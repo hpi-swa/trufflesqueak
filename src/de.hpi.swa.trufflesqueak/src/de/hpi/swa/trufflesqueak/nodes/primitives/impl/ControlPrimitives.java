@@ -72,6 +72,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendHead
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSyntaxErrorNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNodeFactory.DispatchSendSelectorNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
@@ -89,7 +90,6 @@ import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
-import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -1162,24 +1162,21 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveStackIncrementNode implements BinaryPrimitiveFallback {
         @Specialization
         protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
-                        @Cached("createOrNull(true)") final InterruptHandlerNode interruptNode) {
+                        @Cached final CheckForInterruptsNode interruptNode) {
             MiscUtils.sleep(timeMicroseconds / 1000);
             /*
              * Perform interrupt check (even if interrupt handler is not active), otherwise
-             * idleProcess gets stuck. Checking whether the interrupt handler `shouldTrigger()`
-             * decreases performance for some reason, forcing interrupt check instead.
+             * idleProcess gets stuck.
              */
-            if (interruptNode != null) {
-                try {
-                    interruptNode.executeTrigger(frame);
-                } catch (final ProcessSwitch ps) {
-                    /*
-                     * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                     * enough to increment the stack pointer.
-                     */
-                    getFrameStackPointerIncrementNode().execute(frame);
-                    throw ps;
-                }
+            try {
+                interruptNode.execute(frame);
+            } catch (final ProcessSwitch ps) {
+                /*
+                 * Leave receiver on stack. It has not been removed from the stack yet, so it is
+                 * enough to increment the stack pointer.
+                 */
+                getFrameStackPointerIncrementNode().execute(frame);
+                throw ps;
             }
             return receiver;
         }

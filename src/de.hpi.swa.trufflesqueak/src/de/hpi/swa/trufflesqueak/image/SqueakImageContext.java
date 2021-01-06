@@ -50,6 +50,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReader;
@@ -58,7 +59,6 @@ import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
-import de.hpi.swa.trufflesqueak.util.InterruptHandlerState;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -124,7 +124,7 @@ public final class SqueakImageContext {
     private ArrayObject hiddenRoots;
     private long globalClassCounter = -1;
     @CompilationFinal private SqueakDisplayInterface display;
-    public final InterruptHandlerState interrupt;
+    public final CheckForInterruptsState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
     public final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
 
@@ -166,7 +166,7 @@ public final class SqueakImageContext {
         patch(environment);
         options = new SqueakContextOptions(env);
         isHeadless = options.isHeadless;
-        interrupt = InterruptHandlerState.create(this);
+        interrupt = new CheckForInterruptsState(this);
         allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
         final String truffleLanguageHome = language.getTruffleLanguageHome();

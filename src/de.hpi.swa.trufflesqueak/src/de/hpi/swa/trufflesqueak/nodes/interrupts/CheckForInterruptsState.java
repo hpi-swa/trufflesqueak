@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.trufflesqueak.util;
+package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.ScheduledFuture;
@@ -18,9 +18,10 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
-public final class InterruptHandlerState {
-    private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
+public final class CheckForInterruptsState {
+    private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 20;
 
     private final SqueakImageContext image;
     private ScheduledThreadPoolExecutor executor;
@@ -38,22 +39,17 @@ public final class InterruptHandlerState {
      * the interrupt handler mechanism, we can use a standard boolean here for better compilation.
      */
     private boolean shouldTrigger;
+    private boolean shouldTriggerNoTimer;
 
     @CompilationFinal private PointersObject interruptSemaphore;
     private PointersObject timerSemaphore;
     private ScheduledFuture<?> interruptChecks;
 
-    private int count;
-
-    private InterruptHandlerState(final SqueakImageContext image) {
+    public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
         if (image.options.disableInterruptHandler) {
             image.printToStdOut("Interrupt handler disabled...");
         }
-    }
-
-    public static InterruptHandlerState create(final SqueakImageContext image) {
-        return new InterruptHandlerState(image);
     }
 
     @TruffleBoundary
@@ -76,7 +72,8 @@ public final class InterruptHandlerState {
         executor = new ScheduledThreadPoolExecutor(1);
         executor.setRemoveOnCancelPolicy(true);
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
-            shouldTrigger = true;
+            shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
+            shouldTriggerNoTimer = isActive && (interruptPending() || pendingFinalizationSignals() || hasSemaphoresToSignal());
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
@@ -94,13 +91,12 @@ public final class InterruptHandlerState {
     public void setNextWakeupTick(final long msTime) {
         LogUtils.INTERRUPTS.finer(() -> {
             if (nextWakeupTick != 0) {
-                return (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick + " after " + count + " checks";
+                return (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick;
             } else {
-                return (msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0") + " after " + count + " checks";
+                return msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0";
             }
         });
         nextWakeupTick = msTime;
-        count = 0;
     }
 
     public long getNextWakeupTick() {
@@ -121,6 +117,7 @@ public final class InterruptHandlerState {
 
     public void deactivate() {
         isActive = false;
+        resetTriggers();
     }
 
     protected boolean interruptPending() {
@@ -130,9 +127,8 @@ public final class InterruptHandlerState {
     protected boolean nextWakeUpTickTrigger() {
         if (nextWakeupTick != 0) {
             final long time = System.currentTimeMillis();
-            count++;
             if (time >= nextWakeupTick) {
-                LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick + " after " + count + " checks");
+                LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick);
                 return true;
             }
         }
@@ -164,17 +160,17 @@ public final class InterruptHandlerState {
         semaphoresToSignal.addLast(index);
     }
 
-    public boolean isActiveAndShouldTrigger() {
-        return isActive && shouldTrigger();
+    public boolean shouldTrigger() {
+        return shouldTrigger;
     }
 
-    public boolean shouldTrigger() {
-        if (shouldTrigger) {
-            shouldTrigger = false;
-            return true;
-        } else {
-            return false;
-        }
+    public boolean shouldTriggerNoTimer() {
+        return shouldTriggerNoTimer;
+    }
+
+    public void resetTriggers() {
+        shouldTrigger = false;
+        shouldTriggerNoTimer = false;
     }
 
     public PointersObject getInterruptSemaphore() {
@@ -201,7 +197,6 @@ public final class InterruptHandlerState {
         CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
         isActive = true;
         nextWakeupTick = 0;
-        count = 0;
         if (interruptChecks != null) {
             interruptChecks.cancel(true);
         }

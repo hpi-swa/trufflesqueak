@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.trufflesqueak.util;
+package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -15,38 +15,31 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
-public final class InterruptHandlerNode extends Node {
+public final class CheckForInterruptsNode extends Node {
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
     private final Object[] specialObjects;
-    private final InterruptHandlerState istate;
-    private final boolean enableTimerInterrupts;
+    private final CheckForInterruptsState istate;
 
     private final BranchProfile isActiveProfile = BranchProfile.create();
-    private final BranchProfile nextWakeupTickProfile;
+    private final BranchProfile nextWakeupTickProfile = BranchProfile.create();
     private final BranchProfile pendingFinalizationSignalsProfile = BranchProfile.create();
     private final BranchProfile hasSemaphoresToSignalProfile = BranchProfile.create();
 
-    protected InterruptHandlerNode(final SqueakImageContext image, final boolean enableTimerInterrupts) {
+    private CheckForInterruptsNode(final SqueakImageContext image) {
         specialObjects = image.specialObjectsArray.getObjectStorage();
         istate = image.interrupt;
         signalSemaporeNode = SignalSemaphoreNode.create();
-        this.enableTimerInterrupts = enableTimerInterrupts;
-        nextWakeupTickProfile = enableTimerInterrupts ? BranchProfile.create() : null;
     }
 
-    public static InterruptHandlerNode createOrNull(final boolean enableTimerInterrupts) {
-        final SqueakImageContext image = SqueakLanguage.getContext();
-        if (image.interruptHandlerDisabled()) {
-            return null;
-        } else {
-            return new InterruptHandlerNode(image, enableTimerInterrupts);
-        }
+    public static CheckForInterruptsNode create() {
+        return new CheckForInterruptsNode(SqueakLanguage.getContext());
     }
 
-    public void executeTrigger(final VirtualFrame frame) {
-        if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot() || !istate.isActive()) {
+    public void execute(final VirtualFrame frame) {
+        if (!istate.shouldTrigger()) {
             return;
         }
         isActiveProfile.enter();
@@ -57,7 +50,7 @@ public final class InterruptHandlerNode extends Node {
             istate.interruptPending = false; // reset interrupt flag
             signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
         }
-        if (enableTimerInterrupts && istate.nextWakeUpTickTrigger()) {
+        if (istate.nextWakeUpTickTrigger()) {
             nextWakeupTickProfile.enter();
             LogUtils.INTERRUPTS.fine("Timer interrupt");
             istate.nextWakeupTick = 0; // reset timer interrupt
