@@ -138,7 +138,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             if (method.isCompiledMethod()) {
                 closure = (BlockClosureObject) closureOrNil;
                 methodOrBlock = closure.getCompiledBlock(method);
-                numArgs = method.getNumArgs() + closure.getNumCopied();
+                numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
             } else { // FullBlockClosure
                 closure = (BlockClosureObject) closureOrNil;
                 assert !closure.isABlockClosure() && !method.isCompiledMethod();
