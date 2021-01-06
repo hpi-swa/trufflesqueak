@@ -118,6 +118,7 @@ public final class CheckForInterruptsState {
 
     public void deactivate() {
         isActive = false;
+        resetTrigger();
     }
 
     protected boolean interruptPending() {
