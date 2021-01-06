@@ -44,8 +44,6 @@ public final class CheckForInterruptsState {
     private PointersObject timerSemaphore;
     private ScheduledFuture<?> interruptChecks;
 
-    private int count;
-
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
         if (image.options.disableInterruptHandler) {
@@ -91,13 +89,12 @@ public final class CheckForInterruptsState {
     public void setNextWakeupTick(final long msTime) {
         LogUtils.INTERRUPTS.finer(() -> {
             if (nextWakeupTick != 0) {
-                return (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick + " after " + count + " checks";
+                return (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick;
             } else {
-                return (msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0") + " after " + count + " checks";
+                return msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0";
             }
         });
         nextWakeupTick = msTime;
-        count = 0;
     }
 
     public long getNextWakeupTick() {
@@ -128,9 +125,8 @@ public final class CheckForInterruptsState {
     protected boolean nextWakeUpTickTrigger() {
         if (nextWakeupTick != 0) {
             final long time = System.currentTimeMillis();
-            count++;
             if (time >= nextWakeupTick) {
-                LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick + " after " + count + " checks");
+                LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick);
                 return true;
             }
         }
@@ -194,7 +190,6 @@ public final class CheckForInterruptsState {
         CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
         isActive = true;
         nextWakeupTick = 0;
-        count = 0;
         if (interruptChecks != null) {
             interruptChecks.cancel(true);
         }
