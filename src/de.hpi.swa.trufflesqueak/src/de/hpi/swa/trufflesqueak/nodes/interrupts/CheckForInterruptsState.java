@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.trufflesqueak.util;
+package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.ScheduledFuture;
@@ -18,8 +18,9 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
-public final class InterruptHandlerState {
+public final class CheckForInterruptsState {
     private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
 
     private final SqueakImageContext image;
@@ -45,15 +46,11 @@ public final class InterruptHandlerState {
 
     private int count;
 
-    private InterruptHandlerState(final SqueakImageContext image) {
+    public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
         if (image.options.disableInterruptHandler) {
             image.printToStdOut("Interrupt handler disabled...");
         }
-    }
-
-    public static InterruptHandlerState create(final SqueakImageContext image) {
-        return new InterruptHandlerState(image);
     }
 
     @TruffleBoundary
@@ -76,7 +73,7 @@ public final class InterruptHandlerState {
         executor = new ScheduledThreadPoolExecutor(1);
         executor.setRemoveOnCancelPolicy(true);
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
-            shouldTrigger = true;
+            shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
@@ -164,17 +161,12 @@ public final class InterruptHandlerState {
         semaphoresToSignal.addLast(index);
     }
 
-    public boolean isActiveAndShouldTrigger() {
-        return isActive && shouldTrigger();
+    public boolean shouldTrigger() {
+        return shouldTrigger;
     }
 
-    public boolean shouldTrigger() {
-        if (shouldTrigger) {
-            shouldTrigger = false;
-            return true;
-        } else {
-            return false;
-        }
+    public void resetTrigger() {
+        shouldTrigger = false;
     }
 
     public PointersObject getInterruptSemaphore() {

@@ -182,8 +182,12 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    public boolean hasOuterMethod() {
+        return outerMethod != null;
+    }
+
     public CompiledCodeObject getOuterMethod() {
-        assert outerMethod != null;
+        assert hasOuterMethod();
         return outerMethod;
     }
 

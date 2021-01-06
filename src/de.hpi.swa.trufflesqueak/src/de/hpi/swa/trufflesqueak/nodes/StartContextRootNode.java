@@ -23,20 +23,18 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsQuickNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 
 @NodeInfo(language = SqueakLanguageConfig.ID, cost = NodeCost.NONE)
 public final class StartContextRootNode extends RootNode {
-    private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
-
     private final CompiledCodeObject code;
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
 
     @Children private FrameStackWriteNode[] writeTempNodes;
-    @Child private InterruptHandlerNode interruptHandlerNode;
+    @Child private CheckForInterruptsQuickNode interruptHandlerNode;
     @Child private AbstractExecuteContextNode executeBytecodeNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
@@ -44,14 +42,7 @@ public final class StartContextRootNode extends RootNode {
     public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        /*
-         * Only check for interrupts if method is relatively large. Avoid check if a closure is
-         * activated (effectively what #primitiveClosureValueNoContextSwitch is for). Also, skip
-         * timer interrupts here as they trigger too often, which causes a lot of context switches
-         * and therefore materialization and deopts. Time r inputs are currently handled in
-         * primitiveRelinquishProcessor (#230) only.
-         */
-        interruptHandlerNode = code.isCompiledBlock() || code.getBytes().length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(false);
+        interruptHandlerNode = CheckForInterruptsQuickNode.create(code);
         executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
 
@@ -59,9 +50,7 @@ public final class StartContextRootNode extends RootNode {
     public Object execute(final VirtualFrame frame) {
         initializeFrame(frame);
         try {
-            if (interruptHandlerNode != null) {
-                interruptHandlerNode.executeTrigger(frame);
-            }
+            interruptHandlerNode.execute(frame);
             return executeBytecodeNode.execute(frame, initialPC);
         } catch (final NonVirtualReturn | ProcessSwitch nvr) {
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
