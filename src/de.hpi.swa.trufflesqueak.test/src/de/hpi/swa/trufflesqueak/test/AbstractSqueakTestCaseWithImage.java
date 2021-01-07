@@ -60,7 +60,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         try {
             runWithTimeout(imagePath, value -> loadImageContext(value), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
             image.getOutput().println("Test image loaded from " + imagePath + "...");
-            patchImageForTesting();
+            runWithTimeout(imagePath, value -> patchImageForTesting(), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Test image load from " + imagePath + " was interrupted");
@@ -73,19 +73,19 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     @AfterClass
-    public static void cleanUp() {
-        executor.shutdown();
+    public static void cleanUp() throws InterruptedException, ExecutionException, TimeoutException {
         idleProcess = null;
         image.interrupt.reset();
-        destroyImageContext();
+        runWithTimeout(context, value -> destroyImageContext(), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
+        executor.shutdown();
     }
 
-    protected static void reloadImage() {
+    protected static void reloadImage() throws InterruptedException, ExecutionException, TimeoutException {
         cleanUp();
         loadTestImage();
     }
 
-    private static void patchImageForTesting() {
+    private static Object patchImageForTesting() {
         image.interrupt.start();
         final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
@@ -101,6 +101,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
         image.getOutput().println("Image ready for testing...");
+        return null;
     }
 
     private static boolean runsOnMXGate() {
@@ -144,12 +145,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static Object evaluate(final String expression) {
-        context.enter();
-        try {
-            return image.evaluate(expression);
-        } finally {
-            context.leave();
-        }
+        return image.evaluate(expression);
     }
 
     protected static void patchMethod(final String className, final String selector, final String body) {

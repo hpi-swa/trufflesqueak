@@ -139,22 +139,19 @@ public abstract class AbstractSqueakTestCase {
         context = contextBuilder.build();
         context.initialize(SqueakLanguageConfig.ID);
         context.enter();
-        try {
-            image = SqueakLanguage.getContext();
-            if (Files.exists(Paths.get(imagePath))) {
-                image.ensureLoaded();
-            }
-            return image.getSqueakImage(); // Pretend image has been loaded.
-        } finally {
-            context.leave();
+        image = SqueakLanguage.getContext();
+        if (Files.exists(Paths.get(imagePath))) {
+            image.ensureLoaded();
         }
+        return image.getSqueakImage(); // Pretend image has been loaded.
     }
 
-    protected static void destroyImageContext() {
+    protected static Object destroyImageContext() {
         // Close context if existing (for reloading mechanism).
         context.close(true);
         context = null;
         image = null;
         System.gc();
+        return null;
     }
 }
