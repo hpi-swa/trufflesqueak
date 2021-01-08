@@ -11,7 +11,7 @@ on:
 jobs:
   style_and_build_config:
     name: Code Style + Build Config
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v2
@@ -42,7 +42,7 @@ jobs:
 
   linux-java11:
     name: Linux + JDK11 + Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone TruffleSqueak repository
@@ -84,7 +84,7 @@ jobs:
 
   linux-java8:
     name: Linux + JDK8 + Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone TruffleSqueak repository
@@ -156,7 +156,7 @@ jobs:
 
   macos-java11:
     name: macOS + JDK11
-    runs-on: macos-latest
+    runs-on: macos-11.0
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone TruffleSqueak repository
@@ -190,7 +190,7 @@ jobs:
 
   macos-java8:
     name: macOS + JDK8
-    runs-on: macos-latest
+    runs-on: macos-11.0
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone TruffleSqueak repository
@@ -224,7 +224,7 @@ jobs:
 
   windows-java11:
     name: Windows + JDK11
-    runs-on: windows-latest
+    runs-on: windows-2019
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone TruffleSqueak repository
@@ -260,7 +260,7 @@ jobs:
 
   windows-java8:
     name: Windows + JDK8
-    runs-on: windows-latest
+    runs-on: windows-2019
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone TruffleSqueak repository
