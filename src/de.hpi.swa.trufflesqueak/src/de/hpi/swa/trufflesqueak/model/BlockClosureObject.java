@@ -12,7 +12,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -355,16 +356,33 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @ExportMessage
-    public Object execute(final Object[] arguments,
-                    @Exclusive @Cached final WrapToSqueakNode wrapNode) throws ArityException {
-        if (getNumArgs() == arguments.length) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(this, NilObject.SINGLETON, arguments.length);
-            for (int i = 0; i < arguments.length; i++) {
-                frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(arguments[i]);
+    public static final class Execute {
+        @Specialization(guards = "closure.isAFullBlockClosure()")
+        public static Object doFullClosure(final BlockClosureObject closure, final Object[] arguments,
+                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws ArityException {
+            if (closure.getNumArgs() == arguments.length) {
+                final Object[] frameArguments = FrameAccess.newFullClosureArgumentsTemplate(closure, NilObject.SINGLETON, arguments.length);
+                for (int i = 0; i < arguments.length; i++) {
+                    frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(arguments[i]);
+                }
+                return closure.getCompiledBlock().getCallTarget().call(frameArguments);
+            } else {
+                throw ArityException.create((int) closure.getNumArgs(), arguments.length);
             }
-            return getCompiledBlock().getCallTarget().call(frameArguments);
-        } else {
-            throw ArityException.create((int) getNumArgs(), arguments.length);
+        }
+
+        @Specialization(guards = "!closure.isAFullBlockClosure()")
+        public static Object doClosure(final BlockClosureObject closure, final Object[] arguments,
+                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws ArityException {
+            if (closure.getNumArgs() == arguments.length) {
+                final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, NilObject.SINGLETON, arguments.length);
+                for (int i = 0; i < arguments.length; i++) {
+                    frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(arguments[i]);
+                }
+                return closure.getCompiledBlock().getCallTarget().call(frameArguments);
+            } else {
+                throw ArityException.create((int) closure.getNumArgs(), arguments.length);
+            }
         }
     }
 }
