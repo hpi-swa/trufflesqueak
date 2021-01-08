@@ -65,7 +65,7 @@ public abstract class CheckForInterruptsQuickNode extends Node {
 
         @Override
         public void execute(final VirtualFrame frame) {
-            if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot() || !istate.shouldTrigger()) {
+            if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot() || !istate.shouldTriggerNoTimer()) {
                 return;
             }
             /* Exclude interrupts case from compilation. */
@@ -75,11 +75,13 @@ public abstract class CheckForInterruptsQuickNode extends Node {
                 istate.interruptPending = false; // reset interrupt flag
                 signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
             }
-            if (istate.nextWakeUpTickTrigger()) {
-                LogUtils.INTERRUPTS.fine("Timer interrupt");
-                istate.nextWakeupTick = 0; // reset timer interrupt
-                signalSemaporeNode.executeSignal(frame, istate.getTimerSemaphore());
-            }
+            // TODO: timer interrupts disabled in quick checkForInterrupts. That is also why
+            // shouldTriggerNoTimer is used.
+            // if (istate.nextWakeUpTickTrigger()) {
+            // LogUtils.INTERRUPTS.fine("Timer interrupt");
+            // istate.nextWakeupTick = 0; // reset timer interrupt
+            // signalSemaporeNode.executeSignal(frame, istate.getTimerSemaphore());
+            // }
             if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
                 LogUtils.INTERRUPTS.fine("Finalization interrupt");
                 istate.setPendingFinalizations(false);
