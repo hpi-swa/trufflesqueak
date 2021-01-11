@@ -27,7 +27,6 @@ import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
-import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplayInterface;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -544,14 +543,6 @@ public final class SqueakImageContext {
         return lastParseRequestSource;
     }
 
-    public DisplayPoint getWindowSize() {
-        if (hasDisplay() && getDisplay().isVisible()) {
-            return getDisplay().getWindowSize();
-        } else {
-            return flags.getLastWindowSize();
-        }
-    }
-
     public boolean interruptHandlerDisabled() {
         return options.disableInterruptHandler;
     }
@@ -680,10 +671,6 @@ public final class SqueakImageContext {
         writeNode.execute(point, POINT.X, xPos);
         writeNode.execute(point, POINT.Y, yPos);
         return point;
-    }
-
-    public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final DisplayPoint point) {
-        return asPoint(writeNode, (long) point.getWidth(), (long) point.getHeight());
     }
 
     public ArrayObject newEmptyArray() {

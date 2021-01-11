@@ -21,7 +21,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -115,9 +114,8 @@ public final class SqueakImageWriter {
         writeLong(image.flags.getOldBaseAddress()); // oldBaseAddress
         writeLong(specialObjectOop);
         writeLong(0xffee); // last hash
-        final DisplayPoint windowSize = image.getWindowSize();
-        writeLong(windowSize.getWidth() << 16 | windowSize.getHeight());
-        writeLong(SqueakImageConstants.IMAGE_HEADER_FLAGS);
+        writeLong(image.flags.getSnapshotScreenSize());
+        writeLong(image.flags.getHeaderFlags());
         writeInt(0); // extra VM memory
         /* Continue with Spur header. */
         writeInt(0); // (num stack pages << 16) | cog code size

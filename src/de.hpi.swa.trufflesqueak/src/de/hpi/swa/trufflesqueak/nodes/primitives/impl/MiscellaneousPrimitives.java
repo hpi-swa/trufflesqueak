@@ -854,7 +854,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 45: return 0L; // desired size of eden, in bytes (stored in image file header)
                 case 46: return NilObject.SINGLETON; // machine code zone size, in bytes (Cog only; otherwise nil)
                 case 47: return NilObject.SINGLETON; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
-                case 48: return 0L; // various header flags.  See getCogVMFlags.
+                case 48: return image.flags.getHeaderFlagsDecoded(); // various header flags. See #getImageHeaderFlags.
                 case 49: return (long) image.flags.getMaxExternalSemaphoreTableSize(); // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
                 case 50: case 51: return NilObject.SINGLETON; // nil; reserved for VM parameters that persist in the image (such as eden above)
                 case 52: return 65536L; // root table capacity

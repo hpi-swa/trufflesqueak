@@ -13,10 +13,6 @@ public final class SqueakImageConstants {
     public static final int WORD_SIZE = Long.BYTES;
     public static final int IMAGE_FORMAT = 68021;
     public static final int IMAGE_HEADER_SIZE = WORD_SIZE * 16;
-    public static final long IMAGE_HEADER_FLAGS = 0 + /* 0/1 fullscreen or not. */
-                    0b10 + /* 0/2 imageFloatsLittleEndian or not. */
-                    0x10 + /* preemption does not yield. */
-                    0 /* old finalization. */;
     public static final int IMAGE_HEADER_MEMORY_SIZE_POSITION = WORD_SIZE;
     public static final int IMAGE_HEADER_FIRST_FRAGMENT_SIZE_POSITION = 9 * WORD_SIZE;
     public static final int IMAGE_BRIDGE_SIZE = 2 * WORD_SIZE; /* bridge and nextSegmentSize. */

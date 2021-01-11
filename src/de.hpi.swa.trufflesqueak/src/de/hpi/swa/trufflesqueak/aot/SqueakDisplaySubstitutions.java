@@ -37,7 +37,6 @@ import de.hpi.swa.trufflesqueak.aot.SDL.WindowEvent;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplayInterface;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEY;
@@ -286,9 +285,13 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     }
 
     @Override
-    public DisplayPoint getWindowSize() {
-        // TODO Auto-generated method stub
-        return image.flags.getLastWindowSize();
+    public int getWindowWidth() {
+        return width;
+    }
+
+    @Override
+    public int getWindowHeight() {
+        return height;
     }
 
     @Override

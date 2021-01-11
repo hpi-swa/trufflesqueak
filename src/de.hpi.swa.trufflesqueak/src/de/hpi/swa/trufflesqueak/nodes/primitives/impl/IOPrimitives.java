@@ -803,7 +803,16 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final PointersObject doSize(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return image.asPoint(writeNode, image.getWindowSize());
+            final long x;
+            final long y;
+            if (image.hasDisplay() && image.getDisplay().isVisible()) {
+                x = image.getDisplay().getWindowWidth();
+                y = image.getDisplay().getWindowHeight();
+            } else {
+                x = image.flags.getSnapshotScreenWidth();
+                y = image.flags.getSnapshotScreenHeight();
+            }
+            return image.asPoint(writeNode, x, y);
         }
     }
 

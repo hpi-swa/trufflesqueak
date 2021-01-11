@@ -41,12 +41,8 @@ public final class SqueakImageReader {
     private final byte[] byteArrayBuffer = new byte[Long.BYTES];
     private final Map<PointersObject, AbstractSqueakObject> suspendedContexts = new HashMap<>();
 
-    private long headerSize;
     private long oldBaseAddress;
     private long specialObjectsPointer;
-    private int lastWindowSizeWord;
-    private int headerFlags;
-    private short maxExternalSemaphoreTableSize;
     private long firstSegmentSize;
     private int position;
     private long currentAddressSwizzle;
@@ -174,39 +170,33 @@ public final class SqueakImageReader {
         // nextWord(); // magic2
     }
 
-    private void readBaseHeader() {
-        headerSize = nextInt();
+    private void readHeader() {
+        readVersion();
+
+        // Base header start
+        final int headerSize = nextInt();
         nextWord(); // "length of heap in file"
         oldBaseAddress = nextWord();
         specialObjectsPointer = nextWord();
         nextWord(); // 1 word last used hash
-        lastWindowSizeWord = (int) nextWord();
-        headerFlags = (int) nextWord();
+        final long snapshotScreenSize = nextWord();
+        final long headerFlags = nextWord();
         nextInt(); // extraVMMemory
-    }
 
-    private void readSpurHeader() {
+        // Spur header start
         nextShort(); // numStackPages
         nextShort(); // cogCodeSize
         assert position == 64 : "Wrong position";
         nextInt(); // edenBytes
-        maxExternalSemaphoreTableSize = nextShort();
+        final short maxExternalSemaphoreTableSize = nextShort();
         nextShort(); // unused, realign to word boundary
         assert position == 72 : "Wrong position";
         firstSegmentSize = nextWord();
         nextWord(); // freeOldSpace
-    }
 
-    private void readHeader() {
-        readVersion();
-        readBaseHeader();
-        readSpurHeader();
-        image.flags.initialize(oldBaseAddress, headerFlags, lastWindowSizeWord, maxExternalSemaphoreTableSize);
-        skipToBody();
-    }
+        image.flags.initialize(oldBaseAddress, headerFlags, snapshotScreenSize, maxExternalSemaphoreTableSize);
 
-    private void skipToBody() {
-        skipBytes(headerSize - position);
+        skipBytes(headerSize - position); // skip to body
     }
 
     private void readBody() {

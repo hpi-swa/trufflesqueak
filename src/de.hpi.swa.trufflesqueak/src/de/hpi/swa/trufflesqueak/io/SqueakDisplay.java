@@ -195,8 +195,14 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     @Override
     @TruffleBoundary
-    public DisplayPoint getWindowSize() {
-        return new DisplayPoint(canvas.getWidth(), canvas.getHeight());
+    public int getWindowWidth() {
+        return canvas.getWidth();
+    }
+
+    @Override
+    @TruffleBoundary
+    public int getWindowHeight() {
+        return canvas.getHeight();
     }
 
     @Override
@@ -242,8 +248,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
         frame.setTitle(title);
         if (!frame.isVisible()) {
-            final DisplayPoint lastWindowSize = image.flags.getLastWindowSize();
-            frame.setPreferredSize(new Dimension(lastWindowSize.getWidth(), lastWindowSize.getHeight()));
+            frame.setPreferredSize(new Dimension(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight()));
             frame.pack();
             frame.setVisible(true);
             frame.requestFocus();
