@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class CheckForInterruptsState {
-    private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
+    private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 20;
 
     private final SqueakImageContext image;
     private ScheduledThreadPoolExecutor executor;
