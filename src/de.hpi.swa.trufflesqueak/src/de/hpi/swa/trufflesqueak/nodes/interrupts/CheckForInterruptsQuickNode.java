@@ -9,6 +9,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -75,13 +77,16 @@ public abstract class CheckForInterruptsQuickNode extends Node {
                 istate.interruptPending = false; // reset interrupt flag
                 signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
             }
-            // TODO: timer interrupts disabled in quick checkForInterrupts. That is also why
-            // shouldTriggerNoTimer is used.
-            // if (istate.nextWakeUpTickTrigger()) {
-            // LogUtils.INTERRUPTS.fine("Timer interrupt");
-            // istate.nextWakeupTick = 0; // reset timer interrupt
-            // signalSemaporeNode.executeSignal(frame, istate.getTimerSemaphore());
-            // }
+            if (istate.nextWakeUpTickTrigger()) {
+                LogUtils.INTERRUPTS.fine("Timer interrupt");
+                istate.nextWakeupTick = 0; // reset timer interrupt
+                try {
+                    signalSemaporeNode.executeSignal(frame, istate.getTimerSemaphore());
+                } catch (final ProcessSwitch ps) {
+                    SqueakLanguage.getContext().printToStdErr(ps.getNewContext());
+                    throw ps;
+                }
+            }
             if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
                 LogUtils.INTERRUPTS.fine("Finalization interrupt");
                 istate.setPendingFinalizations(false);
