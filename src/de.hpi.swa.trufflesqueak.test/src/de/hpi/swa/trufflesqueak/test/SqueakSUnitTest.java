@@ -199,7 +199,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     private static void ensureTruffleSqueakPackagesLoaded(final SqueakTest test) {
         if (!truffleSqueakPackagesLoaded && inTruffleSqueakPackage(test.className)) {
             image.getOutput().println("\nLoading TruffleSqueak packages (required by " + test.className + "). This may take a while...");
-            loadTruffleSqueakPackages();
+            runWithTimeoutOrExit(() -> loadTruffleSqueakPackages(), 3 * 60);
         }
     }
 
@@ -214,7 +214,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static void loadTruffleSqueakPackages() {
         final long start = System.currentTimeMillis();
-        evaluate(String.format("[Metacello new\n" +
+        image.evaluate(String.format("[Metacello new\n" +
                         "  baseline: 'TruffleSqueak';\n" +
                         "  repository: 'filetree://%s';\n" +
                         "  onConflict: [:ex | ex allow];\n" +

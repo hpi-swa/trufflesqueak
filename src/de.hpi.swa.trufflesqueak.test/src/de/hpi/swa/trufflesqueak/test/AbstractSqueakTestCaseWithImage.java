@@ -38,6 +38,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
     private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = 20 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
+    private static final int EVALUATION_TIMEOUT_SECONDS = 20;
     private static final int PRIORITY_10_LIST_INDEX = 9;
     protected static final String PASSED_VALUE = "passed";
 
@@ -57,30 +58,20 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     public static void loadTestImage() {
         executor = Executors.newSingleThreadExecutor();
         final String imagePath = getPathToTestImage();
-        try {
-            runWithTimeout(imagePath, value -> loadImageContext(value), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
-            image.getOutput().println("Test image loaded from " + imagePath + "...");
-            runWithTimeout(imagePath, value -> patchImageForTesting(), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Test image load from " + imagePath + " was interrupted");
-        } catch (final ExecutionException e) {
-            throw new IllegalStateException(e.getCause());
-        } catch (final TimeoutException e) {
-            throw new IllegalStateException("Timed out while trying to load the image from " + imagePath +
-                            ".\nMake sure the image is not currently loaded by another executable");
-        }
+        runWithTimeoutOrExit(() -> loadImageContext(imagePath), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
+        image.getOutput().println("Test image loaded from " + imagePath + "...");
+        runWithTimeoutOrExit(() -> patchImageForTesting(), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
     }
 
     @AfterClass
-    public static void cleanUp() throws InterruptedException, ExecutionException, TimeoutException {
+    public static void cleanUp() {
         idleProcess = null;
         image.interrupt.reset();
-        runWithTimeout(context, value -> destroyImageContext(), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
+        runWithTimeoutOrExit(() -> destroyImageContext(), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
         executor.shutdown();
     }
 
-    protected static void reloadImage() throws InterruptedException, ExecutionException, TimeoutException {
+    protected static void reloadImage() {
         cleanUp();
         loadTestImage();
     }
@@ -136,21 +127,17 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         return null;
     }
 
-    /**
-     * Some expressions need to be evaluate through the normal Compiler>>#evaluate: infrastructure,
-     * for example because they require a parent context when they include non-local returns.
-     */
-    protected static Object compilerEvaluate(final String expression) {
-        return evaluate("Compiler evaluate: '" + expression.replaceAll("'", "''") + "'");
-    }
-
     protected static Object evaluate(final String expression) {
-        return image.evaluate(expression);
+        try {
+            return executor.submit(() -> image.evaluate(expression)).get(EVALUATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new AssertionError(e);
+        }
     }
 
     protected static void patchMethod(final String className, final String selector, final String body) {
         image.getOutput().println("Patching " + className + ">>#" + selector + "...");
-        final Object patchResult = evaluate(String.join(" ",
+        final Object patchResult = image.evaluate(String.join(" ",
                         className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
                         "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
         assertNotEquals(NilObject.SINGLETON, patchResult);
@@ -195,8 +182,19 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
+    protected static void runWithTimeoutOrExit(final Runnable runnable, final int timeout) {
+        final Future<?> future = executor.submit(runnable);
+        try {
+            future.get(timeout, TimeUnit.SECONDS);
+        } catch (final InterruptedException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
+            future.cancel(true);
+            System.exit(1); // Fail entire test suite immediately
+        }
+    }
+
     private static TestResult extractFailuresAndErrorsFromTestResult(final TestRequest request) {
-        final Object result = evaluate(testCommand(request));
+        final Object result = image.evaluate(testCommand(request));
         if (!(result instanceof NativeObject) || !((NativeObject) result).isString()) {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
@@ -204,7 +202,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (PASSED_VALUE.equals(testResult)) {
             return TestResult.success();
         } else {
-            final boolean shouldPass = (boolean) evaluate(shouldPassCommand(request));
+            final boolean shouldPass = (boolean) image.evaluate(shouldPassCommand(request));
             // we cannot estimate or reliably clean up the state of the image after some unknown
             // exception was thrown
             if (shouldPass) {

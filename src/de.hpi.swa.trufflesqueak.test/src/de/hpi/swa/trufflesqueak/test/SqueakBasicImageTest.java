@@ -160,4 +160,12 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
             }
         }
     }
+
+    /**
+     * Some expressions need to be evaluate through the normal Compiler>>#evaluate: infrastructure,
+     * for example because they require a parent context when they include non-local returns.
+     */
+    private static Object compilerEvaluate(final String expression) {
+        return evaluate("Compiler evaluate: '" + expression.replaceAll("'", "''") + "'");
+    }
 }
