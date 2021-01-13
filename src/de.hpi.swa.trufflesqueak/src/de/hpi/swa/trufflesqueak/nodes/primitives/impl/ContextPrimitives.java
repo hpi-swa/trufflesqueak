@@ -206,14 +206,15 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         @Specialization(guards = {"receiver.hasMaterializedSender()"})
-        protected final AbstractSqueakObject findNext(final ContextObject receiver) {
+        protected final AbstractSqueakObject findNext(final ContextObject receiver,
+                        @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> ref) {
             ContextObject context = receiver;
-            while (true) {
+            while (context.hasMaterializedSender()) {
                 if (context.getCodeObject().isExceptionHandlerMarked()) {
                     assert context.getClosure() == null;
                     return context;
                 }
-                final AbstractSqueakObject sender = context.getSender();
+                final AbstractSqueakObject sender = context.getMaterializedSender();
                 if (sender instanceof ContextObject) {
                     context = (ContextObject) sender;
                 } else {
@@ -225,6 +226,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     }
                 }
             }
+            return findNextAvoidingMaterialization(context, ref);
         }
 
         @TruffleBoundary
@@ -274,10 +276,10 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 return getInteropExceptionThrowingContext();
             } else if (result == null) {
                 if (!foundMyself[0]) {
-                    return findNext(receiver); // Fallback to other version.
+                    return findNext(receiver, ref); // Fallback to other version.
                 }
                 if (lastSender[0] instanceof ContextObject) {
-                    return findNext((ContextObject) lastSender[0]);
+                    return findNext((ContextObject) lastSender[0], ref);
                 } else {
                     return NilObject.SINGLETON;
                 }

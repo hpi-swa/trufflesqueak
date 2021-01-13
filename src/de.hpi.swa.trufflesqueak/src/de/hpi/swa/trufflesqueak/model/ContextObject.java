@@ -304,6 +304,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return (ContextObject) getSender();
     }
 
+    public boolean hasMaterializedSender() {
+        return !(FrameAccess.getSender(getTruffleFrame()) instanceof FrameMarker);
+    }
+
+    public AbstractSqueakObject getMaterializedSender() {
+        return (AbstractSqueakObject) FrameAccess.getSender(getTruffleFrame());
+    }
+
     /**
      * Sets the sender of a ContextObject.
      */
@@ -580,10 +588,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean hasTruffleFrame() {
         return truffleFrame != null;
-    }
-
-    public boolean hasMaterializedSender() {
-        return !(FrameAccess.getSender(getTruffleFrame()) instanceof FrameMarker);
     }
 
     public FrameMarker getFrameMarker() {
