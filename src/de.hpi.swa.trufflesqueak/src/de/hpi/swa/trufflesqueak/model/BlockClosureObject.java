@@ -10,7 +10,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -228,23 +227,11 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public ContextObject getHomeContext() {
-        // Recursively unpack closures until home context is reached.
-        final BlockClosureObject closure = outerContext.getClosure();
-        if (closure != null) {
-            return closure.getHomeContextWithBoundary();
-        } else {
-            return outerContext;
+        ContextObject currentContext = outerContext;
+        while (currentContext.hasClosure()) {
+            currentContext = currentContext.getClosure().getOuterContextOrNull();
         }
-    }
-
-    @TruffleBoundary
-    private ContextObject getHomeContextWithBoundary() {
-        final BlockClosureObject closure = outerContext.getClosure();
-        if (closure != null) {
-            return closure.getHomeContextWithBoundary();
-        } else {
-            return outerContext;
-        }
+        return currentContext;
     }
 
     public int getNumTemps() {
