@@ -199,7 +199,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     private static void ensureTruffleSqueakPackagesLoaded(final SqueakTest test) {
         if (!truffleSqueakPackagesLoaded && inTruffleSqueakPackage(test.className)) {
             image.getOutput().println("\nLoading TruffleSqueak packages (required by " + test.className + "). This may take a while...");
-            runWithTimeoutOrExit(() -> loadTruffleSqueakPackages(), 3 * 60);
+            runWithTimeoutOrExit(() -> loadTruffleSqueakPackages(), 5 * 60);
         }
     }
 
