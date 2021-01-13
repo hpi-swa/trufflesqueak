@@ -17,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 import org.junit.AfterClass;
 import org.junit.Assume;
@@ -148,7 +147,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             throw new IllegalStateException("The previous test case has not finished yet");
         }
         try {
-            return runWithTimeout(request, value -> extractFailuresAndErrorsFromTestResult(value), TIMEOUT_SECONDS);
+            return runTestWithTimeout(request);
         } catch (final TimeoutException e) {
             return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
@@ -159,18 +158,17 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    protected static <T, R> R runWithTimeout(final T argument, final Function<T, R> function, final int timeout) throws InterruptedException, ExecutionException, TimeoutException {
-        final Future<R> future = executor.submit(() -> {
+    private static TestResult runTestWithTimeout(final TestRequest request) throws InterruptedException, ExecutionException, TimeoutException {
+        final Future<TestResult> future = executor.submit(() -> {
             testWithImageIsActive = true;
             try {
-                return function.apply(argument);
+                return extractFailuresAndErrorsFromTestResult(request);
             } finally {
                 testWithImageIsActive = false;
             }
-
         });
         try {
-            return future.get(timeout, TimeUnit.SECONDS);
+            return future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } finally {
             if (testWithImageIsActive) {
                 if (context != null) {
