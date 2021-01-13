@@ -29,7 +29,7 @@ public abstract class ResumeProcessNode extends AbstractNode {
     @Specialization(guards = "hasHigherPriority(newProcess)")
     protected final void doTransferTo(final VirtualFrame frame, final PointersObject newProcess,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
-                    @Cached("create(true)") final GetOrCreateContextNode contextNode,
+                    @Cached final GetOrCreateContextNode contextNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         putToSleepNode.executePutToSleep(getActiveProcessNode.execute());
         contextNode.executeGet(frame).transferTo(image, newProcess, pointersReadNode, pointersWriteNode, getActiveProcessNode);

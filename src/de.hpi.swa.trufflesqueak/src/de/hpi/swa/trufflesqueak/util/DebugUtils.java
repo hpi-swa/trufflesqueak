@@ -209,7 +209,6 @@ public final class DebugUtils {
                 final PointersObject aProcess = (PointersObject) temp;
                 final Object aContext = aProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
                 if (aContext instanceof ContextObject) {
-                    assert ((ContextObject) aContext).getProcess() == null || ((ContextObject) aContext).getProcess() == aProcess;
                     b.append("\tprocess @").append(Integer.toHexString(aProcess.hashCode())).append(" with suspended context ").append(aContext).append(" and stack trace:\n");
                     printSqMaterializedStackTraceOn(b, (ContextObject) aContext);
                 } else {

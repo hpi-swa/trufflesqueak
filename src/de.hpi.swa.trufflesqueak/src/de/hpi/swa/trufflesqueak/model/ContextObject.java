@@ -43,7 +43,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     private MaterializedFrame truffleFrame;
     private CompiledCodeObject methodOrBlock; // Code object holding truffleFrame's frame descriptor
-    private PointersObject process;
     private int size;
     private boolean hasModifiedSender;
     private boolean escaped;
@@ -285,7 +284,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public AbstractSqueakObject getSender() {
-        final Object value = FrameAccess.getSender(getTruffleFrame());
+        final Object value = getFrameSender();
         if (value instanceof FrameMarker) {
             if (!methodOrBlock.hasPrimitive() || methodOrBlock.isUnwindMarked() || methodOrBlock.isExceptionHandlerMarked()) {
                 /*
@@ -297,9 +296,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                 methodOrBlock.getDoesNotNeedSenderAssumption().invalidate("Sender requested");
             }
             final ContextObject previousContext = ((FrameMarker) value).getMaterializedContext();
-            if (process != null && !(getReceiver() instanceof ContextObject)) {
-                previousContext.setProcess(process);
-            }
             FrameAccess.setSender(getTruffleFrame(), previousContext);
             return previousContext;
         } else {
@@ -461,6 +457,10 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return getInstructionPointerForBytecodeLoop() < 0 && getFrameSender() == NilObject.SINGLETON;
     }
 
+    public boolean canReturnTo() {
+        return getInstructionPointerForBytecodeLoop() >= 0 && getFrameSender() != NilObject.SINGLETON;
+    }
+
     public ContextObject shallowCopy() {
         return new ContextObject(this);
     }
@@ -574,7 +574,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         writeNode.execute(oldProcess, PROCESS.SUSPENDED_CONTEXT, this);
         writeNode.executeNil(newProcess, PROCESS.LIST);
         final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
-        newActiveContext.setProcess(newProcess);
         writeNode.executeNil(newProcess, PROCESS.SUSPENDED_CONTEXT);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
             throw ProcessSwitch.create(newActiveContext);
@@ -653,7 +652,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                 }
 
                 assert methodOrBlock != fromPointer : "Code should change and with it the frame descriptor";
-                assert process != fromPointer : "Process should change";
                 FrameAccess.iterateStackSlots(truffleFrame, slot -> {
                     if (truffleFrame.isObject(slot)) {
                         final Object stackValue = FrameUtil.getObjectSafe(truffleFrame, slot);
@@ -733,14 +731,5 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                 }
             }
         }
-    }
-
-    public PointersObject getProcess() {
-        return process;
-    }
-
-    public void setProcess(final PointersObject process) {
-        assert process != null && (this.process == null || this.process == process);
-        this.process = process;
     }
 }

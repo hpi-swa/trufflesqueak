@@ -95,16 +95,14 @@ public final class ReturnBytecodes {
             assert FrameAccess.hasClosure(frame);
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-            assert homeContext.getProcess() != null;
-            final Object caller = homeContext.getFrameSender();
-            final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode.execute();
-            if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+            if (homeContext.canReturnTo()) {
+                throw new NonLocalReturn(returnValue, homeContext.getFrameSender());
+            } else {
                 CompilerDirectives.transferToInterpreter();
-                final ContextObject contextObject = GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame);
+                final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
                 lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, returnValue);
                 throw SqueakException.create("Should not reach");
             }
-            throw new NonLocalReturn(returnValue, caller);
         }
     }
 
@@ -172,7 +170,6 @@ public final class ReturnBytecodes {
 
     public abstract static class AbstractBlockReturnNode extends AbstractReturnNode {
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.createBinaryProfile();
-        @Child private GetActiveProcessNode getActiveProcessNode;
 
         protected AbstractBlockReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -183,16 +180,14 @@ public final class ReturnBytecodes {
             if (hasModifiedSenderProfile.profile(hasModifiedSender(frame))) {
                 // Target is sender of closure's home context.
                 final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-                assert homeContext.getProcess() != null;
-                final boolean homeContextNotOnTheStack = homeContext.getProcess() != getGetActiveProcessNode().execute();
-                final Object caller = homeContext.getFrameSender();
-                if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                if (homeContext.canReturnTo()) {
+                    throw new NonLocalReturn(getReturnValue(frame), homeContext.getFrameSender());
+                } else {
                     CompilerDirectives.transferToInterpreter();
-                    final ContextObject contextObject = GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame);
+                    final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
                     lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
                     throw SqueakException.create("Should not reach");
                 }
-                throw new NonLocalReturn(getReturnValue(frame), caller);
             } else {
                 return getReturnValue(frame);
             }
@@ -201,14 +196,6 @@ public final class ReturnBytecodes {
         private boolean hasModifiedSender(final VirtualFrame frame) {
             final ContextObject context = getContext(frame);
             return context != null && context.hasModifiedSender();
-        }
-
-        private GetActiveProcessNode getGetActiveProcessNode() {
-            if (getActiveProcessNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getActiveProcessNode = insert(GetActiveProcessNode.create());
-            }
-            return getActiveProcessNode;
         }
     }
 

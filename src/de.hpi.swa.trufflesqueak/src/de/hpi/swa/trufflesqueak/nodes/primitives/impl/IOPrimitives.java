@@ -138,7 +138,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         public static final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode,
+                        @Cached final GetOrCreateContextNode getOrCreateContextNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             writeImage(getOrCreateContextNode.executeGet(frame), image);
             /* Return false to signal that the image is not resuming. */

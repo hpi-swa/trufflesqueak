@@ -84,11 +84,6 @@ public final class PointersObject extends AbstractPointersObject {
             writeNode.execute(this, i, pointersObject[i]);
         }
         assert size() == pointersObject.length;
-        if (getSqueakClass().isProcess()) { /* Collect suspended contexts */
-            final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            final ContextObject suspendedContext = (ContextObject) readNode.execute(this, PROCESS.SUSPENDED_CONTEXT);
-            chunk.getReader().getSuspendedContexts().put(this, suspendedContext);
-        }
     }
 
     public void become(final PointersObject other) {

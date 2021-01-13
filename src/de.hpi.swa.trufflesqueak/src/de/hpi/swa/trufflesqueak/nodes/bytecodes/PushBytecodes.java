@@ -99,7 +99,7 @@ public final class PushBytecodes {
 
         private final int blockSize;
 
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
         private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numArgs, final int numCopied, final int blockSize) {
             super(code, index, numBytecodes + blockSize, numCopied);
@@ -198,7 +198,7 @@ public final class PushBytecodes {
         }
 
         private static final class PushFullClosureOnStackReceiverWithOuterContextNode extends AbstractPushFullClosureNode {
-            @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+            @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
             @Child private FrameStackPopNode popReceiverNode = FrameStackPopNode.create();
 
             private PushFullClosureOnStackReceiverWithOuterContextNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
@@ -214,7 +214,7 @@ public final class PushBytecodes {
         }
 
         private static final class PushFullClosureFrameReceiverWithOuterContextNode extends AbstractPushFullClosureNode {
-            @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+            @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
             private PushFullClosureFrameReceiverWithOuterContextNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
                 super(code, index, numBytecodes, literalIndex, numCopied);
@@ -257,7 +257,7 @@ public final class PushBytecodes {
 
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushActiveContextNode extends AbstractPushNode {
-        @Child private GetOrCreateContextNode getContextNode = GetOrCreateContextNode.create(true);
+        @Child private GetOrCreateContextNode getContextNode = GetOrCreateContextNode.create();
 
         public PushActiveContextNode(final CompiledCodeObject code, final int index) {
             super(code, index);

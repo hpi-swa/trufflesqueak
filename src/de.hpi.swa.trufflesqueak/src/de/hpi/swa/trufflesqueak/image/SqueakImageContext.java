@@ -250,7 +250,6 @@ public final class SqueakImageContext {
     public ExecuteTopLevelContextNode getActiveContextNode() {
         final PointersObject activeProcess = GetActiveProcessNode.getSlow(this);
         final ContextObject activeContext = (ContextObject) activeProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
-        activeContext.setProcess(activeProcess);
         activeProcess.instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(this, getLanguage(), activeContext, true);
     }
@@ -314,7 +313,6 @@ public final class SqueakImageContext {
         doItContext.setInstructionPointer(doItMethod.getInitialPC());
         doItContext.setStackPointer(doItMethod.getNumTemps());
         doItContext.setSenderUnsafe(isExternalRequest ? InteropSenderMarker.SINGLETON : NilObject.SINGLETON);
-        doItContext.setProcess(GetActiveProcessNode.getSlow(this));
         return ExecuteTopLevelContextNode.create(this, getLanguage(), doItContext, false);
     }
 

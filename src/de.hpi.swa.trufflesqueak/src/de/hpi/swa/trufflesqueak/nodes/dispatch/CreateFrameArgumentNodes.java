@@ -196,7 +196,7 @@ public final class CreateFrameArgumentNodes {
         @Specialization(guards = "!doesNotNeedSender(code, assumptionProfile)", limit = "1")
         protected static final ContextObject doGetOrCreateContext(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code,
                         @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
-                        @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode) {
+                        @Cached final GetOrCreateContextNode getOrCreateContextNode) {
             return getOrCreateContextNode.executeGet(frame);
         }
 

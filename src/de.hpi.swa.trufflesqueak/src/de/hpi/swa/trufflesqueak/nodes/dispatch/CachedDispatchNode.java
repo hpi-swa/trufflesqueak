@@ -178,7 +178,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
     }
 
     protected static final class CachedDispatchMethodWithSenderNode extends AbstractCachedDispatchMethodNode {
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
         private CachedDispatchMethodWithSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(frame, argumentCount, method);
@@ -228,7 +228,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
     }
 
     protected static final class CachedDispatchDoesNotUnderstandWithSenderNode extends AbstractCachedDispatchDoesNotUnderstandNode {
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
         private CachedDispatchDoesNotUnderstandWithSenderNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final CompiledCodeObject method) {
             super(frame, selector, argumentCount, method);
@@ -281,7 +281,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
     }
 
     protected static final class CachedDispatchObjectAsMethodWithSenderNode extends AbstractCachedDispatchObjectAsMethodNode {
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
         private CachedDispatchObjectAsMethodWithSenderNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final Object object, final CompiledCodeObject method) {
             super(frame, selector, argumentCount, object, method);

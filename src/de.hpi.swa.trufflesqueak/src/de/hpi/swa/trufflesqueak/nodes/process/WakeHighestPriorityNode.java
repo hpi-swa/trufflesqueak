@@ -39,7 +39,7 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
                     @Cached final ArrayObjectSizeNode arraySizeNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
-                    @Cached("create(true)") final GetOrCreateContextNode contextNode,
+                    @Cached final GetOrCreateContextNode contextNode,
                     @Cached final GetActiveProcessNode getActiveProcessNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         // Return the highest priority process that is ready to run.

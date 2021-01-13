@@ -106,7 +106,7 @@ public final class StartContextRootNode extends RootNode {
     private GetOrCreateContextNode getGetOrCreateContextNode() {
         if (getOrCreateContextNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextNode.create(false));
+            getOrCreateContextNode = insert(GetOrCreateContextNode.create());
         }
         return getOrCreateContextNode;
     }

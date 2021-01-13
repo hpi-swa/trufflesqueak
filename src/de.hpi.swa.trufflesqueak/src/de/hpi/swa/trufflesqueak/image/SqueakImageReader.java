@@ -9,13 +9,11 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -23,7 +21,6 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
@@ -39,7 +36,6 @@ public final class SqueakImageReader {
     private final HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>(750000);
     private final SqueakImageContext image;
     private final byte[] byteArrayBuffer = new byte[Long.BYTES];
-    private final Map<PointersObject, AbstractSqueakObject> suspendedContexts = new HashMap<>();
 
     private long oldBaseAddress;
     private long specialObjectsPointer;
@@ -90,13 +86,8 @@ public final class SqueakImageReader {
         }
         initObjects();
         image.printToStdOut("Image loaded in", MiscUtils.currentTimeMillis() - start + "ms.");
-        initializeSuspendedContexts();
         image.initializeAfterLoadingImage((ArrayObject) hiddenRootsChunk.asObject());
         return image.getSqueakImage();
-    }
-
-    public Map<PointersObject, AbstractSqueakObject> getSuspendedContexts() {
-        return suspendedContexts;
     }
 
     private long readBytes(final byte[] bytes, final int length) {
@@ -498,18 +489,5 @@ public final class SqueakImageReader {
         } else {
             return 0;
         }
-    }
-
-    /* Set process in all ContextObjects. */
-    private void initializeSuspendedContexts() {
-        for (final PointersObject process : suspendedContexts.keySet()) {
-            AbstractSqueakObject currentContext = suspendedContexts.get(process);
-            while (currentContext != NilObject.SINGLETON) {
-                final ContextObject context = (ContextObject) currentContext;
-                context.setProcess(process);
-                currentContext = context.getSender();
-            }
-        }
-        suspendedContexts.clear();
     }
 }

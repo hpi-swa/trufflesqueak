@@ -369,7 +369,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         assert getSqueakClass().isSymbolClass();
         final Object method = LookupMethodNode.getUncached().executeLookup(SqueakObjectClassNode.getUncached().executeLookup(receiverAndArguments[0]), this);
         if (method instanceof CompiledCodeObject) {
-            return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledCodeObject) method, receiverAndArguments, GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame));
+            return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledCodeObject) method, receiverAndArguments, GetOrCreateContextNode.getOrCreateUncached(frame));
         } else {
             throw SqueakException.create("Illegal uncached message send");
         }
