@@ -437,6 +437,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return hasPrimitive() && primitiveIndex() == 198;
     }
 
+    public boolean isExceptionHandlerMarked() {
+        return hasPrimitive() && primitiveIndex() == 199;
+    }
+
     public CompiledCodeObject shallowCopy() {
         return new CompiledCodeObject(this);
     }
@@ -615,10 +619,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         for (int i = 1; i < literals.length; i++) {
             literals[i] = NilObject.SINGLETON;
         }
-    }
-
-    public boolean isExceptionHandlerMarked() {
-        return hasPrimitive() && primitiveIndex() == 199;
     }
 
     public boolean hasStoreIntoTemp1AfterCallPrimitive() {
