@@ -42,7 +42,6 @@ public final class CheckForInterruptsState {
      * the interrupt handler mechanism, we can use a standard boolean here for better compilation.
      */
     private boolean shouldTrigger;
-    private boolean shouldTriggerNoTimer;
 
     @CompilationFinal private PointersObject interruptSemaphore;
     private PointersObject timerSemaphore;
@@ -79,7 +78,6 @@ public final class CheckForInterruptsState {
         });
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
             shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
-            shouldTriggerNoTimer = isActive && (interruptPending() || pendingFinalizationSignals() || hasSemaphoresToSignal());
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
@@ -170,13 +168,8 @@ public final class CheckForInterruptsState {
         return shouldTrigger;
     }
 
-    public boolean shouldTriggerNoTimer() {
-        return shouldTriggerNoTimer;
-    }
-
     public void resetTriggers() {
         shouldTrigger = false;
-        shouldTriggerNoTimer = false;
     }
 
     public PointersObject getInterruptSemaphore() {

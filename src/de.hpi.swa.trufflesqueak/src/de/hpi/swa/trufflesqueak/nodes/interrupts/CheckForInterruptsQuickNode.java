@@ -75,7 +75,7 @@ public abstract class CheckForInterruptsQuickNode extends Node {
 
         @Override
         public void execute(final VirtualFrame frame) {
-            if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot() || !istate.shouldTriggerNoTimer()) {
+            if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot() || !istate.shouldTrigger()) {
                 return;
             }
             /* Exclude interrupts case from compilation. */
