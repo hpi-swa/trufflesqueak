@@ -6,8 +6,9 @@
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import java.util.ArrayDeque;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -21,10 +22,12 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class CheckForInterruptsState {
+    private static final String CHECK_FOR_INTERRUPTS_THREAD_NAME = "TruffleSqueakCheckForInterrupts";
+
     private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 20;
 
     private final SqueakImageContext image;
-    private ScheduledThreadPoolExecutor executor;
+    private ScheduledExecutorService executor;
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     private boolean isActive = true;
@@ -69,8 +72,11 @@ public final class CheckForInterruptsState {
         } else {
             assert timerSema == NilObject.SINGLETON;
         }
-        executor = new ScheduledThreadPoolExecutor(1);
-        executor.setRemoveOnCancelPolicy(true);
+        executor = Executors.newSingleThreadScheduledExecutor(r -> {
+            final Thread t = new Thread(r, CHECK_FOR_INTERRUPTS_THREAD_NAME);
+            t.setDaemon(true);
+            return t;
+        });
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
             shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
             shouldTriggerNoTimer = isActive && (interruptPending() || pendingFinalizationSignals() || hasSemaphoresToSignal());
