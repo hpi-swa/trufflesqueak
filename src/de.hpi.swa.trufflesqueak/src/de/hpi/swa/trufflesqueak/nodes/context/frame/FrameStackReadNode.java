@@ -36,6 +36,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
         } else {
             initialSP = closure.getCompiledBlock().getNumTemps();
         }
+        assert initialSP >= numArgs;
         final FrameSlot slot = FrameAccess.findOrAddStackSlot(frame, index);
         if (clear && index >= initialSP) {
             return FrameSlotReadClearNodeGen.create(slot);

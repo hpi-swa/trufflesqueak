@@ -134,15 +134,13 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             methodOrBlock = method;
             numArgs = method.getNumArgs();
         } else {
+            closure = (BlockClosureObject) closureOrNil;
+            numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
             if (method.isCompiledMethod()) {
-                closure = (BlockClosureObject) closureOrNil;
                 methodOrBlock = closure.getCompiledBlock(method);
-                numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
             } else { // FullBlockClosure
-                closure = (BlockClosureObject) closureOrNil;
                 assert !closure.isABlockClosure() && !method.isCompiledMethod();
                 methodOrBlock = method;
-                numArgs = method.getNumArgs();
             }
         }
         final int endArguments = CONTEXT.TEMP_FRAME_START + numArgs;
