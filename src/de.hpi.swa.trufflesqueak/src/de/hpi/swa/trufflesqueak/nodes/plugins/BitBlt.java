@@ -1605,7 +1605,6 @@ public final class BitBlt {
         if (!(isPointers(destForm) && slotSizeOf(destForm) >= 4)) {
             return false;
         }
-        final Object destBitsValue = fetchPointerofObject(FORM.BITS, destForm);
         destWidth = fetchIntegerofObject(FORM.WIDTH, destForm);
         destHeight = fetchIntegerofObject(FORM.HEIGHT, destForm);
         if (!(destWidth >= 0 && destHeight >= 0)) {
@@ -1615,6 +1614,7 @@ public final class BitBlt {
         if (!(destMSB = destDepth > 0)) {
             destDepth = -destDepth;
         }
+        final Object destBitsValue = fetchPointerofObject(FORM.BITS, destForm);
         if (!isWordsOrBytes(destBitsValue)) {
             if (destBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
@@ -1657,8 +1657,6 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#loadBitBltFrom:warping: */
     private boolean loadBitBltFromwarping(final PointersObject bbObj, final boolean aBool) {
-        boolean ok;
-
         bitBltOop = bbObj;
         isWarping = aBool;
         combinationRule = fetchIntegerofObject(BB_RULE_INDEX, bitBltOop);
@@ -1673,8 +1671,7 @@ public final class BitBlt {
         halftoneForm = (AbstractSqueakObject) fetchPointerofObject(BB_HALFTONE_FORM_INDEX, bitBltOop);
         noHalftone = ignoreSourceOrHalftone(halftoneForm == NilObject.SINGLETON ? null : halftoneForm);
         destForm = fetchPointerofObjectOrNull(BB_DEST_FORM_INDEX, bitBltOop);
-        ok = loadBitBltDestForm();
-        if (!ok) {
+        if (!loadBitBltDestForm()) {
             return false;
         }
         destX = fetchIntOrFloatofObjectifNil(BB_DEST_X_INDEX, bitBltOop, 0);
@@ -1687,12 +1684,10 @@ public final class BitBlt {
         if (noSource) {
             sourceX = sourceY = 0;
         } else {
-            ok = loadBitBltSourceForm();
-            if (!ok) {
+            if (!loadBitBltSourceForm()) {
                 return false;
             }
-            ok = loadColorMap();
-            if (!ok) {
+            if (!loadColorMap()) {
                 return false;
             }
             if ((cmFlags & COLOR_MAP_NEW_STYLE) == 0) {
@@ -1701,8 +1696,7 @@ public final class BitBlt {
             sourceX = fetchIntOrFloatofObjectifNil(BB_SOURCE_X_INDEX, bitBltOop, 0);
             sourceY = fetchIntOrFloatofObjectifNil(BB_SOURCE_Y_INDEX, bitBltOop, 0);
         }
-        ok = loadHalftoneForm();
-        if (!ok) {
+        if (!loadHalftoneForm()) {
             return false;
         }
         clipX = fetchIntOrFloatofObjectifNil(BB_CLIP_X_INDEX, bitBltOop, 0);
@@ -1738,7 +1732,6 @@ public final class BitBlt {
         if (!(isPointers(sourceForm) && slotSizeOf(sourceForm) >= 4)) {
             return false;
         }
-        final Object sourceBitsValue = fetchPointerofObject(FORM.BITS, sourceForm);
         sourceWidth = fetchIntOrFloatofObject(FORM.WIDTH, sourceForm);
         sourceHeight = fetchIntOrFloatofObject(FORM.HEIGHT, sourceForm);
         if (!(sourceWidth >= 0 && sourceHeight >= 0)) {
@@ -1748,6 +1741,7 @@ public final class BitBlt {
         if (!(sourceMSB = sourceDepth > 0)) {
             sourceDepth = -sourceDepth;
         }
+        final Object sourceBitsValue = fetchPointerofObject(FORM.BITS, sourceForm);
         if (!isWordsOrBytes(sourceBitsValue)) {
             if (sourceBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
@@ -2511,18 +2505,18 @@ public final class BitBlt {
 
         final NativeObject bitmap = fetchNativeofObjectOrNull(FORM.BITS, bbObj);
         if (!isWordsOrBytes(bitmap)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         width = fetchIntegerofObject(FORM.WIDTH, bbObj);
         height = fetchIntegerofObject(FORM.HEIGHT, bbObj);
         /* if width/height/depth are not integer, fail */
-        final int depth = fetchIntegerofObject(FORM.DEPTH, bbObj);
         assert !failed();
         if (xVal >= width || yVal >= height) {
             return 0L;
         }
+        final int depth = fetchIntegerofObject(FORM.DEPTH, bbObj);
         if (depth < 0) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         /* pixels in each word */
         final int ppW = div(32, depth);
@@ -3129,17 +3123,17 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#setupColorMasks */
     private void setupColorMasks() {
-        long bits = 0;
-        long targetBits = 0;
         if (sourceDepth <= 8) {
             return;
         }
+        long bits = 0;
         if (sourceDepth == 16) {
             bits = 5;
         }
         if (sourceDepth == 32) {
             bits = 8;
         }
+        long targetBits = 0;
         if (cmBitsPerColor == 0) {
             /* Convert to destDepth */
             if (destDepth <= 8) {
@@ -3163,12 +3157,12 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#setupColorMasksFrom:to: */
     private void setupColorMasksFromto(final long srcBits, final long targetBits) {
-        final int[] masks = cmMaskTableTemplate;
-        final int[] shifts = cmShiftTableTemplate;
         final int deltaBits = (int) (targetBits - srcBits);
         if (deltaBits == 0) {
             return;
         }
+        final int[] masks = cmMaskTableTemplate;
+        final int[] shifts = cmShiftTableTemplate;
         if (deltaBits <= 0) {
             /* Mask for extracting a color part of the source */
             final long mask = shl(1, targetBits) - 1;
@@ -3397,10 +3391,8 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#warpLoop */
     private void warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
-        long halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         if (slotSizeOf(bitBltOop) < BB_WARP_BASE + 12) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         int nSteps = height - 1;
         if (nSteps <= 0) {
@@ -3495,6 +3487,7 @@ public final class BitBlt {
                 setupColorMasksFromto(8, cmBitsPerColor);
             }
         }
+        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         final int dstShiftInc;
         final int dstShiftLeft;
@@ -3505,6 +3498,7 @@ public final class BitBlt {
             dstShiftInc = destDepth;
             dstShiftLeft = 0;
         }
+        long halftoneWord = 0;
         if (noHalftone) {
             halftoneWord = ALL_ONES;
         }

@@ -739,8 +739,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode {
         private static final MBeanServer SERVER = TruffleOptions.AOT ? null : ManagementFactory.getPlatformMBeanServer();
         private static final String OPERATION_NAME = "gcRun";
-        private static final Object[] PARAMS = new Object[]{null};
-        private static final String[] SIGNATURE = new String[]{String[].class.getName()};
+        private static final Object[] PARAMS = {null};
+        private static final String[] SIGNATURE = {String[].class.getName()};
         private static final ObjectName OBJECT_NAME;
 
         static {

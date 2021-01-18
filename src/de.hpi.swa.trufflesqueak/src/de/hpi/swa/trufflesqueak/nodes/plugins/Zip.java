@@ -186,8 +186,6 @@ public final class Zip {
 
     /* DeflatePlugin>>#compare:with:min: */
     private int comparewithmin(final int here, final int matchPos, final int minLength) {
-        int length;
-
         /* First test if we can actually get longer than minLength */
         if (zipCollection[here + minLength] != zipCollection[matchPos + minLength]) {
             return 0;
@@ -201,7 +199,7 @@ public final class Zip {
         if (zipCollection[here + 1] != zipCollection[matchPos + 1]) {
             return 1;
         }
-        length = 2;
+        int length = 2;
         while (length < DeflateMaxMatch && zipCollection[here + length] == zipCollection[matchPos + length]) {
             length++;
         }
@@ -215,14 +213,14 @@ public final class Zip {
 
     /* DeflatePlugin>>#deflateBlock:chainLength:goodMatch: */
     private boolean deflateBlockchainLengthgoodMatch(final int lastIndex, final int chainLength, final int goodMatch) {
-        int hereLength = 0;
-        int hereMatch = 0;
         if (zipBlockPos > lastIndex) {
             return false;
         }
         if (zipLiteralCount >= zipLiteralSize) {
             return true;
         }
+        int hereLength = 0;
+        int hereMatch = 0;
         int hasMatch = 0;
         int here = zipBlockPos;
         while (here <= lastIndex) {

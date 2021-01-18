@@ -104,10 +104,6 @@ public final class JPEGReader {
 
     /* JPEGReaderPlugin>>#colorComponentBlocks:from: */
     private static boolean colorComponentBlocksfrom(final int[][] blocks, final Object oop) {
-        final Object arrayOop;
-        Object blockOop;
-        final int max;
-
         if (!isPointers(oop)) {
             return false;
         }
@@ -115,17 +111,17 @@ public final class JPEGReader {
         if (slotSizeOf(pointersOop) < MinComponentSize) {
             return false;
         }
-        arrayOop = fetchPointerofObject(MCUBlockIndex, pointersOop);
+        final Object arrayOop = fetchPointerofObject(MCUBlockIndex, pointersOop);
         if (!isPointers(arrayOop)) {
             return false;
         }
         final PointersObject arrayPointersOop = (PointersObject) arrayOop;
-        max = slotSizeOf(arrayPointersOop);
+        final int max = slotSizeOf(arrayPointersOop);
         if (max > MaxMCUBlocks) {
             return false;
         }
         for (int i = 0; i < max; i += 1) {
-            blockOop = fetchPointerofObject(i, arrayPointersOop);
+            final Object blockOop = fetchPointerofObject(i, arrayPointersOop);
             if (!isWords(blockOop)) {
                 return false;
             }
@@ -169,32 +165,27 @@ public final class JPEGReader {
 
     /* JPEGReaderPlugin>>#decodeBlockInto:component: */
     private void decodeBlockIntocomponent(final int[] anArray, final int[] aColorComponent) {
-        int bits;
-        int byteValue;
-        int i;
-        int index;
-        int zeroCount;
-
-        byteValue = jpegDecodeValueFromsize(dcTable, dcTableSize);
+        int byteValue = jpegDecodeValueFromsize(dcTable, dcTableSize);
         if (byteValue < 0) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
+        int bits;
         if (byteValue != 0) {
             bits = getBits(byteValue);
             byteValue = scaleAndSignExtendinFieldWidth(bits, byteValue);
         }
         byteValue = aColorComponent[PriorDCValueIndex] = aColorComponent[PriorDCValueIndex] + byteValue;
         anArray[0] = byteValue;
-        for (i = 1; i < DCTSize2; i += 1) {
+        for (int i = 1; i < DCTSize2; i += 1) {
             anArray[i] = 0;
         }
-        index = 1;
+        int index = 1;
         while (index < DCTSize2) {
             byteValue = jpegDecodeValueFromsize(acTable, acTableSize);
             if (byteValue < 0) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            zeroCount = (int) (Integer.toUnsignedLong(byteValue) >> 4);
+            final int zeroCount = (int) (Integer.toUnsignedLong(byteValue) >> 4);
             byteValue = byteValue & 15;
             if (byteValue != 0) {
                 index += zeroCount;
@@ -240,8 +231,6 @@ public final class JPEGReader {
 
     /* JPEGReaderPlugin>>#getBits: */
     private int getBits(final int requestedBits) {
-        final int value;
-
         if (requestedBits > jsBitCount) {
             fillBuffer();
             if (requestedBits > jsBitCount) {
@@ -249,7 +238,7 @@ public final class JPEGReader {
             }
         }
         jsBitCount -= requestedBits;
-        value = (int) (Integer.toUnsignedLong(jsBitBuffer) >> jsBitCount);
+        final int value = (int) (Integer.toUnsignedLong(jsBitBuffer) >> jsBitCount);
         jsBitBuffer = jsBitBuffer & (1 << jsBitCount) - 1;
         return value;
     }
@@ -260,34 +249,28 @@ public final class JPEGReader {
 
     /* JPEGReaderPlugin>>#jpegDecodeValueFrom:size: */
     private int jpegDecodeValueFromsize(final int[] table, final int tableSize) {
-        int bits;
-        int bitsNeeded;
-        int index;
-        int tableIndex;
-        int value;
-
         /* Initial bits needed */
-        bitsNeeded = (int) (Integer.toUnsignedLong(table[0]) >> 24);
+        int bitsNeeded = (int) (Integer.toUnsignedLong(table[0]) >> 24);
         if (bitsNeeded > MaxBits) {
             return -1;
         }
 
         /* First real table */
-        tableIndex = 2;
+        int tableIndex = 2;
         while (true) {
 
             /* Get bits */
-            bits = getBits(bitsNeeded);
+            final int bits = getBits(bitsNeeded);
             if (bits < 0) {
                 return -1;
             }
-            index = tableIndex + bits - 1;
+            final int index = tableIndex + bits - 1;
             if (index >= tableSize) {
                 return -1;
             }
 
             /* Lookup entry in table */
-            value = table[index];
+            final int value = table[index];
             if ((value & 0x3F000000) == 0) {
                 return value;
             }
@@ -305,15 +288,11 @@ public final class JPEGReader {
 
     /* JPEGReaderPlugin>>#loadJPEGStreamFrom: */
     private boolean loadJPEGStreamFrom(final PointersObject streamOop) {
-        final Object oop;
-        final int sz;
-
-        oop = fetchPointerofObject(0, streamOop);
+        final Object oop = fetchPointerofObject(0, streamOop);
         if (!isBytes(oop)) {
             return false;
         }
         jsCollection = ((NativeObject) oop).getByteStorage();
-        sz = jsCollection.length;
         jsPosition = fetchIntegerofObject(1, streamOop);
         jsReadLimit = fetchIntegerofObject(2, streamOop);
         jsBitBuffer = fetchIntegerofObject(3, streamOop);
@@ -321,7 +300,7 @@ public final class JPEGReader {
         if (failed()) {
             return false;
         }
-        if (sz < jsReadLimit) {
+        if (jsCollection.length < jsReadLimit) {
             return false;
         }
         return 0 <= jsPosition && jsPosition < jsReadLimit;
@@ -432,21 +411,6 @@ public final class JPEGReader {
     /* JPEGReaderPlugin>>#primitiveColorConvertMCU */
     @TruffleBoundary(transferToInterpreterOnException = false)
     public void primitiveColorConvertMCU(final PointersObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
-        int blockIndex;
-        int blue;
-        int cb;
-        int cr;
-        int curX;
-        int dx;
-        int dy;
-        int green;
-        int red;
-        int sample;
-        int sampleIndex;
-        int sx;
-        int sy;
-        int y;
-
         ditherMask = (int) mask;
         residuals = residualArray.getIntStorage();
         jpegBits = bits.getIntStorage();
@@ -468,21 +432,22 @@ public final class JPEGReader {
         crComponent[CurrentXIndex] = 0;
         crComponent[CurrentYIndex] = 0;
         for (int i = 0; i < jpegBitsSize; i += 1) {
-            y = nextSampleY();
-            cb = nextSampleCb();
+            final int y = nextSampleY();
+            int cb = nextSampleCb();
             cb -= SampleOffset;
             /* begin nextSampleCr */
-            dx = curX = crComponent[CurrentXIndex];
-            dy = crComponent[CurrentYIndex];
-            sx = crComponent[HScaleIndex];
-            sy = crComponent[VScaleIndex];
+            int dx = crComponent[CurrentXIndex];
+            int curX = dx;
+            int dy = crComponent[CurrentYIndex];
+            final int sx = crComponent[HScaleIndex];
+            final int sy = crComponent[VScaleIndex];
             if (!(sx == 0 && sy == 0)) {
                 dx = dx / sx;
                 dy = dy / sy;
             }
-            blockIndex = (int) ((Integer.toUnsignedLong(dy) >> 3) * crComponent[BlockWidthIndex] + (Integer.toUnsignedLong(dx) >> 3));
-            sampleIndex = (int) ((Integer.toUnsignedLong(dy & 7) << 3) + (dx & 7));
-            sample = crBlocks[blockIndex][sampleIndex];
+            final int blockIndex = (int) ((Integer.toUnsignedLong(dy) >> 3) * crComponent[BlockWidthIndex] + (Integer.toUnsignedLong(dx) >> 3));
+            final int sampleIndex = (int) ((Integer.toUnsignedLong(dy & 7) << 3) + (dx & 7));
+            final int sample = crBlocks[blockIndex][sampleIndex];
             curX += 1;
             if (curX < crComponent[MCUWidthIndex] * 8) {
                 crComponent[CurrentXIndex] = curX;
@@ -490,21 +455,21 @@ public final class JPEGReader {
                 crComponent[CurrentXIndex] = 0;
                 crComponent[CurrentYIndex] = crComponent[CurrentYIndex] + 1;
             }
-            cr = sample;
+            int cr = sample;
             cr -= SampleOffset;
-            red = y + FIXn1n40200 * cr / 65536 + residuals[RedIndex];
+            int red = y + FIXn1n40200 * cr / 65536 + residuals[RedIndex];
             red = Math.min(red, MaxSample);
             red = Math.max(red, 0);
             residuals[RedIndex] = red & ditherMask;
             red = red & MaxSample - ditherMask;
             red = Math.max(red, 1);
-            green = y - FIXn0n34414 * cb / 65536 - FIXn0n71414 * cr / 65536 + residuals[GreenIndex];
+            int green = y - FIXn0n34414 * cb / 65536 - FIXn0n71414 * cr / 65536 + residuals[GreenIndex];
             green = Math.min(green, MaxSample);
             green = Math.max(green, 0);
             residuals[GreenIndex] = green & ditherMask;
             green = green & MaxSample - ditherMask;
             green = Math.max(green, 1);
-            blue = y + FIXn1n77200 * cb / 65536 + residuals[BlueIndex];
+            int blue = y + FIXn1n77200 * cb / 65536 + residuals[BlueIndex];
             blue = Math.min(blue, MaxSample);
             blue = Math.max(blue, 0);
             residuals[BlueIndex] = blue & ditherMask;
