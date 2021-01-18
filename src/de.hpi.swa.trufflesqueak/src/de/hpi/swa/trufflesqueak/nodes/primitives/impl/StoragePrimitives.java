@@ -254,7 +254,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {72, 248})
+    @SqueakPrimitive(indices = 72)
     protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization
@@ -649,8 +649,31 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(indices = 248)
+    protected abstract static class PrimArrayBecomeOneWayNoCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode implements BinaryPrimitiveFallback {
+
+        @Specialization
+        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return performPointersBecomeOneWay(image, fromArray, toArray, false);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isArrayObject(receiver)"})
+        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument) {
+            throw PrimitiveFailed.BAD_RECEIVER;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isArrayObject(argument)"})
+        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument) {
+            throw PrimitiveFailed.BAD_ARGUMENT;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 249)
-    protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimArrayBecomeOneWayCopyHashArgNode extends AbstractArrayBecomeOneWayPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization
         protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
