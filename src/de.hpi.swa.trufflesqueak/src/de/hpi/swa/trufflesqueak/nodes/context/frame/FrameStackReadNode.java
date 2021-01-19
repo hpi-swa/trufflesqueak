@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
+import java.util.Objects;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeField;
@@ -33,12 +35,14 @@ public abstract class FrameStackReadNode extends AbstractNode {
         final BlockClosureObject closure = FrameAccess.getClosure(frame);
         if (closure == null) {
             initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
+            assert numArgs == FrameAccess.getCodeObject(frame).getNumArgs();
         } else {
-            initialSP = closure.getCompiledBlock().getNumTemps();
+            initialSP = closure.getNumTemps();
+            assert numArgs == closure.getNumArgs() + closure.getNumCopied();
         }
         assert initialSP >= numArgs;
-        final FrameSlot slot = FrameAccess.findOrAddStackSlot(frame, index);
-        if (clear && index >= initialSP) {
+        final FrameSlot slot = Objects.requireNonNull(FrameAccess.findStackSlot(frame, index));
+        if (clear && index >= initialSP) { // only ever clear non-temp slots
             return FrameSlotReadClearNodeGen.create(slot);
         } else {
             return FrameSlotReadNoClearNodeGen.create(slot);
