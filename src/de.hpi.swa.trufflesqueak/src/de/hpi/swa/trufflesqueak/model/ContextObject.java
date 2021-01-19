@@ -400,8 +400,15 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         final CompiledCodeObject code = FrameAccess.getMethodOrBlock(oldFrame);
         final int pc = FrameAccess.getInstructionPointer(oldFrame, code);
         final int sp = FrameAccess.getStackPointer(oldFrame, code);
+        // Prepare arguments
+        final int numArgs = (int) value.getNumArgs();
+        final int numCopied = value.getNumCopied();
+        final int expectedFrameArgumentSize = FrameAccess.expectedArgumentSize(numArgs);
+        final Object[] arguments = Arrays.copyOf(oldFrame.getArguments(), expectedFrameArgumentSize + numCopied);
+        System.arraycopy(value.getCopiedValues(), 0, arguments, expectedFrameArgumentSize, numCopied);
         final CompiledCodeObject block = value.getCompiledBlock();
-        truffleFrame = Truffle.getRuntime().createMaterializedFrame(oldFrame.getArguments(), block.getFrameDescriptor());
+        // Create and initialize new frame
+        truffleFrame = Truffle.getRuntime().createMaterializedFrame(arguments, block.getFrameDescriptor());
         methodOrBlock = block;
         FrameAccess.assertSenderNotNull(truffleFrame);
         FrameAccess.assertReceiverNotNull(truffleFrame);
