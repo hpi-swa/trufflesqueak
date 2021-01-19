@@ -9,7 +9,6 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.utilities.TriState;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -79,10 +78,13 @@ public final class NilObject extends AbstractSqueakObject {
         return true;
     }
 
-    @ExportMessage
-    protected static TriState isIdenticalOrUndefined(@SuppressWarnings("unused") final NilObject receiver, final Object other) {
-        return TriState.valueOf(NilObject.SINGLETON == other);
-    }
+    // TODO: override no longer working due to a bug (see
+    // https://github.com/oracle/graal/issues/3078).
+    // @ExportMessage
+    // protected static TriState isIdenticalOrUndefined(@SuppressWarnings("unused") final NilObject
+    // receiver, final Object other) {
+    // return TriState.valueOf(NilObject.SINGLETON == other);
+    // }
 
     @ExportMessage
     protected static int identityHashCode(@SuppressWarnings("unused") final NilObject receiver) {
