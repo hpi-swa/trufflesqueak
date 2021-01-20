@@ -74,8 +74,7 @@ public final class ReturnBytecodes {
         protected Object execute(final VirtualFrame frame, final Object returnValue) {
             assert !FrameAccess.hasClosure(frame);
             if (hasModifiedSenderProfile.profile(hasModifiedSender(frame))) {
-                assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
-                throw new NonLocalReturn(returnValue, FrameAccess.getSender(frame));
+                throw new NonLocalReturn(returnValue, FrameAccess.getSenderContext(frame));
             } else {
                 return returnValue;
             }
@@ -96,7 +95,7 @@ public final class ReturnBytecodes {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             if (homeContext.canReturnTo()) {
-                throw new NonLocalReturn(returnValue, homeContext.getFrameSender());
+                throw new NonLocalReturn(returnValue, (ContextObject) homeContext.getFrameSender());
             } else {
                 CompilerDirectives.transferToInterpreter();
                 final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
@@ -181,7 +180,7 @@ public final class ReturnBytecodes {
                 // Target is sender of closure's home context.
                 final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                 if (homeContext.canReturnTo()) {
-                    throw new NonLocalReturn(getReturnValue(frame), homeContext.getFrameSender());
+                    throw new NonLocalReturn(getReturnValue(frame), (ContextObject) homeContext.getFrameSender());
                 } else {
                     CompilerDirectives.transferToInterpreter();
                     final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);

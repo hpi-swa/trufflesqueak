@@ -9,27 +9,20 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.SLOT_IDENTIFIER;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -109,8 +102,8 @@ public final class FrameAccess {
         }
     }
 
-    public static Object getSender(final Frame frame) {
-        return frame.getArguments()[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()];
+    public static AbstractSqueakObject getSender(final Frame frame) {
+        return (AbstractSqueakObject) frame.getArguments()[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()];
     }
 
     public static ContextObject getSenderContext(final Frame frame) {
@@ -164,26 +157,6 @@ public final class FrameAccess {
 
     public static FrameSlot findMarkerSlot(final Frame frame) {
         return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.THIS_MARKER);
-    }
-
-    public static FrameMarker findMarker(final Frame frame) {
-        return getMarker(frame, findMarkerSlot(frame));
-    }
-
-    public static FrameMarker getMarker(final Frame frame, final FrameSlot thisMarkerSlot) {
-        return (FrameMarker) FrameUtil.getObjectSafe(frame, thisMarkerSlot);
-    }
-
-    public static FrameMarker getMarker(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return getMarker(frame, blockOrMethod.getThisMarkerSlot());
-    }
-
-    public static void setMarker(final Frame frame, final FrameSlot thisMarkerSlot, final FrameMarker marker) {
-        frame.setObject(thisMarkerSlot, marker);
-    }
-
-    public static void initializeMarker(final Frame frame, final CompiledCodeObject code) {
-        // setMarker(frame, code.getThisMarkerSlot(), new FrameMarker());
     }
 
     public static Object getContextOrMarkerSlow(final VirtualFrame frame) {
@@ -270,8 +243,8 @@ public final class FrameAccess {
 
     /* Iterates used stack slots (may not be ordered). */
     public static void iterateStackSlots(final Frame frame, final Consumer<FrameSlot> action) {
-        // All slots after fourth slot for stackPointer
-        frame.getFrameDescriptor().getSlots().listIterator(4).forEachRemaining(action);
+        // All slots after third slot for stackPointer
+        frame.getFrameDescriptor().getSlots().listIterator(3).forEachRemaining(action);
     }
 
     /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
@@ -428,28 +401,6 @@ public final class FrameAccess {
 
     public static void assertReceiverNotNull(final Frame frame) {
         assert getReceiver(frame) != null : "Receiver should not be null";
-    }
-
-    @TruffleBoundary
-    public static MaterializedFrame findFrameForMarker(final FrameMarker frameMarker) {
-        CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
-        LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a marker...");
-        final Frame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
-            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-            if (!isTruffleSqueakFrame(current)) {
-                return null;
-            }
-            LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
-            if (frameMarker == findMarker(current)) {
-                return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-            }
-            return null;
-        });
-        if (frame == null) {
-            throw SqueakException.create("Could not find frame for:", frameMarker);
-        } else {
-            return frame.materialize();
-        }
     }
 
     private static void assertCodeAndClosure(final BlockClosureObject closure, final CompiledCodeObject code) {

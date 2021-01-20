@@ -40,7 +40,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
             aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
             // Sender has changed.
             final ContextObject newSender = FrameAccess.getSenderContext(frame);
-            final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
+            final ContextObject target = nlr.getTargetContext();
             FrameAccess.terminate(frame, instructionPointerSlot);
             throw new NonVirtualReturn(nlr.getReturnValue(), target, newSender);
         } else {

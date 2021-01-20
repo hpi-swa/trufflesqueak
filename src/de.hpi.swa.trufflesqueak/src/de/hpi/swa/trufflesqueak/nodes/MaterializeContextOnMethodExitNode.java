@@ -39,16 +39,14 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
                     @Cached final GetOrCreateContextNode getOrCreateContextNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         final ContextObject lastSeenContext = image.lastSeenContext;
-        if (lastSeenContext.isTerminated()) {
+
+        if (lastSeenContext.getCodeObject() == null || lastSeenContext.isTerminated()) {
             image.lastSeenContext = null;
             return;
         }
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (isNotLastSeenContextProfile.profile(context != lastSeenContext)) {
             assert context.hasTruffleFrame();
-            if (lastSeenContext != null && !lastSeenContext.hasMaterializedSender()) {
-                lastSeenContext.setSender(context);
-            }
             if (continueProfile.profile(!context.isTerminated() && context.hasEscaped())) {
                 // Materialization needs to continue in parent frame.
                 image.lastSeenContext = context;

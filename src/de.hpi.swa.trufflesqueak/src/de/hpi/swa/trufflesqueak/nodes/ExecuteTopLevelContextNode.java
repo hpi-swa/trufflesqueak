@@ -82,7 +82,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             ensureCachedContextCanRunAgain(activeContext);
         }
         while (true) {
-            assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
             final AbstractSqueakObject sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || sender == InteropSenderMarker.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
@@ -95,8 +94,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 activeContext = ps.getNewContext();
                 LogUtils.SCHEDULING.log(Level.FINE, "Process Switch: {0}", activeContext);
             } catch (final NonLocalReturn nlr) {
-                final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
-                activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
+                activeContext = unwindContextChainNode.executeUnwind(sender, nlr.getTargetContext(), nlr.getReturnValue());
                 LogUtils.SCHEDULING.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
             } catch (final NonVirtualReturn nvr) {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());

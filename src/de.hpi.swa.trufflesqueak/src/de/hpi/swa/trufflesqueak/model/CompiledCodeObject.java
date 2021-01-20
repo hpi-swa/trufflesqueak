@@ -70,7 +70,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     // frame info
     private final FrameDescriptor frameDescriptor;
-    private final FrameSlot thisMarkerSlot;
     private final FrameSlot thisContextSlot;
     private final FrameSlot instructionPointerSlot;
     private final FrameSlot stackPointerSlot;
@@ -106,7 +105,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public CompiledCodeObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
         frameDescriptor = new FrameDescriptor();
-        thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
@@ -122,7 +120,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     protected CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
         frameDescriptor = original.frameDescriptor;
-        thisMarkerSlot = original.thisMarkerSlot;
         thisContextSlot = original.thisContextSlot;
         instructionPointerSlot = original.instructionPointerSlot;
         stackPointerSlot = original.stackPointerSlot;
@@ -143,7 +140,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         outerMethod = currentOuterCode;
 
         frameDescriptor = new FrameDescriptor();
-        thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
@@ -284,10 +280,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public FrameDescriptor getFrameDescriptor() {
         return frameDescriptor;
-    }
-
-    public FrameSlot getThisMarkerSlot() {
-        return thisMarkerSlot;
     }
 
     public FrameSlot getThisContextSlot() {

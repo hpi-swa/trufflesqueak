@@ -23,7 +23,6 @@ import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
@@ -174,11 +173,10 @@ public final class DebugUtils {
             }
             final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
             lastSender[0] = FrameAccess.getSender(current);
-            final Object marker = FrameAccess.getMarker(current, code);
             final Object context = FrameAccess.getContext(current, code);
             final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
-            err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));
+            err.println(MiscUtils.format("%s%s #(%s) [context: %s, sender: %s]", prefix, code, argumentsString, context, lastSender[0]));
             return null;
         });
         if (lastSender[0] instanceof ContextObject) {
@@ -238,12 +236,9 @@ public final class DebugUtils {
         ContextObject current = context;
         while (current != null && current.hasTruffleFrame()) {
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments();
-            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker())).append('\n');
+            b.append(MiscUtils.format("%s #(%s)", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs))).append('\n');
             final Object sender = current.getFrameSender();
             if (sender == NilObject.SINGLETON) {
-                break;
-            } else if (sender instanceof FrameMarker) {
-                b.append(sender).append('\n');
                 break;
             } else {
                 current = (ContextObject) sender;

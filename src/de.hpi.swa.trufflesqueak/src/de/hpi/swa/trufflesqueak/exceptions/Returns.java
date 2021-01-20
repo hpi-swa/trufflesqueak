@@ -9,7 +9,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 
 public final class Returns {
     private abstract static class AbstractReturn extends ControlFlowException {
@@ -28,22 +27,21 @@ public final class Returns {
 
     public static final class NonLocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        private final Object targetContextOrMarker;
+        private final ContextObject targetContext;
 
-        public NonLocalReturn(final Object returnValue, final Object targetContextOrMarker) {
+        public NonLocalReturn(final Object returnValue, final ContextObject targetContext) {
             super(returnValue);
-            assert targetContextOrMarker instanceof ContextObject || targetContextOrMarker instanceof FrameMarker;
-            this.targetContextOrMarker = targetContextOrMarker;
+            this.targetContext = targetContext;
         }
 
-        public Object getTargetContextOrMarker() {
-            return targetContextOrMarker;
+        public ContextObject getTargetContext() {
+            return targetContext;
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "NLR (value: " + returnValue + ", target: " + targetContextOrMarker + ")";
+            return "NLR (value: " + returnValue + ", target: " + targetContext + ")";
         }
     }
 

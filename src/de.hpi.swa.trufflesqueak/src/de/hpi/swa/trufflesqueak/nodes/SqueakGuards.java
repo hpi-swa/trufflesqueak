@@ -17,7 +17,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -107,10 +106,6 @@ public final class SqueakGuards {
 
     public static boolean isFloatObject(final Object object) {
         return object instanceof FloatObject;
-    }
-
-    public static boolean isFrameMarker(final Object object) {
-        return object instanceof FrameMarker;
     }
 
     public static boolean isGreaterThanZero(final double value) {

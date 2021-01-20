@@ -10,7 +10,6 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.swing.event.MouseInputAdapter;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE_EVENT;
@@ -59,14 +58,14 @@ public final class SqueakMouse extends MouseInputAdapter {
                 buttons = 0;
                 break;
             default:
-                throw SqueakException.create("Unknown mouse event:", e);
+                display.image.printToStdErr("Unknown mouse event:", e);
         }
 
         display.buttons = buttons | display.recordModifiers(e);
         display.addEvent(EVENT_TYPE.MOUSE, e.getX(), e.getY(), display.buttons & MOUSE.ALL, display.buttons >> 3);
     }
 
-    private static int mapButton(final MouseEvent e) {
+    private int mapButton(final MouseEvent e) {
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:
                 return e.isAltDown() ? MOUSE.YELLOW : MOUSE.RED; // left
@@ -77,7 +76,8 @@ public final class SqueakMouse extends MouseInputAdapter {
             case MouseEvent.NOBUTTON:
                 return 0;
             default:
-                throw SqueakException.create("Unknown mouse button in event:", e);
+                display.image.printToStdErr("Unknown mouse button in event:", e);
+                return 0;
         }
     }
 }
