@@ -11,6 +11,11 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class FrameMarker {
+
+    public FrameMarker() {
+        // TODO Auto-generated constructor stub
+    }
+
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();

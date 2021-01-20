@@ -46,6 +46,9 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         final ContextObject context = FrameAccess.getContext(frame, code);
         if (hasContextProfile.profile(context != null)) {
+            if (!context.hasTruffleFrame()) {
+                context.setFrameAndCode(frame.materialize(), code);
+            }
             return context;
         } else {
             return ContextObject.create(image, frame.materialize(), code);

@@ -33,8 +33,8 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 
 /**
@@ -183,7 +183,7 @@ public final class FrameAccess {
     }
 
     public static void initializeMarker(final Frame frame, final CompiledCodeObject code) {
-        setMarker(frame, code.getThisMarkerSlot(), new FrameMarker());
+        // setMarker(frame, code.getThisMarkerSlot(), new FrameMarker());
     }
 
     public static Object getContextOrMarkerSlow(final VirtualFrame frame) {

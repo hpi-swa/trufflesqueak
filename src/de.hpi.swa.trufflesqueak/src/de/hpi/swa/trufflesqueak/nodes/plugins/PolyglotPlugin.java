@@ -831,8 +831,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveReadMember")
     protected abstract static class PrimReadMemberNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(object, member.asStringUnsafe())",
-                        "!lib.hasMemberReadSideEffects(object, member.asStringUnsafe())"}, limit = "2")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(object, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doReadMember(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
@@ -841,15 +840,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(object, member.asStringUnsafe())",
-                        "lib.hasMemberReadSideEffects(object, member.asStringUnsafe())"}, limit = "2")
-        protected static final NativeObject doReadMemberWithSideEffects(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString("[side-effect]");
         }
     }
 

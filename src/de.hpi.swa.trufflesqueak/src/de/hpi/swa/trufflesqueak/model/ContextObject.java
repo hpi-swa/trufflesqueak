@@ -17,6 +17,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -43,9 +44,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     private MaterializedFrame truffleFrame;
     private CompiledCodeObject methodOrBlock; // Code object holding truffleFrame's frame descriptor
+    private AbstractSqueakObject lightSender; // Code object holding truffleFrame's frame descriptor
     private int size;
     private boolean hasModifiedSender;
     private boolean escaped;
+
+    private ContextObject(final SqueakImageContext image) {
+        super(image, image.methodContextClass);
+    }
 
     private ContextObject(final SqueakImageContext image, final long hash) {
         super(image, hash, image.methodContextClass);
@@ -97,6 +103,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
         return new ContextObject(image, hash);
+    }
+
+    public static ContextObject createLight(final SqueakImageContext image, final VirtualFrame frame, final CompiledCodeObject blockOrMethod) {
+        final ContextObject context = new ContextObject(image);
+        FrameAccess.setContext(frame, blockOrMethod, context);
+        context.methodOrBlock = blockOrMethod;
+        context.lightSender = (AbstractSqueakObject) FrameAccess.getSender(frame);
+        return context;
     }
 
     public static ContextObject create(final SqueakImageContext image, final FrameInstance frameInstance) {
@@ -282,6 +296,9 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public AbstractSqueakObject getSender() {
+        if (lightSender != null) {
+            return lightSender;
+        }
         final Object value = getFrameSender();
         if (value instanceof FrameMarker) {
             if (!methodOrBlock.hasPrimitive() || methodOrBlock.isUnwindMarked() || methodOrBlock.isExceptionHandlerMarked()) {
@@ -307,11 +324,15 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean hasMaterializedSender() {
-        return !(FrameAccess.getSender(getTruffleFrame()) instanceof FrameMarker);
+        return true; // !(FrameAccess.getSender(getTruffleFrame()) instanceof FrameMarker);
     }
 
     public AbstractSqueakObject getMaterializedSender() {
-        return (AbstractSqueakObject) FrameAccess.getSender(getTruffleFrame());
+        if (lightSender != null) {
+            return lightSender;
+        } else {
+            return (AbstractSqueakObject) FrameAccess.getSender(getTruffleFrame());
+        }
     }
 
     /**
@@ -328,6 +349,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setSenderUnsafe(final AbstractSqueakObject value) {
+        lightSender = value;
         FrameAccess.setSender(getOrCreateTruffleFrame(), value);
     }
 
@@ -604,6 +626,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public FrameMarker getFrameMarker() {
         return FrameAccess.getMarker(getTruffleFrame(), methodOrBlock);
+    }
+
+    public void setFrameAndCode(final MaterializedFrame materialized, final CompiledCodeObject code) {
+        truffleFrame = materialized;
+        methodOrBlock = FrameAccess.getMethodOrBlock(materialized);
+        size = code.getSqueakContextSize();
     }
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.

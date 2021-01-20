@@ -210,7 +210,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> ref) {
             ContextObject context = receiver;
             while (context.hasMaterializedSender()) {
-                if (context.getCodeObject().isExceptionHandlerMarked()) {
+                if (context.getMethodOrBlock().isExceptionHandlerMarked()) {
                     assert context.getClosure() == null;
                     return context;
                 }

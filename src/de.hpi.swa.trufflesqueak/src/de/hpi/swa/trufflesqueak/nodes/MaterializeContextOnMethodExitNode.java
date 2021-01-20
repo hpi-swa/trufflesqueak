@@ -25,20 +25,24 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     public abstract void execute(VirtualFrame frame);
 
-    @Specialization(guards = {"image.lastSeenContext == null", "!getContextNode.hasContext(frame)", "getContextNode.execute(frame).hasEscaped()"}, limit = "1")
+    @Specialization(guards = {"image.lastSeenContext == null", "getContextNode.execute(frame).hasEscaped()"}, limit = "1")
     protected static final void doStartMaterialization(final VirtualFrame frame,
                     @Shared("getContextNode") @Cached final GetContextNode getContextNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         image.lastSeenContext = getContextNode.execute(frame);
     }
 
-    @Specialization(guards = {"image.lastSeenContext != null"})
+    @Specialization(guards = {"image.lastSeenContext != null", "image.lastSeenContext.hasTruffleFrame()"})
     protected static final void doMaterialize(final VirtualFrame frame,
                     @Cached final ConditionProfile isNotLastSeenContextProfile,
                     @Cached final ConditionProfile continueProfile,
                     @Cached final GetOrCreateContextNode getOrCreateContextNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         final ContextObject lastSeenContext = image.lastSeenContext;
+        if (lastSeenContext.isTerminated()) {
+            image.lastSeenContext = null;
+            return;
+        }
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (isNotLastSeenContextProfile.profile(context != lastSeenContext)) {
             assert context.hasTruffleFrame();
@@ -55,7 +59,13 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
         }
     }
 
-    @Specialization(guards = {"getContextNode.hasContext(frame) || !getContextNode.execute(frame).hasEscaped()"}, limit = "1")
+    @Specialization(guards = {"image.lastSeenContext != null", "!image.lastSeenContext.hasTruffleFrame()"})
+    protected static final void doMaterialize(final VirtualFrame frame,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        image.lastSeenContext = null;
+    }
+
+    @Specialization(guards = {"!getContextNode.execute(frame).hasEscaped()"}, limit = "1")
     protected final void doNothing(@SuppressWarnings("unused") final VirtualFrame frame,
                     @SuppressWarnings("unused") @Shared("getContextNode") @Cached final GetContextNode getContextNode) {
         /*
