@@ -185,7 +185,7 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static String getVMPath() {
-        final String binaryName = OSDetector.SINGLETON.isWindows() ? "java.exe" : "java";
+        final String binaryName = OS.isWindows() ? "java.exe" : "java";
         return System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + binaryName;
     }
 

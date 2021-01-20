@@ -51,7 +51,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimi
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.OS;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
@@ -211,7 +211,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final String path;
             if (".".equals(fileName)) {
                 path = pathName;
-            } else if (OSDetector.SINGLETON.isWindows() && pathName.isEmpty() && fileName.endsWith(":")) {
+            } else if (OS.isWindows() && pathName.isEmpty() && fileName.endsWith(":")) {
                 path = fileName + "\\";
             } else {
                 path = pathName + image.env.getFileNameSeparator() + fileName;
@@ -238,7 +238,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final Object doLookupEmptyString(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            assert OSDetector.SINGLETON.isWindows() : "Unexpected empty path on a non-Windows system.";
+            assert OS.isWindows() : "Unexpected empty path on a non-Windows system.";
             final ArrayList<TruffleFile> fileList = new ArrayList<>();
             // TODO: avoid to use Path and FileSystems here.
             for (final Path path : FileSystems.getDefault().getRootDirectories()) {
@@ -260,7 +260,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doLookup(@SuppressWarnings("unused") final Object receiver, final NativeObject nativePathName, final long index,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             String pathName = nativePathName.asStringUnsafe();
-            if (OSDetector.SINGLETON.isWindows() && !pathName.endsWith("\\")) {
+            if (OS.isWindows() && !pathName.endsWith("\\")) {
                 pathName += "\\"; // new File("C:") will fail, we need to add a trailing backslash.
             }
             final TruffleFile directory = asPublicTruffleFile(image, pathName);

@@ -46,7 +46,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
-import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.OS;
 
 final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak + SubstrateVM + SDL2";
@@ -229,8 +229,8 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
                 handleKeyboardEvent();
                 long[] later = null;
                 // No TEXTINPUT event for this key will follow, but Squeak needs a KeyStroke anyway.
-                if (!isModifierKey(key) && (OSDetector.SINGLETON.isLinux() && isControlKey(key) ||
-                                !OSDetector.SINGLETON.isLinux() && (isControlKey(key) || (SDL.getModState() & ~SDL.kmodShift()) != 0))) {
+                if (!isModifierKey(key) && (OS.isLinux() && isControlKey(key) ||
+                                !OS.isLinux() && (isControlKey(key) || (SDL.getModState() & ~SDL.kmodShift()) != 0))) {
                     later = getNextKeyEvent(KEYBOARD_EVENT.CHAR, time);
                 }
                 fixKeyCodeCase();
@@ -479,7 +479,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
             key = KEY.CTRL;
         } else if (sym == SDL.kLAlt() || sym == SDL.kRAlt()) {
             key = KEY.COMMAND;
-        } else if (OSDetector.SINGLETON.isMacOS() && (sym == SDL.kLGui() || sym == SDL.kRGui())) {
+        } else if (OS.isMacOS() && (sym == SDL.kLGui() || sym == SDL.kRGui())) {
             key = KEY.COMMAND;
         } else if (sym == SDL.kDelete()) {
             key = KEY.DELETE;
@@ -544,7 +544,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
             modifier |= KEY.SHIFT_BIT;
         }
         if ((mod & SDL.kmodAlt()) != 0) {
-            if (OSDetector.SINGLETON.isMacOS()) {
+            if (OS.isMacOS()) {
                 modifier |= KEY.COMMAND_BIT;
             } else {
                 modifier |= KEY.OPTION_BIT;

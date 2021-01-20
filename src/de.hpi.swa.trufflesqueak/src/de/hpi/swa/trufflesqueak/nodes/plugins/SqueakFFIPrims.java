@@ -57,7 +57,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimi
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.AbstractPrimCalloutToFFINode;
-import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.OS;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
@@ -205,7 +205,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final String getPathOrFail(final SqueakImageContext image, final String moduleName) {
-            final String ffiExtension = OSDetector.SINGLETON.getFFIExtension();
+            final String ffiExtension = OS.getFFIExtension();
             final TruffleFile home = image.getHomePath();
             TruffleFile libPath = home.resolve("lib" + File.separatorChar + moduleName + ffiExtension);
             if (!libPath.exists()) {

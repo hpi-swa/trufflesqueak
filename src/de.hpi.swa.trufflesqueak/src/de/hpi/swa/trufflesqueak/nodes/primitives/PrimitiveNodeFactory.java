@@ -58,7 +58,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
-import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class PrimitiveNodeFactory {
     private static final int PRIMITIVE_EXTERNAL_CALL_INDEX = 117;
@@ -111,7 +111,7 @@ public final class PrimitiveNodeFactory {
                         new SqueakSSL(),
                         new UUIDPlugin(),
                         new ZipPlugin(),
-                        OSDetector.SINGLETON.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
+                        OS.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
         fillPrimitiveTable(plugins);
         fillPluginMap(plugins);
     }

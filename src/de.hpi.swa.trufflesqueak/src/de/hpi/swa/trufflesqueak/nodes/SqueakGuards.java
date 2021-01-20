@@ -22,7 +22,7 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class SqueakGuards {
 
@@ -134,7 +134,7 @@ public final class SqueakGuards {
     }
 
     public static boolean isLinux() {
-        return OSDetector.SINGLETON.isLinux();
+        return OS.isLinux();
     }
 
     public static boolean isLong(final Object value) {
@@ -146,7 +146,7 @@ public final class SqueakGuards {
     }
 
     public static boolean isMacOS() {
-        return OSDetector.SINGLETON.isMacOS();
+        return OS.isMacOS();
     }
 
     public static boolean isNativeObject(final Object object) {

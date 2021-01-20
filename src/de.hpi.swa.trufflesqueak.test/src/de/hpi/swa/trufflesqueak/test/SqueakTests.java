@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class SqueakTests {
 
@@ -175,11 +175,11 @@ public final class SqueakTests {
             return TestType.valueOf(type.toUpperCase());
         } else {
             final String prefix;
-            if (OSDetector.SINGLETON.isLinux()) {
+            if (OS.isLinux()) {
                 prefix = TEST_TYPE_PREFIX_LINUX;
-            } else if (OSDetector.SINGLETON.isMacOS()) {
+            } else if (OS.isMacOS()) {
                 prefix = TEST_TYPE_PREFIX_MACOS;
-            } else if (OSDetector.SINGLETON.isWindows()) {
+            } else if (OS.isWindows()) {
                 prefix = TEST_TYPE_PREFIX_WINDOWS;
             } else {
                 throw new IllegalArgumentException("OS not supported");

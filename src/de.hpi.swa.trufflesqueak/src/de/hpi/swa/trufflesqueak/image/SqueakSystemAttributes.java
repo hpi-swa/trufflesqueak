@@ -22,7 +22,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class SqueakSystemAttributes {
     private final SqueakImageContext image;
@@ -53,10 +53,10 @@ public final class SqueakSystemAttributes {
         final String separator = File.separator;
         vmPath = asByteString(System.getProperty("java.home") + separator + "bin" + separator + "java");
 
-        platformName = asByteString(OSDetector.SINGLETON.getSqOSName());
+        platformName = asByteString(OS.getSqueakPlatformName());
 
         String value;
-        if (OSDetector.SINGLETON.isMacOS()) {
+        if (OS.isMacOS()) {
             /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
             value = System.getProperty("os.version", "unknown").replaceFirst("\\.", "");
         } else {
