@@ -85,7 +85,7 @@ public final class StartContextRootNode extends RootNode {
         }
         FrameAccess.setInstructionPointer(frame, code, initialPC);
         FrameAccess.setStackPointer(frame, code, initialSP);
-        ContextObject.createLight(code.getSqueakClass().getImage(), frame, code);
+        ContextObject.createLight(code.getSqueakClass().getImage(), frame);
 
         // TODO: avoid nilling out of temp slots to allow slot specializations
         // Initialize remaining temporary variables with nil in newContext.

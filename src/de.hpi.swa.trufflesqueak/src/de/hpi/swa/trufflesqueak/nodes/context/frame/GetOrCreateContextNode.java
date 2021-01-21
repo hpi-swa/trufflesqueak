@@ -31,6 +31,9 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
         final ContextObject context = FrameAccess.getContext(frame, code);
         if (context != null) {
+            if (!context.hasTruffleFrame()) {
+                context.setFrameAndCode(frame.materialize(), code);
+            }
             return context;
         } else {
             return ContextObject.create(code.getSqueakClass().getImage(), frame.materialize(), code);

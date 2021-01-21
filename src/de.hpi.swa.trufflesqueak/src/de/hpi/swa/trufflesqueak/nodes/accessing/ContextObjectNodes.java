@@ -11,6 +11,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -48,8 +49,12 @@ public final class ContextObjectNodes {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"index == METHOD", "!context.hasTruffleFrame()"})
-        protected static final NilObject doNilMethod(final ContextObject context, final long index) {
-            return NilObject.SINGLETON;
+        protected static final AbstractSqueakObject doNilMethod(final ContextObject context, final long index) {
+            if (context.getMethodOrBlock() != null) {
+                return context.getMethodOrBlock();
+            } else {
+                return NilObject.SINGLETON;
+            }
         }
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})

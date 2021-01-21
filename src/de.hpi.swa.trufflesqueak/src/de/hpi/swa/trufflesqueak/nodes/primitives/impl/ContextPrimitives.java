@@ -122,7 +122,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     assert context.getClosure() == null;
                     return context;
                 }
-                final AbstractSqueakObject sender = context.getMaterializedSender();
+                final AbstractSqueakObject sender = context.getSender();
                 if (sender instanceof ContextObject) {
                     context = (ContextObject) sender;
                 } else {

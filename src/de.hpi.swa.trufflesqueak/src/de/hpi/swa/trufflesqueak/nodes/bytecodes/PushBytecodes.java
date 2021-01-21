@@ -265,7 +265,9 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, getContextNode.executeGet(frame));
+            final ContextObject thisContext = getContextNode.executeGet(frame);
+            assert thisContext.getMethodOrBlock() != null;
+            pushNode.execute(frame, thisContext);
         }
 
         @Override

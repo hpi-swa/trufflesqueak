@@ -41,7 +41,7 @@ public final class GetContextOrMarkerNode extends AbstractNode {
         if (hasContextProfile.profile(context != null)) {
             return context;
         } else {
-            return ContextObject.createLight(image, frame, FrameAccess.getCodeObject(frame));
+            return ContextObject.createLight(image, frame);
 // final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
 // if (hasMarkerProfile.profile(marker != null)) {
 // return marker;
@@ -59,7 +59,7 @@ public final class GetContextOrMarkerNode extends AbstractNode {
         if (context != null) {
             return context;
         } else {
-            return ContextObject.createLight(SqueakLanguage.getContext(), frame, FrameAccess.getCodeObject(frame));
+            return ContextObject.createLight(SqueakLanguage.getContext(), frame);
 // final FrameSlot markerSlot = FrameAccess.findMarkerSlot(frame);
 // final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
 // if (marker != null) {
