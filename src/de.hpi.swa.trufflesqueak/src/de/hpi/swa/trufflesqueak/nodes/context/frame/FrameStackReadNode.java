@@ -35,12 +35,12 @@ public abstract class FrameStackReadNode extends AbstractNode {
         final BlockClosureObject closure = FrameAccess.getClosure(frame);
         if (closure == null) {
             initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
-            assert numArgs == FrameAccess.getCodeObject(frame).getNumArgs();
+// assert numArgs == FrameAccess.getCodeObject(frame).getNumArgs();
         } else {
             initialSP = closure.getNumTemps();
             assert numArgs == closure.getNumArgs() + closure.getNumCopied();
         }
-        assert initialSP >= numArgs;
+// assert initialSP >= numArgs;
         final FrameSlot slot = Objects.requireNonNull(FrameAccess.findStackSlot(frame, index));
         if (clear && index >= initialSP) { // only ever clear non-temp slots
             return FrameSlotReadClearNodeGen.create(slot);
