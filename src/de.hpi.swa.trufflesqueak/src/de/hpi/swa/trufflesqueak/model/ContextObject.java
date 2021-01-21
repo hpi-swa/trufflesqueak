@@ -115,11 +115,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return new ContextObject(image, frame, methodOrBlock);
     }
 
-    public static ContextObject createLight(final SqueakImageContext image, final VirtualFrame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        return new ContextObject(image, frame, FrameAccess.getCodeObject(frame));
-    }
-
     public static ContextObject create(final SqueakImageContext image, final FrameInstance frameInstance) {
         final Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
         return create(image, frame.materialize(), FrameAccess.getCodeObject(frame));
@@ -383,17 +378,20 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public CompiledCodeObject getCodeObject() {
-        if (methodOrBlock != null) {
-            return methodOrBlock;
-        } else {
+        if (hasTruffleFrame()) {
             return FrameAccess.getCodeObject(getTruffleFrame());
+        } else {
+            assert methodOrBlock != null;
+            return methodOrBlock;
         }
     }
 
     public void setCodeObject(final CompiledCodeObject value) {
-        methodOrBlock = value;
         if (hasTruffleFrame()) {
             FrameAccess.setCodeObject(getTruffleFrame(), value);
+            if (!hasClosure()) {
+                methodOrBlock = value;
+            }
         }
     }
 
