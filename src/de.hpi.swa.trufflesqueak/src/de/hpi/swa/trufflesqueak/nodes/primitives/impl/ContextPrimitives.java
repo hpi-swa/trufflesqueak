@@ -7,6 +7,8 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -103,7 +105,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
-        private ContextObject interopExceptionThrowingContextPrototype;
+        @CompilationFinal private ContextObject interopExceptionThrowingContextPrototype;
 
         @Specialization
         protected final AbstractSqueakObject findNext(final ContextObject receiver) {
@@ -140,6 +142,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          */
         private ContextObject getInteropExceptionThrowingContext() {
             if (interopExceptionThrowingContextPrototype == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 final SqueakImageContext image = lookupContext();
                 assert image.evaluate("Interop") != NilObject.SINGLETON : "Interop class must be present";
                 final CompiledCodeObject onDoMethod = (CompiledCodeObject) image.evaluate("BlockClosure>>#on:do:");
