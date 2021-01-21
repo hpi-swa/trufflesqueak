@@ -7,7 +7,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -51,8 +50,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-// @GenerateNodeFactory
-// @SqueakPrimitive(indices = 195)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final AbstractSqueakObject doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
@@ -63,7 +62,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     break;
                 } else {
                     current = (ContextObject) sender;
-                    if (current.getClosure() == null && current.getCodeObject().isUnwindMarked()) {
+                    if (current.getCodeObject().isUnwindMarked()) {
+                        assert current.getClosure() == null;
                         return current;
                     }
                 }
@@ -81,7 +81,14 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
              * Terminate all the Contexts between me and previousContext, if previousContext is on
              * my Context stack. Make previousContext my sender.
              */
-            terminateBetween(receiver, previousContext);
+            if (receiver.hasSender(previousContext)) {
+                ContextObject current = receiver;
+                while (current != previousContext) {
+                    final ContextObject sendingContext = (ContextObject) current.getSender();
+                    current.terminate();
+                    current = sendingContext;
+                }
+            }
             receiver.setSender(previousContext);
             return receiver;
         }
@@ -91,29 +98,13 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             receiver.removeSender();
             return receiver;
         }
-
-        private static void terminateBetween(final ContextObject start, final ContextObject end) {
-            ContextObject current = start;
-            while (true) {
-                final AbstractSqueakObject sender = current.getSender();
-                if (current != start) {
-                    current.terminate();
-                }
-                if (sender == NilObject.SINGLETON || sender == end) {
-                    return;
-                } else {
-                    current = (ContextObject) sender;
-                }
-            }
-        }
     }
 
-// @GenerateNodeFactory
-// @SqueakPrimitive(indices = 197)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         private ContextObject interopExceptionThrowingContextPrototype;
 
-        @TruffleBoundary
         @Specialization
         protected final AbstractSqueakObject findNext(final ContextObject receiver) {
             ContextObject context = receiver;
