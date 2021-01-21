@@ -375,9 +375,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         FrameAccess.setStackPointer(truffleFrame, block, sp);
         FrameAccess.setClosure(truffleFrame, value);
         FrameAccess.iterateStackSlots(truffleFrame, slot -> {
-            final Object stackValue = oldFrame.getValue(slot);
-            if (stackValue != null) {
-                FrameAccess.setStackSlot(truffleFrame, slot, stackValue);
+            final FrameSlot oldSlot = oldFrame.getFrameDescriptor().findFrameSlot(slot.getIdentifier());
+            if (oldSlot != null) {
+                final Object stackValue = oldFrame.getValue(oldSlot);
+                if (stackValue != null) {
+                    FrameAccess.setStackSlot(truffleFrame, slot, stackValue);
+                }
             }
         });
     }
