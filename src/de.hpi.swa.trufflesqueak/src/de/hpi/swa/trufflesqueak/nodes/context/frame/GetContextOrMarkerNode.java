@@ -14,13 +14,17 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /* Gets context or marker, lazily initializes the latter if necessary. */
 public final class GetContextOrMarkerNode extends AbstractNode {
+
     @CompilationFinal private FrameSlot contextSlot;
+    @CompilationFinal private CompiledCodeObject code;
     @CompilationFinal private SqueakImageContext image;
     @CompilationFinal private FrameSlot markerSlot;
     private final ConditionProfile hasContextProfile = ConditionProfile.createBinaryProfile();
@@ -36,20 +40,19 @@ public final class GetContextOrMarkerNode extends AbstractNode {
             contextSlot = FrameAccess.findContextSlot(frame);
             markerSlot = FrameAccess.findMarkerSlot(frame);
             image = lookupContext();
+
+            final BlockClosureObject closure = FrameAccess.getClosure(frame);
+            if (closure == null) {
+                code = FrameAccess.getCodeObject(frame);
+            } else {
+                code = closure.getCompiledBlock();
+            }
         }
         final ContextObject context = FrameAccess.getContext(frame, contextSlot);
         if (hasContextProfile.profile(context != null)) {
             return context;
         } else {
-            return ContextObject.createLight(image, frame);
-// final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
-// if (hasMarkerProfile.profile(marker != null)) {
-// return marker;
-// } else {
-// final FrameMarker newMarker = new FrameMarker();
-// FrameAccess.setMarker(frame, markerSlot, newMarker);
-// return newMarker;
-// }
+            return ContextObject.createLight(image, frame, code);
         }
     }
 
@@ -60,15 +63,6 @@ public final class GetContextOrMarkerNode extends AbstractNode {
             return context;
         } else {
             return ContextObject.createLight(SqueakLanguage.getContext(), frame);
-// final FrameSlot markerSlot = FrameAccess.findMarkerSlot(frame);
-// final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
-// if (marker != null) {
-// return marker;
-// } else {
-// final FrameMarker newMarker = new FrameMarker();
-// FrameAccess.setMarker(frame, markerSlot, newMarker);
-// return newMarker;
-// }
         }
     }
 }

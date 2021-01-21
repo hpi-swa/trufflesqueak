@@ -50,14 +50,17 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private boolean escaped;
 
     private ContextObject(final SqueakImageContext image, final VirtualFrame frame) {
+        this(image, frame, FrameAccess.getCodeObject(frame));
+    }
+
+    private ContextObject(final SqueakImageContext image, final VirtualFrame frame, final CompiledCodeObject code) {
         super(image, image.methodContextClass);
-        methodOrBlock = FrameAccess.getCodeObject(frame);
+        methodOrBlock = code;
         assert methodOrBlock != null;
         lightSender = FrameAccess.getSender(frame);
-        size = methodOrBlock.getSqueakContextSize();
-        assert FrameAccess.getContext(frame, methodOrBlock) == null;
-// truffleFrame = frame.materialize();
-        FrameAccess.setContext(frame, methodOrBlock, this);
+        size = code.getSqueakContextSize();
+        assert FrameAccess.getContext(frame, code) == null;
+        FrameAccess.setContext(frame, code, this);
     }
 
     private ContextObject(final SqueakImageContext image, final long hash) {
@@ -109,6 +112,11 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
         return new ContextObject(image, hash);
+    }
+
+    public static ContextObject createLight(final SqueakImageContext image, final VirtualFrame frame, final CompiledCodeObject code) {
+        CompilerAsserts.partialEvaluationConstant(code);
+        return new ContextObject(image, frame, code);
     }
 
     public static ContextObject createLight(final SqueakImageContext image, final VirtualFrame frame) {

@@ -25,7 +25,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     public abstract void execute(VirtualFrame frame);
 
-    @Specialization(guards = {"image.lastSeenContext == null", "getContextNode.execute(frame).hasEscaped()"}, limit = "1")
+    @Specialization(guards = {"image.lastSeenContext == null", "!getContextNode.hasContext(frame)", "getContextNode.execute(frame).hasEscaped()"}, limit = "1")
     protected static final void doStartMaterialization(final VirtualFrame frame,
                     @Shared("getContextNode") @Cached final GetContextNode getContextNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -63,7 +63,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
         image.lastSeenContext = null;
     }
 
-    @Specialization(guards = {"!getContextNode.execute(frame).hasEscaped()"}, limit = "1")
+    @Specialization(guards = {"getContextNode.hasContext(frame) || !getContextNode.execute(frame).hasEscaped()"}, limit = "1")
     protected final void doNothing(@SuppressWarnings("unused") final VirtualFrame frame,
                     @SuppressWarnings("unused") @Shared("getContextNode") @Cached final GetContextNode getContextNode) {
         /*
