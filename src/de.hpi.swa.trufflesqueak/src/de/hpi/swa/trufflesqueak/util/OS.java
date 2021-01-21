@@ -12,13 +12,6 @@ public enum OS {
     macOS,
     Windows;
 
-    public enum OSType {
-        Windows,
-        MacOS,
-        Linux,
-        Other
-    }
-
     private static final OS THE_OS = findOS();
     private static final String SQUEAK_PLATFORM_NAME = findSqueakOSName();
     private static final String FFI_EXTENSION = findFFIExtension();
@@ -61,10 +54,6 @@ public enum OS {
             default:
                 throw SqueakException.create("Unsupported Platform.");
         }
-    }
-
-    public static OS getOS() {
-        return THE_OS;
     }
 
     public static String getSqueakPlatformName() {

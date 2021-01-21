@@ -34,7 +34,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal private CompiledCodeObject block;
     @CompilationFinal private long startPC = -1;
     @CompilationFinal private long numArgs = -1;
-    @CompilationFinal private Object receiver = null;
+    @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 0) private Object[] copiedValues;
 
     private BlockClosureObject(final SqueakImageContext image, final ClassObject squeakClass) {

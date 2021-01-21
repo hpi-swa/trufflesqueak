@@ -113,10 +113,6 @@ public final class CheckForInterruptsState {
         return nextWakeupTick;
     }
 
-    public boolean disabled() {
-        return image.options.disableInterruptHandler;
-    }
-
     public boolean isActive() {
         return isActive;
     }

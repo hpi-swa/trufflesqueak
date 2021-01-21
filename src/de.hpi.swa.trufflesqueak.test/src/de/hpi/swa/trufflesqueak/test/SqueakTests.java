@@ -20,7 +20,6 @@ import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.hpi.swa.trufflesqueak.util.OS;
@@ -112,7 +111,7 @@ public final class SqueakTests {
 
     private static List<String> rawTestNames() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(SqueakTests.class.getResourceAsStream(FILENAME)))) {
-            return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).collect(Collectors.toList());
+            return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).collect(toList());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -323,8 +323,6 @@ public final class ArrayObjectNodes {
     }
 
     public abstract static class ArrayObjectCopyIntoObjectArrayNode extends AbstractNode {
-        private static final ArrayObjectCopyIntoObjectArrayNode UNCACHED1 = create(1);
-
         private final int offset;
 
         public ArrayObjectCopyIntoObjectArrayNode(final int offset) {
@@ -337,10 +335,6 @@ public final class ArrayObjectNodes {
 
         public static ArrayObjectCopyIntoObjectArrayNode createForFrameArguments() {
             return ArrayObjectCopyIntoObjectArrayNodeGen.create(FrameAccess.getArgumentStartIndex());
-        }
-
-        public static ArrayObjectCopyIntoObjectArrayNode getUncached1() {
-            return UNCACHED1;
         }
 
         public abstract void execute(Object[] target, ArrayObject obj);

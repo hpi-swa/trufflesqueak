@@ -97,10 +97,6 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return fd.getHiddenObject() instanceof Byte;
         }
 
-        protected static final boolean isStdinFileDescriptor(final PointersObject fd) {
-            return isStdioFileDescriptor(fd) && (byte) fd.getHiddenObject() == STDIO_HANDLES.IN;
-        }
-
         protected static final boolean isStdoutFileDescriptor(final PointersObject fd) {
             return isStdioFileDescriptor(fd) && (byte) fd.getHiddenObject() == STDIO_HANDLES.OUT;
         }

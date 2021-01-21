@@ -106,7 +106,7 @@ public final class SqueakImageContext {
     private static final int METHOD_CACHE_SIZE = 1024;
     private static final int METHOD_CACHE_MASK = METHOD_CACHE_SIZE - 1;
     private static final int METHOD_CACHE_REPROBES = 4;
-    private int methodCacheRandomish = 0;
+    private int methodCacheRandomish;
     @CompilationFinal(dimensions = 1) private final MethodCacheEntry[] methodCache = new MethodCacheEntry[METHOD_CACHE_SIZE];
 
     /* System Information */

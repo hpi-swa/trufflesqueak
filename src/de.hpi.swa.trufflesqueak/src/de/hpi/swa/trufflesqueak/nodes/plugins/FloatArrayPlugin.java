@@ -220,11 +220,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveNormalize") // TODO: implement primitive
-    public abstract static class PrimFloatArrayNormalizeNode extends AbstractPrimitiveNode {
-
-    }
+    // TODO: implement primitiveNormalize
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubFloatArray")

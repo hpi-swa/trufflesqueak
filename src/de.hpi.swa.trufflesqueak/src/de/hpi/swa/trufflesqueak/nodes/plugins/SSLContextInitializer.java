@@ -8,9 +8,8 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import static java.util.Arrays.asList;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -63,7 +62,7 @@ public final class SSLContextInitializer {
     }
 
     public static SSLContext createSSLContext(final Path path) throws GeneralSecurityException, IOException {
-        final CertificateInfo info = readPem(path.toFile());
+        final CertificateInfo info = readPem(path);
         final KeyStore keyStore = prepareKeyStore(info);
         final KeyManager[] keyManagers = collectKeyManagers(keyStore);
         final TrustManager[] trustManagers = collectTrustManagers(keyStore);
@@ -73,14 +72,13 @@ public final class SSLContextInitializer {
         return context;
     }
 
-    private static CertificateInfo readPem(final File file)
+    private static CertificateInfo readPem(final Path path)
                     throws IOException, GeneralSecurityException {
 
         Certificate certificate = null;
         PrivateKey key = null;
 
-        try (PemReader reader = new PemReader(new FileReader(file))) {
-
+        try (PemReader reader = new PemReader(Files.newBufferedReader(path))) {
             while (true) {
                 final PemObject read = reader.readPemObject();
                 if (read == null) {
