@@ -197,14 +197,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return getTruffleFrame();
     }
 
-    private MaterializedFrame getOrCreateTruffleFrame(final CompiledCodeObject method) {
-        if (truffleFrame == null || FrameAccess.getCodeObject(getTruffleFrame()) == null) {
-            truffleFrame = createTruffleFrame(this, truffleFrame, method);
-            methodOrBlock = method;
-        }
-        return getTruffleFrame();
-    }
-
     @TruffleBoundary
     private static MaterializedFrame createTruffleFrame(final ContextObject context) {
         // Method is unknown, use dummy frame instead
@@ -214,82 +206,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         FrameAccess.setContext(truffleFrame, dummyMethod, context);
         FrameAccess.setInstructionPointer(truffleFrame, dummyMethod, 0);
         FrameAccess.setStackPointer(truffleFrame, dummyMethod, 1);
-        return truffleFrame;
-    }
-
-    @TruffleBoundary
-    private static MaterializedFrame createTruffleFrame(final ContextObject context, final MaterializedFrame currentFrame, final CompiledCodeObject method) {
-        final Object[] frameArguments;
-        final int instructionPointer;
-        final int stackPointer;
-        if (currentFrame != null) {
-            assert FrameAccess.getSender(currentFrame) != null : "Sender should not be null";
-            FrameAccess.assertReceiverNotNull(currentFrame);
-
-            final Object[] dummyArguments = currentFrame.getArguments();
-            final int expectedArgumentSize = FrameAccess.expectedArgumentSize(method.getNumArgs());
-            if (dummyArguments.length != expectedArgumentSize) {
-                // Adjust arguments.
-                frameArguments = Arrays.copyOf(dummyArguments, expectedArgumentSize);
-            } else {
-                frameArguments = currentFrame.getArguments();
-            }
-            assert currentFrame.getFrameDescriptor().getSize() > 0;
-            instructionPointer = FrameAccess.getInstructionPointer(currentFrame, method);
-            stackPointer = FrameAccess.getStackPointer(currentFrame, method);
-        } else {
-            // Receiver plus arguments.
-            final Object[] squeakArguments = new Object[1 + method.getNumArgs()];
-            frameArguments = FrameAccess.newDummyWith(method, NilObject.SINGLETON, null, squeakArguments);
-            instructionPointer = method.getInitialPC();
-            stackPointer = method.getNumTemps();
-        }
-        final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, method.getFrameDescriptor());
-        FrameAccess.setContext(truffleFrame, method, context);
-        FrameAccess.setInstructionPointer(truffleFrame, method, instructionPointer);
-        FrameAccess.setStackPointer(truffleFrame, method, stackPointer);
-        return truffleFrame;
-    }
-
-    @TruffleBoundary
-    private static MaterializedFrame createTruffleFrame(final ContextObject context, final MaterializedFrame currentFrame, final BlockClosureObject closure) {
-        final Object[] frameArguments;
-        final CompiledCodeObject block = closure.getCompiledBlock();
-        final int numArgsAndCopied = block.getNumArgs() + closure.getNumCopied();
-        final int instructionPointer;
-        final int stackPointer;
-        if (currentFrame != null) {
-            // FIXME: Assuming here this context is not active, add check?
-            assert FrameAccess.getSender(currentFrame) != null : "Sender should not be null";
-
-            final Object[] dummyArguments = currentFrame.getArguments();
-            final int expectedArgumentSize = FrameAccess.expectedArgumentSize(numArgsAndCopied);
-            if (dummyArguments.length != expectedArgumentSize) {
-                // Adjust arguments.
-                frameArguments = Arrays.copyOf(dummyArguments, expectedArgumentSize);
-            } else {
-                frameArguments = currentFrame.getArguments();
-            }
-            if (currentFrame.getFrameDescriptor().getSize() > 0) {
-                instructionPointer = FrameAccess.getInstructionPointer(currentFrame, block);
-                stackPointer = FrameAccess.getStackPointer(currentFrame, block);
-            } else { // Frame slots unknown, so initialize PC and SP;
-                instructionPointer = block.getInitialPC();
-                stackPointer = numArgsAndCopied;
-            }
-        } else {
-            // Receiver plus arguments.
-            final Object[] squeakArguments = new Object[1 + numArgsAndCopied];
-            frameArguments = FrameAccess.newDummyWith(block, NilObject.SINGLETON, closure, squeakArguments);
-            instructionPointer = block.getInitialPC();
-            stackPointer = numArgsAndCopied;
-        }
-        final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, block.getFrameDescriptor());
-        FrameAccess.assertSenderNotNull(truffleFrame);
-        FrameAccess.assertReceiverNotNull(truffleFrame);
-        FrameAccess.setContext(truffleFrame, block, context);
-        FrameAccess.setInstructionPointer(truffleFrame, block, instructionPointer);
-        FrameAccess.setStackPointer(truffleFrame, block, stackPointer);
         return truffleFrame;
     }
 
