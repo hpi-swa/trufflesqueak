@@ -88,24 +88,25 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         hasModifiedSender = original.hasModifiedSender();
         escaped = original.escaped;
         size = original.size;
+        // Must materialize frame on shallowCopy
+        final MaterializedFrame originalFrame = original.truffleFrame != null ? original.truffleFrame : original.getOrFindTruffleFrame().materialize();
+        assert originalFrame != null;
         // Create shallow copy of Truffle frame
-        if (original.truffleFrame != null) {
-            truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments().clone(), methodOrBlock.getFrameDescriptor());
-            // Copy frame slot values
-            FrameAccess.setContext(truffleFrame, methodOrBlock, this);
-            FrameAccess.setInstructionPointer(truffleFrame, methodOrBlock, FrameAccess.getInstructionPointer(original.truffleFrame, methodOrBlock));
-            FrameAccess.setStackPointer(truffleFrame, methodOrBlock, FrameAccess.getStackPointer(original.truffleFrame, methodOrBlock));
-            // Copy stack
-            FrameAccess.iterateStackSlots(truffleFrame, slot -> {
-                final FrameSlot originalSlot = original.truffleFrame.getFrameDescriptor().findFrameSlot(slot.getIdentifier());
-                if (originalSlot != null) {
-                    final Object value = original.truffleFrame.getValue(originalSlot);
-                    if (value != null) {
-                        FrameAccess.setStackSlot(truffleFrame, slot, value);
-                    }
+        truffleFrame = Truffle.getRuntime().createMaterializedFrame(originalFrame.getArguments().clone(), methodOrBlock.getFrameDescriptor());
+        // Copy frame slot values
+        FrameAccess.setContext(truffleFrame, methodOrBlock, this);
+        FrameAccess.setInstructionPointer(truffleFrame, methodOrBlock, FrameAccess.getInstructionPointer(originalFrame, methodOrBlock));
+        FrameAccess.setStackPointer(truffleFrame, methodOrBlock, FrameAccess.getStackPointer(originalFrame, methodOrBlock));
+        // Copy stack
+        FrameAccess.iterateStackSlots(truffleFrame, slot -> {
+            final FrameSlot originalSlot = originalFrame.getFrameDescriptor().findFrameSlot(slot.getIdentifier());
+            if (originalSlot != null) {
+                final Object value = originalFrame.getValue(originalSlot);
+                if (value != null) {
+                    FrameAccess.setStackSlot(truffleFrame, slot, value);
                 }
-            });
-        }
+            }
+        });
     }
 
     public static ContextObject create(final SqueakImageContext image, final int size) {
