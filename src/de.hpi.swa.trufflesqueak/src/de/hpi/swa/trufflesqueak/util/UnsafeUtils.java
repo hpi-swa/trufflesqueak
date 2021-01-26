@@ -5,24 +5,14 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
-import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject.WeakRef;
 import sun.misc.Unsafe;
 
 public final class UnsafeUtils {
 
     private static final Unsafe UNSAFE = initUnsafe();
-
-    private static final long ARRAY_WEAK_REF_BASE_OFFSET;
-    private static final long ARRAY_WEAK_REF_INDEX_SCALE;
-
-    static {
-        ARRAY_WEAK_REF_BASE_OFFSET = UNSAFE.arrayBaseOffset(WeakReference[].class);
-        ARRAY_WEAK_REF_INDEX_SCALE = UNSAFE.arrayIndexScale(WeakReference[].class);
-    }
 
     private UnsafeUtils() {
     }
@@ -147,11 +137,6 @@ public final class UnsafeUtils {
     public static short getShortFromBytes(final byte[] bytes, final long index) {
         assert 0 <= index && index <= bytes.length;
         return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-    }
-
-    public static WeakRef getWeakRef(final WeakRef[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
-        return (WeakRef) UNSAFE.getObject(storage, ARRAY_WEAK_REF_BASE_OFFSET + index * ARRAY_WEAK_REF_INDEX_SCALE);
     }
 
     public static Unsafe initUnsafe() {
@@ -280,11 +265,6 @@ public final class UnsafeUtils {
     public static void putShortIntoBytes(final byte[] bytes, final long index, final short value) {
         assert 0 <= index && index <= bytes.length;
         UNSAFE.putShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
-    }
-
-    public static void putWeakRef(final WeakRef[] storage, final long index, final WeakRef value) {
-        assert 0 <= index && index < storage.length;
-        UNSAFE.putObject(storage, ARRAY_WEAK_REF_BASE_OFFSET + index * ARRAY_WEAK_REF_INDEX_SCALE, value);
     }
 
     public static byte[] toBytes(final int[] ints) {
