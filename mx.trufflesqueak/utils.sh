@@ -12,6 +12,8 @@ set -o nounset
 
 readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")/" && pwd)"
 readonly BASE_DIRECTORY="$(dirname "${SCRIPT_DIRECTORY}")"
+readonly JDK_DIRECTORY="${HOME}/jdk"
+readonly MX_DIRECTORY="${HOME}/mx"
 
 # Load metadata from suite.py
 readonly py_export=$(cat <<-END
@@ -203,15 +205,8 @@ set-up-dependencies() {
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
   download-trufflesqueak-image
   download-trufflesqueak-test-image
-
-  if [[ "${java_version}" == "java8" ]]; then
-    set-up-openjdk8-jvmci "${HOME}"
-  else 
-    set-up-labsjdk11 "${HOME}"
-  fi
-
+  set-up-jdk "${java_version}" "${JDK_DIRECTORY}"
   set-up-graalvm-ce "${java_version}" "${HOME}"
-
   set-env "INSTALLABLE_JVM_TARGET" "$(installable-filename "${java_version}" "")"
   set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
 }
@@ -220,7 +215,7 @@ set-up-graalvm-ce() {
   local java_version=$1
   local target_dir=$2
   local graalvm_name="graalvm-ce-${java_version}-${OS_NAME}-${OS_ARCH}-${DEP_GRAALVM}"
-  local file_suffix=".tar.gz" && [[ "${OS_NAME}" == "windows" ]]  && file_suffix=".zip"
+  local file_suffix=".tar.gz" && [[ "${OS_NAME}" == "windows" ]] && file_suffix=".zip"
   local file="${graalvm_name}${file_suffix}"
 
   pushd "${target_dir}" > /dev/null
@@ -237,51 +232,19 @@ set-up-graalvm-ce() {
   echo "[${graalvm_name} set up successfully]"
 }
 
-set-up-labsjdk11() {
-  local target_dir=$1
-  local jdk_tar=${target_dir}/jdk.tar.gz
-  local jdk_name="labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}"
-
-  pushd "${target_dir}" > /dev/null
-
-  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/labs-openjdk-11/releases/download/${DEP_JVMCI}/${jdk_name}.tar.gz"
-  tar xzf "${jdk_tar}"
-
-  popd > /dev/null
-
-  enable-jdk "${target_dir}/labsjdk-ce-${DEP_JDK11}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
-
-  echo "[${jdk_name} set up successfully]"
+set-up-jdk()  {
+  local java_version=$1
+  local target_dir=$2
+  local jdk="openjdk8" && [[ "${java_version}" == "java8" ]] && jdk="labsjdk-ce-11"
+  ${MX_DIRECTORY}/mx fetch-jdk --java-distribution "${jdk}" --to "${target_dir}" --alias "${JAVA_HOME}"
+  echo "[${jdk} set up successfully]"
 }
 
 set-up-mx() {
-  shallow-clone "https://github.com/graalvm/mx.git" "master" "${HOME}/mx"
-  add-path "${HOME}/mx"
-  set-env "MX_HOME" "${HOME}/mx"
+  shallow-clone "https://github.com/graalvm/mx.git" "master" "${MX_DIRECTORY}"
+  add-path "${MX_DIRECTORY}"
+  set-env "MX_HOME" "${MX_DIRECTORY}"
   echo "[mx set up successfully]"
-}
-
-set-up-openjdk8-jvmci() {
-  local target_dir=$1
-  local jdk_tar=${target_dir}/jdk.tar.gz
-  local jdk_name="openjdk-8u${DEP_JDK8}+${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}"
-
-  pushd "${target_dir}" > /dev/null
-
-  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/graal-jvmci-8/releases/download/${DEP_JVMCI}/${jdk_name}.tar.gz"
-  tar xzf "${jdk_tar}"
-
-  popd > /dev/null
-
-  enable-jdk "${target_dir}/openjdk1.8.0_${DEP_JDK8}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
-
-  # Workaround for Windows (can be removed when https://git.io/Jv9IQ is available)
-  if [[ "${OS_NAME}" == "windows" ]]; then
-    # Remove empty lines
-    sed -i '/^$/d' "${target_dir}/openjdk1.8.0_${DEP_JDK8}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}/release"
-  fi
-
-  echo "[${jdk_name} set up successfully]"
 }
 
 shallow-clone() {
