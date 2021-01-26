@@ -14,6 +14,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -34,6 +35,8 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     public abstract ClassObject executeLookup(Object receiver);
+
+    public abstract ClassObject executeLookup(AbstractSqueakObject receiver);
 
     @Specialization
     protected static final ClassObject doNil(@SuppressWarnings("unused") final NilObject value,
