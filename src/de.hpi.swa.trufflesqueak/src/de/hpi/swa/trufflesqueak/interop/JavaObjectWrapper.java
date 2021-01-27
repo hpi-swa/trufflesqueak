@@ -33,6 +33,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 
+@SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
 public final class JavaObjectWrapper implements TruffleObject {
     private static final String WRAPPED_MEMBER = "wrappedJavaObject";
@@ -163,7 +164,6 @@ public final class JavaObjectWrapper implements TruffleObject {
         return new InteropArray(members.toArray(new String[0]));
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean hasMembers() {
         return true;
@@ -175,7 +175,6 @@ public final class JavaObjectWrapper implements TruffleObject {
         return WRAPPED_MEMBER.equals(member) || getFields().containsKey(member) || getMethods().containsKey(member);
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     @ExportMessage(name = "isMemberInsertable")
     protected boolean isMemberModifiable(@SuppressWarnings("unused") final String member) {
@@ -430,7 +429,6 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean isArrayElementInsertable(@SuppressWarnings("unused") final long index) {
         return false;
@@ -640,7 +638,6 @@ public final class JavaObjectWrapper implements TruffleObject {
     protected static final class JavaNull implements TruffleObject {
         protected static final JavaNull SINGLETON = new JavaNull();
 
-        @SuppressWarnings("static-method")
         @ExportMessage
         protected boolean isNull() {
             return true;

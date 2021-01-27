@@ -56,6 +56,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
+@SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
@@ -655,7 +656,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      * INTEROPERABILITY
      */
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean hasArrayElements() {
         return true;
@@ -666,7 +666,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return literals.length;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage(name = "isArrayElementReadable")
     @ExportMessage(name = "isArrayElementModifiable")
     @ExportMessage(name = "isArrayElementInsertable")
@@ -693,19 +692,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean isExecutable() {
         return true;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean hasExecutableName() {
         return true;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     @TruffleBoundary
     public Object getExecutableName() {

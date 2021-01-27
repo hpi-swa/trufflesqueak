@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @GenerateWrapper
 @ExportLibrary(NodeLibrary.class)
+@SuppressWarnings("static-method")
 public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecodeNode implements InstrumentableNode {
 
     protected AbstractInstrumentableBytecodeNode(final AbstractInstrumentableBytecodeNode original) {
@@ -58,13 +59,11 @@ public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecod
      */
 
     @ExportMessage
-    @SuppressWarnings("static-method")
     protected final boolean hasScope(final Frame frame) {
         return FrameAccess.isTruffleSqueakFrame(frame);
     }
 
     @ExportMessage
-    @SuppressWarnings("static-method")
     protected final Object getScope(final Frame frame, @SuppressWarnings("unused") final boolean nodeEnter) throws UnsupportedMessageException {
         if (hasScope(frame)) {
             return new ContextScope(frame);
@@ -74,13 +73,11 @@ public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecod
     }
 
     @ExportMessage
-    @SuppressWarnings("static-method")
     protected final boolean hasReceiverMember(@SuppressWarnings("unused") final Frame frame) {
         return frame != null;
     }
 
     @ExportMessage
-    @SuppressWarnings("static-method")
     protected final Object getReceiverMember(final Frame frame) throws UnsupportedMessageException {
         if (frame == null) {
             throw UnsupportedMessageException.create();

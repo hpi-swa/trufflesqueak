@@ -49,6 +49,7 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 /*
  * Represents all subclasses of ClassDescription (Class, Metaclass, TraitBehavior, ...).
  */
+@SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
 public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private final CyclicAssumption classHierarchyStable = new CyclicAssumption("Class hierarchy stability");
@@ -656,7 +657,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
      * INTEROPERABILITY
      */
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean isInstantiable() {
         return !isImmediateClassType();
@@ -708,25 +708,21 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         }
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean isMetaObject() {
         return true;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected Object getMetaQualifiedName() {
         return getClassName();
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected Object getMetaSimpleName() {
         return getClassName();
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean isMetaInstance(final Object instance,
                     @Cached final SqueakObjectClassNode classNode) {

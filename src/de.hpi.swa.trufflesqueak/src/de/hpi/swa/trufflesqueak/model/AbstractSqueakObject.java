@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
+@SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
 public abstract class AbstractSqueakObject implements TruffleObject {
 
@@ -59,7 +60,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
      * INTEROPERABILITY
      */
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected final boolean hasMembers() {
         return true;
@@ -173,7 +173,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     @ExportMessage
-    @SuppressWarnings("static-method")
     protected final boolean hasMetaObject() {
         return true;
     }
@@ -184,13 +183,11 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     @ExportMessage
-    @SuppressWarnings("static-method")
     protected final boolean hasLanguage() {
         return true;
     }
 
     @ExportMessage
-    @SuppressWarnings("static-method")
     protected final Class<? extends TruffleLanguage<?>> getLanguage() {
         return SqueakLanguage.class;
     }

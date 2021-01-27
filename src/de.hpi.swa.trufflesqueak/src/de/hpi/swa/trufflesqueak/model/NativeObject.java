@@ -454,8 +454,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
      * INTEROPERABILITY
      */
 
-    @SuppressWarnings("static-method")
     @ExportMessage
+    @SuppressWarnings("static-method")
     protected boolean hasArrayElements() {
         return true;
     }
@@ -465,7 +465,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return sizeNode.execute(this);
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage(name = "isArrayElementReadable")
     @ExportMessage(name = "isArrayElementModifiable")
     @ExportMessage(name = "isArrayElementInsertable")

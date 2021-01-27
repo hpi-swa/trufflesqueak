@@ -462,7 +462,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return sizeNode.execute(this);
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage(name = "isArrayElementReadable")
     @ExportMessage(name = "isArrayElementModifiable")
     @ExportMessage(name = "isArrayElementInsertable")

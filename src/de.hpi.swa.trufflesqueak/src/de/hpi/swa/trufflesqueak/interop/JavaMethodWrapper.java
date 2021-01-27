@@ -15,6 +15,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+@SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
 final class JavaMethodWrapper implements TruffleObject {
     private static final String NAME_MEMBER = "name";
@@ -29,20 +30,17 @@ final class JavaMethodWrapper implements TruffleObject {
         this.method = method;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean hasMembers() {
         return true;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     @TruffleBoundary
     protected boolean isMemberReadable(final String member) {
         return NAME_MEMBER.equals(member) || RECEIVER_MEMBER.equals(member) || PARAMETER_COUNT.equals(member);
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     @ExportMessage(name = "isMemberInsertable")
     @ExportMessage(name = "isMemberInvocable")
@@ -50,19 +48,18 @@ final class JavaMethodWrapper implements TruffleObject {
         return false;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
         return MEMBERS;
     }
 
-    @SuppressWarnings({"static-method", "unused"})
+    @SuppressWarnings("unused")
     @ExportMessage
     protected void writeMember(final String member, final Object value) throws UnsupportedMessageException {
         throw UnsupportedMessageException.create();
     }
 
-    @SuppressWarnings({"static-method", "unused"})
+    @SuppressWarnings("unused")
     @ExportMessage
     protected Object invokeMember(final String member, final Object[] arguments) throws UnsupportedMessageException {
         throw UnsupportedMessageException.create();
@@ -82,7 +79,6 @@ final class JavaMethodWrapper implements TruffleObject {
         }
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean isExecutable() {
         return true;
