@@ -268,6 +268,7 @@ shallow-clone-graalvm-project() {
   local target_dir="${ROOT_DIRECTORY}/${name}"
 
   shallow-clone "${git_url}" "vm-${DEP_GRAALVM}" "${target_dir}"
+  echo "[${name} shallow cloned]"
 }
 
 $@

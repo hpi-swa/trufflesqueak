@@ -8,9 +8,6 @@ on:
     branches:
       - master
 
-env:
-  JAVA_HOME: ${{ github.workspace }}/jdk
-
 jobs:
   style_and_build_config:
     name: Code Style + Build Config
