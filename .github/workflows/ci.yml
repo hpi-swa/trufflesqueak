@@ -34,7 +34,7 @@ jobs:
         # Set up mx, oracle/graal, and LabsJDK11
         mx.trufflesqueak/utils.sh set-up-mx
         mx.trufflesqueak/utils.sh shallow-clone-graalvm-project https://github.com/oracle/graal.git
-        mx.trufflesqueak/utils.sh set-up-labsjdk11 ~/
+        mx.trufflesqueak/utils.sh set-up-jdk java11 ~/jdk
     - name: Check style and perform full build
       run: |
         source ~/venv/bin/activate

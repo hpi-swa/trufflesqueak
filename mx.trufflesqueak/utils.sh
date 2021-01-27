@@ -12,6 +12,8 @@ set -o nounset
 
 readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")/" && pwd)"
 readonly BASE_DIRECTORY="$(dirname "${SCRIPT_DIRECTORY}")"
+readonly ROOT_DIRECTORY="$(dirname "${BASE_DIRECTORY}")"
+readonly GRAAL_DIRECTORY="${ROOT_DIRECTORY}/graal"
 readonly JDK_DIRECTORY="${HOME}/jdk"
 readonly MX_DIRECTORY="${HOME}/mx"
 
@@ -235,8 +237,10 @@ set-up-graalvm-ce() {
 set-up-jdk()  {
   local java_version=$1
   local target_dir=$2
-  local jdk="openjdk8" && [[ "${java_version}" == "java8" ]] && jdk="labsjdk-ce-11"
-  ${MX_DIRECTORY}/mx fetch-jdk --java-distribution "${jdk}" --to "${target_dir}" --alias "${JAVA_HOME}"
+  local jdk="labsjdk-ce-11" && [[ "${java_version}" == "java8" ]] && jdk="openjdk8"
+  ${MX_DIRECTORY}/mx fetch-jdk \
+    --configuration "${GRAAL_DIRECTORY}/common.json" \
+    --java-distribution "${jdk}" --to "${target_dir}" --alias "${JAVA_HOME}"
   echo "[${jdk} set up successfully]"
 }
 
@@ -266,7 +270,7 @@ shallow-clone() {
 shallow-clone-graalvm-project() {
   local git_url=$1
   local name=$(basename "${git_url}" | cut -d. -f1)
-  local target_dir="${BASE_DIRECTORY}/../${name}"
+  local target_dir="${ROOT_DIRECTORY}/${name}"
 
   shallow-clone "${git_url}" "vm-${DEP_GRAALVM}" "${target_dir}"
 }
