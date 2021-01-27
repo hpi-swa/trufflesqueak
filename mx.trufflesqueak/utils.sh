@@ -14,6 +14,7 @@ readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")/" && pwd)"
 readonly BASE_DIRECTORY="$(dirname "${SCRIPT_DIRECTORY}")"
 readonly ROOT_DIRECTORY="$(dirname "${BASE_DIRECTORY}")"
 readonly GRAAL_DIRECTORY="${ROOT_DIRECTORY}/graal"
+readonly JDK_HOME="${HOME}/jdk"
 readonly MX_DIRECTORY="${HOME}/mx"
 
 # Load metadata from suite.py
@@ -144,11 +145,6 @@ download-trufflesqueak-image() {
   echo "[TruffleSqueak image downloaded successfully]"
 }
 
-enable-jdk() {
-  add-path "$1/bin"
-  set-env "JAVA_HOME" "$(resolve-path "$1")"
-}
-
 download-trufflesqueak-test-image() {
   local target_dir="${BASE_DIRECTORY}/images"
 
@@ -206,7 +202,7 @@ set-up-dependencies() {
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
   download-trufflesqueak-image
   download-trufflesqueak-test-image
-  set-up-jdk "${java_version}" "${HOME}/jdk-dl"
+  set-up-jdk "${java_version}"
   set-up-graalvm-ce "${java_version}" "${HOME}"
   set-env "INSTALLABLE_JVM_TARGET" "$(installable-filename "${java_version}" "")"
   set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
@@ -235,11 +231,11 @@ set-up-graalvm-ce() {
 
 set-up-jdk()  {
   local java_version=$1
-  local target_dir=$2
   local jdk="labsjdk-ce-11" && [[ "${java_version}" == "java8" ]] && jdk="openjdk8"
   ${MX_DIRECTORY}/mx fetch-jdk \
     --configuration "${GRAAL_DIRECTORY}/common.json" \
-    --java-distribution "${jdk}" --to "${target_dir}" --alias "${JAVA_HOME}"
+    --java-distribution "${jdk}" --to "${HOME}/jdk-dl" --alias "${JDK_HOME}"
+  set-env "JAVA_HOME" "${JDK_HOME}"
   echo "[${jdk} set up successfully]"
 }
 
