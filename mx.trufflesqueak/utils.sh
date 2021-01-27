@@ -14,7 +14,6 @@ readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")/" && pwd)"
 readonly BASE_DIRECTORY="$(dirname "${SCRIPT_DIRECTORY}")"
 readonly ROOT_DIRECTORY="$(dirname "${BASE_DIRECTORY}")"
 readonly GRAAL_DIRECTORY="${ROOT_DIRECTORY}/graal"
-readonly JDK_DIRECTORY="${HOME}/jdk"
 readonly MX_DIRECTORY="${HOME}/mx"
 
 # Load metadata from suite.py
@@ -207,7 +206,7 @@ set-up-dependencies() {
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
   download-trufflesqueak-image
   download-trufflesqueak-test-image
-  set-up-jdk "${java_version}" "${JDK_DIRECTORY}"
+  set-up-jdk "${java_version}" "${HOME}/jdk-dl"
   set-up-graalvm-ce "${java_version}" "${HOME}"
   set-env "INSTALLABLE_JVM_TARGET" "$(installable-filename "${java_version}" "")"
   set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
