@@ -15,7 +15,7 @@ suite = {
 
     "version": "21.0.0-dev",
     "trufflesqueak:dependencyMap": {
-        "graalvm": "20.3.0",
+        "graalvm": "21.0.0",
         "image": "TruffleSqueakImage-20.2.0.zip",
         "image_tag": "20.2.0",
         "jdk8": "282",
