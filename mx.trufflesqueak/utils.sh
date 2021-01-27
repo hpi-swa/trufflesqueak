@@ -235,7 +235,7 @@ set-up-jdk()  {
   ${MX_DIRECTORY}/mx fetch-jdk \
     --configuration "${GRAAL_DIRECTORY}/common.json" \
     --java-distribution "${jdk}" --to "${HOME}/jdk-dl" --alias "${JDK_HOME}"
-  set-env "JAVA_HOME" "${JDK_HOME}"
+  set-env "JAVA_HOME" "${JDK_HOME}${JAVA_HOME_SUFFIX}"
   echo "[${jdk} set up successfully]"
 }
 
