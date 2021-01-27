@@ -32,6 +32,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
 @SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
@@ -52,7 +53,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     public static Object wrap(final Object object) {
         if (object == null) {
             return JavaNull.SINGLETON;
-        } else if (object instanceof JavaObjectWrapper) {
+        } else if (SqueakGuards.isUsedJavaPrimitive(object) || object instanceof JavaObjectWrapper) {
             return object;
         } else {
             return new JavaObjectWrapper(object);
