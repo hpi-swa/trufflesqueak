@@ -58,13 +58,17 @@ public abstract class LookupSelectorNode extends AbstractNode {
         }
         final ArrayList<Assumption> list = new ArrayList<>();
         ClassObject currentClass = receiverClass;
-        while (currentClass != methodClass) {
+        while (currentClass != null) {
             list.add(currentClass.getMethodDictStable());
-            currentClass = currentClass.getSuperclassOrNull();
+            if (currentClass == methodClass) {
+                break;
+            } else {
+                currentClass = currentClass.getSuperclassOrNull();
+            }
         }
-        if (methodClass != null) {
-            list.add(methodClass.getMethodDictStable());
-        }
+        // TODO: the receiverClass can be an outdated version of methodClass. In this case, a list
+        // of assumptions for the entire class hierarchy is returned. Maybe this can/should be
+        // avoided.
         return list.toArray(new Assumption[0]);
     }
 
@@ -75,6 +79,6 @@ public abstract class LookupSelectorNode extends AbstractNode {
         if (cachedEntry.getResult() == null) {
             cachedEntry.setResult(receiverClass.lookupInMethodDictSlow(selector));
         }
-        return cachedEntry.getResult(); /* `null` return signals a doesNotUnderstand. */
+        return cachedEntry.getResult();
     }
 }
