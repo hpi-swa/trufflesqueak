@@ -3,12 +3,12 @@ arrayStatistics
 	| arrayTypes total |
 	arrayTypes := #(0 0 0 0 0 0).
 	(Array allInstances collect: [ :ea | (self primitiveGetVMObject: ea) ]) do: [ :ea |
-		ea isEmptyType wrappedJavaObject ifTrue: [ arrayTypes at: 1 put: (arrayTypes at: 1) + 1 ].
-		ea isBooleanType wrappedJavaObject ifTrue: [ arrayTypes at: 2 put: (arrayTypes at: 2) + 1 ].
-		ea isCharType wrappedJavaObject ifTrue: [ arrayTypes at: 3 put: (arrayTypes at: 3) + 1 ].
-		ea isLongType wrappedJavaObject ifTrue: [ arrayTypes at: 4 put: (arrayTypes at: 4) + 1 ].
-		ea isDoubleType wrappedJavaObject ifTrue: [ arrayTypes at: 5 put: (arrayTypes at: 5) + 1 ].
-		ea isObjectType wrappedJavaObject ifTrue: [ arrayTypes at: 6 put: (arrayTypes at: 6) + 1 ] ].
+		ea isEmptyType ifTrue: [ arrayTypes at: 1 put: (arrayTypes at: 1) + 1 ].
+		ea isBooleanType ifTrue: [ arrayTypes at: 2 put: (arrayTypes at: 2) + 1 ].
+		ea isCharType ifTrue: [ arrayTypes at: 3 put: (arrayTypes at: 3) + 1 ].
+		ea isLongType ifTrue: [ arrayTypes at: 4 put: (arrayTypes at: 4) + 1 ].
+		ea isDoubleType ifTrue: [ arrayTypes at: 5 put: (arrayTypes at: 5) + 1 ].
+		ea isObjectType ifTrue: [ arrayTypes at: 6 put: (arrayTypes at: 6) + 1 ] ].
 	total := arrayTypes sum.
 
 	^ '# Array Statistics

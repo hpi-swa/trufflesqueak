@@ -23,7 +23,7 @@ testJSObject
 		equals: (Interop getMembers: jsObject) size.
 	self assert: ((Interop getMembers: jsObject) includes: 'a').
 
-	self deny: (Interop hasIdentity: jsObject).
+	self assert: (Interop hasIdentity: jsObject).
 	self assert: (Interop hasMembers: jsObject).
 	self assert: (Interop isMemberExisting: jsObject member: 'a').
 	self deny: (Interop isMemberInsertable: jsObject member: 'a').
