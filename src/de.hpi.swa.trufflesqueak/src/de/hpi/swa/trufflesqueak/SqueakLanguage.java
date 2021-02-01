@@ -18,6 +18,7 @@ import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
+import de.hpi.swa.trufflesqueak.interop.SqueakLanguageView;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -84,5 +85,10 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     @Override
     protected boolean patchContext(final SqueakImageContext context, final Env newEnv) {
         return context.patch(newEnv);
+    }
+
+    @Override
+    protected Object getLanguageView(final SqueakImageContext context, final Object value) {
+        return SqueakLanguageView.create(value);
     }
 }
