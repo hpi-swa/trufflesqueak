@@ -195,7 +195,7 @@ public final class MiscUtils {
 
     /* Wraps bitmap in a BufferedImage for efficient drawing. */
     @TruffleBoundary
-    public static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height) {
+    public static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height, final boolean withAlpha) {
         /**
          * {@link ColorModel#getRGBdefault()} with alpha = 1.0. Transparency not needed at this
          * point. More importantly for the {@link JPEGReadWriter2Plugin}, {@link BufferedImage}s
@@ -203,9 +203,10 @@ public final class MiscUtils {
          */
         final DirectColorModel cm = new DirectColorModel(
                         32,
-                        0x00ff0000,  // Red
-                        0x0000ff00,  // Green
-                        0x000000ff   // Blue
+                        0x00ff0000, // Red
+                        0x0000ff00, // Green
+                        0x000000ff, // Blue
+                        withAlpha ? 0xff000000 : 0 // Alpha
         );
         final SampleModel sm = cm.createCompatibleSampleModel(width, height);
         final DataBufferInt db = new DataBufferInt(words, words.length);

@@ -159,7 +159,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             final int height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
             assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height);
+                bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height, false);
             }
         }
     }
@@ -287,7 +287,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             }
             final BufferedImage bufferedImage;
             if (depth == 32) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(cursorWords, width, height);
+                bufferedImage = MiscUtils.new32BitBufferedImage(cursorWords, width, height, false);
             } else {
                 bufferedImage = new BufferedImage(bestCursorSize.width, bestCursorSize.height, BufferedImage.TYPE_INT_ARGB);
                 for (int y = 0; y < height; y++) {
