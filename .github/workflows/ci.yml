@@ -4,9 +4,15 @@ on:
   push:
     branches-ignore:
       - 'experiements/**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
     branches:
       - master
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
 jobs:
   style_and_build_config:
