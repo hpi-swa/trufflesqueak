@@ -19,7 +19,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -359,12 +358,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 79)
     protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
-
-        /**
-         * Instantiating a {@link CompiledCodeObject} allocates a {@link FrameDescriptor} which
-         * should never be part of compilation, thus the <code>@TruffleBoundary</code>.
-         */
-        @TruffleBoundary
         @Specialization(guards = "receiver.isCompiledMethodClassType()")
         protected static final CompiledCodeObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
