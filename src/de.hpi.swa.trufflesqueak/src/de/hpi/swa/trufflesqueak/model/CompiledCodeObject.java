@@ -52,6 +52,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -61,6 +62,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
+    private static final long METHOD_HEADER_MASK = -1L << 60;
 
     public enum SLOT_IDENTIFIER {
         THIS_MARKER,
@@ -323,14 +325,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // header is a tagged small integer
-        final long header = chunk.getWord(0) >> 3;
-        final int numberOfLiterals = (int) (header & 0x7fff);
-        final Object[] ptrs = chunk.getPointers(numberOfLiterals + 1);
+        final long header = chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS;
+        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
         assert literals == null;
-        literals = ptrs;
+        literals = chunk.getPointers(1 + numLiterals);
         decodeHeader();
         assert bytes == null;
-        bytes = Arrays.copyOfRange(chunk.getBytes(), ptrs.length * SqueakImageConstants.WORD_SIZE, chunk.getBytes().length);
+        bytes = Arrays.copyOfRange(chunk.getBytes(), literals.length * SqueakImageConstants.WORD_SIZE, chunk.getBytes().length);
     }
 
     public AbstractBytecodeNode[] asBytecodeNodesEmpty() {
@@ -530,11 +531,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
         assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
         if (writeHeader(writer, formatOffset)) {
-            // Write header manually to ensure it is always written as SmallInteger.
-            writer.writeLong((long) literals[0] << SqueakImageConstants.NUM_TAG_BITS | SqueakImageConstants.SMALL_INTEGER_TAG);
-            for (int i = 1; i < literals.length; i++) {
-                writer.writeObject(literals[i]);
-            }
+            assert SqueakImageConstants.SMALL_INTEGER_MIN_VAL <= (long) literals[0] && (long) literals[0] <= SqueakImageConstants.SMALL_INTEGER_MAX_VAL : "Method header out of SmallInteger range";
+            writer.writeObjects(literals);
             writer.writeBytes(getBytes());
             final int byteOffset = getBytes().length % SqueakImageConstants.WORD_SIZE;
             if (byteOffset > 0) {
@@ -617,13 +615,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public void setHeader(final long header) {
-        literals = new Object[]{header};
+        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
+        literals = ArrayUtils.withAll(1 + numLiterals, NilObject.SINGLETON);
+        literals[0] = header | METHOD_HEADER_MASK; // keep method header in SmallInteger range
         decodeHeader();
-        literals = new Object[1 + numLiterals];
-        literals[0] = header;
-        for (int i = 1; i < literals.length; i++) {
-            literals[i] = NilObject.SINGLETON;
-        }
     }
 
     public boolean hasStoreIntoTemp1AfterCallPrimitive() {
