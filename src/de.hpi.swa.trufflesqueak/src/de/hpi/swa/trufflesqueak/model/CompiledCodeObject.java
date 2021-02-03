@@ -62,7 +62,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
-    private static final long METHOD_HEADER_MASK = -1L << 60;
+    private static final long NEGATIVE_METHOD_HEADER_MASK = -1L << 60;
 
     public enum SLOT_IDENTIFIER {
         THIS_MARKER,
@@ -617,7 +617,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public void setHeader(final long header) {
         numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
         literals = ArrayUtils.withAll(1 + numLiterals, NilObject.SINGLETON);
-        literals[0] = header | METHOD_HEADER_MASK; // keep method header in SmallInteger range
+        // keep negative method headers in SmallInteger range
+        literals[0] = header | (header < 0 ? NEGATIVE_METHOD_HEADER_MASK : 0);
         decodeHeader();
     }
 
