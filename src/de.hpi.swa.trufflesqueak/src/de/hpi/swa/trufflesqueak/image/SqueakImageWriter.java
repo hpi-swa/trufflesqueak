@@ -441,11 +441,7 @@ public final class SqueakImageWriter {
 
     private long toTaggedSmallInteger(final long value) {
         if (SqueakImageConstants.SMALL_INTEGER_MIN_VAL <= value && value <= SqueakImageConstants.SMALL_INTEGER_MAX_VAL) {
-            if (value < 0) {
-                return 0x8000000000000000L + value << SqueakImageConstants.NUM_TAG_BITS | SqueakImageConstants.SMALL_INTEGER_TAG;
-            } else {
-                return value << SqueakImageConstants.NUM_TAG_BITS | SqueakImageConstants.SMALL_INTEGER_TAG;
-            }
+            return (value < 0 ? 0x8000000000000000L : 0) + value << SqueakImageConstants.NUM_TAG_BITS | SqueakImageConstants.SMALL_INTEGER_TAG;
         } else {
             /* value is too big for SmallInteger, so allocate a LargeIntegerObject for it. */
             return reserveLargeInteger(value);
