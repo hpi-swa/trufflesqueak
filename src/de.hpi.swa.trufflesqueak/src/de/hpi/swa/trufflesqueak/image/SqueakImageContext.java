@@ -719,12 +719,11 @@ public final class SqueakImageContext {
      * INSTRUMENTATION
      */
 
-    public void reportNewAllocationRequest() {
-        allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
-    }
-
-    public <T> T reportNewAllocationResult(final T value) {
-        allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
+    public <T> T reportAllocation(final T value) {
+        if (allocationReporter.isActive()) {
+            allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
+            allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
+        }
         return value;
     }
 }

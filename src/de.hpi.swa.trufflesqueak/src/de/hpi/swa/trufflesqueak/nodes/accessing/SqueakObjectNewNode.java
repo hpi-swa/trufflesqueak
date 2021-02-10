@@ -49,8 +49,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
 
     public final AbstractSqueakObjectWithClassAndHash execute(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         CompilerAsserts.partialEvaluationConstant(image);
-        image.reportNewAllocationRequest();
-        return image.reportNewAllocationResult(executeAllocation(image, classObject, extraSize));
+        return image.reportAllocation(executeAllocation(image, classObject, extraSize));
     }
 
     protected abstract AbstractSqueakObjectWithClassAndHash executeAllocation(SqueakImageContext image, ClassObject classObject, int extraSize);
