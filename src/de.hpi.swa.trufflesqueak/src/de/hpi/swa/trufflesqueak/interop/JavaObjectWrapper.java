@@ -32,12 +32,12 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
 @SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
 public final class JavaObjectWrapper implements TruffleObject {
-    private static final String WRAPPED_MEMBER = "wrappedJavaObject";
     protected static final int LIMIT = 2;
 
     protected final Object wrappedObject;
@@ -52,7 +52,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @TruffleBoundary
     public static Object wrap(final Object object) {
         if (object == null) {
-            return JavaNull.SINGLETON;
+            return NilObject.SINGLETON;
         } else if (SqueakGuards.isUsedJavaPrimitive(object) || object instanceof JavaObjectWrapper) {
             return object;
         } else {
@@ -129,9 +129,6 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     @TruffleBoundary
     protected Object readMember(final String member) throws UnknownIdentifierException {
-        if (WRAPPED_MEMBER.equals(member)) {
-            return WrapToSqueakNode.getUncached().executeWrap(wrappedObject);
-        }
         final Field field = getFields().get(member);
         if (field != null) {
             try {
@@ -158,9 +155,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @TruffleBoundary
     private InteropArray calculateMembers() {
-        final HashSet<String> members = new HashSet<>();
-        members.add(WRAPPED_MEMBER);
-        members.addAll(getFields().keySet());
+        final HashSet<String> members = new HashSet<>(getFields().keySet());
         members.addAll(getMethods().keySet());
         return new InteropArray(members.toArray(new String[0]));
     }
@@ -173,7 +168,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     @TruffleBoundary
     protected boolean isMemberReadable(final String member) {
-        return WRAPPED_MEMBER.equals(member) || getFields().containsKey(member) || getMethods().containsKey(member);
+        return getFields().containsKey(member) || getMethods().containsKey(member);
     }
 
     @ExportMessage
@@ -632,16 +627,6 @@ public final class JavaObjectWrapper implements TruffleObject {
         protected static final void doTruffleObject(final TruffleObject object, final int index, final Object value, @CachedLibrary("object") final InteropLibrary lib)
                         throws UnsupportedMessageException, InvalidArrayIndexException, UnsupportedTypeException {
             lib.writeArrayElement(object, index, value);
-        }
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    protected static final class JavaNull implements TruffleObject {
-        protected static final JavaNull SINGLETON = new JavaNull();
-
-        @ExportMessage
-        protected boolean isNull() {
-            return true;
         }
     }
 }
