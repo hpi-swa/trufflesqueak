@@ -184,6 +184,11 @@ public final class MiscUtils {
         return System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + binaryName;
     }
 
+    @TruffleBoundary
+    public static int identityHashCode(final Object object) {
+        return System.identityHashCode(object);
+    }
+
     public static boolean isBlank(final String str) {
         for (int i = 0; i < str.length(); i++) {
             if (!Character.isWhitespace(str.charAt(i))) {

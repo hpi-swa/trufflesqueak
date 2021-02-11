@@ -17,6 +17,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
@@ -97,7 +98,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     public final long getSqueakHash() {
         if (needsSqueakHash()) {
             /** Lazily initialize squeakHash and derive value from hashCode. */
-            squeakHash = hashCode() & IDENTITY_HASH_MASK;
+            squeakHash = MiscUtils.identityHashCode(this) & IDENTITY_HASH_MASK;
         }
         return squeakHash;
     }
@@ -106,15 +107,9 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         if (needsSqueakHash()) {
             /** Lazily initialize squeakHash and derive value from hashCode. */
             needsHashProfile.enter();
-            squeakHash = hashCode() & IDENTITY_HASH_MASK;
+            squeakHash = MiscUtils.identityHashCode(this) & IDENTITY_HASH_MASK;
         }
         return squeakHash;
-    }
-
-    @Override
-    @TruffleBoundary
-    public int hashCode() {
-        return super.hashCode();
     }
 
     public final boolean needsSqueakHash() {

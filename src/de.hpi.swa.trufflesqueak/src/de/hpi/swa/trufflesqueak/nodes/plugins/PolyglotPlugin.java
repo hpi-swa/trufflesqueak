@@ -1614,7 +1614,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimHostIdentityHashCodeNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final long identityHashCode(@SuppressWarnings("unused") final Object receiver, final Object object) {
-            return System.identityHashCode(object);
+            return MiscUtils.identityHashCode(object);
         }
     }
 
