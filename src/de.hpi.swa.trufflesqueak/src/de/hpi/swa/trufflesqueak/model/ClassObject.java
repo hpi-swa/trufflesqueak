@@ -500,8 +500,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (methodDict == thang) {
             return true;
         }
-        if (thang instanceof Number && format == ((Number) thang).longValue()) {
-            return true; // TODO: check whether format needs to be checked
+        if (thang instanceof Long && format == (long) thang) {
+            return true;
         }
         if (instanceVariables == thang) {
             return true;

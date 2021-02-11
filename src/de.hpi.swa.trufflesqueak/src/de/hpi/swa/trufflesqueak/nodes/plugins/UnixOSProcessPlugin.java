@@ -107,24 +107,13 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEnvironmentAt")
     protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        private static Object[] environmentKeys;
+        protected static final Object[] ENVIRONMENT_KEYS = System.getenv().keySet().toArray();
 
-        protected static final Object[] getEnvironmentKeys() {
-            if (environmentKeys == null) {
-                environmentKeys = systemGetEnvKeyArray();
-            }
-            return environmentKeys;
-        }
-
+        @Specialization(guards = "inBounds1(index, ENVIRONMENT_KEYS.length)")
         @TruffleBoundary
-        private static Object[] systemGetEnvKeyArray() {
-            return System.getenv().keySet().toArray();
-        }
-
-        @Specialization(guards = "inBounds1(index, getEnvironmentKeys().length)")
         protected static final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final String key = getEnvironmentKeys()[(int) index - 1].toString();
+            final String key = ENVIRONMENT_KEYS[(int) index - 1].toString();
             assert key != null : "key should not be null";
             final String value = systemGetEnv(image.env, key);
             assert value != null : "value should not be null";

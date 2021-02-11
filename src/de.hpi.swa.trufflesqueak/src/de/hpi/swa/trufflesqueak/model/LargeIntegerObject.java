@@ -132,18 +132,21 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return toBytes(integer);
     }
 
+    @TruffleBoundary
     public void replaceInternalValue(final LargeIntegerObject other) {
         assert size() == other.size();
         integer = other.getSqueakClass() == getSqueakClass() ? other.integer : other.integer.negate();
         bitLength = integer.bitLength();
     }
 
+    @TruffleBoundary
     public void setBytes(final byte[] bytes) {
         assert size() == bytes.length;
         integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderCopy(bytes));
         bitLength = integer.bitLength();
     }
 
+    @TruffleBoundary
     public void setBytes(final LargeIntegerObject src, final int srcPos, final int destPos, final int length) {
         final byte[] bytes;
         final byte[] srcBytes = toBigEndianBytes(src.integer);
@@ -161,6 +164,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         bitLength = integer.bitLength();
     }
 
+    @TruffleBoundary
     public void setBytes(final byte[] srcBytes, final int srcPos, final int destPos, final int length) {
         // destination bytes are big-endian, source bytes are not
         final byte[] bytes;

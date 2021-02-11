@@ -116,6 +116,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
         paintImmediately(left, right, top, bottom);
     }
 
+    @TruffleBoundary
     private void paintImmediately(final int left, final int right, final int top, final int bottom) {
         copyPixels(left + top * width, right + bottom * width);
         recordDamage(left, top, right - left, bottom - top);
@@ -124,6 +125,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     }
 
     @Override
+    @TruffleBoundary
     public void setFullscreen(final boolean enable) {
         if (enable) {
             SDL.setWindowFullscreen(window, SDL.WindowFlags.FULLSCREEN_DESKTOP.getCValue());
@@ -133,6 +135,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     }
 
     @Override
+    @TruffleBoundary
     public void close() {
         if (window.isNonNull()) {
             SDL.destroyWindow(window);
@@ -184,6 +187,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     }
 
     @Override
+    @TruffleBoundary
     public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
         if (window.isNull()) {
             return;
@@ -269,6 +273,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     }
 
     @Override
+    @TruffleBoundary
     public void resizeTo(final int newWidth, final int newHeight) {
         if (width == newWidth && height == newHeight) {
             return;

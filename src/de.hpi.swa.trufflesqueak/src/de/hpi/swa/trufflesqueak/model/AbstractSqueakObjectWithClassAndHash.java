@@ -111,6 +111,12 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return squeakHash;
     }
 
+    @Override
+    @TruffleBoundary
+    public int hashCode() {
+        return super.hashCode();
+    }
+
     public final boolean needsSqueakHash() {
         return squeakHash == HASH_UNINITIALIZED;
     }

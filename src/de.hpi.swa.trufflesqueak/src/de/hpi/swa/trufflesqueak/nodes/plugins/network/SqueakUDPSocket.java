@@ -19,6 +19,7 @@ final class SqueakUDPSocket extends SqueakSocket {
 
     private final DatagramChannel channel;
 
+    @TruffleBoundary
     SqueakUDPSocket() throws IOException {
         super();
         channel = DatagramChannel.open();
