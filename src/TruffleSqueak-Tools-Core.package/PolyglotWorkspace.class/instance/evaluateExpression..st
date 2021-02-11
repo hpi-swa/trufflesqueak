@@ -1,6 +1,6 @@
 evaluation
 evaluateExpression: selection
 	^ Polyglot
-		eval: self languageID
+		eval: self languageInfo getId asString
 		string: selection asString
 		withBindingsNamed: 'bindings'

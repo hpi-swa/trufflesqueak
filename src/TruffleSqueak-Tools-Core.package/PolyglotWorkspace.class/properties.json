@@ -6,7 +6,7 @@
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		"languageID" ],
+		"languageInfo" ],
 	"name" : "PolyglotWorkspace",
 	"pools" : [
 		 ],

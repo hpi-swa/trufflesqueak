@@ -6,13 +6,21 @@ mainFieldListMenu: aMenu
 
 	aMenu addList: #(
 		('inspect (i)'						inspectSelection)
-		('explore (I)'						exploreSelection)).
+		('explore (I)'						exploreSelection)
+		('basic inspect'						inspectSelectionBasic)).
 
-	self addCollectionItemsTo: aMenu.
+	(#(self ellipsis element nil) includes: self typeOfSelection)
+		ifTrue: [self addCollectionItemsTo: aMenu].
 
-	aMenu addList: #(
-		-
-		('copy name (c)'					copyName)		
-		('basic inspect'						inspectBasic)).
+	self addFieldItemsTo: aMenu.
+	
+	aMenu addLine.
+
+	Polyglot availableLanguages do: [ :ea |
+		aMenu
+			add: 'inspect as ', ea getName
+			target: self
+			selector: #inspectAs:
+			argument: ea ].
 
 	^ aMenu

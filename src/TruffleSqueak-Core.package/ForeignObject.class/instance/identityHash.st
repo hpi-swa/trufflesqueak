@@ -1,3 +1,5 @@
 overrides
 identityHash
-	^ Interop identityHashCode: self
+	^ (Interop hasIdentity: self)
+		ifTrue: [ Interop identityHashCode: self ]
+		ifFalse: [Interop hostIdentityHashCode: self ]

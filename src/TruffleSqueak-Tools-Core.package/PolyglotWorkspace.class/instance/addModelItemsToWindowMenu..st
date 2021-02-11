@@ -3,9 +3,9 @@ addModelItemsToWindowMenu: aMenu
 	aMenu addLine.
 	Polyglot availableLanguages do: [:ea |
 		aMenu
-			add: 'select ', (Polyglot languageNameOf: ea) ,'...'
+			add: 'select ', ea getName ,'...'
 			target: self
-			selector: #selectLanguage:
+			selector: #languageInfo:
 			argument: ea ].
 	aMenu addLine.
 

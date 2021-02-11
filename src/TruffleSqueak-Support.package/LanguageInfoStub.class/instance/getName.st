@@ -1,0 +1,3 @@
+accessing
+getName
+	^ 'Squeak/Smalltalk'

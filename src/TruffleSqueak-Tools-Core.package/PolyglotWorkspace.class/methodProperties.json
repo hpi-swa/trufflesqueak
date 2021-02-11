@@ -1,14 +1,13 @@
 {
 	"class" : {
 		"initialize" : "fn 4/14/2019 00:01",
-		"open" : "fn 2/15/2020 14:41",
+		"open" : "fn 1/26/2021 15:42",
 		"registerInWorldMenu" : "fn 4/14/2019 00:00" },
 	"instance" : {
-		"addModelItemsToWindowMenu:" : "fn 5/13/2020 16:23",
+		"addModelItemsToWindowMenu:" : "fn 1/26/2021 15:33",
 		"buildCodePaneWith:" : "fn 1/27/2020 11:06",
-		"evaluateExpression:" : "fn 12/19/2018 11:50",
+		"evaluateExpression:" : "fn 1/26/2021 15:31",
 		"helpText" : "fn 1/27/2020 11:19",
-		"labelString" : "fn 12/3/2018 11:49",
-		"languageID" : "fn 2/15/2020 14:41",
-		"languageID:" : "fn 8/12/2018 22:01",
-		"selectLanguage:" : "fn 8/12/2018 22:01" } }
+		"labelString" : "fn 1/26/2021 15:53",
+		"languageInfo" : "fn 1/26/2021 15:42",
+		"languageInfo:" : "fn 1/26/2021 15:33" } }

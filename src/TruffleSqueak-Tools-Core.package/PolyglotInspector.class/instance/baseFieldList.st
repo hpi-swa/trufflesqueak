@@ -1,4 +1,0 @@
-accessing
-baseFieldList
-
-	^ #('self')

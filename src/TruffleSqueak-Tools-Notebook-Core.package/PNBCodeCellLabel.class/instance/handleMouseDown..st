@@ -6,8 +6,7 @@ handleMouseDown: anEvent
 	menu addLine.
 	
 	Polyglot availableLanguages do: [:ea |
-		menu add: (Polyglot languageNameOf: ea) action: ea.
-		].
+		menu add: ea getName asString action: ea getId asString ].
 	menu addLine.
 	menu add: 'run cell...' action: #run.
 	menu addLine.

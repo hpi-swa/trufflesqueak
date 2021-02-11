@@ -1,3 +1,3 @@
 helpers
 isPermitted: aLanguageID
-	^ self primitiveListAvailableLanguageIDs includes: aLanguageID
+	^ self primitiveGetPublicLanguages anySatisfy: [ :ea | ea getId = aLanguageID ]

@@ -1,6 +1,9 @@
 {
 	"class" : {
-		 },
+		"with:name:model:parent:members:" : "fn 2/11/2021 15:22" },
 	"instance" : {
-		"asString" : "fn 2/9/2020 22:04",
-		"contents" : "fn 3/3/2020 16:57" } }
+		"asString" : "fn 2/11/2021 15:25",
+		"contents" : "fn 2/11/2021 15:46",
+		"icon" : "fn 2/11/2021 15:34",
+		"members" : "fn 2/11/2021 15:22",
+		"members:" : "fn 2/11/2021 15:22" } }

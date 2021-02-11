@@ -1,12 +1,11 @@
 explorer
 explorerContents
-	^ (self explorableMembers asOrderedCollection withIndexCollect: [:member :index |
-		ObjectExplorerWrapper
-			with: (Interop readMember: self member: member)
-			name: member
-			model: self]) ,
+	^ (self explorableMembers asOrderedCollection collect: [:member |
+		PolyglotObjectExplorerWrapper
+			with: self
+			member: member ]),
 		((1 to: self basicSize) collect: [:index |
-			ObjectExplorerWrapper
+			PolyglotObjectExplorerWrapper
 				with: (self basicAt: index)
 				name: index printString
 				model: self ])

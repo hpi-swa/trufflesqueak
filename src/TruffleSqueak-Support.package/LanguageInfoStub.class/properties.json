@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"Instance" ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "LanguageInfoStub",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

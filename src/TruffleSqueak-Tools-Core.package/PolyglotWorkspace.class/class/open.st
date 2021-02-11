@@ -1,3 +1,3 @@
 overrides
 open
-	^ self new openLabel: (Polyglot languageNameOf: Polyglot defaultLanguageId), ' Workspace'
+	^ self new openLabel: (LanguageInfoStub instance getName), ' Workspace'

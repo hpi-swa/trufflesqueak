@@ -1,6 +1,6 @@
 accessing
 contents
-	^ ((Interop hasMembers: self object) ifTrue: [ {self membersWrapper} ] ifFalse: [{}]),
+	^ ((Interop hasMembers: self object) ifTrue: [ self membersContents ] ifFalse: [{}]),
 		((Interop hasArrayElements: self object) ifFalse: [{}] ifTrue: [
 			((1 to: self object basicSize) collect: [:index |
 				PolyglotObjectExplorerWrapper

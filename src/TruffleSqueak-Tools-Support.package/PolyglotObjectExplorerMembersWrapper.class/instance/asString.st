@@ -9,4 +9,4 @@ asString
 		ifTrue: [String tab]
 		ifFalse: [label ifEmpty: [''] ifNotEmpty: [': ']].
 
-	^ 'members{1}{2} in total' format: {separator. label}
+	^ '{1}{2}{3} in total' format: {label. separator. self members size}

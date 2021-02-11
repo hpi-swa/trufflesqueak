@@ -1,6 +1,7 @@
 {
 	"class" : {
-		 },
+		"with:member:" : "fn 2/11/2021 15:45" },
 	"instance" : {
-		"contents" : "fn 2/10/2020 16:02",
-		"membersWrapper" : "fn 2/9/2020 22:01" } }
+		"contents" : "fn 2/11/2021 15:10",
+		"icon" : "fn 2/11/2021 15:38",
+		"membersContents" : "fn 2/11/2021 15:23" } }

@@ -1,3 +1,3 @@
 polyglot-api
 availableLanguages
-	^ self primitiveListAvailableLanguageIDs
+	^ self primitiveGetPublicLanguages

@@ -1,7 +1,11 @@
 testing
 testLanguageInfo
-	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
-	self assert: (Polyglot languageDefaultMimeTypeOf: Polyglot languageIdJS) notEmpty.
-	self assert: (Polyglot languageMimeTypesOf: Polyglot languageIdJS) notEmpty.
-	self assert: (Polyglot languageNameOf: Polyglot languageIdJS) notEmpty.
-	self assert: (Polyglot languageVersionOf: Polyglot languageIdJS) notEmpty.
+	| info |
+	info := Polyglot languageInfoFor: Polyglot languageIdSmalltalk.
+	self assert: info getId equals: Polyglot languageIdSmalltalk.
+	self assert: info getName isString.
+	self assert: info getVersion isString.
+	self assert: info getDefaultMimeType isString.
+	self assert: info getMimeTypes notNil.
+	self assert: info isInteractive.
+	self deny: info isInternal.

@@ -9,7 +9,7 @@ openInPolyglotEditor
 	newFileName ifEmpty: [^ self].
 
 	editor := (PolyglotEditor open) model.
-	languageExtension := (PELanguageInfo forId: self languageID) defaultExtension asString.
+	languageExtension := (PELanguageInfo forId: self languageInfo getId asString) defaultExtension asString.
 	FileDirectory default forceNewFileNamed: newFileName, '.', languageExtension do: [:stream | 
 		stream nextPutAll: self contents asString.
 		fileEntryForNewFile := PEFileEntryFSFile on: stream name asString asDirectoryEntry].
