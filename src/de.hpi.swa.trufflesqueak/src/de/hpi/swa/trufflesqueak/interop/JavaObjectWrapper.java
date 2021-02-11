@@ -113,7 +113,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @Override
     public boolean equals(final Object other) {
         if (other instanceof JavaObjectWrapper) {
-            return wrappedObject == ((JavaObjectWrapper) other).wrappedObject;
+            return wrappedObject.equals(((JavaObjectWrapper) other).wrappedObject);
         }
         return false;
     }
@@ -516,7 +516,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected static final byte doByte(final byte[] object, final int index) {
+        protected static final long doByte(final byte[] object, final int index) {
             return object[index];
         }
 
