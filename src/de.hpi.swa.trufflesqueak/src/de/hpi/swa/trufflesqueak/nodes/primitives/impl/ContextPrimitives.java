@@ -71,7 +71,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
                 final Object sender = current.getSender();
-                if (sender == NilObject.SINGLETON || sender == previousContextOrNil) {
+                if (sender == NilObject.SINGLETON || sender == previousContextOrNil || sender instanceof InteropSenderMarker) {
                     break;
                 } else {
                     current = (ContextObject) sender;
