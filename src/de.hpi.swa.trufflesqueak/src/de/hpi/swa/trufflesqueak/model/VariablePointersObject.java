@@ -7,11 +7,9 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
-import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -40,16 +38,8 @@ public final class VariablePointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
-        final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
-        final Object[] pointersObject = chunk.getPointers();
-        fillInLayoutAndExtensions();
-        final int instSize = getSqueakClass().getBasicInstanceSize();
-        for (int i = 0; i < instSize; i++) {
-            writeNode.execute(this, i, pointersObject[i]);
-        }
-        variablePart = Arrays.copyOfRange(pointersObject, instSize, pointersObject.length);
-        assert size() == pointersObject.length;
+    protected void fillInVariablePart(final Object[] pointers, final int instSize) {
+        variablePart = Arrays.copyOfRange(pointers, instSize, pointers.length);
     }
 
     public void become(final VariablePointersObject other) {
@@ -106,23 +96,19 @@ public final class VariablePointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void tracePointers(final ObjectTracer tracer) {
-        super.traceLayoutObjects(tracer);
+    protected void traceVariablePart(final ObjectTracer tracer) {
         for (final Object object : variablePart) {
             tracer.addIfUnmarked(object);
         }
     }
 
     @Override
-    public void trace(final SqueakImageWriter writer) {
-        super.trace(writer);
+    protected void traceVariablePart(final SqueakImageWriter writer) {
         writer.traceAllIfNecessary(variablePart);
     }
 
     @Override
-    public void write(final SqueakImageWriter writer) {
-        if (super.writeHeaderAndLayoutObjects(writer)) {
-            writer.writeObjects(variablePart);
-        }
+    protected void writeVariablePart(final SqueakImageWriter writer) {
+        writer.writeObjects(variablePart);
     }
 }

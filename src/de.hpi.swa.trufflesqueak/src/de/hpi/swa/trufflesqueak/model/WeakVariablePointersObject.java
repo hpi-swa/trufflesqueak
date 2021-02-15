@@ -12,11 +12,9 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.utilities.TruffleWeakReference;
 
-import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -51,19 +49,14 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
-        final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
-        final Object[] pointersObject = chunk.getPointers();
-        fillInLayoutAndExtensions();
-        final int instSize = getSqueakClass().getBasicInstanceSize();
-        for (int i = 0; i < instSize; i++) {
-            writeNode.execute(this, i, pointersObject[i]);
+    protected void fillInVariablePart(final Object[] pointers, final int instSize) {
+        variablePart = Arrays.copyOfRange(pointers, instSize, pointers.length);
+        for (int i = 0; i < variablePart.length; i++) {
+            final Object value = variablePart[i];
+            if (value instanceof AbstractSqueakObject) {
+                variablePart[i] = new TruffleWeakReference<>(value, weakPointersQueue);
+            }
         }
-        variablePart = new TruffleWeakReference<?>[pointersObject.length - instSize];
-        for (int i = instSize; i < pointersObject.length; i++) {
-            putIntoVariablePartSlow(i - instSize, pointersObject[i]);
-        }
-        assert size() == pointersObject.length;
     }
 
     public void become(final WeakVariablePointersObject other) {
@@ -149,21 +142,23 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void tracePointers(final ObjectTracer tracer) {
-        super.traceLayoutObjects(tracer);
+    protected void traceVariablePart(final ObjectTracer tracer) {
         /* Weak pointers excluded from tracing. */
     }
 
     @Override
-    public void write(final SqueakImageWriter writer) {
-        if (super.writeHeaderAndLayoutObjects(writer)) {
-            for (int i = 0; i < variablePart.length; i++) {
-                /*
-                 * Since weak pointers are excluded from tracing, ignore (replace with nil) all
-                 * objects that have not been traced somewhere else.
-                 */
-                writer.writeObjectIfTracedElseNil(getFromVariablePart(i));
-            }
+    protected void traceVariablePart(final SqueakImageWriter tracer) {
+        /* Weak pointers excluded from tracing. */
+    }
+
+    @Override
+    protected void writeVariablePart(final SqueakImageWriter writer) {
+        for (int i = 0; i < variablePart.length; i++) {
+            /*
+             * Since weak pointers are excluded from tracing, ignore (replace with nil) all objects
+             * that have not been traced somewhere else.
+             */
+            writer.writeObjectIfTracedElseNil(getFromVariablePart(i));
         }
     }
 

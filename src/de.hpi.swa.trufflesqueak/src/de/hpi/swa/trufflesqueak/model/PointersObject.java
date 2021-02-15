@@ -18,7 +18,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakExceptionWrapper;
-import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
@@ -76,14 +75,9 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
-        final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
-        final Object[] pointersObject = chunk.getPointers();
-        fillInLayoutAndExtensions();
-        for (int i = 0; i < pointersObject.length; i++) {
-            writeNode.execute(this, i, pointersObject[i]);
-        }
-        assert size() == pointersObject.length;
+    protected void fillInVariablePart(final Object[] pointers, final int instSize) {
+        // No variable part to fill in
+        assert pointers.length == instSize : "Unexpected number of pointers found for " + this;
     }
 
     public void become(final PointersObject other) {
@@ -155,8 +149,18 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void tracePointers(final ObjectTracer tracer) {
-        super.traceLayoutObjects(tracer);
+    protected void traceVariablePart(final ObjectTracer tracer) {
+        // nothing to do
+    }
+
+    @Override
+    protected void traceVariablePart(final SqueakImageWriter writer) {
+        // nothing to do
+    }
+
+    @Override
+    protected void writeVariablePart(final SqueakImageWriter writer) {
+        // nothing to do
     }
 
     @Override
@@ -178,11 +182,6 @@ public final class PointersObject extends AbstractPointersObject {
             return readNode.execute(this, BINDING.KEY) + " => " + readNode.execute(this, BINDING.VALUE);
         }
         return super.toString();
-    }
-
-    @Override
-    public void write(final SqueakImageWriter writer) {
-        super.writeHeaderAndLayoutObjects(writer);
     }
 
     /*

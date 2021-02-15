@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
@@ -113,11 +114,22 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         }
     }
 
-    protected final void fillInLayoutAndExtensions() {
+    @Override
+    public final void fillin(final SqueakImageChunk chunk) {
         layout = getSqueakClass().getLayout();
         primitiveExtension = layout.getFreshPrimitiveExtension();
         objectExtension = layout.getFreshObjectExtension();
+        final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
+        final Object[] pointers = chunk.getPointers();
+        final int instSize = instsize();
+        for (int i = 0; i < instSize; i++) {
+            writeNode.execute(this, i, pointers[i]);
+        }
+        fillInVariablePart(pointers, instSize);
+        assert size() == pointers.length;
     }
+
+    protected abstract void fillInVariablePart(Object[] pointers, int instSize);
 
     public final ObjectLayout getLayout() {
         if (layout == null) {
@@ -331,7 +343,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         }
     }
 
-    protected final void traceLayoutObjects(final ObjectTracer tracer) {
+    @Override
+    public final void tracePointers(final ObjectTracer tracer) {
         tracer.addIfUnmarked(object0);
         tracer.addIfUnmarked(object1);
         tracer.addIfUnmarked(object2);
@@ -340,10 +353,13 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
                 tracer.addIfUnmarked(object);
             }
         }
+        traceVariablePart(tracer);
     }
 
+    protected abstract void traceVariablePart(ObjectTracer tracer);
+
     @Override
-    public void trace(final SqueakImageWriter writer) {
+    public final void trace(final SqueakImageWriter writer) {
         super.trace(writer);
         writer.traceIfNecessary(object0);
         writer.traceIfNecessary(object1);
@@ -351,17 +367,21 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         if (objectExtension != null) {
             writer.traceAllIfNecessary(objectExtension);
         }
+        traceVariablePart(writer);
     }
 
-    protected final boolean writeHeaderAndLayoutObjects(final SqueakImageWriter writer) {
+    protected abstract void traceVariablePart(SqueakImageWriter tracer);
+
+    @Override
+    public final void write(final SqueakImageWriter writer) {
         if (writeHeader(writer)) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             for (int i = 0; i < instsize(); i++) {
                 writer.writeObject(readNode.execute(this, i));
             }
-            return true;
-        } else {
-            return false;
+            writeVariablePart(writer);
         }
     }
+
+    protected abstract void writeVariablePart(SqueakImageWriter writer);
 }
