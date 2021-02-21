@@ -1,0 +1,3 @@
+preferences
+showMessageIcons
+	^ false

@@ -1,0 +1,16 @@
+message list
+messageList
+	| messages countsToMessages sortedCounts highestCount result |
+	messages := super messageList.
+	(self sortBy == #alphabetically or: [ messages isEmpty])
+		ifTrue: [ ^ messages ].
+	countsToMessages := self countsToMessages: messages.
+	result := OrderedCollection new.
+	sortedCounts := countsToMessages keysInOrder reversed.
+	highestCount := sortedCounts first.
+	sortedCounts do: [ :count |
+		result addAll: ((countsToMessages at: count) collect: [ :ea |
+			ea asText
+				addAttribute: (self textColorFor: count with: highestCount)
+				yourself])].
+	^ result

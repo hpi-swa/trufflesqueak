@@ -5,6 +5,7 @@
 		"assertSorted:name:" : "fn 1/25/2020 15:24",
 		"testAdoptInstanceArrays" : "fn 1/31/2020 10:20",
 		"testArrayStatistics" : "fn 5/13/2020 17:37",
+		"testCallTarget" : "fn 2/18/2021 09:20",
 		"testLayoutStatistics" : "fn 5/13/2020 17:37",
 		"testTestMapConsistency" : "fn 12/17/2020 19:52",
 		"testVMIntrospection" : "fn 2/1/2021 15:00" } }

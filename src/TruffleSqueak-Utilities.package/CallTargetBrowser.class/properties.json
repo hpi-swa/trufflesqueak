@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Utilities",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"sortBy" ],
+	"name" : "CallTargetBrowser",
+	"pools" : [
+		 ],
+	"super" : "Browser",
+	"type" : "normal" }

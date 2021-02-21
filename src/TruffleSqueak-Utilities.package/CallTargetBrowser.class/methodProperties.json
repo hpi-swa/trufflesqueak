@@ -1,0 +1,27 @@
+{
+	"class" : {
+		"callTargetInfoStringFor:" : "fn 2/18/2021 09:14",
+		"showClassIcons" : "fn 2/16/2021 22:17",
+		"showMessageIcons" : "fn 2/16/2021 22:17" },
+	"instance" : {
+		"callTargetInfoContents" : "fn 2/18/2021 10:12",
+		"contentsSymbolQuints" : "fn 2/17/2021 12:00",
+		"countsToMessages:" : "fn 2/17/2021 14:33",
+		"defaultBrowserTitle" : "fn 2/16/2021 16:54",
+		"formattedLabel:forSelector:inClass:" : "fn 2/16/2021 22:10",
+		"inspectCallTarget" : "fn 2/17/2021 14:50",
+		"mainMessageListMenu:" : "fn 2/17/2021 14:51",
+		"messageList" : "fn 2/16/2021 22:13",
+		"selectedMessage" : "fn 2/17/2021 12:26",
+		"showCallTargetInfo:" : "fn 2/17/2021 12:28",
+		"showingCallTargetInfo" : "fn 2/17/2021 12:01",
+		"showingCallTargetInfoString" : "fn 2/17/2021 12:01",
+		"sortAlphabetically" : "fn 2/16/2021 17:44",
+		"sortBy" : "fn 2/16/2021 17:33",
+		"sortBy:" : "fn 2/16/2021 17:27",
+		"sortByCallAndLoopCount" : "fn 2/16/2021 17:33",
+		"sortByCallCount" : "fn 2/16/2021 17:30",
+		"sortByKnownCallSiteCount" : "fn 2/16/2021 17:39",
+		"sortByNonTrivialNodeCount" : "fn 2/16/2021 17:39",
+		"textColorFor:with:" : "fn 2/17/2021 11:08",
+		"toggleCallTargetInfo" : "fn 2/17/2021 12:28" } }
