@@ -162,6 +162,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return ((NativeObject) pointers[CLASS.NAME]).asStringUnsafe();
     }
 
+    public ArrayObject getSubclasses() {
+        return (ArrayObject) pointers[CLASS.SUBCLASSES];
+    }
+
     private boolean isAClassTrait() {
         if (pointers.length <= CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE) {
             return false;

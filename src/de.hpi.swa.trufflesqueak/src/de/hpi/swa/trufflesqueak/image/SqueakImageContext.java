@@ -43,6 +43,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SmalltalkScope;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FRACTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MESSAGE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
@@ -142,6 +143,7 @@ public final class SqueakImageContext {
     public ContextObject lastSeenContext;
 
     @CompilationFinal private ClassObject exceptionClass;
+    @CompilationFinal private ClassObject fractionClass;
     private PointersObject parserSharedInstance;
     private AbstractSqueakObject requestorSharedInstanceOrNil;
     @CompilationFinal private PointersObject scheduler;
@@ -646,6 +648,43 @@ public final class SqueakImageContext {
 
     public ArrayObject asArrayOfObjects(final Object... elements) {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
+    }
+
+    public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode) {
+        if (fractionClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            final ClassObject numberClass = smallIntegerClass.getSuperclassOrNull().getSuperclassOrNull();
+            for (final Object clazz : numberClass.getSubclasses().getObjectStorage()) {
+                if (clazz instanceof ClassObject && ((ClassObject) clazz).getClassNameUnsafe().equals("Fraction")) {
+                    fractionClass = (ClassObject) clazz;
+                    break;
+                }
+            }
+            if (fractionClass == null) {
+                throw SqueakException.create("Unable to find Fraction class");
+            }
+        }
+        final long actualNumerator;
+        final long actualDenominator;
+        if (denominator < 0) { // "keep sign in numerator"
+            actualNumerator = -numerator;
+            actualDenominator = -denominator;
+        } else {
+            actualNumerator = numerator;
+            actualDenominator = denominator;
+        }
+        // Calculate gcd
+        long n = actualNumerator;
+        long m = actualDenominator;
+        while (n != 0) {
+            n = m % (m = n);
+        }
+        final long gcd = Math.abs(m);
+        // Instantiate reduced fraction
+        final PointersObject fraction = new PointersObject(this, fractionClass, fractionClass.getLayout());
+        writeNode.execute(fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
+        writeNode.execute(fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
+        return fraction;
     }
 
     public NativeObject asByteArray(final byte[] bytes) {
