@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -28,6 +29,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -287,9 +289,21 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return lhs / rhs;
         }
 
+        @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"}, replaces = "doLong")
+        public static final Object doLongFraction(final long lhs, final long rhs,
+                        @Cached final ConditionProfile fractionProfile,
+                        @Cached final AbstractPointersObjectWriteNode writeNode,
+                        @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> ref) {
+            if (fractionProfile.profile(SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
+                return lhs / rhs;
+            } else {
+                return ref.get().asFraction(lhs, rhs, writeNode);
+            }
+        }
+
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        public static final LargeIntegerObject doLong(final long lhs, final long rhs,
+        public static final LargeIntegerObject doLongOverflow(final long lhs, final long rhs,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return LargeIntegerObject.createLongMinOverflowResult(image);
         }
