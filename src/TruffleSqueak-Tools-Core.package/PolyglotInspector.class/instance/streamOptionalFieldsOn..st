@@ -8,7 +8,7 @@ streamOptionalFieldsOn: aStream
 			nextPut: self fieldMetaObject;
 			nextPut: self fieldMetaObjectInfo ].
 	(Interop hasLanguage: self object) ifTrue: [
-		aStream nextPut: self fieldLanguage ].
+		aStream nextPut: self fieldLanguageInfo ].
 	(Interop hasSourceLocation: self object) ifTrue: [
 		aStream nextPut: self fieldSource ].
 	(Interop hasMembers: self object) ifTrue: [
