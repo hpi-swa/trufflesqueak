@@ -42,7 +42,11 @@ $GRAALVM_HOME/bin/trufflesqueak
   </tr>
   <tr align="center">
     <td width="50%"><a href="https://www.youtube.com/watch?v=wuGVyzUsEqE" title="TruffleSqueak vs. OpenSmalltalkVM: Bouncing Atoms"><img src="https://user-images.githubusercontent.com/2368856/90332179-350acc80-dfbb-11ea-803b-bdeb28577ef9.png" alt="TruffleSqueak vs. OpenSmalltalkVM: Bouncing Atoms" /><br>TruffleSqueak vs. OpenSmalltalkVM: Bouncing Atoms</a></td>
+    <td width="50%"><a href="https://twitter.com/fniephaus/status/1363499071575642112" title="TruffleSqueak: CallTargetBrowser (Demo)"><img src="https://user-images.githubusercontent.com/2368856/108628591-24e91380-745c-11eb-9ff5-030a2b10dc35.png" alt="TruffleSqueak: CallTargetBrowser (Demo)" /><br>TruffleSqueak: CallTargetBrowser</a></td>
+  </tr>
+  <tr align="center">
     <td width="50%"><a href="https://twitter.com/fniephaus/status/1075807587491291137" title="TruffleSqueak: Polyglot Workspace (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332290-e4e03a00-dfbb-11ea-92e5-55bded783c8e.png" alt="TruffleSqueak: Polyglot Workspace (Demo)" /><br>TruffleSqueak: Polyglot Workspace</a></td>
+    <td width="50%"></td>
   </tr>
 </table>
 
