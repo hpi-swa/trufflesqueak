@@ -1,6 +1,6 @@
 printing
 printOnTitle
-	| arraySize memberSize properties |
+	| arraySize memberSize properties name |
 	(Interop isNull: self) ifTrue: [ ^ 'ForeignNil' ].
 	(Interop isString: self) ifTrue: [ ^ 'ForeignString[', self asString, ']' ].
 	(Interop fitsInLong: self) ifTrue: [ ^ 'ForeignInteger[', (Interop asLong: self), ']' ].
@@ -16,6 +16,9 @@ printOnTitle
 	(Interop isExecutable: self) ifTrue: [ properties add: 'executable' ].
 	(Interop isMetaObject: self) ifTrue: [ properties add: 'meta' ].
 	(Interop hasIdentity: self) ifTrue: [ properties add: 'identity' ].
+	name := (Interop isHostObject: self)
+		ifTrue: [ 'HostObject' ]
+		ifFalse: [ 'ForeignObject' ].
 	^ properties
-		ifEmpty: [ 'ForeignObject' ]
-		ifNotEmpty: [ 'ForeignObject[', (properties joinSeparatedBy: ','), ']' ]
+		ifEmpty: [ name ]
+		ifNotEmpty: [ name, '[', (properties joinSeparatedBy: ','), ']' ]

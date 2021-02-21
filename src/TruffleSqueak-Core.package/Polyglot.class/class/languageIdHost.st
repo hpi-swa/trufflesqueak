@@ -1,0 +1,3 @@
+constants
+languageIdHost
+	^ 'host'

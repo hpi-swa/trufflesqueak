@@ -3,6 +3,7 @@ iconFor: aLanguageId
 	"LanguageIDToIcon := nil"
 	^ (LanguageIDToIcon ifNil: [
 		LanguageIDToIcon := Dictionary newFromPairs: {
+			self languageIdHost. self iconJava.
 			self languageIdJava. self iconJava.
 			self languageIdJS. self iconJS.
 			self languageIdLLVM. self iconLLVM.
@@ -11,4 +12,4 @@ iconFor: aLanguageId
 			self languageIdR. self iconR.
 			self languageIdRuby. self iconRuby.
 			self languageIdSmalltalk. self iconSmalltalk }
-		]) at: aLanguageId ifAbsent: [ nil ]
+		]) at: aLanguageId ifAbsent: [ ToolIcons iconNamed: #breakpoint ]
