@@ -50,7 +50,7 @@ public final class SqueakLanguageView implements TruffleObject {
 
     @ExportMessage
     protected Object getMetaObject(@Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
-        return classNode.executeLookup(this);
+        return classNode.executeLookup(delegate);
     }
 
     @ExportMessage
@@ -58,10 +58,10 @@ public final class SqueakLanguageView implements TruffleObject {
                     @Cached final LookupMethodByStringNode lookupNode,
                     @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                     @Cached final DispatchUneagerlyNode dispatchNode) {
-        final ClassObject classObject = classNode.executeLookup(this);
+        final ClassObject classObject = classNode.executeLookup(delegate);
         final Object methodObject = lookupNode.executeLookup(classObject, "asString");
         if (methodObject instanceof CompiledCodeObject) {
-            return dispatchNode.executeDispatch((CompiledCodeObject) methodObject, new Object[]{this}, NilObject.SINGLETON);
+            return dispatchNode.executeDispatch((CompiledCodeObject) methodObject, new Object[]{delegate}, NilObject.SINGLETON);
         } else {
             return "Unsupported";
         }
