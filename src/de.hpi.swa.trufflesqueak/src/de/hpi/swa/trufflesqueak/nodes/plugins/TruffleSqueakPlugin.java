@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -64,10 +65,10 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetCallTarget")
-    protected abstract static class PrimGetCallTargetNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimGetCallTargetNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
-        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final CompiledCodeObject code) {
-            return JavaObjectWrapper.wrap(code.getCallTarget());
+        protected static final Object doGet(final CompiledCodeObject code) {
+            return JavaObjectWrapper.wrap(code.getCallTargetOrNull());
         }
     }
 
