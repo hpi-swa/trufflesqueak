@@ -653,14 +653,10 @@ public final class SqueakImageContext {
     public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode) {
         if (fractionClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final ClassObject numberClass = smallIntegerClass.getSuperclassOrNull().getSuperclassOrNull();
-            for (final Object clazz : numberClass.getSubclasses().getObjectStorage()) {
-                if (clazz instanceof ClassObject && ((ClassObject) clazz).getClassNameUnsafe().equals("Fraction")) {
-                    fractionClass = (ClassObject) clazz;
-                    break;
-                }
-            }
-            if (fractionClass == null) {
+            final Object fractionLookup = classNamed("Fraction");
+            if (fractionLookup instanceof ClassObject) {
+                fractionClass = (ClassObject) fractionLookup;
+            } else {
                 throw SqueakException.create("Unable to find Fraction class");
             }
         }
