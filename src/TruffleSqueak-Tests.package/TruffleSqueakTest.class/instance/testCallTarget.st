@@ -5,8 +5,8 @@ testCallTarget
 	
 	self assert: (SmalltalkImage >> #exitToDebugger) callTarget isNil.
 	
-	method := SmallInteger >> #/.
-	4/2. "Ensure method is called"
+	method := Integer >> #benchFib.
+	1 benchFib. "Ensure method is called"
 
 	self deny: method callTarget isNil.
 
