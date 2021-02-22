@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -39,11 +40,12 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 @ExportLibrary(InteropLibrary.class)
 public final class JavaObjectWrapper implements TruffleObject {
     protected static final int LIMIT = 2;
+    private static final WeakHashMap<Object, JavaObjectWrapper> CACHE = new WeakHashMap<>();
+    private static final HashMap<Class<?>, HashMap<String, Field>> CLASSES_TO_FIELDS = new HashMap<>();
+    private static final HashMap<Class<?>, HashMap<String, Method>> CLASSES_TO_METHODS = new HashMap<>();
+    private static final HashMap<Class<?>, InteropArray> CLASSES_TO_MEMBERS = new HashMap<>();
 
-    protected final Object wrappedObject;
-    private InteropArray cachedMembers;
-    private HashMap<String, Field> fields;
-    private HashMap<String, Method> methods;
+    private final Object wrappedObject;
 
     private JavaObjectWrapper(final Object object) {
         wrappedObject = object;
@@ -55,33 +57,76 @@ public final class JavaObjectWrapper implements TruffleObject {
             return NilObject.SINGLETON;
         } else if (SqueakGuards.isUsedJavaPrimitive(object) || object instanceof JavaObjectWrapper) {
             return object;
+        } else if (object instanceof Byte) {
+            return (long) (byte) object;
+        } else if (object instanceof Integer) {
+            return (long) (int) object;
+        } else if (object instanceof Float) {
+            return (double) (float) object;
         } else {
-            return new JavaObjectWrapper(object);
+            return CACHE.computeIfAbsent(object, o -> new JavaObjectWrapper(o));
         }
     }
 
-    private HashMap<String, Field> getFields() {
-        if (fields == null) {
-            final Class<?> clazz = wrappedObject.getClass();
-            final Field[] fieldsArray = clazz.getFields();
-            fields = new HashMap<>(fieldsArray.length);
-            for (final Field field : fieldsArray) {
-                fields.put(field.getName(), field);
+    @TruffleBoundary
+    @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
+    private HashMap<String, Field> lookupFields() {
+        return CLASSES_TO_FIELDS.computeIfAbsent(wrappedObject.getClass(), c -> {
+            final HashMap<String, Field> result = new HashMap<>();
+            Class<?> currentClass = c;
+            while (currentClass != null) {
+                for (final Field field : currentClass.getDeclaredFields()) {
+                    if (!field.isAccessible()) {
+                        try {
+                            field.setAccessible(true);
+                        } catch (final Exception e) {
+                            continue; // skip inaccessible fields
+                        }
+                    }
+                    final String name = field.getName();
+                    if (name.indexOf('$') < 0) {
+                        result.put(field.getName(), field);
+                    }
+                }
+                currentClass = currentClass.getSuperclass();
             }
-        }
-        return fields;
+            return result;
+        });
     }
 
-    private HashMap<String, Method> getMethods() {
-        if (methods == null) {
-            final Class<?> clazz = wrappedObject.getClass();
-            final Method[] methodsArray = clazz.getMethods();
-            methods = new HashMap<>(methodsArray.length);
-            for (final Method method : methodsArray) {
-                methods.put(method.getName(), method);
+    @TruffleBoundary
+    @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
+    private HashMap<String, Method> lookupMethods() {
+        return CLASSES_TO_METHODS.computeIfAbsent(wrappedObject.getClass(), c -> {
+            final HashMap<String, Method> result = new HashMap<>();
+            Class<?> currentClass = c;
+            while (currentClass != null) {
+                for (final Method method : currentClass.getDeclaredMethods()) {
+                    if (!method.isAccessible()) {
+                        try {
+                            method.setAccessible(true);
+                        } catch (final Exception e) {
+                            continue; // skip inaccessible methods
+                        }
+                    }
+                    final String name = method.getName();
+                    if (name.indexOf('$') < 0) {
+                        result.put(method.getName(), method);
+                    }
+                }
+                currentClass = currentClass.getSuperclass();
             }
-        }
-        return methods;
+            return result;
+        });
+    }
+
+    @TruffleBoundary
+    private InteropArray lookupMembers() {
+        return CLASSES_TO_MEMBERS.computeIfAbsent(wrappedObject.getClass(), c -> {
+            final HashSet<String> members = new HashSet<>(lookupFields().keySet());
+            members.addAll(lookupMethods().keySet());
+            return new InteropArray(members.toArray(new String[0]));
+        });
     }
 
     protected boolean isClass() {
@@ -101,10 +146,6 @@ public final class JavaObjectWrapper implements TruffleObject {
         return (Class<?>) wrappedObject;
     }
 
-    private Class<?> getObjectClass() {
-        return wrappedObject.getClass();
-    }
-
     @Override
     public int hashCode() {
         return System.identityHashCode(wrappedObject);
@@ -120,44 +161,32 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @Override
     public String toString() {
-        if (isClass()) {
-            return "JavaClass[" + asClass().getTypeName() + "]";
-        }
-        return "JavaObject[" + wrappedObject + " (" + getObjectClass().getTypeName() + ")" + "]";
+        return "JavaObject[" + wrappedObject.getClass().getName() + "]";
     }
 
     @ExportMessage
     @TruffleBoundary
     protected Object readMember(final String member) throws UnknownIdentifierException {
-        final Field field = getFields().get(member);
+        final Field field = lookupFields().get(member);
         if (field != null) {
             try {
                 return wrap(field.get(wrappedObject));
-            } catch (IllegalArgumentException | IllegalAccessException e) {
+            } catch (final Exception e) {
                 throw UnknownIdentifierException.create(member);
             }
-        }
-        final Method method = getMethods().get(member);
-        if (method != null) {
-            return new JavaMethodWrapper(wrappedObject, method);
         } else {
-            throw UnknownIdentifierException.create(member);
+            final Method method = lookupMethods().get(member);
+            if (method != null) {
+                return new JavaMethodWrapper(wrappedObject, method);
+            } else {
+                throw UnknownIdentifierException.create(member);
+            }
         }
     }
 
     @ExportMessage
     protected Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
-        if (cachedMembers == null) {
-            cachedMembers = calculateMembers();
-        }
-        return cachedMembers;
-    }
-
-    @TruffleBoundary
-    private InteropArray calculateMembers() {
-        final HashSet<String> members = new HashSet<>(getFields().keySet());
-        members.addAll(getMethods().keySet());
-        return new InteropArray(members.toArray(new String[0]));
+        return lookupMembers();
     }
 
     @ExportMessage
@@ -168,7 +197,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     @TruffleBoundary
     protected boolean isMemberReadable(final String member) {
-        return getFields().containsKey(member) || getMethods().containsKey(member);
+        return lookupFields().containsKey(member) || lookupMethods().containsKey(member);
     }
 
     @ExportMessage
@@ -180,21 +209,17 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     @TruffleBoundary
     protected boolean isMemberInvocable(final String member) {
-        return getMethods().containsKey(member);
+        return lookupMethods().containsKey(member);
     }
 
     @ExportMessage
     @TruffleBoundary
-    @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
     protected Object invokeMember(final String member, final Object... arguments) throws UnknownIdentifierException, UnsupportedTypeException {
-        final Method method = getMethods().get(member);
+        final Method method = lookupMethods().get(member);
         if (method != null) {
             try {
-                if (!method.isAccessible()) {
-                    method.setAccessible(true);
-                }
                 return wrap(method.invoke(wrappedObject, arguments));
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            } catch (final Exception e) {
                 throw UnsupportedTypeException.create(arguments);
             }
         } else {
@@ -206,14 +231,11 @@ public final class JavaObjectWrapper implements TruffleObject {
     @TruffleBoundary
     @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
     protected void writeMember(final String key, final Object value) {
-        final Field field = getFields().get(key);
+        final Field field = lookupFields().get(key);
         if (field != null) {
             try {
-                if (!field.isAccessible()) {
-                    field.setAccessible(true);
-                }
                 field.set(wrappedObject, value instanceof JavaObjectWrapper ? ((JavaObjectWrapper) value).wrappedObject : value);
-            } catch (IllegalArgumentException | IllegalAccessException e) {
+            } catch (final Exception e) {
                 throw new UnsupportedOperationException(e);
             }
         } else {
@@ -406,6 +428,12 @@ public final class JavaObjectWrapper implements TruffleObject {
         } catch (final ClassCastException e) {
             throw UnsupportedMessageException.create();
         }
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    protected String toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
+        return toString(); // TODO: String.valueOf(wrappedObject);
     }
 
     @ExportMessage
