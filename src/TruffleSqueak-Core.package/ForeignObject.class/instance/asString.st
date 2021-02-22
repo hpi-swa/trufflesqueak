@@ -1,6 +1,7 @@
 converting
 asString
-	"asString is part of both Squeak's and Truffle's API, so fallback to toDisplayString."
-	^ (Interop isString: self)
-		ifTrue: [ Interop asString: self ]
-		ifFalse: [ Interop toDisplayString: self ]
+	"Always return a ByteString, because asString is also part of Squeak's API."
+	^ Interop asString: (
+		self isString
+			ifTrue: [ self ]
+			ifFalse: [ Interop toDisplayString: self ])
