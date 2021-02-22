@@ -225,6 +225,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
+    public RootCallTarget getCallTargetOrNull() {
+        return callTarget;
+    }
+
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
