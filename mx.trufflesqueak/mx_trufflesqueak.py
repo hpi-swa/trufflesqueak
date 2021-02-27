@@ -56,6 +56,9 @@ _suite = mx.suite('trufflesqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
 _svm = mx.suite('substratevm', fatalIfMissing=False)
 
+if _compiler:
+    BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.Mode=latency')
+    
 
 def _graal_vm_args(args):
     graal_args = ['-Dpolyglot.engine.AllowExperimentalOptions=true']
