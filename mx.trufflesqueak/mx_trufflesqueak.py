@@ -58,8 +58,8 @@ _svm = mx.suite('substratevm', fatalIfMissing=False)
 
 if _compiler:
     BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.Mode=latency')
-    BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.CompilationStatistic=true')
-    
+    BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.CompilationStatistics=true')
+
 
 def _graal_vm_args(args):
     graal_args = ['-Dpolyglot.engine.AllowExperimentalOptions=true']
@@ -74,7 +74,7 @@ def _graal_vm_args(args):
         graal_args += ['-Dpolyglot.engine.TraceCompilationPolymorphism=true']
 
     if args.compilation_stats:
-        graal_args += ['-Dpolyglot.engine.CompilationStatistic=true']
+        graal_args += ['-Dpolyglot.engine.CompilationStatistics=true']
 
     if args.expansion_histogram:
         graal_args += ['-Dpolyglot.engine.PrintExpansionHistogram=true']
