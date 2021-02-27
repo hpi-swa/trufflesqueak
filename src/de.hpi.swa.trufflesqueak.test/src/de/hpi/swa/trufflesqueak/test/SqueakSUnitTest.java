@@ -114,16 +114,17 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             stopRunningSuite = true;
             throw e;
         }
-        RuntimeException exceptionDuringReload = null;
-        if (!(result.passed && result.message.equals(PASSED_VALUE))) {
-            try {
-                image.getError().println("Closing current image context and reloading: " + result.message);
-                reloadImage();
-                truffleSqueakPackagesLoaded = false;
-            } catch (final RuntimeException e) {
-                exceptionDuringReload = e;
-            }
-        }
+        final RuntimeException exceptionDuringReload = null;
+        // if (!(result.passed && result.message.equals(PASSED_VALUE))) {
+        // try {
+        // image.getError().println("Closing current image context and reloading: " +
+        // result.message);
+        // reloadImage();
+        // truffleSqueakPackagesLoaded = false;
+        // } catch (final RuntimeException e) {
+        // exceptionDuringReload = e;
+        // }
+        // }
         try {
             checkResult(result);
         } finally {
