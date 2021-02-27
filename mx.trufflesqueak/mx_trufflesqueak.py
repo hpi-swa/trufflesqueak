@@ -58,6 +58,7 @@ _svm = mx.suite('substratevm', fatalIfMissing=False)
 
 if _compiler:
     BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.Mode=latency')
+    BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.CompilationStatistic=true')
     
 
 def _graal_vm_args(args):
