@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -21,13 +22,12 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 
-@NodeInfo(cost = NodeCost.NONE)
 public abstract class HandlePrimitiveFailedNode extends AbstractNode {
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
         if (code.hasStoreIntoTemp1AfterCallPrimitive()) {
             return HandlePrimitiveFailedImplNodeGen.create();
         } else {
-            return new HandlePrimitiveFailedNoopNode();
+            return HandlePrimitiveFailedNoopNode.SINGLETON;
         }
     }
 
@@ -57,10 +57,28 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     private static final class HandlePrimitiveFailedNoopNode extends HandlePrimitiveFailedNode {
+        private static final HandlePrimitiveFailedNoopNode SINGLETON = new HandlePrimitiveFailedNoopNode();
+
         @Override
         public void executeHandle(final VirtualFrame frame, final int reasonCode) {
             // nothing to do
+        }
+
+        @Override
+        public boolean isAdoptable() {
+            return false;
+        }
+
+        @Override
+        public Node copy() {
+            return SINGLETON;
+        }
+
+        @Override
+        public Node deepCopy() {
+            return SINGLETON;
         }
     }
 }
