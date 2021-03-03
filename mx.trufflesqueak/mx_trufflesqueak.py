@@ -56,6 +56,9 @@ _suite = mx.suite('trufflesqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
 _svm = mx.suite('substratevm', fatalIfMissing=False)
 
+if _compiler:
+    BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.CompilationFailureAction=Diagnose')
+
 
 def _graal_vm_args(args):
     graal_args = ['-Dpolyglot.engine.AllowExperimentalOptions=true']
@@ -70,7 +73,7 @@ def _graal_vm_args(args):
         graal_args += ['-Dpolyglot.engine.TraceCompilationPolymorphism=true']
 
     if args.compilation_stats:
-        graal_args += ['-Dpolyglot.engine.CompilationStatistic=true']
+        graal_args += ['-Dpolyglot.engine.CompilationStatistics=true']
 
     if args.expansion_histogram:
         graal_args += ['-Dpolyglot.engine.PrintExpansionHistogram=true']
@@ -83,7 +86,6 @@ def _graal_vm_args(args):
 
     if args.perf_warnings:
         graal_args += [
-            # '-Dpolyglot.engine.CompilationFailureAction=ExitVM',
             '-Dpolyglot.engine.TreatPerformanceWarningsAsErrors=all',
             '-Dpolyglot.engine.TracePerformanceWarnings=all']
 
