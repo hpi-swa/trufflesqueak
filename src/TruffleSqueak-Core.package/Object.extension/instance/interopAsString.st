@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-string
+interopAsString
+	self subclassResponsibility

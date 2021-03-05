@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-meta-object
+interopGetDeclaringMetaObject
+	self subclassResponsibility

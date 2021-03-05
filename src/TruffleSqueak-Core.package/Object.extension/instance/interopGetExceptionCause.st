@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-exception
+interopGetExceptionCause
+	self subclassResponsibility

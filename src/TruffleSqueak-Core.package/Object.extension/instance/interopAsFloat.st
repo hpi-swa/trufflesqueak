@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-number
+interopAsFloat
+	self subclassResponsibility

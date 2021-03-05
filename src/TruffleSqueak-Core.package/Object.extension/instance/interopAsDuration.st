@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-duration
+interopAsDuration
+	self subclassResponsibility

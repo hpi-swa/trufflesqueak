@@ -1,5 +1,5 @@
 testing
-testExceptionAPIs
+testExceptions
 	| e |
 	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
 	

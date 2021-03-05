@@ -2,9 +2,20 @@
 	"class" : {
 		 },
 	"instance" : {
-		"testExceptionAPIs" : "fn 11/12/2020 11:48",
+		"testArrays" : "fn 3/5/2021 13:54",
+		"testBooleans" : "fn 3/4/2021 12:31",
+		"testDateAndTime" : "fn 3/4/2021 17:19",
+		"testDurations" : "fn 3/4/2021 13:14",
 		"testExceptionHandling" : "fn 11/12/2020 11:52",
+		"testExceptions" : "fn 3/4/2021 12:32",
+		"testExecutables" : "fn 3/4/2021 13:47",
 		"testIdentityAPIs" : "fn 9/3/2020 11:27",
+		"testInstantiables" : "fn 3/4/2021 13:20",
+		"testMembers" : "fn 3/4/2021 13:46",
 		"testMetadataAPIs" : "fn 5/29/2020 16:06",
+		"testNulls" : "fn 3/4/2021 13:21",
+		"testNumbers" : "fn 3/4/2021 12:32",
 		"testScopeAPIs" : "fn 11/12/2020 11:27",
-		"testSmalltalkDNU" : "fn 2/13/2020 15:49" } }
+		"testSmalltalkDNU" : "fn 2/13/2020 15:49",
+		"testStrings" : "fn 3/4/2021 13:23",
+		"testToDisplayString" : "fn 3/4/2021 17:25" } }

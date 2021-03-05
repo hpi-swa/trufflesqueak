@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-boolean
+interopAsBoolean
+	self subclassResponsibility

@@ -1,0 +1,9 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"interopGetExceptionMessage" : "fn 11/24/2020 12:45",
+		"interopGetExceptionType" : "fn 3/4/2021 12:03",
+		"interopHasExceptionMessage" : "fn 11/24/2020 12:45",
+		"interopIsException" : "fn 11/24/2020 12:42",
+		"interopThrowException" : "fn 11/24/2020 12:43" } }

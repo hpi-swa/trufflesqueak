@@ -1,0 +1,3 @@
+*TruffleSqueak-Core
+interopIsDate
+	^ true

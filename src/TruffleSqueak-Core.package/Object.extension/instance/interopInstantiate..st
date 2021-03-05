@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-instantiable
+interopInstantiate: arguments
+	self subclassResponsibility
