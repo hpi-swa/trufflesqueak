@@ -1,4 +1,4 @@
 primitives identity
-isIdentical: anObject to: anOtherObject
+isIdentical: anObject to: anotherObject
 	<primitive: 'primitiveIsIdentical' module: 'PolyglotPlugin'>
-	self primitiveFailed
+	^ anObject interopIsIdentical: anotherObject and: nil

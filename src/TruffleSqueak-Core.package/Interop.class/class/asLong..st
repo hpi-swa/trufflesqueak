@@ -1,6 +1,6 @@
 primitives converting
 asLong: anObject
 	<primitive: 'primitiveAsLong' module: 'PolyglotPlugin'>
-	(self fitsInLong: anObject)
+	^ (self fitsInLong: anObject)
+		ifTrue: [ anObject interopAsLong ]
 		ifFalse: [ self error: 'Object does not fit in long' ]
-		ifTrue: [ self error: 'Unexpected error' ]

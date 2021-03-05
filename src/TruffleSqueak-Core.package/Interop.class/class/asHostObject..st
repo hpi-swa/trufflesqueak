@@ -1,4 +1,6 @@
 primitives internal
 asHostObject: aGuestObject
 	<primitive: 'primitiveToHostObject' module: 'PolyglotPlugin'>
-	self primitiveFailed
+	(self isHostObject: self)
+		ifFalse: [ self error: 'Object not a host object' ]
+		ifTrue: [ self error: 'Unexpected error' ]
