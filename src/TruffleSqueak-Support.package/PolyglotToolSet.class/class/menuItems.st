@@ -2,4 +2,6 @@ menu
 menuItems
 	^#(
 		('polyglot workspace' 			#openPolyglotWorkspace)
-		('polyglot notebook'				#openPolyglotNotebook) ), super menuItems
+		('polyglot notebook'				#openPolyglotNotebook)
+		('polyglot editor'				#openPolyglotEditor)
+		- ), super menuItems
