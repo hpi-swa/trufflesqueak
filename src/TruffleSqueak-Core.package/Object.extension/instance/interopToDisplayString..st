@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-other
-interopToDisplayString
+interopToDisplayString: allowSideEffects
 	^ self printString

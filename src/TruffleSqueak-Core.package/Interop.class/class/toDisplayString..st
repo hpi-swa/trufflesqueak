@@ -1,4 +1,3 @@
 primitives meta-data
 toDisplayString: anObject
-	<primitive: 'primitiveToDisplayString' module: 'PolyglotPlugin'>
-	^ anObject interopToDisplayString
+	^ self toDisplayString: anObject allowSideEffects: true
