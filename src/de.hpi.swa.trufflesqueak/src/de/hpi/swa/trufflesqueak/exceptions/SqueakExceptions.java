@@ -119,10 +119,10 @@ public final class SqueakExceptions {
         @TruffleBoundary
         public String getMessage() {
             final Object messageText = squeakException.instVarAt0Slow(EXCEPTION.MESSAGE_TEXT);
-            if (messageText instanceof NativeObject && ((NativeObject) messageText).isString()) {
+            if (messageText instanceof NativeObject && ((NativeObject) messageText).isByteType()) {
                 return ((NativeObject) messageText).asStringUnsafe();
             } else {
-                return squeakException.toString();
+                return squeakException.getSqueakClassName();
             }
         }
     }

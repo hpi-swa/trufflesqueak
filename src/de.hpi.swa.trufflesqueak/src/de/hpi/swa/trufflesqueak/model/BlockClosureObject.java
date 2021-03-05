@@ -10,25 +10,15 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-@ExportLibrary(InteropLibrary.class)
 public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledCodeObject block;
@@ -330,46 +320,5 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
             writer.writeSmallInteger(getNumArgs());
         }
         writer.writeObjects(getCopiedValues());
-    }
-
-    /*
-     * INTEROPERABILITY
-     */
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean isExecutable() {
-        return true;
-    }
-
-    @ExportMessage
-    public static final class Execute {
-        @Specialization(guards = "closure.isAFullBlockClosure()")
-        public static Object doFullClosure(final BlockClosureObject closure, final Object[] arguments,
-                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws ArityException {
-            if (closure.getNumArgs() == arguments.length) {
-                final Object[] frameArguments = FrameAccess.newFullClosureArgumentsTemplate(closure, NilObject.SINGLETON, arguments.length);
-                for (int i = 0; i < arguments.length; i++) {
-                    frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(arguments[i]);
-                }
-                return closure.getCompiledBlock().getCallTarget().call(frameArguments);
-            } else {
-                throw ArityException.create((int) closure.getNumArgs(), arguments.length);
-            }
-        }
-
-        @Specialization(guards = "!closure.isAFullBlockClosure()")
-        public static Object doClosure(final BlockClosureObject closure, final Object[] arguments,
-                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws ArityException {
-            if (closure.getNumArgs() == arguments.length) {
-                final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, NilObject.SINGLETON, arguments.length);
-                for (int i = 0; i < arguments.length; i++) {
-                    frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(arguments[i]);
-                }
-                return closure.getCompiledBlock().getCallTarget().call(frameArguments);
-            } else {
-                throw ArityException.create((int) closure.getNumArgs(), arguments.length);
-            }
-        }
     }
 }

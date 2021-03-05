@@ -33,8 +33,8 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 
 /**
@@ -351,6 +351,18 @@ public final class FrameAccess {
         for (int i = 0; i < argumentCount; i++) {
             frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + i] = argumentsNodes[i].executeRead(frame);
         }
+        return frameArguments;
+    }
+
+    public static Object[] newWith(final CompiledCodeObject method, final Object sender, final BlockClosureObject closure, final int numReceiverAndArguments) {
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
+        assert method != null : "Method should never be null";
+        assert sender != null : "Sender should never be null";
+        assert numReceiverAndArguments > 0 : "At least a receiver must be provided";
+        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        assertCodeAndClosure(closure, method);
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         return frameArguments;
     }
 

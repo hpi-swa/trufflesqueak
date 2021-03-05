@@ -12,10 +12,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -23,7 +19,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
-@ExportLibrary(InteropLibrary.class)
 public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHash {
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     public static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
@@ -615,119 +610,5 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     public BigInteger getBigInteger() {
         return integer;
-    }
-
-    /*
-     * INTEROPERABILITY
-     */
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean isNumber() {
-        return fitsInLong() || fitsInDouble();
-    }
-
-    @ExportMessage
-    public boolean fitsInByte() {
-        return bitLength < Byte.SIZE;
-    }
-
-    @ExportMessage
-    public boolean fitsInShort() {
-        return bitLength < Short.SIZE;
-    }
-
-    @ExportMessage
-    public boolean fitsInInt() {
-        return bitLength < Integer.SIZE;
-    }
-
-    @ExportMessage
-    public boolean fitsInLong() {
-        return bitLength < Long.SIZE;
-    }
-
-    @ExportMessage
-    @TruffleBoundary
-    public boolean fitsInFloat() {
-        if (bitLength <= 24) { // 24 = size of float mantissa + 1
-            return true;
-        } else {
-            final float floatValue = integer.floatValue();
-            if (!Float.isFinite(floatValue)) {
-                return false;
-            }
-            return new BigDecimal(floatValue).toBigIntegerExact().equals(integer);
-        }
-    }
-
-    @ExportMessage
-    @TruffleBoundary
-    public boolean fitsInDouble() {
-        if (bitLength() <= 53) { // 53 = size of double mantissa + 1
-            return true;
-        } else {
-            final double doubleValue = doubleValue();
-            if (!Double.isFinite(doubleValue)) {
-                return false;
-            }
-            return new BigDecimal(doubleValue).toBigIntegerExact().equals(integer);
-        }
-    }
-
-    @ExportMessage
-    public byte asByte() throws UnsupportedMessageException {
-        try {
-            return byteValueExact();
-        } catch (final ArithmeticException e) {
-            throw UnsupportedMessageException.create();
-        }
-    }
-
-    @ExportMessage
-    public short asShort() throws UnsupportedMessageException {
-        try {
-            return shortValueExact();
-        } catch (final ArithmeticException e) {
-            throw UnsupportedMessageException.create();
-        }
-    }
-
-    @ExportMessage
-    public int asInt() throws UnsupportedMessageException {
-        try {
-            return intValueExact();
-        } catch (final ArithmeticException e) {
-            throw UnsupportedMessageException.create();
-        }
-    }
-
-    @ExportMessage
-    public long asLong() throws UnsupportedMessageException {
-        try {
-            return longValueExact();
-        } catch (final ArithmeticException e) {
-            throw UnsupportedMessageException.create();
-        }
-    }
-
-    @ExportMessage
-    @TruffleBoundary
-    public float asFloat() throws UnsupportedMessageException {
-        if (fitsInFloat()) {
-            return integer.floatValue();
-        } else {
-            throw UnsupportedMessageException.create();
-        }
-    }
-
-    @ExportMessage
-    @TruffleBoundary
-    public double asDouble() throws UnsupportedMessageException {
-        if (fitsInDouble()) {
-            return doubleValue();
-        } else {
-            throw UnsupportedMessageException.create();
-        }
     }
 }

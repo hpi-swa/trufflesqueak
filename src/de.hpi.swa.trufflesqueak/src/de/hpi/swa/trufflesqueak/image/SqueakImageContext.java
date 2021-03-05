@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -17,6 +18,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
@@ -136,6 +139,7 @@ public final class SqueakImageContext {
     private Source lastParseRequestSource;
     @CompilationFinal private PrintWriter output;
     @CompilationFinal private PrintWriter error;
+    private final HashMap<Message, NativeObject> interopMessageToSelectorMap = new HashMap<>();
 
     @CompilationFinal private SqueakImage squeakImage;
 
@@ -230,13 +234,14 @@ public final class SqueakImageContext {
         return Truffle.getRuntime().createCallTarget(getDoItContextNode(sourceCode, false)).call();
     }
 
+    @TruffleBoundary
     public Object lookup(final String member) {
-        final Object symbol = asByteString(member).send(this, "asSymbol");
-        return smalltalk.send(this, "at:ifAbsent:", symbol, NilObject.SINGLETON);
+        return smalltalk.send(this, "at:ifAbsent:", asByteSymbol(member), NilObject.SINGLETON);
     }
 
     /* Returns ClassObject if present, nil otherwise. */
     public Object classNamed(final String className) {
+        CompilerAsserts.neverPartOfCompilation();
         return smalltalk.send(this, "classNamed:", asByteString(className));
     }
 
@@ -691,6 +696,11 @@ public final class SqueakImageContext {
         return NativeObject.newNativeBytes(this, byteStringClass, MiscUtils.stringToBytes(value));
     }
 
+    public NativeObject asByteSymbol(final String value) {
+        CompilerAsserts.neverPartOfCompilation();
+        return (NativeObject) asByteString(value).send(this, "asSymbol");
+    }
+
     public NativeObject asWideString(final String value) {
         return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
@@ -717,6 +727,39 @@ public final class SqueakImageContext {
         assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";
         writeNode.execute(message, MESSAGE.LOOKUP_CLASS, rcvrClass);
         return message;
+    }
+
+    /*
+     * INTEROP
+     */
+
+    @TruffleBoundary
+    public NativeObject toInteropSelector(final Message message) {
+        assert message.getLibraryClass() == InteropLibrary.class;
+        return interopMessageToSelectorMap.computeIfAbsent(message, m -> {
+            final String libraryName = message.getLibraryClass().getSimpleName();
+            assert libraryName.endsWith("Library");
+            final String libraryPrefix = libraryName.substring(0, 1).toLowerCase() + libraryName.substring(1, libraryName.length() - 7);
+            final String messageName = message.getSimpleName();
+            final String messageCapitalized = messageName.substring(0, 1).toUpperCase() + messageName.substring(1);
+            final String suffix;
+            switch (message.getParameterCount()) {
+                case 1:
+                    suffix = "";
+                    break;
+                case 2:
+                    suffix = ":";
+                    break;
+                default:
+                    final StringBuilder sb = new StringBuilder(":");
+                    for (int i = 0; i < message.getParameterCount() - 2; i++) {
+                        sb.append("and:");
+                    }
+                    suffix = sb.toString();
+                    break;
+            }
+            return asByteSymbol(libraryPrefix + messageCapitalized + suffix);
+        });
     }
 
     /*

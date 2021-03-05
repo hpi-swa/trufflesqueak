@@ -5,15 +5,11 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 
-@ExportLibrary(InteropLibrary.class)
 public final class NilObject extends AbstractSqueakObject {
     public static final NilObject SINGLETON = new NilObject();
     public static final long SQUEAK_HASH = 1L;
@@ -66,28 +62,5 @@ public final class NilObject extends AbstractSqueakObject {
     public void write(final SqueakImageWriter writer) {
         writer.writeObjectHeader(instsize() + size(), getSqueakHash(), writer.getImage().nilClass, 0);
         writer.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
-    }
-
-    /*
-     * INTEROPERABILITY
-     */
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    protected boolean isNull() {
-        return true;
-    }
-
-    // TODO: override no longer working due to a bug (see
-    // https://github.com/oracle/graal/issues/3078).
-    // @ExportMessage
-    // protected static TriState isIdenticalOrUndefined(@SuppressWarnings("unused") final NilObject
-    // receiver, final Object other) {
-    // return TriState.valueOf(NilObject.SINGLETON == other);
-    // }
-
-    @ExportMessage
-    protected static int identityHashCode(@SuppressWarnings("unused") final NilObject receiver) {
-        return IDENTITY_HASH;
     }
 }

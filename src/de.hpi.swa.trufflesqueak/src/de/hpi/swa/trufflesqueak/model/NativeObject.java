@@ -13,37 +13,21 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Exclusive;
-import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.InvalidArrayIndexException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-@ExportLibrary(InteropLibrary.class)
 public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
@@ -447,85 +431,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             }
         } else {
             throw SqueakException.create("Trying to write unexpected hidden native object");
-        }
-    }
-
-    /*
-     * INTEROPERABILITY
-     */
-
-    @ExportMessage
-    @SuppressWarnings("static-method")
-    protected boolean hasArrayElements() {
-        return true;
-    }
-
-    @ExportMessage
-    protected long getArraySize(@Shared("sizeNode") @Cached final NativeObjectSizeNode sizeNode) {
-        return sizeNode.execute(this);
-    }
-
-    @ExportMessage(name = "isArrayElementReadable")
-    @ExportMessage(name = "isArrayElementModifiable")
-    @ExportMessage(name = "isArrayElementInsertable")
-    protected boolean isArrayElementReadable(final long index, @Shared("sizeNode") @Cached final NativeObjectSizeNode sizeNode) {
-        return 0 <= index && index < sizeNode.execute(this);
-    }
-
-    @ExportMessage
-    public abstract static class ReadArrayElement {
-        @Specialization(guards = "obj.isByteType()")
-        protected static final byte doNativeBytes(final NativeObject obj, final long index) {
-            return obj.getByte(index);
-        }
-
-        @Specialization(guards = "obj.isShortType()")
-        protected static final short doNativeShorts(final NativeObject obj, final long index) {
-            return obj.getShort(index);
-        }
-
-        @Specialization(guards = "obj.isIntType()")
-        protected static final int doNativeInts(final NativeObject obj, final long index) {
-            return obj.getInt(index);
-        }
-
-        @Specialization(guards = "obj.isLongType()")
-        protected static final long doNativeLongs(final NativeObject obj, final long index) {
-            return obj.getLong(index);
-        }
-    }
-
-    @ExportMessage
-    protected void writeArrayElement(final long index, final Object value,
-                    @Exclusive @Cached final WrapToSqueakNode wrapNode,
-                    @Cached final NativeObjectWriteNode writeNode) throws InvalidArrayIndexException, UnsupportedTypeException {
-        try {
-            writeNode.execute(this, index, wrapNode.executeWrap(value));
-        } catch (final PrimitiveFailed e) {
-            /* NativeObjectWriteNode may throw PrimitiveFailed if value cannot be stored. */
-            throw UnsupportedTypeException.create(new Object[]{value}, "Cannot store value in NativeObject");
-        } catch (final ArrayIndexOutOfBoundsException e) {
-            throw InvalidArrayIndexException.create(index);
-        }
-    }
-
-    @ExportMessage
-    public boolean isString() {
-        final ClassObject squeakClass = getSqueakClass();
-        return squeakClass.isStringClass() || squeakClass.isSymbolClass() || squeakClass.isWideStringClass();
-    }
-
-    @ExportMessage
-    public String asString(@Cached final ConditionProfile byteStringOrSymbolProfile,
-                    @Cached final BranchProfile errorProfile) throws UnsupportedMessageException {
-        final ClassObject squeakClass = getSqueakClass();
-        if (byteStringOrSymbolProfile.profile(squeakClass.isStringClass() || squeakClass.isSymbolClass())) {
-            return asStringUnsafe();
-        } else if (squeakClass.isWideStringClass()) {
-            return asStringFromWideString();
-        } else {
-            errorProfile.enter();
-            throw UnsupportedMessageException.create();
         }
     }
 }

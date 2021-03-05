@@ -35,9 +35,11 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.LiteralBuilder;
 import com.oracle.truffle.api.source.Source.SourceBuilder;
+import com.oracle.truffle.api.utilities.TriState;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakExceptionWrapper;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.ConvertToSqueakNode;
@@ -50,6 +52,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ContextScope;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -1089,11 +1092,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveToDisplayString")
-    protected abstract static class PrimToDisplayStringNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimToDisplayStringNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization
-        protected static final Object toDisplayString(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected static final Object toDisplayString(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean allowSideEffects,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return lib.toDisplayString(object);
+            return lib.toDisplayString(object, allowSideEffects);
         }
     }
 
@@ -1631,12 +1634,100 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected static final NativeObject doGetLastError(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString(lastError.toString());
+            return image.asByteString(lastError.getMessage());
         }
 
         protected static final void setLastError(final Exception e) {
             LogUtils.INTEROP.fine(() -> MiscUtils.toString(e));
             lastError = e;
+        }
+    }
+
+    /*
+     * Interop type conversion
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveToHostObject")
+    protected abstract static class PrimToHostObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "isHostObject(image, value)")
+        protected static final Object toHost(@SuppressWarnings("unused") final Object receiver, final Object value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.env.asHostObject(value);
+        }
+
+        @SuppressWarnings("static-method") // Work around code generation problems.
+        protected final boolean isHostObject(final SqueakImageContext image, final Object value) {
+            return image.env.isHostObject(value);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveToJavaInteger")
+    protected abstract static class PrimToJavaIntegerNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization
+        protected static final int toJavaInteger(@SuppressWarnings("unused") final Object receiver, final long value) {
+            return MiscUtils.toIntExact(value);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveToJavaString")
+    protected abstract static class PrimToJavaStringNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "target.isByteType()")
+        protected static final String bytesToString(@SuppressWarnings("unused") final Object receiver, final NativeObject target) {
+            return target.asStringUnsafe();
+        }
+
+        @Specialization(guards = "target.isIntType()")
+        protected static final String intsToString(@SuppressWarnings("unused") final Object receiver, final NativeObject target) {
+            return target.asStringFromWideString();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveToTriState")
+    protected abstract static class PrimToTriStateNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization
+        protected static final TriState toTriState(@SuppressWarnings("unused") final Object receiver, final boolean value) {
+            return TriState.valueOf(value);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSqueakLanguage")
+    protected abstract static class PrimSqueakLanguageNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final Class<SqueakLanguage> get(@SuppressWarnings("unused") final Object receiver) {
+            return SqueakLanguage.class;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetRuntimeExceptionType")
+    protected abstract static class PrimGetRuntimeExceptionTypeNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final ExceptionType doGet(@SuppressWarnings("unused") final Object receiver) {
+            return ExceptionType.RUNTIME_ERROR;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetParseExceptionType")
+    protected abstract static class PrimGetParseExceptionTypeNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final ExceptionType doGet(@SuppressWarnings("unused") final Object receiver) {
+            return ExceptionType.PARSE_ERROR;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveThrowAsPolyglotException")
+    protected abstract static class PrimThrowAsPolyglotExceptionNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.isException(exception)")
+        protected static final RuntimeException throwException(@SuppressWarnings("unused") final Object receiver, final PointersObject exception,
+                        @SuppressWarnings("unused") @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            throw new SqueakExceptionWrapper(exception);
         }
     }
 

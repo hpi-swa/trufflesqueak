@@ -6,16 +6,12 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-@ExportLibrary(InteropLibrary.class)
 public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     public static final int PRECISION = 53;
     public static final int WORD_LENGTH = 2;
@@ -156,76 +152,5 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
 
     public FloatObject shallowCopy() {
         return new FloatObject(this);
-    }
-
-    /*
-     * INTEROPERABILITY
-     */
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean isNumber() {
-        return true;
-    }
-
-    @ExportMessage
-    public boolean fitsInByte() {
-        return (byte) doubleValue == doubleValue;
-    }
-
-    @ExportMessage
-    public boolean fitsInShort() {
-        return (short) doubleValue == doubleValue;
-    }
-
-    @ExportMessage
-    public boolean fitsInInt() {
-        return (int) doubleValue == doubleValue;
-    }
-
-    @ExportMessage
-    public boolean fitsInLong() {
-        return (long) doubleValue == doubleValue;
-    }
-
-    @ExportMessage
-    public boolean fitsInFloat() {
-        return (float) doubleValue == doubleValue;
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean fitsInDouble() {
-        return true;
-    }
-
-    @ExportMessage
-    public byte asByte() {
-        return (byte) doubleValue;
-    }
-
-    @ExportMessage
-    public short asShort() {
-        return (short) doubleValue;
-    }
-
-    @ExportMessage
-    public int asInt() {
-        return (int) doubleValue;
-    }
-
-    @ExportMessage
-    public long asLong() {
-        return (long) doubleValue;
-    }
-
-    @ExportMessage
-    public float asFloat() {
-        return (float) doubleValue;
-    }
-
-    @ExportMessage
-    public double asDouble() {
-        return doubleValue;
     }
 }

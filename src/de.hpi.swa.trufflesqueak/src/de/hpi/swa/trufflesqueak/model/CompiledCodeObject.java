@@ -16,17 +16,10 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.InvalidArrayIndexException;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -36,7 +29,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ADDITIONAL_METHOD_STATE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
@@ -48,7 +40,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -58,7 +49,6 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @SuppressWarnings("static-method")
-@ExportLibrary(InteropLibrary.class)
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
@@ -650,75 +640,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public CompiledCodeObject getMethodUnsafe() {
         assert !isCompiledMethod();
         return (CompiledCodeObject) literals[literals.length - 1];
-    }
-
-    /*
-     * INTEROPERABILITY
-     */
-
-    @ExportMessage
-    protected boolean hasArrayElements() {
-        return true;
-    }
-
-    @ExportMessage
-    protected long getArraySize() {
-        return literals.length;
-    }
-
-    @ExportMessage(name = "isArrayElementReadable")
-    @ExportMessage(name = "isArrayElementModifiable")
-    @ExportMessage(name = "isArrayElementInsertable")
-    protected boolean isArrayElementReadable(final long index) {
-        return 0 <= index && index < literals.length;
-    }
-
-    @ExportMessage
-    protected Object readArrayElement(final long index) throws InvalidArrayIndexException {
-        if (isArrayElementReadable(index)) {
-            return literals[(int) index];
-        } else {
-            throw InvalidArrayIndexException.create(index);
-        }
-    }
-
-    @ExportMessage
-    protected void writeArrayElement(final long index, final Object value,
-                    @Exclusive @Cached final WrapToSqueakNode wrapNode) throws InvalidArrayIndexException {
-        if (isArrayElementReadable(index)) {
-            literals[(int) index] = wrapNode.executeWrap(value);
-        } else {
-            throw InvalidArrayIndexException.create(index);
-        }
-    }
-
-    @ExportMessage
-    public boolean isExecutable() {
-        return true;
-    }
-
-    @ExportMessage
-    public boolean hasExecutableName() {
-        return true;
-    }
-
-    @ExportMessage
-    @TruffleBoundary
-    public Object getExecutableName() {
-        return toString();
-    }
-
-    @ExportMessage
-    public Object execute(final Object[] receiverAndArguments,
-                    @Exclusive @Cached final WrapToSqueakNode wrapNode,
-                    @Exclusive @Cached final DispatchUneagerlyNode dispatchNode) throws ArityException {
-        final int actualArity = receiverAndArguments.length;
-        final int expectedArity = 1 + getNumArgs(); // receiver + arguments
-        if (actualArity == expectedArity) {
-            return dispatchNode.executeDispatch(this, wrapNode.executeObjects(receiverAndArguments), InteropSenderMarker.SINGLETON);
-        } else {
-            throw ArityException.create(expectedArity, actualArity);
-        }
     }
 
     /**

@@ -6,37 +6,23 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.interop.ExceptionType;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakExceptionWrapper;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BINDING;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.EXCEPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FRACTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.trufflesqueak.nodes.InheritsFromNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-@ExportLibrary(InteropLibrary.class)
 public final class PointersObject extends AbstractPointersObject {
 
     public PointersObject(final SqueakImageContext image) {
@@ -182,85 +168,5 @@ public final class PointersObject extends AbstractPointersObject {
             return readNode.execute(this, BINDING.KEY) + " => " + readNode.execute(this, BINDING.VALUE);
         }
         return super.toString();
-    }
-
-    /*
-     * INTEROPERABILITY
-     */
-
-    @ExportMessage
-    protected static boolean isException(final PointersObject receiver,
-                    @Shared("inheritsFromNode") @Cached final InheritsFromNode inheritsFromNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return inheritsFromNode.execute(receiver, image.getExceptionClass());
-    }
-
-    @ExportMessage
-    protected static RuntimeException throwException(final PointersObject receiver,
-                    @Shared("inheritsFromNode") @Cached final InheritsFromNode inheritsFromNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws UnsupportedMessageException {
-        if (isException(receiver, inheritsFromNode, image)) {
-            throw new SqueakExceptionWrapper(receiver);
-        } else {
-            throw UnsupportedMessageException.create();
-        }
-    }
-
-    @ExportMessage
-    protected static ExceptionType getExceptionType(final PointersObject receiver,
-                    @Shared("inheritsFromNode") @Cached final InheritsFromNode inheritsFromNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws UnsupportedMessageException {
-        if (isException(receiver, inheritsFromNode, image)) {
-            return ExceptionType.RUNTIME_ERROR;
-        } else {
-            throw UnsupportedMessageException.create();
-        }
-    }
-
-    @ExportMessage
-    protected static boolean isExceptionIncompleteSource(@SuppressWarnings("unused") final PointersObject receiver) throws UnsupportedMessageException {
-        throw UnsupportedMessageException.create();
-    }
-
-    @ExportMessage
-    protected static int getExceptionExitStatus(@SuppressWarnings("unused") final PointersObject receiver) throws UnsupportedMessageException {
-        throw UnsupportedMessageException.create();
-    }
-
-    @ExportMessage
-    @TruffleBoundary
-    protected static boolean hasExceptionMessage(final PointersObject receiver,
-                    @Shared("inheritsFromNode") @Cached final InheritsFromNode inheritsFromNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        if (isException(receiver, inheritsFromNode, image)) {
-            final Object messageText = receiver.instVarAt0Slow(EXCEPTION.MESSAGE_TEXT);
-            return messageText instanceof NativeObject && ((NativeObject) messageText).isString();
-        } else {
-            return false;
-        }
-    }
-
-    @ExportMessage
-    @TruffleBoundary
-    protected static Object getExceptionMessage(final PointersObject receiver,
-                    @Shared("inheritsFromNode") @Cached final InheritsFromNode inheritsFromNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws UnsupportedMessageException {
-        if (isException(receiver, inheritsFromNode, image)) {
-            final Object messageText = receiver.instVarAt0Slow(EXCEPTION.MESSAGE_TEXT);
-            if (messageText instanceof NativeObject && ((NativeObject) messageText).isString()) {
-                return messageText;
-            }
-        }
-        throw UnsupportedMessageException.create();
-    }
-
-    @ExportMessage
-    protected static boolean hasExceptionStackTrace(@SuppressWarnings("unused") final PointersObject receiver) {
-        return false;
-    }
-
-    @ExportMessage
-    protected static Object getExceptionStackTrace(@SuppressWarnings("unused") final PointersObject receiver) throws UnsupportedMessageException {
-        throw UnsupportedMessageException.create(); // TODO: expose Squeak stacktrace
     }
 }
