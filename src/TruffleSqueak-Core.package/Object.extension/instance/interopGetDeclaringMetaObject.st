@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-meta-object
 interopGetDeclaringMetaObject
-	self subclassResponsibility
+	self notYetImplemented

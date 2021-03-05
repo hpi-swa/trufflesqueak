@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-other
-interopToDisplayString: arguments
+interopToDisplayString
 	^ self printString
