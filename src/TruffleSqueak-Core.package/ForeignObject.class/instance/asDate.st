@@ -1,10 +1,6 @@
 converting
 asDate
-	(Interop isDate: self)
-		ifTrue: [ | javaLocalDate year month day |
-			javaLocalDate := Interop asDate: self.
-			year := javaLocalDate getYear.
-			month := javaLocalDate getMonthValue.
-			day := javaLocalDate getDayOfMonth.
-			^ Date year: year month: month day: day ]
+	^ (Interop isDate: self)
+		ifTrue: [ Date starting: (DateAndTime fromUnixTime:
+				(Interop asDate: self) toEpochDay * 24 * 60 * 60) ]
 		ifFalse: [ self error: 'Foreign object cannot be represented as date' ]
