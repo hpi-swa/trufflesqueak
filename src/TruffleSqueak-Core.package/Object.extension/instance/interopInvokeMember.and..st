@@ -2,4 +2,5 @@
 interopInvokeMember: member and: arguments
 	^ (self class interopMemberToSelector: member for: arguments)
 		ifNotNil: [ :sel | self perform: sel withArguments: arguments]
-		ifNil: [ nil "TODO" ]
+		ifNil: [ self doesNotUnderstand: (
+			Message selector: member asSymbol arguments: arguments) ]

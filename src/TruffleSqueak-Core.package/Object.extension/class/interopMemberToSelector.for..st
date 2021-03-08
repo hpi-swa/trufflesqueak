@@ -1,8 +1,8 @@
 *TruffleSqueak-Core
 interopMemberToSelector: aMember for: arguments
 	| selectorName  currentClass |
-	selectorName := aMember asString copyReplaceAll: '_' with: ':', (
-		arguments size > 0 ifTrue: [':'] ifFalse: [ '' ]).
+	selectorName := (aMember asString copyReplaceAll: '_' with: ':'), (
+		arguments ifEmpty: [ '' ] ifNotEmpty: [ ':' ]).
 	currentClass := self.
 	[ currentClass isNil ] whileFalse: [
 		currentClass selectors
