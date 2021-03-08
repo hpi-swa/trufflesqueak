@@ -71,11 +71,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final String getSqueakClassName() {
-        if (this instanceof ClassObject) {
-            return getClassName() + " class";
-        } else {
-            return getSqueakClass().getClassName();
-        }
+        return getSqueakClass().getClassName();
     }
 
     public final void setSqueakClass(final ClassObject newClass) {
@@ -114,10 +110,6 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     public final boolean needsSqueakHash() {
         return squeakHash == HASH_UNINITIALIZED;
-    }
-
-    public String getClassName() {
-        return "???NotAClass";
     }
 
     public final void setSqueakHash(final long newHash) {

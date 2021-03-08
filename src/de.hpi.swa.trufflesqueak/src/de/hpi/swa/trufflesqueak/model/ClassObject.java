@@ -133,7 +133,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return getClassName();
     }
 
-    @Override
     @TruffleBoundary
     public String getClassName() {
         if (isAMetaClass()) {
