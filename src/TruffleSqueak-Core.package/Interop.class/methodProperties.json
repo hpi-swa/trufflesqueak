@@ -96,6 +96,7 @@
 		"removeArrayElement:index:" : "fn 12/3/2019 11:53",
 		"removeMember:member:" : "fn 3/5/2021 14:58",
 		"runtimeExceptionType" : "fn 3/4/2021 12:03",
+		"throwAsPolyglotException:" : "fn 3/5/2021 16:54",
 		"throwException:" : "fn 12/12/2019 20:57",
 		"toDisplayString:" : "fn 3/5/2021 15:15",
 		"toDisplayString:allowSideEffects:" : "fn 3/5/2021 15:12",
