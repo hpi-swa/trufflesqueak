@@ -214,16 +214,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static void loadTruffleSqueakPackages() {
         final long start = System.currentTimeMillis();
-        evaluate(String.format("[Metacello new\n" +
-                        "  baseline: 'TruffleSqueak';\n" +
-                        "  repository: 'filetree://%s';\n" +
-                        "  onConflict: [:ex | ex allow];\n" +
-                        "  load: #('tests')] on: ProgressInitiationException do: [:e |\n" +
-                        "            e isNested\n" +
-                        "                ifTrue: [e pass]\n" +
-                        "                ifFalse: [e rearmHandlerDuring:\n" +
-                        "                    [[e sendNotificationsTo: [:min :max :current | \"silence\"]]\n" +
-                        "                        on: ProgressNotification do: [:notification | notification resume]]]]", getPathToInImageCode()));
+        evaluate(String.format("[ | mc |\n" +
+                        "    mc := MCFileTreeRepository path: '%s'.\n" +
+                        "    Installer monticello\n" +
+                        "        mc: mc;\n" +
+                        "        packages: mc allPackageNames;\n" +
+                        "        install ] on: Warning do: [ :w | w resume ]",
+                        getPathToInImageCode()));
         truffleSqueakPackagesLoaded = true;
         image.getOutput().println("TruffleSqueak packages loaded in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
     }
