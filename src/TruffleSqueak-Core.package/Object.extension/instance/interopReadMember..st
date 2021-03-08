@@ -1,7 +1,11 @@
 *TruffleSqueak-Core-members
 interopReadMember: member
-	| cm |
-	cm := self class lookupSelector: (self class interopMemberToSelector: member).
-	^ cm
-		ifNil: [ nil ]
-		ifNotNil: [ [ :args | self withArgs: args executeMethod: cm ] ]
+	^ self instVarAt: (self class
+			instVarIndexFor: member asString
+			ifAbsent: [
+				(self class interopMemberToSelector: member)
+					ifNotNil: [ :sel |
+						(self class lookupSelector: sel)
+							ifNotNil: [ :cm | [ :args | self withArgs: args executeMethod: cm ] ]
+							ifNil: [ nil "TODO: should never happen?" ] ]
+					ifNil: [ nil "TODO" ] ] )

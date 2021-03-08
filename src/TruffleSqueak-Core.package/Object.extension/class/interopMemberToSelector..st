@@ -9,4 +9,4 @@ interopMemberToSelector: aMember
 			detect: [ :ea | ea = selectorName or: [ ea = selectorNameVariant ] ]
 			ifFound: [ :s | ^ s ].
 		currentClass := currentClass superclass ].
-	^(NotFound object: aMember) signal
+	^ nil

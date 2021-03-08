@@ -2,8 +2,10 @@
 interopGetMembers: includeInternal
 	| currentClass selectors |
 	currentClass := self class.
-	selectors := OrderedCollection new.
+	selectors := includeInternal
+		ifTrue: [ Set withAll: self class allInstVarNames ]
+		ifFalse: [ Set new ].
 	[ currentClass isNil ] whileFalse: [
-		selectors addAll: currentClass selectors.
+		selectors addAll: (currentClass selectors collect: [ :ea | self class interopSelectorToMember: ea ]).
 		currentClass := currentClass superclass ].
-	^ selectors collect: [ :ea | self class interopSelectorToMember: ea ]
+	^ selectors asArray
