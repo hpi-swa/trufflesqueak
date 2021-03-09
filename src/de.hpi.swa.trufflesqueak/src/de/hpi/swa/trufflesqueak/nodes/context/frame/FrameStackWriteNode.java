@@ -61,7 +61,6 @@ public abstract class FrameStackWriteNode extends AbstractNode {
             /* Initialize type on first write. No-op if kind is already Object. */
             frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Object);
 
-            assert !isNullOrIllegalPrimitive(value) : "Propagation of illegal value detected: " + value;
             frame.setObject(getSlot(), value);
         }
 
@@ -79,12 +78,6 @@ public abstract class FrameStackWriteNode extends AbstractNode {
             final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(getSlot());
             return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
         }
-
-        private static boolean isNullOrIllegalPrimitive(final Object value) {
-            /* `null` and all primitive types not globally used/allowed in TruffleSqueak. */
-            return value == null || value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Float;
-        }
-
     }
 
     private static final class FrameArgumentWriteNode extends FrameStackWriteNode {
