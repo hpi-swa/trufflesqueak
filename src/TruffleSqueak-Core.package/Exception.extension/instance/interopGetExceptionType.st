@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-exception
 interopGetExceptionType
-	^ Interop runtimeExceptionType
+	^ Java runtimeExceptionType

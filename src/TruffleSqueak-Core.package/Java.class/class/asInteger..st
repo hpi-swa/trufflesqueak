@@ -1,4 +1,4 @@
 primitives internal
-asJavaInteger: aString
+asInteger: aString
 	<primitive: 'primitiveToJavaInteger' module: 'PolyglotPlugin'>
 	self primitiveFailed

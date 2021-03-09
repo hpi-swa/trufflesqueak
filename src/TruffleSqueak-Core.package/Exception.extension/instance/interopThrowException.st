@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-exception
 interopThrowException
-	Interop throwAsPolyglotException: self
+	Java throwAsPolyglotException: self

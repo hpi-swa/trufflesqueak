@@ -1,4 +1,4 @@
 primitives internal
-asJavaString: aString
+asString: aString
 	<primitive: 'primitiveToJavaString' module: 'PolyglotPlugin'>
 	^ aString

@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-identity
 interopIdentityHashCode
-	^ Interop asJavaInteger: self identityHash
+	^ Java asInteger: self identityHash
