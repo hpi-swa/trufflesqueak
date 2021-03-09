@@ -44,7 +44,6 @@ import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.SmalltalkScope;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FRACTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MESSAGE;
@@ -151,7 +150,7 @@ public final class SqueakImageContext {
     private PointersObject parserSharedInstance;
     private AbstractSqueakObject requestorSharedInstanceOrNil;
     @CompilationFinal private PointersObject scheduler;
-    @CompilationFinal private SmalltalkScope smalltalkScope;
+    @CompilationFinal private Object smalltalkScope;
     @CompilationFinal private ClassObject wideStringClass;
 
     /* Plugins */
@@ -572,7 +571,7 @@ public final class SqueakImageContext {
         ensureLoaded();
         if (smalltalkScope == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            smalltalkScope = new SmalltalkScope(smalltalk);
+            smalltalkScope = smalltalk.send(this, "asInteropScope");
         }
         return smalltalkScope;
     }

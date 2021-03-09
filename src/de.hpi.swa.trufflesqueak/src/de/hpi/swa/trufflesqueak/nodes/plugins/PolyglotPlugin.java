@@ -48,8 +48,6 @@ import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.ContextScope;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -1295,30 +1293,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 return lib.getScopeParent(object);
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetSmalltalkScope")
-    protected abstract static class PrimGetSmalltalkScopeNode extends AbstractPrimitiveNode {
-        @Specialization
-        protected static final Object getSmalltalkScope(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.getScope();
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveContextAsScope")
-    protected abstract static class PrimContextAsScopeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization
-        @TruffleBoundary
-        protected static final Object doContextAsScope(@SuppressWarnings("unused") final Object receiver, final ContextObject object) {
-            if (object.hasTruffleFrame()) {
-                return new ContextScope(object.getTruffleFrame());
-            } else {
-                return NilObject.SINGLETON;
             }
         }
     }
