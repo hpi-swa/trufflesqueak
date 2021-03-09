@@ -3,6 +3,10 @@ setupImage
 	"Install polyglot tools"
 	PolyglotToolSet register.
 	ToolSet default: PolyglotToolSet.
+	
+	"Ensure FullBlockClosure is in special objects array"
+	(Smalltalk specialObjectsArray at: 38) ifNil:
+		[ Smalltalk specialObjectsArray at: 38 put: FullBlockClosure ].
 
 	"Avoid UnknownSelector popups"
 	UnknownSelector compile: 'openMenuIn: aBlock
