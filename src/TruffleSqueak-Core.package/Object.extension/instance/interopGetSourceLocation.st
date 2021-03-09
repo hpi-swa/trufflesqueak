@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-source location
+interopGetSourceLocation
+	self notYetImplemented

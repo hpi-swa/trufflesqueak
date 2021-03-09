@@ -1,3 +1,3 @@
-*TruffleSqueak-Core-other
+*TruffleSqueak-Core-source location
 interopHasSourceLocation
 	^ false "TODO"

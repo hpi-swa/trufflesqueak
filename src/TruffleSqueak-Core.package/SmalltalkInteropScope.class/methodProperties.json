@@ -1,0 +1,11 @@
+{
+	"class" : {
+		"instance" : "fn 3/9/2021 15:09" },
+	"instance" : {
+		"interopGetMembers:" : "fn 3/9/2021 15:05",
+		"interopInvokeMember:and:" : "fn 3/9/2021 15:06",
+		"interopIsMemberInvocable:" : "fn 3/9/2021 15:06",
+		"interopIsMemberReadable:" : "fn 3/9/2021 15:06",
+		"interopIsScope" : "fn 3/9/2021 15:04",
+		"interopReadMember:" : "fn 3/9/2021 15:17",
+		"interopToDisplayString:" : "fn 3/9/2021 15:07" } }

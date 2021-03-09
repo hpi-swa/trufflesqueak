@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-scope
+interopGetScopeParent
+	self notYetImplemented
