@@ -54,17 +54,4 @@ setupTestImage
 	"The DecompilerTests use this in MethodNode>>printPrimitiveOn:"
 	(Smalltalk at: #StackInterpreter) initializePrimitiveTable.
 
-	"Disable performance killers"
-	World setAsBackground: Color black lighter.
-	Morph useSoftDropShadow: false.
-	SystemWindow gradientWindow: false.
-	DialogWindow gradientDialog: false.
-	MenuMorph gradientMenu: false.
-	PluggableButtonMorph gradientButton: false.
-	ScrollBar gradientScrollBar: false.
-
-	Morph indicateKeyboardFocus: false.
-
-	"Clean up image"
-	Smalltalk garbageCollect.
-	Smalltalk condenseChanges.
+	self setupImage
