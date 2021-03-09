@@ -1,6 +1,6 @@
 testing
 testMetadataAPIs
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
+	Java primitiveIsHostLookupAllowed ifFalse: [ ^self ].
 
 	"All boxed objects have a language"
 	self assert: (Interop hasLanguage: Smalltalk).

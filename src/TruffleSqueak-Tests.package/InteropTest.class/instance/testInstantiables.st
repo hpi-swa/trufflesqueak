@@ -1,7 +1,5 @@
 testing
 testInstantiables
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
-	
 	self deny: (Interop isInstantiable: Smalltalk).
 	
 	{Array. OrderedCollection. String} do: [ :ea |

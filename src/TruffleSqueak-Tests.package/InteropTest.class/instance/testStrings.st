@@ -1,8 +1,6 @@
 testing
 testStrings
 	| s |
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
-	
 	self deny: (Interop isString: Smalltalk).
 
 	s := 'foo'.

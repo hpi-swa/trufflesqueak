@@ -1,8 +1,6 @@
 testing
 testScopeAPIs
 	| s |
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
-	
 	s := Polyglot primitiveGetScope: Polyglot languageIdSmalltalk.
 	self assert: SmalltalkInteropScope instance equals: s.
 	self assert: (Interop isScope: s).

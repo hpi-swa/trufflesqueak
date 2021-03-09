@@ -1,7 +1,5 @@
 testing
 testNumbers
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
-	
 	self deny: (Interop fitsInLong: Smalltalk).
 	self deny: (Interop fitsInDouble: Smalltalk).
 

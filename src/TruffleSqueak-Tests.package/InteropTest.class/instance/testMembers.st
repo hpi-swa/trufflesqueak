@@ -1,7 +1,5 @@
 testing
 testMembers
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
-	
 	{nil. #(). 'foo'. Object new} do: [ :ea |
 		self assert: (Interop hasMembers: ea).
 		(Interop getMembers: ea) do: [ :member |

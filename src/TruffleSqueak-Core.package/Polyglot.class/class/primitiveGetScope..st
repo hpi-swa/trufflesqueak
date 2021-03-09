@@ -1,4 +1,6 @@
 primitives
 primitiveGetScope: languageId
 	<primitive: 'primitiveGetScope' module: 'PolyglotPlugin'>
-	self primitiveFailed
+	^ languageId = Polyglot languageIdSmalltalk
+		ifTrue: [ SmalltalkInteropScope instance ]
+		ifFalse: [ self primitiveFailed ]

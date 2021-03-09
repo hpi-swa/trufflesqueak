@@ -1,8 +1,6 @@
 testing
 testExecutables
 	| block |
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
-	
 	self deny: (Interop isExecutable: Smalltalk).
 	
 	block := [:x | x + 1].

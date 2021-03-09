@@ -2,5 +2,7 @@
 	"class" : {
 		 },
 	"instance" : {
+		"interopAsDouble" : "fn 3/9/2021 16:53",
 		"interopAsLong" : "fn 11/24/2020 12:37",
+		"interopFitsInDouble" : "fn 3/9/2021 16:53",
 		"interopFitsInLong" : "fn 11/24/2020 12:37" } }

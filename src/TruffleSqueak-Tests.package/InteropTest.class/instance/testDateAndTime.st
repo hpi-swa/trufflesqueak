@@ -1,7 +1,7 @@
 testing
 testDateAndTime
 	| now localTimeZone |
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
+	Java primitiveIsHostLookupAllowed ifFalse: [ ^self ].
 	
 	self deny: (Interop isDate: Smalltalk).
 	self assert: (Interop isDate: Date today).

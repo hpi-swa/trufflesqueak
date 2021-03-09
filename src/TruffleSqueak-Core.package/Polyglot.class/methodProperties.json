@@ -44,7 +44,7 @@
 		"primitiveGetPolyglotBindings" : "fn 11/28/2019 14:52",
 		"primitiveGetPublicLanguageInfo:" : "fn 1/26/2021 15:41",
 		"primitiveGetPublicLanguages" : "fn 2/11/2021 16:02",
-		"primitiveGetScope:" : "fn 1/26/2021 14:08",
+		"primitiveGetScope:" : "fn 3/9/2021 16:38",
 		"primitiveImport:" : "fn 10/17/2019 14:28",
 		"primitiveIsPolyglotBindingsAccessAllowed" : "fn 1/5/2020 16:58",
 		"primitiveIsPolyglotEvalAllowed" : "fn 1/5/2020 16:58",

@@ -1,4 +1,4 @@
 primitives identity
 hasIdentity: anObject
 	<primitive: 'primitiveHasIdentity' module: 'PolyglotPlugin'>
-	^ false
+	^ self isIdentical: anObject to: anObject

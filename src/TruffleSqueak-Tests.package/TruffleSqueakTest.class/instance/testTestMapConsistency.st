@@ -3,7 +3,7 @@ testTestMapConsistency
 	| testNames booleanResult |
 	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
 
-	testNames := TestCase buildSuite tests asArray collect: [:test |
+	testNames := TestCase buildSuite tests collect: [:test |
 		test class asString, '>>', test selector].
 	booleanResult := (Java type: 'de.hpi.swa.trufflesqueak.test.SqueakTests')
 		testTestMapConsistency: testNames.

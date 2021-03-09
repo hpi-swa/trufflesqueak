@@ -1,6 +1,6 @@
 testing
 testDurations
-	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
+	Java primitiveIsHostLookupAllowed ifFalse: [ ^self ].
 	
 	self deny: (Interop isDuration: Smalltalk).
 	
