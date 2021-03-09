@@ -6,7 +6,8 @@ testArrays
 		#[12 24 46 127].
 		OrderedCollection with: 42 with: Smalltalk.
 		WeakArray with: Smalltalk with: 42 with: Object new} do: [ :ea |
-			ea isReadOnlyObject ifTrue: [ ea beWritableObject ].
+			((ea respondsTo: #isReadOnlyObject) and: [ ea isReadOnlyObject ])
+				ifTrue: [ ea beWritableObject ].
 			self assert: (Interop hasArrayElements: ea).
 			self assert: ea size = (Interop getArraySize: ea).
 			ea withIndexDo: [ :val :index |
