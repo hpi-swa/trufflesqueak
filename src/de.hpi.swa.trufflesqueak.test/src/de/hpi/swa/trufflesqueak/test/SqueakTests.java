@@ -118,7 +118,9 @@ public final class SqueakTests {
     }
 
     // Use in TruffleSqueakTest>>testTestMapConsistency
-    public static boolean testTestMapConsistency(final List<String> imageTestNameList) {
+    public static boolean testTestMapConsistency(final List<String> imageTestNames) {
+        // Convert into ArrayList to avoid excessive interop calls during comparisons
+        final List<String> imageTestNameList = new ArrayList<>(imageTestNames);
         final List<String> mapTestNameList = rawTestNames();
         final HashSet<String> mapTestNameSet = new HashSet<>(mapTestNameList);
         if (mapTestNameList.size() != mapTestNameSet.size()) {
