@@ -1,5 +1,5 @@
-*TruffleSqueak-Core
-interopSelectorToMember: aSelector
+dispatch
+selectorToMember: aSelector
 	| member |
 	member := aSelector asString.
 	member last = $: ifTrue: [ member := member allButLast copyReplaceAll: ':' with: '_' ].

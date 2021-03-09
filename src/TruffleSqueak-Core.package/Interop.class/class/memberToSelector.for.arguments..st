@@ -1,9 +1,9 @@
-*TruffleSqueak-Core
-interopMemberToSelector: aMember for: arguments
+dispatch
+memberToSelector: aMember for: anObject arguments: arguments
 	| selectorName  currentClass |
 	selectorName := (aMember asString copyReplaceAll: '_' with: ':'), (
 		arguments ifEmpty: [ '' ] ifNotEmpty: [ ':' ]).
-	currentClass := self.
+	currentClass := anObject class.
 	[ currentClass isNil ] whileFalse: [
 		currentClass selectors
 			detect: [ :ea | ea = selectorName ]

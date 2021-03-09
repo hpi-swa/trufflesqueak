@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-members
 interopIsMemberInvocable: member
-	^ (self class interopMemberToSelector: member) notNil
+	^ (Interop memberToSelector: member for: self) notNil
