@@ -2,6 +2,7 @@ image creation
 setupImage
 	"Install polyglot tools"
 	PolyglotToolSet register.
+	ToolSet default: PolyglotToolSet.
 
 	"Avoid UnknownSelector popups"
 	UnknownSelector compile: 'openMenuIn: aBlock
@@ -16,6 +17,7 @@ setupImage
 	ScrollBar gradientScrollBar: false.
 
 	Morph indicateKeyboardFocus: false.
+	Project current flapsSuppressed: true.
 	
 	"Set up environment"
 	ReleaseBuilder deleteAllWindows.
