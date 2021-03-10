@@ -1603,7 +1603,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetLastError")
     protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode {
-        protected static Exception lastError = new Exception("No exception");
+        private static final Exception NO_EXCEPTION = new Exception("No exception");
+        private static Exception lastError = NO_EXCEPTION;
 
         @Specialization
         @TruffleBoundary
@@ -1613,8 +1614,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final void setLastError(final Exception e) {
-            LogUtils.INTEROP.fine(() -> MiscUtils.toString(e));
-            lastError = e;
+            lastError = e != null ? lastError : NO_EXCEPTION;
+            LogUtils.INTEROP.fine(() -> MiscUtils.toString(lastError));
         }
     }
 
