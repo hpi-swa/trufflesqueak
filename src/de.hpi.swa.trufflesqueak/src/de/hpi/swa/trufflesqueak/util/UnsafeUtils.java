@@ -7,6 +7,8 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.lang.reflect.Field;
 
+import com.oracle.truffle.api.CompilerDirectives;
+
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import sun.misc.Unsafe;
 
@@ -260,6 +262,11 @@ public final class UnsafeUtils {
     public static void putShort(final short[] storage, final long index, final short value) {
         assert 0 <= index && index < storage.length;
         UNSAFE.putShort(storage, Unsafe.ARRAY_SHORT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE, value);
+    }
+
+    public static RuntimeException throwException(final Throwable e) {
+        UNSAFE.throwException(e);
+        return CompilerDirectives.shouldNotReachHere();
     }
 
     public static void putShortIntoBytes(final byte[] bytes, final long index, final short value) {

@@ -61,6 +61,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimiti
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     private static final String EVAL_SOURCE_NAME = "<eval>";
@@ -1702,6 +1703,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final RuntimeException throwException(@SuppressWarnings("unused") final Object receiver, final PointersObject exception,
                         @SuppressWarnings("unused") @CachedLibrary(limit = "2") final InteropLibrary lib) {
             throw new SqueakExceptionWrapper(exception);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveThrowUnsupportedMessageException")
+    protected abstract static class PrimThrowUnsupportedMessageExceptionNode extends AbstractPrimitiveNode {
+        private static final UnsupportedMessageException EXCEPTION = UnsupportedMessageException.create();
+
+        @Specialization
+        protected static final UnsupportedMessageException throwException(@SuppressWarnings("unused") final Object receiver) {
+            throw UnsafeUtils.throwException(EXCEPTION);
         }
     }
 
