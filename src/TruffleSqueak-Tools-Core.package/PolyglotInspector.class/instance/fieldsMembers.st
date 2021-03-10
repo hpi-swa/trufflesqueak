@@ -4,12 +4,12 @@ fieldsMembers
 	invocables := OrderedCollection new.
 	readables := OrderedCollection new.
 	remainder := OrderedCollection new.
-	(Interop getMembers: self object) sorted do: [ :ea | | invocable readable |
-		invocable := Interop isMemberInvocable: self object member: ea.
-		readable := Interop isMemberReadable: self object member: ea.
-		invocable ifTrue: [ invocables add: ea ].
-		readable ifTrue: [ readables add: ea ].
-		(invocable or: readable) ifFalse: [ remainder add: ea ] ].
+	(Interop getMembers: self object) sorted do: [ :ea |
+		(Interop isMemberInvocable: self object member: ea)
+			ifTrue: [ invocables add: ea ]
+			ifFalse: [ (Interop isMemberReadable: self object member: ea)
+				ifTrue: [ readables add: ea ]
+				ifFalse: [ remainder add: ea ] ] ].
 	^ (remainder ifNotEmpty: [ { (self newFieldForType: #misc key: #membersNonReadable)
 			name: 'members (non-readable)'; styleName: { Color red }; emphasizeName;
 			valueGetter: [:object | remainder joinSeparatedBy: String cr ]; printValueAsIs;
@@ -30,5 +30,13 @@ fieldsMembers
 			yourself } ] ifEmpty: [ {} ]),
 		(invocables ifNotEmpty: [ { (self newFieldForType: #misc key: #membersInvocable)
 			name: 'members (invocable)'; emphasizeName;
-			valueGetter: [:object | invocables joinSeparatedBy: String cr ]; printValueAsIs;
+			valueGetter: [:object | 
+				String streamContents: [ :aStream |
+					invocables do: [ :member |
+						aStream
+							nextPutAll: member;
+							nextPutAll: ((Interop isMemberReadable: self object member: member)
+							ifTrue: [ ' (readable)' ]
+							ifFalse: [ ' (non-readable)' ]);
+							cr] ] ]; printValueAsIs;
 			yourself } ] ifEmpty: [ {} ])
