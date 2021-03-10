@@ -27,7 +27,7 @@ suite = {
         "test_image_tag": "21.0.0.1",
     },
 
-    "release": False,
+    "release": True,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
 
