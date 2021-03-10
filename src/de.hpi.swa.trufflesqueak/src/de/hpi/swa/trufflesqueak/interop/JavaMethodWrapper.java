@@ -93,4 +93,10 @@ final class JavaMethodWrapper implements TruffleObject {
             throw UnsupportedMessageException.create();
         }
     }
+
+    @ExportMessage
+    @TruffleBoundary
+    protected String toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
+        return "JavaMethod[method:" + method + ", receiver:" + receiver + "]";
+    }
 }
