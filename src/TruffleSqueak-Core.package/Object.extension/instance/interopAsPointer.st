@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-pointer
 interopAsPointer
-	self notYetImplemented
+	^ Java throwUnsupportedMessageException

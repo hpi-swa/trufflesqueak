@@ -11,6 +11,7 @@
 		"primitiveLookupHostSymbol:" : "fn 11/13/2019 16:13",
 		"runtimeExceptionType" : "fn 3/4/2021 12:03",
 		"throwAsPolyglotException:" : "fn 3/5/2021 16:54",
+		"throwUnsupportedMessageException" : "fn 3/10/2021 09:24",
 		"type:" : "fn 5/9/2019 17:59" },
 	"instance" : {
 		 } }

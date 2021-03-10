@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-scope
 interopGetScopeParent
-	self notYetImplemented
+	^ Java throwUnsupportedMessageException
