@@ -189,7 +189,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     @TruffleBoundary
     public void resizeTo(final int width, final int height) {
-        frame.setPreferredSize(new Dimension(width, height));
+        canvas.setPreferredSize(new Dimension(width, height));
         frame.pack();
     }
 
@@ -219,7 +219,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             frame.setResizable(false);
         } else {
             frame.setExtendedState(Frame.NORMAL);
-            frame.setPreferredSize(rememberedWindowSize);
+            canvas.setPreferredSize(rememberedWindowSize);
+            frame.pack();
             frame.setResizable(true);
         }
         frame.pack();
@@ -248,7 +249,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
         frame.setTitle(title);
         if (!frame.isVisible()) {
-            frame.setPreferredSize(new Dimension(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight()));
+            canvas.setPreferredSize(new Dimension(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight()));
             frame.pack();
             frame.setVisible(true);
             frame.requestFocus();
