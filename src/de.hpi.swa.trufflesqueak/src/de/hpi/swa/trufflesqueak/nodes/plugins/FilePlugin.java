@@ -74,11 +74,16 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
 
         protected static final SeekableByteChannel getChannelOrPrimFail(final PointersObject handle) {
-            try {
-                return (SeekableByteChannel) handle.getHiddenObject();
-            } catch (final ClassCastException e) {
-                throw PrimitiveFailed.andTransferToInterpreterWithError(e);
+            final Object hiddenObject = getChannelOrNil(handle);
+            if (hiddenObject instanceof SeekableByteChannel) {
+                return (SeekableByteChannel) hiddenObject;
+            } else {
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+
+        protected static final Object getChannelOrNil(final PointersObject handle) {
+            return handle.getHiddenObject();
         }
 
         protected static final TruffleFile asPublicTruffleFile(final SqueakImageContext image, final NativeObject obj) {
@@ -347,17 +352,19 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         protected static final Object doClose(final Object receiver, final PointersObject fd) {
-            closeOrPrimFail(getChannelOrPrimFail(fd));
+            final Object channelOrNil = getChannelOrNil(fd);
+            if (channelOrNil instanceof SeekableByteChannel) {
+                closeFailsafe((SeekableByteChannel) channelOrNil);
+            }
             return receiver;
         }
 
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        private static void closeOrPrimFail(final SeekableByteChannel channel) {
+        @TruffleBoundary
+        private static void closeFailsafe(final SeekableByteChannel channel) {
             try {
                 channel.close();
             } catch (final IOException e) {
                 log("Failed to close file", e);
-                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
 
