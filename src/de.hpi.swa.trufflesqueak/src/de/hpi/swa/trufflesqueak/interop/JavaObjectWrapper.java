@@ -175,12 +175,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                 throw UnknownIdentifierException.create(member);
             }
         } else {
-            final Method method = lookupMethods().get(member);
-            if (method != null) {
-                return new JavaMethodWrapper(wrappedObject, method);
-            } else {
-                throw UnknownIdentifierException.create(member);
-            }
+            throw UnknownIdentifierException.create(member);
         }
     }
 
@@ -197,7 +192,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     @TruffleBoundary
     protected boolean isMemberReadable(final String member) {
-        return lookupFields().containsKey(member) || lookupMethods().containsKey(member);
+        return lookupFields().containsKey(member);
     }
 
     @ExportMessage
