@@ -36,7 +36,7 @@ fieldsMembers
 						aStream
 							nextPutAll: member;
 							nextPutAll: ((Interop isMemberReadable: self object member: member)
-							ifTrue: [ ' (readable)' ]
-							ifFalse: [ ' (non-readable)' ]);
+								ifTrue: [ ' (readable)' ]
+								ifFalse: [ ' (non-readable)' ]);
 							cr] ] ]; printValueAsIs;
 			yourself } ] ifEmpty: [ {} ])
