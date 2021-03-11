@@ -1603,18 +1603,18 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetLastError")
     protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode {
-        private static final Exception NO_EXCEPTION = new Exception("No exception");
-        private static Exception lastError = NO_EXCEPTION;
+        private static Exception lastError = new Exception("No exception");
 
         @Specialization
         @TruffleBoundary
         protected static final NativeObject doGetLastError(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString(lastError.getMessage());
+            final String message = lastError.getMessage();
+            return image.asByteString(message != null ? message : lastError.toString());
         }
 
         protected static final void setLastError(final Exception e) {
-            lastError = e != null ? lastError : NO_EXCEPTION;
+            lastError = e;
             LogUtils.INTEROP.fine(() -> MiscUtils.toString(lastError));
         }
     }
