@@ -1,6 +1,6 @@
 helpers
-callTargetInfoStringFor: aCompiledMethod
-	^ aCompiledMethod callTarget
+callTargetInfoStringFor: aCallTarget
+	^ aCallTarget
 		ifNil: [ 'no call target available' ]
 		ifNotNil: [ :c |
 'name:					{1}
@@ -24,9 +24,11 @@ included call nodes:
 		ifNil: [ 'all n/a' ]
 		ifNotNil: [ :p | p getTypes
 			ifNil: [ 'all n/a' ]
-			ifNotNil: [ :t | ((t asCollection allButFirst: 3) collect: [ :ea | ea
+			ifNotNil: [ :t | (t asCollection collect: [ :ea | ea
 				ifNil: ['n/a']
 				ifNotNil: [ ea getSimpleName asString ]]) joinSeparatedBy: ', ' ] ].
-	(c getCallNodes asCollection collect: [ :ea |
-		ea getCurrentCallTarget toString asString])
-			joinSeparatedBy: String cr, '	- ' } ]
+	(c getCallNodes asCollection
+		ifNotEmpty: [:n | (n collect: [ :ea |
+			ea getCurrentCallTarget toString asString])
+				joinSeparatedBy: String cr, '	- ' ]
+		ifEmpty: [ 'n/a' ] ) } ]

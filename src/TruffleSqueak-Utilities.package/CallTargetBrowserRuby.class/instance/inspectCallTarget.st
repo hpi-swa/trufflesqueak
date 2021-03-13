@@ -1,0 +1,3 @@
+call targets
+inspectCallTarget
+	self selectedCallTarget inspect

@@ -10,5 +10,5 @@ testCallTarget
 
 	self deny: method callTarget isNil.
 
-	string := CallTargetBrowser callTargetInfoStringFor: method.
+	string := CallTargetBrowser callTargetInfoStringFor: method callTarget.
 	self assert: (string includesSubstring: 'knownCallSiteCount')

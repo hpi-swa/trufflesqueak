@@ -1,17 +1,18 @@
 {
 	"class" : {
-		"callTargetInfoStringFor:" : "fn 2/27/2021 17:28",
+		"callTargetInfoStringFor:" : "fn 3/12/2021 14:05",
 		"showClassIcons" : "fn 2/16/2021 22:17",
-		"showMessageIcons" : "fn 2/16/2021 22:17" },
+		"showMessageIcons" : "fn 2/16/2021 22:17",
+		"textColorFor:with:" : "fn 3/12/2021 11:14" },
 	"instance" : {
-		"callTargetInfoContents" : "fn 2/18/2021 10:12",
+		"callTargetInfoContents" : "fn 3/12/2021 11:08",
 		"contentsSymbolQuints" : "fn 2/17/2021 12:00",
-		"countsToMessages:" : "fn 2/17/2021 14:33",
+		"countsToMessages:" : "fn 3/12/2021 11:48",
 		"defaultBrowserTitle" : "fn 2/16/2021 16:54",
 		"formattedLabel:forSelector:inClass:" : "fn 2/16/2021 22:10",
 		"inspectCallTarget" : "fn 2/17/2021 14:50",
 		"mainMessageListMenu:" : "fn 2/17/2021 14:51",
-		"messageList" : "fn 2/16/2021 22:13",
+		"messageList" : "fn 3/12/2021 11:14",
 		"selectedMessage" : "fn 2/17/2021 12:26",
 		"showCallTargetInfo:" : "fn 2/17/2021 12:28",
 		"showingCallTargetInfo" : "fn 2/17/2021 12:01",
@@ -23,6 +24,5 @@
 		"sortByCallCount" : "fn 2/16/2021 17:30",
 		"sortByKnownCallSiteCount" : "fn 2/16/2021 17:39",
 		"sortByNonTrivialNodeCount" : "fn 2/16/2021 17:39",
-		"textColorFor:with:" : "fn 2/17/2021 11:08",
 		"toggleCallTargetInfo" : "fn 2/17/2021 12:28",
 		"updateListsAndCodeIn:" : "fn 2/21/2021 15:59" } }

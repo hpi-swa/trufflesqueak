@@ -11,6 +11,6 @@ messageList
 	sortedCounts do: [ :count |
 		result addAll: ((countsToMessages at: count) collect: [ :ea |
 			ea asText
-				addAttribute: (self textColorFor: count with: highestCount)
+				addAttribute: (self class textColorFor: count with: highestCount)
 				yourself])].
 	^ result
