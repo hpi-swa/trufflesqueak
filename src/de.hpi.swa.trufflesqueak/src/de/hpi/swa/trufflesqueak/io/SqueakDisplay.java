@@ -115,7 +115,10 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     private static final class Canvas extends Component {
         private static final long serialVersionUID = 1L;
-        private BufferedImage bufferedImage;
+// private BufferedImage bufferedImage;
+        private int[] bitmapInts;
+        private int width;
+        private int height;
 
         private Canvas() {
             /* Drawing is very simple, so double buffering is not needed. */
@@ -133,6 +136,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
          */
         @Override
         public void paint(final Graphics g) {
+            super.paint(g);
+            final BufferedImage bufferedImage = MiscUtils.new32BitBufferedImage(bitmapInts, width, height, false);
             g.drawImage(bufferedImage, 0, 0, null);
         }
 
@@ -144,6 +149,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         public void paintImmediately(final int left, final int top, final int right, final int bottom) {
             final Graphics g = getGraphics();
             if (g != null) {
+                final BufferedImage bufferedImage = MiscUtils.new32BitBufferedImage(bitmapInts, width, height, false);
                 g.drawImage(bufferedImage, left, top, right, bottom, left, top, right, bottom, null);
                 g.dispose();
             }
@@ -155,11 +161,12 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            final int width = readNode.executeInt(squeakDisplay, FORM.WIDTH);
-            final int height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
+            width = readNode.executeInt(squeakDisplay, FORM.WIDTH);
+            height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
+            bitmapInts = bitmap.getIntStorage();
             assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height, false);
+// bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height, false);
             }
         }
     }
