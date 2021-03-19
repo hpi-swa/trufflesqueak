@@ -25,6 +25,7 @@ $GRAALVM_HOME/bin/gu \
 $GRAALVM_HOME/bin/trufflesqueak
 ```
 
+
 ## Demos
 
 <table>
@@ -47,6 +48,16 @@ $GRAALVM_HOME/bin/trufflesqueak
   <tr align="center">
     <td width="50%"><a href="https://twitter.com/fniephaus/status/1075807587491291137" title="TruffleSqueak: Polyglot Workspace (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332290-e4e03a00-dfbb-11ea-92e5-55bded783c8e.png" alt="TruffleSqueak: Polyglot Workspace (Demo)" /><br>TruffleSqueak: Polyglot Workspace</a></td>
     <td width="50%"></td>
+  </tr>
+</table>
+
+
+## Talks
+
+<table>
+  <tr align="center">
+    <td width="50%"><a href="https://www.youtube.com/watch?v=9SyOVmAqqLg" title="Polyglot Programming with TruffleSqueak and GraalVM (~21min, HPI Symposium at SAP, 2021)"><img src="https://user-images.githubusercontent.com/2368856/111785173-8d40de80-88bc-11eb-82e8-bff9008638ad.png" alt="Polyglot Programming with TruffleSqueak and GraalVM (~21min, HPI Symposium at SAP, 2021)" /><br>Polyglot Programming with TruffleSqueak and GraalVM (~21min, HPI Symposium at SAP, 2021)</a></td>
+    <td width="50%"><a href="https://www.youtube.com/watch?v=FAk3Ec8hmzk" title="Polyglot Notebooks with Squeak/Smalltalk on the GraalVM (~28min, ESUG 2019)"><img src="https://user-images.githubusercontent.com/2368856/111785181-903bcf00-88bc-11eb-8722-7ca7d0558a22.png" alt="Polyglot Notebooks with Squeak/Smalltalk on the GraalVM (~28min, ESUG 2019)" /><br>Polyglot Notebooks with Squeak/Smalltalk on the GraalVM (~28min, ESUG 2019)</a></td>
   </tr>
 </table>
 
