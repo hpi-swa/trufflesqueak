@@ -61,6 +61,7 @@ $GRAALVM_HOME/bin/trufflesqueak
   </tr>
   <tr align="center">
     <td width="50%"><a href="https://www.youtube.com/watch?v=FAk3Ec8hmzk" title="Polyglot Notebooks with Squeak/Smalltalk on the GraalVM (~28min, ESUG 2019)"><img src="https://user-images.githubusercontent.com/2368856/111785181-903bcf00-88bc-11eb-8722-7ca7d0558a22.png" alt="Polyglot Notebooks with Squeak/Smalltalk on the GraalVM (~28min, ESUG 2019)" /><br>Polyglot Notebooks with Squeak/Smalltalk on the GraalVM<br>(~28min, ESUG 2019)</a></td>
+    <td width="50%"></td>
   </tr>
 </table>
 
