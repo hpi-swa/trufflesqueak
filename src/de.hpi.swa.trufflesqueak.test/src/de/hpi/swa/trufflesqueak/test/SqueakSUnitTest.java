@@ -216,10 +216,10 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         final long start = System.currentTimeMillis();
         evaluate(String.format("[ | mc |\n" +
                         "    mc := MCFileTreeRepository path: '%s'.\n" +
-                        "    Installer monticello\n" +
+                        "    [ Installer monticello\n" +
                         "        mc: mc;\n" +
                         "        packages: mc allPackageNames;\n" +
-                        "        install ] on: Warning do: [ :w | w resume ]",
+                        "        install ] on: Warning do: [ :w | w resume ] ] on: Error do: [ :e | e retry ]",
                         getPathToInImageCode()));
         truffleSqueakPackagesLoaded = true;
         image.getOutput().println("TruffleSqueak packages loaded in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
