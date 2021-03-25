@@ -21,17 +21,18 @@ LANGUAGE_ID = 'smalltalk'
 PACKAGE_NAME = 'de.hpi.swa.trufflesqueak'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 BASE_VM_ARGS = [
-    # RUNTIME
-    '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
-]
-BASE_VM_ARGS_TESTING = [
-    # RUNTIME
+    # Tweak Runtime
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 
-    # GARBAGE COLLECTOR (optimized for GitHub Actions)
+    # Tweak GraalVM Engine
+    '-Dpolyglot.engine.Mode=latency',
+]
+BASE_VM_ARGS_TESTING = BASE_VM_ARGS[:]
+BASE_VM_ARGS_TESTING.extend([
+    # Tweak GC for GitHub Actions
     '-Xms4G',                   # Initial heap size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
-]
+])
 
 IS_CI_BUILD = 'GITHUB_ACTIONS' in os.environ
 
