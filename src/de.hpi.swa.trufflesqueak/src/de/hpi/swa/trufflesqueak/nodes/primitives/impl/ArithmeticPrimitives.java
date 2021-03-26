@@ -1232,14 +1232,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @Specialization(guards = "lhs != toDouble(rhs)")
         protected static final boolean doDoubleLong(final double lhs, final long rhs) {
-            return doDouble(lhs, rhs);
+            return BooleanObject.wrap(lhs < rhs);
         }
 
-        @Specialization(guards = "!isExactDouble(rhs)")
-        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
-            return BooleanObject.wrap(compareNotExact(lhs, rhs) < 0);
+        @Specialization(guards = "lhs == toDouble(rhs)")
+        protected static final boolean doDoubleLongIdentical(final double lhs, final long rhs) {
+            return BooleanObject.wrap(truncate(lhs) < rhs);
         }
     }
 
@@ -1256,14 +1256,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @Specialization(guards = "lhs != toDouble(rhs)")
         protected static final boolean doDoubleLong(final double lhs, final long rhs) {
-            return doDouble(lhs, rhs);
+            return BooleanObject.wrap(lhs > rhs);
         }
 
-        @Specialization(guards = "!isExactDouble(rhs)")
-        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
-            return BooleanObject.wrap(compareNotExact(lhs, rhs) > 0);
+        @Specialization(guards = "lhs == toDouble(rhs)")
+        protected static final boolean doDoubleLongIdentical(final double lhs, final long rhs) {
+            return BooleanObject.wrap(truncate(lhs) > rhs);
         }
     }
 
@@ -1280,14 +1280,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @Specialization(guards = "lhs != toDouble(rhs)")
         protected static final boolean doDoubleLong(final double lhs, final long rhs) {
-            return doDouble(lhs, rhs);
+            return BooleanObject.wrap(lhs <= rhs);
         }
 
-        @Specialization(guards = "!isExactDouble(rhs)")
-        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
-            return BooleanObject.wrap(compareNotExact(lhs, rhs) <= 0);
+        @Specialization(guards = "lhs == toDouble(rhs)")
+        protected static final boolean doDoubleLongIdentical(final double lhs, final long rhs) {
+            return BooleanObject.wrap(truncate(lhs) <= rhs);
         }
     }
 
@@ -1304,14 +1304,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @Specialization(guards = "lhs != toDouble(rhs)")
         protected static final boolean doDoubleLong(final double lhs, final long rhs) {
-            return doDouble(lhs, rhs);
+            return BooleanObject.wrap(lhs >= rhs);
         }
 
-        @Specialization(guards = "!isExactDouble(rhs)")
-        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
-            return BooleanObject.wrap(compareNotExact(lhs, rhs) >= 0);
+        @Specialization(guards = "lhs == toDouble(rhs)")
+        protected static final boolean doDoubleLongIdentical(final double lhs, final long rhs) {
+            return BooleanObject.wrap(truncate(lhs) >= rhs);
         }
     }
 
@@ -1328,9 +1328,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @SuppressWarnings("unused")
+        @Specialization(guards = "lhs != toDouble(rhs)")
         protected static final boolean doDoubleLong(final double lhs, final long rhs) {
-            return doDouble(lhs, rhs);
+            return BooleanObject.FALSE;
+        }
+
+        @Specialization(guards = "lhs == toDouble(rhs)")
+        protected static final boolean doDoubleLongIdentical(final double lhs, final long rhs) {
+            return BooleanObject.wrap(truncate(lhs) == rhs);
         }
     }
 
@@ -1347,9 +1353,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @SuppressWarnings("unused")
+        @Specialization(guards = "lhs != toDouble(rhs)")
         protected static final boolean doDoubleLong(final double lhs, final long rhs) {
-            return doDouble(lhs, rhs);
+            return BooleanObject.TRUE;
+        }
+
+        @Specialization(guards = "lhs == toDouble(rhs)")
+        protected static final boolean doDoubleLongIdentical(final double lhs, final long rhs) {
+            return BooleanObject.wrap(truncate(lhs) != rhs);
         }
     }
 
@@ -1423,9 +1435,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 551)
     protected abstract static class PrimSmallFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "inSafeIntegerRange(receiver)")
-        protected static final long doDouble(final double receiver,
-                        @Cached final ConditionProfile positiveProfile) {
-            return (long) (positiveProfile.profile(receiver >= 0) ? Math.floor(receiver) : Math.ceil(receiver));
+        protected static final long doDouble(final double receiver) {
+            return truncate(receiver);
         }
 
         @Specialization(guards = "!inSafeIntegerRange(receiver)")
@@ -1595,6 +1606,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final boolean differentSign(final long lhs, final long rhs) {
             return lhs < 0 ^ rhs < 0;
+        }
+
+        protected static final long truncate(final double d) {
+            return (long) (d < 0.0 ? Math.ceil(d) : Math.floor(d));
         }
     }
 

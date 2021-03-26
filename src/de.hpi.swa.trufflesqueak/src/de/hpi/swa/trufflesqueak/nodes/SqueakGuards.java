@@ -185,4 +185,8 @@ public final class SqueakGuards {
     public static long to0(final long value) {
         return value - 1;
     }
+
+    public static double toDouble(final long value) {
+        return value;
+    }
 }
