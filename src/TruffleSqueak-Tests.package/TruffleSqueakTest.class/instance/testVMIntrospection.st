@@ -1,9 +1,9 @@
 testing
 testVMIntrospection
-	| testObject |
+	| testObject metaObject |
 	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
 
-	testObject := (TruffleSqueakUtilities primitiveGetVMObject: SmalltalkImage).
+	testObject := SmalltalkImage vmObject.
 	"Every Java object understands hashCode"
 	self assert: (Interop fitsInLong: testObject hashCode).
 	"Ensure that class has a layout"
@@ -12,3 +12,10 @@ testVMIntrospection
 	self assert: 'Object' equals: testObject getSuperclass toString asString.
 	"Allocate Object[]"
 	self assert: 10 equals: (testObject getOtherPointers getClass new: 10) size.
+	
+	"Meta Object API"
+	self assert: (Interop hasMetaObject: testObject).
+	metaObject := Interop getMetaObject: testObject..
+	self assert: (Interop isMetaObject: metaObject).
+	self assert: 'ClassObject' equals: (Interop getMetaSimpleName: metaObject) asString.	
+	self assert: (Interop isMetaInstance: metaObject instance: testObject).	
