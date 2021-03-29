@@ -652,4 +652,58 @@ public final class JavaObjectWrapper implements TruffleObject {
             lib.writeArrayElement(object, index, value);
         }
     }
+
+    // Meta Object API
+
+    @ExportMessage
+    protected boolean hasMetaObject() {
+        return true;
+    }
+
+    @ExportMessage
+    protected Object getMetaObject() {
+        return wrap(wrappedObject.getClass());
+    }
+
+    @ExportMessage
+    protected boolean isMetaObject() {
+        return isClass();
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    protected Object getMetaQualifiedName() throws UnsupportedMessageException {
+        if (isClass()) {
+            return asClass().getTypeName();
+        } else {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    protected Object getMetaSimpleName() throws UnsupportedMessageException {
+        if (isClass()) {
+            return asClass().getSimpleName();
+        } else {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    protected boolean isMetaInstance(final Object other) throws UnsupportedMessageException {
+        if (isClass()) {
+            final Class<?> c = asClass();
+            if (other instanceof JavaObjectWrapper) {
+                final Object otherWrappedObject = ((JavaObjectWrapper) other).wrappedObject;
+                assert otherWrappedObject != null;
+                return c.isInstance(otherWrappedObject);
+            } else {
+                return false;
+            }
+        } else {
+            throw UnsupportedMessageException.create();
+        }
+    }
 }
