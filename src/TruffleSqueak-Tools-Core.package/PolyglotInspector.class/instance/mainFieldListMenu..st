@@ -7,7 +7,8 @@ mainFieldListMenu: aMenu
 	aMenu addList: #(
 		('inspect (i)'						inspectSelection)
 		('explore (I)'						exploreSelection)
-		('basic inspect'						inspectSelectionBasic)).
+		('basic inspect'						inspectSelectionBasic)
+		('inspect VM object'					inspectVMObject)).
 
 	(#(self ellipsis element nil) includes: self typeOfSelection)
 		ifTrue: [self addCollectionItemsTo: aMenu].
