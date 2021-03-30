@@ -1,6 +1,6 @@
 testing
 testVMIntrospection
-	| testObject metaObject |
+	| testObject metaObject markingFlag |
 	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
 
 	testObject := SmalltalkImage vmObject.
@@ -12,6 +12,14 @@ testVMIntrospection
 	self assert: 'Object' equals: testObject getSuperclass toString asString.
 	"Allocate Object[]"
 	self assert: 10 equals: (testObject getOtherPointers getClass new: 10) size.
+	"Test inst vars"
+	self assert: (testObject allInstVarNames includesAllOf: #('squeakHash' 'squeakClass' 'superclass' 'methodDict')).
+	self deny: (testObject allInstVarNames includesAnyOf: #('clone' 'become' 'finalize' 'object0')).
+	"Read and write inst vars"
+	markingFlag := testObject markingFlag.
+	self assert: (testObject markingFlag: markingFlag not) = markingFlag not.
+	self assert: testObject markingFlag = markingFlag not.
+	testObject markingFlag: markingFlag.
 	
 	"Meta Object API"
 	self assert: (Interop hasMetaObject: testObject).
