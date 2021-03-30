@@ -13,7 +13,7 @@ suite = {
     "mxversion": "5.281.3",
     "versionConflictResolution": "latest",
 
-    "version": "21.1.0-dev",
+    "version": "21.1.0",
     "trufflesqueak:dependencyMap": {
         "graalvm": "21.0.0",
         "image": "TruffleSqueakImage-21.1.0-dev.zip",
