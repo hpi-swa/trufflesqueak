@@ -1,5 +1,5 @@
 image creation
-setupImage
+setUpImage
 	"Install polyglot tools"
 	PolyglotToolSet register.
 	ToolSet default: PolyglotToolSet.
@@ -11,6 +11,10 @@ setupImage
 	"Avoid UnknownSelector popups"
 	UnknownSelector compile: 'openMenuIn: aBlock
 	^ self resume: name asSymbol'.
+	
+	"Adjust menus"
+	self adjustAppsMenu.
+	self adjustDoMenu.
 
 	"Disable performance killers"
 	Morph useSoftDropShadow: false.

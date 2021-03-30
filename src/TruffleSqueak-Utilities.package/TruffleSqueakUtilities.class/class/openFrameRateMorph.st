@@ -1,0 +1,3 @@
+world menu
+openFrameRateMorph
+	FrameRateMorph new openInHand

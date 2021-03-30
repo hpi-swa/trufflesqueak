@@ -1,6 +1,8 @@
 {
 	"class" : {
 		"callTargetInfoStringFor:" : "fn 3/12/2021 14:05",
+		"initialize" : "fn 3/29/2021 21:42",
+		"registerInWorldMenu" : "fn 3/29/2021 21:58",
 		"showClassIcons" : "fn 2/16/2021 22:17",
 		"showMessageIcons" : "fn 2/16/2021 22:17",
 		"textColorFor:with:" : "fn 3/12/2021 11:14" },

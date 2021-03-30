@@ -1,5 +1,5 @@
 image creation
-setupTestImage
+setUpTestImage
 	| manifest load |
 	manifest := #(
 		('http://source.squeak.org/FFI'                     1 ('FFI-Pools' 'FFI-Kernel' 'FFI-Tests'))
@@ -54,4 +54,4 @@ setupTestImage
 	"The DecompilerTests use this in MethodNode>>printPrimitiveOn:"
 	(Smalltalk at: #StackInterpreter) initializePrimitiveTable.
 
-	self setupImage
+	self setUpImage
