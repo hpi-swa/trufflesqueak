@@ -122,6 +122,18 @@ download-asset() {
     "https://github.com/${GITHUB_SLUG}/releases/download/${git_tag}/${filename}"
 }
 
+download-trufflesqueak-icon() {
+  local target="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/io/trufflesqueak-icon.png"
+
+  if ls -1 ${target} 2>/dev/null; then
+    echo "[TruffleSqueak icon already downloaded]"
+    return
+  fi
+
+  download-asset "${DEP_ICON}" "${DEP_ICON_TAG}" "${target}"
+  echo "[TruffleSqueak icon downloaded successfully]"
+}
+
 download-trufflesqueak-image() {
   local target_dir="${BASE_DIRECTORY}/src/resources"
 
@@ -203,6 +215,7 @@ set-up-dependencies() {
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
   download-trufflesqueak-image
   download-trufflesqueak-test-image
+  download-trufflesqueak-icon
 
   if [[ "${java_version}" == "java8" ]]; then
     set-up-openjdk8-jvmci "${HOME}"

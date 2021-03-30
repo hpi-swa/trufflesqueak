@@ -10,6 +10,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -29,6 +30,8 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.List;
 
@@ -56,6 +59,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
     private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
+    private static final URL ICON_URL = SqueakDisplay.class.getResource("trufflesqueak-icon.png");
     @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
 
     public final SqueakImageContext image;
@@ -72,6 +76,10 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private Point rememberedWindowLocation;
     private boolean deferUpdates;
 
+    static {
+        tryToSetTaskbarIcon();
+    }
+
     public SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
         frame.add(canvas);
@@ -81,6 +89,21 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
         frame.setResizable(true);
         installEventListeners();
+    }
+
+    @TruffleBoundary
+    private static void tryToSetTaskbarIcon() {
+        // java.awt.Taskbar introduced in JDK 9, call it reflectively.
+        try {
+            final Image icon = TOOLKIT.getImage(ICON_URL);
+            final Class<?> tbClass = Class.forName("java.awt.Taskbar");
+            final Method getter = tbClass.getMethod("getTaskbar");
+            final Object tb = getter.invoke(getter);
+            final Method setter = tb.getClass().getMethod("setIconImage", Image.class);
+            setter.invoke(tb, icon);
+        } catch (final Exception e) {
+            // Ignore
+        }
     }
 
     @SuppressWarnings("unused")
