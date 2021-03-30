@@ -9,7 +9,6 @@ Graal runtime inspect.
 -
 RPlotMorph example.
 -
-TruffleSqueakUtilities openTruffleSqueakTests.
 TruffleSqueakUtilities setUpImage.
 -
 ', Utilities commonRequestStrings contents

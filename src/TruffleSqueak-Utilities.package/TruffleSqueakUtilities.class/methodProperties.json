@@ -1,7 +1,7 @@
 {
 	"class" : {
-		"adjustAppsMenu" : "fn 3/29/2021 22:18",
-		"adjustDoMenu" : "fn 3/30/2021 10:04",
+		"adjustAppsMenu" : "fn 3/30/2021 10:24",
+		"adjustDoMenu" : "fn 3/30/2021 10:30",
 		"arrayStatistics" : "fn 1/27/2021 15:25",
 		"getAllLayouts" : "fn 2/1/2021 14:59",
 		"layoutStatistics" : "fn 1/27/2021 15:26",
@@ -17,8 +17,8 @@
 		"openTruffleSqueakTests" : "fn 3/30/2021 09:54",
 		"primitiveFormToBufferedImage:" : "fn 4/29/2020 12:29",
 		"primitiveGetVMObject:" : "fn 3/21/2020 16:23",
-		"registerInWorldMenu" : "fn 3/29/2021 22:04",
-		"setUpImage" : "fn 3/30/2021 09:56",
+		"registerInWorldMenu" : "fn 3/30/2021 10:31",
+		"setUpImage" : "fn 3/30/2021 10:18",
 		"setUpTestImage" : "fn 3/30/2021 09:45" },
 	"instance" : {
 		 } }

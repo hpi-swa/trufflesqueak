@@ -12,9 +12,13 @@ setUpImage
 	UnknownSelector compile: 'openMenuIn: aBlock
 	^ self resume: name asSymbol'.
 	
-	"Adjust menus"
+	"Adjust main docking bar"
+	TheWorldMainDockingBar
+		showProjectsMenuInWorldMainDockingBar: false;
+		showToolsMenuInWorldMainDockingBar: false.
 	self adjustAppsMenu.
 	self adjustDoMenu.
+	DockingBarUpdatingItemMorph allInstances do: [ :ea | ea abandon ].
 
 	"Disable performance killers"
 	Morph useSoftDropShadow: false.
