@@ -16,6 +16,7 @@ import mx_sdk
 import mx_truffle
 import mx_unittest
 
+_SUITE = mx.suite('trufflesqueak')
 
 LANGUAGE_ID = 'smalltalk'
 PACKAGE_NAME = 'de.hpi.swa.trufflesqueak'
@@ -23,10 +24,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 BASE_VM_ARGS = [
     # Tweak Runtime
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
-
-    # Tweak GraalVM Engine
-    '-Dpolyglot.engine.Mode=latency',
 ]
+
+if mx.is_darwin():
+    BASE_VM_ARGS.append('-Xdock:name=TruffleSqueak %s' % _SUITE.release_version())
+
 BASE_VM_ARGS_TESTING = BASE_VM_ARGS[:]
 BASE_VM_ARGS_TESTING.extend([
     # Tweak GC for GitHub Actions
@@ -53,13 +55,15 @@ else:
     BASE_VM_ARGS.append('-XX:NewSize=1G')         # Initial new generation size
     BASE_VM_ARGS.append('-XX:MetaspaceSize=32M')  # Initial size of Metaspaces
 
-_suite = mx.suite('trufflesqueak')
-_compiler = mx.suite('compiler', fatalIfMissing=False)
-_svm = mx.suite('substratevm', fatalIfMissing=False)
+_COMPILER = mx.suite('compiler', fatalIfMissing=False)
+_SVM = mx.suite('substratevm', fatalIfMissing=False)
 
-if _compiler:
+if _COMPILER:
+    # Tweak GraalVM Engine
+    BASE_VM_ARGS.append('-Dpolyglot.engine.Mode=latency')
+    BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.Mode=latency')
+
     BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.CompilationFailureAction=Diagnose')
-
 
 def _graal_vm_args(args):
     graal_args = ['-Dpolyglot.engine.AllowExperimentalOptions=true']
@@ -297,7 +301,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
     vm_args = BASE_VM_ARGS + _get_runtime_jvm_args(jdk)
 
-    if _compiler:
+    if _COMPILER:
         vm_args += _graal_vm_args(parsed_args)
 
     # default: assertion checking is enabled
@@ -370,7 +374,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.extend(parsed_args.image_arguments)
 
     if not jdk:
-        jdk = mx.get_jdk(tag='jvmci' if _compiler else None)
+        jdk = mx.get_jdk(tag='jvmci' if _COMPILER else None)
 
     return mx.run_java(vm_args + squeak_arguments, jdk=jdk, **kwargs)
 
@@ -546,7 +550,7 @@ _enable_local_compression()
 
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
-    suite=_suite,
+    suite=_SUITE,
     name='TruffleSqueak',
     short_name='st',
     dir_name=LANGUAGE_ID,
@@ -573,7 +577,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             ],
         )
     ],
-    post_install_msg=(None if not _svm else "\nNOTES:\n---------------\n" +
+    post_install_msg=(None if not _SVM else "\nNOTES:\n---------------\n" +
             "TruffleSqueak (SVM) requires SDL2 to be installed on your system:\n" +
             "- On Debian/Ubuntu, you can install SDL2 via `sudo apt-get install libsdl2-2.0`.\n" +
             "- On macOS, you can install SDL2 with Homebrew: `brew install sdl2`.\n\n" +
@@ -582,12 +586,12 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
 ))
 
 
-mx.update_commands(_suite, {
+mx.update_commands(_SUITE, {
     'squeak': [_squeak, '[options]'],
     'squeak-gvm': [_squeak_graalvm_launcher, '[options]'],
 })
 
-mx_gate.add_gate_runner(_suite, _trufflesqueak_gate_runner)
+mx_gate.add_gate_runner(_SUITE, _trufflesqueak_gate_runner)
 
 if mx.is_windows():
     # This patch works around "SSL: CERTIFICATE_VERIFY_FAILED" errors (See
