@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-hashes
+interopIsHashEntryInsertable: key
+	self subclassResponsibility

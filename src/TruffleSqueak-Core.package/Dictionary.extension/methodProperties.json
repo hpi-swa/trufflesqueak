@@ -1,0 +1,21 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"interopGetHashEntriesIterator" : "fn 3/31/2021 14:02",
+		"interopGetHashKeysIterator" : "fn 3/31/2021 15:10",
+		"interopGetHashSize" : "fn 3/31/2021 13:34",
+		"interopGetHashValuesIterator" : "fn 3/31/2021 15:10",
+		"interopGetIterator" : "fn 3/31/2021 14:04",
+		"interopHasHashEntries" : "fn 3/31/2021 13:33",
+		"interopHasIterator" : "fn 3/31/2021 14:03",
+		"interopIsHashEntryExisting:" : "fn 3/31/2021 13:36",
+		"interopIsHashEntryInsertable:" : "fn 3/31/2021 13:37",
+		"interopIsHashEntryModifiable:" : "fn 3/31/2021 13:37",
+		"interopIsHashEntryReadable:" : "fn 3/31/2021 13:38",
+		"interopIsHashEntryRemovable:" : "fn 3/31/2021 13:37",
+		"interopIsHashEntryWritable:" : "fn 3/31/2021 13:37",
+		"interopReadHashValue:" : "fn 3/31/2021 13:39",
+		"interopReadHashValueOrDefault:and:" : "fn 3/31/2021 13:40",
+		"interopRemoveHashEntry:" : "fn 3/31/2021 13:42",
+		"interopWriteHashEntry:and:" : "fn 3/31/2021 13:42" } }

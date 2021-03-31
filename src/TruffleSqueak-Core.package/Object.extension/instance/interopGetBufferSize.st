@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-buffers
+interopGetBufferSize
+	self subclassResponsibility

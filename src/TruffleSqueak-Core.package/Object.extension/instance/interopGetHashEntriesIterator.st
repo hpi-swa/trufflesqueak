@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-hashes
+interopGetHashEntriesIterator
+	self subclassResponsibility
