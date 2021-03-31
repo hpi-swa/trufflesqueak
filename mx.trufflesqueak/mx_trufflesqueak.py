@@ -27,7 +27,7 @@ BASE_VM_ARGS = [
 ]
 
 if mx.is_darwin():
-    BASE_VM_ARGS.append('-Xdock:name=TruffleSqueak %s' % _SUITE.release_version())
+    BASE_VM_ARGS.append('-Xdock:name=TruffleSqueak')
 
 BASE_VM_ARGS_TESTING = BASE_VM_ARGS[:]
 BASE_VM_ARGS_TESTING.extend([
