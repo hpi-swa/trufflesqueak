@@ -238,12 +238,6 @@ public final class SqueakImageContext {
         return smalltalk.send(this, "at:ifAbsent:", asByteSymbol(member), NilObject.SINGLETON);
     }
 
-    /* Returns ClassObject if present, nil otherwise. */
-    public Object classNamed(final String className) {
-        CompilerAsserts.neverPartOfCompilation();
-        return smalltalk.send(this, "classNamed:", asByteString(className));
-    }
-
     public boolean patch(final SqueakLanguage.Env newEnv) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         env = newEnv;
@@ -286,8 +280,8 @@ public final class SqueakImageContext {
          */
 
         if (parserSharedInstance == null) {
-            parserSharedInstance = (PointersObject) ((ClassObject) classNamed("Parser")).send(this, "new");
-            final Object polyglotRequestorClassOrNil = classNamed("PolyglotRequestor");
+            parserSharedInstance = (PointersObject) ((ClassObject) lookup("Parser")).send(this, "new");
+            final Object polyglotRequestorClassOrNil = lookup("PolyglotRequestor");
             if (polyglotRequestorClassOrNil instanceof ClassObject) {
                 requestorSharedInstanceOrNil = (AbstractSqueakObject) ((ClassObject) polyglotRequestorClassOrNil).send(this, "default");
             } else {
@@ -657,7 +651,7 @@ public final class SqueakImageContext {
     public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode) {
         if (fractionClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final Object fractionLookup = classNamed("Fraction");
+            final Object fractionLookup = lookup("Fraction");
             if (fractionLookup instanceof ClassObject) {
                 fractionClass = (ClassObject) fractionLookup;
             } else {
