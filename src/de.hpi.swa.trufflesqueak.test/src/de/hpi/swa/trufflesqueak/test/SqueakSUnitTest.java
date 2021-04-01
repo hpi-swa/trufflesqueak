@@ -12,9 +12,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.Assume;
@@ -61,6 +66,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @RunWith(Parameterized.class)
 public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
+    private static final String LOAD_TEMPLATE_FILE_NAME = "LoadTruffleSqueakPackages.st";
     private static final String TEST_CLASS_PROPERTY = "squeakTests";
 
     protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
@@ -104,7 +110,9 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     @Test
     public void runSqueakTest() throws Throwable {
         checkTermination();
-        ensureTruffleSqueakPackagesLoaded(test);
+        if (!truffleSqueakPackagesLoaded && inTruffleSqueakPackage(test.className)) {
+            loadTruffleSqueakPackages(test);
+        }
 
         TestResult result = null;
         try {
@@ -119,7 +127,6 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             try {
                 image.getError().println("Closing current image context and reloading: " + result.message);
                 reloadImage();
-                truffleSqueakPackagesLoaded = false;
             } catch (final RuntimeException e) {
                 exceptionDuringReload = e;
             }
@@ -196,13 +203,6 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
     }
 
-    private static void ensureTruffleSqueakPackagesLoaded(final SqueakTest test) {
-        if (!truffleSqueakPackagesLoaded && inTruffleSqueakPackage(test.className)) {
-            image.getOutput().println("\nLoading TruffleSqueak packages (required by " + test.className + "). This may take a while...");
-            loadTruffleSqueakPackages();
-        }
-    }
-
     private static boolean inTruffleSqueakPackage(final String className) {
         for (final String testCaseName : TRUFFLESQUEAK_TEST_CASE_NAMES) {
             if (testCaseName.equals(className)) {
@@ -212,17 +212,27 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         return false;
     }
 
-    private static void loadTruffleSqueakPackages() {
+    private static void loadTruffleSqueakPackages(final SqueakTest test) {
         final long start = System.currentTimeMillis();
-        evaluate(String.format("[ | mc |\n" +
-                        "    mc := MCFileTreeRepository path: '%s'.\n" +
-                        "    [ Installer monticello\n" +
-                        "        mc: mc;\n" +
-                        "        packages: mc allPackageNames;\n" +
-                        "        install ] on: Warning do: [ :w | w resume ] ] on: Error do: [ :e | e retry ]",
-                        getPathToInImageCode()));
+        image.getOutput().println("\nLoading TruffleSqueak packages (required by " + test + "). This may take a while...");
+        final String loadTemplate;
+        try (InputStream is = SqueakSUnitTest.class.getResourceAsStream(LOAD_TEMPLATE_FILE_NAME)) {
+            if (is == null) {
+                image.getOutput().println("Unable to find load template for TruffleSqueak packages");
+                return;
+            }
+            // TODO: Use new String(is.readAllBytes()) once support for JDK8 is dropped.
+            try (InputStreamReader isr = new InputStreamReader(is);
+                            BufferedReader reader = new BufferedReader(isr)) {
+                loadTemplate = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+            }
+        } catch (final IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        evaluate(String.format(loadTemplate, getPathToInImageCode()));
         truffleSqueakPackagesLoaded = true;
-        image.getOutput().println("TruffleSqueak packages loaded in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
+        image.getOutput().println("TruffleSqueak packages loaded and image saved in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
     }
 
     private static Map<TestType, Long> countByType(final Collection<SqueakTest> tests) {
