@@ -532,7 +532,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         protected static final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.getResourcesDirectory();
+            return image.getResourcesPath(); // Must end with file separator
         }
     }
 

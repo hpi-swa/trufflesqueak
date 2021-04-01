@@ -116,6 +116,7 @@ public final class SqueakImageContext {
     public final SqueakImageFlags flags = new SqueakImageFlags();
     private String imagePath;
     private final TruffleFile homePath;
+    @CompilationFinal(dimensions = 1) private byte[] resourcesDirectoryBytes;
     @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
     private final boolean isHeadless;
     public final SqueakContextOptions options;
@@ -349,7 +350,17 @@ public final class SqueakImageContext {
     }
 
     public NativeObject getResourcesDirectory() {
-        if (resourcesPathBytes == null) {
+        ensureResourcesDirectoryAndPathInitialized();
+        return NativeObject.newNativeBytes(this, byteStringClass, resourcesDirectoryBytes.clone());
+    }
+
+    public NativeObject getResourcesPath() {
+        ensureResourcesDirectoryAndPathInitialized();
+        return NativeObject.newNativeBytes(this, byteStringClass, resourcesPathBytes.clone());
+    }
+
+    private void ensureResourcesDirectoryAndPathInitialized() {
+        if (resourcesDirectoryBytes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final String languageHome = getLanguage().getTruffleLanguageHome();
             final TruffleFile path;
@@ -361,9 +372,9 @@ public final class SqueakImageContext {
                     throw SqueakException.create("`parent` should not be `null`.");
                 }
             }
-            resourcesPathBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath());
+            resourcesDirectoryBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath());
+            resourcesPathBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath() + env.getFileNameSeparator());
         }
-        return NativeObject.newNativeBytes(this, byteStringClass, resourcesPathBytes.clone());
     }
 
     public long getGlobalClassCounter() {
