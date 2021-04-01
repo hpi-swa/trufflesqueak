@@ -24,8 +24,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class PointersObject extends AbstractPointersObject {
-    private static final Object[] HIDDEN_OBJECT_MARKER = new Object[0];
-
     public PointersObject(final SqueakImageContext image) {
         super(image); // for special PointersObjects only
     }
@@ -49,12 +47,11 @@ public final class PointersObject extends AbstractPointersObject {
     public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
         final PointersObject handle = new PointersObject(image, image.pointClass);
         handle.object2 = hiddenObject;
-        handle.objectExtension = HIDDEN_OBJECT_MARKER;
         return handle;
     }
 
     public Object getHiddenObject() {
-        assert getSqueakClass().isPoint() && objectExtension == HIDDEN_OBJECT_MARKER : "Object not a handle with hidden object";
+        assert getSqueakClass().isPoint() : "Object cannot be a handle with hidden object";
         return object2;
     }
 
