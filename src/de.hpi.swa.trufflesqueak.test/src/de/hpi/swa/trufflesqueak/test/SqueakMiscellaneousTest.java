@@ -18,7 +18,8 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
+@SuppressWarnings("static-method")
+public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
     private static final String ALL_BYTECODES_EXPECTED_RESULT = String.join("\n", "1 <8B 1F 00> callPrimitive: 31",
                     "2 <1F> pushTemp: 15",
                     "3 <20> pushConstant: 'someSelector'",

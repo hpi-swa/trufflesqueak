@@ -24,7 +24,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 
-public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
+@SuppressWarnings("static-method")
+public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testBasic() {
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();

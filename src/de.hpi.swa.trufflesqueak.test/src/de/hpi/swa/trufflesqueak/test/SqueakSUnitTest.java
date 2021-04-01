@@ -59,7 +59,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
  * </p>
  */
 @RunWith(Parameterized.class)
-public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
+public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static final String TEST_CLASS_PROPERTY = "squeakTests";
 

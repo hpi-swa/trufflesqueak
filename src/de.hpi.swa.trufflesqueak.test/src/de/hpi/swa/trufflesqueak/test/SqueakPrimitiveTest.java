@@ -22,7 +22,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
-public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
+public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPrimEquivalent() {
         final AbstractSqueakObject rcvr = image.specialObjectsArray;

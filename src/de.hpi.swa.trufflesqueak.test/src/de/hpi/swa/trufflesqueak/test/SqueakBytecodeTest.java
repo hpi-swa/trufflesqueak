@@ -38,7 +38,8 @@ import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 
-public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
+@SuppressWarnings("static-method")
+public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Rule public ExpectedException exceptions = ExpectedException.none();
 
     @Test

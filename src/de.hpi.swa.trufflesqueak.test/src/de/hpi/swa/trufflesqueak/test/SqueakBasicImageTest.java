@@ -24,8 +24,9 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 
+@SuppressWarnings("static-method")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
+public final class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
 
     @Test
     public void test01AsSymbol() {
