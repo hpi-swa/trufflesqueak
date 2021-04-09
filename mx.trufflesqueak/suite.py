@@ -88,7 +88,7 @@ suite = {
                 "BOUNCY_CASTLE_CRYPTO_LIB",
                 "truffle:TRUFFLE_API",
             ],
-            "checkstyleVersion": "8.8",
+            "checkstyleVersion": "8.36.1",
             "jacoco": "include",
             "javaCompliance": "8+",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
