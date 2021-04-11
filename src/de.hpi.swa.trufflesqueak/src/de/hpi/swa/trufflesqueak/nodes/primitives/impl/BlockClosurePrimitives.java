@@ -217,7 +217,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
-    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue0Node extends AbstractClosurePrimitiveNode implements UnaryPrimitiveFallback {
@@ -236,7 +235,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
-    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue1Node extends AbstractClosurePrimitiveNode implements BinaryPrimitiveFallback {
@@ -259,7 +257,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
-    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue2Node extends AbstractClosurePrimitiveNode implements TernaryPrimitiveFallback {
@@ -284,7 +281,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
-    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue3Node extends AbstractClosurePrimitiveNode implements QuaternaryPrimitiveFallback {
@@ -311,7 +307,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
-    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue4Node extends AbstractClosurePrimitiveNode implements QuinaryPrimitiveFallback {
@@ -340,7 +335,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
-    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue5Node extends AbstractClosurePrimitiveNode implements SenaryPrimitiveFallback {
