@@ -3,8 +3,8 @@ fieldMetaObjectInfo
 
 	^ (self newFieldForType: #misc key: #metaObjectInfo)
 		name: 'meta object info'; emphasizeName;
-		valueGetter: [:object | | metaObject |
-			metaObject := Interop getMetaObject: object.
+		valueGetter: [ :o | | metaObject |
+			metaObject := Interop getMetaObject: o.
 			 'Simple name:	{1}
 Qualified name:	{2}' format: {
 				(Interop getMetaSimpleName: metaObject) asString.

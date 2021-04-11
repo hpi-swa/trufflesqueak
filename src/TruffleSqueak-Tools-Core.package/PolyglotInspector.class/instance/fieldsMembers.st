@@ -30,12 +30,12 @@ fieldsMembers
 			yourself } ] ifEmpty: [ {} ]),
 		(invocables ifNotEmpty: [ { (self newFieldForType: #misc key: #membersInvocable)
 			name: 'members (invocable)'; emphasizeName;
-			valueGetter: [:object | 
+			valueGetter: [ :o | 
 				String streamContents: [ :aStream |
 					invocables do: [ :member |
 						aStream
 							nextPutAll: member;
-							nextPutAll: ((Interop isMemberReadable: self object member: member)
+							nextPutAll: ((Interop isMemberReadable: o member: member)
 								ifTrue: [ ' (readable)' ]
 								ifFalse: [ ' (non-readable)' ]);
 							cr] ] ]; printValueAsIs;

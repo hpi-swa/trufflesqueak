@@ -8,6 +8,6 @@ streamArrayElementsOn: aStream
 							ifTrue: [ Interop getArraySize: self object ] ifFalse: [ 0 ] ))
 		collectFields: [:index |
 			(self newFieldForType: #indexed key: index)
-				valueGetter: [:object | Interop readArrayElement: object index: index];
-				valueSetter: [:object :value | Interop writeArrayElement: object index: index value: value];
+				valueGetter: [ :o | Interop readArrayElement: o index: index];
+				valueSetter: [ :o :value | Interop writeArrayElement: o index: index value: value];
 				yourself]
