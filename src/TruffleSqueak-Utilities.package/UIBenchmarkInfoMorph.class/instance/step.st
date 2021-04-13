@@ -7,7 +7,7 @@ step
 	(mSecs > 500 or: [mSecs < 0 "clock wrap-around"]) ifTrue: 
 		[framesPerSec := (framesSinceLastDisplay * 1000) // mSecs.
 		queueSize := Graal runtime ifNil: [ 'n/a' ] ifNotNil: [ :r | r getCompilationQueueSize asNumber ].
-		newContents := 'Frame rate: ', framesPerSec printString, ' fps / Graal queue: ', queueSize.
+		newContents := 'Time: ', now, '; Frame rate: ', framesPerSec, 'fps; Graal queue size: ', queueSize, ';'.
 		self contents: newContents.
 		FileStream stdout nextPutAll: newContents; cr; flush.
 		lastDisplayTime := now.
