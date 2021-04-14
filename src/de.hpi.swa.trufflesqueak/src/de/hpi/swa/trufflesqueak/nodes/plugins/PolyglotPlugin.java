@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +26,10 @@ import com.oracle.truffle.api.instrumentation.TruffleInstrument;
 import com.oracle.truffle.api.interop.ExceptionType;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.InvalidBufferOffsetException;
+import com.oracle.truffle.api.interop.StopIterationException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnknownKeyException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -555,6 +559,194 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     /*
+     * Hashes
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasHashEntries")
+    protected abstract static class PrimHasHashEntriesNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final boolean doHasHashEntries(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasHashEntries(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetHashSize")
+    protected abstract static class PrimGetHashSizeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final long doGetHashSize(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getHashSize(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHashEntryReadable")
+    protected abstract static class PrimIsHashEntryReadableNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final boolean doIsHashEntryReadable(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isHashEntryReadable(object, key));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadHashValue")
+    protected abstract static class PrimReadHashValueNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.isHashEntryReadable(object, key)")
+        protected static final Object doReadHashValue(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.readHashValue(object, key);
+            } catch (UnsupportedMessageException | UnknownKeyException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadHashValueOrDefault")
+    protected abstract static class PrimReadHashValueOrDefaultNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final Object doReadHashValueOrDefault(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key, final Object defaultValue,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.readHashValueOrDefault(object, key, defaultValue);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHashEntryModifiable")
+    protected abstract static class PrimIsHashEntryModifiableNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final boolean doIsHashEntryModifiable(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isHashEntryModifiable(object, key));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHashEntryInsertable")
+    protected abstract static class PrimIsHashEntryInsertableNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final boolean doIsHashEntryInsertable(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isHashEntryInsertable(object, key));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHashEntryWritable")
+    protected abstract static class PrimIsHashEntryWritableNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final boolean doIsHashEntryWritable(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isHashEntryWritable(object, key));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWriteHashEntry")
+    protected abstract static class PrimWriteHashEntryNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final Object doWriteHashEntry(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key, final Object value,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.writeHashEntry(object, key, value);
+                return value;
+            } catch (final UnsupportedMessageException | UnknownKeyException | UnsupportedTypeException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHashEntryRemovable")
+    protected abstract static class PrimIsHashEntryRemovableNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final boolean doIsHashEntryRemovable(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isHashEntryRemovable(object, key));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveRemoveHashEntry")
+    protected abstract static class PrimRemoveHashEntryNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final Object doRemoveHashEntry(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.removeHashEntry(object, key);
+            } catch (UnsupportedMessageException | UnknownKeyException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+            return object;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHashEntryExisting")
+    protected abstract static class PrimIsHashEntryExistingNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final boolean doIsHashEntryExisting(@SuppressWarnings("unused") final Object receiver, final Object object, final Object key,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isHashEntryExisting(object, key));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetHashEntriesIterator")
+    protected abstract static class PrimGetHashEntriesIteratorNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final Object doGetHashEntriesIterator(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getHashEntriesIterator(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetHashKeysIterator")
+    protected abstract static class PrimGetHashKeysIteratorNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final Object doGetHashKeysIterator(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getHashKeysIterator(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetHashValuesIterator")
+    protected abstract static class PrimGetHashValuesIteratorNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasHashEntries(object)")
+        protected static final Object doGetHashValuesIterator(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getHashValuesIterator(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    /*
      * Array-like objects
      */
 
@@ -690,7 +882,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     /*
-     * Dictionary-like objects
+     * Members
      */
 
     @GenerateNodeFactory
@@ -905,6 +1097,222 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 lib.writeMember(object, member.asStringUnsafe(), value);
                 return value;
             } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    /*
+     * Buffers
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasBufferElements")
+    protected abstract static class PrimHasBufferElementsNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final boolean doHasBufferElements(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasBufferElements(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsBufferWritable")
+    protected abstract static class PrimIsBufferWritableNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final boolean doIsBufferWritable(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return BooleanObject.wrap(lib.isBufferWritable(object));
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetBufferSize")
+    protected abstract static class PrimGetBufferSizeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doGetBufferSize(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getBufferSize(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadBufferByte")
+    protected abstract static class PrimReadBufferByteNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doReadBufferByte(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.readBufferByte(object, byteOffset);
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWriteBufferByte")
+    protected abstract static class PrimWriteBufferByteNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doWriteBufferByte(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.writeBufferByte(object, byteOffset, (byte) value);
+                return value;
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadBufferShort")
+    protected abstract static class PrimReadBufferShortNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doReadBufferShort(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.readBufferShort(object, ByteOrder.nativeOrder(), byteOffset);
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWriteBufferShort")
+    protected abstract static class PrimWriteBufferShortNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doWriteBufferShort(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.writeBufferShort(object, ByteOrder.nativeOrder(), byteOffset, (short) value);
+                return value;
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadBufferInt")
+    protected abstract static class PrimReadBufferIntNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doReadBufferInt(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.readBufferInt(object, ByteOrder.nativeOrder(), byteOffset);
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWriteBufferInt")
+    protected abstract static class PrimWriteBufferIntNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doWriteBufferInt(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.writeBufferInt(object, ByteOrder.nativeOrder(), byteOffset, (int) value);
+                return value;
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadBufferLong")
+    protected abstract static class PrimReadBufferLongNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doReadBufferLong(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.readBufferLong(object, ByteOrder.nativeOrder(), byteOffset);
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWriteBufferLong")
+    protected abstract static class PrimWriteBufferLongNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final long doWriteBufferLong(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.writeBufferLong(object, ByteOrder.nativeOrder(), byteOffset, value);
+                return value;
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadBufferFloat")
+    protected abstract static class PrimReadBufferFloatNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final double doReadBufferFloat(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.readBufferFloat(object, ByteOrder.nativeOrder(), byteOffset);
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWriteBufferFloat")
+    protected abstract static class PrimWriteBufferFloatNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final double doWriteBufferFloat(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final double value,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.writeBufferFloat(object, ByteOrder.nativeOrder(), byteOffset, (float) value);
+                return value;
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadBufferDouble")
+    protected abstract static class PrimReadBufferDoubleNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final double doReadBufferDouble(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.readBufferDouble(object, ByteOrder.nativeOrder(), byteOffset);
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWriteBufferDouble")
+    protected abstract static class PrimWriteBufferDoubleNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasBufferElements(object)")
+        protected static final double doWriteBufferDouble(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final double value,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.writeBufferDouble(object, ByteOrder.nativeOrder(), byteOffset, value);
+                return value;
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
         }
@@ -1478,6 +1886,72 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             final String message = messageObject.asStringUnsafe();
             final String source = sourceObject.asStringUnsafe();
             throw new SqueakSyntaxError(message, (int) position, source);
+        }
+    }
+
+    /*
+     * Iterator
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasIterator")
+    protected abstract static class PrimHasIteratorNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final boolean doHasIterator(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasIterator(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetIterator")
+    protected abstract static class PrimGetIteratorNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.hasIterator(object)")
+        protected static final Object doGetIterator(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getIterator(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsIterator")
+    protected abstract static class PrimIsIteratorNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final boolean doIsIterator(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isIterator(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasIteratorNextElement")
+    protected abstract static class PrimHasIteratorNextElementNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.isIterator(object)")
+        protected static final boolean doHasIteratorNextElement(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return BooleanObject.wrap(lib.hasIteratorNextElement(object));
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetIteratorNextElement")
+    protected abstract static class PrimGetIteratorNextElementNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.isIterator(object)")
+        protected static final Object doGetIteratorNextElement(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getIteratorNextElement(object);
+            } catch (final UnsupportedMessageException | StopIterationException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
         }
     }
 
