@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.ExactMath;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -992,11 +993,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 51)
     protected abstract static class PrimFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
-        protected static final long doFloat(final FloatObject receiver,
-                        @Cached final ConditionProfile positiveProfile) {
+        protected static final long doFloat(final FloatObject receiver) {
             assert receiver.isFinite();
             final double value = receiver.getValue();
-            return (long) (positiveProfile.profile(value >= 0) ? Math.floor(value) : Math.ceil(value));
+            return (long) ExactMath.truncate(value);
         }
 
         @Specialization(guards = {"!inSafeIntegerRange(receiver.getValue())", "receiver.isFinite()"})
