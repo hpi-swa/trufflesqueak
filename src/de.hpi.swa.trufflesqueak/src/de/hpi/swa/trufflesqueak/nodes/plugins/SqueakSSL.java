@@ -319,6 +319,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
      * @param length the length to interpret
      * @return a read-only byte buffer
      */
+    @TruffleBoundary
     private static ByteBuffer asReadBuffer(final NativeObject buffer, final long start, final long length) {
         return ByteBuffer.wrap(buffer.getByteStorage(), (int) start - 1, (int) length).asReadOnlyBuffer();
     }
@@ -327,6 +328,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
      * @param buffer the Squeak buffer object (byte type)
      * @return a write-through byte buffer
      */
+    @TruffleBoundary
     private static ByteBuffer asWriteBuffer(final NativeObject buffer) {
         return ByteBuffer.wrap(buffer.getByteStorage());
     }
@@ -393,6 +395,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @param targetBuffer the target buffer; containing server response
          * @return see numeric return type convention from plugin Javadoc
          */
+
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
         protected static final long doAccept(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
@@ -415,11 +418,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             } catch (final SSLHandshakeException e) {
                 return ReturnCode.GENERIC_ERROR.id();
             } catch (final SSLException e) {
-                e.printStackTrace(image.getError());
+                image.printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
 
+        @TruffleBoundary
         private static long process(final SqSSL ssl, final ByteBuffer source, final ByteBuffer target) throws SSLException {
             if (ssl.state == State.UNUSED) {
                 ssl.state = State.ACCEPTING;
@@ -518,11 +522,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             try {
                 return processHandshake(ssl, source, target);
             } catch (final SSLException e) {
-                e.printStackTrace(image.getError());
+                image.printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
 
+        @TruffleBoundary
         private static long processHandshake(final SqSSL ssl, final ByteBuffer source, final ByteBuffer target) throws SSLException {
             if (ssl.state == State.UNUSED) {
                 beginHandshake(ssl, target);
@@ -674,6 +679,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @param targetBuffer the target buffer
          * @return the number of bytes produced in the output buffer
          */
+        @TruffleBoundary
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
         protected static final long doDecrypt(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
@@ -708,8 +714,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 decryptOne(ssl, target);
                 return target.position();
             } catch (final BufferOverflowException | SSLException e) {
-                CompilerDirectives.transferToInterpreter();
-                e.printStackTrace(image.getError());
+                image.printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -770,7 +775,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 encrypt(ssl, source, target);
                 return target.position();
             } catch (final SSLException e) {
-                e.printStackTrace(image.getError());
+                image.printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
