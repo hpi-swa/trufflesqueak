@@ -1,3 +1,2 @@
+DEFAULT_DYNAMIC_IMPORTS=/trufflesqueak,/vm
 COMPONENTS=TruffleSqueak
-DEFAULT_DYNAMIC_IMPORTS=/trufflesqueak,/compiler
-DISABLE_INSTALLABLES=false

@@ -47,10 +47,24 @@ jobs:
         source ~/venv/bin/activate
         mx gate --strict-mode --tags style,fullbuild
 
-  linux-java11:
-    name: Linux + JDK11 + Coverage
+  build_and_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        java: [8, 11, 16]
+        exclude:
+        - os: macos-latest
+          java: 8
+    env:
+      BUILD_SVM: "${{ matrix.os != 'windows-latest' && matrix.java != 16 }}"
+      RUN_TESTS: "${{ matrix.java == 11 }}"
+      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-latest' }}"
+      GRAALVM_HOME_ENV: "${{ matrix.os == 'windows-latest' && 'trufflesqueak-jvm' || 'trufflesqueak-svm' }}"
+      TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-latest' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
+    name: ${{ matrix.os }} + JDK${{ matrix.java }}
     timeout-minutes: 90
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone TruffleSqueak repository
@@ -60,86 +74,69 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: |
-        sudo apt update -qq && sudo apt install -qq libsdl2-dev
-        mx.trufflesqueak/utils.sh set-up-dependencies java11
-    - name: Build TruffleSqueak components
-      run: mx.trufflesqueak/utils.sh build-components java11
-    - name: Install SVM-enabled TruffleSqueak component
-      run: gu install -L "${INSTALLABLE_SVM_TARGET}"
+        mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }}
+    - name: Build TruffleSqueak JVM component
+      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-jvm SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }} ${{ env.INSTALLABLE_JVM_TARGET }}
+      if: ${{ matrix.os != 'windows-latest' }}
+    - name: Build TruffleSqueak JVM component via cmd.exe
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        call mx --env trufflesqueak-jvm build
+        call mx --env trufflesqueak-jvm graalvm-home > graalvm-home-with-forward-slashes.txt
+        set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
+        setlocal enabledelayedexpansion
+        set "GRAALVM_HOME=%GRAALVM_HOME:/=\%"
+        echo %GRAALVM_HOME%\bin>>%GITHUB_PATH%
+        echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
+        echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
+      if: ${{ matrix.os == 'windows-latest' }}
+    - name: Build TruffleSqueak SVM component
+      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
+      if: ${{ env.BUILD_SVM == 'true' }}
     - name: Run SystemReporter on GraalVM
-      run: trufflesqueak --jvm --code "SystemReporter new reportText asString"
-    - name: Run SystemReporter on SubstrateVM
-      run: trufflesqueak --native --code "SystemReporter new reportText asString" images/test-64bit.image
-    - name: Run tinyBenchmarks on GraalVM
-      run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Run tinyBenchmarks on SubstrateVM
-      run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak components
-      run: |
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal compiler, Graal.js, and code coverage
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test --jacocout coverage
-    - name: Report code coverage
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: |
-        bash <(curl -s https://codecov.io/bash)
-        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
-        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
-      if: success()
-
-  linux-java8:
-    name: Linux + JDK8 + Coverage
-    timeout-minutes: 90
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Set up dependencies
       shell: bash
-      run: |
-        sudo apt update -qq && sudo apt install -qq libsdl2-dev
-        mx.trufflesqueak/utils.sh set-up-dependencies java8
-    - name: Build TruffleSqueak components
-      run: mx.trufflesqueak/utils.sh build-components java8
-    - name: Install SVM-enabled TruffleSqueak component
-      run: gu install -L "${INSTALLABLE_SVM_TARGET}"
-    - name: Run SystemReporter on GraalVM
-      run: trufflesqueak --jvm --code "SystemReporter new reportText asString"
+      run: ${{ env.TRUFFLESQUEAK_EXEC }} --jvm --code "SystemReporter new reportText asString"
     - name: Run SystemReporter on SubstrateVM
-      run: trufflesqueak --native --code "SystemReporter new reportText asString" images/test-64bit.image
-    - name: Run tinyBenchmarks on GraalVM
-      run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Run tinyBenchmarks on SubstrateVM
-      run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak components
-      run: |
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      shell: bash
+      run: ${{ env.TRUFFLESQUEAK_EXEC }} --native --code "SystemReporter new reportText asString" images/test-64bit.image
+      if: ${{ env.BUILD_SVM == 'true' }}
+    - name: Upload TruffleSqueak JVM component
+      shell: bash
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload TruffleSqueak SVM component
+      shell: bash
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ env.BUILD_SVM == 'true' }}
+    - name: Run gate with Graal compiler and Graal.js
+      run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
+      if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-latest' && env.RUN_WITH_COVERAGE != 'true' }}
     - name: Run gate with Graal compiler, Graal.js, and code coverage
       run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test --jacocout coverage
+      if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-latest' && env.RUN_WITH_COVERAGE == 'true' }}
+    - name: Run gate with Graal compiler and Graal.js via cmd.exe
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
+      if: ${{ env.RUN_TESTS == 'true' && matrix.os == 'windows-latest' }}
     - name: Report code coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: |
         bash <(curl -s https://codecov.io/bash)
-        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
-        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
-      if: success()
+        bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
+      if: ${{ env.RUN_TESTS == 'true' && env.RUN_WITH_COVERAGE == 'true' && job.status == 'success' }}
 
-  linux-java11-aarch64:
-    name: Linux + JDK11 + aarch64
+  linux-jdk11-aarch64:
+    name: ubuntu-20.04/aarch64 + JDK11
     timeout-minutes: 30
     runs-on: ubuntu-18.04
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - name: Clone TruffleSqueak repository
         uses: actions/checkout@v2
-      - name: Build, install, and test TruffleSqueak component
+      - name: Build and test TruffleSqueak component
         uses: uraimo/run-on-arch-action@v2.0.7
         id: build_aarch64
         with:
@@ -149,155 +146,14 @@ jobs:
             apt update && apt install -y build-essential curl git python unzip
             mx.trufflesqueak/utils.sh set-up-dependencies java11
             source "${HOME}/all_env_vars"
-            export PATH="${PATH}:${MX_HOME}:${GRAALVM_HOME}/bin"
-            mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
-            cp "$(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11)" "${INSTALLABLE_JVM_TARGET}"
+            export PATH="${MX_HOME}:${PATH}"
+            mx --env trufflesqueak-jvm build
+            cp "$(mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_JAVA11)" "${INSTALLABLE_JVM_TARGET}"
             echo ::set-output name=installable_jvm::${INSTALLABLE_JVM_TARGET}
-            gu install -L "${INSTALLABLE_JVM_TARGET}"
+            export PATH="$(mx --env trufflesqueak-jvm graalvm-home)/bin:${PATH}"
             trufflesqueak --jvm --code "SystemReporter new reportText asString"
-            trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
           env: |
             GITHUB_PATH: $GITHUB_PATH
             GITHUB_ENV: $GITHUB_ENV
       - name: Upload TruffleSqueak component
         run: mx.trufflesqueak/utils.sh deploy-asset ${{ steps.build_aarch64.outputs.installable_jvm }} ${{ secrets.GITHUB_TOKEN }}
-
-  macos-java11:
-    name: macOS + JDK11
-    timeout-minutes: 90
-    runs-on: macos-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Set up dependencies
-      shell: bash
-      run: |
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
-        mx.trufflesqueak/utils.sh set-up-dependencies java11
-    - name: Build TruffleSqueak components
-      run: mx.trufflesqueak/utils.sh build-components java11
-    - name: Install SVM-enabled TruffleSqueak component
-      run: gu install -L "${INSTALLABLE_SVM_TARGET}"
-    - name: Run SystemReporter on GraalVM
-      run: trufflesqueak --jvm --code "SystemReporter new reportText asString"
-    - name: Run SystemReporter on SubstrateVM
-      run: trufflesqueak --native --code "SystemReporter new reportText asString" images/test-64bit.image
-    - name: Run tinyBenchmarks on GraalVM
-      run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Run tinyBenchmarks on SubstrateVM
-      run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak components
-      run: |
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal compiler and Graal.js
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
-
-  macos-java8:
-    name: macOS + JDK8
-    timeout-minutes: 90
-    runs-on: macos-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Set up dependencies
-      shell: bash
-      run: |
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
-        mx.trufflesqueak/utils.sh set-up-dependencies java8
-    - name: Build TruffleSqueak components
-      run: mx.trufflesqueak/utils.sh build-components java8
-    - name: Install SVM-enabled TruffleSqueak component
-      run: gu install -L "${INSTALLABLE_SVM_TARGET}"
-    - name: Run SystemReporter on GraalVM
-      run: trufflesqueak --jvm --code "SystemReporter new reportText asString"
-    - name: Run SystemReporter on SubstrateVM
-      run: trufflesqueak --native --code "SystemReporter new reportText asString" images/test-64bit.image
-    - name: Run tinyBenchmarks on GraalVM
-      run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Run tinyBenchmarks on SubstrateVM
-      run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak components
-      run: |
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal compiler and Graal.js
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
-
-  windows-java11:
-    name: Windows + JDK11
-    timeout-minutes: 90
-    runs-on: windows-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Set up dependencies
-      shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies java11
-    - name: Build TruffleSqueak component
-      shell: cmd
-      run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
-    - name: Copy and install TruffleSqueak component
-      shell: pwsh
-      run: |
-        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
-        gu.cmd install -L "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
-    - name: Run SystemReporter on GraalVM
-      run: trufflesqueak.cmd --jvm --code "SystemReporter new reportText asString"
-    - name: Run tinyBenchmarks on GraalVM
-      run: trufflesqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak component
-      shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal compiler and Graal.js
-      shell: cmd
-      run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
-
-  windows-java8:
-    name: Windows + JDK8
-    timeout-minutes: 90
-    runs-on: windows-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Set up dependencies
-      shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies java8
-    - name: Build TruffleSqueak component
-      shell: cmd
-      run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA8
-    - name: Copy and install TruffleSqueak component
-      shell: pwsh
-      run: |
-        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
-        gu.cmd install -L "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
-    - name: Run SystemReporter on GraalVM
-      run: trufflesqueak.cmd --jvm --code "SystemReporter new reportText asString"
-    - name: Run tinyBenchmarks on GraalVM
-      run: trufflesqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak component
-      shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal compiler and Graal.js
-      shell: cmd
-      run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test

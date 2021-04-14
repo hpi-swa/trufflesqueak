@@ -15,7 +15,7 @@ suite = {
 
     "version": "21.1.0",
     "trufflesqueak:dependencyMap": {
-        "graalvm": "21.0.0",
+        "graalvm_tag": "vm-21.1.0",
         "icon": "trufflesqueak-icon.png",
         "icon_tag": "21.0.0.1",
         "image": "TruffleSqueakImage-21.1.0-dev.zip",
@@ -24,6 +24,8 @@ suite = {
         "jdk8_update": "09",
         "jdk11": "11.0.11",
         "jdk11_update": "8",
+        "jdk16": "16",
+        "jdk16_update": "36",
         "jvmci": "jvmci-21.1-b04",
         "test_image": "TruffleSqueakTestImage-6.0alpha-20228-64bit.zip",
         "test_image_tag": "21.0.0.1",

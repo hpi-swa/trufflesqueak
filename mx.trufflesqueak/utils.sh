@@ -23,7 +23,7 @@ print('export %s GITHUB_SLUG=%s' % (vars, slug))
 END
 )
 $(cd "${SCRIPT_DIRECTORY}" && python -c "${py_export}")
-([[ -z "${DEP_GRAALVM}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
+([[ -z "${DEP_GRAALVM_TAG}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
   echo "Failed to load values from dependencyMap and GitHub slug." 1>&2 && exit 1
 
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -39,27 +39,17 @@ add-path() {
 }
 
 build-component() {
-  local component_name=$1
-  local env_name=$2
+  local env_name=$1
+  local component_name=$2
   local target=$3
+  local graalvm_home="$(mx --env "${env_name}" graalvm-home)"
 
-  mx --env "${env_name}" build --dependencies="${component_name}"
+  mx --env "${env_name}" build
   cp $(mx --env "${env_name}" paths "${component_name}") "${target}"
-}
 
-build-components() {
-  local java_version=$1
-
-  if [[ "${java_version}" == "java8" ]]; then
-    java_version="JAVA8"
-  else
-    java_version="JAVA11"
-  fi
-
-  mx build # Ensure all dependencies are built (e.g. GRAAL_SDK)
-
-  build-component "SMALLTALK_INSTALLABLE_${java_version}" trufflesqueak-jvm "${INSTALLABLE_JVM_TARGET}"
-  build-component "SMALLTALK_INSTALLABLE_SVM_${java_version}" trufflesqueak-svm "${INSTALLABLE_SVM_TARGET}"
+  add-path "${graalvm_home}/bin"
+  set-env "GRAALVM_HOME" "$(resolve-path "${graalvm_home}")"
+  echo "[${graalvm_home} set as \$GRAALVM_HOME]"
 }
 
 deploy-asset() {
@@ -205,6 +195,15 @@ set-env() {
 set-up-dependencies() {
   local java_version=$1
 
+  case "$(uname -s)" in
+    "Linux")
+      sudo apt update -qq && sudo apt install -qq libsdl2-dev
+      ;;
+    "Darwin")
+      HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
+      ;;
+  esac
+
   # Repository was shallow copied and Git did not fetch tags, so fetch the tag
   # of the commit (if any) to make it available for other Git operations.
   git -c protocol.version=2 fetch --prune --progress --no-recurse-submodules \
@@ -217,54 +216,61 @@ set-up-dependencies() {
   download-trufflesqueak-test-image
   download-trufflesqueak-icon
 
-  if [[ "${java_version}" == "java8" ]]; then
-    set-up-openjdk8-jvmci "${HOME}"
-  else 
-    set-up-labsjdk11 "${HOME}"
-  fi
-
-  set-up-graalvm-ce "${java_version}" "${HOME}"
+  case "${java_version}" in
+    "java8")
+      set-up-labsjdk8 "${HOME}"
+      ;;
+    "java11")
+      set-up-labsjdk11 "${HOME}"
+      ;;
+    "java16")
+      set-up-labsjdk16 "${HOME}"
+      ;;
+    *)
+      echo "Failed to set up ${java_version}"
+      exit 42
+      ;;
+  esac
 
   set-env "INSTALLABLE_JVM_TARGET" "$(installable-filename "${java_version}" "")"
   set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
 }
 
-set-up-graalvm-ce() {
-  local java_version=$1
-  local target_dir=$2
-  local graalvm_name="graalvm-ce-${java_version}-${OS_NAME}-${OS_ARCH}-${DEP_GRAALVM}"
-  local file_suffix=".tar.gz" && [[ "${OS_NAME}" == "windows" ]]  && file_suffix=".zip"
-  local file="${graalvm_name}${file_suffix}"
+set-up-labsjdk() {
+  local target_dir=$1
+  local jdk_tar=${target_dir}/jdk.tar.gz
+  local jdk_name=$2
+  local jdk_base_url=$3
+  local jdk_name_extracted=$4
 
   pushd "${target_dir}" > /dev/null
-
-  curl -sSL --retry 3 -o "${file}" "https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${DEP_GRAALVM}/${file}"
-  if [[ "${OS_NAME}" == "windows" ]]; then unzip -qq "${file}"; else tar -xzf "${file}"; fi
-
+  curl -sSL --retry 3 -o "${jdk_tar}" "${jdk_base_url}/${DEP_JVMCI}/${jdk_name}.tar.gz"
+  tar xzf "${jdk_tar}"
   popd > /dev/null
 
-  graalvm_home="${target_dir}/graalvm-ce-${java_version}-${DEP_GRAALVM}${JAVA_HOME_SUFFIX}"
-  add-path "${graalvm_home}/bin"
-  set-env "GRAALVM_HOME" "$(resolve-path "${graalvm_home}")"
-  
-  echo "[${graalvm_name} set up successfully]"
+  enable-jdk "${target_dir}/${jdk_name_extracted}"
+  echo "[${jdk_name} set up successfully]"
+}
+
+set-up-labsjdk8() {
+  set-up-labsjdk $1 \
+    "openjdk-8u${DEP_JDK8}+${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
+    "https://github.com/graalvm/graal-jvmci-8/releases/download" \
+    "openjdk1.8.0_${DEP_JDK8}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 }
 
 set-up-labsjdk11() {
-  local target_dir=$1
-  local jdk_tar=${target_dir}/jdk.tar.gz
-  local jdk_name="labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}"
+  set-up-labsjdk $1 \
+    "labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
+    "https://github.com/graalvm/labs-openjdk-11/releases/download" \
+    "labsjdk-ce-${DEP_JDK11}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
+}
 
-  pushd "${target_dir}" > /dev/null
-
-  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/labs-openjdk-11/releases/download/${DEP_JVMCI}/${jdk_name}.tar.gz"
-  tar xzf "${jdk_tar}"
-
-  popd > /dev/null
-
-  enable-jdk "${target_dir}/labsjdk-ce-${DEP_JDK11}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
-
-  echo "[${jdk_name} set up successfully]"
+set-up-labsjdk16() {
+  set-up-labsjdk $1 \
+    "labsjdk-ce-${DEP_JDK16}+${DEP_JDK16_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
+    "https://github.com/graalvm/labs-openjdk-16/releases/download" \
+    "labsjdk-ce-${DEP_JDK16}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 }
 
 set-up-mx() {
@@ -272,29 +278,6 @@ set-up-mx() {
   add-path "${HOME}/mx"
   set-env "MX_HOME" "${HOME}/mx"
   echo "[mx set up successfully]"
-}
-
-set-up-openjdk8-jvmci() {
-  local target_dir=$1
-  local jdk_tar=${target_dir}/jdk.tar.gz
-  local jdk_name="openjdk-8u${DEP_JDK8}+${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}"
-
-  pushd "${target_dir}" > /dev/null
-
-  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/graal-jvmci-8/releases/download/${DEP_JVMCI}/${jdk_name}.tar.gz"
-  tar xzf "${jdk_tar}"
-
-  popd > /dev/null
-
-  enable-jdk "${target_dir}/openjdk1.8.0_${DEP_JDK8}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
-
-  # Workaround for Windows (can be removed when https://git.io/Jv9IQ is available)
-  if [[ "${OS_NAME}" == "windows" ]]; then
-    # Remove empty lines
-    sed -i '/^$/d' "${target_dir}/openjdk1.8.0_${DEP_JDK8}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}/release"
-  fi
-
-  echo "[${jdk_name} set up successfully]"
 }
 
 shallow-clone() {
@@ -318,7 +301,7 @@ shallow-clone-graalvm-project() {
   local name=$(basename "${git_url}" | cut -d. -f1)
   local target_dir="${BASE_DIRECTORY}/../${name}"
 
-  shallow-clone "${git_url}" "vm-${DEP_GRAALVM}" "${target_dir}"
+  shallow-clone "${git_url}" "${DEP_GRAALVM_TAG}" "${target_dir}"
 }
 
 $@
