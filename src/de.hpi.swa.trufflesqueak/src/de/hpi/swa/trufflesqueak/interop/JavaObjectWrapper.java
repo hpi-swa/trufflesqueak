@@ -41,9 +41,64 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 public final class JavaObjectWrapper implements TruffleObject {
     protected static final int LIMIT = 2;
     private static final WeakHashMap<Object, JavaObjectWrapper> CACHE = new WeakHashMap<>();
-    private static final HashMap<Class<?>, HashMap<String, Field>> CLASSES_TO_FIELDS = new HashMap<>();
-    private static final HashMap<Class<?>, HashMap<String, Method>> CLASSES_TO_METHODS = new HashMap<>();
-    private static final HashMap<Class<?>, InteropArray> CLASSES_TO_MEMBERS = new HashMap<>();
+    private static final ClassValue<HashMap<String, Field>> CLASSES_TO_FIELDS = new ClassValue<HashMap<String, Field>>() {
+        @Override
+        @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
+        protected HashMap<String, Field> computeValue(final Class<?> type) {
+            final HashMap<String, Field> result = new HashMap<>();
+            Class<?> currentClass = type;
+            while (currentClass != null) {
+                for (final Field field : currentClass.getDeclaredFields()) {
+                    if (!field.isAccessible()) {
+                        try {
+                            field.setAccessible(true);
+                        } catch (final Exception e) {
+                            continue; // skip inaccessible fields
+                        }
+                    }
+                    final String name = field.getName();
+                    if (name.indexOf('$') < 0) {
+                        result.put(field.getName(), field);
+                    }
+                }
+                currentClass = currentClass.getSuperclass();
+            }
+            return result;
+        }
+    };
+    private static final ClassValue<HashMap<String, Method>> CLASSES_TO_METHODS = new ClassValue<HashMap<String, Method>>() {
+        @Override
+        @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
+        protected HashMap<String, Method> computeValue(final Class<?> type) {
+            final HashMap<String, Method> result = new HashMap<>();
+            Class<?> currentClass = type;
+            while (currentClass != null) {
+                for (final Method method : currentClass.getDeclaredMethods()) {
+                    if (!method.isAccessible()) {
+                        try {
+                            method.setAccessible(true);
+                        } catch (final Exception e) {
+                            continue; // skip inaccessible methods
+                        }
+                    }
+                    final String name = method.getName();
+                    if (name.indexOf('$') < 0) {
+                        result.put(method.getName(), method);
+                    }
+                }
+                currentClass = currentClass.getSuperclass();
+            }
+            return result;
+        }
+    };
+    private static final ClassValue<InteropArray> CLASSES_TO_MEMBERS = new ClassValue<InteropArray>() {
+        @Override
+        protected InteropArray computeValue(final Class<?> type) {
+            final HashSet<String> members = new HashSet<>(CLASSES_TO_FIELDS.get(type).keySet());
+            members.addAll(CLASSES_TO_METHODS.get(type).keySet());
+            return new InteropArray(members.toArray(new String[0]));
+        }
+    };
 
     private final Object wrappedObject;
 
@@ -69,64 +124,18 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @TruffleBoundary
-    @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
     private HashMap<String, Field> lookupFields() {
-        return CLASSES_TO_FIELDS.computeIfAbsent(wrappedObject.getClass(), c -> {
-            final HashMap<String, Field> result = new HashMap<>();
-            Class<?> currentClass = c;
-            while (currentClass != null) {
-                for (final Field field : currentClass.getDeclaredFields()) {
-                    if (!field.isAccessible()) {
-                        try {
-                            field.setAccessible(true);
-                        } catch (final Exception e) {
-                            continue; // skip inaccessible fields
-                        }
-                    }
-                    final String name = field.getName();
-                    if (name.indexOf('$') < 0) {
-                        result.put(field.getName(), field);
-                    }
-                }
-                currentClass = currentClass.getSuperclass();
-            }
-            return result;
-        });
+        return CLASSES_TO_FIELDS.get(wrappedObject.getClass());
     }
 
     @TruffleBoundary
-    @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
     private HashMap<String, Method> lookupMethods() {
-        return CLASSES_TO_METHODS.computeIfAbsent(wrappedObject.getClass(), c -> {
-            final HashMap<String, Method> result = new HashMap<>();
-            Class<?> currentClass = c;
-            while (currentClass != null) {
-                for (final Method method : currentClass.getDeclaredMethods()) {
-                    if (!method.isAccessible()) {
-                        try {
-                            method.setAccessible(true);
-                        } catch (final Exception e) {
-                            continue; // skip inaccessible methods
-                        }
-                    }
-                    final String name = method.getName();
-                    if (name.indexOf('$') < 0) {
-                        result.put(method.getName(), method);
-                    }
-                }
-                currentClass = currentClass.getSuperclass();
-            }
-            return result;
-        });
+        return CLASSES_TO_METHODS.get(wrappedObject.getClass());
     }
 
     @TruffleBoundary
     private InteropArray lookupMembers() {
-        return CLASSES_TO_MEMBERS.computeIfAbsent(wrappedObject.getClass(), c -> {
-            final HashSet<String> members = new HashSet<>(lookupFields().keySet());
-            members.addAll(lookupMethods().keySet());
-            return new InteropArray(members.toArray(new String[0]));
-        });
+        return CLASSES_TO_MEMBERS.get(wrappedObject.getClass());
     }
 
     protected boolean isClass() {
