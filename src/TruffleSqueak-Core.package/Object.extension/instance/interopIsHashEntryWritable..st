@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-hashes
 interopIsHashEntryWritable: key
-	self subclassResponsibility
+	^ (self interopIsHashEntryModifiable: key) or: [ self interopIsHashEntryInsertable: key ]

@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-hashes
 interopIsHashEntryInsertable: key
-	^ true
+	^ (self interopIsHashEntryExisting: key) not
