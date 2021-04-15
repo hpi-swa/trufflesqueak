@@ -36,8 +36,6 @@ BASE_VM_ARGS_TESTING.extend([
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ])
 
-IS_CI_BUILD = 'GITHUB_ACTIONS' in os.environ
-
 IS_JDK9_AND_LATER = mx.get_jdk(tag='default').javaCompliance > '1.8'
 
 if IS_JDK9_AND_LATER:
@@ -418,30 +416,6 @@ def _trufflesqueak_gate_runner(args, tasks):
         with mx_gate.Task('Report Code Coverage', tasks, tags=['test']) as t:
             if t:
                 mx.command_function('jacocoreport')(['--format', 'xml', '.'])
-
-
-def _patch_mx_gate_task_for_github_actions():
-    """Patches __init__ and __exit__ to add foldable groups to workflow log"""
-
-    old_init = mx_gate.Task.__init__
-    def new_init(self, title, tasks=None, disableJacoco=False, tags=None, legacyTitles=None):
-        print("::group::Run task: %s" % title)
-        old_init(self, title, tasks, disableJacoco, tags, legacyTitles)
-        if self.skipped:
-            print("Skipped")
-    mx_gate.Task.__init__ = new_init
-
-    old_exit = mx_gate.Task.__exit__
-    def new_exit(self, exc_type, exc_value, traceback):
-        try:
-            return old_exit(self, exc_type, exc_value, traceback)
-        finally:
-            print("::endgroup::")
-    mx_gate.Task.__exit__ = new_exit
-
-
-if IS_CI_BUILD:
-    _patch_mx_gate_task_for_github_actions()
 
 
 def _add_copyright_checks(tasks):
