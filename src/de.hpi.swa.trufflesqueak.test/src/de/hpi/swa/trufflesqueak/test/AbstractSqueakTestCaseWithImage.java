@@ -59,7 +59,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         final String imagePath = getPathToTestImage();
         try {
             runWithTimeout(imagePath, value -> loadImageContext(value), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
-            image.getOutput().println("Test image loaded from " + imagePath + "...");
+            println("Test image loaded from " + imagePath + "...");
             patchImageForTesting();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -94,13 +94,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
         assert idleProcess.instVarAt0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
-        image.getOutput().println("Increasing default timeout...");
+        println("Increasing default timeout...");
         patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + SQUEAK_TIMEOUT_SECONDS);
         if (!runsOnMXGate()) {
             // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
-        image.getOutput().println("Image ready for testing...");
+        println("Image ready for testing...");
     }
 
     private static boolean runsOnMXGate() {
@@ -153,7 +153,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static void patchMethod(final String className, final String selector, final String body) {
-        image.getOutput().println("Patching " + className + ">>#" + selector + "...");
+        println("Patching " + className + ">>#" + selector + "...");
         final Object patchResult = evaluate(String.join(" ",
                         className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
                         "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));

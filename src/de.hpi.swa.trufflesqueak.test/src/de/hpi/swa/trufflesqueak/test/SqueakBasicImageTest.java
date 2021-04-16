@@ -102,7 +102,7 @@ public final class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage 
         final String resultString = context.eval(SqueakLanguageConfig.ID, "1 tinyBenchmarks").asString();
         assertTrue(resultString.contains("bytecodes/sec"));
         assertTrue(resultString.contains("sends/sec"));
-        image.getOutput().println("tinyBenchmarks: " + resultString);
+        println("tinyBenchmarks: " + resultString);
     }
 
     @Test

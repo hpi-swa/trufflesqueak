@@ -157,4 +157,16 @@ public abstract class AbstractSqueakTestCase {
         image = null;
         System.gc();
     }
+
+    protected static final void println(final String text) {
+        // Checkstyle: stop
+        System.out.println(text);
+        // Checkstyle: resume
+    }
+
+    protected static final void printlnErr(final String text) {
+        // Checkstyle: stop
+        System.err.println(text);
+        // Checkstyle: resume
+    }
 }
