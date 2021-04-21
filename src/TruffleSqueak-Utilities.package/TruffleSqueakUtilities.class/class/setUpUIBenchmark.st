@@ -10,7 +10,7 @@ setUpUIBenchmark
 		thenDo: [ :ea | ea abandon ].
 	ReleaseBuilder deleteAllWindows.
 	
-	World dockingBars do: [ :b | b addMorph: UIBenchmarkInfoMorph new after:
+	World dockingBars do: [ :b | b addMorph: UIBenchmarkInfoMorph new inFrontOf:
 		(b submorphs detect: [:ea | ea isKindOf: AlignmentMorph]) ].
 
 	BouncingAtomsMorph new
