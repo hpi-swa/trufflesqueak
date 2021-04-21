@@ -9,7 +9,7 @@ Metacello new
     baseline: 'TruffleSqueak';
     repository: 'github://hpi-swa/trufflesqueak:image/src';
     load: #('tests').
-(Smalltalk at: #TruffleSqueakUtilities) setupImage.
+(Smalltalk at: #TruffleSqueakUtilities) setUpImage.
 ```
 
 ## TruffleSqueak Test Image Creation
@@ -21,5 +21,5 @@ Metacello new
     baseline: 'TruffleSqueak';
     repository: 'github://hpi-swa/trufflesqueak:image/src';
     load: #('tests').
-(Smalltalk at: #TruffleSqueakUtilities) setupTestImage.
+(Smalltalk at: #TruffleSqueakUtilities) setUpTestImage.
 ```
