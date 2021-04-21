@@ -10,15 +10,7 @@ setUpImage
 
 	"Avoid UnknownSelector popups"
 	UnknownSelector compile: 'openMenuIn: aBlock
-	^ self resume: name asSymbol'.
-	
-	"Adjust main docking bar"
-	TheWorldMainDockingBar
-		showProjectsMenuInWorldMainDockingBar: false;
-		showToolsMenuInWorldMainDockingBar: false.
-	self adjustAppsMenu.
-	self adjustDoMenu.
-	DockingBarUpdatingItemMorph allInstances do: [ :ea | ea abandon ].
+	^ self resume: name asSymbol "Patched by TruffleSqueak"'.
 
 	"Disable performance killers"
 	Morph useSoftDropShadow: false.
@@ -30,6 +22,17 @@ setUpImage
 
 	Morph indicateKeyboardFocus: false.
 	Project current flapsSuppressed: true.
+	
+	"Adjust main docking bar"
+	TheWorldMainDockingBar
+		showProjectsMenuInWorldMainDockingBar: false;
+		showToolsMenuInWorldMainDockingBar: false.
+	self adjustAppsMenu.
+	self adjustDoMenu.
+	TheWorldMainDockingBar compile: 'projectNameOn: aDockingBar
+	^ self "Patched by TruffleSqueak"'.
+	Project current showWorldMainDockingBar: false.
+	Project current showWorldMainDockingBar: true.
 	
 	"Set up environment"
 	ReleaseBuilder deleteAllWindows.
