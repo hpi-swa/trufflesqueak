@@ -90,6 +90,11 @@ jobs:
         echo %GRAALVM_HOME%\bin>>%GITHUB_PATH%
         echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
         echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
+        call mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }} > installable-path-with-forward-slashes.txt
+        set /p INSTALLABLE_PATH=<installable-path-with-forward-slashes.txt
+        setlocal enabledelayedexpansion
+        set "INSTALLABLE_PATH=%INSTALLABLE_PATH:/=\%"
+        copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_JVM_TARGET }}
       if: ${{ matrix.os == 'windows-latest' }}
     - name: Build TruffleSqueak SVM component
       run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
