@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-members
 interopIsMemberReadable: member
-	^ self class allInstVarNames includes: member
+	^ (self class instVarIndexFor: member ifAbsent: 0) > 0
