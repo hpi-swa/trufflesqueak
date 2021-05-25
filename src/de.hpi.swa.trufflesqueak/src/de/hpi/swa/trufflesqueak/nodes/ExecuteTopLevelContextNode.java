@@ -24,7 +24,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.context.UnwindContextChainNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -84,7 +83,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (true) {
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
             final AbstractSqueakObject sender = activeContext.getSender();
-            assert sender == NilObject.SINGLETON || sender == InteropSenderMarker.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
+            assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 image.lastSeenContext = null;  // Reset materialization mechanism.
                 // doIt: activeContext.printSqStackTrace();

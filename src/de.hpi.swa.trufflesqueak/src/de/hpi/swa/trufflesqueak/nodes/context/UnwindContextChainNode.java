@@ -14,7 +14,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
@@ -29,12 +28,6 @@ public abstract class UnwindContextChainNode extends AbstractNode {
     @Specialization
     protected static final ContextObject doTopLevelReturn(final NilObject startContext, final Object targetContext, final Object returnValue) {
         throw new TopLevelReturn(returnValue);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected static final ContextObject doTopLevelReturnInterop(final InteropSenderMarker startContext, final Object targetContext, final Object returnValue) {
-        return doTopLevelReturn(NilObject.SINGLETON, targetContext, returnValue);
     }
 
     @Specialization(guards = {"startContext == targetContext", "startContext.isPrimitiveContext()"})

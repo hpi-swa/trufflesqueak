@@ -27,16 +27,12 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BooleanObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
-import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
@@ -71,7 +67,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
                 final Object sender = current.getSender();
-                if (sender == NilObject.SINGLETON || sender == previousContextOrNil || sender instanceof InteropSenderMarker) {
+                if (sender == NilObject.SINGLETON || sender == previousContextOrNil) {
                     break;
                 } else {
                     current = (ContextObject) sender;
@@ -202,8 +198,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
-        private ContextObject interopExceptionThrowingContextPrototype;
-
         @TruffleBoundary
         @Specialization(guards = {"receiver.hasMaterializedSender()"})
         protected final AbstractSqueakObject findNext(final ContextObject receiver,
@@ -218,12 +212,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (sender instanceof ContextObject) {
                     context = (ContextObject) sender;
                 } else {
-                    if (sender == InteropSenderMarker.SINGLETON) {
-                        return getInteropExceptionThrowingContext();
-                    } else {
-                        assert sender == NilObject.SINGLETON;
-                        return NilObject.SINGLETON;
-                    }
+                    assert sender == NilObject.SINGLETON;
+                    return NilObject.SINGLETON;
                 }
             }
             return findNextAvoidingMaterialization(context, ref);
@@ -273,7 +263,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                  * Foreign frame found during frame iteration. Inject a fake context which will
                  * throw the Smalltalk exception as polyglot exception.
                  */
-                return getInteropExceptionThrowingContext();
+                return ref.get().getInteropExceptionThrowingContext();
             } else if (result == null) {
                 if (!foundMyself[0]) {
                     return findNext(receiver, ref); // Fallback to other version.
@@ -286,45 +276,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 return result;
             }
-        }
-
-        /**
-         * Returns a fake context for BlockClosure>>#on:do: that handles any exception (and may
-         * rethrow it as Interop exception). This allows Smalltalk exceptions to be thrown to other
-         * languages, so that they can catch them. The mechanism works essentially like this:
-         *
-         * <pre>
-         * <code>[ ... ] on: Exception do: [ :e | "handle e" ]</code>
-         * </pre>
-         *
-         * (see Context>>#handleSignal:)
-         */
-        private ContextObject getInteropExceptionThrowingContext() {
-            if (interopExceptionThrowingContextPrototype == null) {
-                final SqueakImageContext image = lookupContext();
-                assert image.evaluate("Interop") != NilObject.SINGLETON : "Interop class must be present";
-                final CompiledCodeObject onDoMethod = (CompiledCodeObject) image.evaluate("BlockClosure>>#on:do:");
-                interopExceptionThrowingContextPrototype = ContextObject.create(image, onDoMethod.getSqueakContextSize());
-                interopExceptionThrowingContextPrototype.setCodeObject(onDoMethod);
-                interopExceptionThrowingContextPrototype.setReceiver(NilObject.SINGLETON);
-                /*
-                 * Need to catch all exceptions here. Otherwise, the contexts sender is used to find
-                 * the next handler context (see Context>>#nextHandlerContext).
-                 */
-                interopExceptionThrowingContextPrototype.atTempPut(0, image.evaluate("Exception"));
-                /*
-                 * Throw Error and Halt as interop, ignore warnings, handle all other exceptions the
-                 * usual way via UndefinedObject>>#handleSignal:.
-                 */
-                interopExceptionThrowingContextPrototype.atTempPut(1, image.evaluate(
-                                "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] " +
-                                                "ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
-                interopExceptionThrowingContextPrototype.atTempPut(2, BooleanObject.TRUE);
-                interopExceptionThrowingContextPrototype.setInstructionPointer(onDoMethod.getInitialPC() + CallPrimitiveNode.NUM_BYTECODES);
-                interopExceptionThrowingContextPrototype.setStackPointer(onDoMethod.getNumTemps());
-                interopExceptionThrowingContextPrototype.removeSender();
-            }
-            return interopExceptionThrowingContextPrototype.shallowCopy();
         }
     }
 
