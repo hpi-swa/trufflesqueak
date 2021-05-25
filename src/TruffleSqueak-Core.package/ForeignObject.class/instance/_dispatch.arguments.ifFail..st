@@ -5,7 +5,7 @@ _dispatch: member arguments: arguments ifFail: failBlock
 	(Interop isMemberInvocable: self member: member)
 		ifTrue: [ ^ Interop invokeMember: self member: member arguments: arguments ].
 	(arguments size = 1 and: [ Interop isMemberWritable: self member: member])
-		ifTrue: [^ Interop writeMember: self member: member value: arguments first ].
+		ifTrue: [ ^ Interop writeMember: self member: member value: arguments first ].
 	^ (Interop isMemberReadable: self member: member)
 		ifTrue: [ | result |
 			result := Interop readMember: self member: member.
