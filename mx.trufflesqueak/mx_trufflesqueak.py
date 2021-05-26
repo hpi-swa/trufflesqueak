@@ -40,10 +40,12 @@ IS_JDK9_AND_LATER = mx.get_jdk(tag='default').javaCompliance > '1.8'
 
 if IS_JDK9_AND_LATER:
     ADD_OPENS = [
+        # Make Truffle.getRuntime() accessible for VM introspection
+        '--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED',
+        # Enable access to HostObject and others
+        '--add-opens=org.graalvm.truffle/com.oracle.truffle.polyglot=ALL-UNNAMED',
         # Enable access to Truffle's SourceSection (for retrieving sources through interop)
         '--add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED',
-        # Make Truffle.getRuntime() accessible for VM introspection
-        '--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED'
     ]
     BASE_VM_ARGS.extend(ADD_OPENS)
     BASE_VM_ARGS_TESTING.extend(ADD_OPENS)
