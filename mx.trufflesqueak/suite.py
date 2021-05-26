@@ -202,7 +202,6 @@ suite = {
             "javaProperties": {
                 "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
             },
-            "exclude": ["mx:JUNIT", "mx:HAMCREST"],
         },
 
         "TRUFFLESQUEAK_HOME": {
