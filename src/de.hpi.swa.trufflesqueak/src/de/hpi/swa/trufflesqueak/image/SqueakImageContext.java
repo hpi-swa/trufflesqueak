@@ -724,12 +724,12 @@ public final class SqueakImageContext {
         return ArrayObject.createWithStorage(this, arrayClass, ArrayUtils.EMPTY_ARRAY);
     }
 
-    public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final NativeObject selector, final ClassObject rcvrClass, final Object[] arguments) {
+    public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
         final PointersObject message = new PointersObject(this, messageClass);
         writeNode.execute(message, MESSAGE.SELECTOR, selector);
         writeNode.execute(message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
         assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";
-        writeNode.execute(message, MESSAGE.LOOKUP_CLASS, rcvrClass);
+        writeNode.execute(message, MESSAGE.LOOKUP_CLASS, lookupClass);
         return message;
     }
 
