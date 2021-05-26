@@ -122,7 +122,7 @@ download-trufflesqueak-icon() {
   fi
 
   download-asset "${DEP_ICON}" "${DEP_ICON_TAG}" "${target}"
-  echo "[TruffleSqueak icon downloaded successfully]"
+  echo "[TruffleSqueak icon (${DEP_ICON_TAG}) downloaded successfully]"
 }
 
 download-trufflesqueak-image() {
@@ -141,7 +141,7 @@ download-trufflesqueak-image() {
 
   popd > /dev/null
 
-  echo "[TruffleSqueak image downloaded successfully]"
+  echo "[TruffleSqueak image (${DEP_IMAGE_TAG}) downloaded successfully]"
 }
 
 enable-jdk() {
@@ -167,7 +167,7 @@ download-trufflesqueak-test-image() {
 
   popd > /dev/null
 
-  echo "[TruffleSqueak test image downloaded successfully]"
+  echo "[TruffleSqueak test image (${DEP_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
 installable-filename() {
@@ -278,7 +278,7 @@ set-up-mx() {
   shallow-clone "https://github.com/graalvm/mx.git" "${MX_VERSION}" "${HOME}/mx"
   add-path "${HOME}/mx"
   set-env "MX_HOME" "${HOME}/mx"
-  echo "[mx set up successfully]"
+  echo "[mx (${MX_VERSION}) set up successfully]"
 }
 
 shallow-clone() {
