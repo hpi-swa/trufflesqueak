@@ -19,7 +19,8 @@ from suite import suite;
 vars= ' '.join(['DEP_%s=%s' % (k.upper(), v)
   for k, v in suite['trufflesqueak:dependencyMap'].items()]);
 slug = '/'.join(suite['url'].split('/')[-2:]);
-print('export %s GITHUB_SLUG=%s' % (vars, slug))
+mxversion = suite['mxversion']
+print('export %s GITHUB_SLUG=%s MX_VERSION=%s' % (vars, slug, mxversion))
 END
 )
 $(cd "${SCRIPT_DIRECTORY}" && python -c "${py_export}")
@@ -274,7 +275,7 @@ set-up-labsjdk16() {
 }
 
 set-up-mx() {
-  shallow-clone "https://github.com/graalvm/mx.git" "master" "${HOME}/mx"
+  shallow-clone "https://github.com/graalvm/mx.git" "${MX_VERSION}" "${HOME}/mx"
   add-path "${HOME}/mx"
   set-env "MX_HOME" "${HOME}/mx"
   echo "[mx set up successfully]"
