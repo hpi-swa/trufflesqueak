@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @SuppressWarnings("static-method")
 @ExportLibrary(ReflectionLibrary.class)
 public abstract class AbstractSqueakObject implements TruffleObject {
+    private static final Object DEFAULT = new Object();
 
     public abstract long getSqueakHash();
 
@@ -79,27 +80,30 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Cached final DispatchUneagerlyNode dispatchNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws Exception {
-            assert message.getLibraryClass() == InteropLibrary.class;
-            final NativeObject selector = image.toInteropSelector(message);
-            final Object method = lookupNode.executeLookup(classNode.executeLookup(receiver), selector);
-            if (method instanceof CompiledCodeObject) {
-                final Object[] receiverAndArguments = new Object[message.getParameterCount()];
-                receiverAndArguments[0] = receiver;
-                for (int i = 0; i < arguments.length; i++) {
-                    receiverAndArguments[1 + i] = wrapNode.executeWrap(arguments[i]);
+            if (message.getLibraryClass() == InteropLibrary.class) {
+                final NativeObject selector = image.toInteropSelector(message);
+                final Object method = lookupNode.executeLookup(classNode.executeLookup(receiver), selector);
+                if (method instanceof CompiledCodeObject) {
+                    assert message.getLibraryClass() == InteropLibrary.class;
+                    final Object[] receiverAndArguments = new Object[message.getParameterCount()];
+                    receiverAndArguments[0] = receiver;
+                    for (int i = 0; i < arguments.length; i++) {
+                        receiverAndArguments[1 + i] = wrapNode.executeWrap(arguments[i]);
+                    }
+                    try {
+                        return dispatchNode.executeDispatch((CompiledCodeObject) method, receiverAndArguments, NilObject.SINGLETON);
+                    } catch (final ProcessSwitch ps) {
+                        CompilerDirectives.transferToInterpreter();
+                        image.printToStdErr(ps);
+                        throw new IllegalArgumentException();
+                    }
+                } else {
+                    image.printToStdErr(selector, "method:", method);
                 }
-                try {
-                    return dispatchNode.executeDispatch((CompiledCodeObject) method, receiverAndArguments, NilObject.SINGLETON);
-                } catch (final ProcessSwitch ps) {
-                    CompilerDirectives.transferToInterpreter();
-                    image.printToStdErr(ps);
-                    throw new IllegalArgumentException();
-                }
-            } else {
-                CompilerDirectives.transferToInterpreter();
-                image.printToStdErr(selector, "method:", method);
-                throw new IllegalArgumentException();
             }
+            CompilerDirectives.transferToInterpreter();
+            // Fall back to other, concrete or the default library implementation
+            return ReflectionLibrary.getFactory().getUncached().send(DEFAULT, message, arguments);
         }
     }
 }
