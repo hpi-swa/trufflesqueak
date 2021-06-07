@@ -198,21 +198,16 @@ public final class JavaObjectWrapper implements TruffleObject {
         return true;
     }
 
-    @ExportMessage
     @TruffleBoundary
-    protected boolean isMemberReadable(final String member) {
+    @ExportMessage(name = "isMemberReadable")
+    @ExportMessage(name = "isMemberModifiable")
+    protected boolean containsField(final String member) {
         return lookupFields().containsKey(member);
     }
 
     @ExportMessage
     protected boolean isMemberInsertable(@SuppressWarnings("unused") final String member) {
         return false;
-    }
-
-    @ExportMessage
-    @TruffleBoundary
-    protected boolean isMemberModifiable(final String member) {
-        return lookupFields().get(member) != null;
     }
 
     @ExportMessage
