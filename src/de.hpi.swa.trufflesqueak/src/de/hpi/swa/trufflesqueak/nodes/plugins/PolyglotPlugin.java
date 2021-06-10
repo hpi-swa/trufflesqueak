@@ -2081,10 +2081,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected static final NativeObject doGetLastError(@SuppressWarnings("unused") final Object receiver,
+        protected static final Object doGetLastError(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final String message = lastError.getMessage();
-            return image.asByteString(message != null ? message : lastError.toString());
+            return image.env.asGuestValue(lastError);
         }
 
         protected static final void setLastError(final Exception e) {
