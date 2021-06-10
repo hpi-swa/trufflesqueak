@@ -1,5 +1,5 @@
 helpers
-getLanguageInfo: anObject
+languageInfoFor: anObject
 	| info |
 	info := (Interop getLanguageInfo: anObject).
 	^ 'Name:				{1}

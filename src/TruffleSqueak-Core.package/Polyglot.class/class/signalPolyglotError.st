@@ -1,3 +1,6 @@
 helpers
 signalPolyglotError
-	self error: self primitiveLastError
+	| error |
+	error := self primitiveLastError.
+	error inspect.
+	self error: error asString

@@ -3,6 +3,6 @@ fieldLanguageInfo
 
 	^ (self newFieldForType: #misc key: #language)
 		name: 'language info'; emphasizeName;
-		valueGetter: [ :o | self getLanguageInfo: o ]; printValueAsIs;
+		valueGetter: [ :o | self languageInfoFor: o ]; printValueAsIs;
 		valueGetterExpression: 'Interop getLanguageInfo: self';
 		yourself

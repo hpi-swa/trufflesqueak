@@ -11,5 +11,7 @@ streamOptionalFieldsOn: aStream
 		aStream nextPut: self fieldLanguageInfo ].
 	(Interop hasSourceLocation: self object) ifTrue: [
 		aStream nextPut: self fieldSource ].
+	(Interop isException: self object) ifTrue: [
+		aStream nextPut: self fieldException ].
 	(Interop hasMembers: self object) ifTrue: [
 		aStream nextPutAll: self fieldsMembers ].
