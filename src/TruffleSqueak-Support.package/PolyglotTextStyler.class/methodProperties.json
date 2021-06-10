@@ -2,12 +2,12 @@
 	"class" : {
 		"default" : "fn 3/26/2019 21:33" },
 	"instance" : {
-		"enabled" : "fn 4/13/2019 13:51",
 		"formatter" : "fn 2/16/2020 22:50",
 		"lexerFor:" : "fn 2/16/2020 22:58",
 		"lexerNameFor:" : "fn 9/12/2019 23:57",
 		"newLexerFor:" : "fn 2/16/2020 22:54",
 		"newRougeFormatter" : "fn 2/17/2020 13:20",
+		"privateStyle:" : "fn 6/10/2021 10:10",
 		"rubyInteropUnbox" : "fn 2/17/2020 13:20",
 		"rubyUnbox:" : "fn 2/16/2020 22:51",
 		"startUp" : "fn 2/16/2020 16:55",
