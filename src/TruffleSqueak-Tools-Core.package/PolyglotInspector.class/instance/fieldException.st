@@ -2,6 +2,6 @@ fields
 fieldException
 
 	^ (self newFieldForType: #misc key: #exception)
-		name: 'language info'; emphasizeName;
+		name: 'exception info'; emphasizeName;
 		valueGetter: [ :o | self exceptionInfoFor: o ]; printValueAsIs;
 		yourself
