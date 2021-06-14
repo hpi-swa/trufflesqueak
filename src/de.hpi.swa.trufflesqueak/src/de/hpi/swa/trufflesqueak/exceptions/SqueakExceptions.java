@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.exceptions;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.interop.ExceptionType;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -27,7 +28,43 @@ import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public final class SqueakExceptions {
 
-    public static final class SqueakException extends AbstractTruffleException {
+    @ExportLibrary(InteropLibrary.class)
+    protected abstract static class AbstractSqueakException extends AbstractTruffleException {
+        private static final long serialVersionUID = 1L;
+
+        protected AbstractSqueakException() {
+        }
+
+        protected AbstractSqueakException(final String message) {
+            super(message);
+        }
+
+        protected AbstractSqueakException(final Node node) {
+            super(node);
+        }
+
+        protected AbstractSqueakException(final String message, final Node location) {
+            super(message, location);
+        }
+
+        @ExportMessage
+        @TruffleBoundary
+        protected Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
+            return toString();
+        }
+
+        @ExportMessage
+        protected boolean hasLanguage() {
+            return true;
+        }
+
+        @ExportMessage
+        protected Class<? extends TruffleLanguage<?>> getLanguage() {
+            return SqueakLanguage.class;
+        }
+    }
+
+    public static final class SqueakException extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
 
         public SqueakException(final String message, final Node location) {
@@ -47,7 +84,7 @@ public final class SqueakExceptions {
 
     @SuppressWarnings("static-method")
     @ExportLibrary(InteropLibrary.class)
-    public static final class SqueakSyntaxError extends AbstractTruffleException {
+    public static final class SqueakSyntaxError extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
         private final SourceSection sourceSection;
 
@@ -85,7 +122,7 @@ public final class SqueakExceptions {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    public static final class SqueakQuit extends AbstractTruffleException {
+    public static final class SqueakQuit extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
         private final int exitStatus;
 
@@ -107,7 +144,7 @@ public final class SqueakExceptions {
     }
 
     @ExportLibrary(value = InteropLibrary.class, delegateTo = "squeakException")
-    public static final class SqueakExceptionWrapper extends AbstractTruffleException {
+    public static final class SqueakExceptionWrapper extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
         protected final PointersObject squeakException;
 
