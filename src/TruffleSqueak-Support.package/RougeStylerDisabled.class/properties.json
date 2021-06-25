@@ -1,14 +1,14 @@
 {
 	"category" : "TruffleSqueak-Support",
 	"classinstvars" : [
-		"Default" ],
+		 ],
 	"classvars" : [
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		 ],
-	"name" : "RougeStyler",
+		"stStyler" ],
+	"name" : "RougeStylerDisabled",
 	"pools" : [
 		 ],
-	"super" : "Object",
+	"super" : "RougeStyler",
 	"type" : "normal" }

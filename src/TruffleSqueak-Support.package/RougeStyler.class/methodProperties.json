@@ -1,14 +1,9 @@
 {
 	"class" : {
-		"default" : "fn 6/17/2021 16:27",
-		"new" : "fn 6/25/2021 09:49" },
+		"default" : "fn 6/25/2021 12:07",
+		"new" : "fn 6/25/2021 11:59",
+		"useRougeStyler" : "fn 6/25/2021 12:06",
+		"useRougeStyler:" : "fn 6/25/2021 12:06" },
 	"instance" : {
-		"ensureInitialized" : "fn 6/25/2021 10:14",
-		"formatter" : "fn 2/16/2020 22:50",
-		"lexerFor:" : "fn 2/16/2020 22:58",
-		"lexerNameFor:" : "fn 9/12/2019 23:57",
-		"newLexerFor:" : "fn 6/25/2021 10:13",
-		"newRougeFormatter" : "fn 6/25/2021 10:14",
-		"rubyUnbox:" : "fn 6/25/2021 10:14",
-		"style:language:" : "fn 6/25/2021 09:56",
-		"style:language:ifFail:" : "fn 6/25/2021 10:14" } }
+		"style:language:" : "fn 6/25/2021 11:58",
+		"style:language:ifFail:" : "fn 6/25/2021 11:58" } }

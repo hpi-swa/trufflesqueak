@@ -56,6 +56,7 @@
 		"setUpPolyglotEnvironment" : "fn 1/24/2020 14:41",
 		"signalPolyglotError" : "fn 6/10/2021 16:15",
 		"startUp:" : "fn 1/24/2020 14:41",
-		"toggleEmphasizeInterop" : "fn 6/25/2021 11:27" },
+		"toggleEmphasizeInterop" : "fn 6/25/2021 11:27",
+		"toggleRougeStyler" : "fn 6/25/2021 11:54" },
 	"instance" : {
 		 } }

@@ -7,6 +7,7 @@ ToolSet browseClass: Interop class.
 -
 Polyglot askForDefaultLanguage.
 Polyglot toggleEmphasizeInterop.
+Polyglot toggleRougeStyler.
 -
 Graal runtime inspect.
 -

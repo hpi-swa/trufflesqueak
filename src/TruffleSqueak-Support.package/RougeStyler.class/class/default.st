@@ -1,3 +1,7 @@
-instance creation
+accessing
 default
-	^ Default ifNil: [ Default := self basicNew initialize ]
+	"Default := nil"
+	^ Default ifNil: [ Default := ((Polyglot isPermitted: 'ruby')
+		ifTrue: [ RougeStylerEnabled ]
+		ifFalse: [ RougeStylerDisabled ])
+			basicNew initialize ]

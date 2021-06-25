@@ -1,14 +1,16 @@
 {
 	"category" : "TruffleSqueak-Support",
 	"classinstvars" : [
-		"Default" ],
+		 ],
 	"classvars" : [
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		 ],
-	"name" : "RougeStyler",
+		"formatter",
+		"lexers",
+		"rubyUnbox" ],
+	"name" : "RougeStylerEnabled",
 	"pools" : [
 		 ],
-	"super" : "Object",
+	"super" : "RougeStyler",
 	"type" : "normal" }

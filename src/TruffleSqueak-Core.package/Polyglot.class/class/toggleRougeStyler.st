@@ -1,0 +1,4 @@
+preferences
+toggleRougeStyler
+
+	RougeStyler useRougeStyler: RougeStyler useRougeStyler not

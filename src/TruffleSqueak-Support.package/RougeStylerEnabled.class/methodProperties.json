@@ -1,0 +1,10 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"initialize" : "fn 6/25/2021 12:13",
+		"lexerFor:" : "fn 2/16/2020 22:58",
+		"lexerNameFor:" : "fn 9/12/2019 23:57",
+		"newLexerFor:" : "fn 6/25/2021 10:13",
+		"style:language:" : "fn 6/25/2021 12:03",
+		"style:language:ifFail:" : "fn 6/25/2021 11:52" } }
