@@ -1,4 +1,11 @@
 printing
 longPrintOn: aStream
-	"Return empty string, which effectively maps #longPrintString to #printString for now."
-	^ ''
+
+	self allInstVarNames withIndexDo:
+		[:title :index |
+		aStream nextPutAll: title;
+		 nextPut: $:;
+		 space;
+		 tab;
+		 print: (self instVarAt: index);
+		 cr]
