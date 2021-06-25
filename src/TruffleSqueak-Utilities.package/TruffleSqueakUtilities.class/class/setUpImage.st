@@ -36,6 +36,10 @@ setUpImage
 	
 	"Set up environment"
 	ReleaseBuilder deleteAllWindows.
+	"Delete all logos and buttons"
+	{ImageMorph. SimpleButtonMorph} do: [ :ea |
+		(World submorphsSatisfying: [ :m |	(m isKindOf: ea) ]) do: [ :m | m delete ] ].
+
 	self openButton: PolyglotWorkspace asString, ' open' at: 20@28.
 	self openButton: PolyglotNotebook asString, ' open' at: 190@28.
 
@@ -52,4 +56,4 @@ setUpImage
 
 	"Clean up image"
 	Smalltalk garbageCollect.
-	Smalltalk condenseChanges.
+	(self confirm: 'Condense changes?') ifTrue: [ Smalltalk condenseChanges ]
