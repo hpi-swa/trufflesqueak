@@ -1,3 +1,5 @@
 printing
 printOn: aStream
-	aStream nextPutAll: self printOnTitle
+	Polyglot emphasizeInterop
+		ifTrue: [ self printInteropOn: aStream ]
+		ifFalse: [ aStream nextPutAll: self asString ]

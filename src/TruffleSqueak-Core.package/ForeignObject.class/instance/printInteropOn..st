@@ -1,6 +1,7 @@
 printing
-printOnTitle
+printInteropOn: aStream
 	| properties |
+	aStream nextPutAll: 'ForeignObject'.
 	properties := OrderedCollection new.
 	(Interop isNull: self) ifTrue: [ properties add: 'nil' ].
 	(Interop isHostObject: self) ifTrue: [ properties add: 'host' ].
@@ -14,6 +15,4 @@ printOnTitle
 	(Interop hasIdentity: self) ifTrue: [ properties add: 'identity' ].
 	(Interop hasArrayElements: self) ifTrue: [ properties add: 'arraySize=', (Interop getArraySize: self) ].
 	(Interop hasMembers: self) ifTrue: [ properties add: 'memberSize=', (Interop getMemberSize: self) ].
-	^ properties
-		ifEmpty: [ 'ForeignObject' ]
-		ifNotEmpty: [ 'ForeignObject[', (properties joinSeparatedBy: ','), ']' ]
+	properties ifNotEmpty: [ aStream nextPutAll: '[', (properties joinSeparatedBy: ','), ']' ]

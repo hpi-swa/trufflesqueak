@@ -6,6 +6,7 @@ adjustDoMenu
 ToolSet browseClass: Interop class.
 -
 Polyglot askForDefaultLanguage.
+Polyglot toggleEmphasizeInterop.
 -
 Graal runtime inspect.
 -
