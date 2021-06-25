@@ -5,8 +5,13 @@ fieldMetaObjectInfo
 		name: 'meta object info'; emphasizeName;
 		valueGetter: [ :o | | metaObject |
 			metaObject := Interop getMetaObject: o.
-			 'Simple name:	{1}
-Qualified name:	{2}' format: {
-				(Interop getMetaSimpleName: metaObject) asString.
-				(Interop getMetaQualifiedName: metaObject) asString} ]; printValueAsIs;
+			Text streamContents: [ :aStream |
+				aStream
+					nextPutAll: 'Meta object:	';
+					withAttribute: (PluggableTextAttribute evalBlock: [ metaObject inspect ])
+						do: [ aStream nextPutAll: metaObject asString ]; cr;
+					nextPutAll: 'Simple name:	';
+					nextPutAll: (Interop getMetaSimpleName: metaObject) asString; cr;
+					nextPutAll: 'Qualified name:	';
+					nextPutAll: (Interop getMetaQualifiedName: metaObject) asString ]]; printValueAsIs;
 		yourself

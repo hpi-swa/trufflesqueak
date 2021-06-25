@@ -31,12 +31,18 @@ fieldsMembers
 		(invocables ifNotEmpty: [ { (self newFieldForType: #misc key: #membersInvocable)
 			name: 'members (invocable)'; emphasizeName;
 			valueGetter: [ :o | 
-				String streamContents: [ :aStream |
+				Text streamContents: [ :aStream |
 					invocables do: [ :member |
-						aStream
-							nextPutAll: member;
-							nextPutAll: ((Interop isMemberReadable: o member: member)
-								ifTrue: [ ' (readable)' ]
-								ifFalse: [ ' (non-readable)' ]);
-							cr] ] ]; printValueAsIs;
+						(Interop isMemberReadable: o member: member)
+							ifTrue: [ aStream
+										withAttribute: (PluggableTextAttribute evalBlock: [
+												(Interop readMember: self object member: member) inspect ])
+											do: [ aStream nextPutAll: member ];
+										withAttributes: { TextEmphasis italic. TextColor color: Color gray }
+											do: [ aStream nextPutAll: ' (readable)' ] ]
+							ifFalse: [ aStream
+										nextPutAll: member;
+										withAttributes: { TextEmphasis italic. TextColor color: Color red }
+											do: [ aStream nextPutAll: ' (non-readable)' ] ].
+						aStream cr ] ] ]; printValueAsIs;
 			yourself } ] ifEmpty: [ {} ])
