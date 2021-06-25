@@ -5,6 +5,8 @@ adjustDoMenu
 'ToolSet browseClass: Polyglot class category: ''polyglot-api''.
 ToolSet browseClass: Interop class.
 -
+Polyglot askForDefaultLanguage.
+-
 Graal runtime inspect.
 -
 RPlotMorph example.
