@@ -12,9 +12,13 @@ testJSMetadataAPIs
 
 	"All boxed objects provide their class as meta object"
 	self assert: (Interop hasMetaObject: jsObject).
-	self assert: (Interop getMetaObject: jsObject) equals: (Interop getMetaObject: jsObject)
+	self assert: (Interop getMetaObject: jsObject) equals: (self jsEval: 'Object')
 		description: 'Meta objects not equal'.
 	self assert: 'Object' equals: (Interop getMetaQualifiedName: (Interop getMetaObject: jsObject)) asString.
 	self assert: 'Object' equals: (Interop getMetaSimpleName: (Interop getMetaObject: jsObject)) asString.
 	self assert: jsCode equals: (Interop toDisplayString: jsObject) asString.
+	
+	self assert: (jsObject isKindOf: (Interop getMetaObject: jsObject)).
+	self assert: (jsObject respondsTo: #a).
+	self deny: (jsObject respondsTo: #foo).
 	
