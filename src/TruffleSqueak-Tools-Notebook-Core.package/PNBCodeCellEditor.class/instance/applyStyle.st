@@ -1,6 +1,6 @@
 actions
 applyStyle
-	self contents runs: (PolyglotTextStyler default style: self contents language: self codeCell languageID) runs.
+	RougeStyler default style: self contents language: self codeCell languageID.
 	self paragraph composeAll.
 	self editor recomputeSelection.
 	self updateFromParagraph.

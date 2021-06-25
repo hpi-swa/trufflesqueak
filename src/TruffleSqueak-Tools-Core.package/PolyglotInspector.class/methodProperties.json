@@ -2,7 +2,7 @@
 	"class" : {
 		 },
 	"instance" : {
-		"aboutToStyle:" : "fn 12/5/2018 19:14",
+		"buildCodePaneWith:" : "fn 6/14/2021 11:07",
 		"exceptionInfoFor:" : "fn 6/10/2021 17:15",
 		"fieldException" : "fn 6/11/2021 09:17",
 		"fieldLanguageInfo" : "fn 6/10/2021 16:48",
@@ -15,6 +15,7 @@
 		"inspectAs:" : "fn 1/26/2021 16:04",
 		"inspectVMObject" : "fn 3/29/2021 16:40",
 		"labelString" : "fn 2/11/2021 12:28",
+		"languageInfo" : "fn 6/25/2021 10:21",
 		"languageInfoFor:" : "fn 6/10/2021 16:47",
 		"mainFieldListMenu:" : "fn 3/29/2021 16:39",
 		"streamArrayElementsOn:" : "fn 4/11/2021 15:03",
