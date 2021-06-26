@@ -1,3 +1,3 @@
 constants
 languageIdPython
-	^ 'python'
+	^ #python

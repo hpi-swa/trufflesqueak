@@ -1,3 +1,4 @@
 accessing
 helpText
-	^ 'evaluate expressions here. switch the language in the window menu.' 
+	^ 'Evaluate {1} expressions here. Switch the language in the window menu.'
+		format: { self languageInfo getName }

@@ -1,3 +1,3 @@
 constants
 languageIdMarkdown
-	^ 'markdown'
+	^ #markdown

@@ -1,3 +1,3 @@
 constants
 languageIdJava
-	^ 'java'
+	^ #java

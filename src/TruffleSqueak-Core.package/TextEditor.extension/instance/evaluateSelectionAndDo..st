@@ -1,7 +1,7 @@
 *TruffleSqueak-Core-overrides
 evaluateSelectionAndDo: aBlock
 	"Treat the current selection as an expression; evaluate it and invoke aBlock with the result."
-	| result rcvr ctxt language |
+	| result rcvr ctxt languageId |
 	self lineSelectAndEmptyCheck: [^ nil].
 
 	(model respondsTo: #evaluateExpression:) ifTrue: [
@@ -11,8 +11,12 @@ evaluateSelectionAndDo: aBlock
 		ifTrue: [ rcvr := model doItReceiver.
 				ctxt := model doItContext]
 		ifFalse: [rcvr := ctxt := nil].
-	language := Polyglot defaultLanguage.
-	result := language = Polyglot languageIdSmalltalk
+
+	languageId := (model respondsTo: #languageId)
+		ifTrue: [ model languageId ]
+		ifFalse: [ Polyglot defaultLanguageId ].
+
+	result := languageId = Polyglot languageIdSmalltalk
 		ifTrue: [ [
 		rcvr class evaluatorClass new 
 			evaluate: self selectionAsStream
@@ -26,8 +30,8 @@ evaluateSelectionAndDo: aBlock
 		on: OutOfScopeNotification 
 		do: [ :ex | ex resume: true] ]
 		ifFalse: [
-			rcvr ifNotNil: [ [ (Polyglot primitiveGetScope: language) at: 'self' put: rcvr ] on: Error do: [ :e | "ignore error" ] ].
-			Polyglot eval: Polyglot defaultLanguage string: self selection asString ].
+			rcvr ifNotNil: [ [ (Polyglot primitiveGetScope: languageId) at: 'self' put: rcvr ] on: Error do: [ :e | "ignore error" ] ].
+			Polyglot eval: languageId string: self selection asString ].
 		
 	(model respondsTo: #expressionEvaluated:result:) ifTrue: [
 		model perform: #expressionEvaluated:result: with: self selection with: result].

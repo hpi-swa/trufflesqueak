@@ -16,4 +16,8 @@ addModelItemsToWindowMenu: aMenu
 			selector: #openInPolyglotEditor.
 		aMenu addLine ].
 
-	super addModelItemsToWindowMenu: aMenu
+	super addModelItemsToWindowMenu: aMenu.
+	
+	aMenu add: 'select syntax highlighter'
+			target: Polyglot
+			selector: #askForRougeStyler.

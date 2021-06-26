@@ -1,4 +1,6 @@
-actions
+language
 languageInfo: aLanguageInfo
+	languageInfo == aLanguageInfo ifTrue: [ ^ self ].
 	languageInfo := aLanguageInfo.
+	self changed: #contents.
 	self changed: #relabel

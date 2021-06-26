@@ -1,0 +1,3 @@
+language
+selectLanguage
+	self languageInfo: Polyglot chooseLanguageInfo

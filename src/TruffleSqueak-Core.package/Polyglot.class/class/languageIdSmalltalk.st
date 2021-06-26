@@ -1,3 +1,3 @@
 constants
 languageIdSmalltalk
-	^ 'smalltalk'
+	^ #smalltalk

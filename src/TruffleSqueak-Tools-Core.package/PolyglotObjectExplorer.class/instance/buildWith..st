@@ -37,8 +37,9 @@ buildWith: builder
 		getText: #expression;
 		editText: #expression:;
 		menu: #codePaneMenu:shifted:;
-		help: 'Evaluate expressions for the current tree selection...' translated;
-		frame: (LayoutFrame fractions: (0@0.71 corner: 1@1) offsets: (0@0 corner: buttonOffset negated@0)).
+		help: #helpText;
+		frame: (LayoutFrame fractions: (0@0.71 corner: 1@1) offsets: (0@0 corner: buttonOffset negated@0));
+		stylerClass: PolyglotTextStyler.
 	windowSpec children add: textSpec.
 
 	buttonSpec := builder pluggableButtonSpec new

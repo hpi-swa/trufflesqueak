@@ -1,3 +1,3 @@
 accessing
 getId
-	^ 'smalltalk'
+	^ Polyglot languageIdSmalltalk

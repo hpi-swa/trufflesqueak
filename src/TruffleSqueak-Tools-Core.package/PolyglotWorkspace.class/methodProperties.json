@@ -1,14 +1,21 @@
 {
 	"class" : {
 		"initialize" : "fn 4/14/2019 00:01",
-		"open" : "fn 1/26/2021 15:42",
+		"open" : "fn 6/25/2021 22:53",
 		"registerInWorldMenu" : "fn 4/14/2019 00:00",
 		"shouldStyle" : "fn 6/25/2021 22:28" },
 	"instance" : {
-		"addModelItemsToWindowMenu:" : "fn 1/26/2021 15:33",
+		"addCustomCodePaneMenuItems:shifted:" : "fn 6/25/2021 22:29",
+		"addModelItemsToWindowMenu:" : "fn 6/25/2021 21:49",
 		"buildCodePaneWith:" : "fn 6/10/2021 09:52",
 		"evaluateExpression:" : "fn 3/5/2021 14:21",
-		"helpText" : "fn 1/27/2020 11:19",
+		"helpText" : "fn 6/25/2021 17:55",
+		"initialize" : "fn 6/25/2021 22:50",
 		"labelString" : "fn 1/26/2021 15:53",
-		"languageInfo" : "fn 1/26/2021 15:42",
-		"languageInfo:" : "fn 1/26/2021 15:33" } }
+		"languageId" : "fn 6/25/2021 13:55",
+		"languageInfo" : "fn 6/25/2021 22:50",
+		"languageInfo:" : "fn 6/25/2021 22:39",
+		"open" : "fn 6/25/2021 22:54",
+		"selectLanguage" : "fn 6/25/2021 22:09",
+		"setDefaultLanguage" : "fn 6/25/2021 22:26",
+		"setSyntaxHighlighter" : "fn 6/25/2021 22:29" } }

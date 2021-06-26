@@ -1,0 +1,4 @@
+language
+setDefaultLanguage
+	Polyglot askForDefaultLanguageInfo.
+	self languageInfo: Polyglot defaultLanguageInfo

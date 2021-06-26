@@ -1,3 +1,3 @@
 constants
 languageIdHost
-	^ 'host'
+	^ #host

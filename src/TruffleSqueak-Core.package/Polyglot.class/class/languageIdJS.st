@@ -1,3 +1,3 @@
 constants
 languageIdJS
-	^ 'js'
+	^ #js

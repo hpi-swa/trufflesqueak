@@ -1,3 +1,3 @@
 constants
 languageIdR
-	^ 'R'
+	^ #R

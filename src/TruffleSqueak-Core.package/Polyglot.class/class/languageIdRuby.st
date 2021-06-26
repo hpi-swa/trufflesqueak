@@ -1,3 +1,3 @@
 constants
 languageIdRuby
-	^ 'ruby'
+	^ #ruby
