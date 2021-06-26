@@ -2,7 +2,8 @@
 	"class" : {
 		"initialize" : "fn 4/14/2019 00:01",
 		"open" : "fn 1/26/2021 15:42",
-		"registerInWorldMenu" : "fn 4/14/2019 00:00" },
+		"registerInWorldMenu" : "fn 4/14/2019 00:00",
+		"shouldStyle" : "fn 6/25/2021 22:28" },
 	"instance" : {
 		"addModelItemsToWindowMenu:" : "fn 1/26/2021 15:33",
 		"buildCodePaneWith:" : "fn 6/10/2021 09:52",
