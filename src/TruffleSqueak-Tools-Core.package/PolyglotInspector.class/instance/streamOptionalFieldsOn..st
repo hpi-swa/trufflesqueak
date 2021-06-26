@@ -1,6 +1,8 @@
 fields - streaming
 streamOptionalFieldsOn: aStream
 
+	(Interop hasMembers: self object) ifTrue: [
+		aStream nextPutAll: self fieldsMembers ].
 	(Interop isMetaObject: self object) ifTrue: [
 		aStream nextPut: self fieldMetaName ].
 	(Interop hasMetaObject: self object) ifTrue: [
@@ -11,5 +13,3 @@ streamOptionalFieldsOn: aStream
 		aStream nextPut: self fieldSource ].
 	(Interop isException: self object) ifTrue: [
 		aStream nextPut: self fieldException ].
-	(Interop hasMembers: self object) ifTrue: [
-		aStream nextPutAll: self fieldsMembers ].
