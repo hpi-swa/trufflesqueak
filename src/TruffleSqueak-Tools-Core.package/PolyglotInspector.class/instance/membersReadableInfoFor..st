@@ -5,7 +5,8 @@ membersReadableInfoFor: anObject
 				(Interop isMemberInvocable: anObject member: ea) not ] ])
 			ifNotEmpty: [ :readables | Text streamContents: [ :aStream |
 				readables sorted do: [ :member | | value |
-					value := Interop readMember: self object member: member.
+					value := [ Interop readMember: self object member: member ]
+								on: Error do: [ :e | e ].
 					aStream
 						withAttribute: (PluggableTextAttribute evalBlock: [ value inspect ])
 							do: [ aStream nextPutAll: member ];

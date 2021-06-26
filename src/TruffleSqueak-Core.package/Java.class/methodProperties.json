@@ -1,12 +1,12 @@
 {
 	"class" : {
-		"addToHostClassPath:" : "fn 11/11/2019 22:15",
+		"addToHostClassPath:" : "fn 6/26/2021 14:36",
 		"asHostObject:" : "fn 3/5/2021 14:50",
 		"asInteger:" : "fn 3/9/2021 13:58",
 		"asString:" : "fn 3/9/2021 13:59",
 		"asTriState:" : "fn 3/4/2021 11:55",
 		"parseExceptionType" : "fn 3/4/2021 12:04",
-		"primitiveAddToHostClassPath:" : "fn 5/3/2019 14:10",
+		"primitiveAddToHostClassPath:" : "fn 6/26/2021 14:36",
 		"primitiveIsHostLookupAllowed" : "fn 11/4/2019 00:01",
 		"primitiveLookupHostSymbol:" : "fn 11/13/2019 16:13",
 		"runtimeExceptionType" : "fn 3/4/2021 12:03",

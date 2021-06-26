@@ -3,6 +3,6 @@ invokeMember: anObject member: aMember arguments: arguments
 	<primitive: 'primitiveInvokeMember' module: 'PolyglotPlugin'>
 	^ (self isMemberInvocable: anObject member: aMember)
 		ifTrue: [ anObject isForeignObject
-			ifTrue: [ Polyglot signalPolyglotError ]
+			ifTrue: [ PolyglotError signal ]
 			ifFalse: [ anObject interopInvokeMember: aMember and: arguments ] ]
 		ifFalse: [ self error: 'Member ', aMember, ' is not invocable' ]

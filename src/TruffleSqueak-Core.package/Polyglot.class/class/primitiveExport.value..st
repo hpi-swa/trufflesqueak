@@ -1,4 +1,4 @@
 primitives
 primitiveExport: aName value: aValue
 	<primitive: 'primitiveExport' module: 'PolyglotPlugin'>
-	Polyglot signalPolyglotError
+	PolyglotError signal

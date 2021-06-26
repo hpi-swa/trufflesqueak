@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"errorObject" ],
+	"name" : "PolyglotError",
+	"pools" : [
+		 ],
+	"super" : "Error",
+	"type" : "normal" }
