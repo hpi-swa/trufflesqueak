@@ -1,3 +1,3 @@
 initialize-release
 open
-	self openLabel: self labelString
+	^ self openLabel: self labelString

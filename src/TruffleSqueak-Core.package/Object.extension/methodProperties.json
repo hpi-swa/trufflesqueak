@@ -2,6 +2,7 @@
 	"class" : {
 		 },
 	"instance" : {
+		"defaultLabelForPolyglotTools" : "fn 6/26/2021 11:57",
 		"interopAsBoolean" : "fn 3/4/2021 11:12",
 		"interopAsByte" : "fn 11/24/2020 12:35",
 		"interopAsDate" : "fn 11/20/2020 16:38",
