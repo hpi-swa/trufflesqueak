@@ -4,7 +4,7 @@ defaultLabelForPolyglotTools
 		aStream nextPutAll: (
 			(Interop hasMetaObject: self)
 				ifTrue: [ (Interop getMetaQualifiedName: (Interop getMetaObject: self)) asString ]
-				ifFalse: [ super defaultLabelForInspector ]).
+				ifFalse: [ self class name ]).
 		(Interop hasLanguage: self)
 			ifTrue: [ aStream
 				nextPutAll: ' (';
