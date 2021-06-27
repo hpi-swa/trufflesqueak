@@ -11,5 +11,6 @@ iconFor: aLanguageId
 			self languageIdPython. self iconPython.
 			self languageIdR. self iconR.
 			self languageIdRuby. self iconRuby.
-			self languageIdSmalltalk. self iconSmalltalk }
+			self languageIdSmalltalk. self iconSmalltalk.
+			self languageIdWASM. self iconWASM }
 		]) at: aLanguageId ifAbsent: [ ToolIcons iconNamed: #breakpoint ]
