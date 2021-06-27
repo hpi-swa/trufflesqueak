@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-members
 interopIsMemberReadable: aMember
-	^ Smalltalk globals keys includes: (aMember asSymbol)
+	^ self allMembers includes: (aMember asSymbol)

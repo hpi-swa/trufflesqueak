@@ -1,0 +1,3 @@
+overrides
+hasContentsInExplorer
+	^ true
