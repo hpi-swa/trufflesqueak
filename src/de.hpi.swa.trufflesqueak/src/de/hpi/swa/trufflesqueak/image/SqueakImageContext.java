@@ -17,6 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
@@ -50,6 +51,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
+import de.hpi.swa.trufflesqueak.nodes.DoItRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
@@ -257,15 +259,20 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    public ExecuteTopLevelContextNode getDoItContextNode(final Source source) {
+    public DoItRootNode getDoItContextNode(final ParsingRequest request) {
+        final Source source = request.getSource();
         lastParseRequestSource = source;
         final String sourceCode;
         if (isFileInFormat(source)) {
-            sourceCode = String.format("[ (FileStream readOnlyFileNamed: '%s') fileIn. true ] on: Error do: [ :e | Interop throwException: e ]", source.getPath());
+            sourceCode = String.format("[[ (FileStream readOnlyFileNamed: '%s') fileIn. true ] on: Error do: [ :e | Interop throwException: e ]]", source.getPath());
         } else {
-            sourceCode = source.getCharacters().toString();
+            if (request.getArgumentNames().isEmpty()) {
+                sourceCode = String.format("[ %s ]", source.getCharacters().toString());
+            } else {
+                sourceCode = String.format("[ :%s | %s ]", String.join(" :", request.getArgumentNames()), source.getCharacters().toString());
+            }
         }
-        return getDoItContextNode(sourceCode, true);
+        return new DoItRootNode(this, language, evaluate(sourceCode));
     }
 
     private static boolean isFileInFormat(final Source source) {

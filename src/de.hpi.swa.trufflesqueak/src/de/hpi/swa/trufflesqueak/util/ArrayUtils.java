@@ -15,6 +15,7 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 
 public final class ArrayUtils {
     @CompilationFinal(dimensions = 1) public static final Object[] EMPTY_ARRAY = new Object[0];
+    @CompilationFinal(dimensions = 1) public static final String[] EMPTY_STRINGS_ARRAY = new String[0];
 
     private ArrayUtils() {
     }
