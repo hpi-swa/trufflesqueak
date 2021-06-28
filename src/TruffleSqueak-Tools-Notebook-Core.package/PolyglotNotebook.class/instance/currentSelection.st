@@ -1,4 +1,4 @@
 model
 currentSelection
 
-	^ 1
+	^ currentSelection

@@ -7,4 +7,5 @@ run
 	result ifNotNil: [self output displayResult: result.
 		self cellContainer changed: #submorphs].
 		self cellContainer notebook changed: #getList.
-		self cellContainer notebook changed: #expandRootsRequested.
+		self cellContainer notebook showLanguageScopes ifFalse: [
+			self cellContainer notebook changed: #expandRootsRequested ]

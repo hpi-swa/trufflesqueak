@@ -11,5 +11,5 @@ buildWith: builder
 	window := builder build: windowSpec.
 	(window allMorphs select: [:m | m isKindOf: PluggableButtonMorphPlus ]) do: [:b | b borderWidth: 0].
 	(window allMorphs detect: [:m |  m isKindOf: PluggableTreeMorph ]) borderWidth: 0; color: (Color fromString: '#F5F5F5').
-	self changed: #expandRootsRequested.
+	self showLanguageScopes ifFalse: [ self changed: #expandRootsRequested ].
 	^ window.

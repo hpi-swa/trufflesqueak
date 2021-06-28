@@ -6,7 +6,9 @@
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		"cellContainer" ],
+		"cellContainer",
+		"currentSelection",
+		"showLanguageScopes" ],
 	"name" : "PolyglotNotebook",
 	"pools" : [
 		 ],

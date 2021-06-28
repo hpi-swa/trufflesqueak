@@ -12,11 +12,11 @@ buildSidebar: builder
 		model: self;
 		nodeClass: PNBBindingsWrapper;
 		roots: #getList;
-		"keyPress: #explorerKey:from:event:;"
+		keyPress: #explorerKey:from:event:;
 		getSelected: #currentSelection;
-		"setSelected: #currentSelection:;"
+		setSelected: #currentSelection:;
 		"setSelectedParent: #currentParent:;"
-		"menu: #genericMenu:;"
+		menu: #genericMenu:;
 		"dragItem: #getDragItem:;"
 		columns: (PNBBindingsWrapper showContentsInColumns
 			ifTrue: [{
