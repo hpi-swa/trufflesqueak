@@ -436,6 +436,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsNumber")
+    protected abstract static class PrimIsNumberNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final boolean doFitsInLong(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isNumber(object));
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFitsInLong")
     protected abstract static class PrimFitsInLongNode extends AbstractPrimitiveNode {
 
