@@ -3,7 +3,7 @@ printInteropOn: aStream
 	| properties |
 	aStream nextPutAll: 'ForeignObject'.
 	properties := OrderedCollection new.
-	(Interop isNull: self) ifTrue: [ properties add: 'nil' ].
+	(Interop isNull: self) ifTrue: [ properties add: 'null' ].
 	(Interop isBoolean: self) ifTrue: [ properties add: 'bool' ].
 	(Interop isString: self) ifTrue: [ properties add: 'string' ].
 	(Interop isNumber: self) ifTrue: [ properties add: 'number' ].
