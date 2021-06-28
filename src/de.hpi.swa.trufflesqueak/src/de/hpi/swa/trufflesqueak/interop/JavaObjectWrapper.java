@@ -14,7 +14,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.WeakHashMap;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -32,6 +36,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
@@ -100,6 +105,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
     };
 
+    @CompilationFinal private static Class<? extends TruffleLanguage<?>> hostLanguage;
     private final Object wrappedObject;
 
     private JavaObjectWrapper(final Object object) {
@@ -714,5 +720,24 @@ public final class JavaObjectWrapper implements TruffleObject {
         } else {
             throw UnsupportedMessageException.create();
         }
+    }
+
+    @ExportMessage
+    protected boolean hasLanguage() {
+        return true;
+    }
+
+    @ExportMessage
+    protected Class<? extends TruffleLanguage<?>> getLanguage() {
+        if (hostLanguage == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            try {
+                final Object hostObject = SqueakLanguage.getContext().env.asGuestValue(Truffle.getRuntime());
+                hostLanguage = InteropLibrary.getUncached().getLanguage(hostObject);
+            } catch (final UnsupportedMessageException e) {
+                e.printStackTrace();
+            }
+        }
+        return hostLanguage;
     }
 }
