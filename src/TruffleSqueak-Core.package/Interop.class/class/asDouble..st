@@ -1,4 +1,4 @@
-primitives converting
+primitives numbers
 asDouble: anObject
 	<primitive: 'primitiveAsDouble' module: 'PolyglotPlugin'>
 	^ (self fitsInDouble: anObject)

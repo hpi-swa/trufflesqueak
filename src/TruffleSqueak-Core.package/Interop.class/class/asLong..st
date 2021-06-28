@@ -1,4 +1,4 @@
-primitives converting
+primitives numbers
 asLong: anObject
 	<primitive: 'primitiveAsLong' module: 'PolyglotPlugin'>
 	^ (self fitsInLong: anObject)
