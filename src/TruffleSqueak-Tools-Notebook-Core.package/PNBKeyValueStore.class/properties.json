@@ -6,11 +6,9 @@
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		"executionCounter",
-		"notebook",
-		"bindings" ],
-	"name" : "PNBCodeCellContainer",
+		"dictionary" ],
+	"name" : "PNBKeyValueStore",
 	"pools" : [
 		 ],
-	"super" : "Morph",
+	"super" : "Object",
 	"type" : "normal" }

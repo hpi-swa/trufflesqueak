@@ -1,11 +1,10 @@
 drawing
 renderIntoForm
-	Polyglot export: '_fastr_graphics' value: self graphics2D.
-	Polyglot eval: 'R' string: ('
-	library(ggplot2)
-	library(lattice)
-	data("mpg")
-	bindings <- import("bindings")
-	awt({1}, {2}, import("_fastr_graphics"))
-	{3}
-	' format: { form width. form height. plotCode})
+	Polyglot eval: Polyglot languageIdR string: ('
+library(ggplot2)
+library(lattice)
+data("mpg")
+awt(width, height, g2d)
+{1}' format: { plotCode })
+		names: #('bindings' 'width' 'height' 'g2d')
+		arguments: {self bindings. form width. form height. self graphics2D}

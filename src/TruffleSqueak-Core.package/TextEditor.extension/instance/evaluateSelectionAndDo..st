@@ -29,9 +29,12 @@ evaluateSelectionAndDo: aBlock
 	] 
 		on: OutOfScopeNotification 
 		do: [ :ex | ex resume: true] ]
-		ifFalse: [
-			rcvr ifNotNil: [ [ (Polyglot primitiveGetScope: languageId) at: 'self' put: rcvr ] on: Error do: [ :e | "ignore error" ] ].
-			Polyglot eval: languageId string: self selection asString ].
+		ifFalse: [ | names args |
+			rcvr
+				ifNil: [ names := args := #() ]
+				ifNotNil: [ names := #('self').
+						   args := {rcvr} ].
+			Polyglot eval: languageId string: self selection asString names: names arguments: args ].
 		
 	(model respondsTo: #expressionEvaluated:result:) ifTrue: [
 		model perform: #expressionEvaluated:result: with: self selection with: result].

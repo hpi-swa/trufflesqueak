@@ -1,0 +1,3 @@
+overrides
+interopIsMemberInvocable: member
+	^ false

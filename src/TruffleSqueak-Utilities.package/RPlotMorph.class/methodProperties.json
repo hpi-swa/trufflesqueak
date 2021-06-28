@@ -3,10 +3,11 @@
 		"example" : "fn 5/1/2020 12:57",
 		"extent:plotCode:" : "fn 4/29/2020 15:46" },
 	"instance" : {
+		"bindings" : "fn 6/27/2021 18:28",
 		"copy" : "fn 4/30/2020 12:43",
 		"exportSVG" : "fn 4/30/2020 09:54",
 		"exportSVG:width:height:" : "fn 4/30/2020 10:19",
 		"form" : "fn 4/29/2020 15:42",
 		"plotCode:" : "fn 4/29/2020 15:40",
-		"renderIntoForm" : "fn 4/29/2020 15:42",
+		"renderIntoForm" : "fn 6/27/2021 18:28",
 		"yellowButtonActivity:" : "fn 2/25/2021 12:21" } }

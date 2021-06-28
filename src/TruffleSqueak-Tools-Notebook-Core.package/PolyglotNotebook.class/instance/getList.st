@@ -1,3 +1,3 @@
 model
 getList
-	^ {'bindings' -> Polyglot bindings}
+	^ {'bindings' -> cellContainer bindings }

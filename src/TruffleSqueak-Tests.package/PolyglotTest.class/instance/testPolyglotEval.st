@@ -10,12 +10,12 @@ testPolyglotEval
 
 	"`global` is disabled by default, use `console` instead"
 	self assert: 42 equals: (Polyglot eval: Polyglot languageIdJS string: 'console._testPolyglotEval = 42').
-	self assert: (Polyglot eval: Polyglot languageIdJS string: 'console._testPolyglotEval' inInnerContext: true) isNil.
-	self assert: 21 equals: (Polyglot eval: Polyglot languageIdJS string: 'console._testPolyglotEval = 21' inInnerContext: true).
+	self assert: (Polyglot evalInInnerContext: Polyglot languageIdJS string: 'console._testPolyglotEval') isNil.
+	self assert: 21 equals: (Polyglot evalInInnerContext: Polyglot languageIdJS string: 'console._testPolyglotEval = 21').
 	self assert: 42 equals: (Polyglot eval: Polyglot languageIdJS string: 'console._testPolyglotEval').
 	self assert: true equals: (Polyglot eval: Polyglot languageIdJS string: 'delete console._testPolyglotEval').
 	self assert: (Polyglot eval: Polyglot languageIdJS string: 'console._testPolyglotEval') isNil.
 
-	self assert: 21 equals: (Polyglot eval: Polyglot languageIdJS string: 'const _testPolyglotEvalOther = 21; _testPolyglotEvalOther' inInnerContext: true).
+	self assert: 21 equals: (Polyglot evalInInnerContext: Polyglot languageIdJS string: 'const _testPolyglotEvalOther = 21; _testPolyglotEvalOther').
 	self should: [ Polyglot eval: Polyglot languageIdJS string: '_testPolyglotEvalOther' ] raise: Error.
-	self assert: 21 equals: (Polyglot eval: Polyglot languageIdJS string: 'let _testPolyglotEvalOther = 21; _testPolyglotEvalOther' inInnerContext: true).
+	self assert: 21 equals: (Polyglot evalInInnerContext: Polyglot languageIdJS string: 'let _testPolyglotEvalOther = 21; _testPolyglotEvalOther').

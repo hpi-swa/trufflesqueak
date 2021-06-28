@@ -2,7 +2,6 @@ evaluation
 evaluateExpression: selection
 	^ Polyglot isPolyglotEvalAllowed
 		ifTrue: [ Polyglot
-					eval: self languageInfo getId asString
-					string: selection asString
-					withBindingsNamed: 'bindings' ]
+					evalWithBindings: self languageInfo getId asString
+					string: selection asString ]
 		ifFalse: [ Compiler evaluate: selection ]
