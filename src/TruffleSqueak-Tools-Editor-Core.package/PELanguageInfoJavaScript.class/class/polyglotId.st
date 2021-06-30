@@ -1,4 +1,4 @@
 polyglot
 polyglotId
 
-	^ Smalltalk globals at: #Polyglot ifPresent: #languageIdJS ifAbsent: ['js']
+	^ Smalltalk globals at: #Polyglot ifPresent: #languageIdJS ifAbsent: [#js]

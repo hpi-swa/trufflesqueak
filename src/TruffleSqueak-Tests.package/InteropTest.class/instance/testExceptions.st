@@ -16,9 +16,9 @@ testExceptions
 	"JS tests disabled due to https://github.com/graalvm/graaljs/issues/373"
 	true ifTrue: [ ^ self ].
 	
-	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
+	(Polyglot isPermitted: #js) ifFalse: [ ^self ].
 	
-	e := Polyglot eval: 'js' string: 'try {foo()} catch (e) {e}'.
+	e := Polyglot eval: #js string: 'try {foo()} catch (e) {e}'.
 	self assert: (Interop isException: e).
 	self assert: (Interop hasExceptionMessage: e).
 	self assert: 'Error message' equals: (Interop getExceptionMessage: e).

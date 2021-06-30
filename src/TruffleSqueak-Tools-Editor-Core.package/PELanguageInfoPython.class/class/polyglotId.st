@@ -1,4 +1,4 @@
 polyglot
 polyglotId
 
-	^ Smalltalk globals at: #Polyglot ifPresent: #languageIdPython ifAbsent: ['python']
+	^ Smalltalk globals at: #Polyglot ifPresent: #languageIdPython ifAbsent: [#python]

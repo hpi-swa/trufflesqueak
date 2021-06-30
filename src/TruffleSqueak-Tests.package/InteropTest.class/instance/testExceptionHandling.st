@@ -4,5 +4,5 @@ testExceptionHandling
 
 	self assert: ((
 		Polyglot
-			eval: 'js'
+			eval: #js
 			string: 'try { Polyglot.eval("smalltalk", "42/0") } catch (error) { error }') dividend = 42)
