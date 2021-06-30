@@ -3,6 +3,8 @@ streamOptionalFieldsOn: aStream
 
 	(Interop hasMembers: self object) ifTrue: [
 		aStream nextPutAll: self fieldsMembers ].
+	(Interop hasHashEntries: self object) ifTrue: [
+		aStream nextPut: self fieldHashEntries ].
 	(Interop isMetaObject: self object) ifTrue: [
 		aStream nextPut: self fieldMetaName ].
 	(Interop hasMetaObject: self object) ifTrue: [
