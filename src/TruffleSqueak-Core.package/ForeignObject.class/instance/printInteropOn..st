@@ -16,14 +16,23 @@ printInteropOn: aStream
 	(Interop isMetaObject: self) ifTrue: [ properties add: 'meta' ].
 	(Interop isIterator: self) ifTrue: [ properties add: 'iterator' ].
 	(Interop isHostObject: self) ifTrue: [ properties add: 'host' ].
+	(Interop isHostSymbol: self) ifTrue: [ properties add: 'host-symbol' ].
+	(Interop isHostFunction: self) ifTrue: [ properties add: 'host-function' ].
 	(Interop isExecutable: self) ifTrue: [ properties add: 'executable' ].
 	(Interop isInstantiable: self) ifTrue: [ properties add: 'instantiable' ].
 	(Interop isPointer: self) ifTrue: [ properties add: 'pointer' ].
 	(Interop isMetaObject: self) ifTrue: [ properties add: 'meta' ].
-	(Interop isScope: self) ifTrue: [ properties add: 'scope' ].
+	(Interop isScope: self) ifTrue: [ properties add: (
+		'scope,hasParent={1}' format: { Interop hasScopeParent: self }) ].
 	(Interop hasIdentity: self) ifTrue: [ properties add: 'identity' ].
-	(Interop hasArrayElements: self) ifTrue: [ properties add: 'arraySize=', (Interop getArraySize: self) ].
-	(Interop hasMembers: self) ifTrue: [ properties add: 'memberSize=', (Interop getMemberSize: self) ].
-	(Interop hasHashEntries: self) ifTrue: [ properties add: 'hashSize=', (Interop getHashSize: self) ].
-	(Interop hasBufferElements: self) ifTrue: [ properties add: 'bufferSize=', (Interop getBufferSize: self) ].
+	(Interop hasArrayElements: self) ifTrue: [ properties add:
+		'arraySize=', (Interop getArraySize: self) ].
+	(Interop hasMembers: self) ifTrue: [ properties add:
+		'memberSize=', (Interop getMemberSize: self) ].
+	(Interop hasHashEntries: self) ifTrue: [ properties add:
+		'hashSize=', (Interop getHashSize: self) ].
+	(Interop hasBufferElements: self) ifTrue: [ properties add: (
+		'bufferSize={1},writable={2}' format: {
+			Interop getBufferSize: self. Interop isBufferWritable: self }) ].
+	(Interop hasSourceLocation: self) ifTrue: [ properties add: 'sourceLocation' ].
 	properties ifNotEmpty: [ aStream nextPutAll: '[', (properties joinSeparatedBy: ','), ']' ]
