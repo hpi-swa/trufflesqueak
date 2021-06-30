@@ -485,7 +485,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         protected static final Object doArrayCached(final JavaObjectWrapper receiver, final Object[] args,
                         @CachedLibrary(limit = "1") final InteropLibrary lib) throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
             if (args.length != 1) {
-                throw ArityException.create(1, args.length);
+                throw ArityException.create(1, 1, args.length);
             }
             final Object arg0 = args[0];
             final int length;
