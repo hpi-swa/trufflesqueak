@@ -1,7 +1,7 @@
 {
 	"category" : "TruffleSqueak-Tools-Notebook-Core",
 	"classinstvars" : [
-		 ],
+		"validateNBJson" ],
 	"classvars" : [
 		 ],
 	"commentStamp" : "",
