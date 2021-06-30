@@ -9,7 +9,9 @@
 		"editor" : "fn 3/27/2019 09:47",
 		"evaluate" : "fn 3/27/2019 10:02",
 		"evaluateExpression:" : "fn 6/27/2021 18:29",
+		"getMenu:" : "fn 6/30/2021 11:27",
 		"hasUnacceptedEdits:" : "fn 3/27/2019 09:48",
 		"indicateKeyboardFocus" : "fn 3/27/2019 09:48",
 		"initialize" : "fn 3/27/2019 10:10",
+		"setSyntaxHighlighter" : "fn 6/30/2021 11:32",
 		"triggerStyle" : "fn 3/27/2019 09:48" } }
