@@ -3,11 +3,10 @@ isValidNBJson: aJsonString
 	validateNBJson ifNil: [
 		[ {[ validateNBJson := (Polyglot eval: #python string: 'import nbformat
 def is_valid_nb_json(nb_json):
-  nb = nbformat.reads(nb_json, 4)
   try:
-    nbformat.validate(nb)
+    nbformat.validate(nbformat.reads(nb_json, 4)) "use version 4"
     return True
-  except nbformat.ValidationError:
+  except:
     return False
 is_valid_nb_json') ]} do: [ :block | block value ]
 				displayingProgress: [ :block | 'Initializing nbformat in Python...' ]
