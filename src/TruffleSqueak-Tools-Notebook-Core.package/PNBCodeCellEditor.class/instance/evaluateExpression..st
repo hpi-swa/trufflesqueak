@@ -5,9 +5,9 @@ evaluateExpression:	aText
 	code := aText asString.
 	bindings := self codeCell cellContainer bindings.
 	^ (code beginsWith: '%ggplot2')
-		ifTrue: [ PNBRPlotMorph
+		ifTrue: [ (PNBRPlotMorph
 					extent: (self width - 10)@(self width)
-					plotCode: (code allButFirst: 9);
+					plotCode: (code allButFirst: 9))
 					bindings: bindings;
 					yourself ]
 		ifFalse: [ Polyglot eval: self codeCell languageID string: code

@@ -1,3 +1,3 @@
 accessing
 bindings
-	^ nil
+	^ bindings
