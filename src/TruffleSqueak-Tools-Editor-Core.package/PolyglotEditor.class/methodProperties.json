@@ -2,14 +2,14 @@
 	"class" : {
 		"defaultWindowColor" : "cmfcmf 6/23/2019 15:37",
 		"error:withLanguage:" : "cmfcmf 7/22/2019 18:38",
-		"evaluateInInnerContext" : "fn 5/13/2020 12:10",
+		"evaluateInInnerContext" : "fn 6/30/2021 15:18",
 		"evaluateSmalltalkDirectly" : "fn 5/13/2020 12:10",
 		"initialize" : "fn 5/13/2020 12:09",
 		"open" : "cmfcmf 7/22/2019 21:21",
 		"registerInWorldMenu" : "fn 5/13/2020 12:08",
 		"showSmalltalkCodeBoxWarning" : "cmfcmf 8/4/2019 17:46",
 		"smalltalkCodeBoxWarningShown" : "cmfcmf 8/4/2019 17:08",
-		"useAbsolutePathsForSnippets" : "fn 5/13/2020 12:10",
+		"useAbsolutePathsForSnippets" : "fn 6/30/2021 15:22",
 		"useAbsolutePathsForSnippets:" : "cmfcmf 7/30/2019 17:19" },
 	"instance" : {
 		"activeEditArea" : "fn 5/13/2020 12:01",

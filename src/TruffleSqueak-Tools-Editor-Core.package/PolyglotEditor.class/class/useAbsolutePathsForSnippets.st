@@ -5,4 +5,4 @@ useAbsolutePathsForSnippets
 		category: 'Polyglot Editor'
 		description: 'When on, snippets will use absolute paths'
 		type: #Boolean>
-	^ AbsolutePathsForSnippets ifNil: [false]
+	^ AbsolutePathsForSnippets ifNil: [true]
