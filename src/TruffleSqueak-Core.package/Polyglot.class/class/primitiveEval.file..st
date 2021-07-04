@@ -1,4 +1,4 @@
 primitives
 primitiveEval: aLanguage file: aString
-	<primitive: 'primitiveFileString' module: 'PolyglotPlugin'>
+	<primitive: 'primitiveEvalFile' module: 'PolyglotPlugin'>
 	PolyglotError signal
