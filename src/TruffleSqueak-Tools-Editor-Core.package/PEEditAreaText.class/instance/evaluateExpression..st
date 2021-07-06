@@ -3,7 +3,7 @@ evaluateExpression: selection
 
 	| polyglot |
 	polyglot := Smalltalk classNamed: #Polyglot.
-	^ (polyglot notNil and: [polyglot isPolyglotAccessAllowed])
+	^ (polyglot notNil and: [polyglot isPolyglotEvalAllowed])
 		ifTrue: [
 			[PolyglotEditor evaluateInInnerContext
 				ifTrue: [ polyglot evalInInnerContext: self languageInfo polyglotId string: selection asString ]
