@@ -1,6 +1,5 @@
 {
 	"class" : {
-		"primitiveGetCallTarget:" : "fn 3/3/2020 16:39",
 		"primitiveGetTruffleRuntime" : "fn 3/27/2020 15:14",
 		"runtime" : "fn 3/27/2020 15:14" },
 	"instance" : {

@@ -1,4 +1,3 @@
 *TruffleSqueak-Utilities
 callTarget
-	<primitive: 'primitiveGetCallTarget' module: 'TruffleSqueakPlugin'>
-	^ nil
+	^ self vmObject ifNotNil: [ :c | c callTarget ]
