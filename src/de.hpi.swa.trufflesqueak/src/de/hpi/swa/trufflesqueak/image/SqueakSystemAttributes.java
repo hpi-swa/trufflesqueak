@@ -46,9 +46,9 @@ public final class SqueakSystemAttributes {
     public SqueakSystemAttributes(final SqueakImageContext image) {
         this.image = image;
 
-        final String osName = System.getProperty("os.name");
-        final String osVersion = System.getProperty("os.version");
-        final String osArch = System.getProperty("os.arch");
+        final String osName = System.getProperty("os.name", "unknown os.name");
+        final String osVersion = System.getProperty("os.version", "unknown os.version");
+        final String osArch = System.getProperty("os.arch", "unknown os.arch");
 
         final String separator = File.separator;
         vmPath = asByteString(System.getProperty("java.home") + separator + "bin" + separator + "java");
@@ -57,10 +57,23 @@ public final class SqueakSystemAttributes {
 
         String value;
         if (OS.isMacOS()) {
-            /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
-            value = System.getProperty("os.version", "unknown").replaceFirst("\\.", "");
+            /*
+             * The image expects things like 1095, so convert 10.10.5 into 1010.5 (e.g., see
+             * #systemConverterClass)
+             */
+            value = "1016.0";
+            final String[] osVersionParts = osVersion.split("\\.");
+            if (osVersionParts.length == 2) {
+                final String major = osVersionParts[0];
+                try {
+                    final int minor = Integer.parseInt(osVersionParts[1]);
+                    value = String.format("%s%02d.0", major, minor);
+                } catch (final NumberFormatException e) {
+                    // give up
+                }
+            }
         } else {
-            value = System.getProperty("os.version", "unknown");
+            value = osVersion;
         }
         operatingSystemVersion = asByteString(value);
 
