@@ -2,7 +2,7 @@ statistics
 arrayStatistics
 	| arrayTypes total |
 	arrayTypes := #(0 0 0 0 0 0).
-	(Array allInstances collect: [ :ea | (self primitiveGetVMObject: ea) ]) do: [ :ea |
+	(Array allInstances collect: [ :ea | ea vmObject ]) do: [ :ea |
 		ea isEmptyType ifTrue: [ arrayTypes at: 1 put: (arrayTypes at: 1) + 1 ].
 		ea isBooleanType ifTrue: [ arrayTypes at: 2 put: (arrayTypes at: 2) + 1 ].
 		ea isCharType ifTrue: [ arrayTypes at: 3 put: (arrayTypes at: 3) + 1 ].

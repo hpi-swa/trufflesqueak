@@ -2,7 +2,7 @@ statistics
 layoutStatistics
 	| allLocations allLocationsSizes allLocationsTypes totalLocations |
 	allLocations := (((Class allSubInstances select: [ :ea | ea instSpec = 1]) "All PointersObjects"
-		collect: [ :ea | (self primitiveGetVMObject: ea) ]) select: [ :ea | ea hasLayout ] )
+		collect: [ :ea | ea vmObject ]) select: [ :ea | ea hasLayout ] )
 		collect: [ :ea | ea getLayout getLocations ].
 	allLocationsSizes := allLocations collect: [ :ea | ea size ].
 	allLocationsTypes := #(0 0 0 0 0 0 0 0 0).

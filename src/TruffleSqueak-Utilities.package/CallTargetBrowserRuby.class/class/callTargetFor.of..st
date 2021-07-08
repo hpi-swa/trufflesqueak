@@ -1,5 +1,4 @@
 helpers
 callTargetFor: aMethodName of: aModuleName
-	^ (TruffleSqueakUtilities primitiveGetVMObject: (
-			self methodFor: aMethodName of: aModuleName))
-				method callTarget
+	^ (self methodFor: aMethodName of: aModuleName)
+		vmObject method callTarget
