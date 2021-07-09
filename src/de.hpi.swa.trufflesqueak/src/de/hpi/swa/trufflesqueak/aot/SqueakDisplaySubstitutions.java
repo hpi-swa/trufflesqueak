@@ -350,7 +350,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
         assert offset >= 0;
         final int remainingSize = width * height * bpp - offset;
         if (remainingSize <= 0 || start >= stop) {
-            image.printToStdOut("remainingSize <= 0", remainingSize <= 0, "start >= stop", start >= stop);
+            image.printToStdOut("remainingSize <= 0", remainingSize, "start >= stop", start, stop);
             return;
         }
         final int[] pixels = bitmap.getIntStorage();
