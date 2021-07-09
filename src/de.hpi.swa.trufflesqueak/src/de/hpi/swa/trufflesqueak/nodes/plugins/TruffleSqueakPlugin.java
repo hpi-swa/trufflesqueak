@@ -20,7 +20,6 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
@@ -28,7 +27,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -60,15 +58,6 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver) {
             return JavaObjectWrapper.wrap(Truffle.getRuntime());
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetCallTarget")
-    protected abstract static class PrimGetCallTargetNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
-        @Specialization
-        protected static final Object doGet(final CompiledCodeObject code) {
-            return JavaObjectWrapper.wrap(code.getCallTargetOrNull());
         }
     }
 
