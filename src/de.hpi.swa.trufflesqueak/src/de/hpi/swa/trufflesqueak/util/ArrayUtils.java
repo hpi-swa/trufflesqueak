@@ -69,6 +69,15 @@ public final class ArrayUtils {
         return false;
     }
 
+    public static boolean containsEqual(final String[] strings, final String element) {
+        for (final String string : strings) {
+            if (string.equals(element)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static Object[] copyWithFirst(final Object[] objects, final Object first) {
         final int numObjects = objects.length;
         final Object[] newObjects = new Object[numObjects + 1];

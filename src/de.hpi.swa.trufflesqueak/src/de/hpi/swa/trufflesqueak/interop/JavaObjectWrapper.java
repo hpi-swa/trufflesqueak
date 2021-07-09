@@ -59,6 +59,7 @@ import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
@@ -73,6 +74,9 @@ public final class JavaObjectWrapper implements TruffleObject {
             Class<?> currentClass = type;
             while (currentClass != null) {
                 for (final Field field : currentClass.getDeclaredFields()) {
+                    if (TruffleOptions.AOT && ignoredForAOT(currentClass)) {
+                        continue;
+                    }
                     if (!field.isAccessible()) {
                         try {
                             field.setAccessible(true);
@@ -89,6 +93,11 @@ public final class JavaObjectWrapper implements TruffleObject {
             }
             return result;
         }
+
+        private boolean ignoredForAOT(final Class<?> cls) {
+            final String simpleName = cls.getSimpleName();
+            return "Class".equals(simpleName) || "SubstrateTruffleRuntime".equals(simpleName) || "GraalTruffleRuntime".equals(simpleName);
+        }
     };
     private static final ClassValue<HashMap<String, Method>> CLASSES_TO_METHODS = new ClassValue<HashMap<String, Method>>() {
         @Override
@@ -98,6 +107,9 @@ public final class JavaObjectWrapper implements TruffleObject {
             Class<?> currentClass = type;
             while (currentClass != null) {
                 for (final Method method : currentClass.getDeclaredMethods()) {
+                    if (TruffleOptions.AOT && ignoredForAOT(method)) {
+                        continue;
+                    }
                     if (!method.isAccessible()) {
                         try {
                             method.setAccessible(true);
@@ -113,6 +125,29 @@ public final class JavaObjectWrapper implements TruffleObject {
                 currentClass = currentClass.getSuperclass();
             }
             return result;
+        }
+
+        private boolean ignoredForAOT(final Method method) {
+            final String methodName = method.getName();
+            if (methodName.endsWith("0")) { // skip internal methods
+                return true;
+            }
+            final String classSimpleName = method.getDeclaringClass().getSimpleName();
+            switch (classSimpleName) {
+                case "Class":
+                    if (methodName.contains("Annotation")) {
+                        return true;
+                    }
+                    return !ArrayUtils.containsEqual(new String[]{"getCanonicalName", "getName", "getSimpleName", "isInstance", "toString"}, methodName);
+                case "SubstrateTruffleRuntime":
+                case "GraalTruffleRuntime": // superclass of SubstrateTruffleRuntime
+                    return !ArrayUtils.containsEqual(new String[]{"getCompileQueue", "getName", "toString"}, methodName);
+                case "BackgroundCompileQueue":
+                    return !ArrayUtils.containsEqual(new String[]{"getQueueSize", "toString"}, methodName);
+                default:
+                    break;
+            }
+            return false;
         }
     };
     private static final ClassValue<InteropArray> CLASSES_TO_MEMBERS = new ClassValue<InteropArray>() {
@@ -130,35 +165,34 @@ public final class JavaObjectWrapper implements TruffleObject {
          * classes to provide access when TruffleSqueak is compiled with native-image.
          */
         if (TruffleOptions.AOT) {
-            // General classes
-            CLASSES_TO_MEMBERS.get(ArrayList.class);
-            CLASSES_TO_MEMBERS.get(HashMap.class);
-            CLASSES_TO_MEMBERS.get(HashSet.class);
-            CLASSES_TO_MEMBERS.get(TreeSet.class); // Used to store mime types in LanguageInfo.class
+            for (final Class<?> cls : new Class<?>[]{
+                            // General classes
+                            boolean.class, byte.class, char.class, short.class, int.class, long.class, float.class, double.class,
+                            Boolean.class, Byte.class, Character.class, Short.class, Integer.class, Long.class, Float.class, Double.class,
+                            Class.class, Object.class, String.class,
+                            // Common data structures
+                            ArrayList.class, HashMap.class, HashSet.class, TreeSet.class,
+                            // Truffle classes exposed by PolyglotPlugin
+                            LanguageInfo.class, SourceSection.class,
+                            // Non-abstract classes of TruffleSqueak model
+                            ArrayObject.class, BlockClosureObject.class, BooleanObject.class, CharacterObject.class, ClassObject.class, CompiledCodeObject.class, ContextObject.class,
+                            EmptyObject.class, FloatObject.class, LargeIntegerObject.class, NativeObject.class, NilObject.class, PointersObject.class, VariablePointersObject.class,
+                            WeakVariablePointersObject.class,
+                            // TruffleSqueak's object layout
+                            ObjectLayout.class,
 
-            // Truffle classes exposed by PolyglotPlugin
-            CLASSES_TO_MEMBERS.get(LanguageInfo.class);
-            CLASSES_TO_MEMBERS.get(SourceSection.class);
+            }) {
+                CLASSES_TO_MEMBERS.get(cls);
+                CLASSES_TO_MEMBERS.get(Array.newInstance(cls, 0).getClass()); // Add array classes
+            }
 
-            // Non-abstract classes of TruffleSqueak model
-            CLASSES_TO_MEMBERS.get(ArrayObject.class);
-            CLASSES_TO_MEMBERS.get(BlockClosureObject.class);
-            CLASSES_TO_MEMBERS.get(BooleanObject.class);
-            CLASSES_TO_MEMBERS.get(CharacterObject.class);
-            CLASSES_TO_MEMBERS.get(ClassObject.class);
-            CLASSES_TO_MEMBERS.get(CompiledCodeObject.class);
-            CLASSES_TO_MEMBERS.get(ContextObject.class);
-            CLASSES_TO_MEMBERS.get(EmptyObject.class);
-            CLASSES_TO_MEMBERS.get(FloatObject.class);
-            CLASSES_TO_MEMBERS.get(LargeIntegerObject.class);
-            CLASSES_TO_MEMBERS.get(NativeObject.class);
-            CLASSES_TO_MEMBERS.get(NilObject.class);
-            CLASSES_TO_MEMBERS.get(PointersObject.class);
-            CLASSES_TO_MEMBERS.get(VariablePointersObject.class);
-            CLASSES_TO_MEMBERS.get(WeakVariablePointersObject.class);
-
-            // TruffleSqueak's object layout
-            CLASSES_TO_MEMBERS.get(ObjectLayout.class);
+            // Truffle runtime class and BackgroundCompileQueue
+            try {
+                CLASSES_TO_MEMBERS.get(Class.forName("com.oracle.svm.truffle.api.SubstrateTruffleRuntime"));
+                CLASSES_TO_MEMBERS.get(Class.forName("org.graalvm.compiler.truffle.runtime.BackgroundCompileQueue"));
+            } catch (final ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
