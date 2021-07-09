@@ -4,7 +4,7 @@ isValidNBJson: aJsonString
 		[ {[ validateNBJson := (Polyglot eval: #python string: 'import nbformat
 def is_valid_nb_json(nb_json):
   try:
-    nbformat.validate(nbformat.reads(nb_json, 4)) "use version 4"
+    nbformat.validate(nbformat.reads(nb_json, 4)) # use version 4
     return True
   except:
     return False
