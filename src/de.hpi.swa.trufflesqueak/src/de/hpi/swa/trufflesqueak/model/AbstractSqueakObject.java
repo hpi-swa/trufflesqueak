@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.lang.reflect.Method;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -15,6 +17,8 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.Library;
+import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.library.ReflectionLibrary;
 import com.oracle.truffle.api.nodes.DirectCallNode;
@@ -72,6 +76,9 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             return callNode.call(frameArguments);
         }
 
+        // TODO: Add Specialization for non-InteropLibrary messages to avoid slowing down other
+        // Truffle libraries?
+
         @TruffleBoundary
         @Specialization(replaces = "doSendCached")
         protected static final Object doSendGeneric(final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
@@ -103,7 +110,13 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             }
             CompilerDirectives.transferToInterpreter();
             // Fall back to other, concrete or the default library implementation
-            return ReflectionLibrary.getFactory().getUncached().send(DEFAULT, message, arguments);
+            // FIXME: avoid reflection here somehow, the following does not work:
+            // return ReflectionLibrary.getFactory().getUncached(receiver).send(DEFAULT, message,
+            // arguments);
+            final LibraryFactory<?> lib = message.getFactory();
+            final Method genericDispatchMethod = lib.getClass().getDeclaredMethod("genericDispatch", Library.class, Object.class, Message.class, Object[].class, int.class);
+            genericDispatchMethod.setAccessible(true);
+            return genericDispatchMethod.invoke(lib, lib.getUncached(DEFAULT), receiver, message, arguments, 0);
         }
     }
 }
