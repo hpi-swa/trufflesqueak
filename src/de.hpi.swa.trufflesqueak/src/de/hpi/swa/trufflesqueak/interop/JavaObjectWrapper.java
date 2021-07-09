@@ -10,8 +10,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -19,6 +21,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -34,11 +37,27 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.CharacterObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.EmptyObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
+import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
 @SuppressWarnings("static-method")
@@ -104,6 +123,44 @@ public final class JavaObjectWrapper implements TruffleObject {
             return new InteropArray(members.toArray(new String[0]));
         }
     };
+
+    static {
+        /*
+         * Pre-initialize CLASSES_TO_MEMBERS, CLASSES_TO_METHODS, and CLASSES_TO_FIELDS for certain
+         * classes to provide access when TruffleSqueak is compiled with native-image.
+         */
+        if (TruffleOptions.AOT) {
+            // General classes
+            CLASSES_TO_MEMBERS.get(ArrayList.class);
+            CLASSES_TO_MEMBERS.get(HashMap.class);
+            CLASSES_TO_MEMBERS.get(HashSet.class);
+            CLASSES_TO_MEMBERS.get(TreeSet.class); // Used to store mime types in LanguageInfo.class
+
+            // Truffle classes exposed by PolyglotPlugin
+            CLASSES_TO_MEMBERS.get(LanguageInfo.class);
+            CLASSES_TO_MEMBERS.get(SourceSection.class);
+
+            // Non-abstract classes of TruffleSqueak model
+            CLASSES_TO_MEMBERS.get(ArrayObject.class);
+            CLASSES_TO_MEMBERS.get(BlockClosureObject.class);
+            CLASSES_TO_MEMBERS.get(BooleanObject.class);
+            CLASSES_TO_MEMBERS.get(CharacterObject.class);
+            CLASSES_TO_MEMBERS.get(ClassObject.class);
+            CLASSES_TO_MEMBERS.get(CompiledCodeObject.class);
+            CLASSES_TO_MEMBERS.get(ContextObject.class);
+            CLASSES_TO_MEMBERS.get(EmptyObject.class);
+            CLASSES_TO_MEMBERS.get(FloatObject.class);
+            CLASSES_TO_MEMBERS.get(LargeIntegerObject.class);
+            CLASSES_TO_MEMBERS.get(NativeObject.class);
+            CLASSES_TO_MEMBERS.get(NilObject.class);
+            CLASSES_TO_MEMBERS.get(PointersObject.class);
+            CLASSES_TO_MEMBERS.get(VariablePointersObject.class);
+            CLASSES_TO_MEMBERS.get(WeakVariablePointersObject.class);
+
+            // TruffleSqueak's object layout
+            CLASSES_TO_MEMBERS.get(ObjectLayout.class);
+        }
+    }
 
     @CompilationFinal private static Class<? extends TruffleLanguage<?>> hostLanguage;
     private final Object wrappedObject;
