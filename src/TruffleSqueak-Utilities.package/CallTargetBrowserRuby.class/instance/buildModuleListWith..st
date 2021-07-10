@@ -4,7 +4,7 @@ buildModuleListWith: builder
 	listSpec := builder pluggableListSpec new.
 	listSpec 
 		model: self;
-		list: #moduleList; 
-		getIndex: #moduleListIndex;
-		setIndex: #moduleListIndex:.
+		list: #moduleAndClassList; 
+		getIndex: #moduleAndClassListIndex;
+		setIndex: #moduleAndClassListIndex:.
 	^ listSpec

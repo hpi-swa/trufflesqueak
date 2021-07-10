@@ -3,6 +3,6 @@ selectedModuleName: anObject
 
 	selectedModuleName := anObject.
 	selectedMethodName := nil.
-	self changed: #moduleListIndex.
+	self changed: #moduleAndClassListIndex.
 	self changed: #methodList.
 	self changed: #relabel.
