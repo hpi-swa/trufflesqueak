@@ -4,15 +4,17 @@ callTargetInfoStringFor: aCallTarget
 		ifNil: [ 'no call target available' ]
 		ifNotNil: [ :c |
 'name:					{1}
-callCount:				{2}
-callAndLoopCount:		{3}
-knownCallSiteCount:	{4}
-nonTrivialNodeCount:	{5}
-profiled return value:	{6}
-profiled arguments:		{7}
+highestCompiledTier:	{2}
+callCount:				{3}
+callAndLoopCount:		{4}
+knownCallSiteCount:	{5}
+nonTrivialNodeCount:	{6}
+profiled return value:	{7}
+profiled arguments:		{8}
 included call nodes:
-	- {8}' format: {
+	- {9}' format: {
 	c getName asString.
+	c highestCompiledTier.
 	c getCallCount.
 	c getCallAndLoopCount.
 	c getKnownCallSiteCount.
