@@ -13,7 +13,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 public final class NilObject extends AbstractSqueakObject {
     public static final NilObject SINGLETON = new NilObject();
     public static final long SQUEAK_HASH = 1L;
-    private static final int IDENTITY_HASH = System.identityHashCode(SINGLETON);
 
     private NilObject() {
     }

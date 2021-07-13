@@ -104,7 +104,7 @@ public final class ContextScope implements TruffleObject {
         final String[] members = new String[getContextSize()];
         System.arraycopy(ALL_FIELDS, 0, members, 0, ALL_FIELDS.length);
         for (int i = CONTEXT.TEMP_FRAME_START; i < members.length; i++) {
-            members[i] = "" + i;
+            members[i] = Integer.toString(i);
         }
         return new InteropArray(members);
     }

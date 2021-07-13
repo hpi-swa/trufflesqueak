@@ -279,16 +279,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    private byte byteValueExact() throws ArithmeticException {
-        return integer.byteValueExact();
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    private short shortValueExact() throws ArithmeticException {
-        return integer.shortValueExact();
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
     public int intValueExact() throws ArithmeticException {
         return integer.intValueExact();
     }

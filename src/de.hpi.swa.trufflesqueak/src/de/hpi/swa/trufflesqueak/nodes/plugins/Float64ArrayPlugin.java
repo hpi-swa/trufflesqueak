@@ -173,7 +173,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimFromFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "other.isIntType()", "receiver.getLongLength() == other.getIntLength()"})
-        protected static final NativeObject doEqual(final NativeObject receiver, final NativeObject other) {
+        protected static final NativeObject doFromFloatArray(final NativeObject receiver, final NativeObject other) {
             final long[] longs = receiver.getLongStorage();
             final int[] ints = other.getIntStorage();
             for (int i = 0; i < longs.length; i++) {

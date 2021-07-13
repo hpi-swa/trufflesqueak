@@ -59,6 +59,7 @@ public final class SqueakMouse extends MouseInputAdapter {
                 break;
             default:
                 display.image.printToStdErr("Unknown mouse event:", e);
+                break;
         }
 
         display.buttons = buttons | display.recordModifiers(e);
