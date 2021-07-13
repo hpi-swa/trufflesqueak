@@ -335,6 +335,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setCodeObject(final CompiledCodeObject value) {
         FrameAccess.setCodeObject(getOrCreateTruffleFrame(value), value);
+        methodOrBlock = value;
     }
 
     public BlockClosureObject getClosure() {
