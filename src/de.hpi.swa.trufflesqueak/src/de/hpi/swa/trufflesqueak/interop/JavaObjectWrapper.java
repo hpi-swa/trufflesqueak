@@ -60,6 +60,7 @@ import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 @SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
@@ -81,7 +82,8 @@ public final class JavaObjectWrapper implements TruffleObject {
                         try {
                             field.setAccessible(true);
                         } catch (final Exception e) {
-                            continue; // skip inaccessible fields
+                            LogUtils.HOST_INTEROP.fine("Unable to access " + field + "\n" + e);
+                            continue;
                         }
                     }
                     final String name = field.getName();
@@ -114,7 +116,8 @@ public final class JavaObjectWrapper implements TruffleObject {
                         try {
                             method.setAccessible(true);
                         } catch (final Exception e) {
-                            continue; // skip inaccessible methods
+                            LogUtils.HOST_INTEROP.fine("Unable to access " + method + "\n" + e);
+                            continue;
                         }
                     }
                     final String name = method.getName();
