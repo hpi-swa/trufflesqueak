@@ -9,4 +9,6 @@ mainMessageListMenu: aMenu
 		add: 'sort by known call site count' action: #sortByKnownCallSiteCount;
 		add: 'sort by non-trivial node count' action: #sortByNonTrivialNodeCount;
 		addLine;
+		add: 'toggle coverage based on Truffle ASTs' action: #toggleCoverage;
+		addLine;
 		yourself
