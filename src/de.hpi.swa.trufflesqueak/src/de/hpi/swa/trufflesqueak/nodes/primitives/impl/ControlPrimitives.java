@@ -646,6 +646,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "receiver.hasMethodClass(readNode)")
         protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            receiver.flushCache();
             image.flushMethodCacheForMethod(receiver);
             /*
              * TODO: maybe the method's callTarget could be invalidated to remove it from any PIC

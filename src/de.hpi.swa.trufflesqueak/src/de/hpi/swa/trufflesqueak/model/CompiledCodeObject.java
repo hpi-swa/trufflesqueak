@@ -253,6 +253,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         callTarget = Truffle.getRuntime().createCallTarget(rootNode);
     }
 
+    public void flushCache() {
+        /* Invalidate callTargetStable assumption to ensure this method is released from caches. */
+        callTargetStable.invalidate("primitive 116");
+    }
+
     public Assumption getCallTargetStable() {
         return callTargetStable.getAssumption();
     }
