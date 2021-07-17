@@ -34,11 +34,7 @@ setUpImage
 	Project current showWorldMainDockingBar: false.
 	Project current showWorldMainDockingBar: true.
 	
-	"Set up environment"
-	ReleaseBuilder deleteAllWindows.
-	"Delete all logos and buttons"
-	{ImageMorph. SimpleButtonMorph} do: [ :ea |
-		(World submorphsSatisfying: [ :m |	(m isKindOf: ea) ]) do: [ :m | m delete ] ].
+	self closeAllWindowsAndMorphs.
 
 	self openButton: PolyglotWorkspace asString, ' open' at: 20@28.
 	self openButton: PolyglotNotebook asString, ' open' at: 190@28.

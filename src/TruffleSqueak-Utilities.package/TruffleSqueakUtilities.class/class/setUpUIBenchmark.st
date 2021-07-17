@@ -1,21 +1,25 @@
 image creation
 setUpUIBenchmark
+	| isDefault bam |
+	isDefault := (UIManager default chooseFrom: #('600x400 (default)' '1024x768 (large)')
+		lines: #()
+		title: 'Choose the resolution of the benchmark') = 1.
+
 	Preferences setFlag: #higherPerformance toValue: true.
 	DisplayScreen
 		fullScreenOff;
-		setNewScreenSize: 1024 @ 768.
+		setNewScreenSize: (isDefault ifTrue: [ 600@400 ] ifFalse: [ 1024@768 ]).
 
-	World submorphs
-		select: [ :ea | ea isKindOf: SimpleButtonMorph ]
-		thenDo: [ :ea | ea abandon ].
-	ReleaseBuilder deleteAllWindows.
+	self closeAllWindowsAndMorphs.
 	
 	World dockingBars do: [ :b | b addMorph: UIBenchmarkInfoMorph new inFrontOf:
 		(b submorphs detect: [:ea | ea isKindOf: AlignmentMorph]) ].
 
-	BouncingAtomsMorph new
-		addAtoms: 70; "100 atoms"
-		extent: 800@600;
+	bam := BouncingAtomsMorph new.
+	isDefault ifFalse: [ bam
+						addAtoms: 70; "100 atoms"
+						extent: 800@600 ].
+	bam
 		center: World center;
 		openInWorld.
 
