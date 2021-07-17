@@ -1,15 +1,14 @@
 stepping and presenter
 step
-	| now mSecs framesPerSec queueSize newContents |
+	| now mSecs framesPerSec queueSize |
 	framesSinceLastDisplay := framesSinceLastDisplay + 1.
 	now := Time millisecondClockValue.
 	mSecs := now - lastDisplayTime.
 	(mSecs > 500 or: [mSecs < 0 "clock wrap-around"]) ifTrue: 
 		[framesPerSec := (framesSinceLastDisplay * 1000) // mSecs.
 		queueSize := Graal runtime ifNil: [ 'n/a' ] ifNotNil: [ :r | r getCompilationQueueSize asNumber ].
-		newContents := 'Time: ', now, '; Frame rate: ', framesPerSec, 'fps; Graal queue size: ', queueSize, ';'.
-		self contents: newContents.
-		FileStream stdout nextPutAll: newContents; cr; flush.
+		self contents: '', framesPerSec, 'fps; Graal queue: ', queueSize.
+		FileStream stdout nextPutAll: 'Time	', now, '	FPS	', framesPerSec, '	Graal queue size	', queueSize; cr; flush.
 		lastDisplayTime := now.
 		framesSinceLastDisplay := 0]
 	ifFalse:
