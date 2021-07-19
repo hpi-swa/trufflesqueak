@@ -60,9 +60,6 @@ _SVM = mx.suite('substratevm', fatalIfMissing=False)
 
 if _COMPILER:
     # Tweak GraalVM Engine
-    BASE_VM_ARGS.append('-Dpolyglot.engine.Mode=latency')
-    BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.Mode=latency')
-
     BASE_VM_ARGS_TESTING.append('-Dpolyglot.engine.CompilationFailureAction=Diagnose')
 
 def _graal_vm_args(args):
