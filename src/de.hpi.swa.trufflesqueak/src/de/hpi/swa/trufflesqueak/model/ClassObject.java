@@ -634,7 +634,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void write(final SqueakImageWriter writer) {
         if (!writeHeader(writer)) {
-            throw SqueakException.create("BlockClosureObject must have slots:", this);
+            throw SqueakException.create("ClassObject must have slots:", this);
         }
         writer.writeObject(getSuperclass());
         writer.writeObject(getMethodDict());

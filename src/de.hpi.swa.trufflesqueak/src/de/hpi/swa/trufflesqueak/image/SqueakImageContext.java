@@ -196,6 +196,10 @@ public final class SqueakImageContext {
                 printToStdOut("Skipping startup routine...");
                 return;
             }
+            /*
+             * TODO: Move setup instructions into a single .st file and evaluate that (similar to
+             * how its done in SqueakSUnitTest.
+             */
             printToStdOut("Preparing image for headless execution...");
             // Remove active context.
             GetActiveProcessNode.getSlow(this).instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
@@ -203,7 +207,7 @@ public final class SqueakImageContext {
             evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
             try {
                 /** See SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:. */
-                evaluate("[Smalltalk clearExternalObjects. Smalltalk processStartUpList: true. Smalltalk setPlatformPreferences] value");
+                evaluate("[Smalltalk clearExternalObjects. Smalltalk processStartUpList: true. Smalltalk setPlatformPreferences; recordStartupStamp] value");
             } catch (final Exception e) {
                 printToStdErr("startUpList failed:");
                 printToStdErr(e);
