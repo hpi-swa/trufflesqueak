@@ -110,8 +110,8 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     @Test
     public void runSqueakTest() throws Throwable {
         checkTermination();
-        if (!truffleSqueakPackagesLoaded && inTruffleSqueakPackage(test.className)) {
-            loadTruffleSqueakPackages(test);
+        if (!truffleSqueakPackagesLoaded && (runsOnMXGate() || inTruffleSqueakPackage(test))) {
+            loadTruffleSqueakPackages();
         }
 
         TestResult result = null;
@@ -203,18 +203,19 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
     }
 
-    private static boolean inTruffleSqueakPackage(final String className) {
+    private static boolean inTruffleSqueakPackage(final SqueakTest test) {
+        final String className = test.className;
         for (final String testCaseName : TRUFFLESQUEAK_TEST_CASE_NAMES) {
             if (testCaseName.equals(className)) {
+                println("\nLoading TruffleSqueak packages (required by " + test + "). This may take a while...");
                 return true;
             }
         }
         return false;
     }
 
-    private static void loadTruffleSqueakPackages(final SqueakTest test) {
+    private static void loadTruffleSqueakPackages() {
         final long start = System.currentTimeMillis();
-        println("\nLoading TruffleSqueak packages (required by " + test + "). This may take a while...");
         final String loadTemplate;
         try (InputStream is = SqueakSUnitTest.class.getResourceAsStream(LOAD_TEMPLATE_FILE_NAME)) {
             if (is == null) {
