@@ -68,6 +68,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private final FrameSlot instructionPointerSlot;
     private final FrameSlot stackPointerSlot;
     // header info and data
+    /*
+     * TODO: literals and bytes can change (and probably more?) and should not be @CompilationFinal.
+     * Literals are cached in the AST and bytes are represented by nodes, so this should not affect
+     * performance. Find out why it does affect performance.
+     */
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
     @CompilationFinal protected int numArgs;
