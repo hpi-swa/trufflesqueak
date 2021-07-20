@@ -13,6 +13,9 @@ Installer monticello
                     [[ e sendNotificationsTo: [ :min :max :current | "silence" ]]
                         on: ProgressNotification do: [ :notification | notification resume ]]]].
 
+"Run finalizationProcess manually in case classes have been reshaped."
+(WeakArray classPool at: #FinalizationDependents) do: [:wd | wd ifNotNil: [wd finalizeValues]].
+
 (Smalltalk at: #TruffleSqueakUtilities) setUpAfterLoadingPackages.
 
 Smalltalk snapshot: true andQuit: false.
