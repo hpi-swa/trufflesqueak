@@ -367,9 +367,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;
+        final EconomicMap<Integer, CompiledCodeObject> shadowBlocks2 = other.shadowBlocks;
+        final CompiledCodeObject outerMethod2 = other.outerMethod;
         other.setLiteralsAndBytes(literals, bytes);
-        setLiteralsAndBytes(literals2, bytes2);
+        other.shadowBlocks = shadowBlocks;
+        other.outerMethod = outerMethod;
         other.callTargetStable.invalidate();
+        setLiteralsAndBytes(literals2, bytes2);
+        shadowBlocks = shadowBlocks2;
+        outerMethod = outerMethod2;
         callTargetStable.invalidate();
     }
 
@@ -515,6 +521,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                     // pointersBecome should not modify literals at all?).
                     setLiteral(j, toPointer);
                 }
+            }
+            if (fromPointer == outerMethod && to[i] instanceof CompiledCodeObject) {
+                outerMethod = (CompiledCodeObject) to[i];
+            }
+        }
+        // Migrate all shadow blocks
+        if (shadowBlocks != null) {
+            for (final CompiledCodeObject shadowBlock : shadowBlocks.getValues()) {
+                shadowBlock.pointersBecomeOneWay(from, to);
             }
         }
     }
