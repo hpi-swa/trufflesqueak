@@ -19,6 +19,7 @@
 		"primitiveFormToBufferedImage:" : "fn 4/29/2020 12:29",
 		"primitiveGetVMObject:" : "fn 3/21/2020 16:23",
 		"registerInWorldMenu" : "fn 3/30/2021 10:31",
+		"setUpAfterLoadingPackages" : "fn 7/20/2021 12:34",
 		"setUpImage" : "fn 7/16/2021 10:15",
 		"setUpTestImage" : "fn 3/30/2021 09:45",
 		"setUpUIBenchmark" : "fn 7/16/2021 10:32" },
