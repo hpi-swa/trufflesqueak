@@ -241,21 +241,26 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public AbstractSqueakObject getSender() {
         final Object value = getFrameSender();
         if (value instanceof FrameMarker) {
-            if (!methodOrBlock.hasPrimitive() || methodOrBlock.isUnwindMarked() || methodOrBlock.isExceptionHandlerMarked()) {
-                /*
-                 * Only invalidate sender assumption if not a primitive method. The sender of a
-                 * primitive method is usually required in exceptional cases (when the debugger is
-                 * opened, example: `1/0`), except if the method is unwind marked or marked as
-                 * exception handler.
-                 */
-                methodOrBlock.getDoesNotNeedSenderAssumption().invalidate("Sender requested");
-            }
-            final ContextObject previousContext = ((FrameMarker) value).getMaterializedContext();
-            FrameAccess.setSender(getTruffleFrame(), previousContext);
-            return previousContext;
+            return fillInSenderFromMaker((FrameMarker) value);
         } else {
             return (AbstractSqueakObject) value;
         }
+    }
+
+    @TruffleBoundary
+    private AbstractSqueakObject fillInSenderFromMaker(final FrameMarker value) {
+        if (!methodOrBlock.hasPrimitive() || methodOrBlock.isUnwindMarked() || methodOrBlock.isExceptionHandlerMarked()) {
+            /*
+             * Only invalidate sender assumption if not a primitive method. The sender of a
+             * primitive method is usually required in exceptional cases (when the debugger is
+             * opened, example: `1/0`), except if the method is unwind marked or marked as exception
+             * handler.
+             */
+            methodOrBlock.getDoesNotNeedSenderAssumption().invalidate("Sender requested");
+        }
+        final ContextObject previousContext = value.getMaterializedContext();
+        FrameAccess.setSender(getTruffleFrame(), previousContext);
+        return previousContext;
     }
 
     // should only be used when sender is not nil
