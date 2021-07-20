@@ -230,7 +230,13 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             e.printStackTrace();
             return;
         }
+        evaluate("FileStream stdout cr; nextPutAll: (CallTargetBrowser>>#callTargetInfoContents) getSource; cr; flush.");
+        evaluate("FileStream stdout cr; nextPutAll: (CallTargetBrowser class>>#callTargetInfoStringFor:) getSource; cr; flush.");
+        evaluate("FileStream stdout cr; nextPutAll: (CallTargetBrowser instVarNames) asString; cr; flush.");
         evaluate(String.format(loadTemplate, getPathToInImageCode()));
+        evaluate("FileStream stdout cr; nextPutAll: (CallTargetBrowser>>#callTargetInfoContents) getSource; cr; flush.");
+        evaluate("FileStream stdout cr; nextPutAll: (CallTargetBrowser class>>#callTargetInfoStringFor:) getSource; cr; flush.");
+        evaluate("FileStream stdout cr; nextPutAll: (CallTargetBrowser instVarNames) asString; cr; flush.");
         truffleSqueakPackagesLoaded = true;
         println("TruffleSqueak packages loaded and image saved in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
     }
