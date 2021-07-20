@@ -221,7 +221,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static String testCommand(final TestRequest request) {
         return String.format(
-                        "[[(%s selector: #%s) runCase. '%s'] on: MessageNotUnderstood do: [:mnu | FileStream stdout nextPutAll: (mnu receiver asString, String cr, ((Interop getMembers: mnu receiver) joinSeparatedBy: String cr), String cr, ((CallTargetBrowser class>>#callTargetInfoStringFor:) getSource); cr; flush. mnu signal] ] on: TestFailure, Error do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ]",
+                        "[[(%s selector: #%s) runCase. '%s'] on: MessageNotUnderstood do: [:mnu | FileStream stdout nextPutAll: (mnu receiver asString, String cr, ((Interop getMembers: mnu receiver) joinSeparatedBy: String cr), String cr, ((CallTargetBrowser class>>#callTargetInfoStringFor:) getSource)); cr; flush. mnu signal] ] on: TestFailure, Error do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
