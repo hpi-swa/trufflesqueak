@@ -80,7 +80,7 @@ public final class SqueakSystemAttributes {
         if (osArch.equals("aarch64")) {
             value = "armv8"; /* For `SmalltalkImage>>#isLowerPerformance`. */
         } else {
-            value = osArch;
+            value = "x64"; /* For users of `Smalltalk os platformSubtype`. */
         }
         platformProcessorType = asByteString(value);
 
