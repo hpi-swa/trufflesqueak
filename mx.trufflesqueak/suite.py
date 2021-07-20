@@ -27,8 +27,8 @@ suite = {
         "jdk16": "16",
         "jdk16_update": "36",
         "jvmci": "jvmci-21.1-b04",
-        "test_image": "TruffleSqueakTestImage-6.0alpha-20228-64bit.zip",
-        "test_image_tag": "21.0.0.1",
+        "test_image": "TruffleSqueakTestImage-6.0alpha-20228b-64bit.zip",
+        "test_image_tag": "21.1.0",
     },
 
     "release": False,
