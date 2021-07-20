@@ -13,4 +13,6 @@ Installer monticello
                     [[ e sendNotificationsTo: [ :min :max :current | "silence" ]]
                         on: ProgressNotification do: [ :notification | notification resume ]]]].
 
+(Smalltalk at: #TruffleSqueakUtilities) setUpAfterLoadingPackages.
+
 Smalltalk snapshot: true andQuit: false.
