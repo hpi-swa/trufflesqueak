@@ -153,6 +153,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
      */
     @SuppressWarnings("unused")
     private AbstractBytecodeNode fetchNextBytecodeNode(final VirtualFrame frame, final int pcZeroBased) {
+        assert 0 <= pcZeroBased && pcZeroBased < bytecodeNodes.length : "PC out of bounds for " + code;
         if (bytecodeNodes[pcZeroBased] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             bytecodeNodes[pcZeroBased] = insert(code.bytecodeNodeAt(frame, pcZeroBased));
