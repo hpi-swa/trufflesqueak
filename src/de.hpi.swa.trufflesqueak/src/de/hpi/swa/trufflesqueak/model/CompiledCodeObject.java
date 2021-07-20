@@ -233,9 +233,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private void invalidateCallTarget() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        callTargetStable.invalidate();
-        callTarget = null;
+        if (callTarget != null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            callTargetStable.invalidate();
+            callTarget = null;
+        }
     }
 
     private void renewCallTarget() {
