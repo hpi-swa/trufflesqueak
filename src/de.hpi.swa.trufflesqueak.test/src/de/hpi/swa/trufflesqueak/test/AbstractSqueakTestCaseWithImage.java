@@ -103,11 +103,11 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         println("Image ready for testing...");
     }
 
-    private static boolean runsOnMXGate() {
+    protected static final boolean runsOnMXGate() {
         return "true".equals(System.getenv("MX_GATE"));
     }
 
-    protected static void assumeNotOnMXGate() {
+    protected static final void assumeNotOnMXGate() {
         Assume.assumeFalse("skipped on `mx gate`", runsOnMXGate());
     }
 
