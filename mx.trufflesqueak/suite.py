@@ -18,8 +18,8 @@ suite = {
         "graalvm_tag": "vm-ce-21.2.0",
         "icon": "trufflesqueak-icon.png",
         "icon_tag": "21.0.0.1",
-        "image": "TruffleSqueakImage-21.1.0.zip",
-        "image_tag": "21.1.0",
+        "image": "TruffleSqueakImage-21.2.0.zip",
+        "image_tag": "21.2.0",
         "jdk8": "302",
         "jdk8_update": "06",
         "jdk11": "11.0.12",
@@ -31,7 +31,7 @@ suite = {
         "test_image_tag": "21.1.0",
     },
 
-    "release": False,
+    "release": True,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
 
