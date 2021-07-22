@@ -13,7 +13,7 @@ suite = {
     "mxversion": "5.305.4",
     "versionConflictResolution": "latest",
 
-    "version": "21.2.0",
+    "version": "21.3.0",
     "trufflesqueak:dependencyMap": {
         "graalvm_tag": "vm-ce-21.2.0",
         "icon": "trufflesqueak-icon.png",
@@ -31,7 +31,7 @@ suite = {
         "test_image_tag": "21.1.0",
     },
 
-    "release": True,
+    "release": False,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
 
