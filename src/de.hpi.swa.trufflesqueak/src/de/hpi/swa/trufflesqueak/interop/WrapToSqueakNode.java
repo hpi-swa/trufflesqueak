@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.trufflesqueak.interop;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -98,7 +99,13 @@ public abstract class WrapToSqueakNode extends AbstractNode {
     @Specialization
     protected final ArrayObject doObjects(final Object[] values,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.asArrayOfObjects(executeObjects(values));
+        // Avoid recursive explosions in inlining by putting the recursive call behind a boundary.
+        return image.asArrayOfObjects(executeObjectsWithBoundary(values));
+    }
+
+    @TruffleBoundary
+    private Object[] executeObjectsWithBoundary(final Object[] values) {
+        return executeObjects(values);
     }
 
     @Fallback
