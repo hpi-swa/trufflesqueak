@@ -64,7 +64,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     public final SqueakImageContext image;
     private final Frame frame = new Frame(DEFAULT_WINDOW_TITLE);
-    private final Canvas canvas = new Canvas();
+    private final SqueakDisplayCanvas canvas = new SqueakDisplayCanvas();
     private final SqueakMouse mouse;
     private final SqueakKeyboard keyboard;
     private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
@@ -136,11 +136,11 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         });
     }
 
-    private static final class Canvas extends Component {
+    private static final class SqueakDisplayCanvas extends Component {
         private static final long serialVersionUID = 1L;
         private BufferedImage bufferedImage;
 
-        private Canvas() {
+        private SqueakDisplayCanvas() {
             /* Drawing is very simple, so double buffering is not needed. */
             RepaintManager.currentManager(this).setDoubleBufferingEnabled(false);
         }
