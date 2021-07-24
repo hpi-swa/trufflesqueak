@@ -68,7 +68,7 @@ public final class MiscellaneousBytecodes {
                 case 3:
                     return new PushLiteralConstantNode(code, index, numBytecodes, third);
                 case 4:
-                    return new PushLiteralVariableNode(code, index, numBytecodes, third);
+                    return PushLiteralVariableNode.create(code, index, numBytecodes, third);
                 case 5:
                     return new StoreIntoReceiverVariableNode(code, index, numBytecodes, third);
                 case 6:
@@ -129,7 +129,7 @@ public final class MiscellaneousBytecodes {
                 case 2:
                     return new PushLiteralConstantNode(code, index, numBytecodes, variableIndex);
                 case 3:
-                    return new PushLiteralVariableNode(code, index, numBytecodes, variableIndex);
+                    return PushLiteralVariableNode.create(code, index, numBytecodes, variableIndex);
                 default:
                     throw SqueakException.create("unexpected type for ExtendedPush");
             }

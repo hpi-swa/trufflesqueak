@@ -103,7 +103,7 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F:
             case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
             case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
-                return new PushBytecodes.PushLiteralVariableNode(code, index, 1, b & 31);
+                return  PushBytecodes.PushLiteralVariableNode.create(code, index, 1, b & 31);
             case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
                 return new StoreBytecodes.PopIntoReceiverVariableNode(code, index, 1, b & 7);
             case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
