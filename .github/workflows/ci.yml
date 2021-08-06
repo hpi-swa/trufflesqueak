@@ -113,17 +113,17 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
       if: ${{ env.BUILD_SVM == 'true' }}
-    - name: Run gate with Graal compiler and Graal.js
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test
+    - name: Run gate with Graal.js
+      run: mx --disable-polyglot --J @"-XX:+UnlockExperimentalVMOptions -XX:-UseJVMCICompiler" --dy /graal-js gate -j -n --strict-mode --tags build,test
       if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-latest' && env.RUN_WITH_COVERAGE != 'true' }}
-    - name: Run gate with Graal compiler, Graal.js, and code coverage
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test --jacocout coverage
+    - name: Run gate with Graal.js and code coverage
+      run: mx --disable-polyglot --J @"-XX:+UnlockExperimentalVMOptions -XX:-UseJVMCICompiler" --dy /graal-js gate -j -n --strict-mode --tags build,test --jacocout coverage
       if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-latest' && env.RUN_WITH_COVERAGE == 'true' }}
-    - name: Run gate with Graal compiler and Graal.js via cmd.exe
+    - name: Run gate with Graal.js via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test
+        mx --disable-polyglot --J @"-XX:+UnlockExperimentalVMOptions -XX:-UseJVMCICompiler" --dy /graal-js gate -j -n --strict-mode --tags build,test
       if: ${{ env.RUN_TESTS == 'true' && matrix.os == 'windows-latest' }}
     - name: Report code coverage
       env:
