@@ -1,3 +1,0 @@
-explorer
-explorableMembers
-	^ self allInstVarNames

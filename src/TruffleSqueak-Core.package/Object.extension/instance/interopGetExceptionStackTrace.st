@@ -1,3 +1,0 @@
-*TruffleSqueak-Core-exception
-interopGetExceptionStackTrace
-	self subclassResponsibility

@@ -1,3 +1,0 @@
-*TruffleSqueak-Core-arrays
-interopGetArraySize
-	self subclassResponsibility

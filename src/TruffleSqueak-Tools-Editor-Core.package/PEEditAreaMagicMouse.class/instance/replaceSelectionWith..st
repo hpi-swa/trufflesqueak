@@ -1,2 +1,0 @@
-public
-replaceSelectionWith: aString

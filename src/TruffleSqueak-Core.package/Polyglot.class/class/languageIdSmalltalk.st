@@ -1,3 +1,0 @@
-constants
-languageIdSmalltalk
-	^ #smalltalk

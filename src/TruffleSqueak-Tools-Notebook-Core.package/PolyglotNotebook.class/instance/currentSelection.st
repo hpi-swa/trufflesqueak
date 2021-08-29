@@ -1,4 +1,0 @@
-model
-currentSelection
-
-	^ currentSelection

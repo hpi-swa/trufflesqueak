@@ -1,4 +1,0 @@
-polyglot
-codeForPolyglotHeader
-
-	self subclassResponsibility

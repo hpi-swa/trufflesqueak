@@ -1,4 +1,0 @@
-public
-setAllTabsToNonActive
-
-	tabs setAllTabsToNonActive

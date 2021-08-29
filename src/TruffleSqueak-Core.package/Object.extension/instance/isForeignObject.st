@@ -1,3 +1,0 @@
-*TruffleSqueak-Core
-isForeignObject
-	^ false

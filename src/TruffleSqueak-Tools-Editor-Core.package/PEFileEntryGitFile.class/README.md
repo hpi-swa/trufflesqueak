@@ -1,1 +1,0 @@
-I represent a file entry in a squit repo.

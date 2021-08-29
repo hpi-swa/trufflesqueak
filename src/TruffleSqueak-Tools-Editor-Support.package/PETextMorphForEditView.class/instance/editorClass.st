@@ -1,4 +1,0 @@
-private
-editorClass
-
-	^ PETextEditor

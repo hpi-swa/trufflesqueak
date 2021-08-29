@@ -1,4 +1,0 @@
-private
-tabHeight
-
-	^ 25

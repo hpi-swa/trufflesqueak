@@ -1,4 +1,0 @@
-private
-openFile
-
-	self subclassResponsibility

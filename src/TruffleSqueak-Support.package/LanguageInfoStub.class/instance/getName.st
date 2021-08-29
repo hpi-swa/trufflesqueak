@@ -1,3 +1,0 @@
-accessing
-getName
-	^ 'Squeak/Smalltalk'

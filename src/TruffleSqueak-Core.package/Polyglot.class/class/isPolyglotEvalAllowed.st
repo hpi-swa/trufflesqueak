@@ -1,3 +1,0 @@
-polyglot-api
-isPolyglotEvalAllowed
-	^ self primitiveIsPolyglotEvalAllowed

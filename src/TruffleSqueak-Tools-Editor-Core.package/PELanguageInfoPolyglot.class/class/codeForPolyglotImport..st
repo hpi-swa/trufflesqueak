@@ -1,4 +1,0 @@
-polyglot
-codeForPolyglotImport: aString
-
-	self subclassResponsibility

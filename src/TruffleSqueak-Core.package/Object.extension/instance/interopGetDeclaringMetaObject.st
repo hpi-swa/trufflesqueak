@@ -1,3 +1,0 @@
-*TruffleSqueak-Core-meta-object
-interopGetDeclaringMetaObject
-	^ Java throwUnsupportedMessageException

@@ -1,3 +1,0 @@
-constants
-languageIdWASM
-	^ #wasm

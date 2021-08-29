@@ -1,3 +1,0 @@
-overrides
-uniformWindowColor
-	^ Color white

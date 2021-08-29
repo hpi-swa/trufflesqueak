@@ -1,3 +1,0 @@
-helpers
-resetCells
-	self removeAllMorphs

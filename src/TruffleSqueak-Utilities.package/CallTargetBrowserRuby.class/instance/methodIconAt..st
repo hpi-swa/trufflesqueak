@@ -1,3 +1,0 @@
-methods
-methodIconAt: anIndex
-	^ nil

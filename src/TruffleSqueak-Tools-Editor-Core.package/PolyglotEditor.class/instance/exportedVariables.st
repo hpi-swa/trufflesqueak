@@ -1,4 +1,0 @@
-accessing
-exportedVariables
-
-	^ exportedVariables

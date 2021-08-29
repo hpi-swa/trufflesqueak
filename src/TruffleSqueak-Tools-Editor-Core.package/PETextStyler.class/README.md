@@ -1,1 +1,0 @@
-I am a TextStyler. I use polyglot-ruby-rouge to highlight code and add helpful bobbles for python code.

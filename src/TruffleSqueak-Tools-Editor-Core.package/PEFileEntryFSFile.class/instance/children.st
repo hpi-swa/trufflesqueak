@@ -1,4 +1,0 @@
-accessing
-children
-
-	^ Array new

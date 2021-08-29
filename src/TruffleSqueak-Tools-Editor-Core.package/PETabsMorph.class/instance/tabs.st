@@ -1,4 +1,0 @@
-private
-tabs
-
-	^ tabHolder submorphs

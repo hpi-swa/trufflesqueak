@@ -1,4 +1,0 @@
-accessing
-printString
-
-	^ self fullPath

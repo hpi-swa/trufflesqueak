@@ -1,3 +1,0 @@
-constants
-languageIdMarkdown
-	^ #markdown

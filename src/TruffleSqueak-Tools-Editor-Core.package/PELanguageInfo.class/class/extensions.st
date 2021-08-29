@@ -1,4 +1,0 @@
-accessing
-extensions
-
-	self subclassResponsibility

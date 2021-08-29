@@ -1,1 +1,0 @@
-I represent an abstract directory entry.

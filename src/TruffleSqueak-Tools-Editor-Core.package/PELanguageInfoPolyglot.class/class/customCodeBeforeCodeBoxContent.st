@@ -1,4 +1,0 @@
-polyglot
-customCodeBeforeCodeBoxContent
-
-	^ ''

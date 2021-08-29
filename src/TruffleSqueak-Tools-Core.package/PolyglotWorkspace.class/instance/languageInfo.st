@@ -1,3 +1,0 @@
-language
-languageInfo
-	^ languageInfo

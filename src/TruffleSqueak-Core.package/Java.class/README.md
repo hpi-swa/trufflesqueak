@@ -1,1 +1,0 @@
-This class provides access to GraalVM's host language (Java).

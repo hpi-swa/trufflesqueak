@@ -1,3 +1,0 @@
-accessing
-getMimeTypes
-	^ {self getDefaultMimeType}

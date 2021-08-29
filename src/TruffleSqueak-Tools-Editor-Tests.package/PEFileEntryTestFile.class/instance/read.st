@@ -1,4 +1,0 @@
-file operations
-read
-
-	^ content

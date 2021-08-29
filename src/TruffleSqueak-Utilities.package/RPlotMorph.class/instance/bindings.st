@@ -1,3 +1,0 @@
-accessing
-bindings
-	^ Polyglot bindings

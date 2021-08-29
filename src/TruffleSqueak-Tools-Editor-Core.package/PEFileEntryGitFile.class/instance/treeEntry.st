@@ -1,4 +1,0 @@
-private
-treeEntry
-
-	^ treeEntry

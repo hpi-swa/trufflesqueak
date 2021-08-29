@@ -1,4 +1,0 @@
-accessing
-textStyler
-
-	^ textStyler

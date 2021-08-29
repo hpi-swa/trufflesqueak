@@ -1,4 +1,0 @@
-snippet directories
-addSnippetDirectory: aPCFileEntryDirectory
-
-	snippetDirectories add: aPCFileEntryDirectory

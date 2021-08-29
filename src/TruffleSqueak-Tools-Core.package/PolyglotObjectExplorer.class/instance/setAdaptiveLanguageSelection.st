@@ -1,4 +1,0 @@
-language
-setAdaptiveLanguageSelection
-	Polyglot askForAdaptiveLanguageSelection.
-	self updateAdaptiveLanguageSelection

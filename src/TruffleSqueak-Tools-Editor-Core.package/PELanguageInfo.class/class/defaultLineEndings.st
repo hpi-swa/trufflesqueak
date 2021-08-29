@@ -1,4 +1,0 @@
-accessing
-defaultLineEndings
-
-	self subclassResponsibility

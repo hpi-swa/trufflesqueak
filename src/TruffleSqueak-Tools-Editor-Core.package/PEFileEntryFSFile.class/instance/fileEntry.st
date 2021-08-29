@@ -1,4 +1,0 @@
-private
-fileEntry
-
-	^ fileEntry

@@ -1,1 +1,0 @@
-A text editor that is able to notify its model when the selection changes and is able to be updated without being accepted.

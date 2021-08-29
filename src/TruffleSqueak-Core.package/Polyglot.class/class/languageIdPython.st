@@ -1,3 +1,0 @@
-constants
-languageIdPython
-	^ #python

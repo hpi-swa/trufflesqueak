@@ -1,4 +1,0 @@
-panes
-panes
-
-	^ panes

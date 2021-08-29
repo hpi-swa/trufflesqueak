@@ -1,3 +1,0 @@
-accessing
-isFile
-	self subclassResponsibility

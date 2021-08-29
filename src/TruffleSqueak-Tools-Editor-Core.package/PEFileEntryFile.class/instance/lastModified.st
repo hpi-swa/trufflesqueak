@@ -1,4 +1,0 @@
-accessing
-lastModified
-
-	self subclassResponsibility

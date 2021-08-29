@@ -1,3 +1,0 @@
-methods
-inspectMethod
-	self selectedMethod inspect

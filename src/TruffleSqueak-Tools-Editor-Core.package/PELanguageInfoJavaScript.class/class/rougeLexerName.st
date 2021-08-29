@@ -1,4 +1,0 @@
-accessing
-rougeLexerName
-
-	^ 'javascript'

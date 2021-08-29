@@ -1,3 +1,0 @@
-*TruffleSqueak-Core-executable
-interopGetExecutableName
-	self subclassResponsibility

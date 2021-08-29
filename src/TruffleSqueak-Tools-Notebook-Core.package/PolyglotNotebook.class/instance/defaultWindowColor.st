@@ -1,3 +1,0 @@
-overrides
-defaultWindowColor
-	^ Color white

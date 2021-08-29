@@ -1,3 +1,0 @@
-*TruffleSqueak-Core-source location
-interopGetSourceLocation
-	^ Java throwUnsupportedMessageException

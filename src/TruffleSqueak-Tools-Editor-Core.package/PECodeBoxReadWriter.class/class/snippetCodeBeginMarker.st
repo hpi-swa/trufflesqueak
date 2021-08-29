@@ -1,4 +1,0 @@
-markers
-snippetCodeBeginMarker
-
-	^ 'CODE BEGIN'

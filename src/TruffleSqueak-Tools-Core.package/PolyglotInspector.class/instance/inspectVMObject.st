@@ -1,3 +1,0 @@
-menu commands
-inspectVMObject
-	object vmObjectInspect

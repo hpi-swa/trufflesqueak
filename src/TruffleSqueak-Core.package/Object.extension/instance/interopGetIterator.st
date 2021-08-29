@@ -1,3 +1,0 @@
-*TruffleSqueak-Core-iterator
-interopGetIterator
-	self subclassResponsibility

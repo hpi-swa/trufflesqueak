@@ -1,4 +1,0 @@
-accessing
-defaultLineEndings
-
-	^ String lf

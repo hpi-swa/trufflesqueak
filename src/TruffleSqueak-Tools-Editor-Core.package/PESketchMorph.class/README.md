@@ -1,1 +1,0 @@
-I am just like the SketchMorph except when I am asked to keep my aspect ratio: In contrast to a SketchMorph, I will keep my contents within my bounds.

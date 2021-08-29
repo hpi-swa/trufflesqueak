@@ -1,3 +1,0 @@
-helpers
-openPolyglotNotebook
-	PolyglotNotebook open

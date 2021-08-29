@@ -1,4 +1,0 @@
-accessing
-fullPath
-
-	self shouldBeImplemented

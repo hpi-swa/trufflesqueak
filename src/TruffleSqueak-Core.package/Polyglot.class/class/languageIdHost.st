@@ -1,3 +1,0 @@
-constants
-languageIdHost
-	^ #host

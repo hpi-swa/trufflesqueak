@@ -1,4 +1,0 @@
-public
-lineEndingsName
-
-	self subclassResponsibility

@@ -1,4 +1,0 @@
-accessing
-codeCell
-
-	^ codeCell

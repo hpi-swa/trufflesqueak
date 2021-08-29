@@ -1,3 +1,0 @@
-*TruffleSqueak-Core-number
-interopAsByte
-	self subclassResponsibility

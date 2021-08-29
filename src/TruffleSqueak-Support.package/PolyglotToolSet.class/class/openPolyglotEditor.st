@@ -1,3 +1,0 @@
-helpers
-openPolyglotEditor
-	PolyglotEditor open

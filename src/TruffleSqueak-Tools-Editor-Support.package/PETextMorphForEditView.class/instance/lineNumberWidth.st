@@ -1,4 +1,0 @@
-accessing
-lineNumberWidth
-
-	^ 30

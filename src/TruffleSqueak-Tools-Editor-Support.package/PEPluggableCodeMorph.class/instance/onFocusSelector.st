@@ -1,4 +1,0 @@
-accessing
-onFocusSelector
-
-	^ onFocusSelector

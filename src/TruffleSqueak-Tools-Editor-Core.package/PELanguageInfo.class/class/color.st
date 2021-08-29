@@ -1,4 +1,0 @@
-accessing
-color
-
-	self subclassResponsibility
