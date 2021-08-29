@@ -31,6 +31,10 @@ included call nodes:
 				ifNotNil: [ ea getSimpleName asString ]]) joinSeparatedBy: ', ' ] ].
 	(c getCallNodes asCollection
 		ifNotEmpty: [:n | (n collect: [ :ea |
-			ea getCurrentCallTarget toString asString])
+				'{1} (callCount: {2}; inliningForced: {3}; identity: {4})' format: {
+					ea getCurrentCallTarget toString asString.
+					ea getCallCount.
+					ea isInliningForced.
+					ea identityHash } ])
 				joinSeparatedBy: String cr, '	- ' ]
 		ifEmpty: [ 'n/a' ] ) } ]
