@@ -248,7 +248,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     protected void initializeCallTargetUnsafe() {
         CompilerAsserts.neverPartOfCompilation();
-        final SqueakLanguage language = SqueakLanguage.getContext().getLanguage();
+        final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
         final RootNode rootNode;
         if (isQuickPushPrimitive()) {
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(this, false, primitiveIndex(), false);
@@ -273,7 +273,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
         if (resumptionCallTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            resumptionCallTarget = Truffle.getRuntime().createCallTarget(ResumeContextRootNode.create(SqueakLanguage.getContext().getLanguage(), context));
+            resumptionCallTarget = Truffle.getRuntime().createCallTarget(ResumeContextRootNode.create(SqueakImageContext.getSlow().getLanguage(), context));
         } else {
             final ResumeContextRootNode resumeNode = (ResumeContextRootNode) resumptionCallTarget.getRootNode();
             if (resumeNode.getActiveContext() != context) {

@@ -6,11 +6,9 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -34,14 +32,14 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
     public abstract void executeWake(VirtualFrame frame);
 
     @Specialization
-    protected static final void doWake(final VirtualFrame frame,
+    protected final void doWake(final VirtualFrame frame,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final ArrayObjectSizeNode arraySizeNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached final GetOrCreateContextNode contextNode,
-                    @Cached final GetActiveProcessNode getActiveProcessNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                    @Cached final GetActiveProcessNode getActiveProcessNode) {
+        final SqueakImageContext image = getContext();
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
         final ArrayObject schedLists = pointersReadNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);

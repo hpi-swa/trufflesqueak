@@ -24,7 +24,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -33,7 +32,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -127,7 +125,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final int CACHE_LIMIT = 2;
 
         protected final DispatchSendNode createDispatchSendNode(final NativeObject selector) {
-            final SqueakImageContext image = lookupContext();
+            final SqueakImageContext image = getContext();
             if (image.isHeadless()) {
                 if (selector.isDebugErrorSelector(image)) {
                     return new DispatchSendHeadlessErrorNode();
@@ -455,9 +453,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode {
 
         @Specialization
-        protected static final Object doFlush(final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.flushMethodCache();
+        protected final Object doFlush(final Object receiver) {
+            getContext().flushMethodCache();
             return receiver;
         }
     }
@@ -644,10 +641,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         @Specialization(guards = "receiver.hasMethodClass(readNode)")
-        protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver) {
             receiver.flushCache();
-            image.flushMethodCacheForMethod(receiver);
+            getContext().flushMethodCacheForMethod(receiver);
             /*
              * TODO: maybe the method's callTarget could be invalidated to remove it from any PIC
              * and to avoid invalidating the entire methodDict assumption.
@@ -728,9 +724,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode {
 
         @Specialization
-        protected static final NativeObject doFlush(final NativeObject receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.flushMethodCacheForSelector(receiver);
+        protected final NativeObject doFlush(final NativeObject receiver) {
+            getContext().flushMethodCacheForSelector(receiver);
             return receiver;
         }
     }
@@ -757,14 +752,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doGC(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final long doGC(@SuppressWarnings("unused") final Object receiver) {
             if (TruffleOptions.AOT) {
                 /* System.gc() triggers full GC by default in SVM (see https://git.io/JvY7g). */
                 MiscUtils.systemGC();
             } else {
                 forceFullGC();
             }
+            final SqueakImageContext image = getContext();
             final boolean hasPendingFinalizations = LogUtils.GC_IS_LOGGABLE_FINE ? hasPendingFinalizationsWithLogging(image) : hasPendingFinalizations(image);
             if (hasPendingFinalizations) {
                 image.interrupt.setPendingFinalizations(true);
@@ -1206,8 +1201,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 233)
     protected abstract static class PrimSetFullScreenNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
-        protected static final Object doFullScreen(final Object receiver, final boolean enable,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final Object doFullScreen(final Object receiver, final boolean enable) {
+            final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
                 image.getDisplay().setFullscreen(enable);
             }

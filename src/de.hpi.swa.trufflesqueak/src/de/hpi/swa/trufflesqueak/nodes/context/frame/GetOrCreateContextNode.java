@@ -7,14 +7,11 @@ package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -40,15 +37,14 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
     public abstract ContextObject executeGet(VirtualFrame frame);
 
     @Specialization
-    protected static final ContextObject doGetOrCreate(final VirtualFrame frame,
+    protected final ContextObject doGetOrCreate(final VirtualFrame frame,
                     @Cached("getMethodOrBlock(frame)") final CompiledCodeObject code,
-                    @Cached("createCountingProfile()") final ConditionProfile hasContextProfile,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                    @Cached("createCountingProfile()") final ConditionProfile hasContextProfile) {
         final ContextObject context = FrameAccess.getContext(frame, code);
         if (hasContextProfile.profile(context != null)) {
             return context;
         } else {
-            return ContextObject.create(image, frame.materialize(), code);
+            return ContextObject.create(getContext(), frame.materialize(), code);
         }
     }
 }

@@ -19,7 +19,6 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -191,7 +190,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private static MaterializedFrame createTruffleFrame(final ContextObject context) {
         // Method is unknown, use dummy frame instead
         final Object[] dummyArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, new Object[2]);
-        final CompiledCodeObject dummyMethod = SqueakLanguage.getContext().dummyMethod;
+        final CompiledCodeObject dummyMethod = SqueakImageContext.getSlow().dummyMethod;
         final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
         FrameAccess.setContext(truffleFrame, dummyMethod, context);
         FrameAccess.setInstructionPointer(truffleFrame, dummyMethod, 0);

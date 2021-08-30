@@ -6,14 +6,11 @@
 package de.hpi.swa.trufflesqueak.interop;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -83,22 +80,19 @@ public abstract class WrapToSqueakNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final NativeObject doString(final String value,
-                    @Cached final ConditionProfile wideStringProfile,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.asString(value, wideStringProfile);
+    protected final NativeObject doString(final String value,
+                    @Cached final ConditionProfile wideStringProfile) {
+        return getContext().asString(value, wideStringProfile);
     }
 
     @Specialization
-    protected static final NativeObject doChar(final char value,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.asByteString(MiscUtils.stringValueOf(value));
+    protected final NativeObject doChar(final char value) {
+        return getContext().asByteString(MiscUtils.stringValueOf(value));
     }
 
     @Specialization
-    protected final ArrayObject doObjects(final Object[] values,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.asArrayOfObjects(executeObjects(values));
+    protected final ArrayObject doObjects(final Object[] values) {
+        return getContext().asArrayOfObjects(executeObjects(values));
     }
 
     @Fallback

@@ -7,13 +7,11 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -34,9 +32,9 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDropRequestFileHandle")
     protected abstract static class PrimDropRequestFileHandleNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
-        @Specialization(guards = "dropIndex <= getFileList(image).length")
-        protected final PointersObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        @Specialization(guards = "dropIndex <= getFileList(getContext()).length")
+        protected final PointersObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
+            final SqueakImageContext image = getContext();
             return FilePlugin.createFileHandleOrPrimFail(image,
                             image.env.getPublicTruffleFile(getFileList(image)[(int) dropIndex - 1]), false);
         }
@@ -52,9 +50,9 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDropRequestFileName")
     protected abstract static class PrimDropRequestFileNameNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
-        @Specialization(guards = "dropIndex <= getFileList(image).length")
-        protected final NativeObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        @Specialization(guards = "dropIndex <= getFileList(getContext()).length")
+        protected final NativeObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
+            final SqueakImageContext image = getContext();
             return image.asByteString(getFileList(image)[(int) dropIndex - 1]);
         }
 

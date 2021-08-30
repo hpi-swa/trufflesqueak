@@ -8,14 +8,11 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.util.Arrays;
 import java.util.List;
 
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -87,9 +84,8 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
-        protected static final FloatObject doFloat(final NativeObject receiver, final long index, final FloatObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FloatObject.valueOf(image, doDouble(receiver, index, value.getValue()));
+        protected final FloatObject doFloat(final NativeObject receiver, final long index, final FloatObject value) {
+            return FloatObject.valueOf(getContext(), doDouble(receiver, index, value.getValue()));
         }
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})

@@ -97,7 +97,7 @@ public final class ReturnBytecodes {
             } else {
                 CompilerDirectives.transferToInterpreter();
                 final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
-                lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, returnValue);
+                getContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, returnValue);
                 throw SqueakException.create("Should not reach");
             }
         }
@@ -182,7 +182,7 @@ public final class ReturnBytecodes {
                 } else {
                     CompilerDirectives.transferToInterpreter();
                     final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
-                    lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
+                    getContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
                     throw SqueakException.create("Should not reach");
                 }
             } else {

@@ -17,11 +17,13 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
@@ -49,10 +51,12 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FRACTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MESSAGE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.DoItRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
@@ -60,7 +64,6 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReader;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Zip;
-import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -68,6 +71,8 @@ import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakImageContext {
+    private static final ContextReference<SqueakImageContext> REFERENCE = ContextReference.create(SqueakLanguage.class);
+
     /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
@@ -188,6 +193,15 @@ public final class SqueakImageContext {
         initializeMethodCache();
     }
 
+    public static SqueakImageContext get(final Node node) {
+        return REFERENCE.get(node);
+    }
+
+    public static SqueakImageContext getSlow() {
+        CompilerAsserts.neverPartOfCompilation();
+        return get(null);
+    }
+
     public void ensureLoaded() {
         if (!loaded()) {
             // Load image.
@@ -202,7 +216,7 @@ public final class SqueakImageContext {
              */
             printToStdOut("Preparing image for headless execution...");
             // Remove active context.
-            GetActiveProcessNode.getSlow(this).instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
+            getActiveProcessSlow().instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
             // Modify StartUpList for headless execution.
             evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
             try {
@@ -256,7 +270,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public ExecuteTopLevelContextNode getActiveContextNode() {
-        final PointersObject activeProcess = GetActiveProcessNode.getSlow(this);
+        final PointersObject activeProcess = getActiveProcessSlow();
         final ContextObject activeContext = (ContextObject) activeProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(this, getLanguage(), activeContext, true);
@@ -529,6 +543,10 @@ public final class SqueakImageContext {
             scheduler = (PointersObject) schedulerAssociation.instVarAt0Slow(ASSOCIATION.VALUE);
         }
         return scheduler;
+    }
+
+    public PointersObject getActiveProcessSlow() {
+        return AbstractPointersObjectReadNode.getUncached().executePointers(getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
     public Object getSpecialObject(final int index) {

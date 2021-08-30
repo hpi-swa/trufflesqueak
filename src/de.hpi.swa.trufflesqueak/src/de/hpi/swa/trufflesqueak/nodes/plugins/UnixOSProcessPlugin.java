@@ -15,7 +15,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -28,7 +27,6 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -76,8 +74,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveArgumentAt")
     protected abstract static class PrimArgumentAtNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
+            final SqueakImageContext image = getContext();
             if (index == 1) {
                 return image.asByteString(MiscUtils.getVMPath());
             } else if (1 < index && index < image.getImageArguments().length) {
@@ -111,8 +109,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @Specialization(guards = "inBounds1(index, ENVIRONMENT_KEYS.length)")
         @TruffleBoundary
-        protected static final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
+            final SqueakImageContext image = getContext();
             final String key = ENVIRONMENT_KEYS[(int) index - 1].toString();
             assert key != null : "key should not be null";
             final String value = systemGetEnv(image.env, key);
@@ -125,8 +123,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveEnvironmentAtSymbol")
     protected abstract static class PrimEnvironmentAtSymbolNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "aSymbol.isByteType()")
-        protected static final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol) {
+            final SqueakImageContext image = getContext();
             final String key = aSymbol.asStringUnsafe();
             final String value = systemGetEnv(image.env, key);
             if (value == null) {
@@ -143,10 +141,9 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @Specialization(guards = "supportsNFI")
         protected final NativeObject doErrorMessageAt(@SuppressWarnings("unused") final Object receiver, final long index,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
-                        @CachedLibrary(limit = "1") final InteropLibrary resultLib,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @CachedLibrary(limit = "1") final InteropLibrary resultLib) {
             try {
-                return image.asByteString(resultLib.asString(lib.execute(sysCallObject, (int) index)));
+                return getContext().asByteString(resultLib.asString(lib.execute(sysCallObject, (int) index)));
             } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
@@ -167,9 +164,9 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveFileProtectionMask")
     protected abstract static class PrimFileProtectionMaskNode extends AbstractFilePrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "pathString.isByteType()")
-        protected static final ArrayObject doFileProtectionMask(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Cached final BranchProfile errorProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final ArrayObject doFileProtectionMask(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
+                        @Cached final BranchProfile errorProfile) {
+            final SqueakImageContext image = getContext();
             try {
                 final TruffleFile file = image.env.getPublicTruffleFile(pathString.asStringUnsafe());
                 return getProtectionMask(image, file.getPosixPermissions());
@@ -184,9 +181,9 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveFileStat")
     protected abstract static class PrimFileStatNode extends AbstractFilePrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "pathString.isByteType()")
-        protected static final ArrayObject doFileStat(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Cached final BranchProfile errorProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final ArrayObject doFileStat(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
+                        @Cached final BranchProfile errorProfile) {
+            final SqueakImageContext image = getContext();
             try {
                 final TruffleFile file = image.env.getPublicTruffleFile(pathString.asStringUnsafe());
                 final long uid = file.getOwner().hashCode();
@@ -312,9 +309,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveGetStdErrHandle")
     protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final PointersObject doGet(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FilePlugin.createStdioFileHandle(image, STDIO_HANDLES.ERROR);
+        protected final PointersObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            return FilePlugin.createStdioFileHandle(getContext(), STDIO_HANDLES.ERROR);
         }
     }
 
@@ -323,9 +319,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveGetStdInHandle")
     protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final PointersObject doGet(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FilePlugin.createStdioFileHandle(image, STDIO_HANDLES.IN);
+        protected final PointersObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            return FilePlugin.createStdioFileHandle(getContext(), STDIO_HANDLES.IN);
         }
     }
 
@@ -334,9 +329,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveGetStdOutHandle")
     protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final PointersObject doGet(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FilePlugin.createStdioFileHandle(image, STDIO_HANDLES.OUT);
+        protected final PointersObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            return FilePlugin.createStdioFileHandle(getContext(), STDIO_HANDLES.OUT);
         }
     }
 
@@ -359,9 +353,9 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveRealpath")
     protected abstract static class PrimRealpathNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "pathString.isByteType()")
-        protected static final NativeObject doRealpath(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Cached final BranchProfile errorProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final NativeObject doRealpath(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
+                        @Cached final BranchProfile errorProfile) {
+            final SqueakImageContext image = getContext();
             try {
                 return image.asByteString(image.env.getPublicTruffleFile(pathString.asStringUnsafe()).getCanonicalFile().getPath());
             } catch (final IOException e) {

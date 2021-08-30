@@ -6,13 +6,10 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
@@ -43,9 +40,8 @@ public abstract class LookupMethodNode extends AbstractNode {
     }
 
     @Specialization(replaces = "doCached")
-    protected static final Object doUncached(final ClassObject classObject, final NativeObject selector,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        final MethodCacheEntry cachedEntry = image.findMethodCacheEntry(classObject, selector);
+    protected final Object doUncached(final ClassObject classObject, final NativeObject selector) {
+        final MethodCacheEntry cachedEntry = getContext().findMethodCacheEntry(classObject, selector);
         if (cachedEntry.getResult() == null) {
             cachedEntry.setResult(classObject.lookupInMethodDictSlow(selector));
         }

@@ -6,8 +6,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -19,8 +17,6 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextScope;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -87,21 +83,17 @@ public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecod
 
     @ExportMessage
     @TruffleBoundary
-    protected final boolean hasRootInstance(@SuppressWarnings("unused") final Frame frame,
-                    @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> contextRef) {
+    protected final boolean hasRootInstance(@SuppressWarnings("unused") final Frame frame) {
         final String selector = getRootNode().getName();
-        final SqueakImageContext image = contextRef.get();
-        return image.lookup(selector) != NilObject.SINGLETON;
+        return getContext().lookup(selector) != NilObject.SINGLETON;
     }
 
     @ExportMessage
     @TruffleBoundary
-    protected final Object getRootInstance(@SuppressWarnings("unused") final Frame frame,
-                    @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> contextRef)
+    protected final Object getRootInstance(@SuppressWarnings("unused") final Frame frame)
                     throws UnsupportedMessageException {
         final String selector = getRootNode().getName();
-        final SqueakImageContext image = contextRef.get();
-        final Object result = image.lookup(selector);
+        final Object result = getContext().lookup(selector);
         if (result != null) {
             return result;
         } else {

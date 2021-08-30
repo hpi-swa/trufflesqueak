@@ -40,7 +40,7 @@ public final class JumpBytecodes {
             } else {
                 CompilerDirectives.transferToInterpreter();
                 FrameAccess.setInstructionPointer(frame, FrameAccess.findInstructionPointerSlot(frame), code.getInitialPC() + getSuccessorIndex());
-                lookupContext().mustBeBooleanSelector.executeAsSymbolSlow(frame, result);
+                getContext().mustBeBooleanSelector.executeAsSymbolSlow(frame, result);
                 throw SqueakException.create("Should not be reached");
             }
         }

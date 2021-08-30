@@ -5,21 +5,18 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodesFactory.AsFloatObjectIfNessaryNodeGen;
 
 public final class FloatObjectNodes {
     @GenerateUncached
     @ImportStatic(Double.class)
-    public abstract static class AsFloatObjectIfNessaryNode extends Node {
+    public abstract static class AsFloatObjectIfNessaryNode extends AbstractNode {
 
         public static AsFloatObjectIfNessaryNode create() {
             return AsFloatObjectIfNessaryNodeGen.create();
@@ -37,9 +34,8 @@ public final class FloatObjectNodes {
         }
 
         @Specialization(guards = "!isFinite(value)")
-        protected static final FloatObject doNaNOrInfinite(final double value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return new FloatObject(image, value);
+        protected final FloatObject doNaNOrInfinite(final double value) {
+            return new FloatObject(getContext(), value);
         }
     }
 }

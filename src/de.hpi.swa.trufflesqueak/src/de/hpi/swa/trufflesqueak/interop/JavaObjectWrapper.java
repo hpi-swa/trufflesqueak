@@ -41,7 +41,7 @@ import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -826,7 +826,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (hostLanguage == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             try {
-                final Object hostObject = SqueakLanguage.getContext().env.asGuestValue(Truffle.getRuntime());
+                final Object hostObject = SqueakImageContext.getSlow().env.asGuestValue(Truffle.getRuntime());
                 hostLanguage = InteropLibrary.getUncached().getLanguage(hostObject);
             } catch (final UnsupportedMessageException e) {
                 e.printStackTrace();

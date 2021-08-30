@@ -13,7 +13,6 @@ import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -22,7 +21,6 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -133,12 +131,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * lookup was unsuccessful.
          */
         @Specialization
-        protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
-                        @Cached final ConditionProfile hasResultProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
+                        @Cached final ConditionProfile hasResultProfile) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
             LogUtils.SOCKET.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
-            return hasResultProfile.profile(lastNameLookup == null) ? NilObject.SINGLETON : image.asByteArray(lastNameLookup);
+            return hasResultProfile.profile(lastNameLookup == null) ? NilObject.SINGLETON : getContext().asByteArray(lastNameLookup);
         }
     }
 
@@ -150,11 +147,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * lookup was unsuccessful.
          */
         @Specialization
-        protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver) {
             final String lastAddressLookup = Resolver.lastAddressLookUpResult();
             LogUtils.SOCKET.finer(() -> ">> Address Lookup Result: " + lastAddressLookup);
-            return lastAddressLookup == null ? NilObject.SINGLETON : image.asByteString(lastAddressLookup);
+            return lastAddressLookup == null ? NilObject.SINGLETON : getContext().asByteString(lastAddressLookup);
         }
     }
 
@@ -162,11 +158,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveResolverLocalAddress")
     protected abstract static class PrimResolverLocalAddressNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver) {
             final byte[] address = Resolver.getLoopbackAddress();
             LogUtils.SOCKET.finer(() -> "Local Address: " + Resolver.addressBytesToString(address));
-            return image.asByteArray(address);
+            return getContext().asByteArray(address);
         }
     }
 
@@ -275,10 +270,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketSetOptions")
     protected abstract static class PrimSocketSetOptionsNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @Specialization(guards = "option.isByteType()")
-        protected static final ArrayObject doSet(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option, final NativeObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final ArrayObject doSet(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option, final NativeObject value) {
             try {
-                return setSocketOption(image, getSocketOrPrimFail(sd), option.asStringUnsafe(), value.asStringUnsafe());
+                return setSocketOption(getContext(), getSocketOrPrimFail(sd), option.asStringUnsafe(), value.asStringUnsafe());
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Set socket option failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -332,10 +326,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketRemoteAddress")
     protected abstract static class PrimSocketRemoteAddressNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
-        protected static final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
-                return image.asByteArray(getSocketOrPrimFail(sd).getRemoteAddress());
+                return getContext().asByteArray(getSocketOrPrimFail(sd).getRemoteAddress());
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Retrieving remote address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -367,8 +360,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * the option value.
          */
         @Specialization(guards = "option.isByteType()")
-        protected static final Object doGetOption(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final Object doGetOption(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option) {
+            final SqueakImageContext image = getContext();
             try {
                 final String value = getSocketOrPrimFail(sd).getOption(option.asStringUnsafe());
                 return image.asArrayOfObjects(0L, image.asByteString(value));
@@ -407,10 +400,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketLocalAddress")
     protected abstract static class PrimSocketLocalAddressNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
-        protected static final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
-                return image.asByteArray(getSocketOrPrimFail(sd).getLocalAddress());
+                return getContext().asByteArray(getSocketOrPrimFail(sd).getLocalAddress());
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Retrieving local address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -530,7 +522,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractPrimitiveNode implements OctonaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization
-        protected static final PointersObject doWork(final PointersObject receiver,
+        protected final PointersObject doWork(final PointersObject receiver,
                         final long netType,
                         final long socketType,
                         final long rcvBufSize,
@@ -538,8 +530,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long semaphoreIndex,
                         final long aReadSemaphore,
                         final long aWriteSemaphore,
-                        @Cached final ConditionProfile socketTypeProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached final ConditionProfile socketTypeProfile) {
 
             final SqueakSocket socket;
             try {
@@ -552,7 +543,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (final IOException e) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
-            return PointersObject.newHandleWithHiddenObject(image, socket);
+            return PointersObject.newHandleWithHiddenObject(getContext(), socket);
         }
     }
 
@@ -561,16 +552,15 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractPrimitiveNode implements SeptenaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization
-        protected static final PointersObject doWork(final Object receiver,
+        protected final PointersObject doWork(final Object receiver,
                         final PointersObject sd,
                         final long receiveBufferSize,
                         final long sendBufSize,
                         final long semaphoreIndex,
                         final long readSemaphoreIndex,
-                        final long writeSemaphoreIndex,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        final long writeSemaphoreIndex) {
             try {
-                return PointersObject.newHandleWithHiddenObject(image, getSocketOrPrimFail(sd).accept());
+                return PointersObject.newHandleWithHiddenObject(getContext(), getSocketOrPrimFail(sd).accept());
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Accepting socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();

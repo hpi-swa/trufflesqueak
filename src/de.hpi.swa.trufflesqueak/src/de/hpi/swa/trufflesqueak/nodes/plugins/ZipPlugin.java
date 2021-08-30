@@ -8,13 +8,10 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -30,9 +27,8 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDeflateBlockNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @Specialization(guards = {"receiver.size() >= 15"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final boolean doDeflateBlock(final PointersObject receiver, final long lastIndex, final long chainLength, final long goodMatch,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.zip.primitiveDeflateBlock(receiver, (int) lastIndex, (int) chainLength, (int) goodMatch);
+        protected final boolean doDeflateBlock(final PointersObject receiver, final long lastIndex, final long chainLength, final long goodMatch) {
+            return getContext().zip.primitiveDeflateBlock(receiver, (int) lastIndex, (int) chainLength, (int) goodMatch);
         }
     }
 
@@ -49,16 +45,14 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInflateDecompressBlock")
     protected abstract static class PrimInflateDecompressBlockNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization(guards = {"hasValidArguments(image, receiver, llTable, dTable)"})
-        protected static final PointersObject doInflateDecompressBlock(final PointersObject receiver, final NativeObject llTable, final NativeObject dTable,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.zip.primitiveInflateDecompressBlock(receiver, llTable, dTable);
+        @Specialization(guards = {"hasValidArguments(receiver, llTable, dTable)"})
+        protected final PointersObject doInflateDecompressBlock(final PointersObject receiver, final NativeObject llTable, final NativeObject dTable) {
+            getContext().zip.primitiveInflateDecompressBlock(receiver, llTable, dTable);
             return receiver;
         }
 
-        @SuppressWarnings("static-method") // Work around code generation problems.
-        protected final boolean hasValidArguments(final SqueakImageContext image, final PointersObject receiver, final NativeObject llTable, final NativeObject dTable) {
-            return image.zip.readStreamHasCorrectSize(receiver) && llTable.isIntType() && dTable.isIntType();
+        protected final boolean hasValidArguments(final PointersObject receiver, final NativeObject llTable, final NativeObject dTable) {
+            return getContext().zip.readStreamHasCorrectSize(receiver) && llTable.isIntType() && dTable.isIntType();
         }
     }
 
@@ -85,18 +79,16 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveZipSendBlock")
     protected abstract static class PrimZipSendBlockNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
-        @Specialization(guards = {"hasValidArguments(image, receiver, litStream, distStream, litTree, distTree)"})
+        @Specialization(guards = {"hasValidArguments(receiver, litStream, distStream, litTree, distTree)"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final long doZipSendBlock(final PointersObject receiver, final PointersObject litStream, final PointersObject distStream, final PointersObject litTree,
-                        final PointersObject distTree,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.zip.primitiveZipSendBlock(receiver, litStream, distStream, litTree, distTree);
+        protected final long doZipSendBlock(final PointersObject receiver, final PointersObject litStream, final PointersObject distStream, final PointersObject litTree,
+                        final PointersObject distTree) {
+            return getContext().zip.primitiveZipSendBlock(receiver, litStream, distStream, litTree, distTree);
         }
 
-        @SuppressWarnings("static-method") // Work around code generation problems.
-        protected final boolean hasValidArguments(final SqueakImageContext image, final PointersObject receiver, final PointersObject litStream, final PointersObject distStream,
+        protected final boolean hasValidArguments(final PointersObject receiver, final PointersObject litStream, final PointersObject distStream,
                         final PointersObject litTree, final PointersObject distTree) {
-            return image.zip.writeStreamHasCorrectSize(receiver) && distTree.size() >= 2 && litTree.size() >= 2 && litStream.size() >= 3 && distStream.size() >= 3;
+            return getContext().zip.writeStreamHasCorrectSize(receiver) && distTree.size() >= 2 && litTree.size() >= 2 && litStream.size() >= 3 && distStream.size() >= 3;
         }
     }
 

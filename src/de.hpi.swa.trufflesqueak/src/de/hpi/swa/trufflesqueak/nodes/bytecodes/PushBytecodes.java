@@ -7,16 +7,10 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -26,10 +20,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakProfiles.SqueakProfile;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.ArrayFromStackNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.CreateNewArrayNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
@@ -53,8 +46,6 @@ public final class PushBytecodes {
 
     private abstract static class AbstractPushClosureNode extends AbstractInstrumentableBytecodeNode {
         protected final int numCopied;
-
-        @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
 
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child private FrameStackPopNNode popCopiedValuesNode;
@@ -80,14 +71,6 @@ public final class PushBytecodes {
 
         public final int getNumCopied() {
             return numCopied;
-        }
-
-        protected final SqueakImageContext getSqueakImageContext() {
-            if (contextReference == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                contextReference = lookupContextReference(SqueakLanguage.class);
-            }
-            return contextReference.get();
         }
     }
 
@@ -133,8 +116,8 @@ public final class PushBytecodes {
         protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
             final int startPC = getSuccessorIndex() - blockSize;
-            final SqueakImageContext image = getSqueakImageContext();
-            return new BlockClosureObject(getSqueakImageContext(), image.blockClosureClass, shadowBlock, startPC, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
+            final SqueakImageContext image = getContext();
+            return new BlockClosureObject(image, image.blockClosureClass, shadowBlock, startPC, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
         }
 
         public int getBlockSize() {
@@ -187,7 +170,7 @@ public final class PushBytecodes {
         }
 
         protected final BlockClosureObject createClosure(final Object[] copiedValues, final Object receiver, final ContextObject context) {
-            final SqueakImageContext image = getSqueakImageContext();
+            final SqueakImageContext image = getContext();
             return new BlockClosureObject(image, image.fullBlockClosureClass, block, block.getInitialPC(), block.getNumArgs(), copiedValues, receiver, context);
         }
 
@@ -423,7 +406,7 @@ public final class PushBytecodes {
         protected PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             super(code, index, numBytecodes);
             final int arraySize = param & 127;
-            arrayNode = param < 0 ? ArrayFromStackNodeGen.create(arraySize) : CreateNewArrayNodeGen.create(arraySize);
+            arrayNode = param < 0 ? new ArrayFromStackNode(arraySize) : new CreateNewArrayNode(arraySize);
         }
 
         public static PushNewArrayNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
@@ -435,7 +418,7 @@ public final class PushBytecodes {
             pushNode.execute(frame, arrayNode.execute(frame));
         }
 
-        protected abstract static class ArrayNode extends Node {
+        protected abstract static class ArrayNode extends AbstractNode {
             protected final int arraySize;
 
             public ArrayNode(final int arraySize) {
@@ -445,7 +428,7 @@ public final class PushBytecodes {
             protected abstract ArrayObject execute(VirtualFrame frame);
         }
 
-        protected abstract static class ArrayFromStackNode extends ArrayNode {
+        protected static final class ArrayFromStackNode extends ArrayNode {
             @Child protected FrameStackPopNNode popNNode;
 
             public ArrayFromStackNode(final int arraySize) {
@@ -453,27 +436,28 @@ public final class PushBytecodes {
                 popNNode = FrameStackPopNNode.create(arraySize);
             }
 
-            @Specialization
-            protected final ArrayObject doPopN(final VirtualFrame frame, @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            @Override
+            protected ArrayObject execute(final VirtualFrame frame) {
                 /**
                  * Pushing an ArrayObject with object strategy. Contents likely to be mixed values
                  * and therefore unlikely to benefit from storage strategy.
                  */
-                return image.asArrayOfObjects(popNNode.execute(frame));
+                return getContext().asArrayOfObjects(popNNode.execute(frame));
             }
         }
 
-        protected abstract static class CreateNewArrayNode extends ArrayNode {
+        protected static final class CreateNewArrayNode extends ArrayNode {
             public CreateNewArrayNode(final int arraySize) {
                 super(arraySize);
             }
 
-            @Specialization
-            protected final ArrayObject doFresh(@CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            @Override
+            protected ArrayObject execute(final VirtualFrame frame) {
                 /**
                  * Pushing an ArrayObject with object strategy. Contents likely to be mixed values
                  * and therefore unlikely to benefit from storage strategy.
                  */
+                final SqueakImageContext image = getContext();
                 return ArrayObject.createObjectStrategy(image, image.arrayClass, arraySize);
             }
         }

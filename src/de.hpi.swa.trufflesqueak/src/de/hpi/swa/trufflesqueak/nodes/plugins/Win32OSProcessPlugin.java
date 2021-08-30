@@ -10,14 +10,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -38,8 +36,8 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveGetEnvironmentStrings")
     protected abstract static class PrimGetEnvironmentStringNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final NativeObject doGet(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            final SqueakImageContext image = getContext();
             return image.asByteString(getEnvironmentString(image));
         }
 

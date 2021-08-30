@@ -10,13 +10,10 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
@@ -33,10 +30,8 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveUtcWithOffset")
     protected abstract static class PrimUtcWithOffset1Node extends AbstractPrimitiveNode {
         @Specialization
-        @SuppressWarnings("unused")
-        protected static final ArrayObject doUTC(final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asArrayOfLongs(getUTCMicroseconds(), getOffsetFromGTMInSeconds());
+        protected final ArrayObject doUTC(@SuppressWarnings("unused") final Object receiver) {
+            return getContext().asArrayOfLongs(getUTCMicroseconds(), getOffsetFromGTMInSeconds());
         }
     }
 

@@ -9,12 +9,9 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -73,9 +70,8 @@ public abstract class LookupSelectorNode extends AbstractNode {
     }
 
     @Specialization(replaces = "doCached")
-    protected final Object doUncached(final ClassObject receiverClass,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        final MethodCacheEntry cachedEntry = image.findMethodCacheEntry(receiverClass, selector);
+    protected final Object doUncached(final ClassObject receiverClass) {
+        final MethodCacheEntry cachedEntry = getContext().findMethodCacheEntry(receiverClass, selector);
         if (cachedEntry.getResult() == null) {
             cachedEntry.setResult(receiverClass.lookupInMethodDictSlow(selector));
         }

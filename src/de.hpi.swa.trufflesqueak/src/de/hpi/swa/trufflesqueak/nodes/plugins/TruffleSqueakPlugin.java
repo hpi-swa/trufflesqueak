@@ -10,13 +10,11 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
@@ -41,8 +39,8 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "debugPrint")
     protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final Object printArgs(final Object receiver, final Object value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final Object printArgs(final Object receiver, final Object value) {
+            final SqueakImageContext image = getContext();
             if (value instanceof NativeObject && ((NativeObject) value).isByteType()) {
                 image.printToStdOut(((NativeObject) value).asStringUnsafe());
             } else {
@@ -75,9 +73,8 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFormToBufferedImage")
     protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "form.instsize() > OFFSET")
-        protected static final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
-                        @Cached final AbstractPointersObjectReadNode readNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
+                        @Cached final AbstractPointersObjectReadNode readNode) {
             try {
                 /* Extract information from form. */
                 final NativeObject bits = readNode.executeNative(form, FORM.BITS);
@@ -89,7 +86,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 /* Use bitmap's storage as backend for BufferedImage. */
-                return image.env.asGuestValue(MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height, true));
+                return getContext().env.asGuestValue(MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height, true));
             } catch (final ClassCastException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;

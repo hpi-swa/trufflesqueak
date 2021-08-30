@@ -6,14 +6,12 @@
 package de.hpi.swa.trufflesqueak.interop;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -39,9 +37,9 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
     }
 
     @Specialization(guards = "lib.isString(value)", limit = "1")
-    protected static final NativeObject doString(final Object value,
-                    @CachedLibrary("value") final InteropLibrary lib,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+    protected final NativeObject doString(final Object value,
+                    @CachedLibrary("value") final InteropLibrary lib) {
+        final SqueakImageContext image = getContext();
         try {
             return image.asByteString(lib.asString(value));
         } catch (final UnsupportedMessageException e) {

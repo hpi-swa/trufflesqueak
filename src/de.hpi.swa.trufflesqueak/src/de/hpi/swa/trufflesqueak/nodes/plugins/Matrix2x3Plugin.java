@@ -8,14 +8,12 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -106,7 +104,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             return m23ArgX * m[3] + m23ArgY * m[4] + m[5];
         }
 
-        protected static final PointersObject roundAndStoreResultPoint(final SqueakImageContext image, final double m23ResultXValue, final double m23ResultYValue,
+        protected final PointersObject roundAndStoreResultPoint(final double m23ResultXValue, final double m23ResultYValue,
                         final AbstractPointersObjectWriteNode writeNode,
                         final BranchProfile errorProfile) {
             final double m23ResultX = m23ResultXValue + 0.5;
@@ -115,10 +113,10 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            return image.asPoint(writeNode, (long) m23ResultX, (long) m23ResultY);
+            return getContext().asPoint(writeNode, (long) m23ResultX, (long) m23ResultY);
         }
 
-        protected static final PointersObject roundAndStoreResultRect(final SqueakImageContext image, final PointersObject dstRect, final double x0, final double y0, final double x1, final double y1,
+        protected final PointersObject roundAndStoreResultRect(final PointersObject dstRect, final double x0, final double y0, final double x1, final double y1,
                         final AbstractPointersObjectWriteNode writeNode, final BranchProfile errorProfile) {
             final double minX = x0 + 0.5;
             final double maxX = x1 + 0.5;
@@ -128,6 +126,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
+            final SqueakImageContext image = getContext();
             final PointersObject origin = image.asPoint(writeNode, (long) minX, (long) minY);
             final PointersObject corner = image.asPoint(writeNode, (long) maxX, (long) maxY);
             writeNode.execute(dstRect, 0, origin);
@@ -163,7 +162,6 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject point,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final BranchProfile errorProfile) {
@@ -171,7 +169,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             final double m23ArgY = loadArgumentPointY(point, readNode, errorProfile);
             final float[] m = loadMatrixAsFloat(receiver);
             final double[] m23Result = matrix2x3InvertPoint(m, m23ArgX, m23ArgY, errorProfile);
-            return roundAndStoreResultPoint(image, m23Result[0], m23Result[1], writeNode, errorProfile);
+            return roundAndStoreResultPoint(m23Result[0], m23Result[1], writeNode, errorProfile);
         }
     }
 
@@ -180,7 +178,6 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final AbstractPointersObjectReadNode readPointNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
@@ -221,7 +218,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             minY = Math.min(minY, result4[1]);
             maxY = Math.max(maxY, result4[1]);
 
-            return roundAndStoreResultRect(image, dstRect, minX, minY, maxX, maxY, writeNode, errorProfile);
+            return roundAndStoreResultRect(dstRect, minX, minY, maxX, maxY, writeNode, errorProfile);
         }
     }
 
@@ -250,14 +247,13 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject point,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final BranchProfile errorProfile) {
             final double m23ArgX = loadArgumentPointX(point, readNode, errorProfile);
             final double m23ArgY = loadArgumentPointY(point, readNode, errorProfile);
             final float[] m = loadMatrixAsFloat(receiver);
-            return roundAndStoreResultPoint(image, matrix2x3TransformPointX(m, m23ArgX, m23ArgY), matrix2x3TransformPointY(m, m23ArgX, m23ArgY), writeNode, errorProfile);
+            return roundAndStoreResultPoint(matrix2x3TransformPointX(m, m23ArgX, m23ArgY), matrix2x3TransformPointY(m, m23ArgX, m23ArgY), writeNode, errorProfile);
         }
     }
 
@@ -266,7 +262,6 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final AbstractPointersObjectReadNode readPointNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
@@ -309,7 +304,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             minY = Math.min(minY, m23ResultY3);
             maxY = Math.max(maxY, m23ResultY3);
 
-            return roundAndStoreResultRect(image, dstRect, minX, minY, maxX, maxY, writeNode, errorProfile);
+            return roundAndStoreResultRect(dstRect, minX, minY, maxX, maxY, writeNode, errorProfile);
         }
     }
 }

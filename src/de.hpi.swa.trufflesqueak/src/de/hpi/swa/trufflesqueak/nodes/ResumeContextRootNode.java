@@ -7,9 +7,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -25,15 +23,12 @@ public final class ResumeContextRootNode extends RootNode {
     private ContextObject activeContext;
     private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();
 
-    @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
-
     @Child private AbstractExecuteContextNode executeBytecodeNode;
 
     protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
         super(language, context.getTruffleFrame().getFrameDescriptor());
         activeContext = context;
         executeBytecodeNode = new ExecuteBytecodeNode(context.getMethodOrBlock());
-        contextReference = lookupContextReference(SqueakLanguage.class);
     }
 
     public static ResumeContextRootNode create(final SqueakLanguage language, final ContextObject activeContext) {
@@ -50,7 +45,7 @@ public final class ResumeContextRootNode extends RootNode {
                 return interpretBytecodeWithBoundary(pc);
             }
         } finally {
-            contextReference.get().lastSeenContext = null; // Stop materialization here.
+            SqueakImageContext.get(this).lastSeenContext = null; // Stop materialization here.
         }
     }
 

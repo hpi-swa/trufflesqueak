@@ -10,10 +10,8 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.ExactMath;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -21,10 +19,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -50,9 +46,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLong")
-        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return LargeIntegerObject.add(image, lhs, rhs);
+        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
+            return LargeIntegerObject.add(getContext(), lhs, rhs);
         }
 
         @Specialization
@@ -81,9 +76,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLong")
-        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return LargeIntegerObject.subtract(image, lhs, rhs);
+        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
+            return LargeIntegerObject.subtract(getContext(), lhs, rhs);
         }
 
         @Specialization
@@ -260,9 +254,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLong")
-        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return LargeIntegerObject.multiply(image, lhs, rhs);
+        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
+            return LargeIntegerObject.multiply(getContext(), lhs, rhs);
         }
 
         @Specialization
@@ -291,22 +284,20 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"}, replaces = "doLong")
-        public static final Object doLongFraction(final long lhs, final long rhs,
+        public final Object doLongFraction(final long lhs, final long rhs,
                         @Cached final ConditionProfile fractionProfile,
-                        @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> ref) {
+                        @Cached final AbstractPointersObjectWriteNode writeNode) {
             if (fractionProfile.profile(SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
                 return lhs / rhs;
             } else {
-                return ref.get().asFraction(lhs, rhs, writeNode);
+                return getContext().asFraction(lhs, rhs, writeNode);
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        public static final LargeIntegerObject doLongOverflow(final long lhs, final long rhs,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return LargeIntegerObject.createLongMinOverflowResult(image);
+        public final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
+            return LargeIntegerObject.createLongMinOverflowResult(getContext());
         }
 
         @Specialization(guards = {"!isZero(rhs)"}, rewriteOn = RespecializeException.class)
@@ -345,9 +336,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        protected static final LargeIntegerObject doLong(final long lhs, final long rhs,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return LargeIntegerObject.createLongMinOverflowResult(image);
+        protected final LargeIntegerObject doLongOverflowDivision(final long lhs, final long rhs) {
+            return LargeIntegerObject.createLongMinOverflowResult(getContext());
         }
 
         @Specialization(guards = {"!rhs.isZero()"})
@@ -366,9 +356,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        public static final LargeIntegerObject doLongOverflow(final long lhs, final long rhs,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return LargeIntegerObject.createLongMinOverflowResult(image);
+        public final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
+            return LargeIntegerObject.createLongMinOverflowResult(getContext());
         }
 
         @Specialization(guards = {"!rhs.isZero()"})
@@ -439,18 +428,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 17)
     protected abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
-        protected static final Object doLong(final long receiver, final long arg,
+        protected final Object doLong(final long receiver, final long arg,
                         @Cached final ConditionProfile isPositiveProfile,
                         @Cached final ConditionProfile isLShiftLongOverflowProfile,
-                        @Cached final ConditionProfile isArgInLongSizeRangeProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached final ConditionProfile isArgInLongSizeRangeProfile) {
             if (isPositiveProfile.profile(arg >= 0)) {
                 if (isLShiftLongOverflowProfile.profile(Long.numberOfLeadingZeros(receiver) - 1 < arg)) {
                     /*
                      * -1 in check needed, because we do not want to shift a positive long into
                      * negative long (most significant bit indicates positive/negative).
                      */
-                    return LargeIntegerObject.shiftLeftPositive(image, receiver, (int) arg);
+                    return LargeIntegerObject.shiftLeftPositive(getContext(), receiver, (int) arg);
                 } else {
                     return receiver << arg;
                 }
@@ -471,32 +459,29 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 18)
     protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        // TODO: Object/Object specialization sufficient
         @Specialization
-        protected static final PointersObject doLong(final long xPos, final Object yPos,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asPoint(writeNode, xPos, yPos);
+        protected final PointersObject doLong(final long xPos, final Object yPos,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+            return getContext().asPoint(writeNode, xPos, yPos);
         }
 
         @Specialization
-        protected static final PointersObject doDouble(final double xPos, final Object yPos,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asPoint(writeNode, xPos, yPos);
+        protected final PointersObject doDouble(final double xPos, final Object yPos,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+            return getContext().asPoint(writeNode, xPos, yPos);
         }
 
         @Specialization
-        protected static final PointersObject doLargeInteger(final LargeIntegerObject xPos, final Object yPos,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asPoint(writeNode, xPos, yPos);
+        protected final PointersObject doLargeInteger(final LargeIntegerObject xPos, final Object yPos,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+            return getContext().asPoint(writeNode, xPos, yPos);
         }
 
         @Specialization
-        protected static final PointersObject doFloatObject(final FloatObject xPos, final Object yPos,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asPoint(writeNode, xPos, yPos);
+        protected final PointersObject doFloatObject(final FloatObject xPos, final Object yPos,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+            return getContext().asPoint(writeNode, xPos, yPos);
         }
     }
 
@@ -1000,9 +985,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!inSafeIntegerRange(receiver.getValue())", "receiver.isFinite()"})
-        protected static final Object doFloatExact(final FloatObject receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return LargeIntegerObject.truncateExact(image, receiver.getValue());
+        protected final Object doFloatExact(final FloatObject receiver) {
+            return LargeIntegerObject.truncateExact(getContext(), receiver.getValue());
         }
 
         @Specialization(guards = {"!receiver.isFinite()"})
@@ -1095,9 +1079,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!receiver.isFinite()"})
-        protected static final FloatObject doFloatNotFinite(@SuppressWarnings("unused") final FloatObject receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FloatObject.valueOf(image, Double.NaN);
+        protected final FloatObject doFloatNotFinite(@SuppressWarnings("unused") final FloatObject receiver) {
+            return FloatObject.valueOf(getContext(), Double.NaN);
         }
     }
 
@@ -1125,9 +1108,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isZero()")
-        protected static final FloatObject doFloatZero(@SuppressWarnings("unused") final FloatObject receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FloatObject.valueOf(image, Double.NEGATIVE_INFINITY);
+        protected final FloatObject doFloatZero(@SuppressWarnings("unused") final FloatObject receiver) {
+            return FloatObject.valueOf(getContext(), Double.NEGATIVE_INFINITY);
         }
 
         @Specialization(guards = "receiver.isPositiveInfinity()")
@@ -1136,9 +1118,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isNegativeInfinity() || receiver.isNaN()")
-        protected static final FloatObject doFloatOtherss(@SuppressWarnings("unused") final FloatObject receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FloatObject.valueOf(image, Double.NaN);
+        protected final FloatObject doFloatOtherss(@SuppressWarnings("unused") final FloatObject receiver) {
+            return FloatObject.valueOf(getContext(), Double.NaN);
         }
     }
 
@@ -1429,9 +1410,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!inSafeIntegerRange(receiver)")
-        protected static final Object doDoubleExact(final double receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return LargeIntegerObject.truncateExact(image, receiver);
+        protected final Object doDoubleExact(final double receiver) {
+            return LargeIntegerObject.truncateExact(getContext(), receiver);
         }
     }
 
@@ -1526,15 +1506,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isZero(receiver)")
-        protected static final FloatObject doFloatZero(@SuppressWarnings("unused") final double receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FloatObject.valueOf(image, Double.NEGATIVE_INFINITY);
+        protected final FloatObject doFloatZero(@SuppressWarnings("unused") final double receiver) {
+            return FloatObject.valueOf(getContext(), Double.NEGATIVE_INFINITY);
         }
 
         @Specialization(guards = "isLessThanZero(receiver)")
-        protected static final FloatObject doDoubleNegative(@SuppressWarnings("unused") final double receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return FloatObject.valueOf(image, Double.NaN);
+        protected final FloatObject doDoubleNegative(@SuppressWarnings("unused") final double receiver) {
+            return FloatObject.valueOf(getContext(), Double.NaN);
         }
     }
 

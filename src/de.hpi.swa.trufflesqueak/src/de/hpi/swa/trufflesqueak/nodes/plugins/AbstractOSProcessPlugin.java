@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
@@ -20,7 +19,6 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.Source;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -39,7 +37,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         @CompilationFinal protected Object sysCallObject;
 
         public AbstractSysCallPrimitiveNode() {
-            supportsNFI = SqueakLanguage.getContext().supportsNFI();
+            supportsNFI = SqueakImageContext.getSlow().supportsNFI();
         }
 
         protected static final long failIfMinusOne(final long result, final BranchProfile errorProfile) {
@@ -61,7 +59,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
             assert supportsNFI;
             if (sysCallObject == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final Object defaultLibrary = SqueakLanguage.getContext().env.parseInternal(Source.newBuilder("nfi", "default", "native").build()).call();
+                final Object defaultLibrary = SqueakImageContext.getSlow().env.parseInternal(Source.newBuilder("nfi", "default", "native").build()).call();
                 final InteropLibrary lib = InteropLibrary.getFactory().getUncached();
                 try {
                     final Object symbol = lib.readMember(defaultLibrary, getFunctionName());
@@ -103,9 +101,9 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
     protected abstract static class PrimChdirNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "pathString.isByteType()")
-        protected static final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Cached final BranchProfile errorProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
+                        @Cached final BranchProfile errorProfile) {
+            final SqueakImageContext image = getContext();
             try {
                 image.env.setCurrentWorkingDirectory(image.env.getPublicTruffleFile(pathString.asStringUnsafe()));
                 return NilObject.SINGLETON; // Signals success.
@@ -121,8 +119,8 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
     protected abstract static class PrimGetCurrentWorkingDirectoryNode extends AbstractPrimitiveNode {
 
         @Specialization
-        protected static final NativeObject doGet(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            final SqueakImageContext image = getContext();
             return image.asByteString(image.env.getCurrentWorkingDirectory().getPath());
         }
     }
@@ -148,13 +146,12 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         @CompilationFinal private NativeObject sessionByteArray;
 
         @Specialization
-        protected final NativeObject doSession(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final NativeObject doSession(@SuppressWarnings("unused") final Object receiver) {
             if (sessionByteArray == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final byte[] bytes = new byte[4];
                 ArrayUtils.fillRandomly(bytes);
-                sessionByteArray = image.asByteArray(bytes);
+                sessionByteArray = getContext().asByteArray(bytes);
             }
             return sessionByteArray;
         }

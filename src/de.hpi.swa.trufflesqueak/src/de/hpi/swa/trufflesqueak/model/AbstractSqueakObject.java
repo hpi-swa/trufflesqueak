@@ -11,10 +11,10 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.Library;
@@ -24,7 +24,6 @@ import com.oracle.truffle.api.library.ReflectionLibrary;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
@@ -59,11 +58,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         @Specialization(guards = {"message == cachedMessage", "classNode.executeLookup(receiver) == cachedClass", "cachedMethod != null"}, limit = "8", //
                         assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()", "cachedMethod.getCallTargetStable()"})
         protected static final Object doSendCached(final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached("message") final Message cachedMessage,
                         @Cached("classNode.executeLookup(receiver)") final ClassObject cachedClass,
-                        @Cached("cachedClass.lookupMethodInMethodDictSlow(image.toInteropSelector(message))") final CompiledCodeObject cachedMethod,
+                        @Cached("lookupMethod(cachedClass, cachedMessage)") final CompiledCodeObject cachedMethod,
                         @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode,
                         @Cached final WrapToSqueakNode wrapNode) {
             final int numArgs = cachedMessage.getParameterCount() - 1;
@@ -76,6 +74,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             return callNode.call(frameArguments);
         }
 
+        protected static final CompiledCodeObject lookupMethod(final ClassObject clazz, final Message message) {
+            return clazz.lookupMethodInMethodDictSlow(SqueakImageContext.get(null).toInteropSelector(message));
+        }
+
         // TODO: Add Specialization for non-InteropLibrary messages to avoid slowing down other
         // Truffle libraries?
 
@@ -86,7 +88,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final DispatchUneagerlyNode dispatchNode,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws Exception {
+                        @CachedLibrary("receiver") final InteropLibrary thisLib) throws Exception {
+            final SqueakImageContext image = SqueakImageContext.get(thisLib);
             if (message.getLibraryClass() == InteropLibrary.class) {
                 final NativeObject selector = image.toInteropSelector(message);
                 final Object method = lookupNode.executeLookup(classNode.executeLookup(receiver), selector);

@@ -5,39 +5,19 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.dsl.GenerateUncached;
-import com.oracle.truffle.api.dsl.Specialization;
-
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 
-@GenerateUncached
-public abstract class GetActiveProcessNode extends AbstractNode {
+public final class GetActiveProcessNode extends AbstractNode {
+    @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
     public static GetActiveProcessNode create() {
-        return GetActiveProcessNodeGen.create();
+        return new GetActiveProcessNode();
     }
 
-    public static GetActiveProcessNode getUncached() {
-        return GetActiveProcessNodeGen.getUncached();
-    }
-
-    public static PointersObject getSlow(final SqueakImageContext image) {
-        return doGet(AbstractPointersObjectReadNode.getUncached(), image);
-    }
-
-    public abstract PointersObject execute();
-
-    @Specialization
-    protected static final PointersObject doGet(@Cached final AbstractPointersObjectReadNode readNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return readNode.executePointers(image.getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
-
+    public PointersObject execute() {
+        return readNode.executePointers(getContext().getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 }

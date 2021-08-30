@@ -18,6 +18,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.EXCEPTION;
@@ -91,7 +92,7 @@ public final class SqueakExceptions {
         public SqueakSyntaxError(final PointersObject syntaxErrorNotification) {
             super(((NativeObject) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.ERROR_MESSAGE)).asStringUnsafe());
             final int sourceOffset = (int) ((long) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.LOCATION) - 1);
-            sourceSection = SqueakLanguage.getContext().getLastParseRequestSource().createSection(Math.max(sourceOffset - 1, 0), 1);
+            sourceSection = SqueakImageContext.getSlow().getLastParseRequestSource().createSection(Math.max(sourceOffset - 1, 0), 1);
         }
 
         @TruffleBoundary

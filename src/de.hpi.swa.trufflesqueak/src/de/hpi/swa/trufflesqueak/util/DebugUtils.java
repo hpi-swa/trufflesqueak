@@ -17,7 +17,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -31,7 +30,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 
 /**
  * Helper functions for debugging purposes.
@@ -129,10 +127,10 @@ public final class DebugUtils {
 
     public static String currentState() {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
-        final SqueakImageContext image = SqueakLanguage.getContext();
+        final SqueakImageContext image = SqueakImageContext.getSlow();
         final StringBuilder b = new StringBuilder(64);
         b.append("\nImage processes state\n");
-        final PointersObject activeProcess = GetActiveProcessNode.getSlow(image);
+        final PointersObject activeProcess = image.getActiveProcessSlow();
         final long activePriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
         b.append("*Active process @").append(Integer.toHexString(activeProcess.hashCode())).append(" priority ").append(activePriority).append('\n');
         final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
@@ -162,7 +160,7 @@ public final class DebugUtils {
         final boolean isCIBuild = System.getenv().containsKey("GITHUB_ACTIONS");
         final int[] depth = new int[1];
         final Object[] lastSender = new Object[]{null};
-        final PrintWriter err = SqueakLanguage.getContext().getError();
+        final PrintWriter err = SqueakImageContext.getSlow().getError();
         err.println("== Truffle stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(frameInstance -> {
             if (depth[0]++ > 50 && isCIBuild) {
@@ -191,7 +189,7 @@ public final class DebugUtils {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final StringBuilder b = new StringBuilder();
         printSqMaterializedStackTraceOn(b, context);
-        SqueakLanguage.getContext().getOutput().println(b.toString());
+        SqueakImageContext.getSlow().getOutput().println(b.toString());
     }
 
     private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {

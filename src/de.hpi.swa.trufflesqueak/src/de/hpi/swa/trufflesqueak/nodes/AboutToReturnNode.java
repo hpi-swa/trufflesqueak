@@ -12,8 +12,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -89,6 +89,6 @@ public abstract class AboutToReturnNode extends AbstractNode {
     }
 
     protected static final SendSelectorNode createAboutToReturnSend() {
-        return SendSelectorNode.create(SqueakLanguage.getContext().aboutToReturnSelector);
+        return SendSelectorNode.create(SqueakImageContext.getSlow().aboutToReturnSelector);
     }
 }

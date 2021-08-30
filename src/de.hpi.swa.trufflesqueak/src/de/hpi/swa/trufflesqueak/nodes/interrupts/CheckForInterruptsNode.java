@@ -10,7 +10,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
@@ -35,7 +34,7 @@ public final class CheckForInterruptsNode extends Node {
     }
 
     public static CheckForInterruptsNode create() {
-        return new CheckForInterruptsNode(SqueakLanguage.getContext());
+        return new CheckForInterruptsNode(SqueakImageContext.getSlow());
     }
 
     public void execute(final VirtualFrame frame) {

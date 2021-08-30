@@ -12,7 +12,6 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -41,7 +40,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
     }
 
     protected static final CachedDispatchNode create(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final ClassObject receiverClass, final Object lookupResult) {
-        final SqueakImageContext image = SqueakLanguage.getContext();
+        final SqueakImageContext image = SqueakImageContext.getSlow();
         if (lookupResult == null) {
             return createDNUNode(frame, selector, argumentCount, image, receiverClass);
         } else if (lookupResult instanceof CompiledCodeObject) {

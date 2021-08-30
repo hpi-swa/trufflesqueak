@@ -7,13 +7,13 @@ package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
@@ -147,8 +147,8 @@ public final class ContextScope implements TruffleObject {
     }
 
     @ExportMessage
-    protected Object getMetaObject(@CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.methodContextClass;
+    protected Object getMetaObject(@CachedLibrary("this") final InteropLibrary lib) {
+        return SqueakImageContext.get(lib).methodContextClass;
     }
 
     @ExportMessage

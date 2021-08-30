@@ -8,14 +8,12 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -53,8 +51,8 @@ public abstract class DispatchSendNode extends AbstractNode {
         protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
                         final Object[] rcvrAndArgs,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final LookupMethodNode lookupNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached final LookupMethodNode lookupNode) {
+            final SqueakImageContext image = getContext();
             final CompiledCodeObject doesNotUnderstandMethod = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, image.doesNotUnderstand);
             final PointersObject message = image.newMessage(writeNode, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
             return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message});
@@ -66,8 +64,8 @@ public abstract class DispatchSendNode extends AbstractNode {
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final LookupMethodNode lookupNode,
-                        @Cached final ConditionProfile isDoesNotUnderstandProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached final ConditionProfile isDoesNotUnderstandProfile) {
+            final SqueakImageContext image = getContext();
             final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
             final ClassObject targetClass = classNode.executeLookup(targetObject);
             final Object newLookupResult = lookupNode.executeLookup(targetClass, image.runWithInSelector);

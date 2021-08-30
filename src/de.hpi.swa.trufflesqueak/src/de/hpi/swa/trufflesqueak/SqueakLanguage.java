@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak;
 import org.graalvm.options.OptionDescriptors;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
@@ -19,6 +18,7 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
 import de.hpi.swa.trufflesqueak.interop.SqueakLanguageView;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -36,6 +36,11 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
                 version = SqueakLanguageConfig.VERSION)
 @ProvidedTags({StandardTags.StatementTag.class, StandardTags.CallTag.class, StandardTags.RootTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
+    private static final LanguageReference<SqueakLanguage> REFERENCE = LanguageReference.create(SqueakLanguage.class);
+
+    public static SqueakLanguage get(final AbstractNode node) {
+        return REFERENCE.get(node);
+    }
 
     @Override
     protected SqueakImageContext createContext(final Env env) {
@@ -44,7 +49,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected CallTarget parse(final ParsingRequest request) throws Exception {
-        final SqueakImageContext image = getContext();
+        final SqueakImageContext image = SqueakImageContext.getSlow();
         final Source source = request.getSource();
         if (source.hasBytes()) {
             image.setImagePath(source.getPath());
@@ -66,11 +71,6 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     @Override
     protected Object getScope(final SqueakImageContext context) {
         return context.getScope();
-    }
-
-    public static SqueakImageContext getContext() {
-        CompilerAsserts.neverPartOfCompilation();
-        return getCurrentContext(SqueakLanguage.class);
     }
 
     public String getTruffleLanguageHome() {

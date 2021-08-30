@@ -35,7 +35,6 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -87,7 +86,7 @@ public final class SqueakImageWriter {
     private void run(final ContextObject thisContext) {
         final long start = MiscUtils.currentTimeMillis();
         nextChunk = image.flags.getOldBaseAddress();
-        final PointersObject activeProcess = GetActiveProcessNode.getUncached().execute();
+        final PointersObject activeProcess = image.getActiveProcessSlow();
         try {
             /* Mark thisContext as suspended during tracing and writing. */
             AbstractPointersObjectWriteNode.getUncached().execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, thisContext);

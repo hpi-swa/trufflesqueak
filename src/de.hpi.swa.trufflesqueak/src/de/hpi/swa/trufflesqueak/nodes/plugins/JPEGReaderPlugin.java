@@ -7,14 +7,11 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -30,9 +27,8 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveColorConvertGrayscaleMCU")
     protected abstract static class PrimColorConvertGrayscaleMCUNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
         @Specialization(guards = {"bits.isIntType()", "residualArray.isIntType()", "residualArray.getIntLength() == 3"})
-        protected static final Object doColor(final Object receiver, final ArrayObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.jpegReader.primitiveColorConvertGrayscaleMCU(componentArray, bits, residualArray, mask);
+        protected final Object doColor(final Object receiver, final ArrayObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
+            getContext().jpegReader.primitiveColorConvertGrayscaleMCU(componentArray, bits, residualArray, mask);
             return receiver;
         }
     }
@@ -41,9 +37,8 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveColorConvertMCU")
     protected abstract static class PrimColorConvertMCUNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
         @Specialization(guards = {"componentArray.size() == 3", "bits.isIntType()", "residualArray.isIntType()", "residualArray.getIntLength() == 3"})
-        protected static final Object doColor(final Object receiver, final PointersObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.jpegReader.primitiveColorConvertMCU(componentArray, bits, residualArray, mask);
+        protected final Object doColor(final Object receiver, final PointersObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
+            getContext().jpegReader.primitiveColorConvertMCU(componentArray, bits, residualArray, mask);
             return receiver;
         }
     }
@@ -54,10 +49,9 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDecodeMCUNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
         @Specialization(guards = {"sampleBuffer.isIntType()", "sampleBuffer.getIntLength() == DCTSize2", "comp.size() >= MinComponentSize", "dcTableValue.isIntType()", "acTableValue.isIntType()",
                         "jpegStream.size() >= 5"})
-        protected static final Object doColor(final Object receiver, final NativeObject sampleBuffer, final PointersObject comp, final NativeObject dcTableValue, final NativeObject acTableValue,
-                        final PointersObject jpegStream,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.jpegReader.primitiveDecodeMCU(sampleBuffer, comp, dcTableValue, acTableValue, jpegStream);
+        protected final Object doColor(final Object receiver, final NativeObject sampleBuffer, final PointersObject comp, final NativeObject dcTableValue, final NativeObject acTableValue,
+                        final PointersObject jpegStream) {
+            getContext().jpegReader.primitiveDecodeMCU(sampleBuffer, comp, dcTableValue, acTableValue, jpegStream);
             return receiver;
         }
     }
@@ -77,9 +71,8 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primGetModuleName")
     public abstract static class PrimGetModuleNameNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final NativeObject doGet(@SuppressWarnings("unused") final Object rcvr,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString(JPEGReader.moduleName);
+        protected final NativeObject doGet(@SuppressWarnings("unused") final Object rcvr) {
+            return getContext().asByteString(JPEGReader.moduleName);
         }
     }
 

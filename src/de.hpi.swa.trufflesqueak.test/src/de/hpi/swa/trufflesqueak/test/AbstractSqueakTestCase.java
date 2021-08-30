@@ -17,7 +17,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImage;
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -140,7 +139,7 @@ public abstract class AbstractSqueakTestCase {
         context.initialize(SqueakLanguageConfig.ID);
         context.enter();
         try {
-            image = SqueakLanguage.getContext();
+            image = SqueakImageContext.getSlow();
             if (Files.exists(Paths.get(imagePath))) {
                 image.ensureLoaded();
             }

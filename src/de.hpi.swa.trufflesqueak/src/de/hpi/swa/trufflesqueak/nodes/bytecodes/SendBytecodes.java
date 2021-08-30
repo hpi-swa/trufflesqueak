@@ -569,7 +569,7 @@ public final class SendBytecodes {
         private ClassObject getPointClass() {
             if (pointClass == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                pointClass = lookupContext().pointClass;
+                pointClass = getContext().pointClass;
             }
             return pointClass;
         }

@@ -15,7 +15,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -32,7 +31,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
@@ -130,7 +128,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        protected final Object doCallout(final SqueakImageContext image, final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
+        protected final Object doCallout(final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
+            final SqueakImageContext image = getContext();
             final List<Integer> headerWordList = new ArrayList<>();
 
             final ArrayObject argTypes = readExternalLibNode.executeArray(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
@@ -240,9 +239,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(argArray));
+        protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray) {
+            return doCallout(asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(argArray));
         }
     }
 
@@ -250,9 +248,9 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveLoadSymbolFromModule")
     protected abstract static class PrimLoadSymbolFromModuleNode extends AbstractFFIPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"moduleSymbol.isByteType()", "module.isByteType()"})
-        protected static final Object doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+        protected final Object doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            final SqueakImageContext image = getContext();
             final String moduleSymbolName = moduleSymbol.asStringUnsafe();
             final String moduleName = module.asStringUnsafe();
             final CallTarget target = image.env.parseInternal(generateNFILoadSource(image, moduleName));
@@ -326,14 +324,13 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
-        protected static final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
-                        @Cached final ConditionProfile positiveProfile,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
+                        @Cached final ConditionProfile positiveProfile) {
             final long signedLong = doAt8Signed(byteArray, byteOffsetLong, byteSize, isSigned);
             if (positiveProfile.profile(signedLong >= 0)) {
                 return signedLong;
             } else {
-                return LargeIntegerObject.toUnsigned(image, signedLong);
+                return LargeIntegerObject.toUnsigned(getContext(), signedLong);
             }
         }
     }

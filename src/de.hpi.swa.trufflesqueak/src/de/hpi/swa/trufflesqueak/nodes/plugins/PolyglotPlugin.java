@@ -17,7 +17,6 @@ import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -94,9 +93,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveRegisterForeignObjectClass")
     protected abstract static class PrimRegisterForeignObjectClassNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
-        protected static final boolean doRegisterForeignObjectClass(final ClassObject foreignObjectClass,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return BooleanObject.wrap(image.setForeignObjectClass(foreignObjectClass));
+        protected final boolean doRegisterForeignObjectClass(final ClassObject foreignObjectClass) {
+            return BooleanObject.wrap(getContext().setForeignObjectClass(foreignObjectClass));
         }
     }
 
@@ -108,30 +106,30 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsPolyglotEvalAllowed")
     protected abstract static class PrimIsPolyglotEvalAllowedNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return BooleanObject.wrap(image.env.isPolyglotEvalAllowed());
+        protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(getContext().env.isPolyglotEvalAllowed());
         }
     }
 
     protected abstract static class AbstractEvalStringPrimitiveNode extends AbstractPrimitiveNode {
-        protected static final Object evalString(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
-            return evalString(image, languageIdOrMimeTypeObj, sourceObject, ArrayUtils.EMPTY_STRINGS_ARRAY, ArrayUtils.EMPTY_ARRAY);
+        protected final Object evalString(final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
+            return evalString(languageIdOrMimeTypeObj, sourceObject, ArrayUtils.EMPTY_STRINGS_ARRAY, ArrayUtils.EMPTY_ARRAY);
         }
 
-        protected static final Object evalString(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+        protected final Object evalString(final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         final String[] argumentNames, final Object[] argumentValues) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String sourceText = sourceObject.asStringUnsafe();
+            final com.oracle.truffle.api.TruffleLanguage.Env env = getContext().env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
-                final String lang = mimeType ? findLanguageByMimeType(image.env, languageIdOrMimeType) : languageIdOrMimeType;
+                final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
                 LiteralBuilder newBuilder = Source.newBuilder(lang, sourceText, EVAL_SOURCE_NAME);
                 if (mimeType) {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
                 final Source source = newBuilder.build();
-                return image.env.parsePublic(source, argumentNames).call(argumentValues);
+                return env.parsePublic(source, argumentNames).call(argumentValues);
             } catch (final RuntimeException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -143,10 +141,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEvalStringNode extends AbstractEvalStringPrimitiveNode implements TernaryPrimitiveFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
-        protected static final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
-                        @Cached final WrapToSqueakNode wrapNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return wrapNode.executeWrap(evalString(image, languageIdOrMimeTypeObj, sourceObject));
+        protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return wrapNode.executeWrap(evalString(languageIdOrMimeTypeObj, sourceObject));
         }
     }
 
@@ -155,12 +152,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEvalStringWithArgumentsNode extends AbstractEvalStringPrimitiveNode implements QuinaryPrimitiveFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()", "sizeNode.execute(argumentNames) == sizeNode.execute(argumentValues)"}, limit = "1")
-        protected static final Object doEvalWithArguments(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+        protected final Object doEvalWithArguments(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         final ArrayObject argumentNames, final ArrayObject argumentValues,
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode,
-                        @Cached final WrapToSqueakNode wrapNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached final WrapToSqueakNode wrapNode) {
             final Object[] namesObjects = toObjectArrayNode.execute(argumentNames);
             final String[] names = new String[namesObjects.length];
             for (int i = 0; i < namesObjects.length; i++) {
@@ -172,7 +168,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 }
             }
             final Object[] values = toObjectArrayNode.execute(argumentValues);
-            return wrapNode.executeWrap(evalString(image, languageIdOrMimeTypeObj, sourceObject, names, values));
+            return wrapNode.executeWrap(evalString(languageIdOrMimeTypeObj, sourceObject, names, values));
         }
     }
 
@@ -181,13 +177,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEvalStringInInnerContextNode extends AbstractEvalStringPrimitiveNode implements TernaryPrimitiveFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
-        protected static final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
-                        @Cached final ConvertToSqueakNode convertNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final TruffleContext innerContext = image.env.newContextBuilder().build();
+        protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+                        @Cached final ConvertToSqueakNode convertNode) {
+            final TruffleContext innerContext = getContext().env.newContextBuilder().build();
             final Object p = innerContext.enter(null);
             try {
-                return convertNode.executeConvert(evalString(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, sourceObject));
+                return convertNode.executeConvert(evalString(languageIdOrMimeTypeObj, sourceObject));
             } finally {
                 innerContext.leave(null, p);
                 innerContext.close();
@@ -196,17 +191,18 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractEvalFilePrimitiveNode extends AbstractPrimitiveNode {
-        protected static final Object evalFile(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
+        protected final Object evalFile(final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String pathString = path.asStringUnsafe();
+            final com.oracle.truffle.api.TruffleLanguage.Env env = getContext().env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
-                final String lang = mimeType ? findLanguageByMimeType(image.env, languageIdOrMimeType) : languageIdOrMimeType;
-                SourceBuilder newBuilder = Source.newBuilder(lang, image.env.getPublicTruffleFile(pathString));
+                final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
+                SourceBuilder newBuilder = Source.newBuilder(lang, env.getPublicTruffleFile(pathString));
                 if (mimeType) {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
-                return image.env.parsePublic(newBuilder.name(pathString).build()).call();
+                return env.parsePublic(newBuilder.name(pathString).build()).call();
             } catch (IOException | RuntimeException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -218,10 +214,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEvalFileNode extends AbstractEvalFilePrimitiveNode implements TernaryPrimitiveFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
-        protected static final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
-                        @Cached final WrapToSqueakNode wrapNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return wrapNode.executeWrap(evalFile(image, languageIdOrMimeTypeObj, path));
+        protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return wrapNode.executeWrap(evalFile(languageIdOrMimeTypeObj, path));
         }
     }
 
@@ -230,13 +225,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEvalFileInInnerContextNode extends AbstractEvalFilePrimitiveNode implements TernaryPrimitiveFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
-        protected static final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
-                        @Cached final ConvertToSqueakNode convertNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final TruffleContext innerContext = image.env.newContextBuilder().build();
+        protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
+                        @Cached final ConvertToSqueakNode convertNode) {
+            final TruffleContext innerContext = getContext().env.newContextBuilder().build();
             final Object p = innerContext.enter(null);
             try {
-                return convertNode.executeConvert(evalFile(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, path));
+                return convertNode.executeConvert(evalFile(languageIdOrMimeTypeObj, path));
             } finally {
                 innerContext.leave(null, p);
                 innerContext.close();
@@ -254,8 +248,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal(dimensions = 1) private static Object[] cachedList;
 
         @Specialization
-        protected static final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            final SqueakImageContext image = getContext();
             if (cachedList == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedList = image.env.getPublicLanguages().values().stream().map(l -> JavaObjectWrapper.wrap(l)).toArray();
@@ -269,9 +263,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetPublicLanguageInfoNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
-        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return JavaObjectWrapper.wrap(image.env.getPublicLanguages().get(languageId.asStringUnsafe()));
+        protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
+            return JavaObjectWrapper.wrap(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe()));
         }
     }
 
@@ -282,8 +275,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected static final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            final SqueakImageContext image = getContext();
             if (cachedList == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedList = image.env.getInternalLanguages().values().stream().map(l -> JavaObjectWrapper.wrap(l)).toArray();
@@ -297,9 +290,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetInternalLanguageInfoNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
-        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return JavaObjectWrapper.wrap(image.env.getInternalLanguages().get(languageId.asStringUnsafe()));
+        protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
+            return JavaObjectWrapper.wrap(getContext().env.getInternalLanguages().get(languageId.asStringUnsafe()));
         }
     }
 
@@ -311,9 +303,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsPolyglotBindingsAccessAllowed")
     protected abstract static class PrimIsPolyglotBindingsAccessAllowedNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final boolean doIsPolyglotBindingsAccessAllowed(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return BooleanObject.wrap(image.env.isPolyglotBindingsAccessAllowed());
+        protected final boolean doIsPolyglotBindingsAccessAllowed(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(getContext().env.isPolyglotBindingsAccessAllowed());
         }
     }
 
@@ -322,8 +313,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetPolyglotBindings")
     protected abstract static class PrimGetPolyglotBindingsNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final Object doGet(@SuppressWarnings("unused") final Object receiver) {
+            final SqueakImageContext image = getContext();
             if (image.env.isPolyglotBindingsAccessAllowed()) {
                 return image.env.getPolyglotBindings();
             } else {
@@ -337,10 +328,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimImportNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary
-        public static final Object importSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        public final Object importSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name) {
             try {
-                return NilObject.nullToNil(image.env.importSymbol(name.asStringUnsafe()));
+                return NilObject.nullToNil(getContext().env.importSymbol(name.asStringUnsafe()));
             } catch (final SecurityException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -352,10 +342,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimExportNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary
-        public static final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        public final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value) {
             try {
-                image.env.exportSymbol(name.asStringUnsafe(), value);
+                getContext().env.exportSymbol(name.asStringUnsafe(), value);
                 return value;
             } catch (final SecurityException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
@@ -465,11 +454,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAsStringNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "lib.isString(object)", limit = "2")
-        protected static final NativeObject doAsString(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final NativeObject doAsString(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return image.asByteString(lib.asString(object));
+                return getContext().asByteString(lib.asString(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -940,12 +928,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetMembers")
     protected abstract static class PrimGetMembersNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"lib.hasMembers(object)"}, limit = "2")
-        protected static final ArrayObject doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean includeInternal,
+        protected final ArrayObject doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean includeInternal,
                         @CachedLibrary("object") final InteropLibrary lib,
                         @CachedLibrary(limit = "2") final InteropLibrary membersLib,
-                        @CachedLibrary(limit = "2") final InteropLibrary memberNameLib,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @CachedLibrary(limit = "2") final InteropLibrary memberNameLib) {
             // TODO: is unpacking really necessary?
+            final SqueakImageContext image = getContext();
             try {
                 final Object members = lib.getMembers(object, includeInternal);
                 final int size = (int) membersLib.getArraySize(members);
@@ -1389,11 +1377,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAsDateNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "lib.isDate(object)")
-        protected static final Object doAsDate(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+        protected final Object doAsDate(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return image.env.asGuestValue(lib.asDate(object));
+                return getContext().env.asGuestValue(lib.asDate(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1416,11 +1403,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAsDurationNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "lib.isDuration(object)")
-        protected static final Object doAsDuration(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+        protected final Object doAsDuration(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return image.env.asGuestValue(lib.asDuration(object));
+                return getContext().env.asGuestValue(lib.asDuration(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1443,11 +1429,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAsInstantNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "lib.isInstant(object)")
-        protected static final Object doAsInstant(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+        protected final Object doAsInstant(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return image.env.asGuestValue(lib.asInstant(object));
+                return getContext().env.asGuestValue(lib.asInstant(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1470,11 +1455,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAsTimeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "lib.isTime(object)")
-        protected static final Object doAsTime(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+        protected final Object doAsTime(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return image.env.asGuestValue(lib.asTime(object));
+                return getContext().env.asGuestValue(lib.asTime(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1497,11 +1481,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAsTimeZoneNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "lib.isTimeZone(object)")
-        protected static final Object doAsTimeZone(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+        protected final Object doAsTimeZone(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return image.env.asGuestValue(lib.asTimeZone(object));
+                return getContext().env.asGuestValue(lib.asTimeZone(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1902,11 +1885,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetExceptionTypeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "lib.isException(object)")
-        protected static final NativeObject getExceptionType(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+        protected final NativeObject getExceptionType(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return image.asByteString(lib.getExceptionType(object).name());
+                return getContext().asByteString(lib.getExceptionType(object).name());
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -2015,9 +1997,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetLanguageViewNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
-        protected static final Object getLanguageView(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId, final Object target,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return NilObject.nullToNil(getInstrumentEnv().getLanguageView(image.env.getPublicLanguages().get(languageId.asStringUnsafe()), target));
+        protected final Object getLanguageView(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId, final Object target) {
+            return NilObject.nullToNil(getInstrumentEnv().getLanguageView(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe()), target));
         }
     }
 
@@ -2026,9 +2007,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetScopeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
-        protected static final Object getScope(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return NilObject.nullToNil(getInstrumentEnv().getScope(image.env.getPublicLanguages().get(languageId.asStringUnsafe())));
+        protected final Object getScope(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
+            return NilObject.nullToNil(getInstrumentEnv().getScope(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe())));
         }
     }
 
@@ -2040,11 +2020,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddToHostClassPath")
     protected abstract static class PrimAddToHostClassPathNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"value.isByteType()"})
-        protected static final Object doAddToHostClassPath(final Object receiver, final NativeObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final Object doAddToHostClassPath(final Object receiver, final NativeObject value) {
             final String path = value.asStringUnsafe();
+            final com.oracle.truffle.api.TruffleLanguage.Env env = getContext().env;
             try {
-                image.env.addToHostClassPath(image.env.getPublicTruffleFile(path));
+                env.addToHostClassPath(env.getPublicTruffleFile(path));
                 return receiver;
             } catch (final SecurityException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
@@ -2056,29 +2036,22 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostLookupAllowed")
     protected abstract static class PrimIsHostLookupAllowedNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return BooleanObject.wrap(image.env.isHostLookupAllowed());
+        protected final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(getContext().env.isHostLookupAllowed());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveLookupHostSymbol")
     protected abstract static class PrimLookupHostSymbolNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = {"isHostLookupAllowed(image)", "value.isByteType()"})
-        protected static final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        @Specialization(guards = {"getContext().env.isHostLookupAllowed()", "value.isByteType()"})
+        protected final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
             final String symbolName = value.asStringUnsafe();
             try {
-                return NilObject.nullToNil(image.env.lookupHostSymbol(symbolName));
+                return NilObject.nullToNil(getContext().env.lookupHostSymbol(symbolName));
             } catch (final RuntimeException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
-        }
-
-        @SuppressWarnings("static-method") // Work around code generation problems.
-        protected final boolean isHostLookupAllowed(final SqueakImageContext image) {
-            return image.env.isHostLookupAllowed();
         }
     }
 
@@ -2086,9 +2059,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostFunction")
     protected abstract static class PrimIsHostFunctionNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final boolean doIsHostFunction(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return BooleanObject.wrap(image.env.isHostFunction(object));
+        protected final boolean doIsHostFunction(@SuppressWarnings("unused") final Object receiver, final Object object) {
+            return BooleanObject.wrap(getContext().env.isHostFunction(object));
         }
     }
 
@@ -2096,9 +2068,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostObject")
     protected abstract static class PrimIsHostObjectNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final boolean doIsHostObject(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return BooleanObject.wrap(image.env.isHostObject(object));
+        protected final boolean doIsHostObject(@SuppressWarnings("unused") final Object receiver, final Object object) {
+            return BooleanObject.wrap(getContext().env.isHostObject(object));
         }
     }
 
@@ -2106,9 +2077,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostSymbol")
     protected abstract static class PrimIsHostSymbolNode extends AbstractPrimitiveNode {
         @Specialization
-        protected static final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return BooleanObject.wrap(image.env.isHostSymbol(object));
+        protected final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver, final Object object) {
+            return BooleanObject.wrap(getContext().env.isHostSymbol(object));
         }
     }
 
@@ -2132,9 +2102,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected static final Object doGetLastError(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.env.asGuestValue(lastError);
+        protected final Object doGetLastError(@SuppressWarnings("unused") final Object receiver) {
+            return getContext().env.asGuestValue(lastError);
         }
 
         protected static final void setLastError(final Exception e) {
@@ -2150,15 +2119,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveToHostObject")
     protected abstract static class PrimToHostObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = "isHostObject(image, value)")
-        protected static final Object toHost(@SuppressWarnings("unused") final Object receiver, final Object value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.env.asHostObject(value);
-        }
-
-        @SuppressWarnings("static-method") // Work around code generation problems.
-        protected final boolean isHostObject(final SqueakImageContext image, final Object value) {
-            return image.env.isHostObject(value);
+        @Specialization(guards = "getContext().env.isHostObject(value)")
+        protected final Object toHost(@SuppressWarnings("unused") final Object receiver, final Object value) {
+            return getContext().env.asHostObject(value);
         }
     }
 
@@ -2270,7 +2233,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     private static com.oracle.truffle.api.instrumentation.TruffleInstrument.Env getInstrumentEnv() {
         if (instrumentEnv == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final Env env = SqueakLanguage.getContext().env;
+            final Env env = SqueakImageContext.getSlow().env;
             instrumentEnv = env.lookup(env.getInstruments().get(INSTRUMENT_ID), PolyglotInstrument.class).getInstrumentEnv();
         }
         return instrumentEnv;

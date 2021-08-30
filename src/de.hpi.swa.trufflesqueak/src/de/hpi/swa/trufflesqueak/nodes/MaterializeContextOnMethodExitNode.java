@@ -7,12 +7,10 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextNode;
@@ -25,19 +23,18 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     public abstract void execute(VirtualFrame frame);
 
-    @Specialization(guards = {"image.lastSeenContext == null", "!getContextNode.hasContext(frame)", "getContextNode.execute(frame).hasEscaped()"}, limit = "1")
-    protected static final void doStartMaterialization(final VirtualFrame frame,
-                    @Shared("getContextNode") @Cached final GetContextNode getContextNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        image.lastSeenContext = getContextNode.execute(frame);
+    @Specialization(guards = {"getSqueakImageContext(frame).lastSeenContext == null", "!getContextNode.hasContext(frame)", "getContextNode.execute(frame).hasEscaped()"}, limit = "1")
+    protected final void doStartMaterialization(final VirtualFrame frame,
+                    @Shared("getContextNode") @Cached final GetContextNode getContextNode) {
+        getContext().lastSeenContext = getContextNode.execute(frame);
     }
 
-    @Specialization(guards = {"image.lastSeenContext != null"})
-    protected static final void doMaterialize(final VirtualFrame frame,
+    @Specialization(guards = {"getSqueakImageContext(frame).lastSeenContext != null"})
+    protected final void doMaterialize(final VirtualFrame frame,
                     @Cached final ConditionProfile isNotLastSeenContextProfile,
                     @Cached final ConditionProfile continueProfile,
-                    @Cached final GetOrCreateContextNode getOrCreateContextNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                    @Cached final GetOrCreateContextNode getOrCreateContextNode) {
+        final SqueakImageContext image = getContext();
         final ContextObject lastSeenContext = image.lastSeenContext;
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (isNotLastSeenContextProfile.profile(context != lastSeenContext)) {
@@ -62,5 +59,10 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
          * Nothing to do because neither was a child context materialized nor has this context been
          * requested and allocated.
          */
+    }
+
+    /* Avoid that the DSL generates an assertion for this. */
+    protected final SqueakImageContext getSqueakImageContext(@SuppressWarnings("unused") final VirtualFrame frame) {
+        return getContext();
     }
 }

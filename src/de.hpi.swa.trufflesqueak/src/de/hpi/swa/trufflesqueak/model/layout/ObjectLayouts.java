@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -108,7 +108,7 @@ public final class ObjectLayouts {
                 return null;
             }
             final AbstractSqueakObjectWithClassAndHash classComment = (AbstractSqueakObjectWithClassAndHash) ((VariablePointersObject) organization).instVarAt0Slow(CLASS_ORGANIZER.CLASS_COMMENT);
-            final NativeObject string = (NativeObject) classComment.send(SqueakLanguage.getContext(), "string");
+            final NativeObject string = (NativeObject) classComment.send(SqueakImageContext.getSlow(), "string");
             return string.asStringUnsafe();
         }
     }

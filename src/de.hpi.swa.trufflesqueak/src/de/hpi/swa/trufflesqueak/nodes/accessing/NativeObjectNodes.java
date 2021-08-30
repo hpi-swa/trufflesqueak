@@ -5,18 +5,14 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -46,14 +42,13 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final Object doNativeLongs(final NativeObject obj, final long index,
-                        @Cached final ConditionProfile positiveValueProfile,
-                        @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> ref) {
+        protected final Object doNativeLongs(final NativeObject obj, final long index,
+                        @Cached final ConditionProfile positiveValueProfile) {
             final long value = obj.getLong(index);
             if (positiveValueProfile.profile(value >= 0)) {
                 return value;
             } else {
-                return LargeIntegerObject.toUnsigned(ref.get(), value);
+                return LargeIntegerObject.toUnsigned(getContext(), value);
             }
         }
     }

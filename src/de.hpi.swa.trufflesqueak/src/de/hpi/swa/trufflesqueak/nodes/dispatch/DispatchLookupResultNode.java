@@ -6,15 +6,12 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -43,12 +40,11 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
     }
 
     @Specialization(replaces = "doCached")
-    protected static final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
+    protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
                     @Cached final ResolveMethodNode methodNode,
                     @Cached("create(frame, selector, argumentCount)") final CreateFrameArgumentsForIndirectCallNode argumentsNode,
-                    @Cached final IndirectCallNode callNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        final CompiledCodeObject method = methodNode.execute(image, receiverClass, lookupResult);
+                    @Cached final IndirectCallNode callNode) {
+        final CompiledCodeObject method = methodNode.execute(getContext(), receiverClass, lookupResult);
         return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, receiver, receiverClass, lookupResult, method));
     }
 }

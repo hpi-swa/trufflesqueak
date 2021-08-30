@@ -7,15 +7,12 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.HandlePrimitiveFailedNodeFactory.HandlePrimitiveFailedImplNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -39,20 +36,18 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
          * error symbol into the corresponding temporary variable. See
          * StackInterpreter>>#getErrorObjectFromPrimFailCode for more information.
          */
-        @Specialization(guards = {"reasonCode < sizeNode.execute(image.primitiveErrorTable)"}, limit = "1")
-        protected static final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
+        @Specialization(guards = {"reasonCode < sizeNode.execute(getContext().primitiveErrorTable)"}, limit = "1")
+        protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final FrameStackPushNode pushNode,
-                        @Cached final ArrayObjectReadNode readNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            pushNode.execute(frame, readNode.execute(image.primitiveErrorTable, reasonCode));
+                        @Cached final ArrayObjectReadNode readNode) {
+            pushNode.execute(frame, readNode.execute(getContext().primitiveErrorTable, reasonCode));
         }
 
-        @Specialization(guards = {"reasonCode >= sizeNode.execute(image.primitiveErrorTable)"}, limit = "1")
+        @Specialization(guards = {"reasonCode >= sizeNode.execute(getContext().primitiveErrorTable)"}, limit = "1")
         protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final FrameStackPushNode pushNode,
-                        @SuppressWarnings("unused") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached final FrameStackPushNode pushNode) {
             pushNode.execute(frame, (long) reasonCode);
         }
     }

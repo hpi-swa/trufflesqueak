@@ -28,13 +28,11 @@ import javax.net.ssl.SSLSession;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -397,13 +395,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
 
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        protected static final long doAccept(@SuppressWarnings("unused") final Object receiver,
+        protected final long doAccept(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
-                        final NativeObject targetBuffer,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        final NativeObject targetBuffer) {
 
             final SqSSL ssl = getSSLOrNull(sslHandle);
             if (ssl == null) {
@@ -418,7 +415,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             } catch (final SSLHandshakeException e) {
                 return ReturnCode.GENERIC_ERROR.id();
             } catch (final SSLException e) {
-                image.printToStdErr(e);
+                getContext().printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -503,13 +500,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return see numeric return type convention from plugin Javadoc
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        protected static final long doConnect(@SuppressWarnings("unused") final Object receiver,
+        protected final long doConnect(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
-                        final NativeObject targetBuffer,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        final NativeObject targetBuffer) {
 
             final SqSSL ssl = getSSLOrNull(sslHandle);
             if (ssl == null) {
@@ -522,7 +518,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             try {
                 return processHandshake(ssl, source, target);
             } catch (final SSLException e) {
-                image.printToStdErr(e);
+                getContext().printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -681,13 +677,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @TruffleBoundary
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        protected static final long doDecrypt(@SuppressWarnings("unused") final Object receiver,
+        protected final long doDecrypt(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
-                        final NativeObject targetBuffer,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        final NativeObject targetBuffer) {
 
             final SqSSL ssl = getSSLOrNull(sslHandle);
             if (ssl == null) {
@@ -714,7 +709,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 decryptOne(ssl, target);
                 return target.position();
             } catch (final BufferOverflowException | SSLException e) {
-                image.printToStdErr(e);
+                getContext().printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -755,13 +750,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the number of bytes produced as a result
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        protected static final long doEncrypt(@SuppressWarnings("unused") final Object receiver,
+        protected final long doEncrypt(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
-                        final NativeObject targetBuffer,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        final NativeObject targetBuffer) {
 
             final SqSSL ssl = getSSLOrNull(sslHandle);
             if (ssl == null) {
@@ -775,7 +769,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 encrypt(ssl, source, target);
                 return target.position();
             } catch (final SSLException e) {
-                image.printToStdErr(e);
+                getContext().printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -867,15 +861,14 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the property value or {@code nil}
          */
         @Specialization
-        protected static final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId) {
             final SqSSL impl = getSSLOrNull(sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (impl == null || property == null) {
                 return NilObject.SINGLETON;
             }
 
-            return getStringPropertyValue(image, impl, property);
+            return getStringPropertyValue(getContext(), impl, property);
         }
 
         private static AbstractSqueakObject getStringPropertyValue(final SqueakImageContext image, final SqSSL impl, final StringProperty property) {
@@ -945,9 +938,8 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return a pointer to the newly created SSL instance
          */
         @Specialization
-        protected static final PointersObject doCreate(@SuppressWarnings("unused") final Object receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return PointersObject.newHandleWithHiddenObject(image, new SqSSL());
+        protected final PointersObject doCreate(@SuppressWarnings("unused") final Object receiver) {
+            return PointersObject.newHandleWithHiddenObject(getContext(), new SqSSL());
         }
     }
 
