@@ -13,7 +13,6 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -404,24 +403,20 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     @Override
+    @TruffleBoundary
     public String getClipboardData() {
         try {
-            return (String) getClipboard().getData(DataFlavor.stringFlavor);
+            return (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
         } catch (UnsupportedFlavorException | IOException e) {
             return "";
         }
     }
 
     @Override
+    @TruffleBoundary
     public void setClipboardData(final String text) {
         final StringSelection selection = new StringSelection(text);
-        getClipboard().setContents(selection, selection);
-    }
-
-    @SuppressWarnings("static-method")
-    @TruffleBoundary
-    private Clipboard getClipboard() {
-        return Toolkit.getDefaultToolkit().getSystemClipboard();
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
     }
 
     @Override

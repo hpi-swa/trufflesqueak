@@ -48,7 +48,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.OS;
 
-final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDisplayInterface {
+public final class SqueakSDL2Display implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak + SubstrateVM + SDL2";
 
     private final SqueakImageContext image;
@@ -78,7 +78,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     private int key;
     private boolean isKeyDown;
 
-    Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay(final SqueakImageContext image) {
+    public SqueakSDL2Display(final SqueakImageContext image) {
         this.image = image;
         sdlAssert(SDL.init(SDL.initVideo()) == 0);
 
@@ -588,7 +588,4 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
     }
-}
-
-public final class SqueakDisplaySubstitutions {
 }

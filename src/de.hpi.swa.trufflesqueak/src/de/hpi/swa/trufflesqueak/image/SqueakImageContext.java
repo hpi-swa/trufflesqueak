@@ -19,6 +19,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
+import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
@@ -30,6 +31,7 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
+import de.hpi.swa.trufflesqueak.aot.SqueakSDL2Display;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
@@ -631,7 +633,7 @@ public final class SqueakImageContext {
     public void attachDisplayIfNecessary() {
         if (!isHeadless) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            display = new SqueakDisplay(this);
+            display = TruffleOptions.AOT ? new SqueakSDL2Display(this) : new SqueakDisplay(this);
         }
     }
 
