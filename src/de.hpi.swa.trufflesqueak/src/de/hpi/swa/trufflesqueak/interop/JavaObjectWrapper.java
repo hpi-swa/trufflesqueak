@@ -122,12 +122,33 @@ public final class JavaObjectWrapper implements TruffleObject {
                     }
                     final String name = method.getName();
                     if (name.indexOf('$') < 0) {
-                        result.put(method.getName(), method);
+                        if (!result.containsKey(name)) {
+                            result.put(name, method);
+                        } else {
+                            if (method.getParameterCount() == 0) {
+                                final Method existingMethod = result.remove(name);
+                                result.put(methodNameWithTypes(existingMethod, name), existingMethod);
+                                result.put(name, method);
+                            } else {
+                                result.put(methodNameWithTypes(method, name), method);
+                            }
+                        }
                     }
                 }
                 currentClass = currentClass.getSuperclass();
             }
             return result;
+        }
+
+        private String methodNameWithTypes(final Method method, final String name) {
+            String key;
+            final Class<?>[] types = method.getParameterTypes();
+            final String[] typeNames = new String[types.length];
+            for (int i = 0; i < types.length; i++) {
+                typeNames[i] = types[i].getSimpleName().replace("[]", "s");
+            }
+            key = name + "_" + String.join("_", typeNames);
+            return key;
         }
 
         private boolean ignoredForAOT(final Method method) {
