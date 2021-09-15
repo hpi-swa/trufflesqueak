@@ -14,7 +14,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.Library;
@@ -87,9 +86,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Cached final LookupMethodNode lookupNode,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final DispatchUneagerlyNode dispatchNode,
-                        @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("receiver") final InteropLibrary thisLib) throws Exception {
-            final SqueakImageContext image = SqueakImageContext.get(thisLib);
+                        @Cached final WrapToSqueakNode wrapNode) throws Exception {
+            final SqueakImageContext image = SqueakImageContext.get(lookupNode);
             if (message.getLibraryClass() == InteropLibrary.class) {
                 final NativeObject selector = image.toInteropSelector(message);
                 final Object method = lookupNode.executeLookup(classNode.executeLookup(receiver), selector);
