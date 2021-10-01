@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Utilities",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "CallTargetBrowserPython",
+	"pools" : [
+		 ],
+	"super" : "CallTargetBrowserRuby",
+	"type" : "normal" }

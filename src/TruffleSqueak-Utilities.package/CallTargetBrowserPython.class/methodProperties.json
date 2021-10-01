@@ -1,0 +1,8 @@
+{
+	"class" : {
+		"callTargetFor:of:" : "fn 10/1/2021 13:15",
+		"methodGetter" : "fn 10/1/2021 13:00",
+		"methodListGetter" : "fn 10/1/2021 13:16" },
+	"instance" : {
+		"labelString" : "fn 10/1/2021 13:04",
+		"moduleAndClassList" : "fn 10/1/2021 13:05" } }
