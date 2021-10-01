@@ -141,7 +141,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
 
         private String methodNameWithTypes(final Method method, final String name) {
-            String key;
+            final String key;
             final Class<?>[] types = method.getParameterTypes();
             final String[] typeNames = new String[types.length];
             for (int i = 0; i < types.length; i++) {
@@ -343,7 +343,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         final Method method = lookupMethods().get(member);
         if (method != null) {
             try {
-                return wrap(method.invoke(wrappedObject, arguments));
+                return wrap(method.invoke(wrappedObject, toJavaArguments(arguments)));
             } catch (final Exception e) {
                 throw UnsupportedTypeException.create(arguments);
             }
@@ -524,14 +524,15 @@ public final class JavaObjectWrapper implements TruffleObject {
             assert !receiver.isArrayClass();
             iterateConstructors: for (final Constructor<?> constructor : receiver.asClass().getConstructors()) {
                 if (constructor.getParameterCount() == args.length) {
+                    final Object[] convertedArgs = toJavaArguments(args);
                     for (int i = 0; i < args.length; i++) {
-                        if (!constructor.getParameterTypes()[i].isAssignableFrom(args[i].getClass())) {
+                        if (!constructor.getParameterTypes()[i].isAssignableFrom(convertedArgs[i].getClass())) {
                             continue iterateConstructors;
                         }
                     }
                     // Arguments should fit into constructor.
                     try {
-                        return wrap(constructor.newInstance(args));
+                        return wrap(constructor.newInstance(convertedArgs));
                     } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                         throw UnsupportedTypeException.create(args);
                     }
@@ -854,5 +855,51 @@ public final class JavaObjectWrapper implements TruffleObject {
             }
         }
         return hostLanguage;
+    }
+
+    // Helpers
+
+    private static Object[] toJavaArguments(final Object[] arguments) {
+        final Object[] convertedArguments = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            convertedArguments[i] = toJavaArgument(arguments[i]);
+        }
+        return convertedArguments;
+    }
+
+    @TruffleBoundary
+    private static Object toJavaArgument(final Object argument) {
+        if (argument instanceof JavaObjectWrapper) {
+            return ((JavaObjectWrapper) argument).wrappedObject;
+        } else if (argument instanceof TruffleObject) {
+            final InteropLibrary lib = InteropLibrary.getFactory().getUncached(argument);
+            try {
+                if (lib.isNull(argument)) {
+                    return null;
+                } else if (lib.isString(argument)) {
+                    return lib.asString(argument);
+                } else if (lib.isBoolean(argument)) {
+                    return lib.asBoolean(argument);
+                } else if (lib.isNumber(argument)) {
+                    if (lib.fitsInByte(argument)) {
+                        return lib.asByte(argument);
+                    } else if (lib.fitsInShort(argument)) {
+                        return lib.asShort(argument);
+                    } else if (lib.fitsInInt(argument)) {
+                        return lib.asInt(argument);
+                    } else if (lib.fitsInLong(argument)) {
+                        return lib.asLong(argument);
+                    } else if (lib.fitsInFloat(argument)) {
+                        return lib.asFloat(argument);
+                    } else if (lib.fitsInDouble(argument)) {
+                        return lib.asDouble(argument);
+                    }
+                }
+                // TODO: add support for more interop types and traits?
+            } catch (final UnsupportedMessageException e) {
+                throw CompilerDirectives.shouldNotReachHere();
+            }
+        }
+        return argument;
     }
 }
