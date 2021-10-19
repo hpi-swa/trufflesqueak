@@ -218,14 +218,11 @@ set-up-dependencies() {
   download-trufflesqueak-icon
 
   case "${java_version}" in
-    "java8")
-      set-up-labsjdk8 "${HOME}"
-      ;;
     "java11")
       set-up-labsjdk11 "${HOME}"
       ;;
-    "java16")
-      set-up-labsjdk16 "${HOME}"
+    "java17")
+      set-up-labsjdk17 "${HOME}"
       ;;
     *)
       echo "Failed to set up ${java_version}"
@@ -253,13 +250,6 @@ set-up-labsjdk() {
   echo "[${jdk_name} set up successfully]"
 }
 
-set-up-labsjdk8() {
-  set-up-labsjdk $1 \
-    "openjdk-8u${DEP_JDK8}+${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
-    "https://github.com/graalvm/graal-jvmci-8/releases/download" \
-    "openjdk1.8.0_${DEP_JDK8}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
-}
-
 set-up-labsjdk11() {
   set-up-labsjdk $1 \
     "labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
@@ -267,11 +257,11 @@ set-up-labsjdk11() {
     "labsjdk-ce-${DEP_JDK11}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 }
 
-set-up-labsjdk16() {
+set-up-labsjdk17() {
   set-up-labsjdk $1 \
-    "labsjdk-ce-${DEP_JDK16}+${DEP_JDK16_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
-    "https://github.com/graalvm/labs-openjdk-16/releases/download" \
-    "labsjdk-ce-${DEP_JDK16}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
+    "labsjdk-ce-${DEP_JDK17}+${DEP_JDK17_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
+    "https://github.com/graalvm/labs-openjdk-17/releases/download" \
+    "labsjdk-ce-${DEP_JDK17}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 }
 
 set-up-mx() {
