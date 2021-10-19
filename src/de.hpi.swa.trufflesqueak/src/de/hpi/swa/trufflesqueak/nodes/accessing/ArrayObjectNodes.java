@@ -401,7 +401,7 @@ public final class ArrayObjectNodes {
         public abstract void execute(ArrayObject obj, long index, Object value);
 
         @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final void doEmptyArray(final ArrayObject obj, final long index, final NilObject value) {
+        protected static final void doEmptyArray(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
             assert index < obj.getEmptyLength();
             // Nothing to do.
         }
