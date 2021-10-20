@@ -24,7 +24,7 @@ print('export %s GITHUB_SLUG=%s MX_VERSION=%s' % (vars, slug, mxversion))
 END
 )
 $(cd "${SCRIPT_DIRECTORY}" && python -c "${py_export}")
-([[ -z "${DEP_GRAALVM_TAG}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
+([[ -z "${DEP_GRAALVM_VERSION}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
   echo "Failed to load values from dependencyMap and GitHub slug." 1>&2 && exit 1
 
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -45,7 +45,7 @@ build-component() {
   local target=$3
   local graalvm_home="$(mx --env "${env_name}" graalvm-home)"
 
-  mx --env "${env_name}" build
+  mx --env "${env_name}" --no-download-progress build
   cp $(mx --env "${env_name}" paths "${component_name}") "${target}"
 
   add-path "${graalvm_home}/bin"
@@ -264,6 +264,26 @@ set-up-labsjdk17() {
     "labsjdk-ce-${DEP_JDK17}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 }
 
+set-up-graalvm() {
+  local java_version=$1
+  local target_dir="${HOME}/graalvm"
+  local graalvm_tar="${target_dir}/graalvm.tar.gz"
+  local graalvm_home="${target_dir}/graalvm-ce-java${java_version}-${DEP_GRAALVM_VERSION}"
+  local graalvm_name="graalvm-ce-java${java_version}-${OS_NAME}-${OS_ARCH}-${DEP_GRAALVM_VERSION}"
+  local download_url="https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${DEP_GRAALVM_VERSION}/${graalvm_name}.tar.gz"
+
+  mkdir -p "${target_dir}"
+  pushd "${target_dir}" > /dev/null
+  curl -sSL --retry 3 -o "${graalvm_tar}" "${download_url}"
+  tar xzf "${graalvm_tar}"
+  popd > /dev/null
+  
+  add-path "${graalvm_home}/bin"
+  set-env "GRAALVM_HOME" "$(resolve-path "${graalvm_home}")"
+
+  echo "[${graalvm_name} set up successfully]"
+}
+
 set-up-mx() {
   shallow-clone "https://github.com/graalvm/mx.git" "${MX_VERSION}" "${HOME}/mx"
   add-path "${HOME}/mx"
@@ -292,7 +312,7 @@ shallow-clone-graalvm-project() {
   local name=$(basename "${git_url}" | cut -d. -f1)
   local target_dir="${BASE_DIRECTORY}/../${name}"
 
-  shallow-clone "${git_url}" "${DEP_GRAALVM_TAG}" "${target_dir}"
+  shallow-clone "${git_url}" "vm-ce-${DEP_GRAALVM_VERSION}" "${target_dir}"
 }
 
-$@
+eval "$@"
