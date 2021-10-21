@@ -7,12 +7,14 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - gu-catalog.properties
   pull_request:
     branches:
       - master
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - gu-catalog.properties
 
 jobs:
   style_and_build_config:
