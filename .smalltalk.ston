@@ -1,0 +1,10 @@
+SmalltalkCISpec {
+  #loading : [
+    SCIMetacelloLoadSpec {
+      #baseline : 'AWFYBenchmarks',
+      #directory : 'src',
+      #platforms : [ #squeak ],
+      #useLatestMetacello : true
+    }
+  ]
+}
