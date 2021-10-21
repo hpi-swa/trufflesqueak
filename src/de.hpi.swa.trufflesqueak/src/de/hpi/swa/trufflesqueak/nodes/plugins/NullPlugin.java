@@ -27,6 +27,15 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHighResClock")
+    protected abstract static class PrimHighResClockNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final long doHighResClock(@SuppressWarnings("unused") final Object receiver) {
+            return System.nanoTime();
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveUtcWithOffset")
     protected abstract static class PrimUtcWithOffset1Node extends AbstractPrimitiveNode {
         @Specialization
