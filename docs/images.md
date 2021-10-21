@@ -9,6 +9,10 @@ Metacello new
     baseline: 'TruffleSqueak';
     repository: 'github://hpi-swa/trufflesqueak:image/src';
     load: #('tests').
+Metacello new
+    baseline: 'AWFYBenchmarks';
+    repository: 'github://hpi-swa/trufflesqueak:image-awfy/src';
+    load.
 (Smalltalk at: #TruffleSqueakUtilities) setUpImage.
 ```
 
