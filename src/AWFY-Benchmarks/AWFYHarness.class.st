@@ -5,9 +5,15 @@ Class {
 }
 
 { #category : #'as yet unclassified' }
+AWFYHarness class >> run: args [
+	FileStream startUp: true. "Ensure stdio handles are up-to-date."
+	self new run: args
+]
+
+{ #category : #'as yet unclassified' }
 AWFYHarness >> printUsage [
 
-    AWFYScriptConsole println: './som -cp Smalltalk Benchmarks/Harness.som [benchmark] [num-iterations [inner-iter]]'.
+    AWFYScriptConsole println: 'trufflesqueak --code "AWFYHarness run: #([benchmark] [num-iterations] [inner-iter])"'.
     AWFYScriptConsole println: ''.
     AWFYScriptConsole println: '  benchmark      - benchmark class name'.
     AWFYScriptConsole println: '  num-iterations - number of times to execute benchmark, default: 1'.
@@ -20,13 +26,12 @@ AWFYHarness >> printUsage [
 AWFYHarness >> processArguments: args [
 
     | run |
-    "First argument is the Harness"
-    run := AWFYRun new: (args at: 2).
+    run := AWFYRun new: (args at: 1).
 
-    args size > 2 ifTrue: [
-      run numIterations: (args at: 3) asInteger.
-      args size > 3 ifTrue: [
-        run innerIterations: (args at: 4) asInteger.
+    args size > 1 ifTrue: [
+      run numIterations: (args at: 2) asInteger.
+      args size > 2 ifTrue: [
+        run innerIterations: (args at: 3) asInteger.
     ] ].
     ^ run
 
@@ -36,15 +41,15 @@ AWFYHarness >> processArguments: args [
 AWFYHarness >> run: args [
 
     | run |
-    args size < 2 ifTrue: [
+    args size < 1 ifTrue: [
       self printUsage.
-      Smalltalk snapshot: false andQuitWithExitCode: 1
+      Smalltalk quitPrimitive: 1
     ].
     
     run := self processArguments: args.
 
     run runBenchmark.
     run printTotal.
-    Smalltalk snapshot: false andQuitWithExitCode: 0
+    Smalltalk quitPrimitive: 0
 
 ]
