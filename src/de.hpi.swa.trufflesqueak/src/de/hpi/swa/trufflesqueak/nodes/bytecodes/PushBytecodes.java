@@ -10,8 +10,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -21,13 +23,13 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakProfiles.SqueakProfile;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class PushBytecodes {
@@ -377,26 +379,63 @@ public final class PushBytecodes {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public static final class PushLiteralVariableNode extends AbstractPushNode {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        private final SqueakProfile valueProfile;
-        private final Object literal;
+    public abstract static class PushLiteralVariableNode extends AbstractPushNode {
+        private static final String[] READONLY_CLASSES = new String[]{"ClassBinding", "ReadOnlyVariableBinding"};
+        protected final Object literal;
 
-        public PushLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
+        private PushLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object literal) {
             super(code, index, numBytecodes);
-            literal = code.getLiteral(literalIndex);
-            valueProfile = SqueakProfile.createLiteralProfile(literal);
+            this.literal = literal;
+        }
+
+        public static final AbstractPushNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
+            final Object literal = code.getLiteral(literalIndex);
+            if (literal instanceof AbstractSqueakObjectWithClassAndHash) {
+                final String squeakClassName = ((AbstractSqueakObjectWithClassAndHash) literal).getSqueakClassName();
+                if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
+                    return new PushLiteralVariableReadonlyNode(code, index, numBytecodes, literal);
+                }
+            }
+            return new PushLiteralVariableWritableNode(code, index, numBytecodes, literal);
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, valueProfile.profile(at0Node.execute(literal, ASSOCIATION.VALUE)));
-        }
-
-        @Override
-        public String toString() {
+        public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "pushLitVar: " + literal;
+        }
+
+        private static final class PushLiteralVariableWritableNode extends PushLiteralVariableNode {
+            @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+            private final ValueProfile valueProfile = ValueProfile.createIdentityProfile();
+
+            protected PushLiteralVariableWritableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object literal) {
+                super(code, index, numBytecodes, literal);
+            }
+
+            @Override
+            public void executeVoid(final VirtualFrame frame) {
+                pushNode.execute(frame, valueProfile.profile(at0Node.execute(literal, ASSOCIATION.VALUE)));
+            }
+        }
+
+        private static final class PushLiteralVariableReadonlyNode extends PushLiteralVariableNode {
+            private final Object pushValue;
+
+            protected PushLiteralVariableReadonlyNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object literal) {
+                super(code, index, numBytecodes, literal);
+                pushValue = getPushValue(literal);
+            }
+
+            @Override
+            public void executeVoid(final VirtualFrame frame) {
+                assert pushValue == getPushValue(literal) : "value of binding changed unexpectedly";
+                pushNode.execute(frame, pushValue);
+            }
+
+            private static Object getPushValue(final Object literal) {
+                return SqueakObjectAt0Node.getUncached().execute(literal, ASSOCIATION.VALUE);
+            }
         }
     }
 
