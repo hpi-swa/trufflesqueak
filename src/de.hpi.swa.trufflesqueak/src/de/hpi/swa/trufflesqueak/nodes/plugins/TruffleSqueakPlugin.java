@@ -69,6 +69,15 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveVMObjectToHostObject")
+    protected abstract static class PrimVMObjectToHostObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization
+        protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final JavaObjectWrapper target) {
+            return getContext().env.asGuestValue(target.unwrap());
+        }
+    }
+
+    @GenerateNodeFactory
     @ImportStatic(FORM.class)
     @SqueakPrimitive(names = "primitiveFormToBufferedImage")
     protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {

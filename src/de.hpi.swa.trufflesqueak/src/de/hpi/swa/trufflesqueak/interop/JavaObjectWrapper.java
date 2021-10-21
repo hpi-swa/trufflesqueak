@@ -244,6 +244,10 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
     }
 
+    public Object unwrap() {
+        return wrappedObject;
+    }
+
     @TruffleBoundary
     private HashMap<String, Field> lookupFields() {
         return CLASSES_TO_FIELDS.get(wrappedObject.getClass());
