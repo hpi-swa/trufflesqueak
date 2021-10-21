@@ -104,7 +104,7 @@ Scheduler >> createIdler: identity priority: priority work: work state: state [
              0 = thedata count
                ifTrue:  [ self holdSelf ]
                ifFalse: [
-                 0 = (thedata control & 1 )
+                 0 = (thedata control bitAnd: 1 )
                  ifTrue: [
                    thedata control: thedata control // 2.
                    self release: RBObject DeviceA]

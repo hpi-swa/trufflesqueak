@@ -20,7 +20,7 @@ SomRandom >> initialize [
 { #category : #'as yet unclassified' }
 SomRandom >> next [
 
-    seed := ((seed * 1309) + 13849) & 65535.
+    seed := ((seed * 1309) + 13849) bitAnd: 65535.
     ^ seed
 
 ]

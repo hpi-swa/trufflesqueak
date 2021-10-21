@@ -28,7 +28,7 @@ Storage >> buildTreeDepth: depth with: random [
 
     count := count + 1.
     ^ (depth = 1) 
-        ifTrue:  [ Array new: random next % 10 + 1 ]
+        ifTrue:  [ Array new: random next \\ 10 + 1 ]
         ifFalse: [
           | arr |
           arr := Array new: 4.

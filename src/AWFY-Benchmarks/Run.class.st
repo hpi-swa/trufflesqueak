@@ -63,10 +63,10 @@ Run >> loadBenchmarkSuite: className [
 Run >> measure: bench [
 
     | startTime endTime runTime |
-    startTime := Time primUtcMicrosecondClock.
+    startTime := Time utcMicrosecondClock.
     (bench innerBenchmarkLoop: innerIterations) ifFalse: [
       self error: 'Benchmark failed with incorrect result'. ].
-    endTime   := Time primUtcMicrosecondClock.
+    endTime   := Time utcMicrosecondClock.
 
     runTime := endTime - startTime.
     self printResult: runTime.

@@ -11,7 +11,7 @@ Class {
 		'mass'
 	],
 	#classVars : [
-		'solarMass'
+		'SolarMass'
 	],
 	#category : #'AWFY-Benchmarks'
 }
@@ -28,13 +28,13 @@ Body class >> Pi [
 
 { #category : #'as yet unclassified' }
 Body class >> SolarMass [
- ^ solarMass 
+ ^ SolarMass 
 ]
 
 { #category : #'as yet unclassified' }
 Body class >> initialize [
 
-    solarMass := 4 * self Pi * self Pi.
+    SolarMass := 4 * self Pi * self Pi.
 
 ]
 

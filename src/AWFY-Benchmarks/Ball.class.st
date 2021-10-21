@@ -39,9 +39,9 @@ Ball >> bounce [
 { #category : #'as yet unclassified' }
 Ball >> initialize: random [
 
-    x := random next % 500.
-    y := random next % 500.
-    xVel := (random next % 300) - 150.
-    yVel := (random next % 300) - 150.
+    x := random next \\ 500.
+    y := random next \\ 500.
+    xVel := (random next \\ 300) - 150.
+    yVel := (random next \\ 300) - 150.
 
 ]

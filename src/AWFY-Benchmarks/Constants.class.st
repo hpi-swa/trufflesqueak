@@ -2,8 +2,8 @@ Class {
 	#name : #Constants,
 	#superclass : #Object,
 	#classVars : [
-		'horizontal',
-		'vertical'
+		'Horizontal',
+		'Vertical'
 	],
 	#category : #'AWFY-Benchmarks'
 }
@@ -50,18 +50,18 @@ Constants class >> ProximityRadius [
 
 { #category : #'as yet unclassified' }
 Constants class >> horizontal [
- ^ horizontal 
+ ^ Horizontal 
 ]
 
 { #category : #'as yet unclassified' }
 Constants class >> initialize [
 
-    horizontal := Vector2D x: self GoodVoxelSize y: 0.0.
-    vertical   := Vector2D x: 0.0 y: self GoodVoxelSize.
+    Horizontal := Vector2D x: self GoodVoxelSize y: 0.0.
+    Vertical   := Vector2D x: 0.0 y: self GoodVoxelSize.
 
 ]
 
 { #category : #'as yet unclassified' }
 Constants class >> vertical [
- ^ vertical 
+ ^ Vertical 
 ]

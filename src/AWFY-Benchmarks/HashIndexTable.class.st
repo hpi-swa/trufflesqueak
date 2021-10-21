@@ -19,7 +19,7 @@ HashIndexTable >> at: name [
     slot := self hashSlotFor: name.
 
     " subtract 1, 0 stands for empty "
-    ^ ((hashTable at: slot) & 255) - 1
+    ^ ((hashTable at: slot) bitAnd: 255) - 1
 
 ]
 
@@ -38,7 +38,7 @@ HashIndexTable >> at: name put: index [
 { #category : #'as yet unclassified' }
 HashIndexTable >> hashSlotFor: element [
 
-    ^ ((self stringHash: element) & (hashTable size - 1)) + 1
+    ^ ((self stringHash: element) bitAnd: (hashTable size - 1)) + 1
 
 ]
 

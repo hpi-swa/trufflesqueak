@@ -66,7 +66,7 @@ SomDictionary >> bucket: hash [
 { #category : #'as yet unclassified' }
 SomDictionary >> bucketIdx: hash [
 
-    ^ 1 + ((buckets size - 1) & hash)
+    ^ 1 + ((buckets size - 1) bitAnd: hash)
 
 ]
 
@@ -180,7 +180,7 @@ SomDictionary >> splitBucket: oldStorage bucket: i head: head [
     current := head.
     
     [current notNil] whileTrue: [
-      (current hash & oldStorage size) = 0
+      (current hash bitAnd: oldStorage size) = 0
         ifTrue: [
           loTail isNil
             ifTrue:  [ loHead := current ]
@@ -212,7 +212,7 @@ SomDictionary >> transferEntries: oldStorage [
         oldStorage at: i put: nil.
         current next isNil
           ifTrue: [
-            buckets at: 1 + (current hash & (buckets size - 1)) put: current ]
+            buckets at: 1 + (current hash bitAnd: (buckets size - 1)) put: current ]
           ifFalse: [
             self splitBucket: oldStorage bucket: i head: current ] ] ]
 
