@@ -1,3 +1,4 @@
 OrderedDictionary {
-	'src/AWFY-Benchmarks' : #SquotTonelSerializer
+	'src/AWFY-Benchmarks' : #SquotTonelSerializer,
+	'src/BaselineOfAWFYBenchmarks' : #SquotTonelSerializer
 }
