@@ -2,4 +2,4 @@ accessing
 bufferedImage
 
 	^ bufferedImage ifNil: [
-		bufferedImage := TruffleSqueakUtilities primitiveFormToBufferedImage: self form ]
+		bufferedImage := TruffleSqueakUtilities formToBufferedImage: self form ]
