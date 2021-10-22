@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -8,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -18,7 +18,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -39,15 +38,26 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         return MiscPrimitivePluginFactory.getFactories();
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveCompareString")
-    public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode {
-        @CompilationFinal private NativeObject asciiOrder;
+    public abstract static class AbstractPrimCompareStringNode extends AbstractPrimitiveNode {
+        protected static final NativeObject asciiOrderOrNull(final NativeObject orderValue) {
+            if (orderValue.isByteType() && orderValue.getByteLength() == 256) {
+                final byte[] bytes = orderValue.getByteStorage();
+                /* AsciiOrder is the identity function. */
+                for (int i = 0; i < bytes.length; i++) {
+                    if ((bytes[i] & 0xff) != i) {
+                        return null;
+                    }
+                }
+                return orderValue;
+            }
+            return null;
+        }
 
-        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()"}, rewriteOn = RespecializeException.class)
-        protected final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2, final NativeObject orderValue)
-                        throws RespecializeException {
-            ensureAsciiOrder(orderValue);
+        protected static final NativeObject validOrderOrNull(final NativeObject orderValue) {
+            return orderValue.isByteType() && orderValue.getByteLength() >= 256 ? orderValue : null;
+        }
+
+        protected static final long compareAsciiOrder(final NativeObject string1, final NativeObject string2) {
             final int len1 = string1.getByteLength();
             final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
@@ -61,33 +71,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
         }
 
-        private void ensureAsciiOrder(final NativeObject orderValue) throws RespecializeException {
-            if (orderValue != asciiOrder) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                if (asciiOrder == null) { /* Haven't seen asciiOrder yet. */
-                    if (!orderValue.isByteType()) {
-                        throw RespecializeException.transferToInterpreterInvalidateAndThrow();
-                    }
-                    final byte[] bytes = orderValue.getByteStorage();
-                    if (bytes.length != 256) {
-                        throw RespecializeException.transferToInterpreterInvalidateAndThrow();
-                    }
-                    /* AsciiOrder is the identity function. */
-                    for (int i = 0; i < bytes.length; i++) {
-                        if ((bytes[i] & 0xff) != i) {
-                            throw RespecializeException.transferToInterpreterInvalidateAndThrow();
-                        }
-                    }
-                    asciiOrder = orderValue;
-                } else {
-                    throw RespecializeException.transferToInterpreterInvalidateAndThrow();
-                }
-            }
-        }
-
-        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, replaces = "doCompareAsciiOrder")
-        protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
-                        final NativeObject orderValue) {
+        protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
             final int len1 = string1.getByteLength();
             final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
@@ -99,6 +83,32 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 }
             }
             return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveCompareString")
+    public abstract static class PrimCompareStringNode extends AbstractPrimCompareStringNode {
+
+        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
+        protected static final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+                        @SuppressWarnings("unused") final NativeObject orderValue,
+                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
+            return compareAsciiOrder(string1, string2);
+        }
+
+        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedOrder"}, limit = "1")
+        protected static final long doCompareCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+                        @SuppressWarnings("unused") final NativeObject orderValue,
+                        @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
+            return compare(string1, string2, cachedOrder);
+        }
+
+        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
+                        replaces = {"doCompareAsciiOrder", "doCompareCached"})
+        protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+                        final NativeObject orderValue) {
+            return compare(string1, string2, orderValue);
         }
 
         @SuppressWarnings("unused")

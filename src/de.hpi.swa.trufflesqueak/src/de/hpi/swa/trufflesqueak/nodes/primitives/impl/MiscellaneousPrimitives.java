@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -48,6 +49,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
+import de.hpi.swa.trufflesqueak.nodes.plugins.MiscPrimitivePlugin.AbstractPrimCompareStringNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -603,20 +605,33 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 158)
-    public abstract static class PrimCompareString2Node extends AbstractPrimitiveNode {
+    public abstract static class PrimCompareString2Node extends AbstractPrimCompareStringNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isByteType()", "other.isByteType()"})
         protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other) {
-            final int len1 = receiver.getByteLength();
-            final int len2 = other.getByteLength();
-            final int min = Math.min(len1, len2);
-            for (int i = 0; i < min; i++) {
-                final byte c1 = receiver.getByte(i);
-                final byte c2 = other.getByte(i);
-                if (c1 != c2) {
-                    return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
-                }
-            }
-            return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
+            return compareAsciiOrder(receiver, other) - 2L;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 158)
+    public abstract static class PrimCompareString3Node extends AbstractPrimCompareStringNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
+        protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
+                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
+            return compareAsciiOrder(receiver, other) - 2L;
+        }
+
+        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedOrder"}, limit = "1")
+        protected static final long doCompareCached(final NativeObject receiver, final NativeObject other,
+                        @SuppressWarnings("unused") final NativeObject orderValue,
+                        @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
+            return compare(receiver, other, cachedOrder) - 2L;
+        }
+
+        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
+                        replaces = {"doCompareAsciiOrder", "doCompareCached"})
+        protected static final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue) {
+            return compare(receiver, other, orderValue) - 2L;
         }
     }
 
