@@ -1,2 +1,2 @@
-# AWFY benchmarks exported to Tonel
+# [AWFY benchmarks](https://github.com/smarr/are-we-fast-yet) exported to Tonel
 
