@@ -320,25 +320,35 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFindFirstInString")
-    public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode {
 
-        @Specialization
+        @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
+        protected static final long doFindCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
+                        final long start,
+                        @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
+                        @Cached final ConditionProfile notFoundProfile) {
+            return doFind(receiver, string, cachedInclusionMap, start, notFoundProfile);
+        }
+
+        protected static final NativeObject validInclusionMapOrNull(final NativeObject inclusionMap) {
+            return inclusionMap.isByteType() && inclusionMap.getByteLength() == 256 ? inclusionMap : null;
+        }
+
+        @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindCached")
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
                         @Cached final ConditionProfile notFoundProfile) {
-            if (start < 1 || !string.isByteType() || !inclusionMap.isByteType()) {
-                CompilerDirectives.transferToInterpreter();
-                throw PrimitiveFailed.BAD_ARGUMENT;
-            }
-            if (inclusionMap.getByteLength() != 256) {
-                CompilerDirectives.transferToInterpreter();
-                return 0L;
-            }
             final int stringSize = string.getByteLength();
             long index = start - 1;
             while (index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0) {
                 index++;
             }
             return notFoundProfile.profile(index >= stringSize) ? 0L : index + 1;
+        }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        protected static final long doFail(final Object receiver, final Object string, final Object inclusionMap, final Object start) {
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
