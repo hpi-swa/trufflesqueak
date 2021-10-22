@@ -65,10 +65,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final byte c1 = string1.getByte(i);
                 final byte c2 = string2.getByte(i);
                 if (c1 != c2) {
-                    return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
+                    return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
                 }
             }
-            return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
+            return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
         }
 
         protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
@@ -79,10 +79,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final byte c1 = orderValue.getByte(string1.getByteUnsigned(i));
                 final byte c2 = orderValue.getByte(string2.getByteUnsigned(i));
                 if (c1 != c2) {
-                    return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
+                    return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
                 }
             }
-            return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
+            return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
         }
     }
 
@@ -94,21 +94,21 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
                         @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
-            return compareAsciiOrder(string1, string2);
+            return compareAsciiOrder(string1, string2) + 2L;
         }
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedOrder"}, limit = "1")
         protected static final long doCompareCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
                         @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
-            return compare(string1, string2, cachedOrder);
+            return compare(string1, string2, cachedOrder) + 2L;
         }
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
         protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         final NativeObject orderValue) {
-            return compare(string1, string2, orderValue);
+            return compare(string1, string2, orderValue) + 2L;
         }
 
         @SuppressWarnings("unused")
