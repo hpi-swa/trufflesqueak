@@ -451,7 +451,18 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveTranslateStringWithTable")
     public abstract static class PrimTranslateStringWithTableNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
 
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"})
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table == cachedTable"}, limit = "1")
+        protected static final Object doNativeObjectCachedTable(final Object receiver, final NativeObject string, final long start, final long stop,
+                        @SuppressWarnings("unused") final NativeObject table,
+                        @Cached("byteTableOrNull(table)") final NativeObject cachedTable) {
+            return doNativeObject(receiver, string, start, stop, cachedTable);
+        }
+
+        protected static final NativeObject byteTableOrNull(final NativeObject table) {
+            return table.isByteType() && table.getByteLength() >= 256 ? table : null;
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"}, replaces = "doNativeObjectCachedTable")
         protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             for (long i = start - 1; i < stop; i++) {
                 string.setByte(i, table.getByte(string.getByteUnsigned(i)));
@@ -459,7 +470,18 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isIntType()", "table.getIntLength() >= 256"})
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table == cachedTable"}, limit = "1")
+        protected static final Object doNativeObjectIntTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
+                        @SuppressWarnings("unused") final NativeObject table,
+                        @Cached("intTableOrNull(table)") final NativeObject cachedTable) {
+            return doNativeObjectIntTable(receiver, string, start, stop, cachedTable);
+        }
+
+        protected static final NativeObject intTableOrNull(final NativeObject table) {
+            return table.isIntType() && table.getIntLength() >= 256 ? table : null;
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isIntType()", "table.getIntLength() >= 256"}, replaces = "doNativeObjectIntTableCached")
         protected static final Object doNativeObjectIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
                         final NativeObject table) {
             for (long i = start - 1; i < stop; i++) {
