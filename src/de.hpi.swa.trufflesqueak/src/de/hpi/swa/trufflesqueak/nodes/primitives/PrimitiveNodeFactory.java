@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -61,7 +62,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
 import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class PrimitiveNodeFactory {
-    private static final int PRIMITIVE_EXTERNAL_CALL_INDEX = 117;
+    public static final int PRIMITIVE_EXTERNAL_CALL_INDEX = 117;
     public static final int PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX = 264;
     public static final int PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX = 520;
     private static final int MAX_PRIMITIVE_INDEX = 575;

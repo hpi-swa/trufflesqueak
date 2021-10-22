@@ -1,9 +1,12 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
 package de.hpi.swa.trufflesqueak.nodes;
+
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -49,6 +52,15 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
         bytecodeNodes = code.asBytecodeNodesEmpty();
         if (code.hasPrimitive()) {
             primitiveNode = PrimitiveNodeFactory.forIndex(code, false, code.primitiveIndex(), false);
+            if (primitiveNode == null) {
+                final Supplier<String> messageSupplier;
+                if (code.primitiveIndex() == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {
+                    messageSupplier = () -> "Named primitive not found for " + code;
+                } else {
+                    messageSupplier = () -> "Primitive #" + code.primitiveIndex() + " not found for " + code;
+                }
+                LogUtils.PRIMITIVES.warning(messageSupplier);
+            }
         }
     }
 
