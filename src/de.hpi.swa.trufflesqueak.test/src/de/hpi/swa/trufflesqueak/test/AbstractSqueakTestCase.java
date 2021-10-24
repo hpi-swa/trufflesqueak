@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -135,6 +136,8 @@ public abstract class AbstractSqueakTestCase {
             contextBuilder.option("log." + SqueakLanguageConfig.ID + ".level", logLevel);
             contextBuilder.logHandler(LogHandlerAccessor.createLogHandler(System.getProperty("log.mode", "out")));
         }
+        contextBuilder.option(// Log missing primitives
+                        "log." + SqueakLanguageConfig.ID + ".primitives.level", "FINE");
         context = contextBuilder.build();
         context.initialize(SqueakLanguageConfig.ID);
         context.enter();

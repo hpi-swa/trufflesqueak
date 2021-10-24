@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
-import java.util.function.Supplier;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -53,13 +51,14 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
         if (code.hasPrimitive()) {
             primitiveNode = PrimitiveNodeFactory.forIndex(code, false, code.primitiveIndex(), false);
             if (primitiveNode == null) {
-                final Supplier<String> messageSupplier;
-                if (code.primitiveIndex() == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {
-                    messageSupplier = () -> "Named primitive not found for " + code;
-                } else {
-                    messageSupplier = () -> "Primitive #" + code.primitiveIndex() + " not found for " + code;
+                final int primitiveIndex = code.primitiveIndex();
+                if (primitiveIndex == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {
+                    LogUtils.PRIMITIVES.fine(() -> "Named primitive not found for " + code);
+                } else if (primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_SIMULATION_GUARD_INDEX &&
+                                primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ENSURE_MARKER_INDEX &&
+                                primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX) {
+                    LogUtils.PRIMITIVES.fine(() -> "Primitive #" + code.primitiveIndex() + " not found for " + code);
                 }
-                LogUtils.PRIMITIVES.warning(messageSupplier);
             }
         }
     }
@@ -74,7 +73,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
                 } catch (final PrimitiveFailed e) {
                     /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
                     getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                    LogUtils.PRIMITIVES.fine(() -> primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
+                    LogUtils.PRIMITIVES.finer(() -> primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
                                     ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
                     /* continue with fallback code. */
                 }

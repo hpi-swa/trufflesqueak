@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -452,11 +453,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public boolean isUnwindMarked() {
-        return hasPrimitive() && primitiveIndex() == 198;
+        return hasPrimitive() && primitiveIndex() == PrimitiveNodeFactory.PRIMITIVE_ENSURE_MARKER_INDEX;
     }
 
     public boolean isExceptionHandlerMarked() {
-        return hasPrimitive() && primitiveIndex() == 199;
+        return hasPrimitive() && primitiveIndex() == PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX;
     }
 
     public CompiledCodeObject shallowCopy() {
