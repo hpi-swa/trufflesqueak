@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -42,14 +43,28 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
-    protected static final byte[] LOCAL_HOST_NAME = getLocalHostName().getBytes();
+    private static final boolean HAS_SOCKET_ACCESS;
+    protected static final byte[] LOCAL_HOST_NAME;
 
-    private static String getLocalHostName() {
+    static {
+        boolean hasSocketAccess = false;
+        String localHostName = "unknown";
         try {
-            return InetAddress.getLocalHost().getHostName();
-        } catch (final UnknownHostException e) {
+            localHostName = InetAddress.getLocalHost().getHostName();
+            hasSocketAccess = true;
+        } catch (final SecurityException | UnknownHostException e) {
             e.printStackTrace();
-            return "unknown";
+        }
+        HAS_SOCKET_ACCESS = hasSocketAccess;
+        LOCAL_HOST_NAME = localHostName.getBytes();
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasSocketAccess")
+    protected abstract static class PrimHasSocketAccessNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static boolean hasSocketAccess(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(HAS_SOCKET_ACCESS);
         }
     }
 
