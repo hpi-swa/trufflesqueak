@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -65,9 +66,19 @@ public final class UnsafeUtils {
         return UNSAFE.getDouble(object, address);
     }
 
+    public static double getDoubleFromBytes(final byte[] bytes, final long index) {
+        assert 0 <= index && index <= bytes.length;
+        return UNSAFE.getDouble(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+    }
+
     public static double getDoubleFromLongs(final long[] array, final long index) {
         assert 0 <= index && index < array.length;
         return UNSAFE.getDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
+    }
+
+    public static float getFloatFromBytes(final byte[] bytes, final long index) {
+        assert 0 <= index && index <= bytes.length;
+        return UNSAFE.getFloat(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static int getInt(final byte[] bytes, final long index) {
@@ -194,8 +205,18 @@ public final class UnsafeUtils {
         UNSAFE.putDouble(object, address, value);
     }
 
+    public static void putDoubleIntoBytes(final byte[] bytes, final long index, final double value) {
+        assert 0 <= index && index <= bytes.length;
+        UNSAFE.putDouble(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+    }
+
     public static void putDoubleIntoLongs(final long[] array, final long index, final double value) {
         UNSAFE.putDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    }
+
+    public static void putFloatIntoBytes(final byte[] bytes, final long index, final float value) {
+        assert 0 <= index && index <= bytes.length;
+        UNSAFE.putFloat(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putInt(final byte[] bytes, final long index, final int value) {

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -286,6 +287,44 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return NativeObject.newNativeBytes(image, externalAddressClass,
                             new byte[]{(byte) pointer, (byte) (pointer >> 8), (byte) (pointer >> 16), (byte) (pointer >> 24), (byte) (pointer >> 32), (byte) (pointer >> 40),
                                             (byte) (pointer >> 48), (byte) (pointer >> 56)});
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFFIDoubleAt")
+    protected abstract static class PrimFFIDoubleAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
+        protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong) {
+            return UnsafeUtils.getDoubleFromBytes(byteArray.getByteStorage(), byteOffsetLong);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFFIDoubleAtPut")
+    protected abstract static class PrimFFIDoubleAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
+        protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong, final double value) {
+            UnsafeUtils.putDoubleIntoBytes(byteArray.getByteStorage(), byteOffsetLong, value);
+            return value;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFFIFloatAt")
+    protected abstract static class PrimFFIFloatAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
+        protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong) {
+            return UnsafeUtils.getFloatFromBytes(byteArray.getByteStorage(), byteOffsetLong);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFFIFloatAtPut")
+    protected abstract static class PrimFFIFloatAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
+        protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong, final double value) {
+            UnsafeUtils.putFloatIntoBytes(byteArray.getByteStorage(), byteOffsetLong, (float) value);
+            return value;
         }
     }
 
