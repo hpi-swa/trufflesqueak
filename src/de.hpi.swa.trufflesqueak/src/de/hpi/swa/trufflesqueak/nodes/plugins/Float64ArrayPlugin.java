@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -28,7 +29,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        return FloatArrayPluginFactory.getFactories();
+        return Float64ArrayPluginFactory.getFactories();
     }
 
     @GenerateNodeFactory
@@ -173,7 +174,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
             final long[] longs = receiver.getLongStorage();
             final int[] ints = other.getIntStorage();
             for (int i = 0; i < longs.length; i++) {
-                longs[i] = ints[i];
+                longs[i] = Double.doubleToRawLongBits(Float.intBitsToFloat(ints[i]));
             }
             return receiver;
         }
