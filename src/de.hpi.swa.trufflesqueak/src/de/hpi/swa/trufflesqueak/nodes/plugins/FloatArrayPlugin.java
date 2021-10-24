@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -163,6 +164,21 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final boolean doNilCase(final NativeObject receiver, final NilObject other) {
             return BooleanObject.FALSE;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFromFloat64Array")
+    public abstract static class PrimFromFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+
+        @Specialization(guards = {"receiver.isIntType()", "other.isLongType()", "receiver.getIntLength() == other.getLongLength()"})
+        protected static final NativeObject doFromFloat64Array(final NativeObject receiver, final NativeObject other) {
+            final int[] ints = receiver.getIntStorage();
+            final long[] longs = other.getLongStorage();
+            for (int i = 0; i < ints.length; i++) {
+                ints[i] = Float.floatToRawIntBits((float) Double.longBitsToDouble(longs[i]));
+            }
+            return receiver;
         }
     }
 
