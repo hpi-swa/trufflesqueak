@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -693,6 +694,21 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             } catch (final IOException e) {
                 log("Failed to write to OutputStream", e);
                 throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasFileAccess")
+    protected abstract static class PrimHasFileAccessNode extends AbstractPrimitiveNode {
+        @Specialization
+        @TruffleBoundary
+        protected final boolean hasFileAccess(@SuppressWarnings("unused") final Object receiver) {
+            try {
+                getContext().env.getCurrentWorkingDirectory();
+                return BooleanObject.TRUE;
+            } catch (final SecurityException e) {
+                return BooleanObject.FALSE;
             }
         }
     }
