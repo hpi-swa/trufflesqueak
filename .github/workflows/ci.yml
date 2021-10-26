@@ -55,8 +55,8 @@ jobs:
         java: [11, 17]
     env:
       BUILD_SVM: "${{ matrix.os != 'windows-latest' && matrix.java != 17 }}"
-      RUN_TESTS: "${{ matrix.java == 11 }}"
-      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-latest' }}"
+      RUN_TESTS: "${{ matrix.os == 'ubuntu-latest' || matrix.java == 11 }}"
+      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-latest' && matrix.java == 17 }}"
       GRAALVM_HOME_ENV: "${{ matrix.os == 'windows-latest' && 'trufflesqueak-jvm' || 'trufflesqueak-svm' }}"
       TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-latest' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
     name: ${{ matrix.os }} + JDK${{ matrix.java }}
@@ -111,8 +111,8 @@ jobs:
     - name: Run gate with Graal compiler and Graal.js
       run: mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test
       if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-latest' && env.RUN_WITH_COVERAGE != 'true' }}
-    - name: Run gate with Graal compiler, Graal.js, and code coverage
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test --jacocout coverage
+    - name: Run gate with Graal.js and code coverage # do not use Graal compiler with JaCoCo code coverage
+      run: mx --disable-polyglot --dy /graal-js gate -j -n --strict-mode --tags build,test --jacocout coverage
       if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-latest' && env.RUN_WITH_COVERAGE == 'true' }}
     - name: Run gate with Graal compiler and Graal.js via cmd.exe
       shell: cmd
@@ -126,7 +126,7 @@ jobs:
       run: |
         bash <(curl -s https://codecov.io/bash)
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
-      if: ${{ env.RUN_TESTS == 'true' && env.RUN_WITH_COVERAGE == 'true' && job.status == 'success' }}
+      if: ${{ env.RUN_WITH_COVERAGE == 'true' && job.status == 'success' }}
     - name: Zip Graal compiler dumps
       shell: bash
       run: "[[ -d graal_dumps ]] && zip -r graal_dumps.zip graal_dumps || true"
