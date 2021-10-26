@@ -492,6 +492,7 @@ def _get_jacoco_agent_args():
     agentOptions = {
         'append': 'true',
         'includes': '%s.*' % PACKAGE_NAME,
+        'exclclassloader': 'sun.reflect.DelegatingClassLoader:com.oracle.graalvm.locator.GraalVMLocator.GuestLangToolsLoader',
         'destfile': mx_gate.get_jacoco_dest_file(),
     }
     return ['-javaagent:' + mx_gate.get_jacoco_agent_path(True) + '=' +
