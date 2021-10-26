@@ -127,6 +127,16 @@ jobs:
         bash <(curl -s https://codecov.io/bash)
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
       if: ${{ env.RUN_TESTS == 'true' && env.RUN_WITH_COVERAGE == 'true' && job.status == 'success' }}
+    - name: Zip Graal compiler dumps
+      run: "[[ -d graal_dumps ]] && zip -r graal_dumps.zip graal_dumps || true"
+      if: ${{ env.RUN_TESTS == 'true' }}
+    - name: Upload Graal compiler dumps
+      uses: actions/upload-artifact@v2
+      with:
+        name: graal_dumps
+        path: graal_dumps.zip
+        if-no-files-found: ignore
+      if: ${{ env.RUN_TESTS == 'true' }}
 
   aarch64-builds:
     strategy:
