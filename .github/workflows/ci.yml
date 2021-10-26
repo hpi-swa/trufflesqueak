@@ -137,6 +137,7 @@ jobs:
         name: graal_dumps
         path: graal_dumps.zip
         if-no-files-found: ignore
+        retention-days: 5
       if: ${{ env.RUN_TESTS == 'true' }}
 
   aarch64-builds:
