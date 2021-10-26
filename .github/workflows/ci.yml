@@ -128,6 +128,7 @@ jobs:
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
       if: ${{ env.RUN_TESTS == 'true' && env.RUN_WITH_COVERAGE == 'true' && job.status == 'success' }}
     - name: Zip Graal compiler dumps
+      shell: bash
       run: "[[ -d graal_dumps ]] && zip -r graal_dumps.zip graal_dumps || true"
       if: ${{ env.RUN_TESTS == 'true' }}
     - name: Upload Graal compiler dumps
