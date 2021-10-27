@@ -29,7 +29,7 @@ import org.graalvm.polyglot.tck.TypeDescriptor;
 
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
-public final class SqueakLanguageProvider implements LanguageProvider {
+public final class SqueakTCKLanguageProvider implements LanguageProvider {
     private static final TypeDescriptor NUMBER_AND_OBJECT = union(NUMBER, OBJECT);
 
     @Override
