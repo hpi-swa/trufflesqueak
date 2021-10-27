@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -13,6 +14,7 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -24,6 +26,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Properties;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -122,6 +125,18 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long getStartTime() {
         return ManagementFactory.getRuntimeMXBean().getStartTime();
+    }
+
+    public static String getStringResource(final Class<?> clazz, final String name) {
+        CompilerAsserts.neverPartOfCompilation();
+        try (InputStream is = clazz.getResourceAsStream(name)) {
+            if (is != null) {
+                return new String(is.readAllBytes());
+            }
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @TruffleBoundary

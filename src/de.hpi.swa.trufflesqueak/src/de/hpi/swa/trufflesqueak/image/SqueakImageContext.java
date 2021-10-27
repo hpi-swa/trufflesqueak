@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -74,6 +75,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakImageContext {
     private static final ContextReference<SqueakImageContext> REFERENCE = ContextReference.create(SqueakLanguage.class);
+    private static final String PREPARE_HEADLESS_IMAGE_SCRIPT = "PrepareHeadlessImage.st";
 
     /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
@@ -205,43 +207,26 @@ public final class SqueakImageContext {
     }
 
     public void ensureLoaded() {
-        if (!loaded()) {
+        if (squeakImage == null) {
             // Load image.
             SqueakImageReader.load(this);
             if (options.disableStartup) {
                 printToStdOut("Skipping startup routine...");
                 return;
             }
-            /*
-             * TODO: Move setup instructions into a single .st file and evaluate that (similar to
-             * how its done in SqueakSUnitTest.
-             */
-            printToStdOut("Preparing image for headless execution...");
-            // Remove active context.
-            getActiveProcessSlow().instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
-            // Modify StartUpList for headless execution.
-            evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
+
+            final String prepareHeadlessImageScript = MiscUtils.getStringResource(getClass(), PREPARE_HEADLESS_IMAGE_SCRIPT);
+            if (prepareHeadlessImageScript == null) {
+                printToStdErr("Unable to find " + PREPARE_HEADLESS_IMAGE_SCRIPT);
+                return;
+            }
             try {
-                /** See SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:. */
-                evaluate("[Smalltalk clearExternalObjects. Smalltalk processStartUpList: true. Smalltalk setPlatformPreferences; recordStartupStamp] value");
+                evaluate(prepareHeadlessImageScript);
             } catch (final Exception e) {
                 printToStdErr("startUpList failed:");
                 printToStdErr(e);
             }
-            // Set author information.
-            evaluate("Utilities authorName: 'TruffleSqueak'");
-            evaluate("Utilities setAuthorInitials: 'TruffleSqueak'");
-            // Initialize fresh MorphicUIManager.
-            evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
         }
-    }
-
-    /**
-     * Returns `true` if image has been loaded. {@link SqueakImageReader} calls
-     * {@link #getSqueakImage()} and initializes `squeakImage`.
-     */
-    public boolean loaded() {
-        return squeakImage != null;
     }
 
     public SqueakImage getSqueakImage() {

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -12,14 +13,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.Assume;
@@ -216,19 +212,9 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static void loadTruffleSqueakPackages() {
         final long start = System.currentTimeMillis();
-        final String loadTemplate;
-        try (InputStream is = SqueakSUnitTest.class.getResourceAsStream(LOAD_TEMPLATE_FILE_NAME)) {
-            if (is == null) {
-                println("Unable to find load template for TruffleSqueak packages");
-                return;
-            }
-            // TODO: Use new String(is.readAllBytes()) once support for JDK8 is dropped.
-            try (InputStreamReader isr = new InputStreamReader(is);
-                            BufferedReader reader = new BufferedReader(isr)) {
-                loadTemplate = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-            }
-        } catch (final IOException e) {
-            e.printStackTrace();
+        final String loadTemplate = MiscUtils.getStringResource(SqueakSUnitTest.class, LOAD_TEMPLATE_FILE_NAME);
+        if (loadTemplate == null) {
+            println("Unable to find load template for TruffleSqueak packages");
             return;
         }
         evaluate(String.format(loadTemplate, getPathToInImageCode()));
