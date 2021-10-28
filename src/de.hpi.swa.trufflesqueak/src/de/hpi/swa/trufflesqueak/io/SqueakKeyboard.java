@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -9,7 +10,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
-import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD_EVENT;
 
 public final class SqueakKeyboard implements KeyListener {
@@ -20,45 +20,37 @@ public final class SqueakKeyboard implements KeyListener {
     }
 
     @Override
-    public void keyTyped(final KeyEvent e) {
-        /* Ignored. Called just after the user types a Unicode character. */
+    public void keyPressed(final KeyEvent e) {
+        display.recordModifiers(e);
+        final int keyChar = toKeyChar(e);
+        addKeyboardEvent(KEYBOARD_EVENT.DOWN, keyChar != KeyEvent.CHAR_UNDEFINED ? keyChar : e.getKeyCode());
+        if (keyChar != KeyEvent.CHAR_UNDEFINED) {
+            addKeyboardEvent(KEYBOARD_EVENT.CHAR, keyChar);
+        }
+        if (e.isMetaDown() && keyChar == '.') {
+            display.image.interrupt.setInterruptPending();
+        }
     }
 
     @Override
-    public void keyPressed(final KeyEvent e) {
-        display.recordModifiers(e);
-        final int keyCode = mapSpecialKeyCode(e);
-        final char keyChar = e.getKeyChar();
-        if (keyCode >= 0) {
-            // Special key pressed, record mapped code
-            recordKeyboardEvent(keyCode);
-        } else if (keyChar != KeyEvent.CHAR_UNDEFINED) {
-            // Regular key pressed, record char value
-            recordKeyboardEvent(keyChar);
-        }
+    public void keyTyped(final KeyEvent e) {
+        /** Keyboard char events handled in keyPressed(KeyEvent). */
     }
 
     @Override
     public void keyReleased(final KeyEvent e) {
         display.recordModifiers(e);
+        final int keyChar = toKeyChar(e);
+        addKeyboardEvent(KEYBOARD_EVENT.UP, keyChar != KeyEvent.CHAR_UNDEFINED ? keyChar : e.getKeyCode());
     }
 
-    private void recordKeyboardEvent(final int key) {
-        final int buttonsShifted = display.buttons >> 3;
-        if ((buttonsShifted << 8 | key) == KEYBOARD.INTERRUPT_KEYCODE) {
-            display.image.interrupt.setInterruptPending();
-        } else {
-            display.addEvent(EVENT_TYPE.KEYBOARD,
-                            key /* MacRoman */,
-                            KEYBOARD_EVENT.CHAR,
-                            buttonsShifted,
-                            key /* Unicode */);
-        }
+    private void addKeyboardEvent(final long eventType, final int keyCharOrCode) {
+        display.addEvent(EVENT_TYPE.KEYBOARD, keyCharOrCode, eventType, display.buttons >> 3, keyCharOrCode);
     }
 
-    private static int mapSpecialKeyCode(final KeyEvent e) {
+    private static int toKeyChar(final KeyEvent e) {
         //@formatter:off
-        switch(e.getExtendedKeyCode()) {
+        switch(e.getKeyCode()) { // Handle special keys.
             case KeyEvent.VK_BACK_SPACE: return 8;
             case KeyEvent.VK_TAB: return 9;
             case KeyEvent.VK_ENTER: return 13;
@@ -74,7 +66,7 @@ public final class SqueakKeyboard implements KeyListener {
             case KeyEvent.VK_DOWN: return 31;
             case KeyEvent.VK_INSERT: return 5;
             case KeyEvent.VK_DELETE: return 127;
-            default: return -1; // Not a special key.
+            default: return e.getKeyChar();
         }
         //@formatter:on
     }

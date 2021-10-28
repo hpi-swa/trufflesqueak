@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -112,7 +113,6 @@ public final class SqueakIOConstants {
         public static final int ALT = 32;
         public static final int CMD = 64;
         public static final int ALL = SHIFT + CTRL + ALT + CMD;
-        public static final long INTERRUPT_KEYCODE = ((long) CMD >> 3 << 8) + '.'; // "CMD + ."
     }
 
     public static final class KEY {
