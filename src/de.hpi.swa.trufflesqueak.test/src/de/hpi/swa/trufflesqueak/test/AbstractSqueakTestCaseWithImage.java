@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -55,6 +56,10 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     public static void loadTestImage() {
+        loadTestImage(true);
+    }
+
+    private static void loadTestImage(final boolean retry) {
         executor = Executors.newSingleThreadExecutor();
         final String imagePath = getPathToTestImage();
         try {
@@ -67,8 +72,14 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         } catch (final ExecutionException e) {
             throw new IllegalStateException(e.getCause());
         } catch (final TimeoutException e) {
-            throw new IllegalStateException("Timed out while trying to load the image from " + imagePath +
-                            ".\nMake sure the image is not currently loaded by another executable");
+            e.printStackTrace();
+            if (retry) {
+                println("Retrying...");
+                loadTestImage(false);
+            } else {
+                throw new IllegalStateException("Timed out while trying to load the image from " + imagePath +
+                                ".\nMake sure the image is not currently loaded by another executable");
+            }
         }
     }
 
