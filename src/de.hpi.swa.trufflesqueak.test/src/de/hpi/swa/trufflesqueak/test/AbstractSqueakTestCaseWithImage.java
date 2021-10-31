@@ -38,7 +38,7 @@ import de.hpi.swa.trufflesqueak.util.DebugUtils;
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
-    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = 30 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
+    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = 45 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
     private static final int PRIORITY_10_LIST_INDEX = 9;
     protected static final String PASSED_VALUE = "passed";
 
@@ -75,7 +75,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             e.printStackTrace();
             if (retry) {
                 println("Retrying...");
-                loadTestImage(false);
+                reloadImage();
             } else {
                 throw new IllegalStateException("Timed out while trying to load the image from " + imagePath +
                                 ".\nMake sure the image is not currently loaded by another executable");
@@ -93,7 +93,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     protected static void reloadImage() {
         cleanUp();
-        loadTestImage();
+        loadTestImage(false);
     }
 
     private static void patchImageForTesting() {
