@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -87,8 +88,9 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final int valuesLength = pointers.length;
         storage = valuesLength;
         if (valuesLength > 0) {
-            final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.getUncached();
-            for (int i = 0; i < pointers.length; i++) {
+            // Use a fresh write node because uncached node is too generic.
+            final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.create();
+            for (int i = 0; i < valuesLength; i++) {
                 writeNode.execute(this, i, pointers[i]);
             }
         }

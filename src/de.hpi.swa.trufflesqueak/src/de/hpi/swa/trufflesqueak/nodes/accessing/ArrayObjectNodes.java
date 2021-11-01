@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -392,10 +393,6 @@ public final class ArrayObjectNodes {
 
         public static ArrayObjectWriteNode create() {
             return ArrayObjectWriteNodeGen.create();
-        }
-
-        public static ArrayObjectWriteNode getUncached() {
-            return ArrayObjectWriteNodeGen.getUncached();
         }
 
         public abstract void execute(ArrayObject obj, long index, Object value);
