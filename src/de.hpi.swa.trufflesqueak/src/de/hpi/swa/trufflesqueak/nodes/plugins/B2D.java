@@ -1320,7 +1320,6 @@ public final class B2D {
 
     /* BalloonEngineBase>>#copyBitsFrom:to:at: */
     private void copyBitsFromtoat(final int x0, final int x1, final int yValue) {
-        image.bitblt.resetSuccessFlag();
         image.bitblt.copyBitsFromtoat(x0, x1, yValue);
     }
 
@@ -3383,7 +3382,6 @@ public final class B2D {
 
     /* BalloonEngineBase>>#loadBitBltFrom: */
     private boolean loadBitBltFrom(final PointersObject bbObj) {
-        image.bitblt.resetSuccessFlag();
         return image.bitblt.loadBitBltFrom(bbObj);
     }
 

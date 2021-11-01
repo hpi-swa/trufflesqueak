@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -217,8 +218,6 @@ public final class BitBlt {
     private long warpSrcMask;
     private int width;
 
-    private boolean successFlag = false;
-
     public BitBlt(final SqueakImageContext image) {
         this.image = image;
         initialiseModule();
@@ -305,7 +304,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaBlendScaled:with: */
-    private long alphaBlendScaledwith(final long sourceWord, final long destinationWord) {
+    private static long alphaBlendScaledwith(final long sourceWord, final long destinationWord) {
         /* High 8 bits of source pixel is source opacity (ARGB format) */
         final long unAlpha = 0xFF - (sourceWord >>> 24);
         /* blend red and blue components */
@@ -328,7 +327,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaBlend:with: */
-    private long alphaBlendwith(final long sourceWord, final long destinationWord) {
+    private static long alphaBlendwith(final long sourceWord, final long destinationWord) {
         /* High 8 bits of source pixel */
         final long alpha = sourceWord >>> 24;
         if (alpha == 0) {
@@ -1549,7 +1548,7 @@ public final class BitBlt {
         opTable[21 + 1] = this::rgbSubwith;
         opTable[22 + 1] = this::oLDrgbDiffwith;
         opTable[23 + 1] = this::oLDtallyIntoMapwith;
-        opTable[24 + 1] = this::alphaBlendwith;
+        opTable[24 + 1] = BitBlt::alphaBlendwith;
         opTable[25 + 1] = this::pixPaintwith;
         opTable[26 + 1] = this::pixMaskwith;
         opTable[27 + 1] = this::rgbMaxwith;
@@ -1559,9 +1558,9 @@ public final class BitBlt {
         opTable[31 + 1] = this::alphaPaintConstwith;
         opTable[32 + 1] = this::rgbDiffwith;
         opTable[33 + 1] = this::tallyIntoMapwith;
-        opTable[34 + 1] = this::alphaBlendScaledwith;
-        opTable[35 + 1] = this::alphaBlendScaledwith;
-        opTable[36 + 1] = this::alphaBlendScaledwith;
+        opTable[34 + 1] = BitBlt::alphaBlendScaledwith;
+        opTable[35 + 1] = BitBlt::alphaBlendScaledwith;
+        opTable[36 + 1] = BitBlt::alphaBlendScaledwith;
         opTable[37 + 1] = this::rgbMulwith;
         opTable[38 + 1] = this::pixSwapwith;
         opTable[39 + 1] = this::pixClearwith;
@@ -3761,13 +3760,12 @@ public final class BitBlt {
      * POLYFILLS
      */
 
-    private int fetchIntegerofObject(final int index, final AbstractPointersObject object) {
+    private static int fetchIntegerofObject(final int index, final AbstractPointersObject object) {
         final Object value = fetchPointerofObject(index, object);
         if (value instanceof Long) {
             return MiscUtils.toIntExact((long) value);
         } else {
-            successFlag = false;
-            return 0;
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
     }
 
@@ -3829,12 +3827,8 @@ public final class BitBlt {
         return object instanceof PointersObject;
     }
 
-    private boolean failed() {
-        return !successFlag;
-    }
-
-    protected void resetSuccessFlag() {
-        successFlag = true;
+    private static boolean failed() {
+        return false;
     }
 
     private static int div(final long a, final long b) {
