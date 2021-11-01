@@ -321,7 +321,9 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                     }
                 }
             }
-            cursor = TOOLKIT.createCustomCursor(bufferedImage, new Point(offsetX, offsetY), "TruffleSqueak Cursor");
+            // Ensure hotspot is within cursor bounds.
+            final Point hotSpot = new Point(Math.min(Math.max(offsetX, 1), width - 1), Math.min(Math.max(offsetY, 1), height - 1));
+            cursor = TOOLKIT.createCustomCursor(bufferedImage, hotSpot, "TruffleSqueak Cursor");
         }
         frame.setCursor(cursor);
     }
