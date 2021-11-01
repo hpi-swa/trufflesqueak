@@ -395,8 +395,9 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
                         @Cached final BranchProfile foundProfile,
                         @Cached final BranchProfile notFoundProfile) {
+            final byte valueByte = (byte) value;
             for (long i = start - 1; i < string.getByteLength(); i++) {
-                if (string.getByteUnsigned(i) == value) {
+                if (string.getByte(i) == valueByte) {
                     foundProfile.enter();
                     return i + 1;
                 }
