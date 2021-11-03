@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -148,7 +149,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             return directCallNode.call(frameArguments);
         }
 
-        @Specialization(guards = {"closure.getNumArgs() == 3"}, replaces = "doValueDirect")
+        @Specialization(guards = {"closure.getNumArgs() == 4"}, replaces = "doValueDirect")
         protected final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         @Cached final IndirectCallNode indirectCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 4);
