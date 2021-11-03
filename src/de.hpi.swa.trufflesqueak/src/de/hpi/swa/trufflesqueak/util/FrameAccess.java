@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -403,15 +404,6 @@ public final class FrameAccess {
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
         return frameArguments;
-    }
-
-    /* Template because closure arguments still need to be filled in. */
-    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
-        return newClosureArgumentsTemplate(closure, closure.getCompiledBlock().getOuterMethod(), senderOrMarker, numArgs);
-    }
-
-    public static Object[] newFullClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
-        return newClosureArgumentsTemplate(closure, closure.getCompiledBlock(), senderOrMarker, numArgs);
     }
 
     /* Template because closure arguments still need to be filled in. */

@@ -92,7 +92,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      * outer method with a new call target, and the outer method to be used for closure activations.
      */
     private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
-    private CompiledCodeObject outerMethod;
+    @CompilationFinal private CompiledCodeObject outerMethod;
 
     private Source source;
 
