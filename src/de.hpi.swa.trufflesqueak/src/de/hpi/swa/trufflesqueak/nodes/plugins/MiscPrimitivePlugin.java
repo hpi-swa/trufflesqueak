@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -227,9 +228,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveConvert8BitSigned")
     public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArray.getByteLength() > aSoundBuffer.getIntLength()"})
-        protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer) {
-            for (int i = 0; i < aByteArray.getByteLength(); i++) {
+        @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArrayLength > aSoundBuffer.getIntLength()"})
+        protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer,
+                        @Bind("aByteArray.getByteLength()") final int aByteArrayLength) {
+            for (int i = 0; i < aByteArrayLength; i++) {
                 final int wordIndex = i / 2;
                 final long value = aByteArray.getByteUnsigned(i) << 8;
                 if (i % 2 == 0) {
