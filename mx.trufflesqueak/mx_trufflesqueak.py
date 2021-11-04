@@ -43,7 +43,7 @@ if IS_JDK9_AND_LATER:
         # Make Truffle.getRuntime() accessible for VM introspection
         '--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED',
         # Enable access to HostObject and others
-        '--add-opens=org.graalvm.truffle/com.oracle.truffle.polyglot=ALL-UNNAMED',
+        '--add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED',
         # Enable access to Truffle's SourceSection (for retrieving sources through interop)
         '--add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED',
     ]
