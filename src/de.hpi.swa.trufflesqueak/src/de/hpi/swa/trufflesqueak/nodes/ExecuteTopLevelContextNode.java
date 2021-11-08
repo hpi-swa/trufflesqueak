@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -86,7 +87,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 image.lastSeenContext = null;  // Reset materialization mechanism.
-                // doIt: activeContext.printSqStackTrace();
                 final Object result = callNode.call(activeContext.getCallTarget());
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
                 LogUtils.SCHEDULING.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
