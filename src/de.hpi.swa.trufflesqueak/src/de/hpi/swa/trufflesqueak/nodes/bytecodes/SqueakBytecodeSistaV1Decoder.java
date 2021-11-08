@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -185,7 +186,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xE0:
                 return decodeBytecode(frame, code, index, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB);
             case 0xE1:
-                return decodeBytecode(frame, code, index, extBytes + 2, extA, (extB << 8) + bytecode[indexWithExt + 1]);
+                return decodeBytecode(frame, code, index, extBytes + 2, extA, (extB << 8) + Integer.valueOf(bytecode[indexWithExt + 1]));
             case 0xE2:
                 return PushBytecodes.PushReceiverVariableNode.create(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xE3:

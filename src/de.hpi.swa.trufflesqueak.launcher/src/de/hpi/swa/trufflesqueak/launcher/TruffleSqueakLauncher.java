@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -94,7 +95,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             return 0;
         }
         final String runtimeName = getRuntimeName();
-        useEngineModeLatency &= runtimeName.contains("Graal"); // only ever use latency on Graal
+        // only ever use latency on Graal
+        useEngineModeLatency = useEngineModeLatency & runtimeName.contains("Graal");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH, imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, Boolean.toString(headless));
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.QUIET, Boolean.toString(quiet));
