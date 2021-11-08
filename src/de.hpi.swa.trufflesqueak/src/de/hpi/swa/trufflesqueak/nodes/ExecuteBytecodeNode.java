@@ -122,11 +122,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
                     pc = successor;
                     continue bytecode_loop;
                 } else {
-                    final int successor = jumpNode.getSuccessorIndex();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
-                    }
-                    pc = successor;
+                    pc = jumpNode.getSuccessorIndex();
                     continue bytecode_loop;
                 }
             } else if (node instanceof UnconditionalJumpNode) {
@@ -162,9 +158,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
     /*
      * Fetch next bytecode and insert AST nodes on demand if enabled.
      */
-    @SuppressWarnings("unused")
     private AbstractBytecodeNode fetchNextBytecodeNode(final VirtualFrame frame, final int pcZeroBased) {
-        assert 0 <= pcZeroBased && pcZeroBased < bytecodeNodes.length : "PC out of bounds for " + code;
         if (bytecodeNodes[pcZeroBased] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             bytecodeNodes[pcZeroBased] = insert(code.bytecodeNodeAt(frame, pcZeroBased));
