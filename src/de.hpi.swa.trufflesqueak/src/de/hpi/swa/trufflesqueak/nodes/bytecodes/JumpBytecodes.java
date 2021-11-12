@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -26,6 +27,7 @@ public final class JumpBytecodes {
         protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes);
             jumpSuccessorIndex = getSuccessorIndex() + offset;
+            assert offset > 0 : "Jump offset is expected to be positive for conditional jump bytecodes (Squeak compiler does not produce conditional back jumps)";
         }
 
         @Override

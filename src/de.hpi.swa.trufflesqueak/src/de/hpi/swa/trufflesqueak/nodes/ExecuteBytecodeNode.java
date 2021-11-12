@@ -115,11 +115,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
             } else if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
-                    final int successor = jumpNode.getJumpSuccessorIndex();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
-                    }
-                    pc = successor;
+                    pc = jumpNode.getJumpSuccessorIndex();
                     continue bytecode_loop;
                 } else {
                     pc = jumpNode.getSuccessorIndex();
