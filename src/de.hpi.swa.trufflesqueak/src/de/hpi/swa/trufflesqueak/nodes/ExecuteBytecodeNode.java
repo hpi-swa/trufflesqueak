@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
@@ -36,7 +35,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
     private static final int LOCAL_RETURN_PC = -2;
 
     protected final CompiledCodeObject code;
-    @CompilationFinal private int initialPC = -1;
+    private final int initialPC;
     private SourceSection section;
 
     @Child private AbstractPrimitiveNode primitiveNode;
@@ -141,7 +140,6 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
         }
         assert returnValue != null && !hasModifiedSender(frame);
         FrameAccess.terminate(frame, code.getInstructionPointerSlot());
-        assert backJumpCounter >= 0;
         LoopNode.reportLoopCount(this, backJumpCounter);
         return returnValue;
     }
