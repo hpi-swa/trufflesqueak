@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -18,7 +19,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SelfSendNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForIndirectCallNode;
 
-@ReportPolymorphism
 @ImportStatic(SelfSendNode.class)
 public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
     public DispatchLookupResultNode(final NativeObject selector, final int argumentCount) {
@@ -39,6 +39,7 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
         return dispatchNode.execute(frame);
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
                     @Cached final ResolveMethodNode methodNode,
