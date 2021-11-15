@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -7,6 +8,9 @@ package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import java.util.Objects;
 
+import org.graalvm.collections.EconomicMap;
+
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeField;
@@ -15,6 +19,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -28,7 +33,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
     public static final FrameStackReadNode create(final Frame frame, final int index, final boolean clear) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
-            return new FrameArgumentNode(index);
+            return FrameArgumentNode.getOrCreate(index);
         }
         // Only clear stack values, not receiver, arguments, or temporary variables.
         final int initialSP;
@@ -52,7 +57,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
     public static final FrameStackReadNode createTemporaryReadNode(final Frame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
-            return new FrameArgumentNode(index);
+            return FrameArgumentNode.getOrCreate(index);
         } else {
             return FrameSlotReadNoClearNodeGen.create(FrameAccess.findStackSlot(frame, index));
         }
@@ -135,15 +140,42 @@ public abstract class FrameStackReadNode extends AbstractNode {
     }
 
     private static final class FrameArgumentNode extends FrameStackReadNode {
+        private static final EconomicMap<Integer, FrameArgumentNode> SINGLETONS = EconomicMap.create();
+
         private final int index;
 
         private FrameArgumentNode(final int index) {
             this.index = FrameAccess.getArgumentStartIndex() + index;
         }
 
+        private static FrameArgumentNode getOrCreate(final int index) {
+            CompilerAsserts.neverPartOfCompilation();
+            FrameArgumentNode node = SINGLETONS.get(index);
+            if (node == null) {
+                node = new FrameArgumentNode(index);
+                SINGLETONS.put(index, node);
+            }
+            return node;
+        }
+
         @Override
         public Object executeReadUnsafe(final Frame frame) {
             return frame.getArguments()[index];
+        }
+
+        @Override
+        public boolean isAdoptable() {
+            return false;
+        }
+
+        @Override
+        public Node copy() {
+            return Objects.requireNonNull(SINGLETONS.get(index));
+        }
+
+        @Override
+        public Node deepCopy() {
+            return copy();
         }
     }
 }
