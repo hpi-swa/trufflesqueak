@@ -122,7 +122,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
                 }
             } else if (node instanceof UnconditionalJumpNode) {
                 final int successor = ((UnconditionalJumpNode) node).getSuccessorIndex();
-                if (CompilerDirectives.inInterpreter() && successor <= pc) {
+                if (CompilerDirectives.inInterpreter() && successor <= pc && backJumpCounter < Integer.MAX_VALUE) {
                     backJumpCounter++;
                 }
                 pc = successor;
@@ -140,7 +140,9 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
         }
         assert returnValue != null && !hasModifiedSender(frame);
         FrameAccess.terminate(frame, code.getInstructionPointerSlot());
-        LoopNode.reportLoopCount(this, backJumpCounter);
+        if (backJumpCounter > 0) {
+            LoopNode.reportLoopCount(this, backJumpCounter);
+        }
         return returnValue;
     }
 
