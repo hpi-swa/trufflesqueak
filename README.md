@@ -56,10 +56,11 @@ $GRAALVM_HOME/bin/trufflesqueak
 
 <table>
   <tr align="center">
-    <td width="50%"><a href="https://www.youtube.com/watch?v=9SyOVmAqqLg" title="Polyglot Programming with TruffleSqueak and GraalVM (~21min, HPI Symposium at SAP, 2021)"><img src="https://user-images.githubusercontent.com/2368856/111785173-8d40de80-88bc-11eb-82e8-bff9008638ad.png" alt="Polyglot Programming with TruffleSqueak and GraalVM (~21min, HPI Symposium at SAP, 2021)" /><br>Polyglot Programming with TruffleSqueak and GraalVM<br>(~21min, HPI Symposium at SAP, 2021)</a></td>
     <td width="50%"><a href="https://www.youtube.com/watch?v=MVblV_ruG28" title="Some Smalltalk with Fabio Niephaus and Thomas Würthinger (~1h10min, GraalVM Stream on Twitch, 2021)"><img src="https://user-images.githubusercontent.com/2368856/111808110-f849df80-88d3-11eb-8c86-3d07cceae296.png" alt="Some Smalltalk with Fabio Niephaus and Thomas Würthinger (~1h10min, GraalVM Stream on Twitch, 2021)" /><br>Some Smalltalk with Fabio Niephaus and Thomas Würthinger<br>(~1h10min, GraalVM Stream on Twitch, 2021)</a></td>
+    <td width="50%"><a href="https://www.youtube.com/watch?v=bJ8Y_LTzwD8" title="Exploiting Dynamic Run-time Data with TruffleSqueak (~30min, Virtual Machine Meetup, 2021)"><img src="https://user-images.githubusercontent.com/2368856/142394925-4ec6e9a7-5a7a-4d15-985e-da39df107e8f.png" alt="Exploiting Dynamic Run-time Data with TruffleSqueak (~30min, Virtual Machine Meetup, 2021)" /><br>Exploiting Dynamic Run-time Data with TruffleSqueak<br>(~30min, Virtual Machine Meetup, 2021)</a></td>
   </tr>
   <tr align="center">
+    <td width="50%"><a href="https://www.youtube.com/watch?v=9SyOVmAqqLg" title="Polyglot Programming with TruffleSqueak and GraalVM (~21min, HPI Symposium at SAP, 2021)"><img src="https://user-images.githubusercontent.com/2368856/111785173-8d40de80-88bc-11eb-82e8-bff9008638ad.png" alt="Polyglot Programming with TruffleSqueak and GraalVM (~21min, HPI Symposium at SAP, 2021)" /><br>Polyglot Programming with TruffleSqueak and GraalVM<br>(~21min, HPI Symposium at SAP, 2021)</a></td>
     <td width="50%"><a href="https://www.youtube.com/watch?v=FAk3Ec8hmzk" title="Polyglot Notebooks with Squeak/Smalltalk on the GraalVM (~28min, ESUG 2019)"><img src="https://user-images.githubusercontent.com/2368856/111785181-903bcf00-88bc-11eb-8722-7ca7d0558a22.png" alt="Polyglot Notebooks with Squeak/Smalltalk on the GraalVM (~28min, ESUG 2019)" /><br>Polyglot Notebooks with Squeak/Smalltalk on the GraalVM<br>(~28min, ESUG 2019)</a></td>
     <td width="50%"></td>
   </tr>
