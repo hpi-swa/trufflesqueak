@@ -1,14 +1,12 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -19,8 +17,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /* Gets context or marker, lazily initializes the latter if necessary. */
 public final class GetContextOrMarkerNode extends AbstractNode {
-    @CompilationFinal private FrameSlot contextSlot;
-    @CompilationFinal private FrameSlot markerSlot;
     private final ConditionProfile hasContextProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasMarkerProfile = ConditionProfile.createBinaryProfile();
 
@@ -29,21 +25,16 @@ public final class GetContextOrMarkerNode extends AbstractNode {
     }
 
     public Object execute(final VirtualFrame frame) {
-        if (contextSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            contextSlot = FrameAccess.findContextSlot(frame);
-            markerSlot = FrameAccess.findMarkerSlot(frame);
-        }
-        final ContextObject context = FrameAccess.getContext(frame, contextSlot);
+        final ContextObject context = FrameAccess.getContext(frame);
         if (hasContextProfile.profile(context != null)) {
             return context;
         } else {
-            final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
+            final FrameMarker marker = FrameAccess.getMarker(frame);
             if (hasMarkerProfile.profile(marker != null)) {
                 return marker;
             } else {
                 final FrameMarker newMarker = new FrameMarker();
-                FrameAccess.setMarker(frame, markerSlot, newMarker);
+                FrameAccess.setMarker(frame, newMarker);
                 return newMarker;
             }
         }
@@ -51,17 +42,16 @@ public final class GetContextOrMarkerNode extends AbstractNode {
 
     public static Object getNotProfiled(final VirtualFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        final ContextObject context = FrameAccess.findContext(frame);
+        final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
             return context;
         } else {
-            final FrameSlot markerSlot = FrameAccess.findMarkerSlot(frame);
-            final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
+            final FrameMarker marker = FrameAccess.getMarker(frame);
             if (marker != null) {
                 return marker;
             } else {
                 final FrameMarker newMarker = new FrameMarker();
-                FrameAccess.setMarker(frame, markerSlot, newMarker);
+                FrameAccess.setMarker(frame, newMarker);
                 return newMarker;
             }
         }

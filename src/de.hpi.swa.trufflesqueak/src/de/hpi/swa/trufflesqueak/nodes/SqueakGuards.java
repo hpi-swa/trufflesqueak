@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.TruffleOptions;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -22,6 +23,7 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class SqueakGuards {
@@ -39,6 +41,18 @@ public final class SqueakGuards {
 
     public static boolean fitsIntoInt(final long value) {
         return Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE;
+    }
+
+    public static ContextObject getContext(final VirtualFrame frame) {
+        return FrameAccess.getContext(frame);
+    }
+
+    public static boolean hasContext(final VirtualFrame frame) {
+        return FrameAccess.getContext(frame) != null;
+    }
+
+    public static boolean hasModifiedSender(final VirtualFrame frame) {
+        return FrameAccess.hasModifiedSender(frame);
     }
 
     public static boolean inBounds1(final long index, final int size) {

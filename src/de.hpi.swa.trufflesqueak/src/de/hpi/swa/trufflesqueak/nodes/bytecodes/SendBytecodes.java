@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -11,7 +12,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.dsl.NodeFactory;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
@@ -46,8 +46,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
         protected final int argumentCount;
-        @CompilationFinal private FrameSlot stackPointerSlot;
-        @CompilationFinal private int stackPointer;
+        @CompilationFinal private int stackPointer = -1;
 
         @Child private FrameStackPushNode pushNode;
 
@@ -71,13 +70,13 @@ public final class SendBytecodes {
                 assert result != null : "Result of a message send should not be null";
                 getPushNode().execute(frame, result);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame))) {
+                if (nlrProfile.profile(nlr.getTargetContextOrMarker() == FrameAccess.getMarker(frame) || nlr.getTargetContextOrMarker() == FrameAccess.getContext(frame))) {
                     getPushNode().execute(frame, nlr.getReturnValue());
                 } else {
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.getTargetContext() == getContext(frame))) {
+                if (nvrProfile.profile(nvr.getTargetContext() == FrameAccess.getContext(frame))) {
                     getPushNode().execute(frame, nvr.getReturnValue());
                 } else {
                     throw nvr;
@@ -86,13 +85,12 @@ public final class SendBytecodes {
         }
 
         private void decrementStackPointerByNumReceiverAndArguments(final VirtualFrame frame) {
-            if (stackPointerSlot == null) {
+            if (stackPointer == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
-                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - (1 + argumentCount);
+                stackPointer = FrameAccess.getStackPointer(frame) - (1 + argumentCount);
                 assert stackPointer >= 0 : "Bad stack pointer";
             }
-            FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
+            FrameAccess.setStackPointer(frame, stackPointer);
         }
 
         protected abstract Object dispatchSend(VirtualFrame frame);
@@ -159,7 +157,7 @@ public final class SendBytecodes {
         private Object peekAtReceiver(final VirtualFrame frame) {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int stackPointer = FrameAccess.getStackPointer(frame, code);
+                final int stackPointer = FrameAccess.getStackPointer(frame);
                 peekAtReceiverNode = insert(FrameStackReadNode.create(frame, stackPointer, false));
             }
             return peekAtReceiverNode.executeRead(frame);
@@ -198,8 +196,7 @@ public final class SendBytecodes {
 
     public static final class DirectedSuperSendNode extends AbstractSendNode {
 
-        @CompilationFinal private FrameSlot stackPointerSlot;
-        @CompilationFinal private int stackPointer;
+        @CompilationFinal private int stackPointer = -1;
 
         @Child private FrameStackReadNode peekAtReceiverNode;
         @Child private FrameStackReadNode readDirectedClassNode;
@@ -232,7 +229,7 @@ public final class SendBytecodes {
         protected Object peekAtReceiver(final VirtualFrame frame) {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int sp = FrameAccess.getStackPointer(frame, code);
+                final int sp = FrameAccess.getStackPointer(frame);
                 peekAtReceiverNode = insert(FrameStackReadNode.create(frame, sp, false));
             }
             return peekAtReceiverNode.executeRead(frame);
@@ -241,16 +238,15 @@ public final class SendBytecodes {
         protected ClassObject popDirectedClass(final VirtualFrame frame) {
             if (readDirectedClassNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
                 /* Decrement sp to pop directed class. */
-                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
+                stackPointer = FrameAccess.getStackPointer(frame) - 1;
                 /*
                  * Read and clear directed class. Add receiver and argumentCount (sp already
                  * decremented in AbstractSendNode).
                  */
                 readDirectedClassNode = insert(FrameStackReadNode.create(frame, stackPointer + 1 + argumentCount, true));
             }
-            FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
+            FrameAccess.setStackPointer(frame, stackPointer);
             return (ClassObject) readDirectedClassNode.executeRead(frame);
         }
 
@@ -334,9 +330,9 @@ public final class SendBytecodes {
         protected final void replaceWithSend(final VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // Replace with normal send (pc needs to be written)
-            FrameAccess.setInstructionPointer(frame, code, getSuccessorIndex());
+            FrameAccess.setInstructionPointer(frame, getSuccessorIndex());
             // Lookup specialSelector and replace with normal send
-            final SqueakImageContext image = code.getSqueakClass().getImage(); // TODO: Refactor
+            final SqueakImageContext image = SqueakImageContext.get(this);
             final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
             final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
             replace(new SelfSendNode(code, index - code.getInitialPC(), 1, specialSelector, numArguments)).executeVoid(frame);
@@ -344,7 +340,7 @@ public final class SendBytecodes {
 
         protected final int findNewStackPointer(final VirtualFrame frame) {
             final int numArguments = findNumArguments();
-            final int stackPointer = FrameAccess.getStackPointer(frame, code) - (1 + numArguments) + 1;
+            final int stackPointer = FrameAccess.getStackPointer(frame) - (1 + numArguments) + 1;
             assert stackPointer <= CONTEXT.MAX_STACK_SIZE : "Bad stack pointer";
             return stackPointer;
         }
@@ -358,11 +354,11 @@ public final class SendBytecodes {
         }
 
         protected final NativeObject findSelector() {
-            return code.getSqueakClass().getImage().getSpecialSelector(selectorIndex);
+            return SqueakImageContext.get(this).getSpecialSelector(selectorIndex);
         }
 
         protected final int findNumArguments() {
-            return code.getSqueakClass().getImage().getSpecialSelectorNumArgs(selectorIndex);
+            return SqueakImageContext.get(this).getSpecialSelectorNumArgs(selectorIndex);
         }
 
         @Override
@@ -426,7 +422,7 @@ public final class SendBytecodes {
                 stackPointer = findNewStackPointer(frame);
                 writeNode = insert(createFrameSlotWriteNode(frame, stackPointer));
             }
-            FrameAccess.setStackPointer(frame, code, stackPointer);
+            FrameAccess.setStackPointer(frame, stackPointer);
             writeNode.executeWrite(frame, result);
         }
     }
@@ -499,7 +495,7 @@ public final class SendBytecodes {
         private Object peekAtReceiver(final VirtualFrame frame) {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int currentStackPointer = FrameAccess.getStackPointer(frame, code) - (1 + findNumArguments());
+                final int currentStackPointer = FrameAccess.getStackPointer(frame) - (1 + findNumArguments());
                 peekAtReceiverNode = insert(FrameStackReadNode.create(frame, currentStackPointer, false));
             }
             return peekAtReceiverNode.executeRead(frame);
@@ -537,7 +533,7 @@ public final class SendBytecodes {
                 stackPointer = findNewStackPointer(frame);
                 writeNode = insert(createFrameSlotWriteNode(frame, stackPointer));
             }
-            FrameAccess.setStackPointer(frame, code, stackPointer);
+            FrameAccess.setStackPointer(frame, stackPointer);
             writeNode.executeWrite(frame, result);
         }
     }
@@ -588,7 +584,7 @@ public final class SendBytecodes {
         private Object peekAtReceiver(final VirtualFrame frame) {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int currentStackPointer = FrameAccess.getStackPointer(frame, code) - 1;
+                final int currentStackPointer = FrameAccess.getStackPointer(frame) - 1;
                 peekAtReceiverNode = insert(FrameStackReadNode.create(frame, currentStackPointer, false));
             }
             return peekAtReceiverNode.executeRead(frame);

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -82,8 +83,8 @@ public final class StartContextRootNode extends RootNode {
                 assert writeTempNodes[i] instanceof FrameSlotWriteNode;
             }
         }
-        FrameAccess.setInstructionPointer(frame, code, initialPC);
-        FrameAccess.setStackPointer(frame, code, initialSP);
+        FrameAccess.setInstructionPointer(frame, initialPC);
+        FrameAccess.setStackPointer(frame, initialSP);
 
         // TODO: avoid nilling out of temp slots to allow slot specializations
         // Initialize remaining temporary variables with nil in newContext.

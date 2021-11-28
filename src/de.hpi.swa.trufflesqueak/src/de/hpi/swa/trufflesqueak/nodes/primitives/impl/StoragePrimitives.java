@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -19,7 +20,6 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -119,14 +119,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     }
                 }
 
-                final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
-                final ContextObject context = FrameAccess.getContext(current, code);
+                final ContextObject context = FrameAccess.getContext(current);
                 if (context != null) {
                     for (int j = 0; j < fromPointersLength; j++) {
                         final Object fromPointer = fromPointers[j];
                         if (context == fromPointer) {
                             final Object toPointer = toPointers[j];
-                            FrameAccess.setContext(current, code, (ContextObject) toPointer);
+                            FrameAccess.setContext(current, (ContextObject) toPointer);
                         } else {
                             context.pointersBecomeOneWay(fromPointers, toPointers);
                         }
@@ -137,15 +136,15 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                  * Iterate over all stack slots here instead of stackPointer because in rare cases,
                  * the stack is accessed behind the stackPointer.
                  */
-                FrameAccess.iterateStackSlots(current, slot -> {
-                    if (current.isObject(slot)) {
-                        final Object stackObject = FrameUtil.getObjectSafe(current, slot);
+                FrameAccess.iterateStackSlots(current, slotIndex -> {
+                    if (current.isObject(slotIndex)) {
+                        final Object stackObject = current.getObject(slotIndex);
                         for (int j = 0; j < fromPointersLength; j++) {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null : "Unexpected `null` value";
-                                current.setObject(slot, toPointer);
+                                current.setObject(slotIndex, toPointer);
                             } else if (stackObject instanceof AbstractSqueakObjectWithClassAndHash) {
                                 ((AbstractSqueakObjectWithClassAndHash) stackObject).pointersBecomeOneWay(fromPointers, toPointers);
                             }

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -172,8 +173,8 @@ public final class DebugUtils {
             }
             final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
             lastSender[0] = FrameAccess.getSender(current);
-            final Object marker = FrameAccess.getMarker(current, code);
-            final Object context = FrameAccess.getContext(current, code);
+            final Object marker = FrameAccess.getMarker(current);
+            final Object context = FrameAccess.getContext(current);
             final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
             err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));

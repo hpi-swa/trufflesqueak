@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -24,7 +25,7 @@ public final class FrameStackTopNode extends AbstractNode {
     public Object execute(final Frame frame) {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final int stackPointer = FrameAccess.findStackPointer(frame) - 1;
+            final int stackPointer = FrameAccess.getStackPointer(frame) - 1;
             readNode = FrameStackReadNode.create(frame, stackPointer, false);
         }
         return readNode.executeRead(frame);

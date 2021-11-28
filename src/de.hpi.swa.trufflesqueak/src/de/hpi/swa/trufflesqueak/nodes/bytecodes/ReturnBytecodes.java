@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -7,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -48,7 +48,7 @@ public final class ReturnBytecodes {
 
         protected AbstractNormalReturnNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
             super(code, index);
-            returnNode = FrameAccess.hasClosure(frame) ? new ReturnFromClosureNode() : new ReturnFromMethodNode(frame);
+            returnNode = FrameAccess.hasClosure(frame) ? new ReturnFromClosureNode() : new ReturnFromMethodNode();
         }
 
         @Override
@@ -63,26 +63,16 @@ public final class ReturnBytecodes {
 
     private static final class ReturnFromMethodNode extends AbstractReturnKindNode {
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.createBinaryProfile();
-        private final FrameSlot contextSlot;
-
-        private ReturnFromMethodNode(final VirtualFrame frame) {
-            contextSlot = FrameAccess.findContextSlot(frame);
-        }
 
         @Override
         protected Object execute(final VirtualFrame frame, final Object returnValue) {
             assert !FrameAccess.hasClosure(frame);
-            if (hasModifiedSenderProfile.profile(hasModifiedSender(frame))) {
+            if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
                 assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
                 throw new NonLocalReturn(returnValue, FrameAccess.getSender(frame));
             } else {
                 return returnValue;
             }
-        }
-
-        private boolean hasModifiedSender(final VirtualFrame frame) {
-            final ContextObject context = FrameAccess.getContext(frame, contextSlot);
-            return context != null && context.hasModifiedSender();
         }
     }
 
@@ -174,7 +164,7 @@ public final class ReturnBytecodes {
 
         @Override
         public final Object executeReturnSpecialized(final VirtualFrame frame) {
-            if (hasModifiedSenderProfile.profile(hasModifiedSender(frame))) {
+            if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
                 // Target is sender of closure's home context.
                 final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                 if (homeContext.canReturnTo()) {
@@ -188,11 +178,6 @@ public final class ReturnBytecodes {
             } else {
                 return getReturnValue(frame);
             }
-        }
-
-        private boolean hasModifiedSender(final VirtualFrame frame) {
-            final ContextObject context = getContext(frame);
-            return context != null && context.hasModifiedSender();
         }
     }
 

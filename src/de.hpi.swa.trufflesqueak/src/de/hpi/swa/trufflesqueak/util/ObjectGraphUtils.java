@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -13,7 +14,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -116,10 +116,10 @@ public final class ObjectGraphUtils {
                 for (final Object argument : current.getArguments()) {
                     addIfUnmarked(argument);
                 }
-                addIfUnmarked(FrameAccess.findContext(current));
-                FrameAccess.iterateStackSlots(current, slot -> {
-                    if (current.isObject(slot)) {
-                        addIfUnmarked(FrameUtil.getObjectSafe(current, slot));
+                addIfUnmarked(FrameAccess.getContext(current));
+                FrameAccess.iterateStackSlots(current, slotIndex -> {
+                    if (current.isObject(slotIndex)) {
+                        addIfUnmarked(current.getObject(slotIndex));
                     }
                 });
                 return null;

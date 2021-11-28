@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -25,11 +26,11 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
 
     public static final ContextObject getOrCreateUncached(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
-        final ContextObject context = FrameAccess.getContext(frame, code);
+        final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
             return context;
         } else {
+            final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
             return ContextObject.create(code.getSqueakClass().getImage(), frame.materialize(), code);
         }
     }
@@ -40,7 +41,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
     protected final ContextObject doGetOrCreate(final VirtualFrame frame,
                     @Cached("getMethodOrBlock(frame)") final CompiledCodeObject code,
                     @Cached("createCountingProfile()") final ConditionProfile hasContextProfile) {
-        final ContextObject context = FrameAccess.getContext(frame, code);
+        final ContextObject context = FrameAccess.getContext(frame);
         if (hasContextProfile.profile(context != null)) {
             return context;
         } else {

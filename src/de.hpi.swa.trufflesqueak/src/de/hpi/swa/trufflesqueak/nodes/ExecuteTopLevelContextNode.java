@@ -114,8 +114,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert !activeContext.hasClosure() : "activeContext is expected to have no closure";
             final CompiledCodeObject method = activeContext.getCodeObject();
             final MaterializedFrame truffleFrame = activeContext.getTruffleFrame();
-            FrameAccess.setInstructionPointer(truffleFrame, method, method.getInitialPC());
-            FrameAccess.setStackPointer(truffleFrame, method, method.getNumTemps());
+            FrameAccess.setInstructionPointer(truffleFrame, method.getInitialPC());
+            FrameAccess.setStackPointer(truffleFrame, method.getNumTemps());
         }
     }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -7,7 +8,6 @@ package de.hpi.swa.trufflesqueak;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -43,7 +43,7 @@ public final class SqueakImage implements TruffleObject {
     }
 
     public RootCallTarget asCallTarget() {
-        return Truffle.getRuntime().createCallTarget(new SqueakImageNode(this));
+        return new SqueakImageNode(this).getCallTarget();
     }
 
     public String getName() {
@@ -62,7 +62,7 @@ public final class SqueakImage implements TruffleObject {
         assert arguments.length == 0;
         image.interrupt.start();
         image.attachDisplayIfNecessary();
-        return Truffle.getRuntime().createCallTarget(image.getActiveContextNode()).call();
+        return image.getActiveContextNode().getCallTarget().call();
     }
 
     @SuppressWarnings("static-method")

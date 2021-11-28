@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -8,7 +9,6 @@ package de.hpi.swa.trufflesqueak;
 import org.graalvm.options.OptionDescriptors;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
@@ -59,7 +59,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
             if (source.isInternal()) {
                 image.printToStdOut(MiscUtils.format("Evaluating '%s'...", source.getCharacters().toString()));
             }
-            return Truffle.getRuntime().createCallTarget(image.getDoItContextNode(request));
+            return image.getDoItContextNode(request).getCallTarget();
         }
     }
 

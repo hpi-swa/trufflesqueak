@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -19,13 +20,13 @@ public final class FrameMarker {
 
     public ContextObject getMaterializedContext() {
         final MaterializedFrame targetFrame = FrameAccess.findFrameForMarker(this);
-        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(targetFrame);
-        final ContextObject context = FrameAccess.getContext(targetFrame, code);
+        final ContextObject context = FrameAccess.getContext(targetFrame);
         if (context != null) {
             assert context.getFrameMarker() == this;
             return context;
         } else {
-            assert this == FrameAccess.getMarker(targetFrame, code) : "Frame does not match";
+            assert this == FrameAccess.getMarker(targetFrame) : "Frame does not match";
+            final CompiledCodeObject code = FrameAccess.getMethodOrBlock(targetFrame);
             return ContextObject.create(code.getSqueakClass().getImage(), targetFrame, code);
         }
     }

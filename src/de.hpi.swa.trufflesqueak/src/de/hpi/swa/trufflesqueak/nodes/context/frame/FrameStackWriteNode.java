@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -8,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.context.frame;
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -21,61 +21,61 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         if (index < numArgs) {
             return new FrameArgumentWriteNode(index);
         } else {
-            return FrameSlotWriteNodeGen.create(FrameAccess.findOrAddStackSlot(frame, index));
+            return FrameSlotWriteNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
         }
     }
 
     public abstract void executeWrite(Frame frame, Object value);
 
-    @NodeField(name = "slot", type = FrameSlot.class)
+    @NodeField(name = "slotIndex", type = int.class)
     public abstract static class FrameSlotWriteNode extends FrameStackWriteNode {
 
-        protected abstract FrameSlot getSlot();
+        protected abstract int getSlotIndex();
 
         @Specialization(guards = "isBooleanOrIllegal(frame)")
         protected final void writeBool(final Frame frame, final boolean value) {
             /* Initialize type on first write. No-op if kind is already Boolean. */
-            frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Boolean);
+            frame.getFrameDescriptor().setSlotKind(getSlotIndex(), FrameSlotKind.Boolean);
 
-            frame.setBoolean(getSlot(), value);
+            frame.setBoolean(getSlotIndex(), value);
         }
 
         @Specialization(guards = "isLongOrIllegal(frame)")
         protected final void writeLong(final Frame frame, final long value) {
             /* Initialize type on first write. No-op if kind is already Long. */
-            frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Long);
+            frame.getFrameDescriptor().setSlotKind(getSlotIndex(), FrameSlotKind.Long);
 
-            frame.setLong(getSlot(), value);
+            frame.setLong(getSlotIndex(), value);
         }
 
         @Specialization(guards = "isDoubleOrIllegal(frame)")
         protected final void writeDouble(final Frame frame, final double value) {
             /* Initialize type on first write. No-op if kind is already Double. */
-            frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Double);
+            frame.getFrameDescriptor().setSlotKind(getSlotIndex(), FrameSlotKind.Double);
 
-            frame.setDouble(getSlot(), value);
+            frame.setDouble(getSlotIndex(), value);
         }
 
         @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
         protected final void writeObject(final Frame frame, final Object value) {
             /* Initialize type on first write. No-op if kind is already Object. */
-            frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Object);
+            frame.getFrameDescriptor().setSlotKind(getSlotIndex(), FrameSlotKind.Object);
 
-            frame.setObject(getSlot(), value);
+            frame.setObject(getSlotIndex(), value);
         }
 
         protected final boolean isBooleanOrIllegal(final Frame frame) {
-            final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(getSlot());
+            final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(getSlotIndex());
             return kind == FrameSlotKind.Boolean || kind == FrameSlotKind.Illegal;
         }
 
         protected final boolean isLongOrIllegal(final Frame frame) {
-            final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(getSlot());
+            final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(getSlotIndex());
             return kind == FrameSlotKind.Long || kind == FrameSlotKind.Illegal;
         }
 
         protected final boolean isDoubleOrIllegal(final Frame frame) {
-            final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(getSlot());
+            final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(getSlotIndex());
             return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
         }
     }

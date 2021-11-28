@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -11,10 +12,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class AbstractBytecodeNode extends AbstractNode {
     protected final CompiledCodeObject code;
@@ -49,14 +47,6 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
 
     public final int getNumBytecodes() {
         return successorIndex - index;
-    }
-
-    protected final ContextObject getContext(final VirtualFrame frame) {
-        return FrameAccess.getContext(frame, code);
-    }
-
-    protected final FrameMarker getMarker(final VirtualFrame frame) {
-        return FrameAccess.getMarker(frame, code);
     }
 
     @Override

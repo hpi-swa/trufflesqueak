@@ -6,7 +6,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -21,7 +20,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AboutToReturnNodeFactory.AboutToReturnImplNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchClosureNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -47,9 +45,8 @@ public abstract class AboutToReturnNode extends AbstractNode {
          * handled. Note that this however does not check if the current context isDead nor does it
          * terminate contexts (this may be a problem).
          */
-        @Specialization(guards = {"!getContextNode.hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
+        @Specialization(guards = {"!hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
         protected static final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
-                        @SuppressWarnings("unused") @Shared("getContextNode") @Cached final GetContextNode getContextNode,
                         @Cached("createTemporaryReadNode(frame, 0)") final FrameStackReadNode blockArgumentNode,
                         @SuppressWarnings("unused") @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode,
                         @Cached("create(frame, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
@@ -65,19 +62,17 @@ public abstract class AboutToReturnNode extends AbstractNode {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!getContextNode.hasModifiedSender(frame)", "!isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
+        @Specialization(guards = {"!hasModifiedSender(frame)", "!isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
         protected final void doAboutToReturnVirtualizedNothing(final VirtualFrame frame, final NonLocalReturn nlr,
-                        @Shared("getContextNode") @Cached final GetContextNode getContextNode,
                         @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode) {
             // Nothing to do.
         }
 
-        @Specialization(guards = {"getContextNode.hasModifiedSender(frame)"}, limit = "1")
+        @Specialization(guards = {"hasModifiedSender(frame)"})
         protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
-                        @Shared("getContextNode") @Cached final GetContextNode getContextNode,
                         @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
             assert nlr.getTargetContextOrMarker() instanceof ContextObject;
-            sendAboutToReturnNode.executeSend(frame, getContextNode.execute(frame), nlr.getReturnValue(), nlr.getTargetContextOrMarker());
+            sendAboutToReturnNode.executeSend(frame, FrameAccess.getContext(frame), nlr.getReturnValue(), nlr.getTargetContextOrMarker());
         }
     }
 

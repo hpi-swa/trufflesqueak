@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -84,7 +85,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
                     return null; // Foreign frame cannot be unwind marked.
                 }
-                final ContextObject context = FrameAccess.findContext(current);
+                final ContextObject context = FrameAccess.getContext(current);
                 if (!foundMyself[0]) {
                     if (receiver == context) {
                         foundMyself[0] = true;
@@ -162,18 +163,18 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return null;
                     }
                     if (!foundMyself) {
-                        if (start == FrameAccess.findMarker(current)) {
+                        if (start == FrameAccess.getMarker(current)) {
                             foundMyself = true;
                         }
                     } else {
-                        final ContextObject context = FrameAccess.findContext(current);
+                        final ContextObject context = FrameAccess.getContext(current);
                         if (context == end) {
                             return end;
                         }
                         bottomContextOnTruffleStack[0] = context;
                         final Frame currentWritable = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
                         // Terminate frame
-                        FrameAccess.setInstructionPointer(currentWritable, FrameAccess.getMethodOrBlock(current), -1);
+                        FrameAccess.setInstructionPointer(currentWritable, -1);
                         FrameAccess.setSender(currentWritable, NilObject.SINGLETON);
                     }
                     return null;
@@ -233,7 +234,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return receiver;
                     }
                 }
-                final ContextObject context = FrameAccess.findContext(current);
+                final ContextObject context = FrameAccess.getContext(current);
                 if (!foundMyself[0]) {
                     if (context == receiver) {
                         foundMyself[0] = true;

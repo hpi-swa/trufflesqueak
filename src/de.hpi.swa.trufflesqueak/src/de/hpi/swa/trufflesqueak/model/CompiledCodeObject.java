@@ -18,7 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameDescriptor.Builder;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -55,19 +55,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
     private static final long NEGATIVE_METHOD_HEADER_MASK = -1L << 60;
 
-    public enum SLOT_IDENTIFIER {
-        THIS_MARKER,
-        THIS_CONTEXT,
-        INSTRUCTION_POINTER,
-        STACK_POINTER,
-    }
-
     // frame info
-    private final FrameDescriptor frameDescriptor;
-    private final FrameSlot thisMarkerSlot;
-    private final FrameSlot thisContextSlot;
-    private final FrameSlot instructionPointerSlot;
-    private final FrameSlot stackPointerSlot;
+    @CompilationFinal private FrameDescriptor frameDescriptor;
+
     // header info and data
     /*
      * TODO: literals and bytes can change (and probably more?) and should not be @CompilationFinal.
@@ -104,11 +94,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     public CompiledCodeObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
-        frameDescriptor = new FrameDescriptor();
-        thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
-        thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
-        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
     }
 
     public CompiledCodeObject(final SqueakImageContext image, final byte[] bc, final Object[] lits, final ClassObject classObject) {
@@ -121,10 +106,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     protected CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
         frameDescriptor = original.frameDescriptor;
-        thisMarkerSlot = original.thisMarkerSlot;
-        thisContextSlot = original.thisContextSlot;
-        instructionPointerSlot = original.instructionPointerSlot;
-        stackPointerSlot = original.stackPointerSlot;
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
         decoder = original.decoder;
     }
@@ -140,12 +121,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
         assert currentOuterCode.isCompiledMethod();
         outerMethod = currentOuterCode;
-
-        frameDescriptor = new FrameDescriptor();
-        thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
-        thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
-        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
 
         // header info and data
         literals = outerCode.literals;
@@ -258,7 +233,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         } else {
             rootNode = new StartContextRootNode(language, this);
         }
-        callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        callTarget = rootNode.getCallTarget();
     }
 
     public void flushCache() {
@@ -274,7 +249,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
         if (resumptionCallTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            resumptionCallTarget = Truffle.getRuntime().createCallTarget(ResumeContextRootNode.create(SqueakImageContext.getSlow().getLanguage(), context));
+            resumptionCallTarget = ResumeContextRootNode.create(SqueakImageContext.getSlow().getLanguage(), context).getCallTarget();
         } else {
             final ResumeContextRootNode resumeNode = (ResumeContextRootNode) resumptionCallTarget.getRootNode();
             if (resumeNode.getActiveContext() != context) {
@@ -293,23 +268,17 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public FrameDescriptor getFrameDescriptor() {
+        if (frameDescriptor == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            final Builder builder = FrameDescriptor.newBuilder();
+            builder.addSlot(FrameSlotKind.Object, null, null); // SLOT_IDENTIFIER.THIS_MARKER
+            builder.addSlot(FrameSlotKind.Illegal, null, null); // SLOT_IDENTIFIER.THIS_CONTEXT
+            builder.addSlot(FrameSlotKind.Int, null, null); // SLOT_IDENTIFIER.INSTRUCTION_POINTER
+            builder.addSlot(FrameSlotKind.Int, null, null); // SLOT_IDENTIFIER.STACK_POINTER
+            builder.addSlots(getSqueakContextSize(), FrameSlotKind.Illegal);
+            frameDescriptor = builder.build();
+        }
         return frameDescriptor;
-    }
-
-    public FrameSlot getThisMarkerSlot() {
-        return thisMarkerSlot;
-    }
-
-    public FrameSlot getThisContextSlot() {
-        return thisContextSlot;
-    }
-
-    public FrameSlot getInstructionPointerSlot() {
-        return instructionPointerSlot;
-    }
-
-    public FrameSlot getStackPointerSlot() {
-        return stackPointerSlot;
     }
 
     public int getNumArgs() {

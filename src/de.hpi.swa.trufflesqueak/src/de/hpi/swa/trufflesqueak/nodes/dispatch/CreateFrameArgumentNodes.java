@@ -42,7 +42,7 @@ public final class CreateFrameArgumentNodes {
         private AbstractCreateFrameArgumentsForExceptionalNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
             this.selector = selector;
             argumentNodes = new FrameStackReadNode[argumentCount];
-            final int stackPointer = FrameAccess.findStackPointer(frame) + 1;
+            final int stackPointer = FrameAccess.getStackPointer(frame) + 1;
             for (int i = 0; i < argumentNodes.length; i++) {
                 argumentNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
             }
@@ -59,7 +59,7 @@ public final class CreateFrameArgumentNodes {
         protected final Object getReceiver(final VirtualFrame frame) {
             if (receiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int stackPointer = FrameAccess.findStackPointer(frame);
+                final int stackPointer = FrameAccess.getStackPointer(frame);
                 receiverNode = insert(FrameStackReadNode.create(frame, stackPointer, true));
             }
             return receiverNode.executeRead(frame);
@@ -112,7 +112,7 @@ public final class CreateFrameArgumentNodes {
         protected CreateFrameArgumentsForIndirectCallNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
             this.selector = selector;
             /* +1 for receiver. */
-            final int stackPointer = FrameAccess.findStackPointer(frame) + 1;
+            final int stackPointer = FrameAccess.getStackPointer(frame) + 1;
             assert stackPointer >= 0 : "Bad stack pointer";
             argumentNodes = new FrameStackReadNode[argumentCount];
             for (int i = 0; i < argumentNodes.length; i++) {

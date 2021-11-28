@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -7,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -41,27 +41,24 @@ public abstract class FrameStackPopNNode extends AbstractNode {
 
     @NodeInfo(cost = NodeCost.NONE)
     private static final class FrameStackPop1Node extends FrameStackPopNNode {
-        @CompilationFinal private FrameSlot stackPointerSlot;
-        @CompilationFinal private int stackPointer;
+        @CompilationFinal private int stackPointer = -1;
         @Child private FrameStackReadNode readNode;
 
         @Override
         public Object[] execute(final VirtualFrame frame) {
-            if (stackPointerSlot == null) {
+            if (stackPointer == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
-                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
+                stackPointer = FrameAccess.getStackPointer(frame) - 1;
                 assert stackPointer >= 0 : "Bad stack pointer";
                 readNode = insert(FrameStackReadNode.create(frame, stackPointer, true));
             }
-            FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
+            FrameAccess.setStackPointer(frame, stackPointer);
             return new Object[]{readNode.executeRead(frame)};
         }
     }
 
     private static final class FrameStackPopMultipleNode extends FrameStackPopNNode {
-        @CompilationFinal private FrameSlot stackPointerSlot;
-        @CompilationFinal private int stackPointer;
+        @CompilationFinal private int stackPointer = -1;
         @Children private FrameStackReadNode[] readNodes;
 
         private FrameStackPopMultipleNode(final int numPop) {
@@ -71,16 +68,15 @@ public abstract class FrameStackPopNNode extends AbstractNode {
         @Override
         @ExplodeLoop
         public Object[] execute(final VirtualFrame frame) {
-            if (stackPointerSlot == null) {
+            if (stackPointer == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
-                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - readNodes.length;
+                stackPointer = FrameAccess.getStackPointer(frame) - readNodes.length;
                 assert stackPointer >= 0 : "Bad stack pointer";
                 for (int i = 0; i < readNodes.length; i++) {
                     readNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
                 }
             }
-            FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
+            FrameAccess.setStackPointer(frame, stackPointer);
             final Object[] result = new Object[readNodes.length];
             for (int i = 0; i < readNodes.length; i++) {
                 result[i] = readNodes[i].executeRead(frame);

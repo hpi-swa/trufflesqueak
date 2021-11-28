@@ -19,7 +19,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -98,9 +97,9 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
             if (node instanceof AbstractSendNode) {
                 pc = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, pc);
+                FrameAccess.setInstructionPointer(frame, pc);
                 node.executeVoid(frame);
-                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
+                final int actualNextPc = FrameAccess.getInstructionPointer(frame);
                 if (pc != actualNextPc) {
                     /*
                      * pc has changed, which can happen if a context is restarted (e.g. as part of
@@ -138,17 +137,12 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
                 continue bytecode_loop;
             }
         }
-        assert returnValue != null && !hasModifiedSender(frame);
-        FrameAccess.terminate(frame, code.getInstructionPointerSlot());
-        if (backJumpCounter > 0) {
-            LoopNode.reportLoopCount(this, backJumpCounter);
+        assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
+        FrameAccess.terminate(frame);
+        if (backJumpCounter != 0) {
+            LoopNode.reportLoopCount(this, backJumpCounter > 0 ? backJumpCounter : Integer.MAX_VALUE);
         }
         return returnValue;
-    }
-
-    protected boolean hasModifiedSender(final VirtualFrame frame) {
-        final ContextObject context = FrameAccess.getContext(frame, code);
-        return context != null && context.hasModifiedSender();
     }
 
     /*

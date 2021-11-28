@@ -16,9 +16,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -46,11 +44,10 @@ public abstract class FrameStackReadNode extends AbstractNode {
             assert numArgs == closure.getNumArgs() + closure.getNumCopied();
         }
         assert initialSP >= numArgs;
-        final FrameSlot slot = Objects.requireNonNull(FrameAccess.findStackSlot(frame, index));
         if (clear && index >= initialSP) { // only ever clear non-temp slots
-            return FrameSlotReadClearNodeGen.create(slot);
+            return FrameSlotReadClearNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
         } else {
-            return FrameSlotReadNoClearNodeGen.create(slot);
+            return FrameSlotReadNoClearNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
         }
     }
 
@@ -59,7 +56,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
         if (index < numArgs) {
             return FrameArgumentNode.getOrCreate(index);
         } else {
-            return FrameSlotReadNoClearNodeGen.create(FrameAccess.findStackSlot(frame, index));
+            return FrameSlotReadNoClearNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
         }
     }
 
@@ -72,24 +69,24 @@ public abstract class FrameStackReadNode extends AbstractNode {
     /* Unsafe as it may return `null` values. */
     public abstract Object executeReadUnsafe(Frame frame);
 
-    @NodeField(name = "slot", type = FrameSlot.class)
+    @NodeField(name = "slotIndex", type = int.class)
     protected abstract static class AbstractFrameSlotReadNode extends FrameStackReadNode {
 
-        protected abstract FrameSlot getSlot();
+        protected abstract int getSlotIndex();
 
-        @Specialization(guards = "frame.isBoolean(getSlot())")
+        @Specialization(guards = "frame.isBoolean(getSlotIndex())")
         protected final boolean readBoolean(final Frame frame) {
-            return FrameUtil.getBooleanSafe(frame, getSlot());
+            return frame.getBoolean(getSlotIndex());
         }
 
-        @Specialization(guards = "frame.isLong(getSlot())")
+        @Specialization(guards = "frame.isLong(getSlotIndex())")
         protected final long readLong(final Frame frame) {
-            return FrameUtil.getLongSafe(frame, getSlot());
+            return frame.getLong(getSlotIndex());
         }
 
-        @Specialization(guards = "frame.isDouble(getSlot())")
+        @Specialization(guards = "frame.isDouble(getSlotIndex())")
         protected final double readDouble(final Frame frame) {
-            return FrameUtil.getDoubleSafe(frame, getSlot());
+            return frame.getDouble(getSlotIndex());
         }
     }
 
@@ -97,7 +94,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
 
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readObject(final Frame frame) {
-            if (!frame.isObject(getSlot())) {
+            if (!frame.isObject(getSlotIndex())) {
                 /*
                  * The FrameSlotKind has been set to Object, so from now on all writes to the slot
                  * will be Object writes. However, now we are in a frame that still has an old
@@ -106,12 +103,12 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  * multiple times for the same slot of the same frame.
                  */
                 CompilerDirectives.transferToInterpreter();
-                final Object value = frame.getValue(getSlot());
+                final Object value = frame.getValue(getSlotIndex());
                 assert value != null : "Unexpected `null` value";
-                frame.setObject(getSlot(), value);
+                frame.setObject(getSlotIndex(), value);
                 return value;
             } else {
-                return FrameUtil.getObjectSafe(frame, getSlot());
+                return frame.getObject(getSlotIndex());
             }
         }
     }
@@ -121,7 +118,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readAndClearObject(final Frame frame) {
             final Object value;
-            if (!frame.isObject(getSlot())) {
+            if (!frame.isObject(getSlotIndex())) {
                 /*
                  * The FrameSlotKind has been set to Object, so from now on all writes to the slot
                  * will be Object writes. However, now we are in a frame that still has an old
@@ -130,11 +127,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  * multiple times for the same slot of the same frame.
                  */
                 CompilerDirectives.transferToInterpreter();
-                value = frame.getValue(getSlot());
+                value = frame.getValue(getSlotIndex());
             } else {
-                value = FrameUtil.getObjectSafe(frame, getSlot());
+                value = frame.getObject(getSlotIndex());
             }
-            frame.setObject(getSlot(), null);
+            frame.setObject(getSlotIndex(), null);
             return value;
         }
     }

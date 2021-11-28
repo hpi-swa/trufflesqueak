@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -115,8 +116,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
 
         private Object slowPathSendToFallbackCode(final VirtualFrame frame) {
-            final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
-            final int stackPointer = FrameAccess.getStackPointer(frame, code);
+            final int stackPointer = FrameAccess.getStackPointer(frame);
             final Object[] receiverAndArguments = new Object[1 + argumentCount];
             final int numArgs = FrameAccess.getNumArguments(frame);
             for (int i = 0; i < receiverAndArguments.length; i++) {
@@ -124,7 +124,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
                 if (stackIndex < numArgs) {
                     receiverAndArguments[i] = FrameAccess.getArgument(frame, stackIndex);
                 } else {
-                    receiverAndArguments[i] = frame.getValue(FrameAccess.findStackSlot(frame, stackIndex));
+                    receiverAndArguments[i] = frame.getValue(FrameAccess.toStackSlotIndex(frame, stackIndex));
                 }
             }
             return IndirectCallNode.getUncached().call(method.getCallTarget(),
@@ -138,7 +138,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         private AbstractCachedDispatchMethodNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(method);
             receiverAndArgumentsNodes = new FrameStackReadNode[1 + argumentCount];
-            final int stackPointer = FrameAccess.findStackPointer(frame);
+            final int stackPointer = FrameAccess.getStackPointer(frame);
             for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
                 receiverAndArgumentsNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
             }

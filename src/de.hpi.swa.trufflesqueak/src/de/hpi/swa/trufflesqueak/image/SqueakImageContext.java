@@ -16,7 +16,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
@@ -239,7 +238,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public Object evaluate(final String sourceCode) {
-        return Truffle.getRuntime().createCallTarget(getDoItContextNode(sourceCode, false)).call();
+        return getDoItContextNode(sourceCode, false).getCallTarget().call();
     }
 
     @TruffleBoundary

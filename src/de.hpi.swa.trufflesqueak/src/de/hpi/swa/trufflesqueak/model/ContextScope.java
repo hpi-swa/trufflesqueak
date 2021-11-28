@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -8,7 +9,6 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -65,10 +65,10 @@ public final class ContextScope implements TruffleObject {
             return FrameAccess.getSender(frame);
         }
         if (PC.equals(member)) {
-            return FrameAccess.findInstructionPointer(frame);
+            return FrameAccess.getInstructionPointer(frame);
         }
         if (STACKP.equals(member)) {
-            return FrameAccess.findStackPointer(frame);
+            return FrameAccess.getStackPointer(frame);
         }
         if (METHOD.equals(member)) {
             return FrameAccess.getCodeObject(frame);
@@ -88,10 +88,7 @@ public final class ContextScope implements TruffleObject {
             if (index < numArgs) {
                 return FrameAccess.getArgument(frame, index);
             } else {
-                final FrameSlot slot = FrameAccess.findStackSlot(frame, index);
-                if (slot != null) {
-                    return frame.getValue(slot);
-                }
+                return frame.getValue(FrameAccess.toStackSlotIndex(frame, index));
             }
         } catch (final NumberFormatException e) {
         }

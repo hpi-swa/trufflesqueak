@@ -16,9 +16,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -28,7 +26,6 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.SLOT_IDENTIFIER;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -87,6 +84,14 @@ public final class FrameAccess {
         CLOSURE_OR_NULL, // 2
         RECEIVER, // 3
         ARGUMENTS_START, // 4
+    }
+
+    public enum SlotIndicies {
+        THIS_MARKER,
+        THIS_CONTEXT,
+        INSTRUCTION_POINTER,
+        STACK_POINTER,
+        STACK_START,
     }
 
     private FrameAccess() {
@@ -163,28 +168,16 @@ public final class FrameAccess {
         return Arrays.copyOfRange(frame.getArguments(), getReceiverStartIndex(), frame.getArguments().length);
     }
 
-    public static FrameSlot findMarkerSlot(final Frame frame) {
-        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.THIS_MARKER);
+    public static FrameMarker getMarker(final Frame frame) {
+        return (FrameMarker) frame.getObject(SlotIndicies.THIS_MARKER.ordinal());
     }
 
-    public static FrameMarker findMarker(final Frame frame) {
-        return getMarker(frame, findMarkerSlot(frame));
+    public static void setMarker(final Frame frame, final FrameMarker marker) {
+        frame.setObject(SlotIndicies.THIS_MARKER.ordinal(), marker);
     }
 
-    public static FrameMarker getMarker(final Frame frame, final FrameSlot thisMarkerSlot) {
-        return (FrameMarker) FrameUtil.getObjectSafe(frame, thisMarkerSlot);
-    }
-
-    public static FrameMarker getMarker(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return getMarker(frame, blockOrMethod.getThisMarkerSlot());
-    }
-
-    public static void setMarker(final Frame frame, final FrameSlot thisMarkerSlot, final FrameMarker marker) {
-        frame.setObject(thisMarkerSlot, marker);
-    }
-
-    public static void initializeMarker(final Frame frame, final CompiledCodeObject code) {
-        setMarker(frame, code.getThisMarkerSlot(), new FrameMarker());
+    public static void initializeMarker(final Frame frame) {
+        setMarker(frame, new FrameMarker());
     }
 
     public static Object getContextOrMarkerSlow(final VirtualFrame frame) {
@@ -192,112 +185,77 @@ public final class FrameAccess {
         return GetContextOrMarkerNode.getNotProfiled(frame);
     }
 
-    public static FrameSlot findContextSlot(final Frame frame) {
-        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT);
+    public static ContextObject getContext(final Frame frame) {
+        return (ContextObject) frame.getObject(SlotIndicies.THIS_CONTEXT.ordinal());
     }
 
-    public static ContextObject findContext(final Frame frame) {
-        return getContext(frame, findContextSlot(frame));
+    public static boolean hasModifiedSender(final VirtualFrame frame) {
+        final ContextObject context = getContext(frame);
+        return context != null && context.hasModifiedSender();
     }
 
-    public static ContextObject getContext(final Frame frame, final FrameSlot thisContextSlot) {
-        return (ContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
+    public static void setContext(final Frame frame, final ContextObject context) {
+        assert getContext(frame) == null : "ContextObject already allocated";
+        frame.getFrameDescriptor().setSlotKind(SlotIndicies.THIS_CONTEXT.ordinal(), FrameSlotKind.Object);
+        frame.setObject(SlotIndicies.THIS_CONTEXT.ordinal(), context);
     }
 
-    public static ContextObject getContext(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return getContext(frame, blockOrMethod.getThisContextSlot());
+    public static int getInstructionPointer(final Frame frame) {
+        return frame.getInt(SlotIndicies.INSTRUCTION_POINTER.ordinal());
     }
 
-    public static void setContext(final Frame frame, final CompiledCodeObject blockOrMethod, final ContextObject context) {
-        final FrameSlot thisContextSlot = blockOrMethod.getThisContextSlot();
-        assert getContext(frame, blockOrMethod) == null : "ContextObject already allocated";
-        blockOrMethod.getFrameDescriptor().setFrameSlotKind(thisContextSlot, FrameSlotKind.Object);
-        frame.setObject(thisContextSlot, context);
+    public static void setInstructionPointer(final Frame frame, final int value) {
+        frame.setInt(SlotIndicies.INSTRUCTION_POINTER.ordinal(), value);
     }
 
-    public static FrameSlot findInstructionPointerSlot(final Frame frame) {
-        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER);
+    public static int getStackPointer(final Frame frame) {
+        return frame.getInt(SlotIndicies.STACK_POINTER.ordinal());
     }
 
-    public static int findInstructionPointer(final Frame frame) {
-        return FrameUtil.getIntSafe(frame, findInstructionPointerSlot(frame));
+    public static void setStackPointer(final Frame frame, final int value) {
+        frame.setInt(SlotIndicies.STACK_POINTER.ordinal(), value);
     }
 
-    public static int getInstructionPointer(final Frame frame, final CompiledCodeObject code) {
-        return FrameUtil.getIntSafe(frame, code.getInstructionPointerSlot());
-    }
-
-    public static void setInstructionPointer(final Frame frame, final FrameSlot instructionPointerSlot, final int value) {
-        frame.setInt(instructionPointerSlot, value);
-    }
-
-    public static void setInstructionPointer(final Frame frame, final CompiledCodeObject code, final int value) {
-        setInstructionPointer(frame, code.getInstructionPointerSlot(), value);
-    }
-
-    public static FrameSlot findStackPointerSlot(final Frame frame) {
-        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.STACK_POINTER);
-    }
-
-    public static int findStackPointer(final Frame frame) {
-        return FrameUtil.getIntSafe(frame, findStackPointerSlot(frame));
-    }
-
-    public static int getStackPointer(final Frame frame, final FrameSlot stackPointerSlot) {
-        return FrameUtil.getIntSafe(frame, stackPointerSlot);
-    }
-
-    public static int getStackPointer(final Frame frame, final CompiledCodeObject code) {
-        return getStackPointer(frame, code.getStackPointerSlot());
-    }
-
-    public static void setStackPointer(final Frame frame, final FrameSlot stackPointerSlot, final int value) {
-        frame.setInt(stackPointerSlot, value);
-    }
-
-    public static void setStackPointer(final Frame frame, final CompiledCodeObject code, final int value) {
-        setStackPointer(frame, code.getStackPointerSlot(), value);
-    }
-
-    public static FrameSlot findOrAddStackSlot(final Frame frame, final int index) {
+    public static int toStackSlotIndex(final Frame frame, final int index) {
         assert frame.getArguments().length - getArgumentStartIndex() <= index;
-        return frame.getFrameDescriptor().findOrAddFrameSlot(index, FrameSlotKind.Illegal);
-    }
-
-    public static FrameSlot findStackSlot(final Frame frame, final int index) {
-        assert frame.getArguments().length - getArgumentStartIndex() <= index;
-        return frame.getFrameDescriptor().findFrameSlot(index);
+        return SlotIndicies.STACK_START.ordinal() + index;
     }
 
     /* Iterates used stack slots (may not be ordered). */
-    public static void iterateStackSlots(final Frame frame, final Consumer<FrameSlot> action) {
+    public static void iterateStackSlots(final Frame frame, final Consumer<Integer> action) {
         // All slots after fourth slot for stackPointer
-        frame.getFrameDescriptor().getSlots().listIterator(4).forEachRemaining(action);
-    }
-
-    /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
-    public static void setStackSlot(final Frame frame, final FrameSlot frameSlot, final Object value) {
-        final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        assert frame.getFrameDescriptor().getSlots().contains(frameSlot);
-        final FrameSlotKind frameSlotKind = frameDescriptor.getFrameSlotKind(frameSlot);
-        final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
-        if (value instanceof Boolean && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
-            frame.setBoolean(frameSlot, (boolean) value);
-        } else if (value instanceof Long && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Long);
-            frame.setLong(frameSlot, (long) value);
-        } else if (value instanceof Double && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Double);
-            frame.setDouble(frameSlot, (double) value);
-        } else {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Object);
-            frame.setObject(frameSlot, value);
+        for (int i = SlotIndicies.STACK_START.ordinal(); i < frame.getFrameDescriptor().getNumberOfSlots(); i++) {
+            action.accept(i);
         }
     }
 
-    public static void terminate(final Frame frame, final FrameSlot instructionPointerSlot) {
-        setInstructionPointer(frame, instructionPointerSlot, ContextObject.NIL_PC_VALUE);
+    /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
+    public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {
+        setSlot(frame, SlotIndicies.STACK_START.ordinal() + stackIndex, value);
+    }
+
+    public static void setSlot(final Frame frame, final int slotIndex, final Object value) {
+        final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        assert SlotIndicies.STACK_START.ordinal() <= slotIndex && slotIndex <= frame.getFrameDescriptor().getNumberOfSlots();
+        final FrameSlotKind frameSlotKind = frameDescriptor.getSlotKind(slotIndex);
+        final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
+        if (value instanceof Boolean && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
+            frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Boolean);
+            frame.setBoolean(slotIndex, (boolean) value);
+        } else if (value instanceof Long && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
+            frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Long);
+            frame.setLong(slotIndex, (long) value);
+        } else if (value instanceof Double && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
+            frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
+            frame.setDouble(slotIndex, (double) value);
+        } else {
+            frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
+            frame.setObject(slotIndex, value);
+        }
+    }
+
+    public static void terminate(final Frame frame) {
+        setInstructionPointer(frame, ContextObject.NIL_PC_VALUE);
         setSender(frame, NilObject.SINGLETON);
     }
 
@@ -444,7 +402,7 @@ public final class FrameAccess {
                 return null;
             }
             LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
-            if (frameMarker == findMarker(current)) {
+            if (frameMarker == getMarker(current)) {
                 return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
             }
             return null;
