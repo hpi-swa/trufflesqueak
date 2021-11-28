@@ -37,9 +37,7 @@ jobs:
         mx.trufflesqueak/utils.sh download-asset "${eclipse_tar}" 0.8.0 "${eclipse_tar_path}"
         tar -xzf ${eclipse_tar_path} -C ${HOME}
         echo "ECLIPSE_EXE=${HOME}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
-        # Download ECJ
-        mx.trufflesqueak/utils.sh download-asset "ci-dep-ecj-4.5.2.jar" 0.8.0 "${HOME}/ecj.jar"
-        echo "JDT=${HOME}/ecj.jar" >> "${GITHUB_ENV}" # required by mx
+        echo "JDT=builtin" >> "${GITHUB_ENV}" # required by mx
         # Set up mx, oracle/graal, and LabsJDK11
         mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk11 ~/"
     - name: Check style and perform full build
