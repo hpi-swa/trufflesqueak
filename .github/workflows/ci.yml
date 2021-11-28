@@ -41,7 +41,7 @@ jobs:
         mx.trufflesqueak/utils.sh download-asset "ci-dep-ecj-4.5.2.jar" 0.8.0 "${HOME}/ecj.jar"
         echo "JDT=${HOME}/ecj.jar" >> "${GITHUB_ENV}" # required by mx
         # Set up mx, oracle/graal, and LabsJDK11
-        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graalvm-project https://github.com/oracle/graal.git && set-up-labsjdk11 ~/"
+        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk11 ~/"
     - name: Check style and perform full build
       run: |
         source ~/venv/bin/activate
@@ -159,14 +159,12 @@ jobs:
           distro: ubuntu20.04
           run: |
             apt update && apt install -y build-essential curl git python unzip
-            mx.trufflesqueak/utils.sh "set-up-dependencies java${{ matrix.java }} && set-up-graalvm ${{ matrix.java }}"
+            mx.trufflesqueak/utils.sh "set-up-dependencies java${{ matrix.java }}"
             source "${HOME}/all_env_vars"
-            export PATH="${MX_HOME}:${GRAALVM_HOME}/bin:${PATH}"
+            export PATH="${MX_HOME}:${PATH}"
             mx --env trufflesqueak-jvm --no-download-progress build --dependencies=SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }}
             cp "$(mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }})" "${INSTALLABLE_JVM_TARGET}"
             echo ::set-output name=installable_jvm::${INSTALLABLE_JVM_TARGET}
-            gu install -L ${INSTALLABLE_JVM_TARGET}
-            trufflesqueak --jvm --code "SystemReporter new reportText asString"
           env: |
             GITHUB_PATH: $GITHUB_PATH
             GITHUB_ENV: $GITHUB_ENV

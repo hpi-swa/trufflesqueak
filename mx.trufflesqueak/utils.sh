@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
 # Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+# Copyright (c) 2021 Oracle and/or its affiliates
 #
 # Licensed under the MIT License.
 #
@@ -18,13 +19,14 @@ readonly py_export=$(cat <<-END
 from suite import suite;
 vars= ' '.join(['DEP_%s=%s' % (k.upper(), v)
   for k, v in suite['trufflesqueak:dependencyMap'].items()]);
+graal_version = next(x['version'] for x in suite['imports']['suites'] if x['name'] == 'truffle')
 slug = '/'.join(suite['url'].split('/')[-2:]);
 mxversion = suite['mxversion']
-print('export %s GITHUB_SLUG=%s MX_VERSION=%s' % (vars, slug, mxversion))
+print('export %s GRAAL_VERSION=%s GITHUB_SLUG=%s MX_VERSION=%s' % (vars, graal_version, slug, mxversion))
 END
 )
 $(cd "${SCRIPT_DIRECTORY}" && python -c "${py_export}")
-([[ -z "${DEP_GRAALVM_VERSION}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
+([[ -z "${GRAAL_VERSION}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
   echo "Failed to load values from dependencyMap and GitHub slug." 1>&2 && exit 1
 
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -211,8 +213,8 @@ set-up-dependencies() {
     --depth=1 origin "+$(git rev-parse HEAD):refs/remotes/origin/master"
 
   set-up-mx
-  shallow-clone-graalvm-project https://github.com/oracle/graal.git
-  shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
+  shallow-clone-graal
+  shallow-clone-graaljs
   download-trufflesqueak-image
   download-trufflesqueak-test-image
   download-trufflesqueak-icon
@@ -264,26 +266,6 @@ set-up-labsjdk17() {
     "labsjdk-ce-${DEP_JDK17}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 }
 
-set-up-graalvm() {
-  local java_version=$1
-  local target_dir="${HOME}/graalvm"
-  local graalvm_tar="${target_dir}/graalvm.tar.gz"
-  local graalvm_home="${target_dir}/graalvm-ce-java${java_version}-${DEP_GRAALVM_VERSION}"
-  local graalvm_name="graalvm-ce-java${java_version}-${OS_NAME}-${OS_ARCH}-${DEP_GRAALVM_VERSION}"
-  local download_url="https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${DEP_GRAALVM_VERSION}/${graalvm_name}.tar.gz"
-
-  mkdir -p "${target_dir}"
-  pushd "${target_dir}" > /dev/null
-  curl -sSL --retry 3 -o "${graalvm_tar}" "${download_url}"
-  tar xzf "${graalvm_tar}"
-  popd > /dev/null
-  
-  add-path "${graalvm_home}/bin"
-  set-env "GRAALVM_HOME" "$(resolve-path "${graalvm_home}")"
-
-  echo "[${graalvm_name} set up successfully]"
-}
-
 set-up-mx() {
   shallow-clone "https://github.com/graalvm/mx.git" "${MX_VERSION}" "${HOME}/mx"
   add-path "${HOME}/mx"
@@ -309,10 +291,27 @@ shallow-clone() {
 
 shallow-clone-graalvm-project() {
   local git_url=$1
+  local git_commit_or_tag=$2
   local name=$(basename "${git_url}" | cut -d. -f1)
   local target_dir="${BASE_DIRECTORY}/../${name}"
 
-  shallow-clone "${git_url}" "vm-ce-${DEP_GRAALVM_VERSION}" "${target_dir}"
+  shallow-clone "${git_url}" "${git_commit_or_tag}" "${target_dir}"
+}
+
+shallow-clone-graal() {
+  shallow-clone-graalvm-project https://github.com/oracle/graal.git "${GRAAL_VERSION}"
+}
+
+shallow-clone-graaljs() {
+  # Load metadata from vm suite.py
+readonly py_graaljs_export=$(cat <<-END
+from suite import suite;
+js_version = next(x['version'] for x in suite['imports']['suites'] if x['name'] == 'graal-js')
+print('export GRAALJS_VERSION=%s' % js_version)
+END
+)
+  $(cd "${BASE_DIRECTORY}/../graal/vm/mx.vm" && python -c "${py_graaljs_export}")
+  shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git "${GRAALJS_VERSION}"
 }
 
 eval "$@"

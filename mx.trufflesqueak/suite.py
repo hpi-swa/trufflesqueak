@@ -10,21 +10,20 @@ suite = {
     #  METADATA
     # ==========================================================================
     "name": "trufflesqueak",
-    "mxversion": "5.311.2",
+    "mxversion": "5.316.11",
     "versionConflictResolution": "latest",
 
     "version": "22.0.0",
     "trufflesqueak:dependencyMap": {
-        "graalvm_version": "21.3.0",
         "icon": "trufflesqueak-icon.png",
         "icon_tag": "21.0.0.1",
         "image": "TruffleSqueakImage-21.3.0.zip",
         "image_tag": "21.3.0",
-        "jdk11": "11.0.12",
-        "jdk11_update": "5",
-        "jdk17": "17",
-        "jdk17_update": "35",
-        "jvmci": "jvmci-21.3-b03",
+        "jdk11": "11.0.13",
+        "jdk11_update": "8",
+        "jdk17": "17.0.2",
+        "jdk17_update": "5",
+        "jvmci": "jvmci-22.0-b02",
         "test_image": "TruffleSqueakTestImage-6.0alpha-20228b-64bit.zip",
         "test_image_tag": "21.1.0",
     },
@@ -53,7 +52,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "84541b16ae8a8726a0e7d76c7179d94a57ed84ee",
+            "version": "b0375403352f6f1128228992b0028e9132047c44",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
