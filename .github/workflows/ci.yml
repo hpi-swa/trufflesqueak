@@ -39,7 +39,7 @@ jobs:
         echo "ECLIPSE_EXE=${HOME}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
         echo "JDT=builtin" >> "${GITHUB_ENV}" # required by mx
         # Set up mx, oracle/graal, and LabsJDK11
-        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk11 ~/"
+        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-11 ~/"
     - name: Check style and perform full build
       run: |
         source ~/venv/bin/activate

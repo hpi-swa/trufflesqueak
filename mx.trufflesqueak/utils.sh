@@ -221,10 +221,10 @@ set-up-dependencies() {
 
   case "${java_version}" in
     "java11")
-      set-up-labsjdk11 "${HOME}"
+      set-up-labsjdk labsjdk-ce-11
       ;;
     "java17")
-      set-up-labsjdk17 "${HOME}"
+      set-up-labsjdk labsjdk-ce-17
       ;;
     *)
       echo "Failed to set up ${java_version}"
@@ -237,33 +237,14 @@ set-up-dependencies() {
 }
 
 set-up-labsjdk() {
-  local target_dir=$1
-  local jdk_tar=${target_dir}/jdk.tar.gz
-  local jdk_name=$2
-  local jdk_base_url=$3
-  local jdk_name_extracted=$4
-
-  pushd "${target_dir}" > /dev/null
-  curl -sSL --retry 3 -o "${jdk_tar}" "${jdk_base_url}/${DEP_JVMCI}/${jdk_name}.tar.gz"
-  tar xzf "${jdk_tar}"
-  popd > /dev/null
-
-  enable-jdk "${target_dir}/${jdk_name_extracted}"
-  echo "[${jdk_name} set up successfully]"
-}
-
-set-up-labsjdk11() {
-  set-up-labsjdk $1 \
-    "labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
-    "https://github.com/graalvm/labs-openjdk-11/releases/download" \
-    "labsjdk-ce-${DEP_JDK11}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
-}
-
-set-up-labsjdk17() {
-  set-up-labsjdk $1 \
-    "labsjdk-ce-${DEP_JDK17}+${DEP_JDK17_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}" \
-    "https://github.com/graalvm/labs-openjdk-17/releases/download" \
-    "labsjdk-ce-${DEP_JDK17}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
+  local jdk_id=$1
+  local target_dir="${HOME}/jdk"
+  local dl_dir="${HOME}/jdk-dl"
+  local mx_suffix="" && [[ "${OS_NAME}" == "windows" ]] && mx_suffix=".cmd"
+  mkdir "${dl_dir}"
+  "${HOME}/mx/mx${mx_suffix}" --quiet --java-home= fetch-jdk --jdk-id "${jdk_id}" --to "${dl_dir}" --alias "${target_dir}"
+  enable-jdk "${target_dir}${JAVA_HOME_SUFFIX}"
+  echo "[${jdk_id} set up successfully]"
 }
 
 set-up-mx() {
