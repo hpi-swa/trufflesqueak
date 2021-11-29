@@ -72,6 +72,26 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         public abstract Object execute(int headerWord, Object value);
 
+        @Specialization(guards = {"getAtomicType(headerWord) == 5"})
+        protected static final short doShort(@SuppressWarnings("unused") final int headerWord, final boolean value) {
+            return (short) (value ? 0 : 1);
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 5"})
+        protected static final short doShort(@SuppressWarnings("unused") final int headerWord, final char value) {
+            return (short) value;
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 7"})
+        protected static final long doLong(@SuppressWarnings("unused") final int headerWord, final boolean value) {
+            return value ? 0L : 1L;
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 7"})
+        protected static final long doLong(@SuppressWarnings("unused") final int headerWord, final char value) {
+            return value;
+        }
+
         @Specialization(guards = {"getAtomicType(headerWord) == 10", "!isPointerType(headerWord)"})
         protected static final char doChar(@SuppressWarnings("unused") final int headerWord, final boolean value) {
             return (char) (value ? 0 : 1);
@@ -105,8 +125,23 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "getAtomicType(headerWord) == 12")
+        protected static final float doFloat(@SuppressWarnings("unused") final int headerWord, final char value) {
+            return value;
+        }
+
+        @Specialization(guards = "getAtomicType(headerWord) == 12")
         protected static final float doFloat(@SuppressWarnings("unused") final int headerWord, final double value) {
             return (float) value;
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 13"})
+        protected static final double doDouble(@SuppressWarnings("unused") final int headerWord, final char value) {
+            return value;
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 13"})
+        protected static final double doDouble(@SuppressWarnings("unused") final int headerWord, final long value) {
+            return value;
         }
 
         @Fallback
@@ -238,7 +273,6 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCalloutWithArgsNode extends AbstractFFIPrimitiveNode implements BinaryPrimitiveFallback {
         @Child private ArrayObjectToObjectArrayCopyNode getObjectArrayNode = ArrayObjectToObjectArrayCopyNode.create();
 
-        @SuppressWarnings("unused")
         @Specialization
         protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray) {
             return doCallout(asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(argArray));
