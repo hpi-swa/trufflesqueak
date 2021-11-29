@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -112,15 +113,15 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractEvalStringPrimitiveNode extends AbstractPrimitiveNode {
-        protected final Object evalString(final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
-            return evalString(languageIdOrMimeTypeObj, sourceObject, ArrayUtils.EMPTY_STRINGS_ARRAY, ArrayUtils.EMPTY_ARRAY);
+        protected static final Object evalString(final AbstractEvalStringPrimitiveNode node, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
+            return evalString(node, languageIdOrMimeTypeObj, sourceObject, ArrayUtils.EMPTY_STRINGS_ARRAY, ArrayUtils.EMPTY_ARRAY);
         }
 
-        protected final Object evalString(final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+        protected static final Object evalString(final AbstractEvalStringPrimitiveNode node, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         final String[] argumentNames, final Object[] argumentValues) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String sourceText = sourceObject.asStringUnsafe();
-            final com.oracle.truffle.api.TruffleLanguage.Env env = getContext().env;
+            final com.oracle.truffle.api.TruffleLanguage.Env env = SqueakImageContext.get(node).env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
@@ -143,7 +144,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         @Cached final WrapToSqueakNode wrapNode) {
-            return wrapNode.executeWrap(evalString(languageIdOrMimeTypeObj, sourceObject));
+            return wrapNode.executeWrap(evalString(this, languageIdOrMimeTypeObj, sourceObject));
         }
     }
 
@@ -168,7 +169,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 }
             }
             final Object[] values = toObjectArrayNode.execute(argumentValues);
-            return wrapNode.executeWrap(evalString(languageIdOrMimeTypeObj, sourceObject, names, values));
+            return wrapNode.executeWrap(evalString(this, languageIdOrMimeTypeObj, sourceObject, names, values));
         }
     }
 
@@ -180,11 +181,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newContextBuilder().build();
-            final Object p = innerContext.enter(null);
+            final Object p = innerContext.enter(this);
             try {
-                return convertNode.executeConvert(evalString(languageIdOrMimeTypeObj, sourceObject));
+                return convertNode.executeConvert(evalString(null, languageIdOrMimeTypeObj, sourceObject));
             } finally {
-                innerContext.leave(null, p);
+                innerContext.leave(this, p);
                 innerContext.close();
             }
         }
