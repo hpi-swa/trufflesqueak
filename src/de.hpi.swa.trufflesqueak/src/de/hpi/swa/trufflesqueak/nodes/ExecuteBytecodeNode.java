@@ -90,7 +90,11 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
     private Object interpretBytecode(final VirtualFrame frame, final int startPC) {
         CompilerAsserts.partialEvaluationConstant(bytecodeNodes.length);
         int pc = startPC;
-        int backJumpCounter = 0;
+        /*
+         * Maintain backJumpCounter in an int[] so that the compiler does not confuse it with the
+         * basicBlockIndex because both are constant within the loop.
+         */
+        final int[] backJumpCounter = new int[1];
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
@@ -121,8 +125,8 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
                 }
             } else if (node instanceof UnconditionalJumpNode) {
                 final int successor = ((UnconditionalJumpNode) node).getSuccessorIndex();
-                if (CompilerDirectives.inInterpreter() && successor <= pc && backJumpCounter < Integer.MAX_VALUE) {
-                    backJumpCounter++;
+                if (CompilerDirectives.hasNextTier() && successor <= pc) {
+                    backJumpCounter[0]++;
                 }
                 pc = successor;
                 continue bytecode_loop;
@@ -139,8 +143,9 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
         }
         assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
         FrameAccess.terminate(frame);
-        if (backJumpCounter != 0) {
-            LoopNode.reportLoopCount(this, backJumpCounter > 0 ? backJumpCounter : Integer.MAX_VALUE);
+        // only report non-zero counters to reduce interpreter overhead
+        if (CompilerDirectives.hasNextTier() && backJumpCounter[0] != 0) {
+            LoopNode.reportLoopCount(this, backJumpCounter[0] > 0 ? backJumpCounter[0] : Integer.MAX_VALUE);
         }
         return returnValue;
     }
