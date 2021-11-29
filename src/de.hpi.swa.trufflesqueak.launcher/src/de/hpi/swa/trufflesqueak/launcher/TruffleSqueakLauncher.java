@@ -96,7 +96,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         }
         final String runtimeName = getRuntimeName();
         // only ever use latency on Graal
-        useEngineModeLatency = useEngineModeLatency & runtimeName.contains("Graal");
+        useEngineModeLatency = useEngineModeLatency && runtimeName.contains("Graal");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH, imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, Boolean.toString(headless));
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.QUIET, Boolean.toString(quiet));

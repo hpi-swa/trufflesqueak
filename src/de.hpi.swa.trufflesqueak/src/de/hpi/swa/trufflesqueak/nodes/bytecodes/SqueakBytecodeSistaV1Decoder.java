@@ -85,10 +85,11 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
 
     @Override
     public AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
-        return decodeBytecode(frame, code, index, 0, 0, 0);
+        return decodeBytecode(frame, code, index, 0, 0, 0, 0);
     }
 
-    private static AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int extBytes, final int extA, final int extB) {
+    private static AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int extBytes, final int extA, final int extB,
+                    final int numExtB) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
         final int indexWithExt = index + extBytes;
@@ -184,9 +185,11 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
                 return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
             case 0xE0:
-                return decodeBytecode(frame, code, index, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB);
-            case 0xE1:
-                return decodeBytecode(frame, code, index, extBytes + 2, extA, (extB << 8) + Integer.valueOf(bytecode[indexWithExt + 1]));
+                return decodeBytecode(frame, code, index, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB, numExtB);
+            case 0xE1: {
+                final int byteValue = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
+                return decodeBytecode(frame, code, index, extBytes + 2, extA, numExtB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue, numExtB + 1);
+            }
             case 0xE2:
                 return PushBytecodes.PushReceiverVariableNode.create(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xE3:
@@ -235,15 +238,15 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xEF:
                 return JumpBytecodes.ConditionalJumpOnFalseNode.createLongExtended(code, index, 2 + extBytes, bytecode[indexWithExt + 1], extB);
             case 0xF0:
-                return new StoreBytecodes.PopIntoReceiverVariableNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
+                return new StoreBytecodes.PopIntoReceiverVariableNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xF1:
-                return new StoreBytecodes.PopIntoLiteralVariableNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
+                return new StoreBytecodes.PopIntoLiteralVariableNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xF2:
                 return new StoreBytecodes.PopIntoTemporaryLocationNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1]);
             case 0xF3:
-                return new StoreBytecodes.StoreIntoReceiverVariableNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
+                return new StoreBytecodes.StoreIntoReceiverVariableNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xF4:
-                return new StoreBytecodes.StoreIntoLiteralVariableNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
+                return new StoreBytecodes.StoreIntoLiteralVariableNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xF5:
                 return new StoreBytecodes.StoreIntoTemporaryLocationNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1]);
             case 0xF6:
