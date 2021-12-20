@@ -14,7 +14,6 @@ public enum OS {
 
     private static final OS THE_OS = findOS();
     private static final String SQUEAK_PLATFORM_NAME = findSqueakOSName();
-    private static final String FFI_EXTENSION = findFFIExtension();
 
     private static OS findOS() {
         final String name = System.getProperty("os.name");
@@ -43,25 +42,8 @@ public enum OS {
         }
     }
 
-    public static String findFFIExtension() {
-        switch (THE_OS) {
-            case macOS:
-                return ".dylib";
-            case Windows:
-                return ".dll";
-            case Linux:
-                return ".so";
-            default:
-                throw SqueakException.create("Unsupported Platform.");
-        }
-    }
-
     public static String getSqueakPlatformName() {
         return SQUEAK_PLATFORM_NAME;
-    }
-
-    public static String getFFIExtension() {
-        return FFI_EXTENSION;
     }
 
     public static boolean isLinux() {

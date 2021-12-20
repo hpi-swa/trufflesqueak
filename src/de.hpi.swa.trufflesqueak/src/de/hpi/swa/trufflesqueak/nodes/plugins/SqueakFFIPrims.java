@@ -56,7 +56,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimi
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.AbstractPrimCalloutToFFINode;
-import de.hpi.swa.trufflesqueak.util.OS;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
@@ -240,14 +239,10 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final String getPathOrFail(final SqueakImageContext image, final String moduleName) {
-            final String ffiExtension = OS.getFFIExtension();
-            final TruffleFile home = image.getHomePath();
-            TruffleFile libPath = home.resolve("lib" + File.separatorChar + moduleName + ffiExtension);
+            final String libName = System.mapLibraryName(moduleName);
+            final TruffleFile libPath = image.getHomePath().resolve("lib" + File.separatorChar + libName);
             if (!libPath.exists()) {
-                libPath = home.resolve("lib" + File.separatorChar + "lib" + moduleName + ffiExtension);
-                if (!libPath.exists()) {
-                    throw PrimitiveFailed.GENERIC_ERROR;
-                }
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return libPath.getAbsoluteFile().getPath();
         }
