@@ -10,8 +10,8 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.Point;
+import java.awt.Taskbar;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -29,7 +29,6 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -92,15 +91,9 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     @TruffleBoundary
     private static void tryToSetTaskbarIcon() {
-        // java.awt.Taskbar introduced in JDK 9, call it reflectively.
         try {
-            final Image icon = TOOLKIT.getImage(ICON_URL);
-            final Class<?> tbClass = Class.forName("java.awt.Taskbar");
-            final Method getter = tbClass.getMethod("getTaskbar");
-            final Object tb = getter.invoke(getter);
-            final Method setter = tb.getClass().getMethod("setIconImage", Image.class);
-            setter.invoke(tb, icon);
-        } catch (final Exception e) {
+            Taskbar.getTaskbar().setIconImage(TOOLKIT.getImage(ICON_URL));
+        } catch (final UnsupportedOperationException e) {
             // Ignore
         }
     }
