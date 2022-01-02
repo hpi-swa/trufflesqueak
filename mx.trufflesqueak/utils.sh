@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2017-2021 Software Architecture Group, Hasso Plattner Institute
-# Copyright (c) 2021 Oracle and/or its affiliates
+# Copyright (c) 2017-2022 Software Architecture Group, Hasso Plattner Institute
+# Copyright (c) 2021-2022 Oracle and/or its affiliates
 #
 # Licensed under the MIT License.
 #
