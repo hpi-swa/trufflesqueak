@@ -13,7 +13,6 @@ import org.graalvm.collections.EconomicMap;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
-import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -31,7 +30,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
     public static final FrameStackReadNode create(final Frame frame, final int index, final boolean clear) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
-            return FrameArgumentNode.getOrCreate(index);
+            return FrameArgumentReadNode.getOrCreate(index);
         }
         // Only clear stack values, not receiver, arguments, or temporary variables.
         final int initialSP;
@@ -54,7 +53,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
     public static final FrameStackReadNode createTemporaryReadNode(final Frame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
-            return FrameArgumentNode.getOrCreate(index);
+            return FrameArgumentReadNode.getOrCreate(index);
         } else {
             return FrameSlotReadNoClearNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
         }
@@ -69,32 +68,38 @@ public abstract class FrameStackReadNode extends AbstractNode {
     /* Unsafe as it may return `null` values. */
     public abstract Object executeReadUnsafe(Frame frame);
 
-    @NodeField(name = "slotIndex", type = int.class)
     protected abstract static class AbstractFrameSlotReadNode extends FrameStackReadNode {
+        protected final int slotIndex;
 
-        protected abstract int getSlotIndex();
+        AbstractFrameSlotReadNode(final int slotIndex) {
+            this.slotIndex = slotIndex;
+        }
 
-        @Specialization(guards = "frame.isBoolean(getSlotIndex())")
+        @Specialization(guards = "frame.isBoolean(slotIndex)")
         protected final boolean readBoolean(final Frame frame) {
-            return frame.getBoolean(getSlotIndex());
+            return frame.getBoolean(slotIndex);
         }
 
-        @Specialization(guards = "frame.isLong(getSlotIndex())")
+        @Specialization(guards = "frame.isLong(slotIndex)")
         protected final long readLong(final Frame frame) {
-            return frame.getLong(getSlotIndex());
+            return frame.getLong(slotIndex);
         }
 
-        @Specialization(guards = "frame.isDouble(getSlotIndex())")
+        @Specialization(guards = "frame.isDouble(slotIndex)")
         protected final double readDouble(final Frame frame) {
-            return frame.getDouble(getSlotIndex());
+            return frame.getDouble(slotIndex);
         }
     }
 
     protected abstract static class FrameSlotReadNoClearNode extends AbstractFrameSlotReadNode {
 
+        FrameSlotReadNoClearNode(final int slotIndex) {
+            super(slotIndex);
+        }
+
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readObject(final Frame frame) {
-            if (!frame.isObject(getSlotIndex())) {
+            if (!frame.isObject(slotIndex)) {
                 /*
                  * The FrameSlotKind has been set to Object, so from now on all writes to the slot
                  * will be Object writes. However, now we are in a frame that still has an old
@@ -103,22 +108,26 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  * multiple times for the same slot of the same frame.
                  */
                 CompilerDirectives.transferToInterpreter();
-                final Object value = frame.getValue(getSlotIndex());
+                final Object value = frame.getValue(slotIndex);
                 assert value != null : "Unexpected `null` value";
-                frame.setObject(getSlotIndex(), value);
+                frame.setObject(slotIndex, value);
                 return value;
             } else {
-                return frame.getObject(getSlotIndex());
+                return frame.getObject(slotIndex);
             }
         }
     }
 
     protected abstract static class FrameSlotReadClearNode extends AbstractFrameSlotReadNode {
 
+        FrameSlotReadClearNode(final int slotIndex) {
+            super(slotIndex);
+        }
+
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readAndClearObject(final Frame frame) {
             final Object value;
-            if (!frame.isObject(getSlotIndex())) {
+            if (!frame.isObject(slotIndex)) {
                 /*
                  * The FrameSlotKind has been set to Object, so from now on all writes to the slot
                  * will be Object writes. However, now we are in a frame that still has an old
@@ -127,29 +136,29 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  * multiple times for the same slot of the same frame.
                  */
                 CompilerDirectives.transferToInterpreter();
-                value = frame.getValue(getSlotIndex());
+                value = frame.getValue(slotIndex);
             } else {
-                value = frame.getObject(getSlotIndex());
+                value = frame.getObject(slotIndex);
             }
-            frame.setObject(getSlotIndex(), null);
+            frame.setObject(slotIndex, null);
             return value;
         }
     }
 
-    private static final class FrameArgumentNode extends FrameStackReadNode {
-        private static final EconomicMap<Integer, FrameArgumentNode> SINGLETONS = EconomicMap.create();
+    private static final class FrameArgumentReadNode extends FrameStackReadNode {
+        private static final EconomicMap<Integer, FrameArgumentReadNode> SINGLETONS = EconomicMap.create();
 
         private final int index;
 
-        private FrameArgumentNode(final int index) {
+        private FrameArgumentReadNode(final int index) {
             this.index = FrameAccess.getArgumentStartIndex() + index;
         }
 
-        private static FrameArgumentNode getOrCreate(final int index) {
+        private static FrameArgumentReadNode getOrCreate(final int index) {
             CompilerAsserts.neverPartOfCompilation();
-            FrameArgumentNode node = SINGLETONS.get(index);
+            FrameArgumentReadNode node = SINGLETONS.get(index);
             if (node == null) {
-                node = new FrameArgumentNode(index);
+                node = new FrameArgumentReadNode(index);
                 SINGLETONS.put(index, node);
             }
             return node;
