@@ -23,7 +23,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     public abstract void execute(VirtualFrame frame);
 
-    @Specialization(guards = {"getSqueakImageContext(frame).lastSeenContext == null", "hasContext(frame)", "getContext(frame).hasEscaped()"})
+    @Specialization(guards = {"getSqueakImageContext(frame).lastSeenContext == null", "hasEscapedContext(frame)"})
     protected final void doStartMaterialization(final VirtualFrame frame) {
         getContext().lastSeenContext = FrameAccess.getContext(frame);
     }
@@ -51,7 +51,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
         }
     }
 
-    @Specialization(guards = {"!hasContext(frame) || !getContext(frame).hasEscaped()"})
+    @Specialization(guards = {"!hasEscapedContext(frame)"})
     protected final void doNothing(@SuppressWarnings("unused") final VirtualFrame frame) {
         /*
          * Nothing to do because neither was a child context materialized nor has this context been

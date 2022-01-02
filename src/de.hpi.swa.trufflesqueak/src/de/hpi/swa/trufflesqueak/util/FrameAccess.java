@@ -189,6 +189,15 @@ public final class FrameAccess {
         return (ContextObject) frame.getObject(SlotIndicies.THIS_CONTEXT.ordinal());
     }
 
+    public static boolean hasContext(final VirtualFrame frame) {
+        return FrameAccess.getContext(frame) != null;
+    }
+
+    public static boolean hasEscapedContext(final VirtualFrame frame) {
+        final ContextObject context = getContext(frame);
+        return context != null && context.hasEscaped();
+    }
+
     public static boolean hasModifiedSender(final VirtualFrame frame) {
         final ContextObject context = getContext(frame);
         return context != null && context.hasModifiedSender();
