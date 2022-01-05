@@ -68,7 +68,7 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 public final class JavaObjectWrapper implements TruffleObject {
     protected static final int LIMIT = 2;
     private static final WeakHashMap<Object, JavaObjectWrapper> CACHE = new WeakHashMap<>();
-    private static final ClassValue<HashMap<String, Field>> CLASSES_TO_FIELDS = new ClassValue<HashMap<String, Field>>() {
+    private static final ClassValue<HashMap<String, Field>> CLASSES_TO_FIELDS = new ClassValue<>() {
         @Override
         @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
         protected HashMap<String, Field> computeValue(final Class<?> type) {
@@ -102,7 +102,7 @@ public final class JavaObjectWrapper implements TruffleObject {
             return "Class".equals(simpleName) || "SubstrateTruffleRuntime".equals(simpleName) || "GraalTruffleRuntime".equals(simpleName);
         }
     };
-    private static final ClassValue<HashMap<String, Method>> CLASSES_TO_METHODS = new ClassValue<HashMap<String, Method>>() {
+    private static final ClassValue<HashMap<String, Method>> CLASSES_TO_METHODS = new ClassValue<>() {
         @Override
         @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
         protected HashMap<String, Method> computeValue(final Class<?> type) {
@@ -175,7 +175,7 @@ public final class JavaObjectWrapper implements TruffleObject {
             return false;
         }
     };
-    private static final ClassValue<InteropArray> CLASSES_TO_MEMBERS = new ClassValue<InteropArray>() {
+    private static final ClassValue<InteropArray> CLASSES_TO_MEMBERS = new ClassValue<>() {
         @Override
         protected InteropArray computeValue(final Class<?> type) {
             final HashSet<String> members = new HashSet<>(CLASSES_TO_FIELDS.get(type).keySet());
