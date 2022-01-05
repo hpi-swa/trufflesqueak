@@ -83,9 +83,16 @@ suite = {
                 "BOUNCY_CASTLE_CRYPTO_LIB",
                 "truffle:TRUFFLE_API",
             ],
+            "requires": [
+                "java.datatransfer",
+                "java.desktop",
+                "java.logging",
+                "java.management",
+                "jdk.unsupported",
+            ],
             "checkstyleVersion": "8.36.1",
             "jacoco": "include",
-            "javaCompliance": "8+",
+            "javaCompliance": "11+",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
             "workingSets": "TruffleSqueak",
         },
@@ -96,9 +103,12 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
             ],
+            "requires": [
+                "java.desktop",
+            ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "8+",
+            "javaCompliance": "11+",
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.ffi.native": {
@@ -133,7 +143,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "8+",
+            "javaCompliance": "11+",
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.tck": {
@@ -145,7 +155,7 @@ suite = {
                 "mx:JUNIT"
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
-            "javaCompliance": "8+",
+            "javaCompliance": "11+",
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
@@ -158,7 +168,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "8+",
+            "javaCompliance": "11+",
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
@@ -261,7 +271,7 @@ suite = {
 
         "TRUFFLESQUEAK_TEST": {
             "description": "TruffleSqueak JUnit and SUnit tests",
-            "javaCompliance": "8+",
+            "javaCompliance": "11+",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
             ],

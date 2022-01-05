@@ -28,7 +28,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
-import de.hpi.swa.trufflesqueak.shared.LogHandlerAccessor;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -134,7 +133,6 @@ public abstract class AbstractSqueakTestCase {
         final String logLevel = System.getProperty("log.level");
         if (logLevel != null) {
             contextBuilder.option("log." + SqueakLanguageConfig.ID + ".level", logLevel);
-            contextBuilder.logHandler(LogHandlerAccessor.createLogHandler(System.getProperty("log.mode", "out")));
         }
         contextBuilder.option(// Log missing primitives
                         "log." + SqueakLanguageConfig.ID + ".primitives.level", "FINE");
