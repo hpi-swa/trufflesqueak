@@ -579,12 +579,12 @@ public final class Zip {
         zipPosition = fetchIntegerofObject(1, rcvr);
         /* zipWriteLimit := interpreterProxy fetchInteger: 3 ofObject: rcvr. */
         zipReadLimit = fetchIntegerofObject(2, rcvr);
-        zipBitBuf = fetchIntegerofObject(writeStreamInstSize + 1, rcvr);
-        zipBitPos = fetchIntegerofObject(writeStreamInstSize + 2, rcvr);
+        zipBitBuf = fetchIntegerofObject(writeStreamInstSize + 0, rcvr);
+        zipBitPos = fetchIntegerofObject(writeStreamInstSize + 1, rcvr);
         final long result = sendBlockwithwithwith(litStream, distStream, litTree, distTree);
         storeIntegerofObjectwithValue(1, rcvr, zipPosition);
-        storeIntegerofObjectwithValue(readStreamInstSize + 1, rcvr, zipBitBuf);
-        storeIntegerofObjectwithValue(readStreamInstSize + 2, rcvr, zipBitPos);
+        storeIntegerofObjectwithValue(writeStreamInstSize + 0, rcvr, zipBitBuf);
+        storeIntegerofObjectwithValue(writeStreamInstSize + 1, rcvr, zipBitPos);
         return result;
     }
 
