@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
+import com.oracle.truffle.api.CompilerAsserts;
+
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -24,9 +26,13 @@ public abstract class AbstractDispatchNode extends AbstractNode {
     }
 
     protected final Object lookupInSuperClassSlow(final ClassObject receiver) {
+        CompilerAsserts.neverPartOfCompilation();
         assert receiver != null;
         final Object result = receiver.getSuperclassOrNull().lookupInMethodDictSlow(selector);
-        assert result != null;
-        return result;
+        if (result == null) {
+            return getContext().doesNotUnderstand;
+        } else {
+            return result;
+        }
     }
 }
