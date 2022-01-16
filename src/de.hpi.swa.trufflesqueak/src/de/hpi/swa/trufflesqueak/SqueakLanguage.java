@@ -48,6 +48,13 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
+    protected void initializeContext(final SqueakImageContext context) throws Exception {
+        if (context.isHeadless() && !context.isTesting()) {
+            context.ensureLoaded();
+        }
+    }
+
+    @Override
     protected CallTarget parse(final ParsingRequest request) throws Exception {
         final SqueakImageContext image = SqueakImageContext.getSlow();
         final Source source = request.getSource();
@@ -55,7 +62,6 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
             image.setImagePath(source.getPath());
             return image.getSqueakImage().asCallTarget();
         } else {
-            image.ensureLoaded();
             if (source.isInternal()) {
                 image.printToStdOut(MiscUtils.format("Evaluating '%s'...", source.getCharacters().toString()));
             }
