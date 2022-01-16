@@ -116,7 +116,7 @@ public final class SqueakImageContext {
     public final CompiledCodeObject dummyMethod = new CompiledCodeObject(this, null, new Object[]{CompiledCodeObject.makeHeader(true, 1, 0, 0, false, true)}, compiledMethodClass);
 
     /* Method Cache */
-    private static final int METHOD_CACHE_SIZE = 1024;
+    private static final int METHOD_CACHE_SIZE = 2 << 12;
     private static final int METHOD_CACHE_MASK = METHOD_CACHE_SIZE - 1;
     private static final int METHOD_CACHE_REPROBES = 4;
     private int methodCacheRandomish;
