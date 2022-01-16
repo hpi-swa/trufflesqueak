@@ -76,6 +76,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             return NilObject.SINGLETON;
         }
 
+        @TruffleBoundary
         @Specialization(guards = "!receiver.hasMaterializedSender()")
         protected final AbstractSqueakObject doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext) {
             // Sender is not materialized, so avoid materialization by walking Truffle frames.
@@ -150,6 +151,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             terminateBetween((FrameMarker) current.getFrameSender(), end);
         }
 
+        @TruffleBoundary
         private void terminateBetween(final FrameMarker start, final ContextObject end) {
             assert start != null : "Unexpected `null` value";
             final ContextObject[] bottomContextOnTruffleStack = new ContextObject[1];
