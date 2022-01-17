@@ -59,6 +59,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class PrimitiveNodeFactory {
@@ -258,7 +259,7 @@ public final class PrimitiveNodeFactory {
         final int numReceiverAndArguments = 1 + numArgs;
         final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = map.get(numReceiverAndArguments);
         if (nodeFactory == null) {
-            assert false : "Unable to find primitive with arity: " + numReceiverAndArguments;
+            LogUtils.PRIMITIVES.fine(() -> "Unable to find primitive with arity: " + numReceiverAndArguments);
             return null;
         }
         assert numReceiverAndArguments == nodeFactory.getExecutionSignature().size();
