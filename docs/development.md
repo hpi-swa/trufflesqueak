@@ -16,7 +16,6 @@ cd trufflesqueak-build
 git clone https://github.com/graalvm/mx
 git clone https://github.com/hpi-swa/trufflesqueak
 cd trufflesqueak
-mx.trufflesqueak/utils.sh download-trufflesqueak-image
 mx.trufflesqueak/utils.sh download-trufflesqueak-test-image
 echo "JAVA_HOME=/path/to/a/jvmci-enabled-JDK" > mx.trufflesqueak/env
 ../mx/mx --env trufflesqueak-jvm build

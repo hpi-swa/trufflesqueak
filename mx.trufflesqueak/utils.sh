@@ -127,25 +127,6 @@ download-trufflesqueak-icon() {
   echo "[TruffleSqueak icon (${DEP_ICON_TAG}) downloaded successfully]"
 }
 
-download-trufflesqueak-image() {
-  local target_dir="${BASE_DIRECTORY}/src/resources"
-
-  if ls -1 ${target_dir}/*.image 2>/dev/null; then
-    echo "[TruffleSqueak image already downloaded]"
-    return
-  fi
-
-  pushd "${target_dir}" > /dev/null
-
-  download-asset "${DEP_IMAGE}" "${DEP_IMAGE_TAG}"
-  unzip -qq "${DEP_IMAGE}"
-  rm -f "${DEP_IMAGE}"
-
-  popd > /dev/null
-
-  echo "[TruffleSqueak image (${DEP_IMAGE_TAG}) downloaded successfully]"
-}
-
 enable-jdk() {
   add-path "$1/bin"
   set-env "JAVA_HOME" "$(resolve-path "$1")"
@@ -215,7 +196,6 @@ set-up-dependencies() {
   set-up-mx
   shallow-clone-graal
   shallow-clone-graaljs
-  download-trufflesqueak-image
   download-trufflesqueak-test-image
   download-trufflesqueak-icon
 

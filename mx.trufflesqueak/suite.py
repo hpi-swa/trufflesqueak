@@ -18,8 +18,6 @@ suite = {
     "trufflesqueak:dependencyMap": {
         "icon": "trufflesqueak-icon.png",
         "icon_tag": "21.0.0.1",
-        "image": "TruffleSqueakImage-21.3.0.zip",
-        "image_tag": "21.3.0",
         "test_image": "TruffleSqueakTestImage-6.0alpha-20228b-64bit.zip",
         "test_image_tag": "21.1.0",
     },
@@ -215,11 +213,6 @@ suite = {
                 "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
                 "README_TRUFFLESQUEAK.md": "file:README.md",
                 "lib/": "dependency:de.hpi.swa.trufflesqueak.ffi.native",
-                "resources": {
-                    "source_type": "file",
-                    "path": "src/resources",
-                    "exclude": ["src/resources/.gitignore"],
-                },
                 "native-image.properties": "file:mx.trufflesqueak/native-image.properties",
             },
             "maven": False,

@@ -93,7 +93,7 @@ jobs:
       if: ${{ env.BUILD_SVM == 'true' }}
     - name: Run SystemReporter on GraalVM
       shell: bash
-      run: ${{ env.TRUFFLESQUEAK_EXEC }} --jvm --code "SystemReporter new reportText asString"
+      run: ${{ env.TRUFFLESQUEAK_EXEC }} --jvm --code "SystemReporter new reportText asString" images/test-64bit.image
     - name: Run SystemReporter on SubstrateVM
       shell: bash
       run: ${{ env.TRUFFLESQUEAK_EXEC }} --native --code "SystemReporter new reportText asString" images/test-64bit.image
