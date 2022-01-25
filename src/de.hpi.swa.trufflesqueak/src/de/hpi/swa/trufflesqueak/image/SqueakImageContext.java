@@ -571,7 +571,7 @@ public final class SqueakImageContext {
     public String getImagePath() {
         if (imagePath == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            setImagePath(options.imagePath.isEmpty() ? SqueakImageLocator.findImage() : options.imagePath);
+            setImagePath(SqueakImageLocator.findImage(options.imagePath));
         }
         return imagePath;
     }

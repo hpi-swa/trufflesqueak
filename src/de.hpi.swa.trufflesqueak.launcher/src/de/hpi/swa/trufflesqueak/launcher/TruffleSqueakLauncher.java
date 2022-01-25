@@ -83,9 +83,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     protected int execute(final Context.Builder contextBuilder) {
-        if (imagePath == null) {
-            imagePath = SqueakImageLocator.findImage();
-        }
+        imagePath = SqueakImageLocator.findImage(imagePath);
         if (printImagePath) {
             println(imagePath);
             return 0;

@@ -71,7 +71,7 @@ public final class SqueakOptions {
 
         public SqueakContextOptions(final Env env) {
             final OptionValues options = env.getOptions();
-            imagePath = options.get(ImagePath);
+            imagePath = options.get(ImagePath).isEmpty() ? null : options.get(ImagePath);
             imageArguments = options.get(ImageArguments).isEmpty() ? new String[0] : options.get(ImageArguments).split(",");
             isHeadless = options.get(Headless);
             isQuiet = options.get(Quiet);
