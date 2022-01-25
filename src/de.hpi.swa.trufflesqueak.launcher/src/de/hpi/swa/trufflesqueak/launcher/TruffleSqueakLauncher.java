@@ -113,7 +113,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         try (Context context = contextBuilder.build()) {
             if (!quiet) {
                 final String engineModeSuffix = useEngineModeLatency ? " (" + ENGINE_MODE_LATENCY + " mode)" : "";
-                println(String.format("[trufflesqueak] Running %s on %s%s...", SqueakLanguageConfig.NAME, runtimeName, engineModeSuffix));
+                println(String.format("[trufflesqueak] Running %s on %s%s...", new File(imagePath).getName(), runtimeName, engineModeSuffix));
             }
             if (sourceCode != null) {
                 final Value result = context.eval(
