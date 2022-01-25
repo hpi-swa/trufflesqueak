@@ -989,11 +989,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doFloatExact(final FloatObject receiver) {
             return LargeIntegerObject.truncateExact(getContext(), receiver.getValue());
         }
-
-        @Specialization(guards = {"!receiver.isFinite()"})
-        protected static final FloatObject doFloatNotFinite(final FloatObject receiver) {
-            return receiver.shallowCopy();
-        }
     }
 
     @GenerateNodeFactory
