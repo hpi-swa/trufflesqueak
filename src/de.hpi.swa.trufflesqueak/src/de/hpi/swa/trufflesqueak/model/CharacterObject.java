@@ -6,10 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 
+@ValueType
 public final class CharacterObject extends AbstractSqueakObject {
     private final long value;
 
