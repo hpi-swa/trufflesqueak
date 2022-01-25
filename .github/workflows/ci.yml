@@ -137,6 +137,31 @@ jobs:
         retention-days: 5
       if: ${{ env.RUN_TESTS == 'true' }}
 
+  cuis-build:
+    name: Cuis + ubuntu-latest + JDK17
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up dependencies
+      shell: bash
+      run: mx.trufflesqueak/utils.sh set-up-dependencies java17
+    - name: Build TruffleSqueak JVM component
+      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-jvm SMALLTALK_INSTALLABLE_JAVA17 ${{ env.INSTALLABLE_JVM_TARGET }}
+    - name: Clone Cuis-Smalltalk repository
+      uses: actions/checkout@v2
+      with:
+        repository: 'Cuis-Smalltalk/Cuis-Smalltalk-Dev'
+        ref: 'd48898a78648f70ce56c6c5a21574b7e7f267dfe'
+        path: 'Cuis-Smalltalk-Dev'
+    - name: Run Cuis-Smalltalk tests on TruffleSqueak
+      run: |
+        cd Cuis-Smalltalk-Dev
+        trufflesqueak --jvm --headless Cuis6.0-5031.image -s ../src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st || true
+
   aarch64-builds:
     strategy:
       fail-fast: false
