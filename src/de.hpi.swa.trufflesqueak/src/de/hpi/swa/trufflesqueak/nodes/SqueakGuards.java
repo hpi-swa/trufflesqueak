@@ -110,6 +110,10 @@ public final class SqueakGuards {
         return object instanceof FloatObject;
     }
 
+    public static boolean isForeignObject(final Object object) {
+        return !(isAbstractSqueakObject(object) || isUsedJavaPrimitive(object));
+    }
+
     public static boolean isFrameMarker(final Object object) {
         return object instanceof FrameMarker;
     }

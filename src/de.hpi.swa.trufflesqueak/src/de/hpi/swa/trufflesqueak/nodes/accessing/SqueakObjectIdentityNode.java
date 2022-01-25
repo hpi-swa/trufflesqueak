@@ -44,18 +44,45 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
         return BooleanObject.wrap(Double.doubleToRawLongBits(left) == Double.doubleToRawLongBits(right));
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isUsedJavaPrimitive(left)")
+    protected static final boolean doPrimitiveAbstractSqueakObject(final Object left, final AbstractSqueakObject right) {
+        return BooleanObject.FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isUsedJavaPrimitive(right)")
+    protected static final boolean doAbstractSqueakObjectPrimitive(final AbstractSqueakObject left, final Object right) {
+        return BooleanObject.FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"isUsedJavaPrimitive(left)", "isUsedJavaPrimitive(right)", "left.getClass() != right.getClass()"})
+    protected static final boolean doNonComparablePrimitives(final Object left, final Object right) {
+        return BooleanObject.FALSE;
+    }
+
+    @Specialization(guards = "!isCharacterObject(left)")
+    protected static final boolean doAbstractSqueakObject(final AbstractSqueakObject left, final Object right) {
+        return BooleanObject.wrap(left == right);
+    }
+
     @Specialization
     protected static final boolean doCharacterObject(final CharacterObject left, final CharacterObject right) {
         return BooleanObject.wrap(left.getValue() == right.getValue());
     }
 
-    @Specialization
-    protected static final boolean doSqueakObjectLeft(final AbstractSqueakObject left, final Object right) {
-        return BooleanObject.wrap(left == right);
+    @Specialization(replaces = "doCharacterObject")
+    protected static final boolean doCharacterObjectGeneric(final CharacterObject left, final Object right) {
+        if (right instanceof CharacterObject) {
+            return doCharacterObject(left, (CharacterObject) right);
+        } else {
+            return BooleanObject.FALSE;
+        }
     }
 
-    @Specialization
-    protected static final boolean doSqueakObjectRight(final Object left, final AbstractSqueakObject right) {
+    @Specialization(guards = "isForeignObject(left)")
+    protected static final boolean doForeignAbstractSqueakObject(final Object left, final AbstractSqueakObject right) {
         return BooleanObject.wrap(left == right);
     }
 
@@ -66,15 +93,15 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
     }
 
     /** (inspired by SimpleLanguage's {@code SLEqualNode}). */
-    @Specialization(guards = "left != right", limit = "4")
-    protected static final boolean doObject(final Object left, final Object right,
+    @Specialization(guards = "isForeignObject(left) || isForeignObject(right)", limit = "4")
+    protected static final boolean doForeignObject(final Object left, final Object right,
                     @CachedLibrary("left") final InteropLibrary leftInterop,
                     @CachedLibrary("right") final InteropLibrary rightInterop) {
         try {
             if (leftInterop.isBoolean(left) && rightInterop.isBoolean(right)) {
                 return doBoolean(leftInterop.asBoolean(left), rightInterop.asBoolean(right));
             } else if (leftInterop.isNull(left) && rightInterop.isNull(right)) {
-                return true;
+                return BooleanObject.TRUE;
             } else if (leftInterop.fitsInLong(left) && rightInterop.fitsInLong(right)) {
                 return doLong(leftInterop.asLong(left), rightInterop.asLong(right));
             } else if (leftInterop.fitsInDouble(left) && rightInterop.fitsInDouble(right)) {
@@ -86,7 +113,7 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
             } else if (left instanceof CharacterObject && right instanceof CharacterObject) {
                 return doCharacterObject((CharacterObject) left, (CharacterObject) right);
             } else {
-                return false;
+                return BooleanObject.wrap(left == right);
             }
         } catch (final UnsupportedMessageException e) {
             throw CompilerDirectives.shouldNotReachHere(e);
