@@ -147,11 +147,12 @@ jobs:
       with:
         submodules: true
     - name: Set up dependencies
-      shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java17
-    - name: Build TruffleSqueak JVM component
-      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-jvm SMALLTALK_INSTALLABLE_JAVA17 ${{ env.INSTALLABLE_JVM_TARGET }}
-    - name: Clone Cuis-Smalltalk repository
+    - name: Build TruffleSqueak and Graal compiler
+      run: |
+        mx --dy /compiler build
+        echo "$(mx --dy /compiler graalvm-home)/bin" >> $GITHUB_PATH
+    - name: Clone Cuis-Smalltalk-Dev repository
       uses: actions/checkout@v2
       with:
         repository: 'Cuis-Smalltalk/Cuis-Smalltalk-Dev'
