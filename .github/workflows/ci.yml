@@ -147,21 +147,13 @@ jobs:
       with:
         submodules: true
     - name: Set up dependencies
-      run: mx.trufflesqueak/utils.sh set-up-dependencies java17
+      run: mx.trufflesqueak/utils.sh set-up-dependencies java17 cuis
     - name: Build TruffleSqueak and Graal compiler
       run: |
         mx --dy /compiler build
         echo "$(mx --dy /compiler graalvm-home)/bin" >> $GITHUB_PATH
-    - name: Clone Cuis-Smalltalk-Dev repository
-      uses: actions/checkout@v2
-      with:
-        repository: 'Cuis-Smalltalk/Cuis-Smalltalk-Dev'
-        ref: 'd48898a78648f70ce56c6c5a21574b7e7f267dfe'
-        path: 'Cuis-Smalltalk-Dev'
     - name: Run Cuis-Smalltalk tests on TruffleSqueak
-      run: |
-        cd Cuis-Smalltalk-Dev
-        trufflesqueak --jvm --headless Cuis6.0-5031.image -s ../src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st || true
+      run: trufflesqueak --jvm --headless images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
 
   aarch64-builds:
     strategy:

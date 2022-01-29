@@ -153,6 +153,20 @@ download-trufflesqueak-test-image() {
   echo "[TruffleSqueak test image (${DEP_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
+download-cuis-test-image() {
+  local target_dir="${BASE_DIRECTORY}/images"
+
+  mkdir "${target_dir}" || true
+  pushd "${target_dir}" > /dev/null
+
+  download-asset "${DEP_CUIS_TEST_IMAGE}" "${DEP_CUIS_TEST_IMAGE_TAG}"
+  unzip -qq "${DEP_CUIS_TEST_IMAGE}"
+
+  popd > /dev/null
+
+  echo "[Cuis test image (${DEP_CUIS_TEST_IMAGE_TAG}) downloaded successfully]"
+}
+
 installable-filename() {
   local java_version=$1
   local svm_prefix=$2
@@ -178,6 +192,7 @@ set-env() {
 
 set-up-dependencies() {
   local java_version=$1
+  local test_image="${2:-trufflesqueak}"
 
   case "$(uname -s)" in
     "Linux")
@@ -196,8 +211,12 @@ set-up-dependencies() {
   set-up-mx
   shallow-clone-graal
   shallow-clone-graaljs
-  download-trufflesqueak-test-image
   download-trufflesqueak-icon
+  if [[ "${test_image}" == "cuis" ]]; then
+    download-cuis-test-image
+  else
+    download-trufflesqueak-test-image
+  fi
 
   case "${java_version}" in
     "java11")

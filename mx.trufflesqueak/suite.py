@@ -16,6 +16,8 @@ suite = {
 
     "version": "22.0.0",
     "trufflesqueak:dependencyMap": {
+        "cuis_test_image": "CuisTestImage-6.0-5053.zip",
+        "cuis_test_image_tag": "21.3.0",
         "icon": "trufflesqueak-icon.png",
         "icon_tag": "21.0.0.1",
         "test_image": "TruffleSqueakTestImage-6.0alpha-20228b-64bit.zip",

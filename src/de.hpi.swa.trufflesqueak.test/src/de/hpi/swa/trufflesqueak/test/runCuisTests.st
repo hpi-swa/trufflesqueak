@@ -4,12 +4,6 @@ StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
 Utilities classPool at: #AuthorInitials put: 'TS'.
 
-StdIOWriteStream stdout nextPutAll: 'Installing BaseImageTests.pck.st ...'; newLine; flush.
-CodePackageFile installPackage: './Packages/BaseImageTests.pck.st' asFileEntry.
-
-StdIOWriteStream stdout nextPutAll: 'Loading TestResultConsolePrinter.st ...'; newLine; flush.
-ChangeSet fileIn: './.ContinuousIntegrationScripts/TestResultConsolePrinter.st' asFileEntry.
-
 nonTerminatingTestCases := OrderedCollection new.
 {
     #DelayTest -> #(#testMultiProcessWaitOnSameDelay).
