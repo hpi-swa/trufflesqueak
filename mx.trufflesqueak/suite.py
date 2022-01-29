@@ -11,7 +11,7 @@ suite = {
     #  METADATA
     # ==========================================================================
     "name": "trufflesqueak",
-    "mxversion": "5.316.11",
+    "mxversion": "5.317.12",
     "versionConflictResolution": "latest",
 
     "version": "22.0.0",
@@ -48,7 +48,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "b0375403352f6f1128228992b0028e9132047c44",
+            "version": "e7d7572e8276bc05708d48356e45b8a0978e3fa5",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
