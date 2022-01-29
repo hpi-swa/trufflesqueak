@@ -24,8 +24,9 @@ import org.graalvm.home.HomeFinder;
 
 public final class SqueakImageLocator {
     private static final String[][] SMALLTALK_IMAGES = {
-                    new String[]{"TruffleSqueak image", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.3.0/TruffleSqueakImage-21.3.0.zip"},
-                    new String[]{"TruffleSqueak test image", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.1.0/TruffleSqueakTestImage-6.0alpha-20228b-64bit.zip"}};
+                    new String[]{"TruffleSqueak image (21.3.0) (recommended)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.3.0/TruffleSqueakImage-21.3.0.zip"},
+                    new String[]{"TruffleSqueak test image (6.0alpha-20228b)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.1.0/TruffleSqueakTestImage-6.0alpha-20228b-64bit.zip"},
+                    new String[]{"Cuis-Smalltalk test image (6.0-5053)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.3.0/CuisTestImage-6.0-5053.zip"}};
 
     /* Ensures that TruffleSqueak's resources directory exists and returns path to image file. */
     public static String findImage(final String userImage) {
