@@ -23,11 +23,6 @@ import java.util.zip.ZipInputStream;
 import org.graalvm.home.HomeFinder;
 
 public final class SqueakImageLocator {
-    private static final String[][] SMALLTALK_IMAGES = {
-                    new String[]{"TruffleSqueak image (21.3.0) (recommended)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.3.0/TruffleSqueakImage-21.3.0.zip"},
-                    new String[]{"TruffleSqueak test image (6.0alpha-20228b)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.1.0/TruffleSqueakTestImage-6.0alpha-20228b-64bit.zip"},
-                    new String[]{"Cuis-Smalltalk test image (6.0-5053)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.3.0/CuisTestImage-6.0-5053.zip"}};
-
     /* Ensures that TruffleSqueak's resources directory exists and returns path to image file. */
     public static String findImage(final String userImage) {
         final File resourcesDirectory = findResourcesDirectory();
@@ -43,10 +38,11 @@ public final class SqueakImageLocator {
         if (imageFile != null) {
             return imageFile;
         } else {
+            final String[][] supportedImages = SqueakLanguageConfig.SUPPORTED_IMAGES;
             final Scanner userInput = new Scanner(System.in);
             final PrintStream out = System.out; // ignore checkstyle
-            for (int i = 0; i < SMALLTALK_IMAGES.length; i++) {
-                out.println(String.format("%d) %s", i + 1, SMALLTALK_IMAGES[i][0]));
+            for (int i = 0; i < supportedImages.length; i++) {
+                out.println(String.format("%d) %s", i + 1, supportedImages[i][0]));
             }
             out.print("Choose Smalltalk image: ");
             int selection = -1;
@@ -55,10 +51,10 @@ public final class SqueakImageLocator {
             } catch (final NoSuchElementException e) {
                 // ignore
             }
-            if (!(0 <= selection && selection < SMALLTALK_IMAGES.length)) {
+            if (!(0 <= selection && selection < supportedImages.length)) {
                 throw new RuntimeException("Invalid selection. Please try again.");
             }
-            final String[] selectedEntry = SMALLTALK_IMAGES[selection];
+            final String[] selectedEntry = supportedImages[selection];
             out.println(String.format("Downloading %s...", selectedEntry[0]));
 
             downloadAndUnzip(selectedEntry[1], resourcesDirectory);
