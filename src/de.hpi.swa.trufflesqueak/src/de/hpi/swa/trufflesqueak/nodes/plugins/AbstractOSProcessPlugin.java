@@ -16,7 +16,6 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.Source;
 
@@ -27,7 +26,6 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
@@ -128,16 +126,10 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPid")
-    protected abstract static class PrimGetPidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
-        @Specialization(guards = "supportsNFI")
-        protected final long doGetPid(@SuppressWarnings("unused") final Object receiver,
-                        @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
-            return getValue(lib);
-        }
-
-        @Override
-        protected final String getFunctionName() {
-            return "getpid"; /* shared (POSIX compatible) */
+    protected abstract static class PrimGetPidNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final long doGetPid(@SuppressWarnings("unused") final Object receiver) {
+            return ProcessHandle.current().pid();
         }
     }
 
