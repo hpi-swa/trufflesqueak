@@ -171,13 +171,7 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static String getVMInformation() {
-        final String jre;
-        if (System.getProperty("java.version").startsWith("1.8")) {
-            jre = "jre" + File.separator;
-        } else {
-            jre = "";
-        }
-        final String releaseFilePath = System.getProperty("java.home") + jre + File.separator + "languages" + File.separator + SqueakLanguageConfig.ID + File.separator + "release";
+        final String releaseFilePath = System.getProperty("java.home") + File.separator + "languages" + File.separator + SqueakLanguageConfig.ID + File.separator + "release";
         final Properties properties = new Properties();
         try {
             properties.load(Files.newInputStream(Paths.get(releaseFilePath)));

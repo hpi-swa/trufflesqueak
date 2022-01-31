@@ -25,6 +25,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 BASE_VM_ARGS = [
     # Tweak Runtime
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
+
+    # Make Truffle.getRuntime() accessible for VM introspection
+    '--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED',
+    # Enable access to HostObject and others
+    '--add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED',
+    # Enable access to Truffle's SourceSection (for retrieving sources through interop)
+    '--add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED',
 ]
 
 if mx.is_darwin():
@@ -36,25 +43,6 @@ BASE_VM_ARGS_TESTING.extend([
     '-Xms4G',                   # Initial heap size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ])
-
-IS_JDK9_AND_LATER = mx.get_jdk(tag='default').javaCompliance > '1.8'
-
-if IS_JDK9_AND_LATER:
-    ADD_OPENS = [
-        # Make Truffle.getRuntime() accessible for VM introspection
-        '--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED',
-        # Enable access to HostObject and others
-        '--add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED',
-        # Enable access to Truffle's SourceSection (for retrieving sources through interop)
-        '--add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED',
-    ]
-    BASE_VM_ARGS.extend(ADD_OPENS)
-    BASE_VM_ARGS_TESTING.extend(ADD_OPENS)
-else:
-    # Tweaks for Java 8's Parallel GC (optimized for TruffleSqueak image)
-    BASE_VM_ARGS.append('-XX:OldSize=256M')       # Initial tenured generation size
-    BASE_VM_ARGS.append('-XX:NewSize=1G')         # Initial new generation size
-    BASE_VM_ARGS.append('-XX:MetaspaceSize=32M')  # Initial size of Metaspaces
 
 _COMPILER = mx.suite('compiler', fatalIfMissing=False)
 _SVM = mx.suite('substratevm', fatalIfMissing=False)
@@ -539,13 +527,14 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     support_distributions=[
         'trufflesqueak:TRUFFLESQUEAK_HOME',
     ],
-    launcher_configs=[
-        mx_sdk.LanguageLauncherConfig(
+    library_configs=[
+        mx_sdk.LanguageLibraryConfig(
+            destination='lib/<lib:smalltalkvm>',
+            launchers=['bin/<exe:trufflesqueak>'],
             language=LANGUAGE_ID,
-            destination='bin/<exe:trufflesqueak>',
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
-            extra_jvm_args=BASE_VM_ARGS,
+            # extra_jvm_args=BASE_VM_ARGS,
             build_args=[
                 # '--pgo-instrument',  # (uncomment to enable profiling)
                 # '--pgo',  # (uncomment to recompile with profiling info)
