@@ -25,7 +25,7 @@ mxversion = suite['mxversion']
 print('export %s GRAAL_VERSION=%s GITHUB_SLUG=%s MX_VERSION=%s' % (vars, graal_version, slug, mxversion))
 END
 )
-$(cd "${SCRIPT_DIRECTORY}" && python -c "${py_export}")
+$(cd "${SCRIPT_DIRECTORY}" && python3 -c "${py_export}")
 ([[ -z "${GRAAL_VERSION}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
   echo "Failed to load values from dependencyMap and GitHub slug." 1>&2 && exit 1
 
@@ -290,7 +290,7 @@ js_version = next(x['version'] for x in suite['imports']['suites'] if x['name'] 
 print('export GRAALJS_VERSION=%s' % js_version)
 END
 )
-  $(cd "${BASE_DIRECTORY}/../graal/vm/mx.vm" && python -c "${py_graaljs_export}")
+  $(cd "${BASE_DIRECTORY}/../graal/vm/mx.vm" && python3 -c "${py_graaljs_export}")
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git "${GRAALJS_VERSION}"
 }
 

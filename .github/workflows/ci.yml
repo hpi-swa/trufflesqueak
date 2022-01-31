@@ -21,16 +21,14 @@ jobs:
     name: Code Style + Build Config
     timeout-minutes: 15
     runs-on: ubuntu-18.04
+    env:
+      MX_PYTHON_VERSION: 3
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v2
     - name: Set up dependencies
       run: |
-        # Install pylint
-        sudo apt update -qq && sudo apt install -qq python-pip python-virtualenv
-        virtualenv ~/venv
-        source ~/venv/bin/activate
-        pip install --quiet astroid==1.1.0 pylint==1.1.0
+        sudo pip install --quiet astroid==1.1.0 pylint==1.1.0
         # Download Eclipse SDK
         eclipse_tar_path="${HOME}/eclipse.tar.gz"
         wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.14-201912100610/eclipse-SDK-4.14-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
@@ -40,9 +38,7 @@ jobs:
         # Set up mx, oracle/graal, and LabsJDK11
         mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-11 ~/"
     - name: Check style and perform full build
-      run: |
-        source ~/venv/bin/activate
-        mx gate --strict-mode --tags style,fullbuild
+      run: mx gate --strict-mode --tags style,fullbuild
 
   amd64-builds:
     strategy:
@@ -56,6 +52,7 @@ jobs:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-latest' && matrix.java == 17 }}"
       GRAALVM_HOME_ENV: "${{ matrix.os == 'windows-latest' && 'trufflesqueak-jvm' || 'trufflesqueak-svm' }}"
       TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-latest' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
+      MX_PYTHON_VERSION: 3
     name: ${{ matrix.os }} + JDK${{ matrix.java }}
     timeout-minutes: 90
     runs-on: ${{ matrix.os }}
@@ -141,6 +138,8 @@ jobs:
     name: Cuis + ubuntu-latest + JDK17
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    env:
+      MX_PYTHON_VERSION: 3
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v2
@@ -173,7 +172,7 @@ jobs:
           arch: aarch64
           distro: ubuntu20.04
           run: |
-            apt update && apt install -y build-essential curl git python unzip
+            apt update && apt install -y build-essential curl git python3 unzip
             mx.trufflesqueak/utils.sh "set-up-dependencies java${{ matrix.java }}"
             source "${HOME}/all_env_vars"
             export PATH="${MX_HOME}:${PATH}"
@@ -183,5 +182,6 @@ jobs:
           env: |
             GITHUB_PATH: $GITHUB_PATH
             GITHUB_ENV: $GITHUB_ENV
+            MX_PYTHON_VERSION: 3
       - name: Upload TruffleSqueak component
         run: mx.trufflesqueak/utils.sh deploy-asset ${{ steps.build_aarch64.outputs.installable_jvm }} ${{ secrets.GITHUB_TOKEN }}
