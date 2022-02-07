@@ -25,6 +25,10 @@ import org.graalvm.home.HomeFinder;
 public final class SqueakImageLocator {
     /* Ensures that TruffleSqueak's resources directory exists and returns path to image file. */
     public static String findImage(final String userImage) {
+        return findImage(userImage, false);
+    }
+
+    public static String findImage(final String userImage, final boolean isQuiet) {
         final File resourcesDirectory = findResourcesDirectory();
         try {
             ensureDirectory(resourcesDirectory);
@@ -39,27 +43,39 @@ public final class SqueakImageLocator {
             return imageFile;
         } else {
             final String[][] supportedImages = SqueakLanguageConfig.SUPPORTED_IMAGES;
-            final Scanner userInput = new Scanner(System.in);
             final PrintStream out = System.out; // ignore checkstyle
-            for (int i = 0; i < supportedImages.length; i++) {
-                out.println(String.format("%d) %s", i + 1, supportedImages[i][0]));
-            }
-            out.print("Choose Smalltalk image: ");
-            int selection = -1;
-            try {
-                selection = userInput.nextInt() - 1;
-            } catch (final NoSuchElementException e) {
-                // ignore
-            }
-            if (!(0 <= selection && selection < supportedImages.length)) {
-                throw new RuntimeException("Invalid selection. Please try again.");
+            final int selection;
+            if (isQuiet) {
+                selection = 0;
+            } else {
+                selection = askUserToChooseImage(supportedImages, out);
             }
             final String[] selectedEntry = supportedImages[selection];
-            out.println(String.format("Downloading %s...", selectedEntry[0]));
-
+            if (!isQuiet) {
+                out.println(String.format("Downloading %s...", selectedEntry[0]));
+            }
             downloadAndUnzip(selectedEntry[1], resourcesDirectory);
             return Objects.requireNonNull(findImageFile(resourcesDirectory));
         }
+    }
+
+    private static int askUserToChooseImage(final String[][] supportedImages, final PrintStream out) {
+        int selection;
+        final Scanner userInput = new Scanner(System.in);
+        for (int i = 0; i < supportedImages.length; i++) {
+            out.println(String.format("%d) %s", i + 1, supportedImages[i][0]));
+        }
+        out.print("Choose Smalltalk image: ");
+        selection = -1;
+        try {
+            selection = userInput.nextInt() - 1;
+        } catch (final NoSuchElementException e) {
+            // ignore
+        }
+        if (!(0 <= selection && selection < supportedImages.length)) {
+            throw new RuntimeException("Invalid selection. Please try again.");
+        }
+        return selection;
     }
 
     private static String findImageFile(final File resourcesDirectory) {

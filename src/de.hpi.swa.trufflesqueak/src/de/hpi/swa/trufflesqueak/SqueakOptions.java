@@ -34,7 +34,7 @@ public final class SqueakOptions {
     public static final OptionKey<String> InterceptMessages = new OptionKey<>("");
 
     @Option(name = SqueakLanguageOptions.QUIET, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.QUIET_HELP)//
-    public static final OptionKey<Boolean> Quiet = new OptionKey<>(true);
+    public static final OptionKey<Boolean> Quiet = new OptionKey<>(false);
 
     @Option(name = SqueakLanguageOptions.INTERRUPTS, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.INTERRUPTS_HELP)//
     public static final OptionKey<Boolean> Interrupts = new OptionKey<>(false);
