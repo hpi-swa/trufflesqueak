@@ -527,14 +527,13 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     support_distributions=[
         'trufflesqueak:TRUFFLESQUEAK_HOME',
     ],
-    library_configs=[
-        mx_sdk.LanguageLibraryConfig(
-            destination='lib/<lib:smalltalkvm>',
-            launchers=['bin/<exe:trufflesqueak>'],
+    launcher_configs=[
+        mx_sdk.LanguageLauncherConfig(
             language=LANGUAGE_ID,
+            destination='bin/<exe:trufflesqueak>',
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
-            # extra_jvm_args=BASE_VM_ARGS,
+            extra_jvm_args=BASE_VM_ARGS,
             build_args=[
                 # '--pgo-instrument',  # (uncomment to enable profiling)
                 # '--pgo',  # (uncomment to recompile with profiling info)
