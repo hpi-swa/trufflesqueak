@@ -91,10 +91,10 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
         CompilerAsserts.partialEvaluationConstant(bytecodeNodes.length);
         int pc = startPC;
         /*
-         * Maintain backJumpCounter in an int[] so that the compiler does not confuse it with the
-         * basicBlockIndex because both are constant within the loop.
+         * Maintain backJumpCounter in a Counter so that the compiler does not confuse it with the
+         * pc because both are constant within the loop.
          */
-        final int[] backJumpCounter = new int[1];
+        final Counter backJumpCounter = new Counter();
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
@@ -126,7 +126,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
             } else if (node instanceof UnconditionalJumpNode) {
                 final int successor = ((UnconditionalJumpNode) node).getSuccessorIndex();
                 if (CompilerDirectives.hasNextTier() && successor <= pc) {
-                    backJumpCounter[0]++;
+                    backJumpCounter.value++;
                 }
                 pc = successor;
                 continue bytecode_loop;
@@ -144,10 +144,17 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
         assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
         FrameAccess.terminate(frame);
         // only report non-zero counters to reduce interpreter overhead
-        if (CompilerDirectives.hasNextTier() && backJumpCounter[0] != 0) {
-            LoopNode.reportLoopCount(this, backJumpCounter[0] > 0 ? backJumpCounter[0] : Integer.MAX_VALUE);
+        if (CompilerDirectives.hasNextTier() && backJumpCounter.value != 0) {
+            LoopNode.reportLoopCount(this, backJumpCounter.value > 0 ? backJumpCounter.value : Integer.MAX_VALUE);
         }
         return returnValue;
+    }
+
+    /**
+     * Smaller than int[1], does not kill int[] on write and doesn't need bounds checks.
+     */
+    private static final class Counter {
+        int value;
     }
 
     /*
