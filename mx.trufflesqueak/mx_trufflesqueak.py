@@ -26,6 +26,9 @@ BASE_VM_ARGS = [
     # Tweak Runtime
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 
+    # Make ReflectionUtils work
+    '--add-exports=java.base/jdk.internal.module=ALL-UNNAMED',
+
     # Make Truffle.getRuntime() accessible for VM introspection
     '--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED',
     # Enable access to HostObject and others

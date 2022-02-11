@@ -7,9 +7,13 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
+
+import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -68,6 +72,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
@@ -2051,6 +2056,28 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return NilObject.nullToNil(getContext().env.lookupHostSymbol(symbolName));
             } catch (final RuntimeException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveLoadLanguageClass")
+    protected abstract static class PrimLoadLanguageClassNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        private static final Method LOAD_LANGUAGE_CLASS = ReflectionUtils.lookupMethod(Engine.class, "loadLanguageClass", String.class);
+
+        @TruffleBoundary
+        @Specialization(guards = {"value.isByteType()"})
+        protected final Object doLoadLanguageClass(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
+            final String symbolName = value.asStringUnsafe();
+            try {
+                final Class<?> languageSymbol = (Class<?>) LOAD_LANGUAGE_CLASS.invoke(null, symbolName);
+                if (languageSymbol != null) {
+                    return getContext().env.asHostSymbol(languageSymbol);
+                } else {
+                    return NilObject.SINGLETON;
+                }
+            } catch (final RuntimeException | IllegalAccessException | InvocationTargetException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
         }

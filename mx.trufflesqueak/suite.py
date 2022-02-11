@@ -90,6 +90,9 @@ suite = {
                 "java.management",
                 "jdk.unsupported",
             ],
+            "requiresConcealed" : {
+                "java.base" : ["jdk.internal.module"],
+            },
             "checkstyleVersion": "8.36.1",
             "jacoco": "include",
             "javaCompliance": "11+",
@@ -182,18 +185,18 @@ suite = {
             "description": "TruffleSqueak engine",
             "moduleInfo": {
                 "name": "de.hpi.swa.trufflesqueak",
-                "requiresConcealed": {
-                    "org.graalvm.truffle": [
-                        "com.oracle.truffle.api",
-                        "com.oracle.truffle.api.instrumentation",
-                    ],
-                },
                 "exports": [
                     "de.hpi.swa.trufflesqueak to org.graalvm.truffle",
                 ],
                 "requires": [
                     "jdk.unsupported" # sun.misc.Unsafe
                 ],
+                "requiresConcealed": {
+                    "org.graalvm.truffle": [
+                        "com.oracle.truffle.api",
+                        "com.oracle.truffle.api.instrumentation",
+                    ],
+                },
             },
             "dependencies": [
                 "de.hpi.swa.trufflesqueak",
