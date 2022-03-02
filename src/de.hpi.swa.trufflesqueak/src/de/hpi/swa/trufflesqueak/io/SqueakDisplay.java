@@ -62,10 +62,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
 
     public final SqueakImageContext image;
-    private final Frame frame = new Frame(DEFAULT_WINDOW_TITLE);
+
+    // public for the Java-based UI for TruffleSqueak.
+    public final Frame frame = new Frame(DEFAULT_WINDOW_TITLE);
+    public final SqueakMouse mouse;
+    public final SqueakKeyboard keyboard;
+
     private final SqueakDisplayCanvas canvas = new SqueakDisplayCanvas();
-    private final SqueakMouse mouse;
-    private final SqueakKeyboard keyboard;
     private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
 
     @CompilationFinal private int inputSemaphoreIndex = -1;
