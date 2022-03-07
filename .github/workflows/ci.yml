@@ -70,7 +70,7 @@ jobs:
     - name: Build TruffleSqueak JVM component via cmd.exe
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call mx --env trufflesqueak-jvm --no-download-progress build
         call mx --env trufflesqueak-jvm graalvm-home > graalvm-home-with-forward-slashes.txt
         set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
@@ -111,7 +111,7 @@ jobs:
     - name: Run gate with Graal compiler and Graal.js via cmd.exe
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test
       if: ${{ env.RUN_TESTS == 'true' && matrix.os == 'windows-latest' }}
     - name: Report code coverage
