@@ -81,10 +81,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         final Object[] pointers = chunk.getPointers();
-        if (!chunk.getImage().options.enableStorageStrategies) {
-            storage = pointers;
-            return;
-        }
         final int valuesLength = pointers.length;
         storage = valuesLength;
         if (valuesLength > 0) {
