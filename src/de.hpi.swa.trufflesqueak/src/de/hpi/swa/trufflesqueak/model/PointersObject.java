@@ -149,17 +149,18 @@ public final class PointersObject extends AbstractPointersObject {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-        if (SqueakImageContext.getSlow().isPointClass(getSqueakClass())) {
+        final ClassObject classObject = getSqueakClass();
+        if (classObject.getImage().isPointClass(classObject)) {
             return readNode.execute(this, POINT.X) + "@" + readNode.execute(this, POINT.Y);
         }
-        final String squeakClassName = getSqueakClass().getClassName();
+        final String squeakClassName = classObject.getClassName();
         if ("Fraction".equals(squeakClassName)) {
             return readNode.execute(this, FRACTION.NUMERATOR) + " / " + readNode.execute(this, FRACTION.DENOMINATOR);
         }
         if ("Association".equals(squeakClassName)) {
             return readNode.execute(this, ASSOCIATION.KEY) + " -> " + readNode.execute(this, ASSOCIATION.VALUE);
         }
-        final ClassObject superclass = getSqueakClass().getSuperclassOrNull();
+        final ClassObject superclass = classObject.getSuperclassOrNull();
         if (superclass != null && "Binding".equals(superclass.getClassName())) {
             return readNode.execute(this, BINDING.KEY) + " => " + readNode.execute(this, BINDING.VALUE);
         }
