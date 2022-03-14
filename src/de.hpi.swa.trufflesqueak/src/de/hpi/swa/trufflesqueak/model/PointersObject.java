@@ -52,7 +52,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public Object getHiddenObject() {
-        assert getSqueakClass().isPoint() : "Object cannot be a handle with hidden object";
+        assert SqueakImageContext.getSlow().isPointClass(getSqueakClass()) : "Object cannot be a handle with hidden object";
         return object2;
     }
 
@@ -85,10 +85,6 @@ public final class PointersObject extends AbstractPointersObject {
 
     public boolean isDisplay(final SqueakImageContext image) {
         return this == image.getSpecialObject(SPECIAL_OBJECT.THE_DISPLAY);
-    }
-
-    public boolean isPoint() {
-        return getSqueakClass().isPoint();
     }
 
     public int[] getFormBits(final AbstractPointersObjectReadNode readNode) {
@@ -153,7 +149,7 @@ public final class PointersObject extends AbstractPointersObject {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-        if (isPoint()) {
+        if (SqueakImageContext.getSlow().isPointClass(getSqueakClass())) {
             return readNode.execute(this, POINT.X) + "@" + readNode.execute(this, POINT.Y);
         }
         final String squeakClassName = getSqueakClass().getClassName();

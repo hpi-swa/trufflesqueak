@@ -119,7 +119,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             CompilerAsserts.neverPartOfCompilation();
             if (method.getNumLiterals() > 0) {
                 final Object literal1 = method.getLiterals()[1];
-                if (literal1 instanceof PointersObject && ((PointersObject) literal1).getSqueakClass().includesExternalFunctionBehavior()) {
+                if (literal1 instanceof PointersObject && ((PointersObject) literal1).getSqueakClass().includesExternalFunctionBehavior(getContext())) {
                     externalFunction = (PointersObject) literal1;
                     return true;
                 }
@@ -450,8 +450,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 136)
     protected abstract static class PrimSignalAtMillisecondsNode extends AbstractSignalAtPrimitiveNode implements TernaryPrimitiveFallback {
-
-        @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
+        @Specialization(guards = "isSemaphore(semaphore)")
         protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long msTime) {
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
@@ -752,15 +751,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return getContext().newEmptyArray();
         }
 
-        @Specialization(guards = {"!classObject.isNilClass()", "!classObject.isImmediateClassType()"})
-        protected final ArrayObject allInstances(final ClassObject classObject) {
+        @Specialization(guards = {"!classObject.isImmediateClassType()"})
+        protected final ArrayObject allInstances(final ClassObject classObject,
+                        @Cached final ConditionProfile isNilClass) {
             final SqueakImageContext image = getContext();
-            return image.asArrayOfObjects(ObjectGraphUtils.allInstancesOf(image, classObject));
-        }
-
-        @Specialization(guards = "classObject.isNilClass()")
-        protected final ArrayObject doNil(@SuppressWarnings("unused") final ClassObject classObject) {
-            return getContext().asArrayOfObjects(NilObject.SINGLETON);
+            if (isNilClass.profile(image.isNilClass(classObject))) {
+                return getContext().asArrayOfObjects(NilObject.SINGLETON);
+            } else {
+                return image.asArrayOfObjects(ObjectGraphUtils.allInstancesOf(image, classObject));
+            }
         }
     }
 
@@ -798,7 +797,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 242)
     protected abstract static class PrimSignalAtUTCMicrosecondsNode extends AbstractSignalAtPrimitiveNode implements TernaryPrimitiveFallback {
 
-        @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
+        @Specialization(guards = "isSemaphore(semaphore)")
         protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long usecsUTC) {
             final long msTime = MiscUtils.toJavaMicrosecondsUTC(usecsUTC) / 1000;
             signalAtMilliseconds(semaphore, msTime);

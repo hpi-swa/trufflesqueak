@@ -79,7 +79,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         super(image, image.getNextClassHash(), classObject);
         this.image = image;
         pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON);
-        instancesAreClasses = classObject.isMetaClass();
+        instancesAreClasses = image.isMetaClass(classObject);
         // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
     }
 
@@ -87,8 +87,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return image;
     }
 
-    public long rehashForClassTable() {
-        final long newHash = image.getNextClassHash();
+    public long rehashForClassTable(final SqueakImageContext i) {
+        final long newHash = i.getNextClassHash();
         assert newHash < IDENTITY_HASH_MASK;
         setSqueakHash(newHash);
         return newHash;
@@ -120,7 +120,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public String getClassName() {
-        if (isAMetaClass()) {
+        if (image.isMetaClass(getSqueakClass())) {
             final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.SIZE];
             if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] != NilObject.SINGLETON) {
                 return ((ClassObject) classInstance).getClassNameUnsafe() + " class";
@@ -156,10 +156,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         }
         final Object traitInstance = pointers[CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE];
         return traitInstance instanceof ClassObject && this != ((ClassObject) traitInstance).getSqueakClass() && ((ClassObject) traitInstance).getSqueakClass().getClassName().equals("Trait");
-    }
-
-    private boolean isAMetaClass() {
-        return getSqueakClass().isMetaClass();
     }
 
     public boolean isBits() {
@@ -238,47 +234,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return instancesAreClasses;
     }
 
-    public boolean isBitmapClass() {
-        return this == image.bitmapClass;
-    }
-
-    public boolean isLargeIntegerClass() {
-        return this == image.largePositiveIntegerClass || this == image.largeNegativeIntegerClass;
-    }
-
-    public boolean isMessageClass() {
-        return this == image.messageClass;
-    }
-
-    public boolean isMetaClass() {
-        return this == image.metaClass;
-    }
-
-    public boolean isPoint() {
-        return this == image.pointClass;
-    }
-
-    public boolean isProcess() {
-        return this == image.processClass;
-    }
-
-    public boolean isSemaphoreClass() {
-        return this == image.semaphoreClass;
-    }
-
-    /** ByteString. */
-    public boolean isStringClass() {
-        return this == image.byteStringClass;
-    }
-
-    /** ByteSymbol. */
-    public boolean isSymbolClass() {
-        return this == image.getByteSymbolClass();
-    }
-
-    /** WideString. */
-    public boolean isWideStringClass() {
-        return this == image.getWideStringClass();
+    public boolean isCompiledMethodClass() {
+        return this == image.compiledMethodClass;
     }
 
     public boolean includesBehavior(final ClassObject squeakClass) {
@@ -292,10 +249,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return false;
     }
 
-    public boolean includesExternalFunctionBehavior() {
-        final Object externalFunctionClass = image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
+    public boolean includesExternalFunctionBehavior(final SqueakImageContext i) {
+        final Object externalFunctionClass = i.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
         if (externalFunctionClass instanceof ClassObject) {
-            return includesBehavior((ClassObject) image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
+            return includesBehavior((ClassObject) i.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
         } else {
             return false;
         }
@@ -311,7 +268,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             if (needsSqueakHash()) {
                 final int hash = chunk.getHash();
                 /* Generate class hashes if unknown. */
-                setSqueakHash(hash != 0 ? hash : image.getNextClassHash());
+                setSqueakHash(hash != 0 ? hash : chunk.getImage().getNextClassHash());
             }
             final Object[] chunkPointers = chunk.getPointers();
             superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
@@ -321,7 +278,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
             pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
         } else if (needsSqueakHash()) {
-            setSqueakHash(image.getNextClassHash());
+            setSqueakHash(chunk.getImage().getNextClassHash());
         }
     }
 
@@ -507,9 +464,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public void become(final ClassObject other) {
         becomeOtherClass(other);
 
-        if (instancesAreClasses != other.getSqueakClass().isMetaClass()) {
+        final boolean otherInstancesAreClasses = image.isMetaClass(other.getSqueakClass());
+        if (instancesAreClasses != otherInstancesAreClasses) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            instancesAreClasses = other.getSqueakClass().isMetaClass();
+            instancesAreClasses = otherInstancesAreClasses;
         }
 
         final ClassObject otherSuperclass = other.superclass;
@@ -552,42 +510,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public String getClassComment() {
         return CLASS_DESCRIPTION.getClassComment(this);
-    }
-
-    public boolean isCompiledMethodClass() {
-        return this == image.compiledMethodClass;
-    }
-
-    public boolean isMethodContextClass() {
-        return this == image.methodContextClass;
-    }
-
-    public boolean isBlockClosureClass() {
-        return this == image.blockClosureClass;
-    }
-
-    public boolean isFullBlockClosureClass() {
-        return this == image.fullBlockClosureClass;
-    }
-
-    public boolean isFloatClass() {
-        return this == image.floatClass;
-    }
-
-    public boolean isLargePositiveIntegerClass() {
-        return this == image.largePositiveIntegerClass;
-    }
-
-    public boolean isLargeNegativeIntegerClass() {
-        return this == image.largeNegativeIntegerClass;
-    }
-
-    public boolean isNilClass() {
-        return this == image.nilClass;
-    }
-
-    public boolean isSmallIntegerClass() {
-        return this == image.smallIntegerClass;
     }
 
     @Override

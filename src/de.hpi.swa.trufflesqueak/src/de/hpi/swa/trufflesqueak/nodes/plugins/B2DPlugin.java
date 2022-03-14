@@ -53,7 +53,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddBezier")
     protected abstract static class PrimAddBezierNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
 
-        @Specialization(guards = {"start.isPoint()", "stop.isPoint()", "via.isPoint()"})
+        @Specialization(guards = {"isPoint(start)", "isPoint(stop)", "isPoint(via)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject stop, final PointersObject via, final long leftFillIndex,
                         final long rightFillIndex) {
             getContext().b2d.primitiveAddBezier(receiver, start, stop, via, leftFillIndex, rightFillIndex);
@@ -77,7 +77,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddBitmapFill")
     protected abstract static class PrimAddBitmapFillNode extends AbstractPrimitiveNode implements OctonaryPrimitiveFallback {
 
-        @Specialization(guards = {"xIndex > 0", "origin.isPoint()", "direction.isPoint()", "normal.isPoint()"})
+        @Specialization(guards = {"xIndex > 0", "isPoint(origin)", "isPoint(direction)", "isPoint(normal)"})
         protected final long doAdd(final PointersObject receiver, final PointersObject form, final AbstractSqueakObject cmap, final boolean tileFlag, final PointersObject origin,
                         final PointersObject direction, final PointersObject normal, final long xIndex) {
             return getContext().b2d.primitiveAddBitmapFill(receiver, form, cmap, tileFlag, origin, direction, normal, xIndex);
@@ -100,7 +100,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddGradientFill")
     protected abstract static class PrimAddGradientFillNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
 
-        @Specialization(guards = {"colorRamp.getSqueakClass().isBitmapClass()", "origin.isPoint()", "direction.isPoint()", "normal.isPoint()"})
+        @Specialization(guards = {"isBitmap(colorRamp)", "isPoint(origin)", "isPoint(direction)", "isPoint(normal)"})
         protected final long doAdd(final PointersObject receiver, final NativeObject colorRamp, final PointersObject origin, final PointersObject direction,
                         final PointersObject normal,
                         final boolean isRadial) {
@@ -112,7 +112,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddLine")
     protected abstract static class PrimAddLineNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
 
-        @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
+        @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long leftFill, final long rightFill) {
             getContext().b2d.primitiveAddLine(receiver, start, end, leftFill, rightFill);
             return receiver;
@@ -123,7 +123,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddOval")
     protected abstract static class PrimAddOvalNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
 
-        @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
+        @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
                         final long pixelValue32) {
             getContext().b2d.primitiveAddOval(receiver, start, end, fillIndex, width, pixelValue32);
@@ -147,7 +147,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddRect")
     protected abstract static class PrimAddRectNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
 
-        @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
+        @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
                         final long pixelValue32) {
             getContext().b2d.primitiveAddRect(receiver, start, end, fillIndex, width, pixelValue32);
@@ -324,7 +324,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveMergeFillFrom")
     protected abstract static class PrimMergeFillFromNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
-        @Specialization(guards = {"fillBitmap.getSqueakClass().isBitmapClass()"})
+        @Specialization(guards = {"isBitmap(fillBitmap)"})
         protected final PointersObject doCopy(final PointersObject receiver, final NativeObject fillBitmap, final PointersObject fill) {
             getContext().b2d.primitiveMergeFillFrom(receiver, fillBitmap, fill);
             return receiver;
@@ -493,7 +493,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSetOffset")
     protected abstract static class PrimSetOffsetNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
-        @Specialization(guards = {"point.isPoint()"})
+        @Specialization(guards = {"isPoint(point)"})
         protected final PointersObject doSet(final PointersObject receiver, final PointersObject point) {
             getContext().b2d.primitiveSetOffset(receiver, point);
             return receiver;

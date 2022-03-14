@@ -137,7 +137,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             if (method.isCompiledMethod()) {
                 methodOrBlock = closure.getCompiledBlock(method);
             } else { // FullBlockClosure
-                assert !closure.isABlockClosure() && !method.isCompiledMethod();
+                assert !closure.isABlockClosure(chunk.getImage()) && !method.isCompiledMethod();
                 methodOrBlock = method;
             }
         }

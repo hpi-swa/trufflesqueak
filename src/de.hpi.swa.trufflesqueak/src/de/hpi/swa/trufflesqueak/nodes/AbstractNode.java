@@ -14,6 +14,8 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -28,5 +30,17 @@ public abstract class AbstractNode extends Node {
 
     public final SqueakImageContext getContext() {
         return SqueakImageContext.get(this);
+    }
+
+    protected final boolean isBitmap(final NativeObject object) {
+        return getContext().isBitmapClass(object.getSqueakClass());
+    }
+
+    protected final boolean isPoint(final PointersObject object) {
+        return getContext().isPointClass(object.getSqueakClass());
+    }
+
+    protected final boolean isSemaphore(final PointersObject object) {
+        return getContext().isSemaphoreClass(object.getSqueakClass());
     }
 }

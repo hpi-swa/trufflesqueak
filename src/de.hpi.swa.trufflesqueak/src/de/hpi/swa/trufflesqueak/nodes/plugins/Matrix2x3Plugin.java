@@ -61,16 +61,16 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             return floats;
         }
 
-        protected static final double loadArgumentPointX(final PointersObject point, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
+        protected final double loadArgumentPointX(final PointersObject point, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
             return loadArgumentPointAt(point, POINT.X, readNode, errorProfile);
         }
 
-        protected static final double loadArgumentPointY(final PointersObject point, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
+        protected final double loadArgumentPointY(final PointersObject point, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
             return loadArgumentPointAt(point, POINT.Y, readNode, errorProfile);
         }
 
-        private static double loadArgumentPointAt(final PointersObject point, final int index, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
-            if (point.isPoint()) {
+        private double loadArgumentPointAt(final PointersObject point, final int index, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
+            if (isPoint(point)) {
                 final Object value = readNode.execute(point, index);
                 if (value instanceof Long) {
                     return (long) value;

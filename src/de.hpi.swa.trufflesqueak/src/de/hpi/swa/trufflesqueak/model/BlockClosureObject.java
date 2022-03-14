@@ -177,7 +177,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public int instsize() {
-        return isABlockClosure() ? BLOCK_CLOSURE.FIRST_COPIED_VALUE : BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE;
+        return isAFullBlockClosure() ? BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE : BLOCK_CLOSURE.FIRST_COPIED_VALUE;
     }
 
     @Override
@@ -185,12 +185,16 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         return instsize() + copiedValues.length;
     }
 
-    public boolean isABlockClosure() {
-        return getSqueakClass().isBlockClosureClass();
+    public boolean isABlockClosure(final SqueakImageContext image) {
+        return image.isBlockClosureClass(getSqueakClass());
+    }
+
+    public boolean isAFullBlockClosure(final SqueakImageContext image) {
+        return image.isFullBlockClosureClass(getSqueakClass());
     }
 
     public boolean isAFullBlockClosure() {
-        return getSqueakClass().isFullBlockClosureClass();
+        return isAFullBlockClosure(getSqueakClass().getImage());
     }
 
     @Override

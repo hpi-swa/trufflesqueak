@@ -276,7 +276,7 @@ public final class SqueakImageWriter {
             long newMajorIndex = majorIndex;
             long newMinorIndex = minorIndex;
             while (image.getHiddenRoots().getObject(newMajorIndex) != NilObject.SINGLETON || classTablePage.getObject(newMinorIndex) != NilObject.SINGLETON) {
-                final int newHash = (int) classObject.rehashForClassTable();
+                final int newHash = (int) classObject.rehashForClassTable(image);
                 newMajorIndex = SqueakImageConstants.majorClassIndexOf(newHash);
                 newMinorIndex = SqueakImageConstants.minorClassIndexOf(newHash);
             }

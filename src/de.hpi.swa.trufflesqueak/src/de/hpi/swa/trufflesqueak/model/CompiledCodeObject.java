@@ -623,7 +623,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      */
 
     public boolean isCompiledBlock() {
-        return !getSqueakClass().isCompiledMethodClass();
+        return !isCompiledMethod();
     }
 
     public CompiledCodeObject getMethod() {

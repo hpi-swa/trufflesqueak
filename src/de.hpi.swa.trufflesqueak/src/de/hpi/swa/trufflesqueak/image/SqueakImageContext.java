@@ -556,7 +556,7 @@ public final class SqueakImageContext {
     }
 
     public void setSemaphore(final int index, final AbstractSqueakObject semaphore) {
-        assert semaphore == NilObject.SINGLETON || ((AbstractSqueakObjectWithClassAndHash) semaphore).getSqueakClass().isSemaphoreClass();
+        assert semaphore == NilObject.SINGLETON || isSemaphoreClass(((AbstractSqueakObjectWithClassAndHash) semaphore).getSqueakClass());
         setSpecialObject(index, semaphore);
     }
 
@@ -699,6 +699,62 @@ public final class SqueakImageContext {
     public void flushMethodCacheAfterBecome() {
         /* TODO: Could be selective by checking class, selector, and method against mutations. */
         flushMethodCache();
+    }
+
+    /*
+     * CLASS CHECKS
+     */
+
+    public boolean isBitmapClass(final ClassObject object) {
+        return object == bitmapClass;
+    }
+
+    public boolean isBlockClosureClass(final ClassObject object) {
+        return object == blockClosureClass;
+    }
+
+    public boolean isByteStringClass(final ClassObject object) {
+        return object == byteStringClass;
+    }
+
+    public boolean isByteSymbolClass(final ClassObject object) {
+        return object == getByteSymbolClass();
+    }
+
+    public boolean isFloatClass(final ClassObject object) {
+        return object == floatClass;
+    }
+
+    public boolean isFullBlockClosureClass(final ClassObject object) {
+        return object == fullBlockClosureClass;
+    }
+
+    public boolean isLargeIntegerClass(final ClassObject object) {
+        return object == largePositiveIntegerClass || object == largeNegativeIntegerClass;
+    }
+
+    public boolean isMetaClass(final ClassObject object) {
+        return object == metaClass;
+    }
+
+    public boolean isMethodContextClass(final ClassObject object) {
+        return object == methodContextClass;
+    }
+
+    public boolean isNilClass(final ClassObject object) {
+        return object == nilClass;
+    }
+
+    public boolean isPointClass(final ClassObject object) {
+        return object == pointClass;
+    }
+
+    public boolean isSemaphoreClass(final ClassObject object) {
+        return object == semaphoreClass;
+    }
+
+    public boolean isWideStringClass(final ClassObject object) {
+        return object == getWideStringClass();
     }
 
     /*

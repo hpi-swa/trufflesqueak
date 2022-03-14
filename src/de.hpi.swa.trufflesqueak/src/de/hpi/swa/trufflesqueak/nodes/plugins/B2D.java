@@ -3404,7 +3404,7 @@ public final class B2D {
             cmSize = 0;
             cmBits = null;
         } else {
-            if (!((AbstractSqueakObjectWithClassAndHash) cmOop).getSqueakClass().isBitmapClass()) {
+            if (!isBitmap((AbstractSqueakObjectWithClassAndHash) cmOop)) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
             cmBits = ((NativeObject) cmOop).getIntStorage();
@@ -3417,7 +3417,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter();
         }
         bmBits = fetchNativeofObject(0, formOop);
-        if (!bmBits.getSqueakClass().isBitmapClass()) {
+        if (!isBitmap(bmBits)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         bmBitsSize = slotSizeOf(bmBits);
@@ -3730,7 +3730,7 @@ public final class B2D {
                 return false;
             }
             bmBits = fetchNativeofObject(0, formOop);
-            if (!bmBits.getSqueakClass().isBitmapClass()) {
+            if (!isBitmap(bmBits)) {
                 return false;
             }
             bmBitsSize = slotSizeOf(bmBits);
@@ -3759,7 +3759,7 @@ public final class B2D {
         final long fill;
         final long rampWidth;
 
-        assert rampOop.getSqueakClass().isBitmapClass();
+        assert isBitmap(rampOop);
         rampWidth = slotSizeOf(rampOop);
         fill = allocateGradientFillrampWidthisRadial(rampOop.getIntStorage(), rampWidth, isRadial);
         assert !engineStopped;
@@ -3875,9 +3875,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#loadPoint:from: */
     private void loadPointfrom(final int pointIndex, final PointersObject pointOop) {
-        if (!pointOop.getSqueakClass().isPoint()) {
-            PrimitiveFailed.andTransferToInterpreter();
-        }
+        assert SqueakImageContext.getSlow().isPointClass(pointOop.getSqueakClass()) : "Not a point (VMMaker code lets primitive fail)";
         final Object value0 = fetchObjectofObject(0, pointOop);
         if (value0 instanceof Long) {
             pointSetX(pointIndex, (long) value0);
@@ -3998,7 +3996,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#loadSpanBufferFrom: */
     private int loadSpanBufferFrom(final NativeObject spanOop) {
-        if (!spanOop.getSqueakClass().isBitmapClass()) {
+        if (!isBitmap(spanOop)) {
             return GEF_CLASS_MISMATCH;
         }
         /* Leave last entry unused to avoid complications */
@@ -7286,6 +7284,11 @@ public final class B2D {
 
     private static boolean isArray(final AbstractSqueakObject object) {
         return SqueakGuards.isArrayObject(object);
+    }
+
+    private static boolean isBitmap(final AbstractSqueakObjectWithClassAndHash object) {
+        final ClassObject squeakClass = object.getSqueakClass();
+        return squeakClass.getImage().isBitmapClass(squeakClass);
     }
 
     private int aetBuffer(final int index) {

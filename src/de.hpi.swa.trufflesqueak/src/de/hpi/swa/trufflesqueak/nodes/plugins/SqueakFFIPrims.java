@@ -155,8 +155,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Child private AbstractPointersObjectReadNode readExternalLibNode = AbstractPointersObjectReadNode.create();
         @Child private AbstractPointersObjectReadNode readArgumentTypeNode = AbstractPointersObjectReadNode.create();
 
-        protected static final PointersObject asExternalFunctionOrFail(final Object object) {
-            if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass().includesExternalFunctionBehavior())) {
+        protected final PointersObject asExternalFunctionOrFail(final Object object) {
+            if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass().includesExternalFunctionBehavior(getContext()))) {
                 throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
             }
             return (PointersObject) object;

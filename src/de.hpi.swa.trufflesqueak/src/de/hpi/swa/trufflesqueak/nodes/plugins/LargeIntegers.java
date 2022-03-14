@@ -151,9 +151,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
+        protected final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
                         @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(rhs.differentSign(lhs))) {
+            if (differentSignProfile.profile(rhs.differentSign(getContext(), lhs))) {
                 return LargeIntegerObject.subtract(lhs, rhs);
             } else {
                 return rhs.add(lhs);
@@ -161,9 +161,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+        protected final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
                         @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(lhs.differentSign(rhs))) {
+            if (differentSignProfile.profile(lhs.differentSign(getContext(), rhs))) {
                 return lhs.subtract(rhs);
             } else {
                 return lhs.add(rhs);
@@ -206,9 +206,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
+        protected final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
                         @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(rhs.differentSign(lhs))) {
+            if (differentSignProfile.profile(rhs.differentSign(getContext(), lhs))) {
                 return rhs.add(lhs);
             } else {
                 return LargeIntegerObject.subtract(lhs, rhs);
@@ -216,9 +216,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+        protected final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
                         @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(lhs.differentSign(rhs))) {
+            if (differentSignProfile.profile(lhs.differentSign(getContext(), rhs))) {
                 return lhs.add(rhs);
             } else {
                 return lhs.subtract(rhs);
@@ -368,24 +368,24 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
+        protected final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
                         @Cached final ConditionProfile fitsIntoLongProfile) {
             if (fitsIntoLongProfile.profile(rhs.fitsIntoLong())) {
                 final long value = rhs.longValue();
                 return value == lhs ? 0L : value < lhs ? -1L : 1L;
             } else {
-                return rhs.isNegative() ? 1L : -1L;
+                return rhs.isNegative(getContext()) ? 1L : -1L;
             }
         }
 
         @Specialization
-        protected static final long doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+        protected final long doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
                         @Cached final ConditionProfile fitsIntoLongProfile) {
             if (fitsIntoLongProfile.profile(lhs.fitsIntoLong())) {
                 final long value = lhs.longValue();
                 return value == rhs ? 0L : value < rhs ? -1L : 1L;
             } else {
-                return lhs.isNegative() ? -1L : 1L;
+                return lhs.isNegative(getContext()) ? -1L : 1L;
             }
         }
     }
@@ -685,7 +685,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
          * SecureHashAlgorithmTest>>testEmptyInput).
          */
         @TruffleBoundary
-        @Specialization(guards = {"receiver.isByteType()", "receiver.getSqueakClass().isLargeIntegerClass()"})
+        @Specialization(guards = {"receiver.isByteType()", "getContext().isLargeIntegerClass(receiver.getSqueakClass())"})
         protected final Object doNativeObject(final NativeObject receiver) {
             return new LargeIntegerObject(getContext(), receiver.getSqueakClass(), receiver.getByteStorage().clone()).reduceIfPossible();
         }

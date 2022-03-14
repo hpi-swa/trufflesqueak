@@ -305,9 +305,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
+        final ClassObject squeakClass = getSqueakClass();
+        final SqueakImageContext image = squeakClass.getImage();
         if (isByteType()) {
-            final ClassObject squeakClass = getSqueakClass();
-            if (squeakClass.isStringClass()) {
+            if (image.isByteStringClass(squeakClass)) {
                 final String fullString = asStringUnsafe();
                 final int fullLength = fullString.length();
                 /* Split at first non-printable character. */
@@ -317,7 +318,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
                     return "'" + fullString + "'";
                 }
                 return String.format("'%.30s...' (string length: %s)", displayString, fullLength);
-            } else if (squeakClass.isSymbolClass()) {
+            } else if (image.isByteSymbolClass(squeakClass)) {
                 return "#" + asStringUnsafe();
             } else {
                 return "byte[" + getByteLength() + "]";
@@ -325,7 +326,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         } else if (isShortType()) {
             return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
-            if (getSqueakClass().isWideStringClass()) {
+            if (image.isWideStringClass(squeakClass)) {
                 return asStringFromWideString();
             } else {
                 return "int[" + getIntLength() + "]";
@@ -351,7 +352,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public Object executeAsSymbolSlow(final VirtualFrame frame, final Object... receiverAndArguments) {
         CompilerAsserts.neverPartOfCompilation();
-        assert getSqueakClass().isSymbolClass();
+        assert SqueakImageContext.getSlow().isByteSymbolClass(getSqueakClass());
         final Object method = LookupMethodNode.getUncached().executeLookup(SqueakObjectClassNode.getUncached().executeLookup(receiverAndArguments[0]), this);
         if (method instanceof CompiledCodeObject) {
             return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledCodeObject) method, receiverAndArguments, GetOrCreateContextNode.getOrCreateUncached(frame));

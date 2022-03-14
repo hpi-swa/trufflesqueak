@@ -333,7 +333,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 85)
     protected abstract static class PrimSignalNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
-        @Specialization(guards = "receiver.getSqueakClass().isSemaphoreClass()")
+        @Specialization(guards = "isSemaphore(receiver)")
         protected final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final SignalSemaphoreNode signalSemaphoreNode) {
             try {
@@ -355,7 +355,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimWaitNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
         @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
 
-        @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "hasExcessSignals(receiver)"})
+        @Specialization(guards = {"isSemaphore(receiver)", "hasExcessSignals(receiver)"})
         protected final Object doWaitExcessSignals(final PointersObject receiver,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final long excessSignals = pointersReadNode.executeLong(receiver, SEMAPHORE.EXCESS_SIGNALS);
@@ -363,7 +363,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "!hasExcessSignals(receiver)"})
+        @Specialization(guards = {"isSemaphore(receiver)", "!hasExcessSignals(receiver)"})
         protected final Object doWait(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,

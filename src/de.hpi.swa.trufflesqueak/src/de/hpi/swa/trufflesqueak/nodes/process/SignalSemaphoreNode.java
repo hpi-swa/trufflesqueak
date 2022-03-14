@@ -26,14 +26,14 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
 
     public abstract void executeSignal(VirtualFrame frame, Object semaphore);
 
-    @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "semaphore.isEmptyList(readNode)"}, limit = "1")
+    @Specialization(guards = {"isSemaphore(semaphore)", "semaphore.isEmptyList(readNode)"}, limit = "1")
     public static final void doSignalEmpty(final PointersObject semaphore,
                     @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
         writeNode.execute(semaphore, SEMAPHORE.EXCESS_SIGNALS, readNode.executeLong(semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
     }
 
-    @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "!semaphore.isEmptyList(readNode)"}, limit = "1")
+    @Specialization(guards = {"isSemaphore(semaphore)", "!semaphore.isEmptyList(readNode)"}, limit = "1")
     public static final void doSignal(final VirtualFrame frame, final PointersObject semaphore,
                     @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,

@@ -39,14 +39,14 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     public LargeIntegerObject(final SqueakImageContext image, final long hash, final ClassObject klass, final byte[] bytes) {
         super(image, hash, klass);
-        integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
+        integer = new BigInteger(isPositive(image) ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
         bitLength = integer.bitLength();
         exposedSize = bytes.length;
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
         super(image, klass);
-        integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
+        integer = new BigInteger(isPositive(image) ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
         bitLength = integer.bitLength();
         exposedSize = bytes.length;
     }
@@ -104,7 +104,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary
-    public void setNativeAt0(final long index, final long value) {
+    public void setNativeAt0(final SqueakImageContext image, final long index, final long value) {
         assert index < size() : "Illegal index: " + index;
         assert 0 <= value && value <= NativeObject.BYTE_MAX : "Illegal value for LargeIntegerObject: " + value;
         final byte[] bytes;
@@ -119,7 +119,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
             bytes = bigIntegerBytes;
         }
         bytes[bytes.length - 1 - (int) index] = (byte) value;
-        integer = new BigInteger(isPositive() ? 1 : -1, bytes);
+        integer = new BigInteger(isPositive(image) ? 1 : -1, bytes);
         bitLength = integer.bitLength();
     }
 
@@ -136,14 +136,14 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary
-    public void setBytes(final byte[] bytes) {
+    public void setBytes(final SqueakImageContext image, final byte[] bytes) {
         assert size() == bytes.length;
-        integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderCopy(bytes));
+        integer = new BigInteger(isPositive(image) ? 1 : -1, ArrayUtils.swapOrderCopy(bytes));
         bitLength = integer.bitLength();
     }
 
     @TruffleBoundary
-    public void setBytes(final LargeIntegerObject src, final int srcPos, final int destPos, final int length) {
+    public void setBytes(final SqueakImageContext image, final LargeIntegerObject src, final int srcPos, final int destPos, final int length) {
         final byte[] bytes;
         final byte[] srcBytes = toBigEndianBytes(src.integer);
         final byte[] bigIntegerBytes = toBigEndianBytes(integer);
@@ -156,12 +156,12 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
             bytes = bigIntegerBytes;
         }
         System.arraycopy(srcBytes, srcBytes.length - length - srcPos, bytes, bytes.length - length - destPos, length);
-        integer = new BigInteger(isPositive() ? 1 : -1, bytes);
+        integer = new BigInteger(isPositive(image) ? 1 : -1, bytes);
         bitLength = integer.bitLength();
     }
 
     @TruffleBoundary
-    public void setBytes(final byte[] srcBytes, final int srcPos, final int destPos, final int length) {
+    public void setBytes(final SqueakImageContext image, final byte[] srcBytes, final int srcPos, final int destPos, final int length) {
         // destination bytes are big-endian, source bytes are not
         final byte[] bytes;
         final byte[] bigIntegerBytes = toBigEndianBytes(integer);
@@ -176,7 +176,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         for (int i = 0; i < length; i++) {
             bytes[bytes.length - 1 - (destPos + i)] = srcBytes[srcPos + i];
         }
-        integer = new BigInteger(isPositive() ? 1 : -1, bytes);
+        integer = new BigInteger(isPositive(image) ? 1 : -1, bytes);
         bitLength = integer.bitLength();
     }
 
@@ -297,12 +297,12 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return integer.bitLength();
     }
 
-    public boolean isPositive() {
-        return getSqueakClass().isLargePositiveIntegerClass();
+    private boolean isPositive(final SqueakImageContext image) {
+        return getSqueakClass() == image.largePositiveIntegerClass;
     }
 
-    public boolean isNegative() {
-        return getSqueakClass().isLargeNegativeIntegerClass();
+    public boolean isNegative(final SqueakImageContext image) {
+        return getSqueakClass() == image.largeNegativeIntegerClass;
     }
 
     /*
@@ -526,13 +526,13 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return getSqueakClass() == other.getSqueakClass();
     }
 
-    public boolean differentSign(final long other) {
-        return isNegative() ^ other < 0;
+    public boolean differentSign(final SqueakImageContext image, final long other) {
+        return isNegative(image) ^ other < 0;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public long toSignedLong() {
-        assert isPositive() && bitLength <= Long.SIZE;
+        assert isPositive(SqueakImageContext.getSlow()) && bitLength <= Long.SIZE;
         if (bitLength == Long.SIZE) {
             return integer.subtract(ONE_SHIFTED_BY_64).longValue();
         } else {

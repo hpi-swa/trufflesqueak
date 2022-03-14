@@ -529,14 +529,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract void execute(LargeIntegerObject rcvr, long start, long stop, Object repl, long replStart);
 
             @Specialization
-            protected static final void doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
+            protected final void doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile,
                             @Cached final ConditionProfile fitsEntirelyProfile) {
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
                     rcvr.replaceInternalValue(repl);
                 } else {
                     if (inBounds(rcvr.size(), start, stop, repl.size(), replStart)) {
-                        rcvr.setBytes(repl, (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                        rcvr.setBytes(getContext(), repl, (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
                     } else {
                         errorProfile.enter();
                         throw PrimitiveFailed.BAD_INDEX;
@@ -545,14 +545,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
 
             @Specialization
-            protected static final void doLargeIntegerFloat(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart,
+            protected final void doLargeIntegerFloat(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile,
                             @Cached final ConditionProfile fitsEntirelyProfile) {
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
-                    rcvr.setBytes(repl.getBytes());
+                    rcvr.setBytes(getContext(), repl.getBytes());
                 } else {
                     if (inBounds(rcvr.size(), start, stop, repl.size(), replStart)) {
-                        rcvr.setBytes(repl.getBytes(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                        rcvr.setBytes(getContext(), repl.getBytes(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
                     } else {
                         errorProfile.enter();
                         throw PrimitiveFailed.BAD_INDEX;
@@ -561,14 +561,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
 
             @Specialization(guards = {"repl.isByteType()"})
-            protected static final void doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+            protected final void doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile,
                             @Cached final ConditionProfile fitsEntirelyProfile) {
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart))) {
-                    rcvr.setBytes(repl.getByteStorage());
+                    rcvr.setBytes(getContext(), repl.getByteStorage());
                 } else {
                     if (inBounds(rcvr.size(), start, stop, repl.getByteLength(), replStart)) {
-                        rcvr.setBytes(repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                        rcvr.setBytes(getContext(), repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
                     } else {
                         errorProfile.enter();
                         throw PrimitiveFailed.BAD_INDEX;

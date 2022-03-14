@@ -98,7 +98,7 @@ public final class SqueakImageChunk {
             } else if (format == 3) { // fixed and indexable fields
                 if (squeakClass == image.methodContextClass) {
                     object = ContextObject.createWithHash(image, hash);
-                } else if (squeakClass.isBlockClosureClass() || squeakClass.isFullBlockClosureClass()) {
+                } else if (image.isBlockClosureClass(squeakClass) || image.isFullBlockClosureClass(squeakClass)) {
                     object = BlockClosureObject.createWithHash(image, hash, squeakClass);
                 } else {
                     object = new VariablePointersObject(image, hash, squeakClass);
