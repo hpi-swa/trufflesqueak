@@ -33,7 +33,7 @@ TruffleSqueak checkout.
 Using the `trufflesqueak-jvm` environment file ensures that the Graal compiler
 is built with TruffleSqueak and enabled by default.
 For this, however, you must use a JVMCI-enabled JDK, such as the
-[JDK11-based LabsJDK][labsjdk] or the [JDK8-based OpenJDK][graal_jvmci_8].
+[JDK11-based LabsJDK][labsjdk].
 The environment file also instructs mx to build an installable component for the
 GraalVM Updater, which can be installed with:
 
@@ -115,7 +115,6 @@ For additional help, feel free to join the `#trufflesqueak` channel on the
 
 [eclipse_cs]: https://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
-[graal_jvmci_8]: https://github.com/graalvm/graal-jvmci-8/releases
 [graal]: https://github.com/oracle/graal
 [graalvm_slack]: https://www.graalvm.org/slack-invitation/
 [gu]: https://www.graalvm.org/docs/reference-manual/install-components/
