@@ -7,7 +7,6 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -72,17 +71,23 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new ClassObject(image, classObject, classObject.getBasicInstanceSize() + METACLASS.INST_SIZE);
     }
 
-    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!image.isMetaClass(classObject)", "!classObject.instancesAreClasses()",
-                    "classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
-    protected static final PointersObject doPointers(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
-                    @Cached(value = "classObject.getLayout()", allowUncached = true) final ObjectLayout cachedLayout) {
-        assert extraSize == 0;
+    @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
+    protected static final PointersObject doPointersCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
+                    @Cached("getPointersLayoutOrNull(image, classObject)") final ObjectLayout cachedLayout) {
+        assert extraSize == 0 && instantiatesPointersObject(image, classObject);
         return new PointersObject(image, classObject, cachedLayout);
     }
 
-    @TruffleBoundary
-    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!image.isMetaClass(classObject)", "!classObject.instancesAreClasses()"})
-    protected static final PointersObject doPointersFallback(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+    protected static final boolean instantiatesPointersObject(final SqueakImageContext image, final ClassObject classObject) {
+        return classObject.isNonIndexableWithInstVars() && !image.isMetaClass(classObject) && !classObject.instancesAreClasses();
+    }
+
+    protected static final ObjectLayout getPointersLayoutOrNull(final SqueakImageContext image, final ClassObject classObject) {
+        return instantiatesPointersObject(image, classObject) ? classObject.getLayout() : null;
+    }
+
+    @Specialization(guards = {"instantiatesPointersObject(image, classObject)"}, replaces = "doPointersCached")
+    protected static final PointersObject doPointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
         return new PointersObject(image, classObject);
     }
@@ -105,28 +110,43 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return BlockClosureObject.create(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!image.isMethodContextClass(classObject)", "!image.isBlockClosureClass(classObject)",
-                    "!image.isFullBlockClosureClass(classObject)", "classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
-    protected static final VariablePointersObject doVariablePointers(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
-                    @Cached(value = "classObject.getLayout()", allowUncached = true) final ObjectLayout cachedLayout) {
+    @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
+    protected static final VariablePointersObject doVariablePointersCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
+                    @Cached(value = "getVariablePointersLayoutOrNull(image, classObject)") final ObjectLayout cachedLayout) {
+        assert instantiatesVariablePointersObject(image, classObject);
         return new VariablePointersObject(image, classObject, cachedLayout, extraSize);
     }
 
-    @TruffleBoundary
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!image.isMethodContextClass(classObject)", "!image.isBlockClosureClass(classObject)"})
-    protected static final VariablePointersObject doVariablePointersFallback(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+    protected static final boolean instantiatesVariablePointersObject(final SqueakImageContext image, final ClassObject classObject) {
+        return classObject.isIndexableWithInstVars() && !image.isMethodContextClass(classObject) && !image.isBlockClosureClass(classObject) && !image.isFullBlockClosureClass(classObject);
+    }
+
+    protected static final ObjectLayout getVariablePointersLayoutOrNull(final SqueakImageContext image, final ClassObject classObject) {
+        return instantiatesVariablePointersObject(image, classObject) ? classObject.getLayout() : null;
+    }
+
+    @Specialization(guards = {"instantiatesVariablePointersObject(image, classObject)"}, replaces = "doVariablePointersCached")
+    protected static final VariablePointersObject doVariablePointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         return new VariablePointersObject(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isWeak()", "classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
-    protected static final WeakVariablePointersObject doWeakPointers(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
-                    @Cached(value = "classObject.getLayout()", allowUncached = true) final ObjectLayout cachedLayout) {
+    @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
+    protected static final WeakVariablePointersObject doWeakPointersCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
+                    @Cached(value = "getWeakPointersLayoutOrNull(classObject)") final ObjectLayout cachedLayout) {
+        assert instantiatesWeakVariablePointersObject(classObject);
         return new WeakVariablePointersObject(image, classObject, cachedLayout, extraSize);
     }
 
-    @TruffleBoundary
-    @Specialization(guards = "classObject.isWeak()")
-    protected static final WeakVariablePointersObject doWeakPointersFallback(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+    protected static final boolean instantiatesWeakVariablePointersObject(final ClassObject classObject) {
+        return classObject.isWeak();
+    }
+
+    protected static final ObjectLayout getWeakPointersLayoutOrNull(final ClassObject classObject) {
+        return instantiatesWeakVariablePointersObject(classObject) ? classObject.getLayout() : null;
+    }
+
+    @Specialization(guards = "instantiatesWeakVariablePointersObject(classObject)", replaces = "doWeakPointersCached")
+    protected static final WeakVariablePointersObject doWeakPointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         return new WeakVariablePointersObject(image, classObject, extraSize);
     }
 
