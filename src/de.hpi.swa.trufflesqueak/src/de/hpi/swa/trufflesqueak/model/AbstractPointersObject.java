@@ -153,7 +153,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     @TruffleBoundary
-    public final ObjectLayout updateLayout(final int index, final Object value) {
+    public final ObjectLayout updateLayout(final long index, final Object value) {
         assert !layout.getLocation(index).canStore(value);
         ObjectLayout latestLayout = getSqueakClass().getLayout();
         if (!latestLayout.getLocation(index).canStore(value)) {
@@ -289,12 +289,12 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return getLayout().getInstSize();
     }
 
-    public final Object instVarAt0Slow(final int index) {
+    public final Object instVarAt0Slow(final long index) {
         CompilerAsserts.neverPartOfCompilation();
         return AbstractPointersObjectReadNode.getUncached().execute(this, index);
     }
 
-    public final void instVarAtPut0Slow(final int index, final Object value) {
+    public final void instVarAtPut0Slow(final long index, final Object value) {
         CompilerAsserts.neverPartOfCompilation();
         AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
     }

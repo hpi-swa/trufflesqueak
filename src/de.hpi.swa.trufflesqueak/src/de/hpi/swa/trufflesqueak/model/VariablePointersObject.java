@@ -67,11 +67,11 @@ public final class VariablePointersObject extends AbstractPointersObject {
         return variablePart.length;
     }
 
-    public Object getFromVariablePart(final int index) {
+    public Object getFromVariablePart(final long index) {
         return UnsafeUtils.getObject(variablePart, index);
     }
 
-    public void putIntoVariablePart(final int index, final Object value) {
+    public void putIntoVariablePart(final long index, final Object value) {
         UnsafeUtils.putObject(variablePart, index, value);
     }
 

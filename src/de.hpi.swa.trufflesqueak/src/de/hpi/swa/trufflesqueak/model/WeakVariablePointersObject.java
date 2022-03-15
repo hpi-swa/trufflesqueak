@@ -91,7 +91,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         }
     }
 
-    public Object getFromVariablePart(final int index, final ConditionProfile weakRefProfile) {
+    public Object getFromVariablePart(final long index, final ConditionProfile weakRefProfile) {
         final Object value = UnsafeUtils.getObject(variablePart, index);
         if (weakRefProfile.profile(value instanceof WeakRef)) {
             return NilObject.nullToNil(((WeakRef) value).get());
@@ -105,7 +105,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         putIntoVariablePart(index, value, ConditionProfile.getUncached());
     }
 
-    public void putIntoVariablePart(final int index, final Object value, final ConditionProfile profile) {
+    public void putIntoVariablePart(final long index, final Object value, final ConditionProfile profile) {
         UnsafeUtils.putObject(variablePart, index, profile.profile(value instanceof AbstractSqueakObject) ? new WeakRef((AbstractSqueakObject) value, weakPointersQueue) : value);
     }
 

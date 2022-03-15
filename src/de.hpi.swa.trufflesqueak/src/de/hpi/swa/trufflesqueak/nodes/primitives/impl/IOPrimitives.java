@@ -489,7 +489,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
-                final int repOff = (int) (replStart - start);
+                final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
@@ -504,7 +504,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
-                final int repOff = (int) (replStart - start);
+                final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
@@ -666,7 +666,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 final int rcvrSize = rcvrSizeNode.execute(rcvr);
                 final int replSize = replSizeNode.execute(repl);
                 if (inBounds(rcvrSize, rcvrSize, start, stop, replSize, replSize, replStart)) {
-                    final int repOff = (int) (replStart - start);
+                    final long repOff = replStart - start;
                     for (int i = (int) (start - 1); i < stop; i++) {
                         writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                     }
@@ -717,7 +717,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
-                final int repOff = (int) (replStart - start);
+                final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
@@ -764,7 +764,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
-                final int repOff = (int) (replStart - start);
+                final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }

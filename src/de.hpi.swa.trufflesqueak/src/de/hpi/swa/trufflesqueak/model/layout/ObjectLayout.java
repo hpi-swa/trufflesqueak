@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class ObjectLayout {
     private final ClassObject squeakClass;
@@ -46,8 +47,9 @@ public final class ObjectLayout {
         numObjectExtension = countObjectExtension(locations);
     }
 
-    public ObjectLayout evolveLocation(final int index, final Object value) {
+    public ObjectLayout evolveLocation(final long longIndex, final Object value) {
         slowPathOperation();
+        final int index = Math.toIntExact(longIndex);
         if (!isValid()) {
             throw SqueakException.create("Only the latest layout should be evolved");
         }
@@ -213,8 +215,8 @@ public final class ObjectLayout {
         return squeakClass;
     }
 
-    public SlotLocation getLocation(final int index) {
-        return locations[index];
+    public SlotLocation getLocation(final long index) {
+        return (SlotLocation) UnsafeUtils.getObject(locations, index);
     }
 
     public SlotLocation[] getLocations() {

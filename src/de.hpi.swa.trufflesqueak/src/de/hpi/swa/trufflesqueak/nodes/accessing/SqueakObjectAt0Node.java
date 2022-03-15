@@ -54,13 +54,13 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     @Specialization
     protected static final Object doPointers(final PointersObject obj, final long index,
                     @Cached final AbstractPointersObjectReadNode readNode) {
-        return readNode.execute(obj, (int) index);
+        return readNode.execute(obj, index);
     }
 
     @Specialization
     protected static final Object doVariablePointers(final VariablePointersObject obj, final long index,
                     @Cached final VariablePointersObjectReadNode readNode) {
-        return readNode.execute(obj, (int) index);
+        return readNode.execute(obj, index);
     }
 
     @Specialization
@@ -72,7 +72,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     @Specialization
     protected static final Object doWeakPointersVariable(final WeakVariablePointersObject obj, final long index,
                     @Cached final WeakVariablePointersObjectReadNode readNode) {
-        return readNode.execute(obj, (int) index);
+        return readNode.execute(obj, index);
     }
 
     @Specialization
