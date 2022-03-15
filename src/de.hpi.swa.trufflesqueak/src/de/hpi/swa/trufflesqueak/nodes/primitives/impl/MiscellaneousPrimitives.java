@@ -71,6 +71,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -683,7 +684,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         "receiver.isByteType()", "anotherObject.isByteType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
         protected static final NativeObject doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
             final byte[] destStorage = receiver.getByteStorage();
-            System.arraycopy(anotherObject.getByteStorage(), 0, destStorage, 0, destStorage.length);
+            UnsafeUtils.copyBytes(anotherObject.getByteStorage(), 0L, destStorage, 0L, destStorage.length);
             return receiver;
         }
 
@@ -691,7 +692,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         "receiver.isShortType()", "anotherObject.isShortType()", "receiver.getShortLength() == anotherObject.getShortLength()"})
         protected static final NativeObject doCopyNativeShort(final NativeObject receiver, final NativeObject anotherObject) {
             final short[] destStorage = receiver.getShortStorage();
-            System.arraycopy(anotherObject.getShortStorage(), 0, destStorage, 0, destStorage.length);
+            UnsafeUtils.copyShorts(anotherObject.getShortStorage(), 0L, destStorage, 0L, destStorage.length);
             return receiver;
         }
 
@@ -699,7 +700,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         "receiver.isIntType()", "anotherObject.isIntType()", "receiver.getIntLength() == anotherObject.getIntLength()"})
         protected static final NativeObject doCopyNativeInt(final NativeObject receiver, final NativeObject anotherObject) {
             final int[] destStorage = receiver.getIntStorage();
-            System.arraycopy(anotherObject.getIntStorage(), 0, destStorage, 0, destStorage.length);
+            UnsafeUtils.copyInts(anotherObject.getIntStorage(), 0L, destStorage, 0L, destStorage.length);
             return receiver;
         }
 
@@ -707,7 +708,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         "receiver.isLongType()", "anotherObject.isLongType()", "receiver.getLongLength() == anotherObject.getLongLength()"})
         protected static final NativeObject doCopyNativeLong(final NativeObject receiver, final NativeObject anotherObject) {
             final long[] destStorage = receiver.getLongStorage();
-            System.arraycopy(anotherObject.getLongStorage(), 0, destStorage, 0, destStorage.length);
+            UnsafeUtils.copyLongs(anotherObject.getLongStorage(), 0L, destStorage, 0L, destStorage.length);
             return receiver;
         }
 

@@ -20,6 +20,42 @@ public final class UnsafeUtils {
     private UnsafeUtils() {
     }
 
+    public static void copyBytes(final byte[] src, final long srcPos, final byte[] dest, final long destPos, final long length) {
+        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_BYTE_BASE_OFFSET + srcPos * Unsafe.ARRAY_BYTE_INDEX_SCALE,
+                        dest, Unsafe.ARRAY_BYTE_BASE_OFFSET + destPos * Unsafe.ARRAY_BYTE_INDEX_SCALE, Byte.BYTES * length);
+    }
+
+    public static void copyChars(final char[] src, final long srcPos, final char[] dest, final long destPos, final long length) {
+        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_CHAR_BASE_OFFSET + srcPos * Unsafe.ARRAY_CHAR_INDEX_SCALE,
+                        dest, Unsafe.ARRAY_CHAR_BASE_OFFSET + destPos * Unsafe.ARRAY_CHAR_INDEX_SCALE, Character.BYTES * length);
+    }
+
+    public static void copyDoubles(final double[] src, final long srcPos, final double[] dest, final long destPos, final long length) {
+        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + srcPos * Unsafe.ARRAY_DOUBLE_INDEX_SCALE,
+                        dest, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + destPos * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, Double.BYTES * length);
+    }
+
+    public static void copyInts(final int[] src, final long srcPos, final int[] dest, final long destPos, final long length) {
+        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_INT_BASE_OFFSET + srcPos * Unsafe.ARRAY_INT_INDEX_SCALE,
+                        dest, Unsafe.ARRAY_INT_BASE_OFFSET + destPos * Unsafe.ARRAY_INT_INDEX_SCALE, Integer.BYTES * length);
+    }
+
+    public static void copyLongs(final long[] src, final long srcPos, final long[] dest, final long destPos, final long length) {
+        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_LONG_BASE_OFFSET + srcPos * Unsafe.ARRAY_LONG_INDEX_SCALE,
+                        dest, Unsafe.ARRAY_LONG_BASE_OFFSET + destPos * Unsafe.ARRAY_LONG_INDEX_SCALE, Long.BYTES * length);
+    }
+
+    public static void copyShorts(final short[] src, final long srcPos, final short[] dest, final long destPos, final long length) {
+        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_SHORT_BASE_OFFSET + srcPos * Unsafe.ARRAY_SHORT_INDEX_SCALE,
+                        dest, Unsafe.ARRAY_SHORT_BASE_OFFSET + destPos * Unsafe.ARRAY_SHORT_INDEX_SCALE, Short.BYTES * length);
+    }
+
     public static long getAddress(final Class<?> javaClass, final String fieldName) {
         try {
             return UNSAFE.objectFieldOffset(javaClass.getField(fieldName));
