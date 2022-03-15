@@ -79,7 +79,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
         protected static final double doDouble(final NativeObject receiver, final long index, final double value) {
-            receiver.getLongStorage()[(int) index - 1] = Double.doubleToRawLongBits((float) value);
+            receiver.setLong(index - 1, Double.doubleToRawLongBits((float) value));
             return value;
         }
 
