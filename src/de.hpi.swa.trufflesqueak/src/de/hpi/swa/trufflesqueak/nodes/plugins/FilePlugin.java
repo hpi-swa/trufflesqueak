@@ -111,7 +111,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected static PointersObject createFileHandleOrPrimFail(final SqueakImageContext image, final TruffleFile truffleFile, final boolean writableFlag) {
-        return PointersObject.newHandleWithHiddenObject(image, createChannelOrPrimFail(truffleFile, writableFlag));
+        return PointersObject.newHandleWithHiddenObject(image, createChannelOrPrimFail(image, truffleFile, writableFlag));
     }
 
     public static PointersObject createStdioFileHandle(final SqueakImageContext image, final byte type) {
@@ -119,9 +119,11 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    private static SeekableByteChannel createChannelOrPrimFail(final TruffleFile truffleFile, final boolean writableFlag) {
+    private static SeekableByteChannel createChannelOrPrimFail(final SqueakImageContext image, final TruffleFile truffleFile, final boolean writableFlag) {
         try {
-            return truffleFile.newByteChannel(writableFlag ? OPTIONS_WRITEABLE : OPTIONS_DEFAULT);
+            final SeekableByteChannel channel = truffleFile.newByteChannel(writableFlag ? OPTIONS_WRITEABLE : OPTIONS_DEFAULT);
+            image.env.registerOnDispose(channel);
+            return channel;
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
             log("Failed to create SeekableByteChannel", e);
             throw PrimitiveFailed.GENERIC_ERROR;
@@ -476,6 +478,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] bytes = getBytes(dst);
             assert readBytes % Integer.BYTES == 0 && readBytes == bytes.length;
             final long readInts = readBytes / Integer.BYTES;
+            // TODO: could use UnsafeUtils.copyMemory here?
             for (int index = 0; index < readInts; index++) {
                 target.setInt(startIndex - 1 + index, UnsafeUtils.getInt(bytes, index));
             }
