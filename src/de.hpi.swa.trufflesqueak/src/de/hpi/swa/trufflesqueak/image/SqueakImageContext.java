@@ -140,7 +140,7 @@ public final class SqueakImageContext {
     @CompilationFinal private SqueakDisplayInterface display;
     public final CheckForInterruptsState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
-    public final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
+    public final ReferenceQueue<AbstractSqueakObject> weakPointersQueue = new ReferenceQueue<>();
 
     /* Truffle */
     private final AllocationReporter allocationReporter;

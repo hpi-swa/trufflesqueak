@@ -787,7 +787,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         private static boolean hasPendingFinalizationsWithLogging(final SqueakImageContext image) {
-            final ReferenceQueue<Object> queue = image.weakPointersQueue;
+            final ReferenceQueue<AbstractSqueakObject> queue = image.weakPointersQueue;
             Reference<?> element = queue.poll();
             int count = 0;
             while (element != null) {
