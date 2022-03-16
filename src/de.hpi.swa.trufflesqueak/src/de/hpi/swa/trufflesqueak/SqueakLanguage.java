@@ -33,7 +33,8 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
                 interactive = true, //
                 internal = false, //
                 name = SqueakLanguageConfig.NAME, //
-                version = SqueakLanguageConfig.VERSION)
+                version = SqueakLanguageConfig.VERSION, //
+                website = SqueakLanguageConfig.WEBSITE)
 @ProvidedTags({StandardTags.StatementTag.class, StandardTags.CallTag.class, StandardTags.RootTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     private static final LanguageReference<SqueakLanguage> REFERENCE = LanguageReference.create(SqueakLanguage.class);

@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.utilities.AlwaysValidAssumption;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -33,7 +32,7 @@ public abstract class LookupClassGuard {
     protected abstract ClassObject getSqueakClassInternal(SqueakImageContext image);
 
     protected Assumption getIsValidAssumption() {
-        return AlwaysValidAssumption.INSTANCE;
+        return Assumption.ALWAYS_VALID;
     }
 
     public static LookupClassGuard create(final Object receiver) {
