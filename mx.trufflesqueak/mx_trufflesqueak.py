@@ -519,9 +519,9 @@ def _enable_local_compression():
 
 _enable_local_compression()
 
-mx_sdk_vm.register_vm_config('trufflesqueak', ['nfi', 'sdk', 'st', 'tfl'],
+mx_sdk_vm.register_vm_config('trufflesqueak', ['nfi', 'nfi-libffi', 'sdk', 'st', 'tfl'],
                                 _SUITE, env_file='trufflesqueak-jvm')
-mx_sdk_vm.register_vm_config('trufflesqueak-svm', ['cmp', 'nfi', 'sdk', 'st', 'svm', 'svmnfi', 'tfl', 'tflm'],
+mx_sdk_vm.register_vm_config('trufflesqueak-svm', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'svm', 'svmnfi', 'tfl', 'tflm'],
                                 _SUITE, env_file='trufflesqueak-svm')
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(

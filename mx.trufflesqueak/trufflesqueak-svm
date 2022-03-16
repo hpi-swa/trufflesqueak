@@ -1,2 +1,2 @@
 DEFAULT_DYNAMIC_IMPORTS=/trufflesqueak,/substratevm,/vm
-COMPONENTS=cmp,nfi,sdk,st,svm,svmnfi,tfl,tflm
+COMPONENTS=cmp,nfi-libffi,sdk,st,svm,svmnfi,tfl,tflm
