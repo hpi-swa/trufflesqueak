@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class CheckForInterruptsState {
     private static final String CHECK_FOR_INTERRUPTS_THREAD_NAME = "TruffleSqueakCheckForInterrupts";
@@ -133,7 +134,7 @@ public final class CheckForInterruptsState {
 
     protected boolean nextWakeUpTickTrigger() {
         if (nextWakeupTick != 0) {
-            final long time = System.currentTimeMillis();
+            final long time = MiscUtils.currentTimeMillis();
             if (time >= nextWakeupTick) {
                 LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick);
                 return true;
