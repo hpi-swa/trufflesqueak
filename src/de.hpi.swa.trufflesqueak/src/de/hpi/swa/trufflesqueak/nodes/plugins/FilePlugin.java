@@ -72,6 +72,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
 
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final SeekableByteChannel getChannelOrPrimFail(final PointersObject handle) {
             final Object hiddenObject = getChannelOrNil(handle);
             if (hiddenObject instanceof SeekableByteChannel) {
@@ -348,16 +349,16 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         protected static final Object doClose(final Object receiver, final PointersObject fd) {
             final Object channelOrNil = getChannelOrNil(fd);
-            if (channelOrNil instanceof SeekableByteChannel) {
-                closeFailsafe((SeekableByteChannel) channelOrNil);
+            if (channelOrNil != NilObject.SINGLETON) {
+                closeFailsafe(channelOrNil);
             }
             return receiver;
         }
 
         @TruffleBoundary
-        private static void closeFailsafe(final SeekableByteChannel channel) {
+        private static void closeFailsafe(final Object channel) {
             try {
-                channel.close();
+                ((SeekableByteChannel) channel).close();
             } catch (final IOException e) {
                 log("Failed to close file", e);
             }
