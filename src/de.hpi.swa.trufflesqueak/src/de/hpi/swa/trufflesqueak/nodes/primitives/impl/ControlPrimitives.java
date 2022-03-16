@@ -587,7 +587,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -811,7 +811,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -1232,7 +1232,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -1248,7 +1248,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -1264,7 +1264,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -1280,7 +1280,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -1296,7 +1296,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -1312,7 +1312,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -1328,7 +1328,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }

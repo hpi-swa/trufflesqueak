@@ -11,7 +11,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNode {
 
-    protected abstract AbstractPrimitiveNode getSingleton();
+    protected abstract AbstractSingletonPrimitiveNode getSingleton();
 
     @Override
     public final Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {

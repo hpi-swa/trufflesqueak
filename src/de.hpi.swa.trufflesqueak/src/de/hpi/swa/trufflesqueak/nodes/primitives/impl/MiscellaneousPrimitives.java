@@ -475,7 +475,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -737,7 +737,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -774,7 +774,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
@@ -789,7 +789,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Override
-        protected AbstractPrimitiveNode getSingleton() {
+        protected AbstractSingletonPrimitiveNode getSingleton() {
             return SINGLETON;
         }
     }
