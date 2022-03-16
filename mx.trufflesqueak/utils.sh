@@ -194,14 +194,16 @@ set-up-dependencies() {
   local java_version=$1
   local test_image="${2:-trufflesqueak}"
 
-  case "$(uname -s)" in
-    "Linux")
-      sudo apt update -qq && sudo apt install -qq libsdl2-dev
-      ;;
-    "Darwin")
-      HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
-      ;;
-  esac
+  if [[ "${BUILD_SVM:-}" == "true" ]]; then
+    case "$(uname -s)" in
+      "Linux")
+        sudo apt update -qq && sudo apt install -qq libsdl2-dev
+        ;;
+      "Darwin")
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
+        ;;
+    esac
+  fi
 
   # Repository was shallow copied and Git did not fetch tags, so fetch the tag
   # of the commit (if any) to make it available for other Git operations.
@@ -232,7 +234,9 @@ set-up-dependencies() {
   esac
 
   set-env "INSTALLABLE_JVM_TARGET" "$(installable-filename "${java_version}" "")"
-  set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
+  if [[ "${BUILD_SVM:-}" == "true" ]]; then
+    set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
+  fi
 }
 
 set-up-labsjdk() {
