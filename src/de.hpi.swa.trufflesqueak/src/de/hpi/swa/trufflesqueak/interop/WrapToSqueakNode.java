@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.strings.TruffleString;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -85,6 +86,13 @@ public abstract class WrapToSqueakNode extends AbstractNode {
     protected final NativeObject doString(final String value,
                     @Cached final ConditionProfile wideStringProfile) {
         return getContext().asString(value, wideStringProfile);
+    }
+
+    @Specialization
+    protected final NativeObject doTruffleString(final TruffleString value,
+                    @Cached final TruffleString.ToJavaStringNode toJavaString,
+                    @Cached final ConditionProfile wideStringProfile) {
+        return doString(toJavaString.execute(value), wideStringProfile);
     }
 
     @Specialization
