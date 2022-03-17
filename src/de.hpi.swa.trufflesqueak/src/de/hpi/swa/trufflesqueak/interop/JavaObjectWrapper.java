@@ -166,7 +166,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                     return !ArrayUtils.containsEqual(new String[]{"getCanonicalName", "getName", "getSimpleName", "isInstance", "toString"}, methodName);
                 case "SubstrateTruffleRuntime":
                 case "GraalTruffleRuntime": // superclass of SubstrateTruffleRuntime
-                    return !ArrayUtils.containsEqual(new String[]{"getCompileQueue", "getName", "toString"}, methodName);
+                    return !ArrayUtils.containsEqual(new String[]{"getCompileQueue", "getCompilationQueueSize", "getName", "toString"}, methodName);
                 case "BackgroundCompileQueue":
                     return !ArrayUtils.containsEqual(new String[]{"getQueueSize", "toString"}, methodName);
                 default:
