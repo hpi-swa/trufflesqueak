@@ -87,6 +87,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @TruffleBoundary(transferToInterpreterOnException = false)
     private static SqueakSocket getSocketOrPrimFail(final PointersObject socketHandle) {
         final Object socket = socketHandle.getHiddenObject();
         if (socket instanceof SqueakSocket) {
@@ -205,6 +206,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSocketLocalPortNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         /** Return the local port for this socket, or zero if no port has yet been assigned. */
         @Specialization
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doLocalPort(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 return getSocketOrPrimFail(sd).getLocalPort();
@@ -227,12 +229,17 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final PointersObject sd,
                         final long port) {
             try {
-                getSocketOrPrimFail(sd).listenOn(port, 0L);
+                listenOn(sd, port);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return receiver;
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static void listenOn(final PointersObject sd, final long port) throws IOException {
+            getSocketOrPrimFail(sd).listenOn(port, 0L);
         }
     }
 
@@ -249,12 +256,17 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long port,
                         final long backlogSize) {
             try {
-                getSocketOrPrimFail(sd).listenOn(port, backlogSize);
+                listenOn(sd, port, backlogSize);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return receiver;
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static void listenOn(final PointersObject sd, final long port, final long backlogSize) throws IOException {
+            getSocketOrPrimFail(sd).listenOn(port, backlogSize);
         }
     }
 
@@ -272,12 +284,17 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long backlogSize,
                         @SuppressWarnings("unused") final NativeObject interfaceAddress) {
             try {
-                getSocketOrPrimFail(sd).listenOn(port, backlogSize);
+                listenOn(sd, port, backlogSize);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return receiver;
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static void listenOn(final PointersObject sd, final long port, final long backlogSize) throws IOException {
+            getSocketOrPrimFail(sd).listenOn(port, backlogSize);
         }
     }
 
@@ -308,7 +325,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketConnectToPort")
     protected abstract static class PrimSocketConnectToPortNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @Specialization(guards = "hostAddress.isByteType()")
-        protected static final long doConntext(
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        protected static final long doConnectToPort(
                         @SuppressWarnings("unused") final Object receiver, final PointersObject sd,
                         final NativeObject hostAddress, final long port) {
             try {
@@ -327,6 +345,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketConnectionStatus")
     protected abstract static class PrimSocketConnectionStatusNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doStatus(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 return getSocketOrPrimFail(sd).getStatus().id();
@@ -343,11 +362,16 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
-                return getContext().asByteArray(getSocketOrPrimFail(sd).getRemoteAddress());
+                return getContext().asByteArray(getRemoteAddress(sd));
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Retrieving remote address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static byte[] getRemoteAddress(final PointersObject sd) throws IOException {
+            return getSocketOrPrimFail(sd).getRemoteAddress();
         }
     }
 
@@ -355,6 +379,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketRemotePort")
     protected abstract static class PrimSocketRemotePortNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doRemotePort(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 return getSocketOrPrimFail(sd).getRemotePort();
@@ -378,12 +403,16 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doGetOption(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option) {
             final SqueakImageContext image = getContext();
             try {
-                final String value = getSocketOrPrimFail(sd).getOption(option.asStringUnsafe());
-                return image.asArrayOfObjects(0L, image.asByteString(value));
+                return image.asArrayOfObjects(0L, image.asByteString(getOption(sd, option)));
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Retrieving socket option failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static String getOption(final PointersObject sd, final NativeObject option) throws IOException {
+            return getSocketOrPrimFail(sd).getOption(option.asStringUnsafe());
         }
     }
 
@@ -391,6 +420,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketReceiveDataAvailable")
     protected abstract static class PrimSocketReceiveDataAvailableNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final boolean doDataAvailable(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 return getSocketOrPrimFail(sd).isDataAvailable();
@@ -417,11 +447,16 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
-                return getContext().asByteArray(getSocketOrPrimFail(sd).getLocalAddress());
+                return getContext().asByteArray(getLocalAddress(sd));
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Retrieving local address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static byte[] getLocalAddress(final PointersObject sd) throws IOException {
+            return getSocketOrPrimFail(sd).getLocalAddress();
         }
     }
 
@@ -445,11 +480,16 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long count) {
 
             try {
-                return getSocketOrPrimFail(sd).sendData(buffer.getByteStorage(), (int) startIndex - 1, (int) count);
+                return sendData(sd, buffer.getByteStorage(), (int) startIndex - 1, (int) count);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Sending data failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static long sendData(final PointersObject sd, final byte[] data, final int start, final int count) throws IOException {
+            return getSocketOrPrimFail(sd).sendData(data, start, count);
         }
     }
 
@@ -459,7 +499,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doClose(final Object receiver, final PointersObject sd) {
             try {
-                getSocketOrPrimFail(sd).close();
+                close(sd);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Closing socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -474,7 +514,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doAbort(final Object receiver, final PointersObject sd) {
             try {
-                getSocketOrPrimFail(sd).close();
+                close(sd);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Closing socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -489,11 +529,16 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doSendDone(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
-                return BooleanObject.wrap(getSocketOrPrimFail(sd).isSendDone());
+                return BooleanObject.wrap(isSendDone(sd));
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Checking completed send failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static boolean isSendDone(final PointersObject sd) throws IOException {
+            return getSocketOrPrimFail(sd).isSendDone();
         }
     }
 
@@ -509,11 +554,16 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") final Object receiver, final PointersObject sd,
                         final NativeObject buffer, final long startIndex, final long count) {
             try {
-                return getSocketOrPrimFail(sd).receiveData(buffer.getByteStorage(), (int) startIndex - 1, (int) count);
+                return receiveData(sd, buffer.getByteStorage(), (int) startIndex - 1, (int) count);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Receiving data failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static long receiveData(final PointersObject sd, final byte[] data, final int start, final int count) throws IOException {
+            return getSocketOrPrimFail(sd).receiveData(data, start, count);
         }
     }
 
@@ -523,7 +573,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doDestroy(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
-                getSocketOrPrimFail(sd).close();
+                close(sd);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Destroying socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -550,15 +600,25 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             final SqueakSocket socket;
             try {
                 if (socketTypeProfile.profile(socketType == 1)) {
-                    socket = new SqueakUDPSocket();
+                    socket = createSqueakUDPSocket();
                 } else {
                     assert socketType == 0;
-                    socket = new SqueakTCPSocket();
+                    socket = createSqueakTCPSocket();
                 }
             } catch (final IOException e) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return PointersObject.newHandleWithHiddenObject(getContext(), socket);
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static SqueakUDPSocket createSqueakUDPSocket() throws IOException {
+            return new SqueakUDPSocket();
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static SqueakTCPSocket createSqueakTCPSocket() throws IOException {
+            return new SqueakTCPSocket();
         }
     }
 
@@ -567,7 +627,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractPrimitiveNode implements SeptenaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization
-        protected final PointersObject doWork(final Object receiver,
+        protected final PointersObject doAccept(final Object receiver,
                         final PointersObject sd,
                         final long receiveBufferSize,
                         final long sendBufSize,
@@ -575,11 +635,16 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long readSemaphoreIndex,
                         final long writeSemaphoreIndex) {
             try {
-                return PointersObject.newHandleWithHiddenObject(getContext(), getSocketOrPrimFail(sd).accept());
+                return PointersObject.newHandleWithHiddenObject(getContext(), accept(sd));
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Accepting socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static SqueakSocket accept(final PointersObject sd) throws IOException {
+            return getSocketOrPrimFail(sd).accept();
         }
     }
 
@@ -597,7 +662,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             // TODO: primitiveSocketCreate
             throw PrimitiveFailed.andTransferToInterpreter();
         }
+    }
 
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    private static void close(final PointersObject sd) throws IOException {
+        getSocketOrPrimFail(sd).close();
     }
 
     @Override

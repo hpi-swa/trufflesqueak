@@ -17,8 +17,6 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
@@ -47,11 +45,6 @@ public abstract class SqueakSocket {
 
     protected boolean listening;
 
-    /*
-     * TODO: Boundary does not seem to be needed on JDK11 and macOS/Linux. Split once TruffleSqueak
-     * has JDK-specific packages.
-     */
-    @TruffleBoundary
     protected SqueakSocket() throws IOException {
         selector = Selector.open();
         listening = false;
@@ -77,7 +70,6 @@ public abstract class SqueakSocket {
 
     protected abstract boolean isSendDone() throws IOException;
 
-    @TruffleBoundary
     protected final long sendData(final byte[] data, final int start, final int count) throws IOException {
         final ByteBuffer buffer = ByteBuffer.wrap(data, start, count);
         selector.selectNow();
@@ -97,7 +89,6 @@ public abstract class SqueakSocket {
 
     protected abstract long sendDataTo(ByteBuffer data, SelectionKey key) throws IOException;
 
-    @TruffleBoundary
     protected final boolean isDataAvailable() throws IOException {
         selector.selectNow();
         final Set<SelectionKey> keys = selector.selectedKeys();
@@ -112,7 +103,6 @@ public abstract class SqueakSocket {
         return false;
     }
 
-    @TruffleBoundary
     protected final long receiveData(final byte[] data, final int start, final int count) throws IOException {
         final ByteBuffer buffer = ByteBuffer.wrap(data, start, count);
         selector.selectNow();
@@ -136,7 +126,6 @@ public abstract class SqueakSocket {
         return asNetworkChannel().supportedOptions().stream().anyMatch(o -> o.name().equals(name));
     }
 
-    @TruffleBoundary
     protected final String getOption(final String name) throws IOException {
         final SocketOption<?> option = socketOptionFromString(name);
         final Object value = asNetworkChannel().getOption(option);
@@ -161,7 +150,6 @@ public abstract class SqueakSocket {
         asNetworkChannel().setOption(opt, (T) value);
     }
 
-    @TruffleBoundary
     protected void close() throws IOException {
         selector.close();
     }
