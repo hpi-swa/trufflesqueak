@@ -139,6 +139,7 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     env:
+      BUILD_SVM: true
       MX_PYTHON_VERSION: 3
     steps:
     - name: Clone TruffleSqueak repository
@@ -149,10 +150,11 @@ jobs:
       run: mx.trufflesqueak/utils.sh set-up-dependencies java17 cuis
     - name: Build TruffleSqueak and Graal compiler
       run: |
-        mx --dy /compiler build
-        echo "$(mx --dy /compiler graalvm-home)/bin" >> $GITHUB_PATH
+        mx --env trufflesqueak-svm build
+        echo "$(mx --env trufflesqueak-svm graalvm-home)/bin" >> $GITHUB_PATH
     - name: Run Cuis-Smalltalk tests on TruffleSqueak
-      run: trufflesqueak --jvm --headless --experimental-options --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+      run: trufflesqueak --native --headless --experimental-options --engine.TracePerformanceWarnings=all images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+      # run: trufflesqueak --native --headless --experimental-options --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
 
   aarch64-builds:
     strategy:
