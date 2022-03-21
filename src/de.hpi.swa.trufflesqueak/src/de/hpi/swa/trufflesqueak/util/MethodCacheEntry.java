@@ -16,9 +16,6 @@ public final class MethodCacheEntry {
     private NativeObject selector;
     private Object result;
 
-    public MethodCacheEntry() {
-    }
-
     public ClassObject getClassObject() {
         return classObject;
     }

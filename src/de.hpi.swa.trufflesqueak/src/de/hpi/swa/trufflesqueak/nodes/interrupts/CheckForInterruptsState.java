@@ -176,7 +176,7 @@ public final class CheckForInterruptsState {
         return shouldTriggerNoTimer;
     }
 
-    public void resetTriggers() {
+    private void resetTriggers() {
         shouldTrigger = false;
         shouldTriggerNoTimer = false;
     }

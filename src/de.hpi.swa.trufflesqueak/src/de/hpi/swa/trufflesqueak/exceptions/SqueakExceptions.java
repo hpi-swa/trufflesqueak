@@ -30,6 +30,7 @@ import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public final class SqueakExceptions {
 
+    @SuppressWarnings("static-method")
     @ExportLibrary(InteropLibrary.class)
     protected abstract static class AbstractSqueakException extends AbstractTruffleException {
         private static final long serialVersionUID = 1L;
@@ -51,17 +52,17 @@ public final class SqueakExceptions {
 
         @ExportMessage
         @TruffleBoundary
-        protected Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
+        protected final Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
             return toString();
         }
 
         @ExportMessage
-        protected boolean hasLanguage() {
+        protected final boolean hasLanguage() {
             return true;
         }
 
         @ExportMessage
-        protected Class<? extends TruffleLanguage<?>> getLanguage() {
+        protected final Class<? extends TruffleLanguage<?>> getLanguage() {
             return SqueakLanguage.class;
         }
     }

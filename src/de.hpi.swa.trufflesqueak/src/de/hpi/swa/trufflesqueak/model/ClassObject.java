@@ -6,9 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -238,7 +236,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.compiledMethodClass;
     }
 
-    public boolean includesBehavior(final ClassObject squeakClass) {
+    private boolean includesBehavior(final ClassObject squeakClass) {
         ClassObject current = this;
         while (current != null) {
             if (current == squeakClass) {
@@ -411,23 +409,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public CompiledCodeObject lookupMethodInMethodDictSlow(final NativeObject selector) {
         return (CompiledCodeObject) lookupInMethodDictSlow(selector);
-    }
-
-    @TruffleBoundary
-    public Object[] listInteropMembers() {
-        final List<String> methodNames = new ArrayList<>();
-        ClassObject lookupClass = this;
-        while (lookupClass != null) {
-            final VariablePointersObject methodDictObject = lookupClass.getMethodDict();
-            final Object[] methodDictVariablePart = methodDictObject.getVariablePart();
-            for (final Object methodSelector : methodDictVariablePart) {
-                if (methodSelector instanceof NativeObject) {
-                    methodNames.add(((NativeObject) methodSelector).asStringUnsafe().replace(':', '_'));
-                }
-            }
-            lookupClass = lookupClass.getSuperclassOrNull();
-        }
-        return methodNames.toArray(new String[0]);
     }
 
     public int getBasicInstanceSize() {

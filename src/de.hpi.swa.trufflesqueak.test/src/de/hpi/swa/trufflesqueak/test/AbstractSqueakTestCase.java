@@ -39,11 +39,11 @@ public abstract class AbstractSqueakTestCase {
     protected static SqueakImageContext image;
     protected static PointersObject nilClassBinding;
 
-    protected static CompiledCodeObject makeMethod(final byte[] bytes, final Object[] literals) {
+    protected static final CompiledCodeObject makeMethod(final byte[] bytes, final Object[] literals) {
         return new CompiledCodeObject(image, bytes, literals, image.compiledMethodClass);
     }
 
-    protected static CompiledCodeObject makeMethod(final Object[] literals, final int... intbytes) {
+    protected static final CompiledCodeObject makeMethod(final Object[] literals, final int... intbytes) {
         final byte[] bytes = new byte[intbytes.length + 1];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
@@ -55,15 +55,15 @@ public abstract class AbstractSqueakTestCase {
         return makeMethod(bytes, literals);
     }
 
-    protected static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
+    protected static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
         return CompiledCodeObject.makeHeader(true, numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
     }
 
-    protected CompiledCodeObject makeMethod(final int... intbytes) {
+    protected static final CompiledCodeObject makeMethod(final int... intbytes) {
         return makeMethod(new Object[]{makeHeader(0, 5, 14, false, true), nilClassBinding}, intbytes);
     }
 
-    protected static Object runMethod(final CompiledCodeObject code, final Object receiver, final Object... arguments) {
+    protected static final Object runMethod(final CompiledCodeObject code, final Object receiver, final Object... arguments) {
         final VirtualFrame frame = createTestFrame(code);
         Object result = null;
         try {
@@ -74,11 +74,11 @@ public abstract class AbstractSqueakTestCase {
         return result;
     }
 
-    protected ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver) {
+    protected static final ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver) {
         return createContext(code, receiver, ArrayUtils.EMPTY_ARRAY);
     }
 
-    protected static ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver, final Object[] arguments) {
+    protected static final ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver, final Object[] arguments) {
         final ContextObject testContext = ContextObject.create(image, code.getSqueakContextSize());
         testContext.setReceiver(receiver);
         testContext.setCodeObject(code);
@@ -96,34 +96,34 @@ public abstract class AbstractSqueakTestCase {
         return ExecuteTopLevelContextNode.create(image, null, testContext, false);
     }
 
-    protected Object runMethod(final Object receiver, final int... intbytes) {
+    protected static final Object runMethod(final Object receiver, final int... intbytes) {
         return runMethod(receiver, new AbstractSqueakObject[0], intbytes);
     }
 
-    protected Object runMethod(final Object receiver, final Object[] arguments, final int... intbytes) {
+    protected static final Object runMethod(final Object receiver, final Object[] arguments, final int... intbytes) {
         final CompiledCodeObject method = makeMethod(intbytes);
         return runMethod(method, receiver, arguments);
     }
 
-    protected Object runBinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
+    protected static final Object runBinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
         return runPrim(new Object[]{17104899L}, primCode, rcvr, arguments);
     }
 
-    protected Object runQuinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
+    protected static final Object runQuinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
         return runPrim(new Object[]{68222979L}, primCode, rcvr, arguments);
     }
 
-    protected Object runPrim(final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
+    protected static final Object runPrim(final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
         final CompiledCodeObject method = makeMethod(literals, 139, primCode & 0xFF, (primCode & 0xFF00) >> 8);
         return runMethod(method, rcvr, arguments);
     }
 
-    protected static VirtualFrame createTestFrame(final CompiledCodeObject code) {
+    protected static final VirtualFrame createTestFrame(final CompiledCodeObject code) {
         final Object[] arguments = FrameAccess.newWith(code, NilObject.SINGLETON, null, new Object[]{NilObject.SINGLETON});
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 
-    protected static SqueakImage loadImageContext(final String imagePath) {
+    protected static final SqueakImage loadImageContext(final String imagePath) {
         assert context == null && image == null;
         final Builder contextBuilder = Context.newBuilder();
         contextBuilder.allowAllAccess(true);
@@ -150,7 +150,7 @@ public abstract class AbstractSqueakTestCase {
         }
     }
 
-    protected static void destroyImageContext() {
+    protected static final void destroyImageContext() {
         // Close context if existing (for reloading mechanism).
         context.close(true);
         context = null;

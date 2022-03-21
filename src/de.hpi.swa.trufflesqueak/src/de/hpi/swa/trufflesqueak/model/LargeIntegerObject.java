@@ -475,11 +475,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public double doubleValue() {
-        return integer.doubleValue();
-    }
-
     /** {@link BigInteger#signum()} does not need a {@link TruffleBoundary}. */
     public boolean isZero() {
         return integer.signum() == 0;

@@ -23,6 +23,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
+@SuppressWarnings("static-method")
 public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPrimEquivalent() {

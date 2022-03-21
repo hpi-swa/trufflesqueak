@@ -441,7 +441,7 @@ public final class PushBytecodes {
     }
 
     public static final class PushNewArrayNode extends AbstractPushNode {
-        @Child protected ArrayNode arrayNode;
+        @Child private ArrayNode arrayNode;
 
         protected PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             super(code, index, numBytecodes);
@@ -469,7 +469,7 @@ public final class PushBytecodes {
         }
 
         protected static final class ArrayFromStackNode extends ArrayNode {
-            @Child protected FrameStackPopNNode popNNode;
+            @Child private FrameStackPopNNode popNNode;
 
             public ArrayFromStackNode(final int arraySize) {
                 super(arraySize);

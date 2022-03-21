@@ -397,7 +397,7 @@ public abstract class SlotLocation {
         }
     }
 
-    protected static int getPrimitiveUsedMask(final int index) {
+    private static int getPrimitiveUsedMask(final int index) {
         assert 0 <= index && index < Integer.SIZE;
         return 1 << index;
     }

@@ -226,7 +226,7 @@ public final class SendBytecodes {
             return dispatchNode.getSelector();
         }
 
-        protected Object peekAtReceiver(final VirtualFrame frame) {
+        private Object peekAtReceiver(final VirtualFrame frame) {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final int sp = FrameAccess.getStackPointer(frame);
@@ -235,7 +235,7 @@ public final class SendBytecodes {
             return peekAtReceiverNode.executeRead(frame);
         }
 
-        protected ClassObject popDirectedClass(final VirtualFrame frame) {
+        private ClassObject popDirectedClass(final VirtualFrame frame) {
             if (readDirectedClassNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 /* Decrement sp to pop directed class. */

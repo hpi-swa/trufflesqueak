@@ -41,10 +41,6 @@ public abstract class WrapToSqueakNode extends AbstractNode {
         return wrappedElements;
     }
 
-    public final ArrayObject executeList(final Object... values) {
-        return (ArrayObject) executeWrap(values);
-    }
-
     @Specialization
     protected static final boolean doBoolean(final boolean value) {
         return value;

@@ -63,7 +63,7 @@ public final class StartContextRootNode extends RootNode {
     }
 
     @ExplodeLoop
-    public void initializeFrame(final VirtualFrame frame) {
+    private void initializeFrame(final VirtualFrame frame) {
         if (writeTempNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final BlockClosureObject closure = FrameAccess.getClosure(frame);
@@ -88,8 +88,8 @@ public final class StartContextRootNode extends RootNode {
 
         // TODO: avoid nilling out of temp slots to allow slot specializations
         // Initialize remaining temporary variables with nil in newContext.
-        for (int i = 0; i < writeTempNodes.length; i++) {
-            writeTempNodes[i].executeWrite(frame, NilObject.SINGLETON);
+        for (final FrameStackWriteNode node : writeTempNodes) {
+            node.executeWrite(frame, NilObject.SINGLETON);
         }
     }
 

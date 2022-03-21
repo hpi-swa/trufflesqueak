@@ -280,12 +280,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 10)
     protected abstract static class PrimDivideNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)", "isIntegralWhenDividedBy(lhs, rhs)"})
-        public static final long doLong(final long lhs, final long rhs) {
+        protected static final long doLong(final long lhs, final long rhs) {
             return lhs / rhs;
         }
 
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"}, replaces = "doLong")
-        public final Object doLongFraction(final long lhs, final long rhs,
+        protected final Object doLongFraction(final long lhs, final long rhs,
                         @Cached final ConditionProfile fractionProfile,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             if (fractionProfile.profile(SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
@@ -297,7 +297,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        public final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
+        protected final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.createLongMinOverflowResult(getContext());
         }
 
@@ -351,13 +351,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 13)
     protected abstract static class PrimQuoNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
-        public static final long doLong(final long lhs, final long rhs) {
+        protected static final long doLong(final long lhs, final long rhs) {
             return lhs / rhs;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        public final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
+        protected final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.createLongMinOverflowResult(getContext());
         }
 
@@ -665,7 +665,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
             return lhs.floorMod(rhs);
         }
     }

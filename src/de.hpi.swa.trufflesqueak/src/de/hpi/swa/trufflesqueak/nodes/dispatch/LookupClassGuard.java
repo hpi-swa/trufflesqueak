@@ -65,9 +65,6 @@ public abstract class LookupClassGuard {
     private static final class NilGuard extends LookupClassGuard {
         private static final NilGuard SINGLETON = new NilGuard();
 
-        private NilGuard() {
-        }
-
         @Override
         protected boolean check(final Object receiver) {
             return receiver == NilObject.SINGLETON;
@@ -81,9 +78,6 @@ public abstract class LookupClassGuard {
 
     private static final class TrueGuard extends LookupClassGuard {
         private static final TrueGuard SINGLETON = new TrueGuard();
-
-        private TrueGuard() {
-        }
 
         @Override
         protected boolean check(final Object receiver) {
@@ -99,9 +93,6 @@ public abstract class LookupClassGuard {
     private static final class FalseGuard extends LookupClassGuard {
         private static final FalseGuard SINGLETON = new FalseGuard();
 
-        private FalseGuard() {
-        }
-
         @Override
         protected boolean check(final Object receiver) {
             return receiver == Boolean.FALSE;
@@ -115,9 +106,6 @@ public abstract class LookupClassGuard {
 
     private static final class SmallIntegerGuard extends LookupClassGuard {
         private static final SmallIntegerGuard SINGLETON = new SmallIntegerGuard();
-
-        private SmallIntegerGuard() {
-        }
 
         @Override
         protected boolean check(final Object receiver) {
@@ -133,9 +121,6 @@ public abstract class LookupClassGuard {
     private static final class CharacterGuard extends LookupClassGuard {
         private static final CharacterGuard SINGLETON = new CharacterGuard();
 
-        private CharacterGuard() {
-        }
-
         @Override
         protected boolean check(final Object receiver) {
             return receiver instanceof Character || receiver instanceof CharacterObject;
@@ -149,9 +134,6 @@ public abstract class LookupClassGuard {
 
     private static final class DoubleGuard extends LookupClassGuard {
         private static final DoubleGuard SINGLETON = new DoubleGuard();
-
-        private DoubleGuard() {
-        }
 
         @Override
         protected boolean check(final Object receiver) {
@@ -167,9 +149,6 @@ public abstract class LookupClassGuard {
     private static final class ContextObjectGuard extends LookupClassGuard {
         private static final ContextObjectGuard SINGLETON = new ContextObjectGuard();
 
-        private ContextObjectGuard() {
-        }
-
         @Override
         protected boolean check(final Object receiver) {
             return receiver instanceof ContextObject;
@@ -183,9 +162,6 @@ public abstract class LookupClassGuard {
 
     private static final class FloatObjectGuard extends LookupClassGuard {
         private static final ForeignObjectGuard SINGLETON = new ForeignObjectGuard();
-
-        private FloatObjectGuard() {
-        }
 
         @Override
         protected boolean check(final Object receiver) {
@@ -246,9 +222,6 @@ public abstract class LookupClassGuard {
 
     private static final class ForeignObjectGuard extends LookupClassGuard {
         private static final ForeignObjectGuard SINGLETON = new ForeignObjectGuard();
-
-        private ForeignObjectGuard() {
-        }
 
         @Override
         protected boolean check(final Object receiver) {

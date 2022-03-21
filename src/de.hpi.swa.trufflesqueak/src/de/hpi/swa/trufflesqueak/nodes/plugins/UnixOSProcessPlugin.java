@@ -529,7 +529,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @Override
-        protected String getFunctionSignature() {
+        protected final String getFunctionSignature() {
             return "(SINT32,SINT32):SINT32";
         }
     }
@@ -549,7 +549,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @Override
-        protected String getFunctionSignature() {
+        protected final String getFunctionSignature() {
             return "(SINT32,SINT32):SINT32";
         }
     }

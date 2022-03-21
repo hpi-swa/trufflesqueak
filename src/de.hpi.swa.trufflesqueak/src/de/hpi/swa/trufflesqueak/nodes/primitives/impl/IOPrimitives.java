@@ -517,7 +517,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
 
-            protected final ArrayObjectSizeNode getSizeNode() {
+            private ArrayObjectSizeNode getSizeNode() {
                 if (sizeNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     sizeNode = insert(ArrayObjectSizeNode.create());
