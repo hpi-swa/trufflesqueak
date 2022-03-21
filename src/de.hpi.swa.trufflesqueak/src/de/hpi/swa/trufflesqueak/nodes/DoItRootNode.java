@@ -16,7 +16,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
 public final class DoItRootNode extends RootNode {
-    @Child protected WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
+    @Child private WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
     private final SqueakImageContext image;
     private final Object maybeClosure;
 

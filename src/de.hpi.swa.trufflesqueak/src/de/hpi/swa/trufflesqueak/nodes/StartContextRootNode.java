@@ -63,7 +63,7 @@ public final class StartContextRootNode extends RootNode {
     }
 
     @ExplodeLoop
-    public void initializeFrame(final VirtualFrame frame) {
+    private void initializeFrame(final VirtualFrame frame) {
         if (writeTempNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final BlockClosureObject closure = FrameAccess.getClosure(frame);

@@ -44,7 +44,7 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class AbstractNormalReturnNode extends AbstractReturnNode {
-        @Child protected AbstractReturnKindNode returnNode;
+        @Child private AbstractReturnKindNode returnNode;
 
         protected AbstractNormalReturnNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
             super(code, index);

@@ -33,7 +33,7 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
     private static final int LOCAL_RETURN_PC = -2;
 
-    protected final CompiledCodeObject code;
+    private final CompiledCodeObject code;
     private final int initialPC;
     private SourceSection section;
 

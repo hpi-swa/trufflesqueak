@@ -152,7 +152,7 @@ jobs:
       run: |
         mx --env trufflesqueak-svm build
         echo "$(mx --env trufflesqueak-svm graalvm-home)/bin" >> $GITHUB_PATH
-    - name: Run Cuis-Smalltalk tests on TruffleSqueak
+    - name: Run Cuis-Smalltalk tests on TruffleSqueak Native
       run: trufflesqueak --native --headless --experimental-options --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
 
   aarch64-builds:

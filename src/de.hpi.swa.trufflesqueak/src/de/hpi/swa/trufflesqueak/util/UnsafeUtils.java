@@ -188,7 +188,7 @@ public final class UnsafeUtils {
         return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
-    public static Unsafe initUnsafe() {
+    private static Unsafe initUnsafe() {
         try {
             // Fast path when we are trusted.
             return Unsafe.getUnsafe();

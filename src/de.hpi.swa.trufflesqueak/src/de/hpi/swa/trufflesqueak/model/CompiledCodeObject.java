@@ -64,13 +64,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      * Literals are cached in the AST and bytes are represented by nodes, so this should not affect
      * performance. Find out why it does affect performance.
      */
-    @CompilationFinal(dimensions = 1) protected Object[] literals;
-    @CompilationFinal(dimensions = 1) protected byte[] bytes;
-    @CompilationFinal protected int numArgs;
-    @CompilationFinal protected int numLiterals;
-    @CompilationFinal protected boolean hasPrimitive;
-    @CompilationFinal protected boolean needsLargeFrame;
-    @CompilationFinal protected int numTemps;
+    @CompilationFinal(dimensions = 1) private Object[] literals;
+    @CompilationFinal(dimensions = 1) private byte[] bytes;
+    @CompilationFinal private int numArgs;
+    @CompilationFinal private int numLiterals;
+    @CompilationFinal private boolean hasPrimitive;
+    @CompilationFinal private boolean needsLargeFrame;
+    @CompilationFinal private int numTemps;
 
     private AbstractSqueakBytecodeDecoder decoder;
 
@@ -103,14 +103,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         bytes = bc;
     }
 
-    protected CompiledCodeObject(final CompiledCodeObject original) {
+    private CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
         frameDescriptor = original.frameDescriptor;
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
         decoder = original.decoder;
     }
 
-    protected CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
+    private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
         super(outerCode);
         outerCode.shadowBlocks.put(startPC, this);
 
@@ -222,7 +222,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         initializeCallTargetUnsafe();
     }
 
-    protected void initializeCallTargetUnsafe() {
+    private void initializeCallTargetUnsafe() {
         CompilerAsserts.neverPartOfCompilation();
         final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
         final RootNode rootNode;
@@ -322,7 +322,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return decoder.findLineNumber(this, index);
     }
 
-    protected void decodeHeader() {
+    private void decodeHeader() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final long header = (long) literals[0];
         numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);

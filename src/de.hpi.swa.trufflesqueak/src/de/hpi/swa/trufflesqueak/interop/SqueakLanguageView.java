@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.interop;
 
 import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -80,23 +79,6 @@ public final class SqueakLanguageView implements TruffleObject {
         final InteropLibrary interop = InteropLibrary.getFactory().getUncached(value);
         try {
             return !interop.hasLanguage(value) || interop.getLanguage(value) != SqueakLanguage.class;
-        } catch (final UnsupportedMessageException e) {
-            throw shouldNotReachHere(e);
-        }
-    }
-
-    @TruffleBoundary
-    public static Object forValue(final Object value) {
-        if (value == null) {
-            return null;
-        }
-        final InteropLibrary lib = InteropLibrary.getFactory().getUncached(value);
-        try {
-            if (lib.hasLanguage(value) && lib.getLanguage(value) == SqueakLanguage.class) {
-                return value;
-            } else {
-                return create(value);
-            }
         } catch (final UnsupportedMessageException e) {
             throw shouldNotReachHere(e);
         }

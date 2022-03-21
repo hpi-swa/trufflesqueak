@@ -335,7 +335,7 @@ public final class ArrayObjectNodes {
         }
 
         public static ArrayObjectCopyIntoObjectArrayNode createForFrameArguments() {
-            return ArrayObjectCopyIntoObjectArrayNodeGen.create(FrameAccess.getArgumentStartIndex());
+            return create(FrameAccess.getArgumentStartIndex());
         }
 
         public abstract void execute(Object[] target, ArrayObject obj);
