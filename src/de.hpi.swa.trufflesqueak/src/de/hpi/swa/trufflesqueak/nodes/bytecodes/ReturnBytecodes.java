@@ -10,6 +10,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -77,11 +78,13 @@ public final class ReturnBytecodes {
     }
 
     private static final class ReturnFromClosureNode extends AbstractReturnKindNode {
+        private final LoopConditionProfile loopProfile = LoopConditionProfile.create();
+
         @Override
         protected Object execute(final VirtualFrame frame, final Object returnValue) {
             assert FrameAccess.hasClosure(frame);
             // Target is sender of closure's home context.
-            final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+            final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext(this, loopProfile);
             if (homeContext.canReturnTo()) {
                 throw new NonLocalReturn(returnValue, homeContext.getFrameSender());
             } else {
@@ -157,6 +160,7 @@ public final class ReturnBytecodes {
 
     public abstract static class AbstractBlockReturnNode extends AbstractReturnNode {
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.createBinaryProfile();
+        private final LoopConditionProfile loopProfile = LoopConditionProfile.create();
 
         protected AbstractBlockReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -166,7 +170,7 @@ public final class ReturnBytecodes {
         public final Object executeReturnSpecialized(final VirtualFrame frame) {
             if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
                 // Target is sender of closure's home context.
-                final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+                final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext(this, loopProfile);
                 if (homeContext.canReturnTo()) {
                     throw new NonLocalReturn(getReturnValue(frame), homeContext.getFrameSender());
                 } else {

@@ -8,8 +8,10 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -42,5 +44,14 @@ public abstract class AbstractNode extends Node {
 
     protected final boolean isSemaphore(final PointersObject object) {
         return getContext().isSemaphoreClass(object.getSqueakClass());
+    }
+
+    protected final void profileAndReportLoopCount(final LoopConditionProfile loopProfile, final int count) {
+        profileAndReportLoopCount(this, loopProfile, count);
+    }
+
+    public static final void profileAndReportLoopCount(final Node node, final LoopConditionProfile loopProfile, final int count) {
+        loopProfile.profileCounted(count);
+        LoopNode.reportLoopCount(node, count);
     }
 }

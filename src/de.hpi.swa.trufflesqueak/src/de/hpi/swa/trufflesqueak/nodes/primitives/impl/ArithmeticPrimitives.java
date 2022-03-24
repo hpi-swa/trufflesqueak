@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
@@ -1041,14 +1042,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!matissa.isZero()", "!isZero(exponent)"}, rewriteOn = RespecializeException.class)
-        protected static final double doDoubleFinite(final FloatObject matissa, final long exponent) throws RespecializeException {
-            return ensureFinite(timesToPower(matissa.getValue(), exponent));
+        protected final double doDoubleFinite(final FloatObject matissa, final long exponent,
+                        @Cached final LoopConditionProfile loopProfile) throws RespecializeException {
+            return ensureFinite(timesToPower(loopProfile, matissa.getValue(), exponent));
         }
 
         @Specialization(guards = {"!matissa.isZero()", "!isZero(exponent)"}, replaces = "doDoubleFinite")
-        protected static final Object doDouble(final FloatObject matissa, final long exponent,
+        protected final Object doDouble(final FloatObject matissa, final long exponent,
+                        @Cached final LoopConditionProfile loopProfile,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(timesToPower(matissa.getValue(), exponent));
+            return boxNode.execute(timesToPower(loopProfile, matissa.getValue(), exponent));
         }
     }
 
@@ -1450,14 +1453,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isZero(matissa)", "!isZero(exponent)"}, rewriteOn = RespecializeException.class)
-        protected static final double doDoubleFinite(final double matissa, final long exponent) throws RespecializeException {
-            return ensureFinite(timesToPower(matissa, exponent));
+        protected final double doDoubleFinite(final double matissa, final long exponent,
+                        @Cached final LoopConditionProfile loopProfile) throws RespecializeException {
+            return ensureFinite(timesToPower(loopProfile, matissa, exponent));
         }
 
         @Specialization(guards = {"!isZero(matissa)", "!isZero(exponent)"}, replaces = "doDoubleFinite")
-        protected static final Object doDouble(final double matissa, final long exponent,
+        protected final Object doDouble(final double matissa, final long exponent,
+                        @Cached final LoopConditionProfile loopProfile,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(timesToPower(matissa, exponent));
+            return boxNode.execute(timesToPower(loopProfile, matissa, exponent));
         }
     }
 
@@ -1575,13 +1580,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractFloatArithmeticPrimitiveNode extends AbstractArithmeticPrimitiveNode {
         private static final long BIAS = 1023;
 
-        protected static final double timesToPower(final double matissa, final long exponent) {
+        protected final double timesToPower(final LoopConditionProfile loopProfile, final double matissa, final long exponent) {
             final double steps = Math.min(3, Math.ceil(Math.abs((double) exponent) / 1023));
             double result = matissa;
-            for (int i = 0; i < steps; i++) {
-                final double pow = Math.pow(2, Math.floor(((double) exponent + i) / steps));
-                assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
-                result *= pow;
+            int i = 0;
+            try {
+                for (; loopProfile.inject(i < steps); i++) {
+                    final double pow = Math.pow(2, Math.floor(((double) exponent + i) / steps));
+                    assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
+                    result *= pow;
+                }
+            } finally {
+                profileAndReportLoopCount(loopProfile, i);
             }
             return result;
         }

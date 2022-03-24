@@ -22,6 +22,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -470,14 +471,20 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected final void doArraysWithDifferenStorageTypes(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @Cached final ArrayObjectReadNode readNode,
                             @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 if (!inBounds(getSizeNode().execute(rcvr), start, stop, getSizeNode().execute(repl), replStart)) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 final long repOff = replStart - start;
-                for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                long i = start - 1;
+                try {
+                    for (; loopProfile.inject(i < stop); i++) {
+                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    }
+                } finally {
+                    profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                 }
             }
 
@@ -485,14 +492,20 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected final void doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
                             @Cached final VariablePointersObjectReadNode readNode,
                             @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 final long repOff = replStart - start;
-                for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                long i = start - 1;
+                try {
+                    for (; loopProfile.inject(i < stop); i++) {
+                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    }
+                } finally {
+                    profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                 }
             }
 
@@ -500,14 +513,20 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected final void doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakVariablePointersObject repl, final long replStart,
                             @Cached final WeakVariablePointersObjectReadNode readNode,
                             @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 final long repOff = replStart - start;
-                for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                long i = start - 1;
+                try {
+                    for (; loopProfile.inject(i < stop); i++) {
+                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    }
+                } finally {
+                    profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                 }
             }
 
@@ -658,18 +677,24 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract void execute(PointersObject rcvr, long start, long stop, Object repl, long replStart);
 
             @Specialization
-            protected static final void doPointers(final PointersObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
+            protected final void doPointers(final PointersObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
                             @Cached final AbstractPointersObjectInstSizeNode rcvrSizeNode,
                             @Cached final AbstractPointersObjectInstSizeNode replSizeNode,
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Cached final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 final int rcvrSize = rcvrSizeNode.execute(rcvr);
                 final int replSize = replSizeNode.execute(repl);
                 if (inBounds(rcvrSize, rcvrSize, start, stop, replSize, replSize, replStart)) {
                     final long repOff = replStart - start;
-                    for (int i = (int) (start - 1); i < stop; i++) {
-                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    long i = start - 1;
+                    try {
+                        for (; loopProfile.inject(i < stop); i++) {
+                            writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                        }
+                    } finally {
+                        profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                     }
                 } else {
                     errorProfile.enter();
@@ -678,11 +703,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
 
             @Specialization
-            protected static final void doPointersArray(final PointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+            protected final void doPointersArray(final PointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @Cached final AbstractPointersObjectInstSizeNode rcvrSizeNode,
                             @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
                             @Cached final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 final int rcvrSize = rcvrSizeNode.execute(rcvr);
                 if (!inBounds(rcvrSize, rcvrSize, start, stop, repl.instsize(), sizeNode.execute(repl), replStart)) {
@@ -690,8 +716,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 final long repOff = replStart - start;
-                for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                long i = start - 1;
+                try {
+                    for (; loopProfile.inject(i < stop); i++) {
+                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    }
+                } finally {
+                    profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                 }
             }
 
@@ -706,11 +737,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract void execute(VariablePointersObject rcvr, long start, long stop, Object repl, long replStart);
 
             @Specialization
-            protected static final void doVariablePointers(final VariablePointersObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
+            protected final void doVariablePointers(final VariablePointersObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
                             @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
                             @Cached final AbstractPointersObjectInstSizeNode replInstSizeNode,
                             @Cached final VariablePointersObjectReadNode readNode,
                             @Cached final VariablePointersObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 final int rcvrInstSize = rcvrInstSizeNode.execute(rcvr);
                 final int replInstSize = replInstSizeNode.execute(repl);
@@ -719,17 +751,23 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 final long repOff = replStart - start;
-                for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                long i = start - 1;
+                try {
+                    for (; loopProfile.inject(i < stop); i++) {
+                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    }
+                } finally {
+                    profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                 }
             }
 
             @Specialization
-            protected static final void doVariablePointersArray(final VariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+            protected final void doVariablePointersArray(final VariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
                             @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
                             @Cached final VariablePointersObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 final int rcvrInstSize = rcvrInstSizeNode.execute(rcvr);
                 if (!inBounds(rcvrInstSize, rcvrInstSize + rcvr.getVariablePartSize(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)) {
@@ -737,8 +775,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 final long repOff = replStart - start;
-                for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                long i = start - 1;
+                try {
+                    for (; loopProfile.inject(i < stop); i++) {
+                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    }
+                } finally {
+                    profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                 }
             }
 
@@ -753,11 +796,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract void execute(WeakVariablePointersObject rcvr, long start, long stop, Object repl, long replStart);
 
             @Specialization
-            protected static final void doWeakPointers(final WeakVariablePointersObject rcvr, final long start, final long stop, final WeakVariablePointersObject repl, final long replStart,
+            protected final void doWeakPointers(final WeakVariablePointersObject rcvr, final long start, final long stop, final WeakVariablePointersObject repl, final long replStart,
                             @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
                             @Cached final AbstractPointersObjectInstSizeNode replInstSizeNode,
                             @Cached final WeakVariablePointersObjectReadNode readNode,
                             @Cached final WeakVariablePointersObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 final int rcvrInstSize = rcvrInstSizeNode.execute(rcvr);
                 final int replInstSize = replInstSizeNode.execute(repl);
@@ -766,17 +810,23 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 final long repOff = replStart - start;
-                for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                long i = start - 1;
+                try {
+                    for (; loopProfile.inject(i < stop); i++) {
+                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    }
+                } finally {
+                    profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                 }
             }
 
             @Specialization
-            protected static final void doWeakPointersArray(final WeakVariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+            protected final void doWeakPointersArray(final WeakVariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
                             @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
                             @Cached final WeakVariablePointersObjectWriteNode writeNode,
+                            @Shared("loopProfile") @Cached final LoopConditionProfile loopProfile,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 final int rcvrInstSize = rcvrInstSizeNode.execute(rcvr);
                 if (!inBounds(rcvrInstSize, rcvrInstSize + rcvr.getVariablePartSize(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)) {
@@ -784,8 +834,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 final long repOff = replStart - start;
-                for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                long i = start - 1;
+                try {
+                    for (; loopProfile.inject(i < stop); i++) {
+                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                    }
+                } finally {
+                    profileAndReportLoopCount(loopProfile, (int) (i - (start - 1)));
                 }
             }
 

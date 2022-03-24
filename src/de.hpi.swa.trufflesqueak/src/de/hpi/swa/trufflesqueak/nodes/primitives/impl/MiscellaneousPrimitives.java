@@ -23,6 +23,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -607,8 +608,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 158)
     public abstract static class PrimCompareString2Node extends AbstractPrimCompareStringNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isByteType()", "other.isByteType()"})
-        protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other) {
-            return compareAsciiOrder(receiver, other) - 2L;
+        protected final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other,
+                        @Cached final LoopConditionProfile loopProfile) {
+            return compareAsciiOrder(loopProfile, receiver, other) - 2L;
         }
     }
 
@@ -616,22 +618,25 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 158)
     public abstract static class PrimCompareString3Node extends AbstractPrimCompareStringNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
-        protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
+        protected final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
+                        @Cached final LoopConditionProfile loopProfile,
                         @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
-            return compareAsciiOrder(receiver, other);
+            return compareAsciiOrder(loopProfile, receiver, other);
         }
 
         @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedOrder"}, limit = "1")
-        protected static final long doCompareCached(final NativeObject receiver, final NativeObject other,
+        protected final long doCompareCached(final NativeObject receiver, final NativeObject other,
                         @SuppressWarnings("unused") final NativeObject orderValue,
+                        @Cached final LoopConditionProfile loopProfile,
                         @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
-            return compare(receiver, other, cachedOrder);
+            return compare(loopProfile, receiver, other, cachedOrder);
         }
 
         @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
-        protected static final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue) {
-            return compare(receiver, other, orderValue);
+        protected final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue,
+                        @Cached final LoopConditionProfile loopProfile) {
+            return compare(loopProfile, receiver, other, orderValue);
         }
     }
 

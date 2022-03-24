@@ -11,12 +11,15 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
@@ -221,10 +224,16 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         return block;
     }
 
-    public ContextObject getHomeContext() {
+    public ContextObject getHomeContext(final Node node, final LoopConditionProfile loopProfile) {
         ContextObject currentContext = outerContext;
-        while (currentContext.hasClosure()) {
-            currentContext = currentContext.getClosure().getOuterContextOrNull();
+        int i = 0;
+        try {
+            while (loopProfile.inject(currentContext.hasClosure())) {
+                currentContext = currentContext.getClosure().getOuterContextOrNull();
+                i++;
+            }
+        } finally {
+            AbstractNode.profileAndReportLoopCount(node, loopProfile, i);
         }
         return currentContext;
     }
