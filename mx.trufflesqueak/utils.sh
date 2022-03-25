@@ -233,9 +233,10 @@ set-up-dependencies() {
       ;;
   esac
 
-  set-env "INSTALLABLE_JVM_TARGET" "$(installable-filename "${java_version}" "")"
   if [[ "${BUILD_SVM:-}" == "true" ]]; then
     set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
+  else
+    set-env "INSTALLABLE_JVM_TARGET" "$(installable-filename "${java_version}" "")"
   fi
 }
 

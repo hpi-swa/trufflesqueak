@@ -531,28 +531,30 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         'trufflesqueak:TRUFFLESQUEAK',
         'trufflesqueak:TRUFFLESQUEAK_SHARED',
     ],
-    support_distributions=[
-        'trufflesqueak:TRUFFLESQUEAK_HOME',
+    support_distributions=['trufflesqueak:TRUFFLESQUEAK_HOME'],
+    provided_executables=[
+        'bin/<cmd:trufflesqueak>',
     ],
-    launcher_configs=[
-        mx_sdk.LanguageLauncherConfig(
+    library_configs=[
+        mx_sdk.LanguageLibraryConfig(
             language=LANGUAGE_ID,
-            destination='bin/<exe:trufflesqueak>',
+            destination='lib/<lib:%svm>' % LANGUAGE_ID,
+            launchers=['bin/<exe:trufflesqueak-launcher>'],
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
-            extra_jvm_args=BASE_VM_ARGS,
             build_args=[
-                # '--pgo-instrument',  # (uncomment to enable profiling)
-                # '--pgo',  # (uncomment to recompile with profiling info)
+                '-H:+DumpThreadStacksOnSignal',
+                '-H:+DetectUserDirectoriesInImageHeap',
+                '-H:+TruffleCheckBlockListMethods',
             ],
         )
     ],
-    post_install_msg=(None if not _SVM else "\nNOTES:\n---------------\n" +
-            "TruffleSqueak (SVM) requires SDL2 to be installed on your system:\n" +
+    stability="experimental",
+    post_install_msg=(None if not _SVM else "\nTRUFFLESQUEAK NOTE:\n-------------------\n" +
+            "By default, TruffleSqueak runs in JVM mode (`trufflesqueak --jvm ...`). " +
+            "Running it in native mode (`trufflesqueak --native` ...) requires SDL2 to be installed on your system:\n" +
             "- On Debian/Ubuntu, you can install SDL2 via `sudo apt-get install libsdl2-2.0`.\n" +
-            "- On macOS, you can install SDL2 with Homebrew: `brew install sdl2`.\n\n" +
-            "The pre-compiled native image is used by default and does not include other languages. " +
-            "Run TruffleSqueak in JVM mode (via `trufflesqueak --jvm`) for polyglot access."),
+            "- On macOS, you can install SDL2 with Homebrew: `brew install sdl2`."),
 ))
 
 

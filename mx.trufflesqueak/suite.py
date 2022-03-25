@@ -219,6 +219,9 @@ suite = {
                 "README_TRUFFLESQUEAK.md": "file:README.md",
                 "lib/": "dependency:de.hpi.swa.trufflesqueak.ffi.native",
                 "native-image.properties": "file:mx.trufflesqueak/native-image.properties",
+                "bin/" : [
+                    "file:mx.trufflesqueak/launchers/<cmd:trufflesqueak>",
+                ],
             },
             "maven": False,
         },

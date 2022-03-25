@@ -39,7 +39,7 @@ GraalVM Updater, which can be installed with:
 
 ```bash
 $GRAALVM_HOME/bin/gu install -f -L \
-   "$(../mx/mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_JAVA11)"
+   "$(../mx/mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_SVM_JAVA11)"
 ```
 
 

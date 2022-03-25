@@ -66,7 +66,7 @@ jobs:
       run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }}
     - name: Build TruffleSqueak JVM component
       run: mx.trufflesqueak/utils.sh build-component trufflesqueak-jvm SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }} ${{ env.INSTALLABLE_JVM_TARGET }}
-      if: ${{ matrix.os != 'windows-latest' }}
+      if: ${{ env.BUILD_SVM != 'true' && matrix.os != 'windows-latest' }}
     - name: Build TruffleSqueak JVM component via cmd.exe
       shell: cmd
       run: |
@@ -88,16 +88,17 @@ jobs:
     - name: Build TruffleSqueak SVM component
       run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
       if: ${{ env.BUILD_SVM == 'true' }}
-    - name: Run SystemReporter on GraalVM
+    - name: Run SystemReporter on TruffleSqueak in JVM mode
       shell: bash
       run: ${{ env.TRUFFLESQUEAK_EXEC }} --jvm --code "SystemReporter new reportText asString" images/test-64bit.image
-    - name: Run SystemReporter on SubstrateVM
+    - name: Run SystemReporter on TruffleSqueak in native mode
       shell: bash
       run: ${{ env.TRUFFLESQUEAK_EXEC }} --native --code "SystemReporter new reportText asString" images/test-64bit.image
       if: ${{ env.BUILD_SVM == 'true' }}
     - name: Upload TruffleSqueak JVM component
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ env.BUILD_SVM != 'true' && matrix.os != 'windows-latest' }}
     - name: Upload TruffleSqueak SVM component
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}

@@ -187,7 +187,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected VMType getDefaultVMType() {
-        return VMType.Native;
+        return VMType.JVM;
     }
 
     private static boolean isExistingImageFile(final String fileName) {
