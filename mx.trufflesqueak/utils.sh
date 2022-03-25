@@ -219,7 +219,6 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
-  shallow-clone-graaljs
   download-trufflesqueak-icon
   if [[ "${test_image}" == "cuis" ]]; then
     download-cuis-test-image
@@ -292,6 +291,7 @@ shallow-clone-graalvm-project() {
 
 shallow-clone-graal() {
   shallow-clone-graalvm-project https://github.com/oracle/graal.git "${GRAAL_VERSION}"
+  echo "[graal repo (${GRAAL_VERSION}) cloned successfully]"
 }
 
 shallow-clone-graaljs() {
@@ -304,6 +304,7 @@ END
 )
   $(cd "${BASE_DIRECTORY}/../graal/vm/mx.vm" && python3 -c "${py_graaljs_export}")
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git "${GRAALJS_VERSION}"
+  echo "[graaljs repo (${GRAALJS_VERSION}) cloned successfully]"
 }
 
 eval "$@"
