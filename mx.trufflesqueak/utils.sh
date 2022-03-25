@@ -208,7 +208,7 @@ set-up-dependencies() {
   # Repository was shallow copied and Git did not fetch tags, so fetch the tag
   # of the commit (if any) to make it available for other Git operations.
   git -c protocol.version=2 fetch --prune --progress --no-recurse-submodules \
-    --depth=1 origin "+$(git rev-parse HEAD):refs/remotes/origin/master"
+    --depth=1 origin "+$(git rev-parse HEAD):refs/remotes/origin/main"
 
   set-up-mx
   shallow-clone-graal

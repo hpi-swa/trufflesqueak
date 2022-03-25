@@ -10,7 +10,7 @@ on:
       - gu-catalog.properties
   pull_request:
     branches:
-      - master
+      - main
     paths-ignore:
       - '**.md'
       - 'docs/**'

@@ -13,7 +13,7 @@ A [Squeak/Smalltalk][squeak] VM and Polyglot Programming Environment for the [Gr
 
 ```bash
 $GRAALVM_HOME/bin/gu \
-  -C https://raw.githubusercontent.com/hpi-swa/trufflesqueak/master/gu-catalog.properties \
+  -C https://raw.githubusercontent.com/hpi-swa/trufflesqueak/main/gu-catalog.properties \
   install smalltalk
 ```
 
@@ -78,7 +78,7 @@ Documentation is available in [`docs/`][ts_docs].
 
 ## Development
 
-Active development is done in the [`master` branch][ts_master].
+Active development is done in the [`main` branch][ts_main].
 Please feel free to open a [pull request][pull_request] if you'd like to
 contribute a bug-fix, documentation, or a new feature.
 For more information, for example on how to build TruffleSqueak from source or
@@ -238,17 +238,17 @@ TruffleSqueak is released under the [MIT license][ts_license].
 [sdr19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/PapeFelgentreffNiephausHirschfeld_2019_LetThemFailTowardsVmBuiltInBehaviorThatFallsBackToTheProgram_AcmDL.pdf
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
-[ts_docs]: https://github.com/hpi-swa/trufflesqueak/tree/master/docs
-[ts_dev_docs]: https://github.com/hpi-swa/trufflesqueak/blob/master/docs/development.md
+[ts_docs]: https://github.com/hpi-swa/trufflesqueak/tree/main/docs
+[ts_dev_docs]: https://github.com/hpi-swa/trufflesqueak/blob/main/docs/development.md
 [ts_gh_action]: https://github.com/hpi-swa/trufflesqueak/actions
 [ts_gh_action_badge]: https://img.shields.io/github/workflow/status/hpi-swa/trufflesqueak/CI
 [ts_issues]: https://github.com/hpi-swa/trufflesqueak/issues/new
 [ts_latest]: https://github.com/hpi-swa/trufflesqueak/releases/latest
 [ts_latest_badge]: https://img.shields.io/github/v/release/hpi-swa/trufflesqueak
-[ts_launcher]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.trufflesqueak.launcher/src/de/hpi/swa/trufflesqueak/launcher/TruffleSqueakLauncher.java
-[ts_license]: https://github.com/hpi-swa/trufflesqueak/blob/master/LICENSE
+[ts_launcher]: https://github.com/hpi-swa/trufflesqueak/blob/main/src/de.hpi.swa.trufflesqueak.launcher/src/de/hpi/swa/trufflesqueak/launcher/TruffleSqueakLauncher.java
+[ts_license]: https://github.com/hpi-swa/trufflesqueak/blob/main/LICENSE
 [ts_license_badge]: https://img.shields.io/github/license/hpi-swa/trufflesqueak
 [ts_logo]: https://user-images.githubusercontent.com/2368856/83736775-67f72280-a652-11ea-9785-35c2a688c0fc.png
-[ts_master]: https://github.com/hpi-swa/trufflesqueak/tree/master
+[ts_main]: https://github.com/hpi-swa/trufflesqueak/tree/main
 [ts_twitter]: https://twitter.com/TruffleSqueak
 [ts_twitter_badge]: https://img.shields.io/badge/twitter-%40TruffleSqueak-active

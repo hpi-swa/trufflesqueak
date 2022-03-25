@@ -1,6 +1,6 @@
 # Development
 
-Active development is done in the [`master` branch][ts_master].
+Active development is done in the [`main` branch][ts_main].
 Please feel free to open a [pull request][pull_request] if you'd like to
 contribute a bug-fix, documentation, or a new feature.
 In addition to the [issues][ts_issues], the [`TODO`s][ts_todos] and the
@@ -123,12 +123,12 @@ For additional help, feel free to join the `#trufflesqueak` channel on the
 [mx]: https://github.com/graalvm/mx
 [pull_request]: https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request
 [truffle_docs]: https://github.com/oracle/graal/tree/master/truffle/docs
-[ts_ci]: https://github.com/hpi-swa/trufflesqueak/blob/master/.github/workflows/ci.yml
-[ts_debug_utils]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/util/DebugUtils.java
+[ts_ci]: https://github.com/hpi-swa/trufflesqueak/blob/main/.github/workflows/ci.yml
+[ts_debug_utils]: https://github.com/hpi-swa/trufflesqueak/blob/main/src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/util/DebugUtils.java
 [ts_gha]: https://github.com/hpi-swa/trufflesqueak/actions
 [ts_issues]: https://github.com/hpi-swa/trufflesqueak/issues
-[ts_launcher]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.trufflesqueak.launcher/src/de/hpi/swa/trufflesqueak/launcher/TruffleSqueakLauncher.java
-[ts_log_utils]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/util/LogUtils.java
-[ts_master]: https://github.com/hpi-swa/trufflesqueak/tree/master
-[ts_test_map]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/tests.properties
+[ts_launcher]: https://github.com/hpi-swa/trufflesqueak/blob/main/src/de.hpi.swa.trufflesqueak.launcher/src/de/hpi/swa/trufflesqueak/launcher/TruffleSqueakLauncher.java
+[ts_log_utils]: https://github.com/hpi-swa/trufflesqueak/blob/main/src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/util/LogUtils.java
+[ts_main]: https://github.com/hpi-swa/trufflesqueak/tree/main
+[ts_test_map]: https://github.com/hpi-swa/trufflesqueak/blob/main/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/tests.properties
 [ts_todos]: https://github.com/hpi-swa/trufflesqueak/search?q=%22TODO%22
