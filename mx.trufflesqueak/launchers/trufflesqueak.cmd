@@ -23,7 +23,7 @@ set extra_args=%extra_args% --vm.-add-exports=java.base/jdk.internal.module=ALL-
 @REM Make Truffle.getRuntime() accessible for VM introspection
 set extra_args=%extra_args% --vm.-add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED
 @REM Enable access to HostObject and others
-set extra_args=%extra_args% --vm.-add-opens=org.graalvm.truff22le/com.oracle.truffle.host=ALL-UNNAMED
+set extra_args=%extra_args% --vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED
 @REM Enable access to Truffle's SourceSection (for retrieving sources through interop)
 set extra_args=%extra_args% --vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED
 
