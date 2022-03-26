@@ -14,6 +14,12 @@ import org.graalvm.nativeimage.c.CContext;
 
 public final class SDLCContext implements CContext.Directives {
     @Override
+    public boolean isInConfiguration() {
+        /* SDL2 backend only supported on Linux and Darwin */
+        return Platform.includedIn(Platform.LINUX.class) || Platform.includedIn(Platform.DARWIN.class);
+    }
+
+    @Override
     public List<String> getHeaderFiles() {
         return Collections.singletonList("<SDL2/SDL.h>");
     }

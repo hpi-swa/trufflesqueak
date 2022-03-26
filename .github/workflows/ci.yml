@@ -47,7 +47,6 @@ jobs:
         os: [ubuntu-latest, ubuntu-20.04-aarch64, macos-latest, windows-latest]
         java: [11, 17]
     env:
-      BUILD_SVM: "${{ matrix.os != 'windows-latest' && matrix.java != 17 }}"
       RUN_TESTS: "${{ matrix.os == 'ubuntu-latest' || matrix.java == 11 }}"
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-latest' && matrix.java == 17 }}"
       GRAALVM_HOME_ENV: "${{ matrix.os == 'windows-latest' && 'trufflesqueak-jvm' || 'trufflesqueak-svm' }}"
@@ -65,45 +64,36 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }}
-    - name: Build TruffleSqueak JVM component
-      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-jvm ${{ matrix.java }} ${{ env.INSTALLABLE_JVM_TARGET }}
-      if: ${{ env.BUILD_SVM != 'true' && matrix.os != 'windows-latest' }}
-    - name: Build TruffleSqueak JVM component via cmd.exe
+    - name: Build TruffleSqueak SVM component
+      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm ${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
+      if: ${{ matrix.os != 'windows-latest' }}
+    - name: Build TruffleSqueak SVM component via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env trufflesqueak-jvm --no-download-progress build --dependencies SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK_JAVA${{ matrix.java }}
-        call mx --env trufflesqueak-jvm graalvm-home > graalvm-home-with-forward-slashes.txt
+        call mx --env trufflesqueak-svm --no-download-progress build --dependencies SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK_SVM_JAVA${{ matrix.java }}
+        call mx --env trufflesqueak-svm graalvm-home > graalvm-home-with-forward-slashes.txt
         set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "GRAALVM_HOME=%GRAALVM_HOME:/=\%"
         echo %GRAALVM_HOME%\bin>>%GITHUB_PATH%
         echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
         echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
-        call mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }} > installable-path-with-forward-slashes.txt
+        call mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }} > installable-path-with-forward-slashes.txt
         set /p INSTALLABLE_PATH=<installable-path-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "INSTALLABLE_PATH=%INSTALLABLE_PATH:/=\%"
-        copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_JVM_TARGET }}
+        copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_SVM_TARGET }}
       if: ${{ matrix.os == 'windows-latest' }}
-    - name: Build TruffleSqueak SVM component
-      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm ${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
-      if: ${{ env.BUILD_SVM == 'true' }}
     - name: Run SystemReporter on TruffleSqueak in JVM mode
       shell: bash
       run: ${{ env.TRUFFLESQUEAK_EXEC }} --jvm --code "SystemReporter new reportText asString" images/test-64bit.image
     - name: Run SystemReporter on TruffleSqueak in native mode
       shell: bash
       run: ${{ env.TRUFFLESQUEAK_EXEC }} --native --code "SystemReporter new reportText asString" images/test-64bit.image
-      if: ${{ env.BUILD_SVM == 'true' }}
-    - name: Upload TruffleSqueak JVM component
-      shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ env.BUILD_SVM != 'true' && matrix.os != 'windows-latest' }}
     - name: Upload TruffleSqueak SVM component
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ env.BUILD_SVM == 'true' }}
     - name: Clone Graal.js repository
       shell: bash
       run: mx.trufflesqueak/utils.sh shallow-clone-graaljs

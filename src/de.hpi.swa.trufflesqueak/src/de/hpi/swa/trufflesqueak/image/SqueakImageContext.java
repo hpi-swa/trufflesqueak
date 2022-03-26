@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
+import org.graalvm.nativeimage.Platform;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -617,7 +619,14 @@ public final class SqueakImageContext {
     public void attachDisplayIfNecessary() {
         if (!isHeadless) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            display = TruffleOptions.AOT ? new SqueakSDL2Display(this) : new SqueakDisplay(this);
+            if (TruffleOptions.AOT) {
+                /* SDL2 backend only supported on Linux and Darwin */
+                if (Platform.includedIn(Platform.LINUX.class) || Platform.includedIn(Platform.DARWIN.class)) {
+                    display = new SqueakSDL2Display(this);
+                }
+            } else {
+                display = new SqueakDisplay(this);
+            }
         }
     }
 

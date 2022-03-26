@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.aot;
 
+import org.graalvm.nativeimage.Platform;
+import org.graalvm.nativeimage.Platforms;
 import org.graalvm.nativeimage.c.CContext;
 import org.graalvm.nativeimage.c.constant.CConstant;
 import org.graalvm.nativeimage.c.constant.CEnum;
@@ -32,6 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
  *
  */
 @CContext(SDLCContext.class)
+@Platforms({Platform.LINUX.class, Platform.DARWIN.class})
 public final class SDL {
     /*
      * SDL.h

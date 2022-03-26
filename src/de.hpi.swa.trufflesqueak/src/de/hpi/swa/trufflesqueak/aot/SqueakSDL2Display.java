@@ -10,6 +10,8 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 
 import org.graalvm.nativeimage.PinnedObject;
+import org.graalvm.nativeimage.Platform;
+import org.graalvm.nativeimage.Platforms;
 import org.graalvm.nativeimage.UnmanagedMemory;
 import org.graalvm.nativeimage.c.struct.SizeOf;
 import org.graalvm.nativeimage.c.type.CIntPointer;
@@ -49,6 +51,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.OS;
 
+@Platforms({Platform.LINUX.class, Platform.DARWIN.class})
 public final class SqueakSDL2Display implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak + SubstrateVM + SDL2";
 

@@ -548,6 +548,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
             build_args=[
+                '-H:+ReportExceptionStackTraces',
                 '-H:+DumpThreadStacksOnSignal',
                 '-H:+DetectUserDirectoriesInImageHeap',
                 '-H:+TruffleCheckBlockListMethods',
