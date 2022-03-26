@@ -52,6 +52,7 @@ jobs:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-latest' && matrix.java == 17 }}"
       GRAALVM_HOME_ENV: "${{ matrix.os == 'windows-latest' && 'trufflesqueak-jvm' || 'trufflesqueak-svm' }}"
       TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-latest' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
+      VERBOSE_GRAALVM_LAUNCHERS: true
       MX_PYTHON_VERSION: 3
     name: ${{ matrix.os }} + JDK${{ matrix.java }}
     timeout-minutes: 60
@@ -145,6 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BUILD_SVM: true
+      VERBOSE_GRAALVM_LAUNCHERS: true
       MX_PYTHON_VERSION: 3
     steps:
     - name: Clone TruffleSqueak repository
