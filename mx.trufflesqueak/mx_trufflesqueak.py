@@ -14,6 +14,7 @@ import sys
 import mx
 import mx_gate
 import mx_sdk
+import mx_sdk_vm
 import mx_truffle
 import mx_unittest
 
@@ -518,6 +519,10 @@ def _enable_local_compression():
 
 _enable_local_compression()
 
+mx_sdk_vm.register_vm_config('trufflesqueak', ['nfi', 'sdk', 'st', 'tfl'],
+                                _SUITE, env_file='trufflesqueak-jvm')
+mx_sdk_vm.register_vm_config('trufflesqueak-svm', ['cmp', 'nfi', 'sdk', 'st', 'svm', 'svmnfi', 'tfl', 'tflm'],
+                                _SUITE, env_file='trufflesqueak-svm')
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_SUITE,

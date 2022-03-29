@@ -43,11 +43,18 @@ add-path() {
 
 build-component() {
   local env_name=$1
-  local component_name=$2
+  local java_version=$2
   local target=$3
   local graalvm_home="$(mx --env "${env_name}" graalvm-home)"
 
-  mx --env "${env_name}" --no-download-progress build
+  local infix=""
+  if [[ "${env_name}" == "trufflesqueak-svm" ]]; then
+    infix="_SVM"
+  fi
+  local distro_name="GRAALVM_TRUFFLESQUEAK${infix}_JAVA${java_version}"
+  local component_name="SMALLTALK_INSTALLABLE${infix}_JAVA${java_version}"
+
+  mx --env "${env_name}" --no-download-progress build --dependencies "${component_name},${distro_name}"
   cp $(mx --env "${env_name}" paths "${component_name}") "${target}"
 
   add-path "${graalvm_home}/bin"

@@ -65,13 +65,13 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }}
     - name: Build TruffleSqueak JVM component
-      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-jvm SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }} ${{ env.INSTALLABLE_JVM_TARGET }}
+      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-jvm ${{ matrix.java }} ${{ env.INSTALLABLE_JVM_TARGET }}
       if: ${{ env.BUILD_SVM != 'true' && matrix.os != 'windows-latest' }}
     - name: Build TruffleSqueak JVM component via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env trufflesqueak-jvm --no-download-progress build
+        call mx --env trufflesqueak-jvm --no-download-progress build --dependencies SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK_JAVA${{ matrix.java }}
         call mx --env trufflesqueak-jvm graalvm-home > graalvm-home-with-forward-slashes.txt
         set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
         setlocal enabledelayedexpansion
@@ -86,7 +86,7 @@ jobs:
         copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_JVM_TARGET }}
       if: ${{ matrix.os == 'windows-latest' }}
     - name: Build TruffleSqueak SVM component
-      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
+      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm ${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
       if: ${{ env.BUILD_SVM == 'true' }}
     - name: Run SystemReporter on TruffleSqueak in JVM mode
       shell: bash
@@ -151,7 +151,7 @@ jobs:
       run: mx.trufflesqueak/utils.sh set-up-dependencies java17 cuis
     - name: Build TruffleSqueak and Graal compiler
       run: |
-        mx --env trufflesqueak-svm build
+        mx --env trufflesqueak-svm build --dependencies GRAALVM_TRUFFLESQUEAK_SVM_JAVA17
         echo "$(mx --env trufflesqueak-svm graalvm-home)/bin" >> $GITHUB_PATH
     - name: Run Cuis-Smalltalk tests on TruffleSqueak
       run: trufflesqueak --native --headless --experimental-options --engine.TracePerformanceWarnings=all images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
