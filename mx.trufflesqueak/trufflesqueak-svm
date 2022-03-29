@@ -1,2 +1,3 @@
 DEFAULT_DYNAMIC_IMPORTS=/trufflesqueak,/substratevm,/vm
+EXCLUDE_COMPONENTS=llp
 COMPONENTS=TruffleSqueak,Truffle NFI,SubstrateVM
