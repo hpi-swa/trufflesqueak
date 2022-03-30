@@ -15,6 +15,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -107,6 +108,9 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
         protected static final Object doReadHeader(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source,
                         @SuppressWarnings("unused") final NativeObject aJPEGErrorMgr2Struct) {
+            if (TruffleOptions.AOT) { /* ImageIO not yet working properly when AOT-compiled. */
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
             final BufferedImage image = readImageOrPrimFail(source);
             UnsafeUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 0, image.getHeight());
             UnsafeUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 1, image.getWidth());
@@ -132,6 +136,9 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         protected static final Object doRead(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source, final PointersObject form,
                         final boolean ditherFlag, final NativeObject aJPEGErrorMgr2Struct,
                         @Cached final AbstractPointersObjectReadNode readNode) {
+            if (TruffleOptions.AOT) { /* ImageIO not yet working properly when AOT-compiled. */
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
             final NativeObject bits = readNode.executeNative(form, FORM.BITS);
             final int width = readNode.executeInt(form, FORM.WIDTH);
             final int height = readNode.executeInt(form, FORM.HEIGHT);
@@ -163,6 +170,9 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         protected static final long doWrite(final Object receiver, final NativeObject aJPEGCompressStruct, final NativeObject destination, final PointersObject form,
                         final long quality, final boolean progressiveFlag, final NativeObject aJPEGErrorMgr2Struct,
                         @Cached final AbstractPointersObjectReadNode readNode) {
+            if (TruffleOptions.AOT) { /* ImageIO not yet working properly when AOT-compiled. */
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
             final NativeObject bits = readNode.executeNative(form, FORM.BITS);
             final int width = readNode.executeInt(form, FORM.WIDTH);
             final int height = readNode.executeInt(form, FORM.HEIGHT);

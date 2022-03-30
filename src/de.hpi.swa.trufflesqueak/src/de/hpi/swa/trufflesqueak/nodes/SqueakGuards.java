@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.TruffleOptions;
-
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -56,10 +54,6 @@ public final class SqueakGuards {
 
     public static boolean isAbstractSqueakObject(final Object object) {
         return object instanceof AbstractSqueakObject;
-    }
-
-    public static boolean isAOT() {
-        return TruffleOptions.AOT;
     }
 
     public static boolean isArrayObject(final Object object) {
