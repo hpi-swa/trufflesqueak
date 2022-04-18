@@ -30,10 +30,10 @@ jobs:
       run: |
         sudo pip install --quiet astroid==1.1.0 pylint==1.1.0
         # Download Eclipse SDK
-        eclipse_tar_path="${HOME}/eclipse.tar.gz"
+        eclipse_tar_path="${RUNNER_TEMP}/eclipse.tar.gz"
         wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.14-201912100610/eclipse-SDK-4.14-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
-        tar -xzf ${eclipse_tar_path} -C ${HOME}
-        echo "ECLIPSE_EXE=${HOME}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
+        tar -xzf ${eclipse_tar_path} -C ${RUNNER_TEMP}
+        echo "ECLIPSE_EXE=${RUNNER_TEMP}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
         echo "JDT=builtin" >> "${GITHUB_ENV}" # required by mx
         # Set up mx, oracle/graal, and LabsJDK11
         mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-11 ~/"

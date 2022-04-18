@@ -194,7 +194,7 @@ resolve-path() {
 
 set-env() {
   echo "$1=$2" >> $GITHUB_ENV
-  echo "export $1=\"$2\"" >> "${HOME}/all_env_vars"
+  echo "export $1=\"$2\"" >> "${RUNNER_TEMP}/all_env_vars"
 }
 
 set-up-dependencies() {
@@ -204,7 +204,7 @@ set-up-dependencies() {
   if [[ "${BUILD_SVM:-}" == "true" ]]; then
     case "$(uname -s)" in
       "Linux")
-        sudo apt update -qq && sudo apt install -qq libsdl2-dev
+        sudo apt update --quiet --yes && sudo apt install --quiet --yes libsdl2-dev
         ;;
       "Darwin")
         HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
@@ -249,19 +249,19 @@ set-up-dependencies() {
 
 set-up-labsjdk() {
   local jdk_id=$1
-  local target_dir="${HOME}/jdk"
-  local dl_dir="${HOME}/jdk-dl"
+  local target_dir="${RUNNER_TEMP}/jdk"
+  local dl_dir="${RUNNER_TEMP}/jdk-dl"
   local mx_suffix="" && [[ "${OS_NAME}" == "windows" ]] && mx_suffix=".cmd"
   mkdir "${dl_dir}"
-  "${HOME}/mx/mx${mx_suffix}" --quiet --java-home= fetch-jdk --jdk-id "${jdk_id}" --to "${dl_dir}" --alias "${target_dir}"
+  "${RUNNER_TEMP}/mx/mx${mx_suffix}" --quiet --java-home= fetch-jdk --jdk-id "${jdk_id}" --to "${dl_dir}" --alias "${target_dir}"
   enable-jdk "${target_dir}${JAVA_HOME_SUFFIX}"
   echo "[${jdk_id} set up successfully]"
 }
 
 set-up-mx() {
-  shallow-clone "https://github.com/graalvm/mx.git" "${MX_VERSION}" "${HOME}/mx"
-  add-path "${HOME}/mx"
-  set-env "MX_HOME" "${HOME}/mx"
+  shallow-clone "https://github.com/graalvm/mx.git" "${MX_VERSION}" "${RUNNER_TEMP}/mx"
+  add-path "${RUNNER_TEMP}/mx"
+  set-env "MX_HOME" "${RUNNER_TEMP}/mx"
   echo "[mx (${MX_VERSION}) set up successfully]"
 }
 
