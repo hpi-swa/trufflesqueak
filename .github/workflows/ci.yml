@@ -40,11 +40,11 @@ jobs:
     - name: Check style and perform full build
       run: mx gate --strict-mode --tags style,fullbuild
 
-  amd64-builds:
+  builds:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, ubuntu-20.04-aarch64, macos-latest, windows-latest]
         java: [11, 17]
     env:
       BUILD_SVM: "${{ matrix.os != 'windows-latest' && matrix.java != 17 }}"
@@ -156,35 +156,3 @@ jobs:
     - name: Run Cuis-Smalltalk tests on TruffleSqueak
       run: trufflesqueak --native --headless --experimental-options --engine.TracePerformanceWarnings=all images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
       # run: trufflesqueak --native --headless --experimental-options --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
-
-  aarch64-builds:
-    strategy:
-      fail-fast: false
-      matrix:
-        java: [11, 17]
-    name: ubuntu-20.04/aarch64 + JDK${{ matrix.java }}
-    timeout-minutes: 30
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Clone TruffleSqueak repository
-        uses: actions/checkout@v2
-      - name: Build and test TruffleSqueak component
-        uses: uraimo/run-on-arch-action@v2.0.7
-        id: build_aarch64
-        with:
-          arch: aarch64
-          distro: ubuntu20.04
-          run: |
-            apt update && apt install -y build-essential curl git python3 unzip
-            mx.trufflesqueak/utils.sh "set-up-dependencies java${{ matrix.java }}"
-            source "${HOME}/all_env_vars"
-            export PATH="${MX_HOME}:${PATH}"
-            mx --env trufflesqueak-jvm --no-download-progress build --dependencies=SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }}
-            cp "$(mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }})" "${INSTALLABLE_JVM_TARGET}"
-            echo ::set-output name=installable_jvm::${INSTALLABLE_JVM_TARGET}
-          env: |
-            GITHUB_PATH: $GITHUB_PATH
-            GITHUB_ENV: $GITHUB_ENV
-            MX_PYTHON_VERSION: 3
-      - name: Upload TruffleSqueak component
-        run: mx.trufflesqueak/utils.sh deploy-asset ${{ steps.build_aarch64.outputs.installable_jvm }} ${{ secrets.GITHUB_TOKEN }}
