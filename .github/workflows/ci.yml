@@ -67,6 +67,12 @@ jobs:
     - name: Build TruffleSqueak SVM component
       run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm ${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
       if: ${{ matrix.os != 'windows-latest' }}
+    - name: Configure pagefile # this reduces OOM kills on Windows
+      uses: al-cheb/configure-pagefile-action@v1.2
+      with:
+        minimum-size: 8GB
+        disk-root: "C:"
+      if: ${{ matrix.os == 'windows-latest' }}
     - name: Build TruffleSqueak SVM component via cmd.exe
       shell: cmd
       run: |
