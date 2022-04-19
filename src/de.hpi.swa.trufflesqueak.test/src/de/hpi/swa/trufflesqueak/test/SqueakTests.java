@@ -35,16 +35,16 @@ public final class SqueakTests {
     private static final String TEST_TYPE_PREFIX_WINDOWS = "WINDOWS_";
 
     public enum TestType {
-        BROKEN_IN_SQUEAK("Broken in Squeak"),
-        EXPECTED_FAILURE("Expected failure"),
-        FAILING("Failing"),
-        FLAKY("Flaky"),
-        IGNORED("Ignored"), // unable to run (e.g., OOM, ...)
-        NOT_TERMINATING("Not Terminating"),
         PASSING("Passing"),
         PASSING_WITH_NFI("Passing with NFI"),
+        SLOWLY_PASSING("Passing, but slow"),
+        FLAKY("Flaky"),
+        EXPECTED_FAILURE("Expected failure"),
+        FAILING("Failing"),
         SLOWLY_FAILING("Failing and slow"),
-        SLOWLY_PASSING("Passing, but slow");
+        NOT_TERMINATING("Not Terminating"),
+        BROKEN_IN_SQUEAK("Broken in Squeak"),
+        IGNORED("Ignored"); // unable to run (e.g., OOM, ...)
 
         private final String message;
 
@@ -158,7 +158,7 @@ public final class SqueakTests {
         final Properties properties = loadProperties();
         return properties.stringPropertyNames().stream() //
                         .map(test -> parseTest(test, properties.getProperty(test))) //
-                        .sorted(Comparator.comparing(t -> t.qualifiedName().toLowerCase()));
+                        .sorted(Comparator.comparing((final SqueakTest t) -> t.type).thenComparing((final SqueakTest t) -> t.qualifiedName()));
     }
     // Checkstyle: resume
 
