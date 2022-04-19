@@ -228,7 +228,7 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static void print(final TestType type, final Map<TestType, Long> counts, final String color) {
         // Checkstyle: stop
-        System.out.printf("%s%5d %s tests%s\n",
+        System.out.printf("%s%5s %s tests%s%n",
                         color,
                         counts.getOrDefault(type, 0L),
                         type.getMessage(),

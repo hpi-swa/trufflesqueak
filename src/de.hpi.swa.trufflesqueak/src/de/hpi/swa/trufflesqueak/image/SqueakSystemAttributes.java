@@ -256,7 +256,7 @@ public final class SqueakSystemAttributes {
         } catch (final HeadlessException e) {
             /* Report 0 x 0 in headless mode. */
         }
-        return asByteString(String.format("Display Information: \n\tPrimary monitor resolution: %d x %d\n", width, height));
+        return asByteString(String.format("Display Information: \n\tPrimary monitor resolution: %s x %s\n", width, height));
     }
 
     private NativeObject asByteString(final String value) {

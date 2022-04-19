@@ -63,7 +63,7 @@ public final class SqueakImageLocator {
         int selection;
         final Scanner userInput = new Scanner(System.in);
         for (int i = 0; i < supportedImages.length; i++) {
-            out.println(String.format("%d) %s", i + 1, supportedImages[i][0]));
+            out.println(String.format("%s) %s", i + 1, supportedImages[i][0]));
         }
         out.print("Choose Smalltalk image: ");
         selection = -1;
