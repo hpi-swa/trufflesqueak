@@ -199,7 +199,6 @@ set-env() {
 
 set-up-dependencies() {
   local java_version=$1
-  local test_image="${2:-trufflesqueak}"
 
   case "$(uname -s)" in
     "Linux")
@@ -218,11 +217,7 @@ set-up-dependencies() {
   set-up-mx
   shallow-clone-graal
   download-trufflesqueak-icon
-  if [[ "${test_image}" == "cuis" ]]; then
-    download-cuis-test-image
-  else
-    download-trufflesqueak-test-image
-  fi
+  download-trufflesqueak-test-image
 
   case "${java_version}" in
     "java11")

@@ -100,6 +100,11 @@ jobs:
     - name: Upload TruffleSqueak SVM component
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run Cuis-Smalltalk tests on TruffleSqueak in native mode
+      run: |
+        mx.trufflesqueak/utils.sh download-cuis-test-image
+        trufflesqueak --native --headless --experimental-options --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+      if: ${{ matrix.os == 'macos-latest' && matrix.java == 17 }}
     - name: Clone Graal.js repository
       shell: bash
       run: mx.trufflesqueak/utils.sh shallow-clone-graaljs
@@ -135,25 +140,3 @@ jobs:
         if-no-files-found: ignore
         retention-days: 5
       if: ${{ env.RUN_TESTS == 'true' }}
-
-  cuis-build:
-    name: Cuis + ubuntu-latest + JDK17
-    timeout-minutes: 30
-    runs-on: ubuntu-latest
-    env:
-      BUILD_SVM: true
-      VERBOSE_GRAALVM_LAUNCHERS: true
-      MX_PYTHON_VERSION: 3
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Set up dependencies
-      run: mx.trufflesqueak/utils.sh set-up-dependencies java17 cuis
-    - name: Build TruffleSqueak and Graal compiler
-      run: |
-        mx --env trufflesqueak-svm build --dependencies GRAALVM_TRUFFLESQUEAK_SVM_JAVA17
-        echo "$(mx --env trufflesqueak-svm graalvm-home)/bin" >> $GITHUB_PATH
-    - name: Run Cuis-Smalltalk tests on TruffleSqueak in native mode
-      run: trufflesqueak --native --headless --experimental-options --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
