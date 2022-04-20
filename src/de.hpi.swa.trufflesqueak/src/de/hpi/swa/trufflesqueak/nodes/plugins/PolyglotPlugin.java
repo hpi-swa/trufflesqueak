@@ -403,7 +403,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(lib.instantiate(object, getObjectArrayNode.execute(argumentArray)));
+                return wrapNode.executeWrap(instantiate(object, lib, getObjectArrayNode.execute(argumentArray)));
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
@@ -411,6 +411,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                  */
                 throw primitiveFailedInInterpreterCapturing(e);
             }
+        }
+
+        @TruffleBoundary // TODO: remove in 22.2 (triggers a perf warning when assertions enabled)
+        private static Object instantiate(final Object object, final InteropLibrary lib, final Object[] execute) throws Exception {
+            return lib.instantiate(object, execute);
         }
     }
 
