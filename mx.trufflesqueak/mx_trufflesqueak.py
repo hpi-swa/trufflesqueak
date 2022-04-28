@@ -553,7 +553,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
                 '-H:+DumpThreadStacksOnSignal',
                 '-H:+DetectUserDirectoriesInImageHeap',
                 '-H:+TruffleCheckBlockListMethods',
-            ],
+            ] + [] if _SUITE.is_release() else ['-Ob'], # use quick build mode for development
         )
     ],
     stability="experimental",
