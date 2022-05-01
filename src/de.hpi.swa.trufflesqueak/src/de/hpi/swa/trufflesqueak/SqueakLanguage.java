@@ -49,6 +49,11 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
+    protected void finalizeContext(final SqueakImageContext context) {
+        context.finalizeContext();
+    }
+
+    @Override
     protected CallTarget parse(final ParsingRequest request) throws Exception {
         final SqueakImageContext image = SqueakImageContext.getSlow();
         final Source source = request.getSource();

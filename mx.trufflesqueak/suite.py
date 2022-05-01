@@ -91,7 +91,8 @@ suite = {
                 "jdk.unsupported",
             ],
             "requiresConcealed" : {
-                "java.base" : ["jdk.internal.module"],
+                "java.base": ["jdk.internal.module"],
+                "jdk.management": ["com.sun.management"],
             },
             "checkstyleVersion": "8.36.1",
             "jacoco": "include",

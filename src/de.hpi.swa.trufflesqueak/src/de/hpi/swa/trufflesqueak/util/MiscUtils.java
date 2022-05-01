@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 public final class MiscUtils {
@@ -202,6 +203,14 @@ public final class MiscUtils {
         return true;
     }
 
+    private static double millisToSeconds(final double millis) {
+        return millis / 1000d;
+    }
+
+    private static double nanosToSeconds(final double nanos) {
+        return nanos / (1000d * 1000d * 1000d);
+    }
+
     /* Wraps bitmap in a BufferedImage for efficient drawing. */
     @TruffleBoundary
     public static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height, final boolean withAlpha) {
@@ -221,6 +230,26 @@ public final class MiscUtils {
         final DataBufferInt db = new DataBufferInt(words, words.length);
         final WritableRaster raster = Raster.createWritableRaster(sm, db, null);
         return new BufferedImage(cm, raster, true, null);
+    }
+
+    @TruffleBoundary
+    public static void printResourceSummary(final SqueakImageContext image) {
+        image.printToStdOut("# Resource Summary");
+        final double totalProcessTimeSeconds = millisToSeconds(System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
+        final long processCPUTime = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getProcessCpuTime();
+        image.printToStdOut(String.format("> Total process time: %ss | CPU load: %.2f", totalProcessTimeSeconds, nanosToSeconds(processCPUTime) / totalProcessTimeSeconds));
+        long totalGCCount = 0;
+        long totalGCTime = 0;
+        for (final GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            final long time = gcBean.getCollectionTime();
+            final long count = gcBean.getCollectionCount();
+            totalGCTime += Math.max(time, 0);
+            totalGCCount += Math.max(count, 0);
+            final double timeSeconds = millisToSeconds(time);
+            image.printToStdOut(String.format("> %8.4fs (%5.2f%% of total time) in %4s GCs of %s", timeSeconds, timeSeconds / totalProcessTimeSeconds * 100, count, gcBean.getName()));
+        }
+        final double totalGCSeconds = millisToSeconds(totalGCTime);
+        image.printToStdOut(String.format("> %8.4fs (%5.2f%% of total time) in %4s GCs in total", totalGCSeconds, totalGCSeconds / totalProcessTimeSeconds * 100, totalGCCount));
     }
 
     @TruffleBoundary

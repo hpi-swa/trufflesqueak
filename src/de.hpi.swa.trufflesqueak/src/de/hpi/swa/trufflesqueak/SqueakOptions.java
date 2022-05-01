@@ -40,6 +40,9 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.INTERRUPTS, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.INTERRUPTS_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> Interrupts = new OptionKey<>(false);
 
+    @Option(name = SqueakLanguageOptions.RESOURCE_SUMMARY, category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.RESOURCE_SUMMARY_HELP, usageSyntax = "false|true")//
+    public static final OptionKey<Boolean> ResourceSummary = new OptionKey<>(false);
+
     @Option(name = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> SignalInputSemaphore = new OptionKey<>(false);
 
@@ -59,6 +62,7 @@ public final class SqueakOptions {
     public static final class SqueakContextOptions {
         public final String imagePath;
         public final String[] imageArguments;
+        public final boolean printResourceSummary;
         public final boolean isHeadless;
         public final boolean isQuiet;
         public final boolean disableInterruptHandler;
@@ -70,6 +74,7 @@ public final class SqueakOptions {
             final OptionValues options = env.getOptions();
             imagePath = options.get(ImagePath).isEmpty() ? null : options.get(ImagePath);
             imageArguments = options.get(ImageArguments).isEmpty() ? new String[0] : options.get(ImageArguments).split(",");
+            printResourceSummary = options.get(ResourceSummary);
             isHeadless = options.get(Headless);
             isQuiet = options.get(Quiet);
             disableInterruptHandler = options.get(Interrupts);

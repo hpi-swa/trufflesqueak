@@ -29,6 +29,9 @@ public final class SqueakLanguageOptions {
     public static final String QUIET = "quiet";
     public static final String QUIET_FLAG = "--" + QUIET;
     public static final String QUIET_HELP = "Operate quietly";
+    public static final String RESOURCE_SUMMARY = "resource-summary";
+    public static final String RESOURCE_SUMMARY_FLAG = "--" + RESOURCE_SUMMARY;
+    public static final String RESOURCE_SUMMARY_HELP = "Print resource summary on context exit";
     public static final String SIGNAL_INPUT_SEMAPHORE = "signal-input-semaphore";
     public static final String SIGNAL_INPUT_SEMAPHORE_HELP = "Signal the input semaphore";
     public static final String STACK_DEPTH_PROTECTION = "stack-depth-protection";

@@ -129,6 +129,7 @@ public abstract class AbstractSqueakTestCase {
         contextBuilder.allowAllAccess(true);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH, imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, "true");
+        contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.RESOURCE_SUMMARY, "true");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.TESTING, "true");
         final String logLevel = System.getProperty("log.level");
         if (logLevel != null) {

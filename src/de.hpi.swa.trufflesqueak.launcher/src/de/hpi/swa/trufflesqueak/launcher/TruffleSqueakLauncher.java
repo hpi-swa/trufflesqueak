@@ -177,7 +177,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     @Override
     protected void collectArguments(final Set<String> options) {
         options.addAll(Arrays.asList(SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.HEADLESS_FLAG,
-                        SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
+                        SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.RESOURCE_SUMMARY_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
     }
 
     @Override

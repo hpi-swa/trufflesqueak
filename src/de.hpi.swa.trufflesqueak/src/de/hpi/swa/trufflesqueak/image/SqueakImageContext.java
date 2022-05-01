@@ -634,6 +634,12 @@ public final class SqueakImageContext {
         return options.isTesting;
     }
 
+    public void finalizeContext() {
+        if (options.printResourceSummary) {
+            MiscUtils.printResourceSummary(this);
+        }
+    }
+
     @TruffleBoundary
     public Object getScope() {
         ensureLoaded();
