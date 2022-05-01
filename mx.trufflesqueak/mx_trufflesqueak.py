@@ -44,7 +44,7 @@ if mx.is_darwin():
 BASE_VM_ARGS_TESTING = BASE_VM_ARGS[:]
 BASE_VM_ARGS_TESTING.extend([
     # Tweak GC for GitHub Actions
-    '-Xms4G',                   # Initial heap size
+    '-Xms6G',                   # Initial heap size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ])
 

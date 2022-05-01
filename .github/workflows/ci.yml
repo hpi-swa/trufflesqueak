@@ -103,7 +103,7 @@ jobs:
     - name: Run Cuis-Smalltalk tests on TruffleSqueak in native mode
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
-        trufflesqueak --native --headless --experimental-options --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+        trufflesqueak --native --headless --experimental-options --smalltalk.resource-summary=true --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
       if: ${{ matrix.os == 'macos-latest' && matrix.java == 17 }}
     - name: Clone Graal.js repository
       shell: bash
