@@ -87,8 +87,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private Source source;
 
     @CompilationFinal private RootCallTarget callTarget;
-    private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
-    private final Assumption doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
+    @CompilationFinal private CyclicAssumption callTargetStable;
+    @CompilationFinal private Assumption doesNotNeedSender;
     @CompilationFinal private RootCallTarget resumptionCallTarget;
 
     @TruffleBoundary
@@ -211,14 +211,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private void invalidateCallTarget() {
         if (callTarget != null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            callTargetStable.invalidate();
+            callTargetStable().invalidate();
             callTarget = null;
         }
     }
 
     private void renewCallTarget() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        callTargetStable.invalidate();
+        callTargetStable().invalidate();
         initializeCallTargetUnsafe();
     }
 
@@ -238,11 +238,27 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public void flushCache() {
         /* Invalidate callTargetStable assumption to ensure this method is released from caches. */
-        callTargetStable.invalidate("primitive 116");
+        callTargetStable().invalidate("primitive 116");
+    }
+
+    private CyclicAssumption callTargetStable() {
+        if (callTargetStable == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
+        }
+        return callTargetStable;
     }
 
     public Assumption getCallTargetStable() {
-        return callTargetStable.getAssumption();
+        return callTargetStable().getAssumption();
+    }
+
+    public Assumption getDoesNotNeedSenderAssumption() {
+        if (doesNotNeedSender == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
+        }
+        return doesNotNeedSender;
     }
 
     @TruffleBoundary
@@ -261,10 +277,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             }
         }
         return resumptionCallTarget;
-    }
-
-    public Assumption getDoesNotNeedSenderAssumption() {
-        return doesNotNeedSender;
     }
 
     public FrameDescriptor getFrameDescriptor() {
@@ -342,11 +354,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         other.setLiteralsAndBytes(literals, bytes);
         other.shadowBlocks = shadowBlocks;
         other.outerMethod = outerMethod;
-        other.callTargetStable.invalidate();
+        other.callTargetStable().invalidate();
         setLiteralsAndBytes(literals2, bytes2);
         shadowBlocks = shadowBlocks2;
         outerMethod = outerMethod2;
-        callTargetStable.invalidate();
+        callTargetStable().invalidate();
     }
 
     public int getBytecodeOffset() {

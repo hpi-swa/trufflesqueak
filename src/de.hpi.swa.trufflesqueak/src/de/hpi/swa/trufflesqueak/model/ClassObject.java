@@ -35,9 +35,9 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
  */
 @SuppressWarnings("static-method")
 public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
-    private final CyclicAssumption classHierarchyStable = new CyclicAssumption("Class hierarchy stability");
-    private final CyclicAssumption methodDictStable = new CyclicAssumption("Method dictionary stability");
-    private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
+    @CompilationFinal private CyclicAssumption classHierarchyStable;
+    @CompilationFinal private CyclicAssumption methodDictStable;
+    @CompilationFinal private CyclicAssumption classFormatStable;
 
     private final SqueakImageContext image;
     @CompilationFinal private boolean instancesAreClasses;
@@ -281,7 +281,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setFormat(final long format) {
-        classFormatStable.invalidate();
+        classFormatStable().invalidate();
         this.format = format;
     }
 
@@ -380,12 +380,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setSuperclass(final ClassObject superclass) {
-        classHierarchyStable.invalidate();
+        classHierarchyStable().invalidate();
         this.superclass = superclass;
     }
 
     public void setMethodDict(final VariablePointersObject methodDict) {
-        methodDictStable.invalidate();
+        methodDictStable().invalidate();
         this.methodDict = methodDict;
     }
 
@@ -473,20 +473,44 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         setOtherPointers(otherPointers);
     }
 
+    private CyclicAssumption classHierarchyStable() {
+        if (classHierarchyStable == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            classHierarchyStable = new CyclicAssumption("Class hierarchy stability");
+        }
+        return classHierarchyStable;
+    }
+
     public Assumption getClassHierarchyStable() {
-        return classHierarchyStable.getAssumption();
+        return classHierarchyStable().getAssumption();
+    }
+
+    private CyclicAssumption methodDictStable() {
+        if (methodDictStable == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            methodDictStable = new CyclicAssumption("Method dictionary stability");
+        }
+        return methodDictStable;
     }
 
     public Assumption getMethodDictStable() {
-        return methodDictStable.getAssumption();
+        return methodDictStable().getAssumption();
     }
 
     public void invalidateMethodDictStableAssumption() {
-        methodDictStable.invalidate();
+        methodDictStable().invalidate();
+    }
+
+    private CyclicAssumption classFormatStable() {
+        if (classFormatStable == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            classFormatStable = new CyclicAssumption("Class format stability");
+        }
+        return classFormatStable;
     }
 
     public Assumption getClassFormatStable() {
-        return classFormatStable.getAssumption();
+        return classFormatStable().getAssumption();
     }
 
     public String getClassComment() {
