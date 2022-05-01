@@ -16,13 +16,12 @@ cd trufflesqueak-build
 git clone https://github.com/graalvm/mx
 git clone https://github.com/hpi-swa/trufflesqueak
 cd trufflesqueak
-mx.trufflesqueak/utils.sh download-trufflesqueak-test-image
 echo "JAVA_HOME=/path/to/a/jvmci-enabled-JDK" > mx.trufflesqueak/env
 ../mx/mx --env trufflesqueak-jvm build
-../mx/mx --env trufflesqueak-jvm squeak path/to/a/squeaksmalltalk.image
+export GRAALVM_HOME=$(../mx/mx --env trufflesqueak-jvm graalvm-home)
+$GRAALVM_HOME/bin/trufflesqueak path/to/a/squeaksmalltalk.image
 
 ../mx/mx --help
-../mx/mx squeak --help
 ```
 
 It is recommended to create a dedicated directory (named `trufflesqueak-build`
@@ -39,7 +38,7 @@ GraalVM Updater, which can be installed with:
 
 ```bash
 $GRAALVM_HOME/bin/gu install -f -L \
-   "$(../mx/mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_SVM_JAVA11)"
+   "$(../mx/mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA11)"
 ```
 
 
@@ -73,7 +72,9 @@ test image and checks the results against [this test map][ts_test_map].
 To start TruffleSqueak in debug mode, you can run the following and connect your
 preferred Java debugger to the process:
 ```bash
-mx -d --env trufflesqueak-jvm squeak your.image
+$GRAALVM_HOME/bin/trufflesqueak \
+   --vm.agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000 \
+   your.image
 ```
 
 The following runs the `ArrayTest>>testAtWrap` SUnit test from Squeak/Smalltalk
