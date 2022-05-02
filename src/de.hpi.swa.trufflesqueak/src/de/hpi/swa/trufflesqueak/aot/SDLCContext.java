@@ -24,7 +24,7 @@ public final class SDLCContext implements CContext.Directives {
 
     @Override
     public List<String> getHeaderFiles() {
-        return Collections.singletonList("<SDL2/SDL.h>");
+        return Collections.singletonList("<SDL.h>");
     }
 
     @Override
