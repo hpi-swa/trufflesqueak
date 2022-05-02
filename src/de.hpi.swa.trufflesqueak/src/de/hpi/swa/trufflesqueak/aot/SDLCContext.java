@@ -6,11 +6,14 @@
  */
 package de.hpi.swa.trufflesqueak.aot;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.c.CContext;
+
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SDLCContext implements CContext.Directives {
     @Override
@@ -31,13 +34,23 @@ public final class SDLCContext implements CContext.Directives {
 
     @Override
     public List<String> getOptions() {
-        /* `sdl2-config --cflags` */
-        if (Platform.includedIn(Platform.LINUX.class)) {
-            return Collections.singletonList("-I/usr/include/SDL2 -D_REENTRANT");
-        } else if (Platform.includedIn(Platform.DARWIN.class)) {
-            return Collections.singletonList("-I/usr/local/include/SDL2 -D_THREAD_SAFE");
+        if (isInConfiguration()) {
+            return Arrays.asList(SDL2Config.CFLAGS.split(" "));
         } else {
             throw new UnsupportedOperationException("Unsupported OS");
+        }
+    }
+
+    private static class SDL2Config {
+        private static final String CFLAGS;
+
+        static {
+            final List<String> lines = MiscUtils.exec("sdl2-config --cflags", 5);
+            if (lines != null && lines.size() == 1) {
+                CFLAGS = lines.get(0);
+            } else {
+                throw new UnsupportedOperationException("`sdl2-config --cflags` failed. Please make sure SDL2 is installed on your system.");
+            }
         }
     }
 }
