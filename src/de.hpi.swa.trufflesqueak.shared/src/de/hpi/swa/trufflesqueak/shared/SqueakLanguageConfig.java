@@ -12,7 +12,7 @@ public final class SqueakLanguageConfig {
     public static final String MIME_TYPE = "application/x-smalltalk";
     public static final String NAME = "Squeak/Smalltalk";
     public static final String ST_MIME_TYPE = "text/x-smalltalk";
-    public static final String VERSION = "22.1.0";
+    public static final String VERSION = "22.2.0-dev";
     public static final String WEBSITE = "https://github.com/hpi-swa/trufflesqueak";
 
     public static final String[][] SUPPORTED_IMAGES = {

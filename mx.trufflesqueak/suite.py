@@ -14,7 +14,7 @@ suite = {
     "mxversion": "5.321.1",
     "versionConflictResolution": "latest",
 
-    "version": "22.1.0",
+    "version": "22.2.0",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-6.0-5053.zip",
         "cuis_test_image_tag": "21.3.0",
@@ -24,7 +24,7 @@ suite = {
         "test_image_tag": "21.1.0",
     },
 
-    "release": True,
+    "release": False,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
 
