@@ -30,6 +30,15 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveScreenScaleFactor")
+    protected abstract static class PrimScreenScaleFactorNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final double doGet(@SuppressWarnings("unused") final Object receiver) {
+            return 1.0d;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHighResClock")
     protected abstract static class PrimHighResClockNode extends AbstractPrimitiveNode {
         @Specialization
@@ -49,7 +58,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMultipleBytecodeSetsActive")
-    protected abstract static class PrimMultipleBytecodeSetsActive1Node extends AbstractPrimitiveNode {
+    protected abstract static class PrimMultipleBytecodeSetsActive1Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected final boolean doSet(@SuppressWarnings("unused") final Object receiver, final boolean value) {
             final int imageFormat = getContext().imageFormat;
