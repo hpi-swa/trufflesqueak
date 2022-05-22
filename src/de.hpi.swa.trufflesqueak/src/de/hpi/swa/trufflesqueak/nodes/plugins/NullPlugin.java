@@ -15,7 +15,9 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -33,6 +35,26 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doHighResClock(@SuppressWarnings("unused") final Object receiver) {
             return System.nanoTime();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveMultipleBytecodeSetsActive")
+    protected abstract static class PrimMultipleBytecodeSetsActive0Node extends AbstractPrimitiveNode {
+        @Specialization
+        protected final boolean doGet(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap((getContext().imageFormat & SqueakImageConstants.MULTIPLE_BYTECODE_SETS_BITMASK) != 0);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveMultipleBytecodeSetsActive")
+    protected abstract static class PrimMultipleBytecodeSetsActive1Node extends AbstractPrimitiveNode {
+        @Specialization
+        protected final boolean doSet(@SuppressWarnings("unused") final Object receiver, final boolean value) {
+            final int imageFormat = getContext().imageFormat;
+            getContext().imageFormat = value ? imageFormat | SqueakImageConstants.MULTIPLE_BYTECODE_SETS_BITMASK : imageFormat & ~SqueakImageConstants.MULTIPLE_BYTECODE_SETS_BITMASK;
+            return value;
         }
     }
 
