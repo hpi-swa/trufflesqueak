@@ -105,9 +105,9 @@ public final class SqueakImageWriter {
     }
 
     private void writeImageHeader() {
-        assert position == 0;
+        assert position == 0 && image.imageFormat != 0;
         /* Write basic header. */
-        writeInt(SqueakImageConstants.IMAGE_FORMAT);
+        writeInt(image.imageFormat);
         writeInt(SqueakImageConstants.IMAGE_HEADER_SIZE); // hdr size
         assert position == SqueakImageConstants.IMAGE_HEADER_MEMORY_SIZE_POSITION;
         writeLong(0); // memory size (yet unknown, see finalizeFileHeader)

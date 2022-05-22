@@ -127,6 +127,7 @@ public final class SqueakImageContext {
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
     private String imagePath;
+    @CompilationFinal public int imageFormat = 0;
     private final TruffleFile homePath;
     @CompilationFinal(dimensions = 1) private byte[] resourcesDirectoryBytes;
     @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;

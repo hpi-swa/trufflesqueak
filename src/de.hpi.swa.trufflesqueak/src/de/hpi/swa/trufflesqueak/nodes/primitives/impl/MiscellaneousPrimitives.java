@@ -25,7 +25,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -852,7 +851,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 38: return 0L; // milliseconds taken by current IGC (read-only)
                 case 39: return MiscUtils.getObjectPendingFinalizationCount(); // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 8L; // BytesPerOop for this image
-                case 41: return (long) SqueakImageConstants.IMAGE_FORMAT; // imageFormatVersion for the VM
+                case 41: return (long) image.imageFormat; // imageFormatVersion for the VM
                 case 42: return 50L; // number of stack pages in use (see SmalltalkImage>>isRunningCog)
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes

@@ -12,11 +12,12 @@ public final class SqueakImageConstants {
 
     /** General. */
     public static final int WORD_SIZE = Long.BYTES;
-    public static final int IMAGE_FORMAT = 68021;
+    public static final int MULTIPLE_BYTECODE_SETS_BITMASK = 0x200;
     public static final int IMAGE_HEADER_SIZE = WORD_SIZE * 16;
     public static final int IMAGE_HEADER_MEMORY_SIZE_POSITION = WORD_SIZE;
     public static final int IMAGE_HEADER_FIRST_FRAGMENT_SIZE_POSITION = 9 * WORD_SIZE;
     public static final int IMAGE_BRIDGE_SIZE = 2 * WORD_SIZE; /* bridge and nextSegmentSize. */
+    public static final int[] SUPPORTED_IMAGE_FORMATS = new int[]{68021, 68021 | MULTIPLE_BYTECODE_SETS_BITMASK};
 
     /** Object Header. */
     public static final long OVERFLOW_SLOTS = 255;

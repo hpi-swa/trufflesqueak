@@ -43,6 +43,15 @@ public final class ArrayUtils {
         return false;
     }
 
+    public static boolean contains(final int[] objects, final int element) {
+        for (final long object : objects) {
+            if (object == element) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean contains(final long[] objects, final long element) {
         for (final long object : objects) {
             if (object == element) {

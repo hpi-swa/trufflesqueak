@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.image;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -27,6 +28,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -155,9 +157,10 @@ public final class SqueakImageReader {
     }
 
     private void readVersion() {
-        final long version = nextInt();
-        if (version != SqueakImageConstants.IMAGE_FORMAT) {
-            throw SqueakException.create(MiscUtils.format("Image format %s not supported. Please supply a 64bit Spur image (format %s).", version, SqueakImageConstants.IMAGE_FORMAT));
+        image.imageFormat = nextInt();
+        if (!ArrayUtils.contains(SqueakImageConstants.SUPPORTED_IMAGE_FORMATS, image.imageFormat)) {
+            throw SqueakException.create(MiscUtils.format("Image format %s not supported. Please supply a compatible 64bit Spur image (%s).", image.imageFormat,
+                            Arrays.toString(SqueakImageConstants.SUPPORTED_IMAGE_FORMATS)));
         }
         // nextWord(); // magic2
     }
