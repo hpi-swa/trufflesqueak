@@ -307,7 +307,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             }
             final BufferedImage bufferedImage;
             if (depth == 32) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(cursorWords, width, height, false);
+                bufferedImage = MiscUtils.new32BitBufferedImage(cursorWords, width, height, true);
             } else {
                 bufferedImage = new BufferedImage(bestCursorSize.width, bestCursorSize.height, BufferedImage.TYPE_INT_ARGB);
                 for (int y = 0; y < height; y++) {
