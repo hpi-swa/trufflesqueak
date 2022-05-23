@@ -205,7 +205,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xE8:
                 return new PushBytecodes.PushSmallIntegerNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extB << 8));
             case 0xE9:
-                return new PushBytecodes.PushCharacterNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extB << 8));
+                return new PushBytecodes.PushCharacterNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xEA: {
                 final int byte1 = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
                 final int literalIndex = (byte1 >> 3) + (extA << 5);

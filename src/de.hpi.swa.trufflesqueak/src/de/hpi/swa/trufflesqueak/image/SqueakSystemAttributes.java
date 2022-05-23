@@ -36,7 +36,7 @@ public final class SqueakSystemAttributes {
     private final NativeObject vmVersion;
     private final NativeObject windowSystemName;
     private final NativeObject vmBuildId;
-    private final NativeObject graalVMInformation;
+    private final NativeObject interpreterClass;
     private final NativeObject systemProperties;
     private final NativeObject vmInformation;
     private final NativeObject maxFilenameLength;
@@ -96,7 +96,12 @@ public final class SqueakSystemAttributes {
         final String date = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US).format(new Date(MiscUtils.getStartTime()));
         vmBuildId = asByteString(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, date));
 
-        graalVMInformation = asByteString(MiscUtils.getGraalVMInformation());
+        /*
+         * For SmalltalkImage>>#interpreterVMMakerVersion (see
+         * https://lists.squeakfoundation.org/pipermail/squeak-dev/2022-March/219464.html).
+         */
+        interpreterClass = asByteString(String.format("TruffleSqueak Interpreter VMMaker.oscog-fn.3184 (%s)", MiscUtils.getGraalVMInformation()));
+
         systemProperties = asByteString(MiscUtils.getSystemProperties());
         vmInformation = asByteString(MiscUtils.getVMInformation());
         maxFilenameLength = asByteString("255");
@@ -125,7 +130,7 @@ public final class SqueakSystemAttributes {
             case 1006:
                 return getVmBuildId();
             case 1007:
-                return getGraalVMInformation();
+                return getInterpreterClass();
             case 1008:
                 return getSystemProperties();
             case 1009:
@@ -210,8 +215,8 @@ public final class SqueakSystemAttributes {
     }
 
     /** Attribute #1007: "Interpreter class (Cog VM only)". */
-    private NativeObject getGraalVMInformation() {
-        return graalVMInformation.shallowCopyBytes();
+    private NativeObject getInterpreterClass() {
+        return interpreterClass.shallowCopyBytes();
     }
 
     /** Attribute #1008: "Cogit class (Cog VM only)". */
