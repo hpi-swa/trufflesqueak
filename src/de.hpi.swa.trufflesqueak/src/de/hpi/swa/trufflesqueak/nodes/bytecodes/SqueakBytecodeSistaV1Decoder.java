@@ -564,6 +564,26 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
         //@formatter:on
     }
 
+    @Override
+    public int pcPreviousTo(final CompiledCodeObject code, final int pc) {
+        final int initialPC = code.getInitialPC();
+        int currentPC = initialPC;
+        assert currentPC < pc;
+        int previousPC = -1;
+        while (currentPC < pc) {
+            previousPC = currentPC;
+            do {
+                currentPC += decodeNumBytes(code, currentPC - initialPC);
+            } while (isSistaV1Extension(Byte.toUnsignedInt(code.getBytes()[currentPC - initialPC])));
+        }
+        assert previousPC > 0;
+        return previousPC;
+    }
+
+    private static boolean isSistaV1Extension(final int bytecode) {
+        return 0xE0 <= bytecode && bytecode <= 0xE1;
+    }
+
     private static int decodeNumBytes(final CompiledCodeObject code, final int index) {
         final int b = Byte.toUnsignedInt(code.getBytes()[index]);
         if (b <= 223) {

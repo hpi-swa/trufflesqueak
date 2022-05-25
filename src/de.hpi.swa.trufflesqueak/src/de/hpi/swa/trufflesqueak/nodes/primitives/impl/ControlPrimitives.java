@@ -50,6 +50,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
@@ -450,6 +451,63 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             removeProcessNode.executeRemove(receiver, myList);
             writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
             return myList;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 578)
+    protected abstract static class PrimSuspendBackingUpV2Node extends AbstractPrimitiveStackPushNode implements UnaryPrimitiveFallback {
+
+        @Specialization(guards = "receiver == getActiveProcessNode.execute()", limit = "1")
+        protected final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
+                        @Cached final WakeHighestPriorityNode wakeHighestPriorityNode) {
+            try {
+                wakeHighestPriorityNode.executeWake(frame);
+            } catch (final ProcessSwitch ps) {
+                /* Leave `nil` as result on stack. */
+                getFrameStackPushNode().execute(frame, NilObject.SINGLETON);
+                throw ps;
+            }
+            return NilObject.SINGLETON;
+        }
+
+        @Specialization(guards = {"receiver != getActiveProcessNode.execute()"}, limit = "1")
+        protected final Object doSuspendOtherProcess(final PointersObject receiver,
+                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final RemoveProcessFromListNode removeProcessNode,
+                        @Cached final AbstractPointersObjectReadNode readNode,
+                        @Cached final AbstractPointersObjectWriteNode writeNode) {
+            final Object myListOrNil = readNode.execute(receiver, PROCESS.LIST);
+            final Object myContext = readNode.execute(receiver, PROCESS.SUSPENDED_CONTEXT);
+            if (myListOrNil instanceof PointersObject) {
+                final PointersObject myList = (PointersObject) myListOrNil;
+                removeProcessNode.executeRemove(receiver, myList);
+                writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
+                if (classNode.executeLookup(myList) != getContext().getLinkedListClass()) {
+                    backupContextToBlockingSendTo((ContextObject) myContext, myList);
+                    return NilObject.SINGLETON;
+                } else {
+                    return myList;
+                }
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                assert myListOrNil == NilObject.SINGLETON : "Unexpected object for myList";
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
+        }
+
+        private static void backupContextToBlockingSendTo(final ContextObject myContext, final PointersObject conditionVariable) {
+            final int pc = myContext.getInstructionPointerForBytecodeLoop();
+            final int sp = myContext.getStackPointer();
+            assert pc > 0 && sp > 0;
+            final int theNewPC = myContext.getCodeObject().pcPreviousTo(pc);
+            assert theNewPC < pc && pc - theNewPC <= 3;
+            myContext.setInstructionPointer(theNewPC);
+            final int conditionTempIndex = sp + CONTEXT.RECEIVER - CONTEXT.TEMP_FRAME_START;
+            assert myContext.atTemp(conditionTempIndex) == Boolean.valueOf(BooleanObject.FALSE) || myContext.atTemp(conditionTempIndex) == conditionVariable;
+            myContext.atTempPut(conditionTempIndex, conditionVariable);
         }
     }
 

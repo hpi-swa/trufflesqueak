@@ -57,6 +57,7 @@ import de.hpi.swa.trufflesqueak.nodes.DoItRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
@@ -105,6 +106,7 @@ public final class SqueakImageContext {
     @CompilationFinal public ClassObject smallFloatClass;
     @CompilationFinal private ClassObject byteSymbolClass;
     @CompilationFinal private ClassObject foreignObjectClass;
+    @CompilationFinal private ClassObject linkedListClass;
 
     public final ArrayObject specialObjectsArray = new ArrayObject();
     public final ClassObject metaClass = new ClassObject(this);
@@ -585,6 +587,15 @@ public final class SqueakImageContext {
         } else {
             return false;
         }
+    }
+
+    public ClassObject getLinkedListClass() {
+        if (linkedListClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            final Object lists = getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
+            linkedListClass = SqueakObjectClassNode.getUncached().executeLookup(((ArrayObject) lists).getObject(0));
+        }
+        return linkedListClass;
     }
 
     public boolean supportsNFI() {

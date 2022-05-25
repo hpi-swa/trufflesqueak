@@ -613,6 +613,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return getDecoder().hasStoreIntoTemp1AfterCallPrimitive(this);
     }
 
+    @TruffleBoundary
+    public int pcPreviousTo(final int pc) {
+        return getDecoder().pcPreviousTo(this, pc);
+    }
+
     /*
      * CompiledBlock
      */
