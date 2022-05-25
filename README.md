@@ -8,20 +8,30 @@ A [Squeak/Smalltalk][squeak] VM and Polyglot Programming Environment for the [Gr
 ## Getting Started
 
 1. Download the latest [GraalVM distribution][graalvm_download] for your platform.
+
+   <details>
+     <summary>Compatibility notes</summary>
+     <ul>
+       <li>
+         <strong>Linux:</strong> Only Ubuntu 20.04 is officially supported at the moment. If some libraries for <code>libstdc++</code> are missing, you can install them manually as described <a href="https://askubuntu.com/a/1328208/1140486">here</a>. See <a href="https://github.com/hpi-swa/trufflesqueak/issues/161">#161</a> for futher information.
+       </li>
+     </ul>
+   </details>
+
 2. Use the [GraalVM Updater][graalvm_updater] to install the TruffleSqueak
    component for your platform:
 
-```bash
-$GRAALVM_HOME/bin/gu \
-  -C https://raw.githubusercontent.com/hpi-swa/trufflesqueak/main/gu-catalog.properties \
-  install smalltalk
-```
+   ```bash
+   $GRAALVM_HOME/bin/gu \
+     -C https://raw.githubusercontent.com/hpi-swa/trufflesqueak/main/gu-catalog.properties \
+     install smalltalk
+   ```
 
 3. You should now be able to run TruffleSqueak:
 
-```bash
-$GRAALVM_HOME/bin/trufflesqueak
-```
+   ```bash
+   $GRAALVM_HOME/bin/trufflesqueak
+   ```
 
 
 ## Demos
