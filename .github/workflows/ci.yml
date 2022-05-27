@@ -44,13 +44,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-20.04-aarch64, macos-latest, windows-latest]
+        os: [ubuntu-18.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
         java: [11, 17]
     env:
-      RUN_TESTS: "${{ matrix.os == 'ubuntu-latest' || matrix.java == 11 }}"
-      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-latest' && matrix.java == 17 }}"
-      GRAALVM_HOME_ENV: "${{ matrix.os == 'windows-latest' && 'trufflesqueak-jvm' || 'trufflesqueak-svm' }}"
-      TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-latest' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
+      RUN_TESTS: "${{ matrix.os == 'ubuntu-18.04' || matrix.java == 11 }}"
+      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-18.04' && matrix.java == 17 }}"
+      GRAALVM_HOME_ENV: "${{ matrix.os == 'windows-2019' && 'trufflesqueak-jvm' || 'trufflesqueak-svm' }}"
+      TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-2019' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
       MX_PYTHON_VERSION: 3
     name: ${{ matrix.os }} + JDK${{ matrix.java }}
@@ -66,17 +66,17 @@ jobs:
       run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }}
     - name: Build TruffleSqueak SVM component
       run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm ${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
-      if: ${{ matrix.os != 'windows-latest' }}
+      if: ${{ matrix.os != 'windows-2019' }}
     - name: Configure pagefile # this reduces OOM kills on Windows
       uses: al-cheb/configure-pagefile-action@v1.2
       with:
         minimum-size: 8GB
         disk-root: "C:"
-      if: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.os == 'windows-2019' }}
     - name: Build TruffleSqueak SVM component via cmd.exe
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call mx --env trufflesqueak-svm --no-download-progress build --dependencies SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK_SVM_JAVA${{ matrix.java }}
         call mx --env trufflesqueak-svm graalvm-home > graalvm-home-with-forward-slashes.txt
         set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
@@ -90,7 +90,7 @@ jobs:
         setlocal enabledelayedexpansion
         set "INSTALLABLE_PATH=%INSTALLABLE_PATH:/=\%"
         copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_SVM_TARGET }}
-      if: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.os == 'windows-2019' }}
     - name: Run SystemReporter on TruffleSqueak in JVM mode
       shell: bash
       run: ${{ env.TRUFFLESQUEAK_EXEC }} --jvm --code "SystemReporter new reportText asString" images/test-64bit.image
@@ -104,23 +104,23 @@ jobs:
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
         trufflesqueak --native --headless --experimental-options --smalltalk.resource-summary=true --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
-      if: ${{ matrix.os == 'macos-latest' && matrix.java == 17 }}
+      if: ${{ matrix.os == 'macos-11' && matrix.java == 17 }}
     - name: Clone Graal.js repository
       shell: bash
       run: mx.trufflesqueak/utils.sh shallow-clone-graaljs
       if: ${{ env.RUN_TESTS == 'true' }}
     - name: Run gate with Graal compiler and Graal.js
       run: mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test
-      if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-latest' && env.RUN_WITH_COVERAGE != 'true' }}
+      if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-2019' && env.RUN_WITH_COVERAGE != 'true' }}
     - name: Run gate with Graal.js and code coverage # do not use Graal compiler with JaCoCo code coverage
       run: mx --disable-polyglot --dy /graal-js gate -j -n --strict-mode --tags build,test --jacocout coverage
-      if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-latest' && env.RUN_WITH_COVERAGE == 'true' }}
+      if: ${{ env.RUN_TESTS == 'true' && matrix.os != 'windows-2019' && env.RUN_WITH_COVERAGE == 'true' }}
     - name: Run gate with Graal compiler and Graal.js via cmd.exe
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test
-      if: ${{ env.RUN_TESTS == 'true' && matrix.os == 'windows-latest' }}
+      if: ${{ env.RUN_TESTS == 'true' && matrix.os == 'windows-2019' }}
     - name: Report code coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
