@@ -121,6 +121,11 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             }
 
             @Override
+            public void windowDeactivated(final WindowEvent e) {
+                addWindowEvent(WINDOW.DEACTIVATED);
+            }
+
+            @Override
             public void windowIconified(final WindowEvent e) {
                 addWindowEvent(WINDOW.ICONISE);
             }

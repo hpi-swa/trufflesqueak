@@ -170,6 +170,8 @@ public final class SqueakIOConstants {
         public static final long ICONISE = 3;
         public static final long ACTIVATED = 4;
         public static final long PAINT = 5;
+        public static final long CHANGED_SCREEN = 6;
+        public static final long DEACTIVATED = 7;
     }
 
     private SqueakIOConstants() {
