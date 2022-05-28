@@ -6,9 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Specialization;
-
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
@@ -17,23 +14,22 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 
-public abstract class PutToSleepNode extends AbstractNode {
+/*
+ * Save the given process on the scheduler process list for its priority.
+ */
+public final class PutToSleepNode extends AbstractNode {
+    @Child private ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.create();
+    @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
+    @Child private AddLastLinkToListNode addLastLinkToListNode = AddLastLinkToListNode.create();
 
     public static PutToSleepNode create() {
-        return PutToSleepNodeGen.create();
+        return new PutToSleepNode();
     }
 
-    public abstract void executePutToSleep(PointersObject process);
-
-    @Specialization
-    protected final void doPutToSleep(final PointersObject process,
-                    @Cached final ArrayObjectReadNode arrayReadNode,
-                    @Cached final AbstractPointersObjectReadNode pointersReadNode,
-                    @Cached final LinkProcessToListNode linkProcessToList) {
-        // Save the given process on the scheduler process list for its priority.
+    public void executePutToSleep(final PointersObject process) {
         final long priority = pointersReadNode.executeLong(process, PROCESS.PRIORITY);
         final ArrayObject processLists = pointersReadNode.executeArray(getContext().getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject processList = (PointersObject) arrayReadNode.execute(processLists, priority - 1);
-        linkProcessToList.executeLink(process, processList);
+        addLastLinkToListNode.execute(process, processList);
     }
 }

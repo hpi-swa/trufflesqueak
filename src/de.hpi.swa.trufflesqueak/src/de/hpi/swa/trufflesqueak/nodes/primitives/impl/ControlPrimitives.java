@@ -86,8 +86,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimiti
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimLoadInstVarNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.process.AddLastLinkToListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
-import de.hpi.swa.trufflesqueak.nodes.process.LinkProcessToListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
@@ -352,37 +352,32 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 86)
     protected abstract static class PrimWaitNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
-        @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
-
-        @Specialization(guards = {"isSemaphore(receiver)", "hasExcessSignals(receiver)"})
-        protected final Object doWaitExcessSignals(final PointersObject receiver,
-                        @Cached final AbstractPointersObjectWriteNode writeNode) {
-            final long excessSignals = pointersReadNode.executeLong(receiver, SEMAPHORE.EXCESS_SIGNALS);
-            writeNode.execute(receiver, SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
-            return receiver;
-        }
-
-        @Specialization(guards = {"isSemaphore(receiver)", "!hasExcessSignals(receiver)"})
-        protected final Object doWait(final VirtualFrame frame, final PointersObject receiver,
-                        @Cached final LinkProcessToListNode linkProcessToListNode,
+        @Specialization
+        protected final PointersObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
+                        @Cached final AbstractPointersObjectReadNode pointersReadNode,
+                        @Cached final AbstractPointersObjectWriteNode writeNode,
+                        @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode) {
-            linkProcessToListNode.executeLink(getActiveProcessNode.execute(), receiver);
-            try {
-                wakeHighestPriorityNode.executeWake(frame);
-            } catch (final ProcessSwitch ps) {
-                /*
-                 * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                 * enough to increment the stack pointer.
-                 */
-                getFrameStackPointerIncrementNode().execute(frame);
-                throw ps;
+            assert isSemaphore(receiver);
+            final long excessSignals = pointersReadNode.executeLong(receiver, SEMAPHORE.EXCESS_SIGNALS);
+            if (excessSignals > 0) {
+                writeNode.execute(receiver, SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
+                return receiver;
+            } else {
+                addLastLinkToListNode.execute(getActiveProcessNode.execute(), receiver);
+                try {
+                    wakeHighestPriorityNode.executeWake(frame);
+                } catch (final ProcessSwitch ps) {
+                    /*
+                     * Leave receiver on stack. It has not been removed from the stack yet, so it is
+                     * enough to increment the stack pointer.
+                     */
+                    getFrameStackPointerIncrementNode().execute(frame);
+                    throw ps;
+                }
+                throw CompilerDirectives.shouldNotReachHere();
             }
-            return receiver;
-        }
-
-        protected final boolean hasExcessSignals(final PointersObject semaphore) {
-            return pointersReadNode.executeLong(semaphore, SEMAPHORE.EXCESS_SIGNALS) > 0;
         }
     }
 
@@ -833,48 +828,32 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 167)
     protected abstract static class PrimYieldNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
-        @Child private LinkProcessToListNode linkProcessToListNode;
-        @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
-
         @Specialization
         protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
                         @Cached final ArrayObjectReadNode arrayReadNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached final AbstractPointersObjectReadNode pointersReadNode) {
+                        @Cached final AbstractPointersObjectReadNode pointersReadNode,
+                        @Cached final AddLastLinkToListNode addLastLinkToListNode,
+                        @Cached final WakeHighestPriorityNode wakeHighestPriorityNode) {
             final PointersObject activeProcess = getActiveProcessNode.execute();
             final long priority = pointersReadNode.executeLong(activeProcess, PROCESS.PRIORITY);
             final ArrayObject processLists = pointersReadNode.executeArray(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
             final PointersObject processList = (PointersObject) arrayReadNode.execute(processLists, priority - 1);
-            if (!processList.isEmptyList(pointersReadNode)) {
-                getLinkProcessToListNode().executeLink(activeProcess, processList);
-                try {
-                    getWakeHighestPriorityNode().executeWake(frame);
-                } catch (final ProcessSwitch ps) {
-                    /*
-                     * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                     * enough to increment the stack pointer.
-                     */
-                    getFrameStackPointerIncrementNode().execute(frame);
-                    throw ps;
-                }
+            if (processList.isEmptyList(pointersReadNode)) {
+                return NilObject.SINGLETON;
             }
-            return scheduler;
-        }
-
-        private LinkProcessToListNode getLinkProcessToListNode() {
-            if (linkProcessToListNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                linkProcessToListNode = insert(LinkProcessToListNode.create());
-                wakeHighestPriorityNode = insert(WakeHighestPriorityNode.create());
+            addLastLinkToListNode.execute(activeProcess, processList);
+            try {
+                wakeHighestPriorityNode.executeWake(frame);
+            } catch (final ProcessSwitch ps) {
+                /*
+                 * Leave receiver on stack. It has not been removed from the stack yet, so it is
+                 * enough to increment the stack pointer.
+                 */
+                getFrameStackPointerIncrementNode().execute(frame);
+                throw ps;
             }
-            return linkProcessToListNode;
-        }
-
-        private WakeHighestPriorityNode getWakeHighestPriorityNode() {
-            if (wakeHighestPriorityNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-            }
-            return wakeHighestPriorityNode;
+            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 
@@ -958,10 +937,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(mutex, getActiveProcessNode)"}, limit = "1")
         protected final Object doEnter(final VirtualFrame frame, final PointersObject mutex,
-                        @Cached final LinkProcessToListNode linkProcessToListNode,
+                        @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
-            linkProcessToListNode.executeLink(getActiveProcessNode.execute(), mutex);
+            addLastLinkToListNode.execute(getActiveProcessNode.execute(), mutex);
             try {
                 wakeHighestPriorityNode.executeWake(frame);
             } catch (final ProcessSwitch ps) {
@@ -991,9 +970,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!isMutexOwner(mutex, effectiveProcess)"})
         protected final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess,
-                        @Cached final LinkProcessToListNode linkProcessToListNode,
+                        @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode) {
-            linkProcessToListNode.executeLink(effectiveProcess, mutex);
+            addLastLinkToListNode.execute(effectiveProcess, mutex);
             try {
                 wakeHighestPriorityNode.executeWake(frame);
             } catch (final ProcessSwitch ps) {
