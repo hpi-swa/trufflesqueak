@@ -8,6 +8,8 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import java.util.logging.Level;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -26,7 +28,6 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.context.UnwindContextChainNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -38,7 +39,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private final boolean isImageResuming;
     private ContextObject initialContext;
 
-    @Child private UnwindContextChainNode unwindContextChainNode = UnwindContextChainNode.create();
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
 
     private ExecuteTopLevelContextNode(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
@@ -88,20 +88,96 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             try {
                 image.lastSeenContext = null;  // Reset materialization mechanism.
                 final Object result = callNode.call(activeContext.getCallTarget());
-                activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
+                activeContext = returnTo(activeContext, sender, result);
                 LogUtils.SCHEDULING.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
             } catch (final ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
                 LogUtils.SCHEDULING.log(Level.FINE, "Process Switch: {0}", activeContext);
             } catch (final NonLocalReturn nlr) {
-                final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
-                activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
+                activeContext = commonReturn((ContextObject) sender, (ContextObject) nlr.getTargetContextOrMarker(), nlr.getReturnValue());
                 LogUtils.SCHEDULING.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
             } catch (final NonVirtualReturn nvr) {
-                activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                activeContext = commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
         }
+    }
+
+    @TruffleBoundary
+    private static ContextObject returnTo(final ContextObject activeContext, final AbstractSqueakObject sender, final Object returnValue) {
+        if (sender == NilObject.SINGLETON) {
+            assert "DoIt".equals(activeContext.getCodeObject().getCompiledInSelector().asStringUnsafe());
+            throw new TopLevelReturn(returnValue);
+        }
+        final ContextObject targetContext = (ContextObject) sender;
+        final ContextObject context;
+        if (targetContext.isPrimitiveContext()) {
+            context = (ContextObject) targetContext.getSender(); // skip primitive contexts.
+        } else {
+            context = targetContext;
+        }
+        context.push(returnValue);
+        return context;
+    }
+
+    @TruffleBoundary
+    private ContextObject commonReturn(final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
+        /* "make sure we can return to the given context" */
+        if (!targetContext.canBeReturnedTo()) {
+            CompilerDirectives.transferToInterpreter();
+            try {
+                image.cannotReturn.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue);
+            } catch (final ProcessSwitch ps) {
+                return ps.getNewContext();
+            }
+            throw CompilerDirectives.shouldNotReachHere();
+        }
+        /*
+         * "If this return is not to our immediate predecessor (i.e. from a method to its sender, or
+         * from a block to its caller), scan the stack for the first unwind marked context and
+         * inform this context and let it deal with it. This provides a chance for ensure unwinding
+         * to occur."
+         */
+        AbstractSqueakObject contextOrNil = startContext;
+        while (contextOrNil != targetContext) {
+            if (contextOrNil == NilObject.SINGLETON) {
+                /* "error: sender's instruction pointer or context is nil; cannot return" */
+                CompilerDirectives.transferToInterpreter();
+                try {
+                    image.cannotReturn.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue);
+                } catch (final ProcessSwitch ps) {
+                    return ps.getNewContext();
+                }
+                throw CompilerDirectives.shouldNotReachHere();
+            }
+            final ContextObject context = (ContextObject) contextOrNil;
+            assert !context.isPrimitiveContext();
+            if (context.getCodeObject().isUnwindMarked()) {
+                /* "context is marked; break out" */
+                CompilerDirectives.transferToInterpreter();
+                try {
+                    image.aboutToReturnSelector.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue, context);
+                } catch (final ProcessSwitch ps) {
+                    return ps.getNewContext();
+                } catch (final NonVirtualReturn nvr) {
+                    return commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                }
+                throw CompilerDirectives.shouldNotReachHere();
+            }
+            contextOrNil = context.getSender();
+        }
+        /*
+         * "If we get here there is no unwind to worry about. Simply terminate the stack up to the
+         * localCntx - often just the sender of the method"
+         */
+        ContextObject currentContext = startContext;
+        while (currentContext != targetContext) {
+            final ContextObject sender = (ContextObject) currentContext.getFrameSender();
+            currentContext.terminate();
+            currentContext = sender;
+        }
+        targetContext.push(returnValue);
+        return targetContext;
     }
 
     private static void ensureCachedContextCanRunAgain(final ContextObject activeContext) {
