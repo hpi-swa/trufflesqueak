@@ -17,6 +17,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
  * Add the given process to the given linked list and set the backpointer of process to its new list.
  */
 public final class AddLastLinkToListNode extends AbstractNode {
+    @Child private AbstractPointersObjectReadNode readEmptyNode = AbstractPointersObjectReadNode.create();
     @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
     @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
     @Child private AbstractPointersObjectWriteNode writeLastLinkNode = AbstractPointersObjectWriteNode.create();
@@ -27,7 +28,7 @@ public final class AddLastLinkToListNode extends AbstractNode {
     }
 
     public void execute(final PointersObject process, final PointersObject list) {
-        if (list.isEmptyList(readNode)) {
+        if (list.isEmptyList(readEmptyNode)) {
             writeNode.execute(list, LINKED_LIST.FIRST_LINK, process);
         } else {
             final PointersObject lastLink = readNode.executePointers(list, LINKED_LIST.LAST_LINK);

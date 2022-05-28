@@ -49,7 +49,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
             if (next == process) {
                 break;
             } else if (next == NilObject.SINGLETON) {
-                throw PrimitiveFailed.GENERIC_ERROR; // TODO: make this better.
+                throw PrimitiveFailed.andTransferToInterpreter(); // TODO: make this better.
             } else {
                 temp = (PointersObject) next;
             }

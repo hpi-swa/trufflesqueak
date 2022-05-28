@@ -422,7 +422,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 getFrameStackPushNode().execute(frame, NilObject.SINGLETON);
                 throw ps;
             }
-            return NilObject.SINGLETON;
+            throw CompilerDirectives.shouldNotReachHere();
         }
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute()"}, limit = "1")
@@ -432,16 +432,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final Object myListOrNil = readNode.execute(receiver, PROCESS.LIST);
-            if (myListOrNil instanceof PointersObject) {
-                final PointersObject myList = (PointersObject) myListOrNil;
-                removeProcessNode.executeRemove(receiver, myList);
-                writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
-                return myList;
-            } else {
+            if (myListOrNil == NilObject.SINGLETON) {
                 CompilerDirectives.transferToInterpreter();
-                assert myListOrNil == NilObject.SINGLETON : "Unexpected object for myList";
                 throw PrimitiveFailed.BAD_RECEIVER;
             }
+            final PointersObject myList = (PointersObject) myListOrNil;
+            removeProcessNode.executeRemove(receiver, myList);
+            writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
+            return myList;
         }
     }
 
@@ -948,7 +946,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 getFrameStackPushNode().execute(frame, BooleanObject.FALSE);
                 throw ps;
             }
-            return BooleanObject.FALSE;
+            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 
@@ -980,7 +978,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 getFrameStackPushNode().execute(frame, BooleanObject.FALSE);
                 throw ps;
             }
-            return BooleanObject.FALSE;
+            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 
