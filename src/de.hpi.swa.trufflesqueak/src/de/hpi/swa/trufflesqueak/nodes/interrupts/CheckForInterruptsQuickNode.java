@@ -86,7 +86,11 @@ public abstract class CheckForInterruptsQuickNode extends Node {
                 istate.interruptPending = false; // reset interrupt flag
                 signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
             }
-            // Timer interrupts skipped
+            if (istate.nextWakeUpTickTrigger()) {
+                LogUtils.INTERRUPTS.fine("Timer interrupt");
+                istate.nextWakeupTick = 0; // reset timer interrupt
+                signalSemaporeNode.executeSignal(frame, istate.getTimerSemaphore());
+            }
             if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
                 LogUtils.INTERRUPTS.fine("Finalization interrupt");
                 istate.setPendingFinalizations(false);
