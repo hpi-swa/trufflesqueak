@@ -55,6 +55,7 @@ public final class Returns {
 
         public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
             super(returnValue);
+            assert !targetContext.isDead() : "Cannot return to terminated context";
             this.targetContext = targetContext;
             this.currentContext = currentContext;
         }

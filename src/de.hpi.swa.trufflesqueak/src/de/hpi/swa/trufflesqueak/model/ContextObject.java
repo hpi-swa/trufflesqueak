@@ -418,12 +418,10 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         removeSender();
     }
 
-    public boolean isTerminated() {
-        return getInstructionPointerForBytecodeLoop() < 0 && getFrameSender() == NilObject.SINGLETON;
-    }
-
-    public boolean canReturnTo() {
-        return getInstructionPointerForBytecodeLoop() >= 0 && getFrameSender() != NilObject.SINGLETON;
+    public boolean isDead() {
+        final boolean pcIsNil = getInstructionPointerForBytecodeLoop() < 0;
+        assert !pcIsNil || getFrameSender() == NilObject.SINGLETON : "Sender of dead context must be nil";
+        return pcIsNil;
     }
 
     public ContextObject shallowCopy() {

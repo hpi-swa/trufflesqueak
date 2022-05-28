@@ -29,6 +29,7 @@ public final class ResumeContextRootNode extends RootNode {
     protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
         super(language, context.getTruffleFrame().getFrameDescriptor());
         activeContext = context;
+        assert !context.isDead() : "Terminated contexts cannot be resumed";
         executeBytecodeNode = new ExecuteBytecodeNode(context.getMethodOrBlock());
     }
 
@@ -39,6 +40,7 @@ public final class ResumeContextRootNode extends RootNode {
     @Override
     public Object execute(final VirtualFrame frame) {
         try {
+            assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
             final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
             if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
                 return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);

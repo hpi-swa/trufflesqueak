@@ -17,6 +17,7 @@ public final class ProcessSwitch extends ControlFlowException {
     private final ContextObject newContext;
 
     private ProcessSwitch(final ContextObject newContext) {
+        assert !newContext.isDead() : "Cannot switch to terminated context";
         this.newContext = newContext;
     }
 
