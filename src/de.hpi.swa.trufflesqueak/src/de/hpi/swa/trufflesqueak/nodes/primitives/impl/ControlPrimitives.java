@@ -58,7 +58,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayWithFirstNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
@@ -664,8 +663,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final Object primitiveWithArgs(final VirtualFrame frame, final Object receiver, final ArrayObject argumentArray,
-                        final AbstractPrimitiveNode primitiveNode, final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
-            return primitiveNode.executeWithReceiverAndArguments(frame, receiver, toObjectArrayNode.execute(argumentArray));
+                        final AbstractPrimitiveNode primitiveNode, final ArrayObjectToObjectArrayWithFirstNode toObjectArrayNode) {
+            return primitiveNode.executeWithArguments(frame, toObjectArrayNode.execute(receiver, argumentArray));
         }
 
         protected final Object primitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
@@ -676,8 +675,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
-                final Object[] arguments = ArrayObjectToObjectArrayCopyNode.getUncached().execute(argumentArray);
-                return primitiveNode.executeWithReceiverAndArguments(frame, receiver, arguments);
+                final Object[] receiverAndArguments = ArrayObjectToObjectArrayWithFirstNode.getUncached().execute(receiver, argumentArray);
+                return primitiveNode.executeWithArguments(frame, receiverAndArguments);
             }
         }
     }
@@ -691,7 +690,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(argumentArray)") final int cachedArraySize,
                         @Cached("createPrimitiveNode(cachedPrimitiveIndex, cachedArraySize)") final AbstractPrimitiveNode primitiveNode,
-                        @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
+                        @Cached final ArrayObjectToObjectArrayWithFirstNode toObjectArrayNode) {
             return primitiveWithArgs(frame, receiver, argumentArray, primitiveNode, toObjectArrayNode);
         }
 
@@ -711,7 +710,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(argumentArray)") final int cachedArraySize,
                         @Cached("createPrimitiveNode(cachedPrimitiveIndex, cachedArraySize)") final AbstractPrimitiveNode primitiveNode,
-                        @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
+                        @Cached final ArrayObjectToObjectArrayWithFirstNode toObjectArrayNode) {
             return primitiveWithArgs(frame, receiver, argumentArray, primitiveNode, toObjectArrayNode);
         }
 
@@ -1140,8 +1139,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(argumentArray)") final int cachedArraySize,
                         @Cached("createPrimitiveNode(methodObject)") final AbstractPrimitiveNode primitiveNode,
-                        @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
-            return primitiveNode.executeWithReceiverAndArguments(frame, target, toObjectArrayNode.execute(argumentArray));
+                        @Cached final ArrayObjectToObjectArrayWithFirstNode toObjectArrayNode) {
+            return primitiveNode.executeWithArguments(frame, toObjectArrayNode.execute(target, argumentArray));
         }
 
         @Specialization(replaces = "doNamedPrimitiveWithArgsContextCached")
@@ -1155,8 +1154,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
-                final Object[] arguments = ArrayObjectToObjectArrayCopyNode.getUncached().execute(argumentArray);
-                return primitiveNode.executeWithReceiverAndArguments(frame, target, arguments);
+                final Object[] receiverAndArguments = ArrayObjectToObjectArrayWithFirstNode.getUncached().execute(target, argumentArray);
+                return primitiveNode.executeWithArguments(frame, receiverAndArguments);
             }
         }
 

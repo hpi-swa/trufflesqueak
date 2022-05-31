@@ -21,8 +21,6 @@ public abstract class AbstractPrimitiveNode extends AbstractNode {
 
     public abstract Object executeWithArguments(VirtualFrame frame, Object... receiverAndArguments);
 
-    public abstract Object executeWithReceiverAndArguments(VirtualFrame frame, Object receiver, Object... arguments);
-
     public boolean acceptsMethod(@SuppressWarnings("unused") final CompiledCodeObject method) {
         CompilerAsserts.neverPartOfCompilation();
         return true;

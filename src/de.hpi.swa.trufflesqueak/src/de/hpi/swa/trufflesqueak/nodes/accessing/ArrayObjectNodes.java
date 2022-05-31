@@ -245,10 +245,15 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class ArrayObjectToObjectArrayWithFirstNode extends AbstractNode {
 
         public static ArrayObjectToObjectArrayWithFirstNode create() {
             return ArrayObjectToObjectArrayWithFirstNodeGen.create();
+        }
+
+        public static ArrayObjectToObjectArrayWithFirstNode getUncached() {
+            return ArrayObjectToObjectArrayWithFirstNodeGen.getUncached();
         }
 
         public abstract Object[] execute(Object first, ArrayObject obj);

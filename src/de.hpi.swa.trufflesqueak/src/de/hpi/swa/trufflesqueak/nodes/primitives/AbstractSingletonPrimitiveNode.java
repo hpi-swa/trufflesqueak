@@ -19,11 +19,6 @@ public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNo
     }
 
     @Override
-    public final Object executeWithReceiverAndArguments(final VirtualFrame frame, final Object receiver, final Object... arguments) {
-        return execute();
-    }
-
-    @Override
     public Object execute(final VirtualFrame frame) {
         return execute();
     }
