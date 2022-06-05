@@ -123,7 +123,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @TruffleBoundary
     private ContextObject commonReturn(final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
         /* "make sure we can return to the given context" */
-        if (!targetContext.canBeReturnedTo()) {
+        if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
             CompilerDirectives.transferToInterpreter();
             try {
                 image.cannotReturn.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue);
@@ -152,7 +152,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             }
             final ContextObject context = (ContextObject) contextOrNil;
             assert !context.isPrimitiveContext();
-            if (context.getCodeObject().isUnwindMarked()) {
+            if (!context.hasClosure() && context.getCodeObject().isUnwindMarked()) {
                 /* "context is marked; break out" */
                 CompilerDirectives.transferToInterpreter();
                 try {
