@@ -132,39 +132,41 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             }
             throw CompilerDirectives.shouldNotReachHere();
         }
-        /*
-         * "If this return is not to our immediate predecessor (i.e. from a method to its sender, or
-         * from a block to its caller), scan the stack for the first unwind marked context and
-         * inform this context and let it deal with it. This provides a chance for ensure unwinding
-         * to occur."
-         */
-        AbstractSqueakObject contextOrNil = startContext;
-        while (contextOrNil != targetContext) {
-            if (contextOrNil == NilObject.SINGLETON) {
-                /* "error: sender's instruction pointer or context is nil; cannot return" */
-                CompilerDirectives.transferToInterpreter();
-                try {
-                    image.cannotReturn.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue);
-                } catch (final ProcessSwitch ps) {
-                    return ps.getNewContext();
+        if (!targetContext.hasClosure()) {
+            /*
+             * "If this return is not to our immediate predecessor (i.e. from a method to its
+             * sender, or from a block to its caller), scan the stack for the first unwind marked
+             * context and inform this context and let it deal with it. This provides a chance for
+             * ensure unwinding to occur."
+             */
+            AbstractSqueakObject contextOrNil = startContext;
+            while (contextOrNil != targetContext) {
+                if (contextOrNil == NilObject.SINGLETON) {
+                    /* "error: sender's instruction pointer or context is nil; cannot return" */
+                    CompilerDirectives.transferToInterpreter();
+                    try {
+                        image.cannotReturn.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue);
+                    } catch (final ProcessSwitch ps) {
+                        return ps.getNewContext();
+                    }
+                    throw CompilerDirectives.shouldNotReachHere();
                 }
-                throw CompilerDirectives.shouldNotReachHere();
-            }
-            final ContextObject context = (ContextObject) contextOrNil;
-            assert !context.isPrimitiveContext();
-            if (!context.hasClosure() && context.getCodeObject().isUnwindMarked()) {
-                /* "context is marked; break out" */
-                CompilerDirectives.transferToInterpreter();
-                try {
-                    image.aboutToReturnSelector.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue, context);
-                } catch (final ProcessSwitch ps) {
-                    return ps.getNewContext();
-                } catch (final NonVirtualReturn nvr) {
-                    return commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                final ContextObject context = (ContextObject) contextOrNil;
+                assert !context.isPrimitiveContext();
+                if (!context.hasClosure() && context.getCodeObject().isUnwindMarked()) {
+                    /* "context is marked; break out" */
+                    CompilerDirectives.transferToInterpreter();
+                    try {
+                        image.aboutToReturnSelector.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue, context);
+                    } catch (final ProcessSwitch ps) {
+                        return ps.getNewContext();
+                    } catch (final NonVirtualReturn nvr) {
+                        return commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                    }
+                    throw CompilerDirectives.shouldNotReachHere();
                 }
-                throw CompilerDirectives.shouldNotReachHere();
+                contextOrNil = context.getSender();
             }
-            contextOrNil = context.getSender();
         }
         /*
          * "If we get here there is no unwind to worry about. Simply terminate the stack up to the
