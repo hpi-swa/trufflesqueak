@@ -6,12 +6,7 @@ Utilities classPool at: #AuthorInitials put: 'TS'.
 
 nonTerminatingTestCases := OrderedCollection new.
 {
-    #DelayTest -> #(#testMultiProcessWaitOnSameDelay).
     #JpegTest -> #(#test16bpp61 #test16bpp63 #test16bppLE #test16bppLE61 #test16bppLE62 #test16bppLE63 #test32bpp #test32bpp63 #test32bppLE63 #testBA32bpp #testBA32bpp63 "all previous tests pass on TruffleSqueak in JVM mode, the rest is not yet supported" #test16bpp #test16bpp62 #testBA16bpp #testBA16bpp61 #testBA16bpp62 #testBA16bpp63 #testBA16bppLE #testBA16bppLE61 #testBA16bppLE62 #testBA16bppLE63 #testGray #testGray61 #testGray62 #testGray63 #testGrayBA #testGrayBA61 #testGrayBA62 #testGrayBA63).
-    #MonitorTest -> #(#testMonitorNotGainingUnwantedSignalsDuringUnwinding).
-    #ProcessTerminateBug -> #(#testTerminationDuringNestedUnwind5 #testUnwindFromForeignProcess).
-    #ProcessTerminateUnwindNonLocalReturn -> #(#test1ATerminate #test1BTerminate #test1CTerminate #test1DTerminate #test2ATerminate #test2BTerminate #test2CTerminate #test2DTerminate #test3ATerminate #test3BTerminate #test3CTerminate #test3DTerminate #test4ATerminate #test4BTerminate #test4CTerminate #test4DTerminate #test5ATerminate #test5BTerminate #test5CTerminate #test5DTerminate #test6ATerminate #test6BTerminate #test6CTerminate #test6DTerminate #test7ATerminate #test7BTerminate #test7CTerminate #test7DTerminate #test8ATerminate #test8BTerminate #test8CTerminate #test8DTerminate).
-    #SemaphoreTest -> #(#testSemaAfterCriticalWait).
     #TestValueWithinFix -> #(#testValueWithinNonLocalReturnFixReal #testValueWithinNonLocalReturnFixSimply).
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
@@ -25,6 +20,7 @@ failingTests := OrderedCollection new.
     #FloatTest -> #(#testHashWithSmallishLargeNegativeInteger #testHashWithSmallishLargePositiveInteger #testIsDenormalized #testPrimDivideBy #testPrimTruncated).
     #IntegerTest -> #(#testRange "TruffleSqueak supports 64-bit SmallIntegers").
     #ProcessorTest -> #("flaky" #testGrabProcessor #testGrabProcessorOnlyForNoTimeout #testGrabProcessorOnlyForTimeout #testValueUnpreemptively).
+    #ProcessTerminateUnwindNonLocalReturn -> #(test1ATerminate #test1BTerminate #test2ATerminate #test2BTerminate #test3ATerminate #test3BTerminate #test4ATerminate #test4BTerminate #test5ATerminate #test5BTerminate #test6ATerminate #test6BTerminate #test7ATerminate #test7BTerminate #test8ATerminate #test8BTerminate).
     #ProcessTest -> #(#testTerminateInEnsure #testValueEnsured).
     #WeakIdentitySetTest -> #(#test). "Failing (or flaky?) on TruffleSqueak Native"
 } collect: [:assoc | | testCase |
