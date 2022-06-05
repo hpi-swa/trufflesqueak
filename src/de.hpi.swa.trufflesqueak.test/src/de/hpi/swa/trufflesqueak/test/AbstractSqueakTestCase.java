@@ -10,6 +10,7 @@ import static org.junit.Assert.fail;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
@@ -49,18 +50,18 @@ public abstract class AbstractSqueakTestCase {
             bytes[i] = (byte) intbytes[i];
         }
         bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
-        if (literals.length == 0 || literals[literals.length - 1] != nilClassBinding) {
-            return makeMethod(bytes, ArrayUtils.copyWithLast(literals, nilClassBinding));
-        }
-        return makeMethod(bytes, literals);
+        final Object[] allLiterals = Arrays.copyOf(literals, literals.length + 2);
+        allLiterals[allLiterals.length - 2] = image.asByteString("DoIt"); // compiledInSelector
+        allLiterals[allLiterals.length - 1] = nilClassBinding; // methodClassAssociation
+        return makeMethod(bytes, allLiterals);
     }
 
     protected static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
         return CompiledCodeObject.makeHeader(true, numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
     }
 
-    protected static final CompiledCodeObject makeMethod(final int... intbytes) {
-        return makeMethod(new Object[]{makeHeader(0, 5, 14, false, true), nilClassBinding}, intbytes);
+    private static CompiledCodeObject makeMethod(final int... intbytes) {
+        return makeMethod(new Object[]{makeHeader(0, 5, 14, false, true)}, intbytes);
     }
 
     protected static final Object runMethod(final CompiledCodeObject code, final Object receiver, final Object... arguments) {
@@ -101,8 +102,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static final Object runMethod(final Object receiver, final Object[] arguments, final int... intbytes) {
-        final CompiledCodeObject method = makeMethod(intbytes);
-        return runMethod(method, receiver, arguments);
+        return runMethod(makeMethod(intbytes), receiver, arguments);
     }
 
     protected static final Object runBinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
