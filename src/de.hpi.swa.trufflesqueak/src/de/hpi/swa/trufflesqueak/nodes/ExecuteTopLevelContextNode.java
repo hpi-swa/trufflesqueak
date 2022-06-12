@@ -125,6 +125,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         /* "make sure we can return to the given context" */
         if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
             CompilerDirectives.transferToInterpreter();
+            if (startContext == targetContext) {
+                assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe());
+                throw new TopLevelReturn(returnValue);
+            }
             try {
                 image.cannotReturn.executeAsSymbolSlow(targetContext.getTruffleFrame(), targetContext, returnValue);
             } catch (final ProcessSwitch ps) {
