@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
@@ -30,7 +31,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         if (code.isUnwindMarked()) {
             return AboutToReturnImplNodeGen.create();
         } else {
-            return new AboutToReturnNoopNode();
+            return AboutToReturnNoopNode.SINGLETON;
         }
     }
 
@@ -77,10 +78,27 @@ public abstract class AboutToReturnNode extends AbstractNode {
         }
     }
 
-    protected static final class AboutToReturnNoopNode extends AboutToReturnNode {
+    private static final class AboutToReturnNoopNode extends AboutToReturnNode {
+        private static final AboutToReturnNoopNode SINGLETON = new AboutToReturnNoopNode();
+
         @Override
         public void executeAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
             // Nothing to do.
+        }
+
+        @Override
+        public boolean isAdoptable() {
+            return false;
+        }
+
+        @Override
+        public Node copy() {
+            return SINGLETON;
+        }
+
+        @Override
+        public Node deepCopy() {
+            return copy();
         }
     }
 
