@@ -41,7 +41,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
             if (lastSeenContext != null && !lastSeenContext.hasMaterializedSender()) {
                 lastSeenContext.setSender(context);
             }
-            if (continueProfile.profile(!context.isDead() && context.hasEscaped())) {
+            if (continueProfile.profile(context.canBeReturnedTo() && context.hasEscaped())) {
                 // Materialization needs to continue in parent frame.
                 image.lastSeenContext = context;
             } else {

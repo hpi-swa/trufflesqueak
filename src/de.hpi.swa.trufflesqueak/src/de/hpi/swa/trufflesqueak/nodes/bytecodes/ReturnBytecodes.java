@@ -82,13 +82,14 @@ public final class ReturnBytecodes {
             assert FrameAccess.hasClosure(frame);
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-            if (homeContext.isDead()) {
+            if (homeContext.canBeReturnedTo()) {
+                throw new NonLocalReturn(returnValue, homeContext.getFrameSender());
+            } else {
                 CompilerDirectives.transferToInterpreter();
                 final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
                 getContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, returnValue);
                 throw CompilerDirectives.shouldNotReachHere();
             }
-            throw new NonLocalReturn(returnValue, homeContext.getFrameSender());
         }
     }
 
@@ -166,13 +167,14 @@ public final class ReturnBytecodes {
             if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
                 // Target is sender of closure's home context.
                 final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-                if (homeContext.isDead()) {
+                if (homeContext.canBeReturnedTo()) {
+                    throw new NonLocalReturn(getReturnValue(frame), homeContext.getFrameSender());
+                } else {
                     CompilerDirectives.transferToInterpreter();
                     final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
                     getContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
                     throw CompilerDirectives.shouldNotReachHere();
                 }
-                throw new NonLocalReturn(getReturnValue(frame), homeContext.getFrameSender());
             } else {
                 return getReturnValue(frame);
             }
