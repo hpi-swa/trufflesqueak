@@ -41,6 +41,10 @@ public final class Returns {
             return targetContextOrMarker;
         }
 
+        public ContextObject getTargetContext() {
+            return (ContextObject) targetContextOrMarker;
+        }
+
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
