@@ -69,7 +69,7 @@ public final class PrimitiveNodeFactory {
     public static final int PRIMITIVE_ON_DO_MARKER_INDEX = 199;
     public static final int PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX = 264;
     public static final int PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX = 520;
-    private static final int MAX_PRIMITIVE_INDEX = 575;
+    private static final int MAX_PRIMITIVE_INDEX = 578;
     @CompilationFinal(dimensions = 1) private static final byte[] NULL_MODULE_NAME = NullPlugin.class.getSimpleName().getBytes();
 
     private static final EconomicMap<Integer, AbstractPrimitiveNode> SINGLETON_PRIMITIVE_TABLE = EconomicMap.create();
@@ -282,8 +282,8 @@ public final class PrimitiveNodeFactory {
                     addEntryToPrimitiveTable(index, nodeFactory);
                 }
             }
-            for (final AbstractPrimitiveNode singleton : primitiveFactory.getSingletonPrimitives()) {
-                final Class<? extends AbstractPrimitiveNode> primitiveClass = singleton.getClass();
+            for (final Class<? extends AbstractSingletonPrimitiveNode> primitiveClass : primitiveFactory.getSingletonPrimitives()) {
+                final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.getInstance(primitiveClass);
                 final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                 for (final int index : primitive.indices()) {
                     assert !SINGLETON_PRIMITIVE_TABLE.containsKey(index) && !PRIMITIVE_TABLE.containsKey(index);

@@ -465,17 +465,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @SqueakPrimitive(indices = 137)
-    private static final class PrimSecondClockNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimSecondClockNode SINGLETON = new PrimSecondClockNode();
-
+    public static final class PrimSecondClockNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return MiscUtils.toSqueakSecondsLocal(MiscUtils.currentTimeMillis() / 1000);
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
@@ -508,12 +501,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @GenerateNodeFactory
     @SqueakPrimitive(indices = 142)
-    protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode {
-
-        @Specialization
-        protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimVMPathNode extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return getContext().getResourcesPath(); // Must end with file separator
         }
     }
@@ -727,17 +718,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 176)
-    private static final class PrimMaxIdentityHashNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimMaxIdentityHashNode SINGLETON = new PrimMaxIdentityHashNode();
-
+    public static final class PrimMaxIdentityHashNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return (long) AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
@@ -764,32 +748,18 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @SqueakPrimitive(indices = 240)
-    private static final class PrimUTCClockNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimUTCClockNode SINGLETON = new PrimUTCClockNode();
-
+    public static final class PrimUTCClockNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return MiscUtils.toSqueakMicrosecondsUTC(MiscUtils.currentTimeMillis() * 1000);
         }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
-        }
     }
 
     @SqueakPrimitive(indices = 241)
-    private static final class PrimLocalMicrosecondsClockNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimLocalMicrosecondsClockNode SINGLETON = new PrimLocalMicrosecondsClockNode();
-
+    public static final class PrimLocalMicrosecondsClockNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return MiscUtils.toSqueakMicrosecondsLocal(MiscUtils.currentTimeMillis() * 1000);
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
@@ -969,11 +939,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @Override
-    public List<? extends AbstractPrimitiveNode> getSingletonPrimitives() {
+    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
         return Arrays.asList(
-                        PrimSecondClockNode.SINGLETON,
-                        PrimMaxIdentityHashNode.SINGLETON,
-                        PrimUTCClockNode.SINGLETON,
-                        PrimLocalMicrosecondsClockNode.SINGLETON);
+                        PrimSecondClockNode.class,
+                        PrimVMPathNode.class,
+                        PrimMaxIdentityHashNode.class,
+                        PrimUTCClockNode.class,
+                        PrimLocalMicrosecondsClockNode.class);
     }
 }

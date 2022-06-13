@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -24,34 +25,32 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSize
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveScreenScaleFactor")
-    protected abstract static class PrimScreenScaleFactorNode extends AbstractPrimitiveNode {
-        @Specialization
-        protected static final double doGet(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimScreenScaleFactorNode extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return 1.0d;
         }
     }
 
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHighResClock")
-    protected abstract static class PrimHighResClockNode extends AbstractPrimitiveNode {
-        @Specialization
-        protected static final long doHighResClock(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimHighResClockNode extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return System.nanoTime();
         }
     }
 
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMultipleBytecodeSetsActive")
-    protected abstract static class PrimMultipleBytecodeSetsActive0Node extends AbstractPrimitiveNode {
-        @Specialization
-        protected final boolean doGet(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimMultipleBytecodeSetsActive0Node extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return BooleanObject.wrap((getContext().imageFormat & SqueakImageConstants.MULTIPLE_BYTECODE_SETS_BITMASK) != 0);
         }
     }
@@ -67,11 +66,10 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveUtcWithOffset")
-    protected abstract static class PrimUtcWithOffset1Node extends AbstractPrimitiveNode {
-        @Specialization
-        protected final ArrayObject doUTC(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimUtcWithOffset1Node extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return getContext().asArrayOfLongs(getUTCMicroseconds(), getOffsetFromGTMInSeconds());
         }
     }
@@ -109,5 +107,10 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return NullPluginFactory.getFactories();
+    }
+
+    @Override
+    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
+        return Arrays.asList(PrimScreenScaleFactorNode.class, PrimHighResClockNode.class, PrimMultipleBytecodeSetsActive0Node.class, PrimUtcWithOffset1Node.class);
     }
 }

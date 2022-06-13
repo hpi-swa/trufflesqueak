@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -47,6 +48,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
@@ -57,11 +59,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
-
-    @Override
-    public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        return StoragePrimitivesFactory.getFactories();
-    }
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
@@ -414,25 +411,21 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 129)
-    protected abstract static class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode {
-
-        @Specialization
-        protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimSpecialObjectsArrayNode extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return getContext().specialObjectsArray;
         }
     }
 
-    @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 138)
-    protected abstract static class PrimSomeObjectNode extends AbstractPrimitiveNode {
-
-        @Specialization
-        protected final ArrayObject doSome(@SuppressWarnings("unused") final Object receiver) {
-            return getContext().specialObjectsArray;
+    public static final class PrimSomeObjectNode extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
+            return NilObject.SINGLETON;
         }
     }
 
@@ -673,5 +666,15 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument, final boolean copyHash) {
             throw PrimitiveFailed.BAD_ARGUMENT;
         }
+    }
+
+    @Override
+    public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
+        return StoragePrimitivesFactory.getFactories();
+    }
+
+    @Override
+    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
+        return Arrays.asList(PrimSpecialObjectsArrayNode.class, PrimSomeObjectNode.class);
     }
 }

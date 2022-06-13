@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -14,17 +15,16 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCanWriteImage")
-    protected abstract static class PrimCanWriteImageNode extends AbstractPrimitiveNode {
-        @Specialization
-        protected final Object doCanWrite(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimCanWriteImageNode extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return BooleanObject.wrap(getContext().env.getCurrentWorkingDirectory().isWritable());
         }
     }
@@ -47,11 +47,10 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetUntrustedUserDirectory")
-    protected abstract static class PrimGetUntrustedUserDirectoryNode extends AbstractPrimitiveNode {
-        @Specialization
-        protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimGetUntrustedUserDirectoryNode extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return getContext().getResourcesDirectory();
         }
     }
@@ -59,5 +58,10 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return SecurityPluginFactory.getFactories();
+    }
+
+    @Override
+    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
+        return Arrays.asList(PrimCanWriteImageNode.class, PrimGetUntrustedUserDirectoryNode.class);
     }
 }

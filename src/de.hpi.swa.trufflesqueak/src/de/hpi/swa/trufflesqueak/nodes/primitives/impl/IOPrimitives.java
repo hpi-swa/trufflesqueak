@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -58,6 +59,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWrit
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
@@ -68,11 +70,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
-
-    @Override
-    public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        return IOPrimitivesFactory.getFactories();
-    }
 
     /* primitiveMousePoint (#90) no longer in use, support dropped in TruffleSqueak. */
 
@@ -797,13 +794,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
     @SqueakPrimitive(indices = 106)
-    protected abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode {
+    public static final class PrimScreenSizeNode extends AbstractSingletonPrimitiveNode {
+        @Child AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
 
-        @Specialization
-        protected final PointersObject doSize(@SuppressWarnings("unused") final Object receiver,
-                        @Cached final AbstractPointersObjectWriteNode writeNode) {
+        @Override
+        public Object execute() {
             final long x;
             final long y;
             final SqueakImageContext image = getContext();
@@ -877,5 +873,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             return receiver;
         }
+    }
+
+    @Override
+    public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
+        return IOPrimitivesFactory.getFactories();
+    }
+
+    @Override
+    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
+        return Arrays.asList(PrimScreenSizeNode.class);
     }
 }

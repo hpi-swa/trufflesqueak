@@ -572,17 +572,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @SqueakPrimitive(indices = 112)
-    private static final class PrimBytesLeftNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimBytesLeftNode SINGLETON = new PrimBytesLeftNode();
-
+    public static final class PrimBytesLeftNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return MiscUtils.runtimeFreeMemory();
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
@@ -794,19 +787,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @SqueakPrimitive(indices = 131)
-    private static final class PrimIncrementalGCNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimIncrementalGCNode SINGLETON = new PrimIncrementalGCNode();
-
+    public static final class PrimIncrementalGCNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             /* Cannot force incremental GC in Java, suggesting a normal GC instead. */
             MiscUtils.systemGC();
             return MiscUtils.runtimeFreeMemory();
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
@@ -1201,113 +1187,64 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 257)
-    private static final class PrimQuickReturnTrueNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimQuickReturnTrueNode SINGLETON = new PrimQuickReturnTrueNode();
-
+    public static final class PrimQuickReturnTrueNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return BooleanObject.TRUE;
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 258)
-    private static final class PrimQuickReturnFalseNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimQuickReturnFalseNode SINGLETON = new PrimQuickReturnFalseNode();
-
+    public static final class PrimQuickReturnFalseNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return BooleanObject.FALSE;
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 259)
-    private static final class PrimQuickReturnNilNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimQuickReturnNilNode SINGLETON = new PrimQuickReturnNilNode();
-
+    public static final class PrimQuickReturnNilNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return NilObject.SINGLETON;
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 260)
-    private static final class PrimQuickReturnMinusOneNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimQuickReturnMinusOneNode SINGLETON = new PrimQuickReturnMinusOneNode();
-
+    public static final class PrimQuickReturnMinusOneNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return -1L;
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 261)
-    private static final class PrimQuickReturnZeroNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimQuickReturnZeroNode SINGLETON = new PrimQuickReturnZeroNode();
-
+    public static final class PrimQuickReturnZeroNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return 0L;
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 262)
-    private static final class PrimQuickReturnOneNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimQuickReturnOneNode SINGLETON = new PrimQuickReturnOneNode();
-
+    public static final class PrimQuickReturnOneNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return 1L;
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 263)
-    private static final class PrimQuickReturnTwoNode extends AbstractSingletonPrimitiveNode {
-        private static final PrimQuickReturnTwoNode SINGLETON = new PrimQuickReturnTwoNode();
-
+    public static final class PrimQuickReturnTwoNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
             return 2L;
-        }
-
-        @Override
-        protected AbstractSingletonPrimitiveNode getSingleton() {
-            return SINGLETON;
         }
     }
 
@@ -1336,16 +1273,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @Override
-    public List<? extends AbstractPrimitiveNode> getSingletonPrimitives() {
+    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
         return Arrays.asList(
-                        PrimQuickReturnTrueNode.SINGLETON,
-                        PrimQuickReturnFalseNode.SINGLETON,
-                        PrimQuickReturnNilNode.SINGLETON,
-                        PrimQuickReturnMinusOneNode.SINGLETON,
-                        PrimQuickReturnZeroNode.SINGLETON,
-                        PrimQuickReturnOneNode.SINGLETON,
-                        PrimQuickReturnTwoNode.SINGLETON,
-                        PrimBytesLeftNode.SINGLETON,
-                        PrimIncrementalGCNode.SINGLETON);
+                        PrimQuickReturnTrueNode.class,
+                        PrimQuickReturnFalseNode.class,
+                        PrimQuickReturnNilNode.class,
+                        PrimQuickReturnMinusOneNode.class,
+                        PrimQuickReturnZeroNode.class,
+                        PrimQuickReturnOneNode.class,
+                        PrimQuickReturnTwoNode.class,
+                        PrimBytesLeftNode.class,
+                        PrimIncrementalGCNode.class);
     }
 }
