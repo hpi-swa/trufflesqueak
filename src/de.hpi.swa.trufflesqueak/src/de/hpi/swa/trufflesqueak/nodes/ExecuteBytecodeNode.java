@@ -26,6 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNo
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -47,7 +48,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
         initialPC = code.getInitialPC();
         bytecodeNodes = code.asBytecodeNodesEmpty();
         if (code.hasPrimitive()) {
-            primitiveNode = PrimitiveNodeFactory.forIndex(code, false, code.primitiveIndex(), false);
+            primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(code, ArgumentsLocation.IN_FRAME_ARGUMENTS);
             if (primitiveNode == null) {
                 final int primitiveIndex = code.primitiveIndex();
                 if (primitiveIndex == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {

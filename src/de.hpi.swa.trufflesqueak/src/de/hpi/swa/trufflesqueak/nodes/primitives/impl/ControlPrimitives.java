@@ -84,6 +84,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPri
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimLoadInstVarNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.process.AddLastLinkToListNode;
@@ -141,7 +142,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
-    public abstract static class AbstractPrimPerformNode extends AbstractPerformPrimitiveNode {
+    private abstract static class AbstractPrimPerformNode extends AbstractPerformPrimitiveNode {
         protected static final Object dispatchCached(final VirtualFrame frame, final NativeObject selector, final Object[] receiverAndArguments, final SqueakObjectClassNode lookupClassNode,
                         final LookupMethodNode lookupMethodNode, final DispatchSendNode dispatchNode) {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
@@ -527,7 +528,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 110)
-    public abstract static class PrimIdentical2Node extends AbstractPrimitiveNode {
+    protected abstract static class PrimIdentical2Node extends AbstractPrimitiveNode {
         @Specialization
         protected static final boolean doObject(final Object a, final Object b,
                         @Cached final SqueakObjectIdentityNode identityNode) {
@@ -552,7 +553,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 111)
-    public abstract static class PrimClass1Node extends AbstractPrimitiveNode {
+    protected abstract static class PrimClass1Node extends AbstractPrimitiveNode {
         @Specialization
         protected static final ClassObject doClass(final Object receiver,
                         @Cached final SqueakObjectClassNode classNode) {
@@ -645,7 +646,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractPrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode {
         protected static final AbstractPrimitiveNode createPrimitiveNode(final long primitiveIndex, final int arraySize) {
-            return PrimitiveNodeFactory.forIndex((int) primitiveIndex, arraySize, true);
+            return PrimitiveNodeFactory.getOrCreateIndexed((int) primitiveIndex, 1 + arraySize, ArgumentsLocation.PROVIDED_ON_EXECUTE);
         }
 
         protected static final Object primitiveWithArgs(final VirtualFrame frame, final Object receiver, final ArrayObject argumentArray,
@@ -653,7 +654,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return primitiveNode.executeWithArguments(frame, toObjectArrayNode.execute(receiver, argumentArray));
         }
 
-        protected final Object primitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
+        protected final Object primitiveWithArgsSlow(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
             /* Deopt might be acceptable because primitive is mostly used for debugging anyway. */
             CompilerDirectives.transferToInterpreter();
             final int arraySize = ArrayObjectSizeNode.getUncached().execute(argumentArray);
@@ -682,7 +683,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doPrimitiveWithArgsCached")
         protected final Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
-            return primitiveWithArgs(frame, receiver, primitiveIndex, argumentArray);
+            return primitiveWithArgsSlow(frame, receiver, primitiveIndex, argumentArray);
         }
     }
 
@@ -703,7 +704,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doPrimitiveWithArgsContextCached")
         protected final Object doPrimitiveWithArgsContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
                         final long primitiveIndex, final ArrayObject argumentArray) {
-            return primitiveWithArgs(frame, receiver, primitiveIndex, argumentArray);
+            return primitiveWithArgsSlow(frame, receiver, primitiveIndex, argumentArray);
         }
     }
 
@@ -844,7 +845,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 169)
-    public abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
         @Specialization
         public static final boolean doObject(final Object a, final Object b,
                         @Cached final SqueakObjectIdentityNode identityNode) {
@@ -1107,7 +1108,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doNamedPrimitiveWithArgsContextCached")
-        protected final Object doNamedPrimitiveWithArgsContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final CompiledCodeObject methodObject,
+        protected final Object doNamedPrimitiveWithArgsContextUncached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final CompiledCodeObject methodObject,
                         final Object target, final ArrayObject argumentArray) {
             /* Deopt might be acceptable because primitive is mostly used for debugging anyway. */
             CompilerDirectives.transferToInterpreter();
@@ -1122,8 +1123,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected static final AbstractPrimitiveNode createPrimitiveNode(final CompiledCodeObject methodObject) {
-            return PrimitiveNodeFactory.namedFor(methodObject, false, true);
+        protected static final AbstractPrimitiveNode createPrimitiveNode(final CompiledCodeObject method) {
+            return PrimitiveNodeFactory.getOrCreateNamed(method, 1 + method.getNumArgs(), ArgumentsLocation.PROVIDED_ON_EXECUTE);
         }
     }
 

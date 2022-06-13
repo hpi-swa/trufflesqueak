@@ -25,11 +25,12 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.PrimitiveFailedCounter;
 
 @ReportPolymorphism
-@ImportStatic(PrimitiveNodeFactory.class)
+@ImportStatic({PrimitiveNodeFactory.class, ArgumentsLocation.class})
 public abstract class DispatchEagerlyNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 6;
 
@@ -45,7 +46,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, rewriteOn = PrimitiveFailed.class)
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached("method") final CompiledCodeObject cachedMethod,
-                    @Cached("forIndex(cachedMethod, false, cachedMethod.primitiveIndex(), true)") final AbstractPrimitiveNode primitiveNode,
+                    @Cached("getOrCreateIndexedOrNamed(cachedMethod, PROVIDED_ON_EXECUTE)") final AbstractPrimitiveNode primitiveNode,
                     @Cached final PrimitiveFailedCounter failureCounter) {
         try {
             return primitiveNode.executeWithArguments(frame, receiverAndArguments);

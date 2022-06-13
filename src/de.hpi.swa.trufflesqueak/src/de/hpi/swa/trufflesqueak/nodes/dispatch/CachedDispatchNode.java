@@ -29,6 +29,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFr
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForOAMNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.PrimitiveFailedCounter;
 
@@ -47,7 +48,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         } else if (lookupResult instanceof CompiledCodeObject) {
             final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
             if (lookupMethod.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex(), false);
+                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(lookupMethod, ArgumentsLocation.ON_STACK);
                 if (primitiveNode != null) {
                     return new CachedDispatchPrimitiveNode(argumentCount, lookupMethod, primitiveNode);
                 }

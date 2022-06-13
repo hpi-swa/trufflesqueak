@@ -43,6 +43,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -227,7 +228,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
         final RootNode rootNode;
         if (isQuickPushPrimitive()) {
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(this, false, primitiveIndex(), false);
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this, ArgumentsLocation.IN_FRAME_ARGUMENTS);
             assert primitiveNode != null;
             rootNode = new ExecuteNonFailingPrimitiveRootNode(language, this, primitiveNode);
         } else {
