@@ -138,6 +138,12 @@ public final class PrimitiveNodeFactory {
         return target.toArray(new String[0]);
     }
 
+    public static boolean isNonFailing(final CompiledCodeObject method) {
+        final int primitiveIndex = method.primitiveIndex();
+        return isLoadInstVar(primitiveIndex) || SINGLETON_PRIMITIVE_TABLE.containsKey(primitiveIndex);
+        // checking SINGLETON_PLUGIN_MAP is probably not worth the effort.
+    }
+
     public static AbstractPrimitiveNode getOrCreateIndexedOrNamed(final CompiledCodeObject method, final ArgumentsLocation location) {
         assert method.hasPrimitive();
         final int primitiveIndex = method.primitiveIndex();
@@ -156,7 +162,7 @@ public final class PrimitiveNodeFactory {
 
     public static AbstractPrimitiveNode getOrCreateIndexed(final int primitiveIndex, final int numReceiverAndArguments, final ArgumentsLocation location) {
         assert primitiveIndex <= MAX_PRIMITIVE_INDEX;
-        if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
+        if (isLoadInstVar(primitiveIndex)) {
             assert numReceiverAndArguments == 1;
             return ControlPrimitives.PrimLoadInstVarNode.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX, createArguments(location, numReceiverAndArguments));
         } else {
@@ -208,6 +214,10 @@ public final class PrimitiveNodeFactory {
             }
         }
         return null;
+    }
+
+    private static boolean isLoadInstVar(final int primitiveIndex) {
+        return PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX;
     }
 
     private static AbstractPrimitiveNode createNode(final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory, final ArgumentsLocation location, final int numReceiverAndArguments) {

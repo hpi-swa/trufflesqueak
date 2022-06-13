@@ -214,7 +214,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerAsserts.neverPartOfCompilation();
         final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
         final RootNode rootNode;
-        if (isQuickPushPrimitive()) {
+        if (hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) {
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this, ArgumentsLocation.IN_FRAME_ARGUMENTS);
             assert primitiveNode != null;
             rootNode = new ExecuteNonFailingPrimitiveRootNode(language, this, primitiveNode);
@@ -417,14 +417,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public int primitiveIndex() {
         assert hasPrimitive() && bytes.length >= 3;
         return (Byte.toUnsignedInt(bytes[2]) << 8) + Byte.toUnsignedInt(bytes[1]);
-    }
-
-    public boolean isQuickPushPrimitive() {
-        if (!hasPrimitive()) {
-            return false;
-        }
-        final int primitiveIndex = primitiveIndex();
-        return 256 <= primitiveIndex && primitiveIndex <= 519;
     }
 
     public boolean isUnwindMarked() {
