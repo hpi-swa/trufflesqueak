@@ -477,10 +477,18 @@ public final class SendBytecodes {
                         } else {
                             nodeFactory = PrimitiveNodeFactory.getNodeFactory(primitiveIndex, 1 + numArguments);
                         }
-                        if (nodeFactory == null) {
-                            return true; // primitive not found / supported
+                        if (nodeFactory != null) {
+                            node = nodeFactory.createNode((Object) createArgumentNodes(numArguments));
+                        } else {
+                            if (primitiveIndex == 117) {
+                                node = PrimitiveNodeFactory.getSingleton(primitiveMethod);
+                            } else {
+                                node = PrimitiveNodeFactory.getSingleton(primitiveIndex);
+                            }
+                            if (node == null) {
+                                return true; // primitive not found / supported
+                            }
                         }
-                        node = nodeFactory.createNode((Object) createArgumentNodes(numArguments));
                     }
                     primitiveNode = insert(node);
                     cachedReceiverClass = actualClass;

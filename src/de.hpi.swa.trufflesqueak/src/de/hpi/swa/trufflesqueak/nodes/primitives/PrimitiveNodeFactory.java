@@ -74,6 +74,7 @@ public final class PrimitiveNodeFactory {
 
     private static final EconomicMap<Integer, AbstractPrimitiveNode> SINGLETON_PRIMITIVE_TABLE = EconomicMap.create();
     private static final EconomicMap<Integer, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> PRIMITIVE_TABLE = EconomicMap.create(MAX_PRIMITIVE_INDEX);
+    private static final EconomicMap<String, EconomicMap<String, AbstractPrimitiveNode>> SINGLETON_PLUGIN_MAP = EconomicMap.create();
     private static final EconomicMap<String, EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>>> PLUGIN_MAP = EconomicMap.create();
 
     static {
@@ -161,6 +162,24 @@ public final class PrimitiveNodeFactory {
         }
     }
 
+    public static AbstractPrimitiveNode getSingleton(final int primitiveIndex) {
+        return SINGLETON_PRIMITIVE_TABLE.get(primitiveIndex);
+    }
+
+    public static AbstractPrimitiveNode getSingleton(final CompiledCodeObject method) {
+        final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
+        if (values[1] == NilObject.SINGLETON) {
+            return null;
+        }
+        final byte[] moduleName = values[0] == NilObject.SINGLETON ? NULL_MODULE_NAME : ((NativeObject) values[0]).getByteStorage();
+        final byte[] functionName = ((NativeObject) values[1]).getByteStorage();
+        final EconomicMap<String, AbstractPrimitiveNode> functionMap = SINGLETON_PLUGIN_MAP.get(new String(moduleName));
+        if (functionMap == null) {
+            return null;
+        }
+        return functionMap.get(new String(functionName));
+    }
+
     public static boolean isLoadInstVarPrimitive(final int primitiveIndex) {
         return PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX;
     }
@@ -183,7 +202,17 @@ public final class PrimitiveNodeFactory {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         final EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> functionNameToNodeFactory = PLUGIN_MAP.get(new String(moduleName));
         if (functionNameToNodeFactory != null) {
-            return createInstance(method, useStack, argsProvided, functionNameToNodeFactory.get(new String(functionName)));
+            final AbstractPrimitiveNode primitiveNode = createInstance(method, useStack, argsProvided, functionNameToNodeFactory.get(new String(functionName)));
+            if (primitiveNode != null) {
+                return primitiveNode;
+            }
+        }
+        final EconomicMap<String, AbstractPrimitiveNode> functionMap = SINGLETON_PLUGIN_MAP.get(new String(moduleName));
+        if (functionMap != null) {
+            final AbstractPrimitiveNode primitiveNode = functionMap.get(new String(functionName));
+            if (primitiveNode != null) {
+                return primitiveNode;
+            }
         }
         return null;
     }
@@ -283,10 +312,10 @@ public final class PrimitiveNodeFactory {
                 }
             }
             for (final Class<? extends AbstractSingletonPrimitiveNode> primitiveClass : primitiveFactory.getSingletonPrimitives()) {
-                final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.getInstance(primitiveClass);
                 final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                 for (final int index : primitive.indices()) {
                     assert !SINGLETON_PRIMITIVE_TABLE.containsKey(index) && !PRIMITIVE_TABLE.containsKey(index);
+                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.getInstance(primitiveClass);
                     SINGLETON_PRIMITIVE_TABLE.put(index, singleton);
                 }
             }
@@ -295,6 +324,7 @@ public final class PrimitiveNodeFactory {
 
     private static void fillPluginMap(final AbstractPrimitiveFactoryHolder[] plugins) {
         for (final AbstractPrimitiveFactoryHolder plugin : plugins) {
+            final String pluginName = plugin.getClass().getSimpleName();
             final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
             final EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> functionNameToNodeFactory = EconomicMap.create(nodeFactories.size());
             for (final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
@@ -311,8 +341,22 @@ public final class PrimitiveNodeFactory {
                     map.put(numReceiverAndArguments, nodeFactory);
                 }
             }
-            final String pluginName = plugin.getClass().getSimpleName();
-            PLUGIN_MAP.put(pluginName, EconomicMap.create(functionNameToNodeFactory));
+            PLUGIN_MAP.put(pluginName, functionNameToNodeFactory);
+
+            final EconomicMap<String, AbstractPrimitiveNode> functionNameToSingletonNode = EconomicMap.create(plugin.getSingletonPrimitives().size());
+            for (final Class<? extends AbstractSingletonPrimitiveNode> primitiveClass : plugin.getSingletonPrimitives()) {
+                final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
+                for (final int index : primitive.indices()) {
+                    assert !SINGLETON_PRIMITIVE_TABLE.containsKey(index) && !PRIMITIVE_TABLE.containsKey(index);
+                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.getInstance(primitiveClass);
+                    SINGLETON_PRIMITIVE_TABLE.put(index, singleton);
+                }
+                for (final String name : primitive.names()) {
+                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.getInstance(primitiveClass);
+                    functionNameToSingletonNode.put(name, singleton);
+                }
+            }
+            SINGLETON_PLUGIN_MAP.put(pluginName, functionNameToSingletonNode);
         }
     }
 
