@@ -19,13 +19,10 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     protected final int index;
     private final int successorIndex;
 
-    private SourceSection sourceSection;
-
     protected AbstractBytecodeNode(final AbstractBytecodeNode original) {
         code = original.code;
         index = original.index;
         successorIndex = original.successorIndex;
-        sourceSection = original.sourceSection;
     }
 
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index) {
@@ -52,15 +49,12 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     @Override
     public final SourceSection getSourceSection() {
         CompilerAsserts.neverPartOfCompilation();
-        if (sourceSection == null) {
-            final Source source = code.getSource();
-            if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
-                sourceSection = source.createUnavailableSection();
-            } else {
-                final int lineNumber = code.findLineNumber(index - code.getInitialPC());
-                sourceSection = source.createSection(lineNumber);
-            }
+        final Source source = code.getSource();
+        if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
+            return source.createUnavailableSection();
+        } else {
+            final int lineNumber = code.findLineNumber(index - code.getInitialPC());
+            return source.createSection(lineNumber);
         }
-        return sourceSection;
     }
 }
