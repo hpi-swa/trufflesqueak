@@ -71,8 +71,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal private int numLiterals;
     @CompilationFinal private int numTemps;
 
-    private AbstractSqueakBytecodeDecoder decoder;
-
     /*
      * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
      * CompiledBlocks their outer method in their last literal. For traditional BlockClosures, we
@@ -106,7 +104,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         super(original);
         frameDescriptor = original.frameDescriptor;
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
-        decoder = original.decoder;
     }
 
     private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
@@ -127,8 +124,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         numArgs = outerCode.numArgs;
         numLiterals = outerCode.numLiterals;
         numTemps = outerCode.numTemps;
-
-        decoder = outerCode.decoder;
     }
 
     private CompiledCodeObject(final int size, final SqueakImageContext image, final ClassObject classObject) {
@@ -177,7 +172,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             String contents;
             try {
                 name = toString();
-                contents = decoder.decodeToString(this);
+                contents = getDecoder().decodeToString(this);
             } catch (final RuntimeException e) {
                 if (name == null) {
                     name = SOURCE_UNAVAILABLE_NAME;
@@ -306,6 +301,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return CompiledCodeHeaderDecoder.getSignFlag(getHeader());
     }
 
+    private AbstractSqueakBytecodeDecoder getDecoder() {
+        CompilerAsserts.neverPartOfCompilation();
+        return getSignFlag() ? SqueakBytecodeV3PlusClosuresDecoder.SINGLETON : SqueakBytecodeSistaV1Decoder.SINGLETON;
+    }
+
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -320,15 +320,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public AbstractBytecodeNode[] asBytecodeNodesEmpty() {
-        return new AbstractBytecodeNode[decoder.trailerPosition(this)];
+        return new AbstractBytecodeNode[getDecoder().trailerPosition(this)];
     }
 
     public AbstractBytecodeNode bytecodeNodeAt(final VirtualFrame frame, final int pc) {
-        return decoder.decodeBytecode(frame, this, pc);
+        return getDecoder().decodeBytecode(frame, this, pc);
     }
 
     public int findLineNumber(final int index) {
-        return decoder.findLineNumber(this, index);
+        return getDecoder().findLineNumber(this, index);
     }
 
     private void decodeHeader() {
@@ -337,7 +337,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
         numTemps = CompiledCodeHeaderDecoder.getNumTemps(header);
         numArgs = CompiledCodeHeaderDecoder.getNumArguments(header);
-        decoder = getSignFlag() ? SqueakBytecodeV3PlusClosuresDecoder.SINGLETON : SqueakBytecodeSistaV1Decoder.SINGLETON;
     }
 
     public void become(final CompiledCodeObject other) {
@@ -626,7 +625,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public boolean hasStoreIntoTemp1AfterCallPrimitive() {
         assert hasPrimitive();
-        return decoder.hasStoreIntoTemp1AfterCallPrimitive(this);
+        return getDecoder().hasStoreIntoTemp1AfterCallPrimitive(this);
     }
 
     /*
