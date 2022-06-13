@@ -139,17 +139,23 @@ public final class PushBytecodes {
     public abstract static class AbstractPushFullClosureNode extends AbstractPushClosureNode {
         private final int literalIndex;
         private final CompiledCodeObject block;
+        private final int blockInitialPC;
+        private final int blockNumArgs;
 
         protected AbstractPushFullClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
             super(code, index, numBytecodes, numCopied);
             this.literalIndex = literalIndex;
             block = (CompiledCodeObject) code.getLiteral(literalIndex);
+            blockInitialPC = block.getInitialPC();
+            blockNumArgs = block.getNumArgs();
         }
 
         public AbstractPushFullClosureNode(final AbstractPushFullClosureNode node) {
             super(node);
             literalIndex = node.literalIndex;
             block = node.block;
+            blockInitialPC = block.getInitialPC();
+            blockNumArgs = block.getNumArgs();
         }
 
         public static AbstractPushFullClosureNode createExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final int extA, final byte byteA, final byte byteB) {
@@ -174,7 +180,7 @@ public final class PushBytecodes {
 
         protected final BlockClosureObject createClosure(final Object[] copiedValues, final Object receiver, final ContextObject context) {
             final SqueakImageContext image = getContext();
-            return new BlockClosureObject(image, image.fullBlockClosureClass, block, block.getInitialPC(), block.getNumArgs(), copiedValues, receiver, context);
+            return new BlockClosureObject(image, image.fullBlockClosureClass, block, blockInitialPC, blockNumArgs, copiedValues, receiver, context);
         }
 
         @Override
