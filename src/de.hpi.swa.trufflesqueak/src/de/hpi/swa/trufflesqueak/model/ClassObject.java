@@ -86,7 +86,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public long rehashForClassTable(final SqueakImageContext i) {
-        final long newHash = i.getNextClassHash();
+        final int newHash = i.getNextClassHash();
         assert newHash < IDENTITY_HASH_MASK;
         setSqueakHash(newHash);
         return newHash;

@@ -17,7 +17,7 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
         super(image, classObject);
     }
 
-    public EmptyObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
+    public EmptyObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
         super(image, hash, classObject);
     }
 

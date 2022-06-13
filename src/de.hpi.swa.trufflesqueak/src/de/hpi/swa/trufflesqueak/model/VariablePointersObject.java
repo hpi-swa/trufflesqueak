@@ -19,7 +19,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public final class VariablePointersObject extends AbstractPointersObject {
     private Object[] variablePart;
 
-    public VariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
+    public VariablePointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
         super(image, hash, classObject);
     }
 

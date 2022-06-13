@@ -56,6 +56,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimiti
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
@@ -88,7 +89,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 final Object from = fromPointers[i];
                 final Object to = toPointers[i];
                 if (from instanceof AbstractSqueakObjectWithClassAndHash && to instanceof AbstractSqueakObjectWithClassAndHash) {
-                    ((AbstractSqueakObjectWithClassAndHash) to).setSqueakHash(((AbstractSqueakObjectWithClassAndHash) from).getSqueakHash());
+                    ((AbstractSqueakObjectWithClassAndHash) to).setSqueakHash(MiscUtils.toIntExact(((AbstractSqueakObjectWithClassAndHash) from).getSqueakHash()));
                 }
             }
         }

@@ -43,7 +43,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
-    public ArrayObject(final SqueakImageContext image, final long hash, final ClassObject squeakClass) {
+    public ArrayObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
         super(image, hash, squeakClass);
     }
 

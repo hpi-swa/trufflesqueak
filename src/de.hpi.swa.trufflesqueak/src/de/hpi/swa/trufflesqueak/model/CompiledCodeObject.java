@@ -89,7 +89,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal private RootCallTarget resumptionCallTarget;
 
     @TruffleBoundary
-    public CompiledCodeObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
+    public CompiledCodeObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
         super(image, hash, classObject);
     }
 

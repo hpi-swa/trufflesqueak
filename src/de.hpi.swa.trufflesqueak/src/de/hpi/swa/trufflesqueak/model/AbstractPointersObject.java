@@ -73,7 +73,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         objectExtension = layout.getFreshObjectExtension();
     }
 
-    protected AbstractPointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
+    protected AbstractPointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
         super(image, hash, classObject);
     }
 

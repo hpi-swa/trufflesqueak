@@ -29,7 +29,7 @@ public final class PointersObject extends AbstractPointersObject {
         super(image); // for special PointersObjects only
     }
 
-    public PointersObject(final SqueakImageContext image, final long hash, final ClassObject klass) {
+    public PointersObject(final SqueakImageContext image, final int hash, final ClassObject klass) {
         super(image, hash, klass);
     }
 

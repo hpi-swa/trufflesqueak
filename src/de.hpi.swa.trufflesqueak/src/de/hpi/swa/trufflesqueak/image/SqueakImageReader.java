@@ -363,7 +363,7 @@ public final class SqueakImageReader {
      */
     private void fillInClassObjects() {
         /** Find all metaclasses and instantiate their singleton instances as class objects. */
-        long highestKnownClassIndex = -1;
+        int highestKnownClassIndex = -1;
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = getChunk(hiddenRootsChunk.getWord(p));
             if (classTablePage.isNil()) {

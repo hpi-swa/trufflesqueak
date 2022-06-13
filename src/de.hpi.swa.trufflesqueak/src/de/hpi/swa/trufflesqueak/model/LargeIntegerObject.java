@@ -37,7 +37,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         assert integer.signum() != 0 : "LargePositiveInteger>>isZero returns 'false'";
     }
 
-    public LargeIntegerObject(final SqueakImageContext image, final long hash, final ClassObject klass, final byte[] bytes) {
+    public LargeIntegerObject(final SqueakImageContext image, final int hash, final ClassObject klass, final byte[] bytes) {
         super(image, hash, klass);
         integer = new BigInteger(isPositive(image) ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
         bitLength = integer.bitLength();

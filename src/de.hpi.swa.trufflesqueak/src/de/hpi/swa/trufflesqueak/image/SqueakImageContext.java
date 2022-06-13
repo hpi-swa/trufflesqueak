@@ -139,7 +139,7 @@ public final class SqueakImageContext {
     public NativeObject clipboardTextHeadless = asByteString("");
     private boolean currentMarkingFlag;
     private ArrayObject hiddenRoots;
-    private long globalClassCounter = -1;
+    private int globalClassCounter = -1;
     @CompilationFinal private SqueakDisplayInterface display;
     public final CheckForInterruptsState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
@@ -434,12 +434,12 @@ public final class SqueakImageContext {
         return globalClassCounter;
     }
 
-    public void setGlobalClassCounter(final long newValue) {
+    public void setGlobalClassCounter(final int newValue) {
         assert globalClassCounter < 0 : "globalClassCounter should only be set once";
         globalClassCounter = newValue;
     }
 
-    public long getNextClassHash() {
+    public int getNextClassHash() {
         return ++globalClassCounter;
     }
 

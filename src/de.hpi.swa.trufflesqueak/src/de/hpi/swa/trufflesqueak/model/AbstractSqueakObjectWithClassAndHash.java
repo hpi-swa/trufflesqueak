@@ -23,9 +23,9 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
     public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
-    public static final long HASH_UNINITIALIZED = 0;
+    public static final int HASH_UNINITIALIZED = 0;
 
-    private long squeakHash;
+    private int squeakHash;
     private ClassObject squeakClass;
     private boolean markingFlag;
 
@@ -35,7 +35,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         markingFlag = image.getCurrentMarkingFlag();
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final long hash, final ClassObject klass) {
+    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final int hash, final ClassObject klass) {
         this(image.getCurrentMarkingFlag(), hash, klass);
         assert hash >= 0 : "Squeak hashes should not be negative (will mess up object headers)";
     }
@@ -44,7 +44,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         this(image.getCurrentMarkingFlag(), HASH_UNINITIALIZED, klass);
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final boolean markingFlag, final long hash, final ClassObject klass) {
+    private AbstractSqueakObjectWithClassAndHash(final boolean markingFlag, final int hash, final ClassObject klass) {
         squeakHash = hash;
         squeakClass = klass;
         this.markingFlag = markingFlag;
@@ -112,7 +112,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return squeakHash == HASH_UNINITIALIZED;
     }
 
-    public final void setSqueakHash(final long newHash) {
+    public final void setSqueakHash(final int newHash) {
         squeakHash = newHash;
     }
 

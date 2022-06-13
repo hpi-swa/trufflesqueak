@@ -25,7 +25,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     private Object[] variablePart;
     private final ReferenceQueue<AbstractSqueakObject> weakPointersQueue;
 
-    public WeakVariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
+    public WeakVariablePointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
         super(image, hash, classObject);
         weakPointersQueue = image.weakPointersQueue;
     }

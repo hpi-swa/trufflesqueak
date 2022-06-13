@@ -50,7 +50,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
-    private NativeObject(final SqueakImageContext image, final long hash, final ClassObject classObject, final Object storage) {
+    private NativeObject(final SqueakImageContext image, final int hash, final ClassObject classObject, final Object storage) {
         super(image, hash, classObject);
         assert storage != null : "Unexpected `null` value";
         this.storage = storage;

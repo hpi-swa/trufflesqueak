@@ -32,7 +32,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         super(image, squeakClass);
     }
 
-    private BlockClosureObject(final SqueakImageContext image, final long hash, final ClassObject squeakClass) {
+    private BlockClosureObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
         super(image, hash, squeakClass);
         copiedValues = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
