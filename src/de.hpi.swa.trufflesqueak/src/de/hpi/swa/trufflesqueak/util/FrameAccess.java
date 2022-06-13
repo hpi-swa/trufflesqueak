@@ -226,6 +226,14 @@ public final class FrameAccess {
         return SlotIndicies.STACK_START.ordinal() + index;
     }
 
+    public static Object getStackValue(final Frame frame, final int stackIndex, final int numArguments) {
+        if (stackIndex < numArguments) {
+            return getArgument(frame, stackIndex);
+        } else {
+            return frame.getValue(toStackSlotIndex(frame, stackIndex));
+        }
+    }
+
     /* Iterates used stack slots (may not be ordered). */
     public static void iterateStackSlots(final Frame frame, final Consumer<Integer> action) {
         // All slots after fourth slot for stackPointer

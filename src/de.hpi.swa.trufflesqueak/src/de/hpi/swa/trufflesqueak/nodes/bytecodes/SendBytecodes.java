@@ -269,16 +269,23 @@ public final class SendBytecodes {
             this.selectorIndex = selectorIndex;
         }
 
-        public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int selectorIndex) {
+        public static AbstractBytecodeNode create(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int selectorIndex) {
             int primitiveIndex = -1;
             final SqueakImageContext image = code.getSqueakClass().getImage();
             final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
             final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
             if (0 <= selectorIndex && selectorIndex <= 15) { // arithmetic primitives
-                /* Look up specialSelector in SmallInteger class. */
-                final CompiledCodeObject method = (CompiledCodeObject) image.smallIntegerClass.lookupInMethodDictSlow(specialSelector);
-                assert method.hasPrimitive() && method.getNumArgs() == numArguments;
-                primitiveIndex = method.primitiveIndex();
+                /*
+                 * Peek at receiver and only use a primitive if it is a SmallInteger (see
+                 * #arithmeticSelectorPrimitive).
+                 */
+                final int receiverStackIndex = FrameAccess.getStackPointer(frame) - 2;
+                final Object receiver = FrameAccess.getStackValue(frame, receiverStackIndex, FrameAccess.getNumArguments(frame));
+                if (receiver instanceof Long) { // TODO: can this be expanded to Double and others?
+                    final CompiledCodeObject method = (CompiledCodeObject) image.smallIntegerClass.lookupInMethodDictSlow(specialSelector);
+                    assert method.hasPrimitive() && method.getNumArgs() == numArguments;
+                    primitiveIndex = method.primitiveIndex();
+                }
             } else if (selectorIndex == 16 || selectorIndex == 17) { // #at:, #at:put:
                 return new SendSpecialSelectorQuickWithClassCheck1OrMoreArgumentsNode(code, index, selectorIndex);
             } else if (selectorIndex == 18) { // #size

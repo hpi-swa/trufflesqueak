@@ -121,12 +121,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
             final Object[] receiverAndArguments = new Object[1 + argumentCount];
             final int numArgs = FrameAccess.getNumArguments(frame);
             for (int i = 0; i < receiverAndArguments.length; i++) {
-                final int stackIndex = stackPointer + i;
-                if (stackIndex < numArgs) {
-                    receiverAndArguments[i] = FrameAccess.getArgument(frame, stackIndex);
-                } else {
-                    receiverAndArguments[i] = frame.getValue(FrameAccess.toStackSlotIndex(frame, stackIndex));
-                }
+                receiverAndArguments[i] = FrameAccess.getStackValue(frame, stackPointer + i, numArgs);
             }
             return IndirectCallNode.getUncached().call(method.getCallTarget(),
                             FrameAccess.newWith(method, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
