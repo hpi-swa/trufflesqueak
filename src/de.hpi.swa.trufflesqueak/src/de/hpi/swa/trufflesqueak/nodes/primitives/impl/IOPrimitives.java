@@ -11,7 +11,6 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -28,7 +27,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.io.SqueakDisplayInterface;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -109,14 +108,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization
-        protected final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray,
-                        @Cached("createIdentityProfile()") final ValueProfile displayProfile) {
+        protected final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
-                final SqueakDisplayInterface display = displayProfile.profile(image.getDisplay());
-                if (TruffleOptions.AOT) {
-                    display.pollEvents();
-                }
+                final SqueakDisplay display = image.getDisplay();
                 final long[] event = display.getNextEvent();
                 targetArray.setStorage(event != null ? event : SqueakIOConstants.NONE_EVENT);
             } else {
@@ -867,7 +862,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doBeep(final Object receiver) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
-                image.getDisplay().beep();
+                SqueakDisplay.beep();
             } else {
                 image.printToStdOut((char) 7);
             }

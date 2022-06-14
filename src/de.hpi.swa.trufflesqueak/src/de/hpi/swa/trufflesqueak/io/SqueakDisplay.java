@@ -30,7 +30,6 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.List;
 
@@ -54,11 +53,8 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
-public final class SqueakDisplay implements SqueakDisplayInterface {
+public final class SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
-    private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
-    private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
-    private static final URL ICON_URL = SqueakDisplay.class.getResource("trufflesqueak-icon.png");
     @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
 
     public final SqueakImageContext image;
@@ -78,25 +74,21 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private Point rememberedWindowLocation;
     private boolean deferUpdates;
 
-    static {
-        tryToSetTaskbarIcon();
-    }
-
     public SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
         frame.add(canvas);
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
         frame.setFocusTraversalKeysEnabled(false); // Ensure `Tab` key is captured.
-        frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
+        frame.setMinimumSize(new Dimension(200, 150));
         frame.setResizable(true);
         installEventListeners();
+        tryToSetTaskbarIcon();
     }
 
-    @TruffleBoundary
     private static void tryToSetTaskbarIcon() {
         try {
-            Taskbar.getTaskbar().setIconImage(TOOLKIT.getImage(ICON_URL));
+            Taskbar.getTaskbar().setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("trufflesqueak-icon.png")));
         } catch (final UnsupportedOperationException e) {
             // Ignore
         }
@@ -188,7 +180,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
     }
 
-    @Override
     @TruffleBoundary
     public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
         if (left < right && top < bottom && !deferUpdates && destForm.isDisplay(image)) {
@@ -196,40 +187,34 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
     }
 
-    @Override
     @TruffleBoundary
     public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
         assert left < right && top < bottom;
         canvas.paintImmediately(left, top, right, bottom);
     }
 
-    @Override
     @TruffleBoundary
     public void close() {
         frame.setVisible(false);
         frame.dispose();
     }
 
-    @Override
     @TruffleBoundary
     public void resizeTo(final int width, final int height) {
         canvas.setPreferredSize(new Dimension(width, height));
         frame.pack();
     }
 
-    @Override
     @TruffleBoundary
     public int getWindowWidth() {
         return canvas.getWidth();
     }
 
-    @Override
     @TruffleBoundary
     public int getWindowHeight() {
         return canvas.getHeight();
     }
 
-    @Override
     @TruffleBoundary
     public void setFullscreen(final boolean enable) {
         if (enable) {
@@ -258,7 +243,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         frame.setVisible(true);
     }
 
-    @Override
     @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
         canvas.setSqueakDisplay(sqDisplay);
@@ -280,16 +264,14 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
     }
 
-    @Override
     @TruffleBoundary
     public boolean isVisible() {
         return frame.isVisible();
     }
 
-    @Override
     @TruffleBoundary
     public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
-        final Dimension bestCursorSize = TOOLKIT.getBestCursorSize(width, height);
+        final Dimension bestCursorSize = Toolkit.getDefaultToolkit().getBestCursorSize(width, height);
         final Cursor cursor;
         if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
             cursor = Cursor.getDefaultCursor();
@@ -325,7 +307,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             }
             // Ensure hotspot is within cursor bounds.
             final Point hotSpot = new Point(Math.min(Math.max(offsetX, 1), width - 1), Math.min(Math.max(offsetY, 1), height - 1));
-            cursor = TOOLKIT.createCustomCursor(bufferedImage, hotSpot, "TruffleSqueak Cursor");
+            cursor = Toolkit.getDefaultToolkit().createCustomCursor(bufferedImage, hotSpot, "TruffleSqueak Cursor");
         }
         frame.setCursor(cursor);
     }
@@ -346,7 +328,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         return cursorMergedWords;
     }
 
-    @Override
     public long[] getNextEvent() {
         return deferredEvents.pollFirst();
     }
@@ -384,31 +365,26 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         return System.currentTimeMillis() - image.startUpMillis;
     }
 
-    @Override
     public void setDeferUpdates(final boolean flag) {
         deferUpdates = flag;
     }
 
-    @Override
     public boolean getDeferUpdates() {
         return deferUpdates;
     }
 
-    @Override
     @TruffleBoundary
     public void setWindowTitle(final String title) {
         frame.setTitle(title);
     }
 
-    @Override
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         inputSemaphoreIndex = interruptSemaphoreIndex;
     }
 
-    @Override
     @TruffleBoundary
-    public String getClipboardData() {
+    public static String getClipboardData() {
         try {
             return (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
         } catch (UnsupportedFlavorException | IOException e) {
@@ -416,22 +392,15 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
     }
 
-    @Override
     @TruffleBoundary
-    public void setClipboardData(final String text) {
+    public static void setClipboardData(final String text) {
         final StringSelection selection = new StringSelection(text);
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
     }
 
-    @Override
     @TruffleBoundary
-    public void beep() {
+    public static void beep() {
         Toolkit.getDefaultToolkit().beep();
-    }
-
-    @Override
-    public void pollEvents() {
-        throw SqueakException.create("No need to poll for events manually when using AWT.");
     }
 
     private final class SqueakDropTargetAdapter extends DropTargetAdapter {

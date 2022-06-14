@@ -1,0 +1,177 @@
+[
+{
+  "name":"[B"
+},
+{
+  "name":"[C"
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.model.AbstractPointersObject",
+  "fields":[
+    {"name":"object0"}, 
+    {"name":"object1"}, 
+    {"name":"object2"}, 
+    {"name":"primitive0"}, 
+    {"name":"primitive1"}, 
+    {"name":"primitive2"}, 
+    {"name":"primitiveUsedMap"}
+  ]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.plugins.NullPlugin$PrimHighResClockNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.plugins.NullPlugin$PrimMultipleBytecodeSetsActive0Node",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.plugins.NullPlugin$PrimScreenScaleFactorNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.plugins.NullPlugin$PrimUtcWithOffset1Node",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.plugins.SecurityPlugin$PrimCanWriteImageNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.plugins.SecurityPlugin$PrimGetUntrustedUserDirectoryNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimBytesLeftNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimIncrementalGCNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimQuickReturnFalseNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimQuickReturnMinusOneNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimQuickReturnNilNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimQuickReturnOneNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimQuickReturnTrueNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimQuickReturnTwoNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives$PrimQuickReturnZeroNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives$PrimScreenSizeNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives$PrimLocalMicrosecondsClockNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives$PrimMaxIdentityHashNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives$PrimSecondClockNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives$PrimUTCClockNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives$PrimVMPathNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives$PrimSomeObjectNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives$PrimSpecialObjectsArrayNode",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"java.awt.Image"
+},
+{
+  "name":"java.awt.SequencedEvent"
+},
+{
+  "name":"java.io.InputStream"
+},
+{
+  "name":"java.io.Reader"
+},
+{
+  "name":"java.lang.String"
+},
+{
+  "name":"java.nio.ByteBuffer"
+},
+{
+  "name":"java.nio.CharBuffer"
+},
+{
+  "name":"java.security.MessageDigestSpi"
+},
+{
+  "name":"java.security.SecureRandomParameters"
+},
+{
+  "name":"java.util.List"
+},
+{
+  "name":"org.graalvm.polyglot.Engine",
+  "methods":[{"name":"getImpl","parameterTypes":[] }]
+},
+{
+  "name":"org.graalvm.polyglot.management.Management"
+},
+{
+  "name":"sun.awt.X11.XToolkit",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.awt.X11GraphicsEnvironment",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.java2d.marlin.DMarlinRenderingEngine",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.misc.Unsafe",
+  "fields":[{"name":"theUnsafe"}]
+},
+{
+  "name":"sun.security.provider.NativePRNG",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+}
+]

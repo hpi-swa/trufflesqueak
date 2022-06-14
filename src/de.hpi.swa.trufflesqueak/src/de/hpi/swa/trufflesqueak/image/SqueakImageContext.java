@@ -12,8 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
-import org.graalvm.nativeimage.Platform;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -21,7 +19,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
-import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
@@ -33,12 +30,10 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
-import de.hpi.swa.trufflesqueak.aot.SqueakSDL2Display;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
-import de.hpi.swa.trufflesqueak.io.SqueakDisplayInterface;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -140,7 +135,7 @@ public final class SqueakImageContext {
     private boolean currentMarkingFlag;
     private ArrayObject hiddenRoots;
     private int globalClassCounter = -1;
-    @CompilationFinal private SqueakDisplayInterface display;
+    @CompilationFinal private SqueakDisplay display;
     public final CheckForInterruptsState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
     public final ReferenceQueue<AbstractSqueakObject> weakPointersQueue = new ReferenceQueue<>();
@@ -567,7 +562,7 @@ public final class SqueakImageContext {
         return display != null;
     }
 
-    public SqueakDisplayInterface getDisplay() {
+    public SqueakDisplay getDisplay() {
         return display;
     }
 
@@ -620,14 +615,7 @@ public final class SqueakImageContext {
     public void attachDisplayIfNecessary() {
         if (!isHeadless) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (TruffleOptions.AOT) {
-                /* SDL2 backend only supported on Linux and Darwin */
-                if (Platform.includedIn(Platform.LINUX.class) || Platform.includedIn(Platform.DARWIN.class)) {
-                    display = new SqueakSDL2Display(this);
-                }
-            } else {
-                display = new SqueakDisplay(this);
-            }
+            display = new SqueakDisplay(this);
         }
     }
 
