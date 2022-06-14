@@ -35,6 +35,7 @@ import java.util.List;
 
 import javax.swing.RepaintManager;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -75,6 +76,7 @@ public final class SqueakDisplay {
     private boolean deferUpdates;
 
     public SqueakDisplay(final SqueakImageContext image) {
+        CompilerAsserts.neverPartOfCompilation();
         this.image = image;
         frame.add(canvas);
         mouse = new SqueakMouse(this);
@@ -205,12 +207,10 @@ public final class SqueakDisplay {
         frame.pack();
     }
 
-    @TruffleBoundary
     public int getWindowWidth() {
         return canvas.getWidth();
     }
 
-    @TruffleBoundary
     public int getWindowHeight() {
         return canvas.getHeight();
     }
