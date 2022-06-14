@@ -180,16 +180,6 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                         SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.RESOURCE_SUMMARY_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
     }
 
-    @Override
-    protected String[] getDefaultLanguages() {
-        return new String[0]; // Allow all languages (same effect of `--polyglot`)
-    }
-
-    @Override
-    protected VMType getDefaultVMType() {
-        return VMType.JVM;
-    }
-
     private static boolean isExistingImageFile(final String fileName) {
         try {
             return fileName.endsWith(".image") && Files.exists(Paths.get(fileName));

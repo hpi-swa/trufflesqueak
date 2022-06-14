@@ -14,17 +14,22 @@ bin_dir="$( cd -P "$( dirname "$source" )" && pwd )"
 
 # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 extra_args=("--vm.Xss64M")
-# Make ReflectionUtils work
-extra_args+=("--vm.-add-exports=java.base/jdk.internal.module=ALL-UNNAMED")
-# Make Truffle.getRuntime() accessible for VM introspection
-extra_args+=("--vm.-add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED")
-# Enable access to HostObject and others
-extra_args+=("--vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED")
-# Enable access to Truffle's SourceSection (for retrieving sources through interop)
-extra_args+=("--vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED")
 
-if [ "$(uname -s)" == "Darwin" ]; then
-    extra_args+=("--vm.Xdock:name=TruffleSqueak")
+if [[ "$*" != *"--native"* ]]; then
+    # Default to polyglot launcher in JVM mode
+    extra_args+=("--jvm" "--polyglot")
+    # Make ReflectionUtils work
+    extra_args+=("--vm.-add-exports=java.base/jdk.internal.module=ALL-UNNAMED")
+    # Make Truffle.getRuntime() accessible for VM introspection
+    extra_args+=("--vm.-add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED")
+    # Enable access to HostObject and others
+    extra_args+=("--vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED")
+    # Enable access to Truffle's SourceSection (for retrieving sources through interop)
+    extra_args+=("--vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED")
+
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        extra_args+=("--vm.Xdock:name=TruffleSqueak")
+    fi
 fi
 
 exec "${bin_dir}/trufflesqueak-launcher" "${extra_args[@]}" "$@"
