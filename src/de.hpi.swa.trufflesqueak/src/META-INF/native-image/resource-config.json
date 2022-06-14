@@ -12,6 +12,12 @@
     }, 
     {
       "pattern":"\\Qcom/oracle/truffle/nfi/backend/libffi/LibFFILanguage.class\\E"
+    }, 
+    {
+      "pattern":"\\Qde/hpi/swa/trufflesqueak/image/PrepareHeadlessImage.st\\E"
+    }, 
+    {
+      "pattern":"\\Qde/hpi/swa/trufflesqueak/io/trufflesqueak-icon.png\\E"
     }
   ]},
   "bundles":[{
