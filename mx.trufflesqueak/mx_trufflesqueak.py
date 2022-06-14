@@ -185,6 +185,13 @@ mx_sdk_vm.register_vm_config('trufflesqueak', ['nfi', 'nfi-libffi', 'sdk', 'st',
 mx_sdk_vm.register_vm_config('trufflesqueak-svm', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'svm', 'svmnfi', 'tfl', 'tflm'],
                                 _SUITE, env_file='trufflesqueak-svm')
 
+SVM_BUILD_ARGS = [
+    '-H:+ReportExceptionStackTraces',
+    '-H:+DumpThreadStacksOnSignal',
+    '-H:+DetectUserDirectoriesInImageHeap',
+    '-H:+TruffleCheckBlockListMethods',
+]
+
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_SUITE,
     name='TruffleSqueak',
@@ -201,21 +208,26 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     provided_executables=[
         'bin/<cmd:trufflesqueak>',
     ],
-    library_configs=[
-        mx_sdk.LanguageLibraryConfig(
+    # Use language launcher on macOS to work around AWT issues
+    launcher_configs=(
+        [mx_sdk.LanguageLauncherConfig(
+            language=LANGUAGE_ID,
+            destination='bin/<exe:trufflesqueak-launcher>',
+            jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
+            main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
+            build_args=SVM_BUILD_ARGS,
+        )] if mx.is_darwin() else []
+    ),
+    library_configs=(
+        [] if mx.is_darwin() else [mx_sdk.LanguageLibraryConfig(
             language=LANGUAGE_ID,
             destination='lib/<lib:%svm>' % LANGUAGE_ID,
             launchers=['bin/<exe:trufflesqueak-launcher>'],
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
-            build_args=[
-                '-H:+ReportExceptionStackTraces',
-                '-H:+DumpThreadStacksOnSignal',
-                '-H:+DetectUserDirectoriesInImageHeap',
-                '-H:+TruffleCheckBlockListMethods',
-            ],
-        )
-    ],
+            build_args=SVM_BUILD_ARGS,
+        )]
+    ),
     stability="experimental",
     post_install_msg=None,
 ))
