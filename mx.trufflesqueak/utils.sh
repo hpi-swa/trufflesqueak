@@ -202,10 +202,7 @@ set-up-dependencies() {
 
   case "$(uname -s)" in
     "Linux")
-      sudo apt update --quiet --yes && sudo apt install --quiet --yes libsdl2-dev
-      ;;
-    "Darwin")
-      HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
+      sudo apt-get update --quiet --yes && sudo apt-get install --quiet --yes libz-dev libxi-dev libxtst-dev libxrender-dev libfreetype6-dev
       ;;
   esac
 

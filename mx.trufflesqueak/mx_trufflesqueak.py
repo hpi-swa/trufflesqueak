@@ -213,15 +213,11 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
                 '-H:+DumpThreadStacksOnSignal',
                 '-H:+DetectUserDirectoriesInImageHeap',
                 '-H:+TruffleCheckBlockListMethods',
-            ] + [] if _SUITE.is_release() else ['-Ob'], # use quick build mode for development
+            ] + [] if True or _SUITE.is_release() else ['-Ob'], # use quick build mode for development
         )
     ],
     stability="experimental",
-    post_install_msg=(None if not _SVM else "\nTRUFFLESQUEAK NOTE:\n-------------------\n" +
-            "By default, TruffleSqueak runs in JVM mode (`trufflesqueak --jvm ...`). " +
-            "Running it in native mode (`trufflesqueak --native` ...) requires SDL2 to be installed on your system:\n" +
-            "- On Debian/Ubuntu, you can install SDL2 via `sudo apt-get install libsdl2-2.0`.\n" +
-            "- On macOS, you can install SDL2 with Homebrew: `brew install sdl2`."),
+    post_install_msg=None,
 ))
 
 
