@@ -47,7 +47,7 @@ jobs:
         os: [ubuntu-18.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
         java: [11, 17]
     env:
-      RUN_TESTS: "${{ matrix.os == 'ubuntu-18.04' || matrix.java == 11 }}"
+      RUN_TESTS: "${{ matrix.os == 'ubuntu-18.04' || matrix.java == 17 }}"
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-18.04' && matrix.java == 17 }}"
       TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-2019' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
       TS_INFIX: "${{ matrix.java == 11 && '_SVM' || '' }}"
@@ -106,7 +106,7 @@ jobs:
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
         trufflesqueak --native --headless --experimental-options --smalltalk.resource-summary=true --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
-      if: ${{ matrix.os == 'macos-11' && matrix.java == 17 }}
+      if: ${{ matrix.os == 'macos-11' && matrix.java == 11 }}
     - name: Clone Graal.js repository
       shell: bash
       run: mx.trufflesqueak/utils.sh shallow-clone-graaljs
