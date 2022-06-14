@@ -47,12 +47,8 @@ build-component() {
   local target=$3
   local graalvm_home="$(mx --env "${env_name}" graalvm-home)"
 
-  local infix=""
-  if [[ "${env_name}" == "trufflesqueak-svm" ]]; then
-    infix="_SVM"
-  fi
-  local distro_name="GRAALVM_TRUFFLESQUEAK${infix}_JAVA${java_version}"
-  local component_name="SMALLTALK_INSTALLABLE${infix}_JAVA${java_version}"
+  local distro_name="GRAALVM_TRUFFLESQUEAK${TS_INFIX}_JAVA${java_version}"
+  local component_name="SMALLTALK_INSTALLABLE${TS_INFIX}_JAVA${java_version}"
 
   mx --env "${env_name}" --no-download-progress build --dependencies "${component_name},${distro_name}"
   cp $(mx --env "${env_name}" paths "${component_name}") "${target}"
@@ -176,11 +172,10 @@ download-cuis-test-image() {
 
 installable-filename() {
   local java_version=$1
-  local svm_prefix=$2
   local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
-  echo "trufflesqueak-installable${svm_prefix}-${java_version}-${OS_NAME}-${OS_ARCH}-${git_description}.jar"
+  echo "trufflesqueak-installable-${java_version}-${OS_NAME}-${OS_ARCH}-${git_description}.jar"
 }
 
 resolve-path() {
@@ -229,7 +224,7 @@ set-up-dependencies() {
       ;;
   esac
 
-  set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
+  set-env "INSTALLABLE_TARGET" "$(installable-filename "${java_version}")"
 }
 
 set-up-labsjdk() {

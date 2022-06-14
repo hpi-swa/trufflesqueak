@@ -49,10 +49,11 @@ jobs:
     env:
       RUN_TESTS: "${{ matrix.os == 'ubuntu-18.04' || matrix.java == 11 }}"
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-18.04' && matrix.java == 17 }}"
-      GRAALVM_HOME_ENV: "${{ matrix.os == 'windows-2019' && 'trufflesqueak-jvm' || 'trufflesqueak-svm' }}"
       TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-2019' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
-      VERBOSE_GRAALVM_LAUNCHERS: true
+      TS_INFIX: "${{ matrix.java == 11 && '_SVM' || '' }}"
+      MX_ENV: "${{ matrix.java == 11 && 'trufflesqueak-svm' || 'trufflesqueak-jvm' }}"
       MX_PYTHON_VERSION: 3
+      VERBOSE_GRAALVM_LAUNCHERS: true
     name: ${{ matrix.os }} + JDK${{ matrix.java }}
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
@@ -64,8 +65,8 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }}
-    - name: Build TruffleSqueak SVM component
-      run: mx.trufflesqueak/utils.sh build-component trufflesqueak-svm ${{ matrix.java }} ${{ env.INSTALLABLE_SVM_TARGET }}
+    - name: Build TruffleSqueak component
+      run: mx.trufflesqueak/utils.sh build-component ${{ env.MX_ENV }} ${{ matrix.java }} ${{ env.INSTALLABLE_TARGET }}
       if: ${{ matrix.os != 'windows-2019' }}
     - name: Configure pagefile # this reduces OOM kills on Windows
       uses: al-cheb/configure-pagefile-action@v1.2
@@ -73,23 +74,23 @@ jobs:
         minimum-size: 8GB
         disk-root: "C:"
       if: ${{ matrix.os == 'windows-2019' }}
-    - name: Build TruffleSqueak SVM component via cmd.exe
+    - name: Build TruffleSqueak component via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env trufflesqueak-svm --no-download-progress build --dependencies SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK_SVM_JAVA${{ matrix.java }}
-        call mx --env trufflesqueak-svm graalvm-home > graalvm-home-with-forward-slashes.txt
+        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies SMALLTALK_INSTALLABLE${{ env.TS_INFIX }}_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK${{ env.TS_INFIX }}_JAVA${{ matrix.java }}
+        call mx --env ${{ env.MX_ENV }} graalvm-home > graalvm-home-with-forward-slashes.txt
         set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "GRAALVM_HOME=%GRAALVM_HOME:/=\%"
         echo %GRAALVM_HOME%\bin>>%GITHUB_PATH%
         echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
         echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
-        call mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA${{ matrix.java }} > installable-path-with-forward-slashes.txt
+        call mx --env ${{ env.MX_ENV }} paths SMALLTALK_INSTALLABLE${{ env.TS_INFIX }}_JAVA${{ matrix.java }} > installable-path-with-forward-slashes.txt
         set /p INSTALLABLE_PATH=<installable-path-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "INSTALLABLE_PATH=%INSTALLABLE_PATH:/=\%"
-        copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_SVM_TARGET }}
+        copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_TARGET }}
       if: ${{ matrix.os == 'windows-2019' }}
     - name: Run SystemReporter on TruffleSqueak in JVM mode
       shell: bash
@@ -97,9 +98,10 @@ jobs:
     - name: Run SystemReporter on TruffleSqueak in native mode
       shell: bash
       run: ${{ env.TRUFFLESQUEAK_EXEC }} --native --code "SystemReporter new reportText asString" images/test-64bit.image
-    - name: Upload TruffleSqueak SVM component
+      if: ${{ matrix.java == 11 }}
+    - name: Upload TruffleSqueak component
       shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run Cuis-Smalltalk tests on TruffleSqueak in native mode
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
