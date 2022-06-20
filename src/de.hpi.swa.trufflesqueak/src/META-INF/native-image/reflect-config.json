@@ -4,6 +4,7 @@
   { "name": "java.io.InputStream" },
   { "name": "java.io.Reader" },
   { "name": "java.lang.String" },
+  { "name": "java.net.URL" },
   { "name": "java.nio.ByteBuffer" },
   { "name": "java.nio.CharBuffer" },
   { "name": "java.security.MessageDigestSpi" },
@@ -15,6 +16,18 @@
   },
   { "name": "org.graalvm.polyglot.management.Management" },
   {
+    "name": "sun.awt.Symbol",
+    "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
+    "name": "sun.awt.Win32FontManager",
+    "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
+    "name": "sun.awt.Win32GraphicsEnvironment",
+    "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
     "name": "sun.awt.X11.XToolkit",
     "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
   },
@@ -23,8 +36,27 @@
     "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
   },
   {
+    "name": "sun.awt.shell.Win32ShellFolderManager2",
+    "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
+    "name": "sun.awt.windows.WToolkit",
+    "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
+    "name": "sun.awt.windows.WingDings",
+    "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
     "name": "sun.java2d.marlin.DMarlinRenderingEngine",
     "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  { "name": "sun.misc.Unsafe", "fields": [{ "name": "theUnsafe" }] },
+  {
+    "name": "sun.security.provider.DRBG",
+    "methods": [
+      { "name": "<init>", "parameterTypes": ["java.security.SecureRandomParameters"] }
+    ]
   },
   {
     "name": "sun.security.provider.NativePRNG",
@@ -32,6 +64,10 @@
   },
   {
     "name": "sun.security.provider.SHA",
+    "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
+    "name": "sun.security.provider.SHA2$SHA256",
     "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
   }
 ]
