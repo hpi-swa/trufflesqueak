@@ -9,10 +9,12 @@ package de.hpi.swa.trufflesqueak.io;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Taskbar;
+import java.awt.Taskbar.Feature;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -30,10 +32,10 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.List;
-
-import javax.swing.RepaintManager;
+import java.util.Objects;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -75,8 +77,8 @@ public final class SqueakDisplay {
     private Point rememberedWindowLocation;
     private boolean deferUpdates;
 
-    public SqueakDisplay(final SqueakImageContext image) {
-        CompilerAsserts.neverPartOfCompilation();
+    private SqueakDisplay(final SqueakImageContext image) {
+        assert EventQueue.isDispatchThread();
         this.image = image;
         frame.add(canvas);
         mouse = new SqueakMouse(this);
@@ -84,61 +86,41 @@ public final class SqueakDisplay {
         frame.setFocusTraversalKeysEnabled(false); // Ensure `Tab` key is captured.
         frame.setMinimumSize(new Dimension(200, 150));
         frame.setResizable(true);
-        installEventListeners();
-        tryToSetTaskbarIcon();
-    }
 
-    private static void tryToSetTaskbarIcon() {
-        try {
-            Taskbar.getTaskbar().setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("trufflesqueak-icon.png")));
-        } catch (final UnsupportedOperationException e) {
-            // Ignore
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private void installEventListeners() {
+        // Install event listeners
         canvas.addMouseListener(mouse);
         canvas.addMouseMotionListener(mouse);
         canvas.addMouseWheelListener(mouse);
-        new DropTarget(canvas, new SqueakDropTargetAdapter());
         frame.addKeyListener(keyboard);
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowActivated(final WindowEvent e) {
-                addWindowEvent(WINDOW.ACTIVATED);
-            }
+        installWindowAdapter();
+        installDropTargetListener();
 
-            @Override
-            public void windowClosing(final WindowEvent e) {
-                addWindowEvent(WINDOW.CLOSE);
-            }
+        tryToSetTaskbarIcon();
+    }
 
-            @Override
-            public void windowDeactivated(final WindowEvent e) {
-                addWindowEvent(WINDOW.DEACTIVATED);
-            }
+    public static SqueakDisplay create(final SqueakImageContext image) {
+        CompilerAsserts.neverPartOfCompilation();
+        final SqueakDisplay[] display = new SqueakDisplay[1];
+        try {
+            EventQueue.invokeAndWait(() -> display[0] = new SqueakDisplay(image));
+        } catch (InvocationTargetException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return Objects.requireNonNull(display[0]);
+    }
 
-            @Override
-            public void windowIconified(final WindowEvent e) {
-                addWindowEvent(WINDOW.ICONISE);
+    private static void tryToSetTaskbarIcon() {
+        if (Taskbar.isTaskbarSupported()) {
+            final Taskbar taskbar = Taskbar.getTaskbar();
+            if (taskbar.isSupported(Feature.ICON_IMAGE)) {
+                taskbar.setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("trufflesqueak-icon.png")));
             }
-
-            @Override
-            public void windowStateChanged(final WindowEvent e) {
-                addWindowEvent(WINDOW.METRIC_CHANGE);
-            }
-        });
+        }
     }
 
     private static final class SqueakDisplayCanvas extends Component {
         private static final long serialVersionUID = 1L;
         private BufferedImage bufferedImage;
-
-        private SqueakDisplayCanvas() {
-            /* Drawing is very simple, so double buffering is not needed. */
-            RepaintManager.currentManager(this).setDoubleBufferingEnabled(false);
-        }
 
         @Override
         public boolean isOpaque() {
@@ -183,13 +165,6 @@ public final class SqueakDisplay {
     }
 
     @TruffleBoundary
-    public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
-        if (left < right && top < bottom && !deferUpdates && destForm.isDisplay(image)) {
-            canvas.paintImmediately(left, top, right, bottom);
-        }
-    }
-
-    @TruffleBoundary
     public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
         assert left < right && top < bottom;
         canvas.paintImmediately(left, top, right, bottom);
@@ -197,14 +172,18 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void close() {
-        frame.setVisible(false);
-        frame.dispose();
+        EventQueue.invokeLater(() -> {
+            frame.setVisible(false);
+            frame.dispose();
+        });
     }
 
     @TruffleBoundary
     public void resizeTo(final int width, final int height) {
-        canvas.setPreferredSize(new Dimension(width, height));
-        frame.pack();
+        EventQueue.invokeLater(() -> {
+            canvas.setPreferredSize(new Dimension(width, height));
+            frame.pack();
+        });
     }
 
     public int getWindowWidth() {
@@ -217,30 +196,32 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setFullscreen(final boolean enable) {
-        if (enable) {
-            rememberedWindowLocation = frame.getLocationOnScreen();
-            rememberedWindowSize = frame.getSize();
-        }
-        frame.dispose();
-        frame.setUndecorated(enable);
-        if (enable) {
-            frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-            frame.setResizable(false);
-        } else {
-            frame.setExtendedState(Frame.NORMAL);
-            canvas.setPreferredSize(rememberedWindowSize);
-            frame.pack();
-            frame.setResizable(true);
-        }
-        frame.pack();
-        if (!enable) {
-            if (rememberedWindowLocation != null) {
-                frame.setLocation(rememberedWindowLocation);
+        EventQueue.invokeLater(() -> {
+            if (enable) {
+                rememberedWindowLocation = frame.getLocationOnScreen();
+                rememberedWindowSize = frame.getSize();
             }
-            rememberedWindowLocation = null;
-            rememberedWindowSize = null;
-        }
-        frame.setVisible(true);
+            frame.dispose();
+            frame.setUndecorated(enable);
+            if (enable) {
+                frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+                frame.setResizable(false);
+            } else {
+                frame.setExtendedState(Frame.NORMAL);
+                canvas.setPreferredSize(rememberedWindowSize);
+                frame.pack();
+                frame.setResizable(true);
+            }
+            frame.pack();
+            if (!enable) {
+                if (rememberedWindowLocation != null) {
+                    frame.setLocation(rememberedWindowLocation);
+                }
+                rememberedWindowLocation = null;
+                rememberedWindowSize = null;
+            }
+            frame.setVisible(true);
+        });
     }
 
     @TruffleBoundary
@@ -255,13 +236,15 @@ public final class SqueakDisplay {
         } else {
             title = imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
         }
-        frame.setTitle(title);
-        if (!frame.isVisible()) {
-            canvas.setPreferredSize(new Dimension(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight()));
-            frame.pack();
-            frame.setVisible(true);
-            frame.requestFocus();
-        }
+        EventQueue.invokeLater(() -> {
+            frame.setTitle(title);
+            if (!frame.isVisible()) {
+                canvas.setPreferredSize(new Dimension(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight()));
+                frame.pack();
+                frame.setVisible(true);
+                frame.requestFocus();
+            }
+        });
     }
 
     @TruffleBoundary
@@ -309,7 +292,9 @@ public final class SqueakDisplay {
             final Point hotSpot = new Point(Math.min(Math.max(offsetX, 1), width - 1), Math.min(Math.max(offsetY, 1), height - 1));
             cursor = Toolkit.getDefaultToolkit().createCustomCursor(bufferedImage, hotSpot, "TruffleSqueak Cursor");
         }
-        frame.setCursor(cursor);
+        EventQueue.invokeLater(() -> {
+            frame.setCursor(cursor);
+        });
     }
 
     private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
@@ -375,7 +360,9 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setWindowTitle(final String title) {
-        frame.setTitle(title);
+        EventQueue.invokeLater(() -> {
+            frame.setTitle(title);
+        });
     }
 
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
@@ -403,50 +390,87 @@ public final class SqueakDisplay {
         Toolkit.getDefaultToolkit().beep();
     }
 
-    private final class SqueakDropTargetAdapter extends DropTargetAdapter {
+    private void installWindowAdapter() {
+        assert EventQueue.isDispatchThread();
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowActivated(final WindowEvent e) {
+                addWindowEvent(WINDOW.ACTIVATED);
+            }
 
-        @Override
-        public void drop(final DropTargetDropEvent dtde) {
-            final Transferable transferable = dtde.getTransferable();
-            for (final DataFlavor flavor : transferable.getTransferDataFlavors()) {
-                if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-                    dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-                    try {
-                        @SuppressWarnings("unchecked")
-                        final List<File> fileList = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                        final String[] fileArray = new String[fileList.size()];
-                        int i = 0;
-                        for (final File file : fileList) {
-                            fileArray[i++] = file.getCanonicalPath();
+            @Override
+            public void windowClosing(final WindowEvent e) {
+                addWindowEvent(WINDOW.CLOSE);
+            }
+
+            @Override
+            public void windowDeactivated(final WindowEvent e) {
+                addWindowEvent(WINDOW.DEACTIVATED);
+            }
+
+            @Override
+            public void windowIconified(final WindowEvent e) {
+                addWindowEvent(WINDOW.ICONISE);
+            }
+
+            @Override
+            public void windowStateChanged(final WindowEvent e) {
+                addWindowEvent(WINDOW.METRIC_CHANGE);
+            }
+        });
+    }
+
+    @SuppressWarnings("unused")
+    private void installDropTargetListener() {
+        assert EventQueue.isDispatchThread();
+        new DropTarget(canvas, new DropTargetAdapter() {
+            @Override
+            public void drop(final DropTargetDropEvent dtde) {
+                final Transferable transferable = dtde.getTransferable();
+                for (final DataFlavor flavor : transferable.getTransferDataFlavors()) {
+                    if (DataFlavor.javaFileListFlavor.equals(flavor)) {
+                        dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+                        try {
+                            @SuppressWarnings("unchecked")
+                            final List<File> fileList = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                            final String[] fileArray = new String[fileList.size()];
+                            int i = 0;
+                            for (final File file : fileList) {
+                                fileArray[i++] = file.getCanonicalPath();
+                            }
+                            image.dropPluginFileList = fileArray;
+                            addDragEvent(DRAG.DROP, dtde.getLocation());
+                            dtde.getDropTargetContext().dropComplete(true);
+                            return;
+                        } catch (final IOException | UnsupportedFlavorException e) {
+                            CompilerDirectives.transferToInterpreter();
+                            e.printStackTrace();
                         }
-                        image.dropPluginFileList = fileArray;
-                        addDragEvent(DRAG.DROP, dtde.getLocation());
-                        dtde.getDropTargetContext().dropComplete(true);
-                        return;
-                    } catch (final IOException | UnsupportedFlavorException e) {
-                        CompilerDirectives.transferToInterpreter();
-                        e.printStackTrace();
                     }
                 }
+                image.dropPluginFileList = new String[0];
+                addDragEvent(DRAG.DROP, dtde.getLocation());
+                dtde.rejectDrop();
+
             }
-            image.dropPluginFileList = new String[0];
-            addDragEvent(DRAG.DROP, dtde.getLocation());
-            dtde.rejectDrop();
-        }
 
-        @Override
-        public void dragEnter(final DropTargetDragEvent e) {
-            addDragEvent(DRAG.ENTER, e.getLocation());
-        }
+            @Override
+            public void dragOver(final DropTargetDragEvent dtde) {
+                addDragEvent(DRAG.MOVE, dtde.getLocation());
 
-        @Override
-        public void dragExit(final DropTargetEvent e) {
-            addDragEvent(DRAG.LEAVE, new Point(0, 0));
-        }
+            }
 
-        @Override
-        public void dragOver(final DropTargetDragEvent e) {
-            addDragEvent(DRAG.MOVE, e.getLocation());
-        }
+            @Override
+            public void dragExit(final DropTargetEvent dte) {
+                addDragEvent(DRAG.LEAVE, new Point(0, 0));
+
+            }
+
+            @Override
+            public void dragEnter(final DropTargetDragEvent dtde) {
+                addDragEvent(DRAG.ENTER, dtde.getLocation());
+
+            }
+        });
     }
 }

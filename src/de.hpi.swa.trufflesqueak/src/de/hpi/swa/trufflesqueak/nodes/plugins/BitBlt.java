@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -3187,8 +3188,9 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#showDisplayBits */
     private void showDisplayBits() {
-        if (image.hasDisplay()) {
-            image.getDisplay().showDisplayBitsLeftTopRightBottom(destForm, affectedL, affectedT, affectedR, affectedB);
+        final SqueakDisplay display = image.getDisplay();
+        if (display != null && affectedL < affectedR && affectedT < affectedB && !display.getDeferUpdates() && destForm.isDisplay(image)) {
+            display.showDisplayRect(affectedL, affectedT, affectedR, affectedB);
         }
     }
 

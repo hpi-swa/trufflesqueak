@@ -615,7 +615,7 @@ public final class SqueakImageContext {
     public void attachDisplayIfNecessary() {
         if (!isHeadless) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            display = new SqueakDisplay(this);
+            display = SqueakDisplay.create(this);
         }
     }
 
