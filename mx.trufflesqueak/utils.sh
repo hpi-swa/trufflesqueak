@@ -170,6 +170,13 @@ download-cuis-test-image() {
   echo "[Cuis test image (${DEP_CUIS_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
+format-native-image-config() {
+  readonly NI_CONFIG_BASE="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/META-INF/native-image"
+  for f in "${NI_CONFIG_BASE}/"*.json; do
+    underscore --in "${f}" --out "${f}" --wrapwidth 80 print
+  done
+}
+
 installable-filename() {
   local java_version=$1
   local git_describe=$(git describe --tags --always)
