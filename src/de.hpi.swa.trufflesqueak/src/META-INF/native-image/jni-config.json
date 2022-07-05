@@ -87,6 +87,16 @@
     ],
     "methods": [{ "name": "<init>", "parameterTypes": ["int", "int", "int", "int"] }]
   },
+  {
+    "name": "java.awt.MenuComponent",
+    "fields": [{ "name": "appContext" }]
+  },
+  { "name": "java.awt.MenuItem",
+    "methods": [
+      { "name": "getActionCommand", "parameterTypes": [ ] },
+      { "name": "getLabel", "parameterTypes": [ ] }
+    ]
+  },
   { "name": "java.awt.Point", "fields": [{ "name": "x" }, { "name": "y" }] },
   {
     "name": "java.awt.Rectangle",
@@ -431,6 +441,10 @@
   {
     "name": "sun.awt.X11.XRootWindow",
     "methods": [{ "name": "getXRootWindow", "parameterTypes": [ ] }]
+  },
+  {
+    "name": "sun.awt.X11.XTaskbarPeer",
+    "methods": [{ "name": "menuItemCallback", "parameterTypes": ["java.awt.MenuItem"] }]
   },
   {
     "name": "sun.awt.X11.XToolkit",
