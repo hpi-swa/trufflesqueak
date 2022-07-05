@@ -191,6 +191,7 @@ SVM_BUILD_ARGS = [
     '-H:+DetectUserDirectoriesInImageHeap',
     '-H:+TruffleCheckBlockListMethods',
 ]
+USE_LIBRARY_LAUNCHERS = False
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_SUITE,
@@ -208,7 +209,6 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     provided_executables=[
         'bin/<cmd:trufflesqueak>',
     ],
-    # Use language launcher on macOS to work around AWT issues
     launcher_configs=(
         [mx_sdk.LanguageLauncherConfig(
             language=LANGUAGE_ID,
@@ -216,17 +216,17 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
             build_args=SVM_BUILD_ARGS,
-        )] if mx.is_darwin() else []
+        )] if not USE_LIBRARY_LAUNCHERS else []
     ),
     library_configs=(
-        [] if mx.is_darwin() else [mx_sdk.LanguageLibraryConfig(
+        [mx_sdk.LanguageLibraryConfig(
             language=LANGUAGE_ID,
             destination='lib/<lib:%svm>' % LANGUAGE_ID,
             launchers=['bin/<exe:trufflesqueak-launcher>'],
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
             build_args=SVM_BUILD_ARGS,
-        )]
+        )] if USE_LIBRARY_LAUNCHERS else []
     ),
     stability="experimental",
     post_install_msg=None,
