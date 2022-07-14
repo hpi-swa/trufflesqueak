@@ -113,7 +113,32 @@ You may also find the [Truffle docs][truffle_docs] useful.
 For additional help, feel free to join the `#trufflesqueak` channel on the
 [GraalVM Slack][graalvm_slack].
 
+## Alternative build instructions and polyglot language installation
 
+If you would like to install more languages to try out polyglot interop, GraalVM provides a tool called 'gu' that can do this (and much more). The recommended way is ```gu install python``` for instaling python.
+
+In the above instruction, you're just building TruffleSqueak plus the base GraalVM JDK, so gu isn't there. The gu impl actually lives inside this directory of the graal repo, so you could do this:
+
+cd ../graal/vm
+mx --dy trufflesqueak,/compiler build
+which builds a GraalVM + compiler + TruffleSqueak + gu. Or this:
+
+cd ../graal/vm
+mx --dy trufflesqueak,/graal-nodejs,/compiler build
+to build a GraalVM + compiler + TruffleSqueak + GraalVM's Node.js runtime + gu. (note that you need to check out the graaljs repo next to your trufflesqueak/ and graal/ checkouts for this to work).
+
+However, a simpler way to reach the same goal would be to do this instead:
+
+1. Download a recent [GraalVM_dev_build] and follow the [installation_instructions]
+2. Build TruffleSqueak via mx --env trufflesqueak-jvm build
+3. Run mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_JAVA11 to find the path to the installable
+4. Install it via $GRAALVM_HOME/bin/gu install -f -L path/to/the/installable.jar
+5. Run $GRAALVM_HOME/bin/trufflesqueak ...
+
+This way, you can install any other language (e.g., gu install nodejs) without having to build any of this from source, while trying out a TruffleSqueak dev build.
+
+[GraalVM_dev_build] https://www.graalvm.org/downloads/
+[installation_instructions] https://www.graalvm.org/22.0/docs/getting-started/
 [eclipse_cs]: https://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
 [graal]: https://github.com/oracle/graal
