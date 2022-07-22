@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -18,6 +19,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.nfi.api.SignatureLibrary;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -58,16 +60,21 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
             assert supportsNFI;
             if (sysCallObject == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final Object defaultLibrary = SqueakImageContext.getSlow().env.parseInternal(Source.newBuilder("nfi", "default", "native").build()).call();
-                final InteropLibrary lib = InteropLibrary.getFactory().getUncached();
+                final Env env = SqueakImageContext.getSlow().env;
+                final Object defaultLibrary = env.parseInternal(Source.newBuilder("nfi", "default", "native").build()).call();
                 try {
-                    final Object symbol = lib.readMember(defaultLibrary, getFunctionName());
-                    sysCallObject = lib.invokeMember(symbol, "bind", getFunctionSignature());
-                } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
+                    final Object symbol = InteropLibrary.getUncached().readMember(defaultLibrary, getFunctionName());
+                    sysCallObject = SignatureLibrary.getUncached().bind(createNFISignature(env, getFunctionSignature()), symbol);
+                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                     throw PrimitiveFailed.andTransferToInterpreterWithError(e);
                 }
             }
             return sysCallObject;
+        }
+
+        protected Object createNFISignature(final Env env, final String functionSignature) {
+            final Source source = Source.newBuilder("nfi", functionSignature, "signature").build();
+            return env.parseInternal(source).call();
         }
 
         protected final long getValue(final InteropLibrary lib) {
