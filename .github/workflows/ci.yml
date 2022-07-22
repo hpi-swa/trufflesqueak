@@ -20,15 +20,16 @@ jobs:
   style_and_build_config:
     name: Code Style + Build Config
     timeout-minutes: 15
-    runs-on: ubuntu-18.04
-    env:
-      MX_PYTHON_VERSION: 3
+    runs-on: ubuntu-20.04
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
     - name: Set up dependencies
       run: |
-        sudo pip install --quiet astroid==1.1.0 pylint==1.1.0
         # Download Eclipse SDK
         eclipse_tar_path="${RUNNER_TEMP}/eclipse.tar.gz"
         wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.14-201912100610/eclipse-SDK-4.14-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
@@ -37,6 +38,11 @@ jobs:
         echo "JDT=builtin" >> "${GITHUB_ENV}" # required by mx
         # Set up mx, oracle/graal, and LabsJDK11
         mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-11 ~/"
+        # Set up style dependencies
+        sudo apt update && sudo apt install python3-pip python-setuptools
+        cat ../graal/common.json |
+          jq -r '.deps.common.packages | to_entries[] | select(.key | startswith("pip:")) | (.key | split(":")[1]) + .value' |
+          xargs sudo pip install
     - name: Check style and perform full build
       run: mx gate --strict-mode --tags style,fullbuild
 
@@ -52,7 +58,6 @@ jobs:
       TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-2019' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
       TS_INFIX: "${{ matrix.java == 11 && '_SVM' || '' }}"
       MX_ENV: "${{ matrix.java == 11 && 'trufflesqueak-svm' || 'trufflesqueak-jvm' }}"
-      MX_PYTHON_VERSION: 3
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: ${{ matrix.os }} + JDK${{ matrix.java }}
     timeout-minutes: 60
@@ -62,6 +67,10 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: true
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }}
