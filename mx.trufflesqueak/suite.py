@@ -82,6 +82,7 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "BOUNCY_CASTLE_CRYPTO_LIB",
                 "truffle:TRUFFLE_API",
+                "truffle:TRUFFLE_NFI",
             ],
             "requires": [
                 "java.datatransfer",
@@ -205,6 +206,7 @@ suite = {
             "distDependencies": [
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
+                "truffle:TRUFFLE_NFI",
             ],
             "javaProperties": {
                 "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
