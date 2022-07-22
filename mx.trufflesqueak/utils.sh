@@ -280,6 +280,8 @@ shallow-clone-graalvm-project() {
 shallow-clone-graal() {
   shallow-clone-graalvm-project https://github.com/oracle/graal.git "${GRAAL_VERSION}"
   echo "[graal repo (${GRAAL_VERSION}) cloned successfully]"
+  $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/liblauncher_macos_backport.patch")
+  echo "[graal repo patched successfully]"
 }
 
 shallow-clone-graaljs() {

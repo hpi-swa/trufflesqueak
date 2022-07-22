@@ -182,7 +182,7 @@ _enable_local_compression()
 
 mx_sdk_vm.register_vm_config('trufflesqueak', ['nfi', 'nfi-libffi', 'sdk', 'st', 'tfl'],
                                 _SUITE, env_file='trufflesqueak-jvm')
-mx_sdk_vm.register_vm_config('trufflesqueak-svm', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'svm', 'svmnfi', 'tfl', 'tflm'],
+mx_sdk_vm.register_vm_config('trufflesqueak-svm', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'svm', 'svmnfi', 'svmsl', 'tfl', 'tflm'],
                                 _SUITE, env_file='trufflesqueak-svm')
 
 SVM_BUILD_ARGS = [
@@ -191,7 +191,7 @@ SVM_BUILD_ARGS = [
     '-H:+DetectUserDirectoriesInImageHeap',
     '-H:+TruffleCheckBlockListMethods',
 ]
-USE_LIBRARY_LAUNCHERS = False
+USE_LIBRARY_LAUNCHERS = True
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_SUITE,
