@@ -12,6 +12,7 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.DenyReplace;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -21,6 +22,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
+
+    @DenyReplace
     @SqueakPrimitive(names = "primitiveCanWriteImage")
     public static final class PrimCanWriteImageNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -47,6 +50,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(names = "primitiveGetUntrustedUserDirectory")
     public static final class PrimGetUntrustedUserDirectoryNode extends AbstractSingletonPrimitiveNode {
         @Override

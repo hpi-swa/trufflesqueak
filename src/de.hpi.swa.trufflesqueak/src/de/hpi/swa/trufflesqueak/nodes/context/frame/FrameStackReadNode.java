@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -145,6 +146,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
         }
     }
 
+    @DenyReplace
     private static final class FrameArgumentReadNode extends FrameStackReadNode {
         private static final EconomicMap<Integer, FrameArgumentReadNode> SINGLETONS = EconomicMap.create();
 

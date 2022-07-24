@@ -14,6 +14,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -87,6 +88,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
     }
 
+    @DenyReplace
     private static final class FrameArgumentWriteNode extends FrameStackWriteNode {
         private static final EconomicMap<Integer, FrameArgumentWriteNode> SINGLETONS = EconomicMap.create();
 

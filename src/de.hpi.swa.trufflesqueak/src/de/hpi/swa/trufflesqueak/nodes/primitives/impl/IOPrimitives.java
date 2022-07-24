@@ -18,6 +18,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -789,6 +790,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(indices = 106)
     public static final class PrimScreenSizeNode extends AbstractSingletonPrimitiveNode {
         @Child AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();

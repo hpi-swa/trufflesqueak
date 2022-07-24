@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -39,6 +40,7 @@ public abstract class CheckForInterruptsQuickNode extends Node {
 
     public abstract void execute(VirtualFrame frame);
 
+    @DenyReplace
     private static final class NoCheckForInterruptsNode extends CheckForInterruptsQuickNode {
         private static final NoCheckForInterruptsNode SINGLETON = new NoCheckForInterruptsNode();
 

@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -572,6 +573,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(indices = 112)
     public static final class PrimBytesLeftNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -787,6 +789,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(indices = 131)
     public static final class PrimIncrementalGCNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -1186,6 +1189,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 257)
     public static final class PrimQuickReturnTrueNode extends AbstractSingletonPrimitiveNode {
@@ -1195,6 +1199,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 258)
     public static final class PrimQuickReturnFalseNode extends AbstractSingletonPrimitiveNode {
@@ -1204,6 +1209,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 259)
     public static final class PrimQuickReturnNilNode extends AbstractSingletonPrimitiveNode {
@@ -1213,6 +1219,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 260)
     public static final class PrimQuickReturnMinusOneNode extends AbstractSingletonPrimitiveNode {
@@ -1222,6 +1229,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 261)
     public static final class PrimQuickReturnZeroNode extends AbstractSingletonPrimitiveNode {
@@ -1231,6 +1239,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 262)
     public static final class PrimQuickReturnOneNode extends AbstractSingletonPrimitiveNode {
@@ -1240,6 +1249,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 263)
     public static final class PrimQuickReturnTwoNode extends AbstractSingletonPrimitiveNode {

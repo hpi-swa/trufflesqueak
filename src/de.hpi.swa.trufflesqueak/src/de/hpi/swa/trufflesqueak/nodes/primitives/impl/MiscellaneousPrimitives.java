@@ -20,6 +20,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -465,6 +466,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(indices = 137)
     public static final class PrimSecondClockNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -502,6 +504,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(indices = 142)
     public static final class PrimVMPathNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -717,6 +720,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 176)
     public static final class PrimMaxIdentityHashNode extends AbstractSingletonPrimitiveNode {
@@ -748,6 +752,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(indices = 240)
     public static final class PrimUTCClockNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -756,6 +761,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(indices = 241)
     public static final class PrimLocalMicrosecondsClockNode extends AbstractSingletonPrimitiveNode {
         @Override

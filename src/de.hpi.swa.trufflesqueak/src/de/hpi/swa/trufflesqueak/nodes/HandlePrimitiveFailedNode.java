@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -53,6 +54,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     private static final class HandlePrimitiveFailedNoopNode extends HandlePrimitiveFailedNode {
         private static final HandlePrimitiveFailedNoopNode SINGLETON = new HandlePrimitiveFailedNoopNode();

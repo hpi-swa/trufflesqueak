@@ -21,6 +21,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -412,6 +413,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 129)
     public static final class PrimSpecialObjectsArrayNode extends AbstractSingletonPrimitiveNode {
@@ -421,6 +423,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 138)
     public static final class PrimSomeObjectNode extends AbstractSingletonPrimitiveNode {

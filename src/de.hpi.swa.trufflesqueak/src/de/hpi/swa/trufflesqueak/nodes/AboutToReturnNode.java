@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
@@ -78,6 +79,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         }
     }
 
+    @DenyReplace
     private static final class AboutToReturnNoopNode extends AboutToReturnNode {
         private static final AboutToReturnNoopNode SINGLETON = new AboutToReturnNoopNode();
 

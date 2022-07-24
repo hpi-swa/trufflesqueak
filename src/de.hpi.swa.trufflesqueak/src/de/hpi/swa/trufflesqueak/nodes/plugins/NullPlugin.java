@@ -15,6 +15,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.DenyReplace;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -31,6 +32,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
+    @DenyReplace
     @SqueakPrimitive(names = "primitiveScreenScaleFactor")
     public static final class PrimScreenScaleFactorNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -39,6 +41,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(names = "primitiveHighResClock")
     public static final class PrimHighResClockNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -47,6 +50,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(names = "primitiveMultipleBytecodeSetsActive")
     public static final class PrimMultipleBytecodeSetsActive0Node extends AbstractSingletonPrimitiveNode {
         @Override
@@ -66,6 +70,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @DenyReplace
     @SqueakPrimitive(names = "primitiveUtcWithOffset")
     public static final class PrimUtcWithOffset1Node extends AbstractSingletonPrimitiveNode {
         @Override
