@@ -193,27 +193,18 @@ public final class PrimitiveNodeFactory {
         }
         final String moduleName = values[NAMED_PRIMITIVE_MODULE_NAME_INDEX] instanceof NativeObject ? ((NativeObject) values[0]).asStringUnsafe() : NULL_MODULE_NAME;
         final String functionName = ((NativeObject) values[NAMED_PRIMITIVE_FUNCTION_NAME_INDEX]).asStringUnsafe();
-        // TODO: lookups can be simplified with EconomicMap.emptyMap() introduced in GraalVM 22.2.
         if (numReceiverAndArguments == 1) { // Check for singleton plugin primitive
-            final EconomicMap<String, AbstractPrimitiveNode> functionNameToSingletonNode = SINGLETON_PLUGIN_MAP.get(moduleName);
-            if (functionNameToSingletonNode != null) {
-                final AbstractPrimitiveNode primitiveNode = functionNameToSingletonNode.get(functionName);
-                if (primitiveNode != null) {
-                    return primitiveNode;
-                }
+            final AbstractPrimitiveNode primitiveNode = SINGLETON_PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName);
+            if (primitiveNode != null) {
+                return primitiveNode;
             }
         }
-        final EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> functionNameToMap = PLUGIN_MAP.get(moduleName);
-        if (functionNameToMap != null) {
-            final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> numRcvrAndArgsToFactory = functionNameToMap.get(functionName);
-            if (numRcvrAndArgsToFactory != null) {
-                final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = numRcvrAndArgsToFactory.get(numReceiverAndArguments);
-                if (nodeFactory != null) {
-                    return createNode(nodeFactory, location, numReceiverAndArguments);
-                }
-            }
+        final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName, EconomicMap.emptyMap()).get(numReceiverAndArguments);
+        if (nodeFactory != null) {
+            return createNode(nodeFactory, location, numReceiverAndArguments);
+        } else {
+            return null;
         }
-        return null;
     }
 
     private static boolean isLoadInstVar(final int primitiveIndex) {
