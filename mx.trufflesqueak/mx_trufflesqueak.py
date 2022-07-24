@@ -185,14 +185,6 @@ mx_sdk_vm.register_vm_config('trufflesqueak', ['nfi', 'nfi-libffi', 'sdk', 'st',
 mx_sdk_vm.register_vm_config('trufflesqueak-svm', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'svm', 'svmnfi', 'svmsl', 'tfl', 'tflm'],
                                 _SUITE, env_file='trufflesqueak-svm')
 
-SVM_BUILD_ARGS = [
-    '-H:+ReportExceptionStackTraces',
-    '-H:+DumpThreadStacksOnSignal',
-    '-H:+DetectUserDirectoriesInImageHeap',
-    '-H:+TruffleCheckBlockListMethods',
-]
-USE_LIBRARY_LAUNCHERS = True
-
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_SUITE,
     name='TruffleSqueak',
@@ -209,25 +201,21 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     provided_executables=[
         'bin/<cmd:trufflesqueak>',
     ],
-    launcher_configs=(
-        [mx_sdk.LanguageLauncherConfig(
-            language=LANGUAGE_ID,
-            destination='bin/<exe:trufflesqueak-launcher>',
-            jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
-            main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
-            build_args=SVM_BUILD_ARGS,
-        )] if not USE_LIBRARY_LAUNCHERS else []
-    ),
-    library_configs=(
-        [mx_sdk.LanguageLibraryConfig(
+    library_configs=[
+        mx_sdk.LanguageLibraryConfig(
             language=LANGUAGE_ID,
             destination='lib/<lib:%svm>' % LANGUAGE_ID,
             launchers=['bin/<exe:trufflesqueak-launcher>'],
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
-            build_args=SVM_BUILD_ARGS,
-        )] if USE_LIBRARY_LAUNCHERS else []
-    ),
+            build_args=[
+                '-H:+ReportExceptionStackTraces',
+                '-H:+DumpThreadStacksOnSignal',
+                '-H:+DetectUserDirectoriesInImageHeap',
+                '-H:+TruffleCheckBlockListMethods',
+            ],
+        )
+    ],
     stability="experimental",
     post_install_msg=None,
 ))
