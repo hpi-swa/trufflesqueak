@@ -86,7 +86,7 @@ public final class FrameAccess {
         ARGUMENTS_START, // 4
     }
 
-    public enum SlotIndicies {
+    private enum SlotIndicies {
         THIS_MARKER,
         THIS_CONTEXT,
         INSTRUCTION_POINTER,
