@@ -119,6 +119,15 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
  *
  */
 public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
+    /*
+     * On JDK 11, TLS 1.3 would be selected. However, this does not seem to be operational. After
+     * exchanging ClientHello and ServerHello, the client instance writes 6 bytes, the
+     * "Client Change Cipher Spec", which the server can successfully read. Then both engines end up
+     * in "NEED_UNWRAP" state (expecting to be fed new input), however, both engines refuse to
+     * produce new data. TLS 1.3 details: https://tls13.ulfheim.net/
+     */
+    private static final String[] ENABLED_PROTOCOLS = new String[]{"TLSv1.2"};
+
     private static final ByteBuffer EMPTY_BUFFER = createEmptyImmutableBuffer();
 
     // FIXME global state
@@ -402,15 +411,20 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                         final NativeObject targetBuffer) {
 
             final SqSSL ssl = getSSLOrNull(sslHandle);
-            if (ssl == null) {
+            if (ssl == null || ssl.state != State.UNUSED && ssl.state != State.ACCEPTING) {
                 return ReturnCode.INVALID_STATE.id();
             }
 
-            final ByteBuffer source = asReadBuffer(sourceBuffer, start, length);
+            final ByteBuffer sourceOrNull;
+            if (sourceBuffer.getByteLength() > 0) {
+                sourceOrNull = asReadBuffer(sourceBuffer, start, length);
+            } else {
+                sourceOrNull = null;
+            }
             final ByteBuffer target = asWriteBuffer(targetBuffer);
 
             try {
-                return process(ssl, source, target);
+                return process(ssl, sourceOrNull, target);
             } catch (final SSLHandshakeException e) {
                 return ReturnCode.GENERIC_ERROR.id();
             } catch (final SSLException e) {
@@ -420,21 +434,25 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private static long process(final SqSSL ssl, final ByteBuffer source, final ByteBuffer target) throws SSLException {
+        private static long process(final SqSSL ssl, final ByteBuffer sourceOrNull, final ByteBuffer target) throws SSLException {
             if (ssl.state == State.UNUSED) {
                 ssl.state = State.ACCEPTING;
                 setUp(ssl);
                 ssl.engine.setUseClientMode(false);
             }
 
-            if (ssl.state == State.ACCEPTING) {
-                ssl.buffer.put(source);
-                unwrapEagerly(ssl);
-                wrapEagerly(ssl, target);
-                return target.position();
+            assert ssl.state == State.ACCEPTING;
+            if (sourceOrNull != null) {
+                ssl.buffer.put(sourceOrNull);
             }
-
-            return ReturnCode.INVALID_STATE.id();
+            unwrapEagerly(ssl);
+            wrapEagerly(ssl, target);
+            if (ssl.state == State.CONNECTED) {
+                return ReturnCode.OK.id();
+            } else {
+                final int pos = target.position();
+                return pos == 0 ? ReturnCode.NEED_MORE_DATA.id() : pos;
+            }
         }
 
         private static void unwrapEagerly(final SqSSL ssl) throws SSLException {
@@ -507,15 +525,19 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                         final NativeObject targetBuffer) {
 
             final SqSSL ssl = getSSLOrNull(sslHandle);
-            if (ssl == null) {
+            if (ssl == null || ssl.state != State.UNUSED && ssl.state != State.CONNECTING) {
                 return ReturnCode.INVALID_STATE.id();
             }
-
-            final ByteBuffer source = asReadBuffer(sourceBuffer, start, length);
+            final ByteBuffer sourceOrNull;
+            if (sourceBuffer.getByteLength() > 0) {
+                sourceOrNull = asReadBuffer(sourceBuffer, start, length);
+            } else {
+                sourceOrNull = null;
+            }
             final ByteBuffer target = asWriteBuffer(targetBuffer);
 
             try {
-                return processHandshake(ssl, source, target);
+                return processHandshake(ssl, sourceOrNull, target);
             } catch (final SSLException e) {
                 getContext().printToStdErr(e);
                 return ReturnCode.GENERIC_ERROR.id();
@@ -523,17 +545,22 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private static long processHandshake(final SqSSL ssl, final ByteBuffer source, final ByteBuffer target) throws SSLException {
+        private static long processHandshake(final SqSSL ssl, final ByteBuffer sourceOrNull, final ByteBuffer target) throws SSLException {
+            /* Establish initial connection */
             if (ssl.state == State.UNUSED) {
                 beginHandshake(ssl, target);
-                return target.position();
-            } else if (ssl.state == State.CONNECTING) {
-                ssl.buffer.put(source);
-                readHandshakeResponse(ssl);
-                writeHandshakeResponse(ssl, target);
-                return target.position();
+            }
+            assert ssl.state == State.CONNECTING;
+            if (sourceOrNull != null) {
+                ssl.buffer.put(sourceOrNull);
+            }
+            readHandshakeResponse(ssl);
+            writeHandshakeResponse(ssl, target);
+            if (ssl.state == State.CONNECTED) {
+                return ReturnCode.OK.id();
             } else {
-                return ReturnCode.INVALID_STATE.id();
+                final int pos = target.position();
+                return pos == 0 ? ReturnCode.NEED_MORE_DATA.id() : pos;
             }
         }
 
@@ -639,13 +666,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             ssl.engine = ssl.context.createSSLEngine();
         }
 
-        // On JDK 11, TLS 1.3 would be selected. However, this does not seem to be operational.
-        // After exchanging ClientHello and ServerHello, the client instance writes 6 bytes,
-        // the "Client Change Cipher Spec", which the server can successfully read.
-        // Then both engines end up in "NEED_UNWRAP" state (expecting to be fed new input),
-        // however, both engines refuse to produce new data.
-        // TLS 1.3 details: https://tls13.ulfheim.net/
-        ssl.engine.setEnabledProtocols(new String[]{"TLSv1.2"});
+        ssl.engine.setEnabledProtocols(ENABLED_PROTOCOLS);
         ssl.buffer = ByteBuffer.allocate(getBufferSize(ssl));
     }
 
