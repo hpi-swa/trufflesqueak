@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameDescriptor.Builder;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -97,6 +98,17 @@ public final class FrameAccess {
     private FrameAccess() {
     }
 
+    /** Creates a new {@link FrameDescriptor} according to {@link SlotIndicies}. */
+    public static FrameDescriptor newFrameDescriptor(final int squeakContextSize) {
+        final Builder builder = FrameDescriptor.newBuilder();
+        builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.THIS_MARKER
+        builder.addSlot(FrameSlotKind.Illegal, null, null); // SlotIndicies.THIS_CONTEXT
+        builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.INSTRUCTION_POINTER
+        builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.STACK_POINTER
+        builder.addSlots(squeakContextSize, FrameSlotKind.Illegal);
+        return builder.build();
+    }
+
     public static CompiledCodeObject getCodeObject(final Frame frame) {
         return (CompiledCodeObject) frame.getArguments()[ArgumentIndicies.CODE_OBJECT.ordinal()];
     }
@@ -169,11 +181,11 @@ public final class FrameAccess {
     }
 
     public static FrameMarker getMarker(final Frame frame) {
-        return (FrameMarker) frame.getObject(SlotIndicies.THIS_MARKER.ordinal());
+        return (FrameMarker) frame.getObjectStatic(SlotIndicies.THIS_MARKER.ordinal());
     }
 
     public static void setMarker(final Frame frame, final FrameMarker marker) {
-        frame.setObject(SlotIndicies.THIS_MARKER.ordinal(), marker);
+        frame.setObjectStatic(SlotIndicies.THIS_MARKER.ordinal(), marker);
     }
 
     public static void initializeMarker(final Frame frame) {
@@ -206,19 +218,19 @@ public final class FrameAccess {
     }
 
     public static int getInstructionPointer(final Frame frame) {
-        return frame.getInt(SlotIndicies.INSTRUCTION_POINTER.ordinal());
+        return frame.getIntStatic(SlotIndicies.INSTRUCTION_POINTER.ordinal());
     }
 
     public static void setInstructionPointer(final Frame frame, final int value) {
-        frame.setInt(SlotIndicies.INSTRUCTION_POINTER.ordinal(), value);
+        frame.setIntStatic(SlotIndicies.INSTRUCTION_POINTER.ordinal(), value);
     }
 
     public static int getStackPointer(final Frame frame) {
-        return frame.getInt(SlotIndicies.STACK_POINTER.ordinal());
+        return frame.getIntStatic(SlotIndicies.STACK_POINTER.ordinal());
     }
 
     public static void setStackPointer(final Frame frame, final int value) {
-        frame.setInt(SlotIndicies.STACK_POINTER.ordinal(), value);
+        frame.setIntStatic(SlotIndicies.STACK_POINTER.ordinal(), value);
     }
 
     public static int toStackSlotIndex(final Frame frame, final int index) {

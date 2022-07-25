@@ -18,8 +18,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameDescriptor.Builder;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
@@ -46,6 +44,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -270,13 +269,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public FrameDescriptor getFrameDescriptor() {
         if (frameDescriptor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final Builder builder = FrameDescriptor.newBuilder();
-            builder.addSlot(FrameSlotKind.Object, null, null); // SLOT_IDENTIFIER.THIS_MARKER
-            builder.addSlot(FrameSlotKind.Illegal, null, null); // SLOT_IDENTIFIER.THIS_CONTEXT
-            builder.addSlot(FrameSlotKind.Int, null, null); // SLOT_IDENTIFIER.INSTRUCTION_POINTER
-            builder.addSlot(FrameSlotKind.Int, null, null); // SLOT_IDENTIFIER.STACK_POINTER
-            builder.addSlots(getSqueakContextSize(), FrameSlotKind.Illegal);
-            frameDescriptor = builder.build();
+            frameDescriptor = FrameAccess.newFrameDescriptor(getSqueakContextSize());
         }
         return frameDescriptor;
     }
