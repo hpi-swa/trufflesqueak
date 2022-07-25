@@ -561,6 +561,15 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @SuppressWarnings("unused")
+        @Specialization(guards = "buffer.isIntType()")
+        protected static final long doCountInt(
+                        final Object receiver, final PointersObject sd,
+                        final NativeObject buffer, final long startIndex, final long count) {
+            // TODO: not yet implemented
+            throw PrimitiveFailed.andTransferToInterpreter();
+        }
+
         @TruffleBoundary(transferToInterpreterOnException = false)
         private static long receiveData(final PointersObject sd, final byte[] data, final int start, final int count) throws IOException {
             return getSocketOrPrimFail(sd).receiveData(data, start, count);
