@@ -6,7 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import org.bouncycastle.util.Arrays;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -558,7 +558,7 @@ public final class InlinePrimitiveBytecodes {
             // TODO: Make use of `final long length = (long) pop3Node.execute(frame);`
             final NativeObject argument = (NativeObject) pop2Node.execute(frame);
             final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, BooleanObject.wrap(Arrays.areEqual(receiver.getByteStorage(), argument.getByteStorage())));
+            pushNode.execute(frame, BooleanObject.wrap(Arrays.equals(receiver.getByteStorage(), argument.getByteStorage())));
         }
     }
 
