@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
-import static java.util.Arrays.asList;
-
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -47,6 +45,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPr
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 /**
@@ -344,10 +343,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
      */
     @TruffleBoundary
     private static void checkHandshake(final String message, final SqSSL ssl, final HandshakeStatus... expected) {
-        final List<HandshakeStatus> expectedList = asList(expected);
-        assert !expectedList.contains(HandshakeStatus.FINISHED) : "State FINISHED is never returned from engine";
+        assert !ArrayUtils.contains(expected, HandshakeStatus.FINISHED) : "State FINISHED is never returned from engine";
         final HandshakeStatus actual = ssl.engine.getHandshakeStatus();
-        if (!expectedList.contains(actual)) {
+        if (!ArrayUtils.contains(expected, actual)) {
             throw new IllegalStateException(String.format("Handshake status %s expected, actual: %s. %s",
                             Arrays.toString(expected), actual, message));
         }
@@ -356,7 +354,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @TruffleBoundary
     private static void checkHandshake(final String message, final SSLEngineResult result, final HandshakeStatus... expected) {
         final HandshakeStatus actual = result.getHandshakeStatus();
-        if (!asList(expected).contains(actual)) {
+        if (!ArrayUtils.contains(expected, actual)) {
             throw new IllegalStateException(String.format("Handshake status %s expected, actual: %s. %s",
                             Arrays.toString(expected), actual, message));
         }
@@ -365,7 +363,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @TruffleBoundary
     private static void checkStatus(final String message, final SSLEngineResult result, final SSLEngineResult.Status... expected) {
         final SSLEngineResult.Status actual = result.getStatus();
-        if (!asList(expected).contains(actual)) {
+        if (!ArrayUtils.contains(expected, actual)) {
             throw new IllegalStateException(String.format("Status %s expected, actual: %s. %s", Arrays.toString(expected), actual, message));
         }
     }
