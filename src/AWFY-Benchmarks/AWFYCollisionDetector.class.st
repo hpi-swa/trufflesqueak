@@ -94,9 +94,9 @@ AWFYCollisionDetector >> isInVoxel: voxel motion: motion [
     y0  := init y.
     yv  := fin y - init y.
 
-    xv = 0.0
+    xv = 0.0 "follow IEEE floating point semantics"
       ifTrue:  [
-        low_x  := Float negativeInfinity.
+        low_x  := Float infinity.
         high_x := Float infinity ]
       ifFalse: [
         low_x := (v_x - r - x0) / xv.
@@ -108,9 +108,9 @@ AWFYCollisionDetector >> isInVoxel: voxel motion: motion [
       low_x  := high_x.
       high_x := tmp ].
 
-    yv = 0.0
+    yv = 0.0 "follow IEEE floating point semantics"
       ifTrue: [
-        low_y  := Float negativeInfinity.
+        low_y  := Float infinity.
         high_y := Float infinity ]
       ifFalse: [
         low_y  := (v_y - r - y0) / yv.
