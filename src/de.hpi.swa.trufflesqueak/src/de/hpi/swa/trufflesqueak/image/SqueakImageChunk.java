@@ -122,6 +122,8 @@ public final class SqueakImageChunk {
             } else if (format <= 23) { // bytes
                 if (squeakClass == image.largePositiveIntegerClass || squeakClass == image.largeNegativeIntegerClass) {
                     object = new LargeIntegerObject(image, hash, squeakClass, getBytes()).reduceIfPossible();
+                } else if (squeakClass == image.byteStringClass) {
+                    object = NativeObject.newNativeTruffleString(this);
                 } else {
                     object = NativeObject.newNativeBytes(this);
                 }

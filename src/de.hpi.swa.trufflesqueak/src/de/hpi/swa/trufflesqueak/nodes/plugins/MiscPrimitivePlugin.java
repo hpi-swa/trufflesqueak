@@ -17,6 +17,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.strings.TruffleString;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -393,8 +394,25 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIndexOfAsciiInString")
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
 
+        @Specialization(guards = {"start >= 0", "string.isTruffleStringType()"})
+        protected static final long doNativeTruffleString(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
+                        @Cached final TruffleString.IndexOfCodePointNode node,
+                        @Cached final BranchProfile foundProfile,
+                        @Cached final BranchProfile notFoundProfile) {
+// node.execute(string.getTruffleString(), (int) value, (int) start, end, Encoding.UTF_8);
+            final byte valueByte = (byte) value;
+            for (long i = start - 1; i < string.getByteLength(); i++) {
+                if (string.getByte(i) == valueByte) {
+                    foundProfile.enter();
+                    return i + 1;
+                }
+            }
+            notFoundProfile.enter();
+            return 0L;
+        }
+
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
+        protected static final long doNativeBytes(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
                         @Cached final BranchProfile foundProfile,
                         @Cached final BranchProfile notFoundProfile) {
             final byte valueByte = (byte) value;

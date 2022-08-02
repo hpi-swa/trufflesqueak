@@ -399,12 +399,12 @@ public final class SqueakImageContext {
 
     public NativeObject getResourcesDirectory() {
         ensureResourcesDirectoryAndPathInitialized();
-        return NativeObject.newNativeBytes(this, byteStringClass, resourcesDirectoryBytes.clone());
+        return asByteString(resourcesDirectoryBytes.clone());
     }
 
     public NativeObject getResourcesPath() {
         ensureResourcesDirectoryAndPathInitialized();
-        return NativeObject.newNativeBytes(this, byteStringClass, resourcesPathBytes.clone());
+        return asByteString(resourcesPathBytes.clone());
     }
 
     private void ensureResourcesDirectoryAndPathInitialized() {
@@ -811,7 +811,11 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asByteString(final String value) {
-        return NativeObject.newNativeBytes(this, byteStringClass, MiscUtils.stringToBytes(value));
+        return asByteString(MiscUtils.stringToBytes(value));
+    }
+
+    public NativeObject asByteString(final byte[] bytes) {
+        return NativeObject.newNativeTruffleString(this, byteStringClass, bytes);
     }
 
     public NativeObject asByteSymbol(final String value) {
