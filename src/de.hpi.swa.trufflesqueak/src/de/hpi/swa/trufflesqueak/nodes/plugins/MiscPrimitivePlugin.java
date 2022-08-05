@@ -17,6 +17,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -40,6 +41,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     public abstract static class AbstractPrimCompareStringNode extends AbstractPrimitiveNode {
+        private final LoopConditionProfile loopProfile = LoopConditionProfile.create();
+
         protected static final NativeObject asciiOrderOrNull(final NativeObject orderValue) {
             if (orderValue.isByteType() && orderValue.getByteLength() == 256) {
                 final byte[] bytes = orderValue.getByteStorage();
@@ -58,30 +61,40 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return orderValue.isByteType() && orderValue.getByteLength() >= 256 ? orderValue : null;
         }
 
-        protected static final long compareAsciiOrder(final NativeObject string1, final NativeObject string2) {
+        protected final long compareAsciiOrder(final NativeObject string1, final NativeObject string2) {
             final int len1 = string1.getByteLength();
             final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
-            for (int i = 0; i < min; i++) {
-                final byte c1 = string1.getByte(i);
-                final byte c2 = string2.getByte(i);
-                if (c1 != c2) {
-                    return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
+            int i = 0;
+            try {
+                for (; loopProfile.inject(i < min); i++) {
+                    final byte c1 = string1.getByte(i);
+                    final byte c2 = string2.getByte(i);
+                    if (c1 != c2) {
+                        return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
+                    }
                 }
+            } finally {
+                profileAndReportLoopCount(loopProfile, i);
             }
             return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
         }
 
-        protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
+        protected final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
             final int len1 = string1.getByteLength();
             final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
-            for (int i = 0; i < min; i++) {
-                final byte c1 = orderValue.getByte(string1.getByteUnsigned(i));
-                final byte c2 = orderValue.getByte(string2.getByteUnsigned(i));
-                if (c1 != c2) {
-                    return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
+            int i = 0;
+            try {
+                for (; loopProfile.inject(i < min); i++) {
+                    final byte c1 = orderValue.getByte(string1.getByteUnsigned(i));
+                    final byte c2 = orderValue.getByte(string2.getByteUnsigned(i));
+                    if (c1 != c2) {
+                        return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
+                    }
                 }
+            } finally {
+                profileAndReportLoopCount(loopProfile, i);
             }
             return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
         }
@@ -92,14 +105,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimCompareStringNode extends AbstractPrimCompareStringNode {
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
-        protected static final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+        protected final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
                         @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
             return compareAsciiOrder(string1, string2) + 2L;
         }
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedOrder"}, limit = "1")
-        protected static final long doCompareCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+        protected final long doCompareCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
                         @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
             return compare(string1, string2, cachedOrder) + 2L;
@@ -107,7 +120,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
-        protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+        protected final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         final NativeObject orderValue) {
             return compare(string1, string2, orderValue) + 2L;
         }
@@ -325,11 +338,12 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode {
 
         @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
-        protected static final long doFindCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
+        protected final long doFindCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
                         final long start,
                         @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
-                        @Cached final ConditionProfile notFoundProfile) {
-            return doFind(receiver, string, cachedInclusionMap, start, notFoundProfile);
+                        @Cached final ConditionProfile notFoundProfile,
+                        @Cached final LoopConditionProfile loopProfile) {
+            return doFind(receiver, string, cachedInclusionMap, start, notFoundProfile, loopProfile);
         }
 
         protected static final NativeObject validInclusionMapOrNull(final NativeObject inclusionMap) {
@@ -337,12 +351,17 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindCached")
-        protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
-                        @Cached final ConditionProfile notFoundProfile) {
+        protected final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
+                        @Cached final ConditionProfile notFoundProfile,
+                        @Cached final LoopConditionProfile loopProfile) {
             final int stringSize = string.getByteLength();
             long index = start - 1;
-            while (index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0) {
-                index++;
+            try {
+                while (loopProfile.inject(index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0)) {
+                    index++;
+                }
+            } finally {
+                profileAndReportLoopCount(loopProfile, index);
             }
             return notFoundProfile.profile(index >= stringSize) ? 0L : index + 1;
         }
@@ -358,11 +377,13 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFindSubstring")
     public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
         @Specialization
-        protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
+        protected final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable,
                         @Cached final ConditionProfile quickReturnProfile,
                         @Cached final BranchProfile foundProfile,
-                        @Cached final BranchProfile notFoundProfile) {
+                        @Cached final BranchProfile notFoundProfile,
+                        @Cached final LoopConditionProfile outerLoopProfile,
+                        @Cached final LoopConditionProfile innerLoopProfile) {
             if (!key.isByteType() || !body.isByteType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -372,16 +393,25 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 return 0L;
             } else {
                 final int bodyLength = body.getByteLength();
-                for (long startIndex = Math.max(start - 1, 0); startIndex <= bodyLength - keyLength; startIndex++) {
-                    int index = 0;
-                    while (matchTable.getByte(body.getByteUnsigned(startIndex + index)) == matchTable.getByte(key.getByteUnsigned(index))) {
-                        if (index == keyLength - 1) {
-                            foundProfile.enter();
-                            return startIndex + 1;
-                        } else {
-                            index++;
+                long startIndex = Math.max(start - 1, 0);
+                try {
+                    for (; startIndex <= bodyLength - keyLength; startIndex++) {
+                        int index = 0;
+                        try {
+                            while (innerLoopProfile.inject(matchTable.getByte(body.getByteUnsigned(startIndex + index)) == matchTable.getByte(key.getByteUnsigned(index)))) {
+                                if (index == keyLength - 1) {
+                                    foundProfile.enter();
+                                    return startIndex + 1;
+                                } else {
+                                    index++;
+                                }
+                            }
+                        } finally {
+                            profileAndReportLoopCount(innerLoopProfile, startIndex);
                         }
                     }
+                } finally {
+                    profileAndReportLoopCount(outerLoopProfile, startIndex);
                 }
                 notFoundProfile.enter();
                 return 0L;
@@ -394,15 +424,21 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
 
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
+        protected final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
                         @Cached final BranchProfile foundProfile,
-                        @Cached final BranchProfile notFoundProfile) {
+                        @Cached final BranchProfile notFoundProfile,
+                        @Cached final LoopConditionProfile loopProfile) {
             final byte valueByte = (byte) value;
-            for (long i = start - 1; i < string.getByteLength(); i++) {
-                if (string.getByte(i) == valueByte) {
-                    foundProfile.enter();
-                    return i + 1;
+            long i = start - 1;
+            try {
+                for (; loopProfile.inject(i < string.getByteLength()); i++) {
+                    if (string.getByte(i) == valueByte) {
+                        foundProfile.enter();
+                        return i + 1;
+                    }
                 }
+            } finally {
+                profileAndReportLoopCount(loopProfile, i);
             }
             notFoundProfile.enter();
             return 0L;
@@ -410,11 +446,18 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     private abstract static class AbstractPrimStringHashNode extends AbstractPrimitiveNode {
-        protected static final long calculateHash(final long initialHash, final byte[] bytes) {
+        private final LoopConditionProfile loopProfile = LoopConditionProfile.create();
+
+        protected final long calculateHash(final long initialHash, final byte[] bytes) {
             long hash = initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
             final int length = bytes.length;
-            for (int i = 0; i < length; i++) {
-                hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
+            int i = 0;
+            try {
+                for (; loopProfile.inject(i < length); i++) {
+                    hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
+                }
+            } finally {
+                profileAndReportLoopCount(loopProfile, i);
             }
             return hash;
         }
@@ -425,17 +468,17 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     /* Byte(Array|String|Symbol)>>#hashWithInitialHash: */
     public abstract static class PrimStringHash2Node extends AbstractPrimStringHashNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"string.isByteType()"})
-        protected static final long doNativeObject(final NativeObject string, final long initialHash) {
+        protected final long doNativeObject(final NativeObject string, final long initialHash) {
             return calculateHash(initialHash, string.getByteStorage());
         }
 
         @Specialization
-        protected static final long doLargeInteger(final LargeIntegerObject largeInteger, final long initialHash) {
+        protected final long doLargeInteger(final LargeIntegerObject largeInteger, final long initialHash) {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
         @Specialization(guards = {"isLongMinValue(value)"})
-        protected static final long doLongMinValue(@SuppressWarnings("unused") final long value, final long initialHash) {
+        protected final long doLongMinValue(@SuppressWarnings("unused") final long value, final long initialHash) {
             return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
         }
     }
@@ -445,17 +488,17 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
     public abstract static class PrimStringHash3Node extends AbstractPrimStringHashNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final long initialHash) {
+        protected final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final long initialHash) {
             return calculateHash(initialHash, string.getByteStorage());
         }
 
         @Specialization
-        protected static final long doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject largeInteger, final long initialHash) {
+        protected final long doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject largeInteger, final long initialHash) {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
         @Specialization(guards = {"isLongMinValue(value)"})
-        protected static final long doLongMinValue(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long value, final long initialHash) {
+        protected final long doLongMinValue(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long value, final long initialHash) {
             return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
         }
     }
@@ -465,10 +508,11 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimTranslateStringWithTableNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table == cachedTable"}, limit = "1")
-        protected static final Object doNativeObjectCachedTable(final Object receiver, final NativeObject string, final long start, final long stop,
+        protected final Object doNativeObjectCachedTable(final Object receiver, final NativeObject string, final long start, final long stop,
                         @SuppressWarnings("unused") final NativeObject table,
-                        @Cached("byteTableOrNull(table)") final NativeObject cachedTable) {
-            return doNativeObject(receiver, string, start, stop, cachedTable);
+                        @Cached("byteTableOrNull(table)") final NativeObject cachedTable,
+                        @Cached final LoopConditionProfile loopProfile) {
+            return doNativeObject(receiver, string, start, stop, cachedTable, loopProfile);
         }
 
         protected static final NativeObject byteTableOrNull(final NativeObject table) {
@@ -476,18 +520,25 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"}, replaces = "doNativeObjectCachedTable")
-        protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
-            for (long i = start - 1; i < stop; i++) {
-                string.setByte(i, table.getByte(string.getByteUnsigned(i)));
+        protected final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table,
+                        @Cached final LoopConditionProfile loopProfile) {
+            long i = start - 1;
+            try {
+                for (; loopProfile.inject(i < stop); i++) {
+                    string.setByte(i, table.getByte(string.getByteUnsigned(i)));
+                }
+            } finally {
+                profileAndReportLoopCount(loopProfile, i);
             }
             return receiver;
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table == cachedTable"}, limit = "1")
-        protected static final Object doNativeObjectIntTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
+        protected final Object doNativeObjectIntTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
                         @SuppressWarnings("unused") final NativeObject table,
-                        @Cached("intTableOrNull(table)") final NativeObject cachedTable) {
-            return doNativeObjectIntTable(receiver, string, start, stop, cachedTable);
+                        @Cached("intTableOrNull(table)") final NativeObject cachedTable,
+                        @Cached final LoopConditionProfile loopProfile) {
+            return doNativeObjectIntTable(receiver, string, start, stop, cachedTable, loopProfile);
         }
 
         protected static final NativeObject intTableOrNull(final NativeObject table) {
@@ -495,10 +546,16 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isIntType()", "table.getIntLength() >= 256"}, replaces = "doNativeObjectIntTableCached")
-        protected static final Object doNativeObjectIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
-                        final NativeObject table) {
-            for (long i = start - 1; i < stop; i++) {
-                string.setByte(i, table.getInt(string.getByteUnsigned(i)));
+        protected final Object doNativeObjectIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
+                        final NativeObject table,
+                        @Cached final LoopConditionProfile loopProfile) {
+            long i = start - 1;
+            try {
+                for (; loopProfile.inject(i < stop); i++) {
+                    string.setByte(i, table.getInt(string.getByteUnsigned(i)));
+                }
+            } finally {
+                profileAndReportLoopCount(loopProfile, i);
             }
             return receiver;
         }
