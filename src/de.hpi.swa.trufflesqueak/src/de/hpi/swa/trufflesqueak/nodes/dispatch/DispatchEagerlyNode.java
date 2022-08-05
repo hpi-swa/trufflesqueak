@@ -29,7 +29,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsL
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.PrimitiveFailedCounter;
 
-@ReportPolymorphism
 @ImportStatic({PrimitiveNodeFactory.class, ArgumentsLocation.class})
 public abstract class DispatchEagerlyNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 6;
@@ -79,6 +78,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
         return callDirect(callNode, cachedMethod, getOrCreateContext(frame), receiverAndArguments);
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
     protected static final Object doIndirect(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
@@ -87,6 +87,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
         return callIndirect(callNode, method, getContextOrMarkerNode.execute(frame), receiverAndArguments);
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
     protected final Object doIndirectWithSender(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
