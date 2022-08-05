@@ -395,7 +395,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final int bodyLength = body.getByteLength();
                 long startIndex = Math.max(start - 1, 0);
                 try {
-                    for (; startIndex <= bodyLength - keyLength; startIndex++) {
+                    for (; outerLoopProfile.inject(startIndex <= bodyLength - keyLength); startIndex++) {
                         int index = 0;
                         try {
                             while (innerLoopProfile.inject(matchTable.getByte(body.getByteUnsigned(startIndex + index)) == matchTable.getByte(key.getByteUnsigned(index)))) {
@@ -451,13 +451,12 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected final long calculateHash(final long initialHash, final byte[] bytes) {
             long hash = initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
             final int length = bytes.length;
-            int i = 0;
             try {
-                for (; loopProfile.inject(i < length); i++) {
+                for (int i = 0; loopProfile.inject(i < length); i++) {
                     hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
                 }
             } finally {
-                profileAndReportLoopCount(loopProfile, i);
+                profileAndReportLoopCount(loopProfile, length);
             }
             return hash;
         }

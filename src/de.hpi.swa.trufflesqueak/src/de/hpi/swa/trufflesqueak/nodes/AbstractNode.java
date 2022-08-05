@@ -56,7 +56,7 @@ public abstract class AbstractNode extends Node {
         reportLongLoopCount(count);
     }
 
-    protected final void reportLongLoopCount(final long count) {
+    private void reportLongLoopCount(final long count) {
         assert count >= 0L;
         LoopNode.reportLoopCount(this, count > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) count);
     }
