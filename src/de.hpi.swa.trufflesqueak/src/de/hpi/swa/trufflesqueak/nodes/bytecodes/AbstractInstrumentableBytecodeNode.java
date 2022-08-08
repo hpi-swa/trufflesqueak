@@ -83,22 +83,23 @@ public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecod
     }
 
     @ExportMessage
-    @TruffleBoundary
     protected final boolean hasRootInstance(@SuppressWarnings("unused") final Frame frame) {
-        final String selector = getRootNode().getName();
-        return getContext().lookup(selector) != NilObject.SINGLETON;
+        return lookupRootSelector() != NilObject.SINGLETON;
     }
 
     @ExportMessage
-    @TruffleBoundary
-    protected final Object getRootInstance(@SuppressWarnings("unused") final Frame frame)
-                    throws UnsupportedMessageException {
-        final String selector = getRootNode().getName();
-        final Object result = getContext().lookup(selector);
+    protected final Object getRootInstance(@SuppressWarnings("unused") final Frame frame) throws UnsupportedMessageException {
+        final Object result = lookupRootSelector();
         if (result != null) {
             return result;
         } else {
             throw UnsupportedMessageException.create();
         }
+    }
+
+    @TruffleBoundary
+    private Object lookupRootSelector() {
+        final String selector = getRootNode().getName();
+        return getContext().lookup(selector);
     }
 }
