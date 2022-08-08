@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -74,6 +75,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @TruffleBoundary
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doReadCached")
         protected static final Object doReadUncached(final AbstractPointersObject object, final long index) {
             return object.getLayout().getLocation(index).read(object);
@@ -126,6 +128,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @TruffleBoundary
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doWriteCached")
         protected static final void doWriteUncached(final AbstractPointersObject object, final long index, final Object value) {
             try {
@@ -152,6 +155,7 @@ public class AbstractPointersObjectNodes {
             return cachedLayout.getInstSize();
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doSizeCached")
         protected static final int doSizeUncached(final AbstractPointersObject object) {
             return object.getLayout().getInstSize();
@@ -176,8 +180,9 @@ public class AbstractPointersObjectNodes {
             return readNode.execute(object, cachedIndex);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index < object.instsize()", replaces = "doReadCached")
-        protected static final Object doRead(final VariablePointersObject object, final long index,
+        protected static final Object doReadUncached(final VariablePointersObject object, final long index,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             return readNode.execute(object, index);
         }
@@ -197,8 +202,9 @@ public class AbstractPointersObjectNodes {
             return object.getFromVariablePart(index - cachedLayout.getInstSize());
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doReadFromVariablePartCachedIndex", "doReadFromVariablePartCachedLayout"})
-        protected static final Object doReadFromVariablePart(final VariablePointersObject object, final long index) {
+        protected static final Object doReadFromVariablePartUncached(final VariablePointersObject object, final long index) {
             return object.getFromVariablePart(index - object.instsize());
         }
     }
@@ -219,8 +225,9 @@ public class AbstractPointersObjectNodes {
             writeNode.execute(object, cachedIndex, value);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index < object.instsize()", replaces = "doWriteCached")
-        protected static final void doWrite(final VariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteUncached(final VariablePointersObject object, final long index, final Object value,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             writeNode.execute(object, index, value);
         }
@@ -240,8 +247,9 @@ public class AbstractPointersObjectNodes {
             object.putIntoVariablePart(index - cachedLayout.getInstSize(), value);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCachedIndex", "doWriteIntoVariablePartCachedLayout"})
-        protected static final void doWriteIntoVariablePart(final VariablePointersObject object, final long index, final Object value) {
+        protected static final void doWriteIntoVariablePartUncached(final VariablePointersObject object, final long index, final Object value) {
             object.putIntoVariablePart(index - object.instsize(), value);
         }
     }
@@ -262,8 +270,9 @@ public class AbstractPointersObjectNodes {
             return readNode.execute(object, cachedIndex);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index < object.instsize()", replaces = "doReadCached")
-        protected static final Object doRead(final WeakVariablePointersObject object, final long index,
+        protected static final Object doReadUncached(final WeakVariablePointersObject object, final long index,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             return readNode.execute(object, index);
         }
@@ -285,8 +294,9 @@ public class AbstractPointersObjectNodes {
             return object.getFromVariablePart(index - cachedLayout.getInstSize(), weakRefProfile);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doReadFromVariablePartCachedIndex", "doReadFromVariablePartCachedLayout"})
-        protected static final Object doReadFromVariablePart(final WeakVariablePointersObject object, final long index,
+        protected static final Object doReadFromVariablePartUncached(final WeakVariablePointersObject object, final long index,
                         @Cached final ConditionProfile weakRefProfile) {
             return object.getFromVariablePart(index - object.instsize(), weakRefProfile);
         }
@@ -308,8 +318,9 @@ public class AbstractPointersObjectNodes {
             writeNode.execute(object, cachedIndex, value);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index < object.instsize()", replaces = "doWriteCached")
-        protected static final void doWrite(final WeakVariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteUncached(final WeakVariablePointersObject object, final long index, final Object value,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             writeNode.execute(object, index, value);
         }
@@ -331,8 +342,9 @@ public class AbstractPointersObjectNodes {
             object.putIntoVariablePart(index - cachedLayout.getInstSize(), value, primitiveProfile);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCachedIndex", "doWriteIntoVariablePartCachedLayout"})
-        protected static final void doWriteIntoVariablePart(final WeakVariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteIntoVariablePartUncached(final WeakVariablePointersObject object, final long index, final Object value,
                         @Cached final ConditionProfile primitiveProfile) {
             object.putIntoVariablePart(index - object.instsize(), value, primitiveProfile);
         }
