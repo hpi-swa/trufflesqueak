@@ -50,11 +50,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
         java: [11, 17]
     env:
-      RUN_TESTS: "${{ matrix.os == 'ubuntu-18.04' || matrix.java == 17 }}"
-      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-18.04' && matrix.java == 17 }}"
+      RUN_TESTS: "${{ matrix.os == 'ubuntu-20.04' || matrix.java == 17 }}"
+      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' && matrix.java == 17 }}"
       TRUFFLESQUEAK_EXEC: "${{ matrix.os == 'windows-2019' && 'trufflesqueak.cmd' || 'trufflesqueak' }}"
       TS_INFIX: "${{ matrix.java == 11 && '_SVM' || '' }}"
       MX_ENV: "${{ matrix.java == 11 && 'trufflesqueak-svm' || 'trufflesqueak-jvm' }}"
