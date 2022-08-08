@@ -828,7 +828,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {
-        final PointersObject point = new PointersObject(this, pointClass);
+        final PointersObject point = new PointersObject(this, pointClass, null);
         writeNode.execute(point, POINT.X, xPos);
         writeNode.execute(point, POINT.Y, yPos);
         return point;
@@ -839,7 +839,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
-        final PointersObject message = new PointersObject(this, messageClass);
+        final PointersObject message = new PointersObject(this, messageClass, null);
         writeNode.execute(message, MESSAGE.SELECTOR, selector);
         writeNode.execute(message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
         assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";

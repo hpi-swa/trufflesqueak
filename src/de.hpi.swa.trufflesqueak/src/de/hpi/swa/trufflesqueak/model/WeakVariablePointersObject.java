@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -19,11 +18,9 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-public final class WeakVariablePointersObject extends AbstractPointersObject {
-    private Object[] variablePart;
-    private final ReferenceQueue<AbstractSqueakObject> weakPointersQueue;
+public final class WeakVariablePointersObject extends AbstractVariablePointersObject {
+    private ReferenceQueue<AbstractSqueakObject> weakPointersQueue;
 
     public WeakVariablePointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
         super(image, hash, classObject);
@@ -31,28 +28,18 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
-        super(image, classObject, layout);
-        variablePart = new Object[variableSize];
-        Arrays.fill(variablePart, NilObject.SINGLETON);
-        weakPointersQueue = image.weakPointersQueue;
-    }
-
-    public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final int variableSize) {
-        super(image, classObject);
-        variablePart = new Object[variableSize];
-        Arrays.fill(variablePart, NilObject.SINGLETON);
+        super(image, classObject, layout, variableSize);
         weakPointersQueue = image.weakPointersQueue;
     }
 
     private WeakVariablePointersObject(final WeakVariablePointersObject original) {
         super(original);
-        variablePart = original.variablePart.clone();
         weakPointersQueue = original.weakPointersQueue;
     }
 
     @Override
     protected void fillInVariablePart(final Object[] pointers, final int instSize) {
-        variablePart = Arrays.copyOfRange(pointers, instSize, pointers.length);
+        super.fillInVariablePart(pointers, instSize);
         for (int i = 0; i < variablePart.length; i++) {
             final Object value = variablePart[i];
             if (value instanceof AbstractSqueakObject) {
@@ -62,27 +49,15 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     public void become(final WeakVariablePointersObject other) {
-        becomeLayout(other);
-        final Object[] otherVariablePart = other.variablePart;
-        other.variablePart = variablePart;
-        variablePart = otherVariablePart;
+        super.become(other);
+        final ReferenceQueue<AbstractSqueakObject> otherWeakPointersQueue = other.weakPointersQueue;
+        other.weakPointersQueue = weakPointersQueue;
+        weakPointersQueue = otherWeakPointersQueue;
     }
 
     @Override
-    public int size() {
-        return instsize() + variablePart.length;
-    }
-
-    public Object[] getVariablePart() {
-        return variablePart;
-    }
-
-    public int getVariablePartSize() {
-        return variablePart.length;
-    }
-
-    private Object getFromVariablePart(final int index) {
-        final Object value = UnsafeUtils.getObject(variablePart, index);
+    public Object getFromVariablePart(final long index) {
+        final Object value = super.getFromVariablePart(index);
         if (value instanceof WeakRef) {
             return NilObject.nullToNil(((WeakRef) value).get());
         } else {
@@ -92,7 +67,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     public Object getFromVariablePart(final long index, final ConditionProfile weakRefProfile) {
-        final Object value = UnsafeUtils.getObject(variablePart, index);
+        final Object value = super.getFromVariablePart(index);
         if (weakRefProfile.profile(value instanceof WeakRef)) {
             return NilObject.nullToNil(((WeakRef) value).get());
         } else {
@@ -101,14 +76,16 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         }
     }
 
-    private void putIntoVariablePartSlow(final int index, final Object value) {
+    @Override
+    public void putIntoVariablePart(final long index, final Object value) {
         putIntoVariablePart(index, value, ConditionProfile.getUncached());
     }
 
     public void putIntoVariablePart(final long index, final Object value, final ConditionProfile profile) {
-        UnsafeUtils.putObject(variablePart, index, profile.profile(value instanceof AbstractSqueakObject) ? new WeakRef((AbstractSqueakObject) value, weakPointersQueue) : value);
+        super.putIntoVariablePart(index, profile.profile(value instanceof AbstractSqueakObject) ? new WeakRef((AbstractSqueakObject) value, weakPointersQueue) : value);
     }
 
+    @Override
     public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
         return layoutValuesPointTo(identityNode, thang) || variablePartPointsTo(thang);
     }
@@ -127,23 +104,6 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        layoutValuesBecomeOneWay(from, to);
-        final int variableSize = variablePart.length;
-        if (variableSize > 0) {
-            for (int i = 0; i < from.length; i++) {
-                final Object fromPointer = from[i];
-                for (int j = 0; j < variableSize; j++) {
-                    final Object object = getFromVariablePart(j);
-                    if (object == fromPointer) {
-                        putIntoVariablePartSlow(j, to[i]);
-                    }
-                }
-            }
-        }
-    }
-
-    @Override
     protected void traceVariablePart(final ObjectTracer tracer) {
         /* Weak pointers excluded from tracing. */
     }
@@ -155,7 +115,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
 
     @Override
     protected void writeVariablePart(final SqueakImageWriter writer) {
-        for (int i = 0; i < variablePart.length; i++) {
+        for (long i = 0; i < variablePart.length; i++) {
             /*
              * Since weak pointers are excluded from tracing, ignore (replace with nil) all objects
              * that have not been traced somewhere else.

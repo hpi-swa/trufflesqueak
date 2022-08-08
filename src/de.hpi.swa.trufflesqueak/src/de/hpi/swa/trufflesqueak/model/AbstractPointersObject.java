@@ -59,18 +59,15 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
         super(image, classObject);
-        assert classObject.getLayout() == layout : "Layout mismatch";
-        CompilerAsserts.partialEvaluationConstant(layout);
-        this.layout = layout;
-        primitiveExtension = layout.getFreshPrimitiveExtension();
-        objectExtension = layout.getFreshObjectExtension();
-    }
-
-    protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject) {
-        super(image, classObject);
-        layout = classObject.getLayout();
-        primitiveExtension = layout.getFreshPrimitiveExtension();
-        objectExtension = layout.getFreshObjectExtension();
+        if (layout != null) {
+            CompilerAsserts.partialEvaluationConstant(layout);
+            this.layout = layout;
+        } else {
+            this.layout = classObject.getLayout();
+        }
+        assert classObject.getLayout() == this.layout : "Layout mismatch";
+        primitiveExtension = this.layout.getFreshPrimitiveExtension();
+        objectExtension = this.layout.getFreshObjectExtension();
     }
 
     protected AbstractPointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {

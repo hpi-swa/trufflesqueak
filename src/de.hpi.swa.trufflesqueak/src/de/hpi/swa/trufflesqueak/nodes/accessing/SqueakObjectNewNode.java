@@ -89,7 +89,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     @Specialization(guards = {"instantiatesPointersObject(image, classObject)"}, replaces = "doPointersCached")
     protected static final PointersObject doPointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
-        return new PointersObject(image, classObject);
+        return new PointersObject(image, classObject, null);
     }
 
     @Specialization(guards = "classObject.isIndexableWithNoInstVars()")
@@ -127,7 +127,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
 
     @Specialization(guards = {"instantiatesVariablePointersObject(image, classObject)"}, replaces = "doVariablePointersCached")
     protected static final VariablePointersObject doVariablePointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        return new VariablePointersObject(image, classObject, extraSize);
+        return new VariablePointersObject(image, classObject, null, extraSize);
     }
 
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
@@ -147,7 +147,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
 
     @Specialization(guards = "instantiatesWeakVariablePointersObject(classObject)", replaces = "doWeakPointersCached")
     protected static final WeakVariablePointersObject doWeakPointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        return new WeakVariablePointersObject(image, classObject, extraSize);
+        return new WeakVariablePointersObject(image, classObject, null, extraSize);
     }
 
     @SuppressWarnings("unused")

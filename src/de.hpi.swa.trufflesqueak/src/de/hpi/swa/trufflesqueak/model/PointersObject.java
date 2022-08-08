@@ -37,16 +37,12 @@ public final class PointersObject extends AbstractPointersObject {
         super(image, classObject, layout);
     }
 
-    public PointersObject(final SqueakImageContext image, final ClassObject classObject) {
-        super(image, classObject);
-    }
-
     private PointersObject(final PointersObject original) {
         super(original);
     }
 
     public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
-        final PointersObject handle = new PointersObject(image, image.pointClass);
+        final PointersObject handle = new PointersObject(image, image.pointClass, null);
         handle.object2 = hiddenObject;
         return handle;
     }
