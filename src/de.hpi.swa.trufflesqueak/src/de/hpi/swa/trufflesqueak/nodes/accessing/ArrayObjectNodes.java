@@ -268,8 +268,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final Object[] doEmptyArray(final Object first, final ArrayObject obj) {
-            final Object[] result = new Object[1 + obj.getEmptyLength()];
-            Arrays.fill(result, NilObject.SINGLETON);
+            final Object[] result = ArrayUtils.withAll(1 + obj.getEmptyLength(), NilObject.SINGLETON);
             result[0] = first;
             return result;
         }

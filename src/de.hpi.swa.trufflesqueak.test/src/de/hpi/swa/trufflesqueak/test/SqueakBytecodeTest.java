@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @SuppressWarnings("static-method")
 public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
@@ -657,9 +658,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     // TODO: testSend()
 
     private static Object[] createDummyLiterals(final int numLiterals) {
-        final Object[] literals = new Object[numLiterals];
-        Arrays.fill(literals, NilObject.SINGLETON);
-        return literals;
+        return ArrayUtils.withAll(numLiterals, NilObject.SINGLETON);
     }
 
     private static Object[] getTestObjects(final int n) {
