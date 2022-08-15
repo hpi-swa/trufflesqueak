@@ -26,7 +26,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-public abstract class AbstractPointersObject extends AbstractSqueakObjectWithClassAndHash {
+public abstract class AbstractPointersObject extends AbstractSqueakObjectWithHeader {
     /*
      * Field addresses for Unsafe access. `static final` allows SubstrateVM to intercept and
      * recalculate addresses before native image generation.

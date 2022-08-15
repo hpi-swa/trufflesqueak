@@ -11,7 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -278,7 +278,7 @@ public final class Zip {
      */
 
     /* InflatePlugin>>#determineSizeOfReadStream: */
-    private boolean determineSizeOfReadStream(final AbstractSqueakObjectWithClassAndHash rcvr) {
+    private boolean determineSizeOfReadStream(final AbstractSqueakObjectWithHeader rcvr) {
         ClassObject squeakClass = rcvr.getSqueakClass();
         while (squeakClass != null && squeakClass.getBasicInstanceSize() >= 13) {
             squeakClass = squeakClass.getSuperclassOrNull();
@@ -297,7 +297,7 @@ public final class Zip {
      */
 
     /* DeflatePlugin>>#determineSizeOfWriteStream: */
-    private boolean determineSizeOfWriteStream(final AbstractSqueakObjectWithClassAndHash rcvr) {
+    private boolean determineSizeOfWriteStream(final AbstractSqueakObjectWithHeader rcvr) {
         ClassObject squeakClass = rcvr.getSqueakClass();
         while (squeakClass != null && squeakClass.getBasicInstanceSize() >= 7) {
             squeakClass = squeakClass.getSuperclassOrNull();

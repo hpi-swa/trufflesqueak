@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
+public final class ArrayObject extends AbstractSqueakObjectWithHeader {
     public static final byte BOOLEAN_NIL_TAG = 0;
     public static final byte BOOLEAN_TRUE_TAG = 1;
     public static final byte BOOLEAN_FALSE_TAG = -1;

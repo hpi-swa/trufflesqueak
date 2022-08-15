@@ -50,7 +50,7 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @SuppressWarnings("static-method")
-public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
+public final class CompiledCodeObject extends AbstractSqueakObjectWithHeader {
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
     private static final long NEGATIVE_METHOD_HEADER_MASK = -1L << 60;

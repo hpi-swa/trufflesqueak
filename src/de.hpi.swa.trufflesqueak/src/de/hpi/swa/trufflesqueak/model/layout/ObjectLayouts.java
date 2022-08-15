@@ -12,7 +12,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -108,7 +108,7 @@ public final class ObjectLayouts {
             if (organization == NilObject.SINGLETON) {
                 return null;
             }
-            final AbstractSqueakObjectWithClassAndHash classComment = (AbstractSqueakObjectWithClassAndHash) ((VariablePointersObject) organization).instVarAt0Slow(CLASS_ORGANIZER.CLASS_COMMENT);
+            final AbstractSqueakObjectWithHeader classComment = (AbstractSqueakObjectWithHeader) ((VariablePointersObject) organization).instVarAt0Slow(CLASS_ORGANIZER.CLASS_COMMENT);
             final NativeObject string = (NativeObject) classComment.send(SqueakImageContext.getSlow(), "string");
             return string.asStringUnsafe();
         }

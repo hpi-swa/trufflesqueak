@@ -22,23 +22,23 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
+public abstract class AbstractSqueakObjectWithHeader extends AbstractSqueakObject {
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
     public static final int HASH_UNINITIALIZED = 0;
 
     protected long squeakObjectHeader;
 
     // For special/well-known objects only.
-    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image) {
+    protected AbstractSqueakObjectWithHeader(final SqueakImageContext image) {
         this(image, null);
     }
 
-    public AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final long objectHeader) {
+    public AbstractSqueakObjectWithHeader(final SqueakImageContext image, final long objectHeader) {
         this(image, null);
         squeakObjectHeader = objectHeader;
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final ClassObject klass) {
+    protected AbstractSqueakObjectWithHeader(final SqueakImageContext image, final ClassObject klass) {
         squeakObjectHeader = HASH_UNINITIALIZED;
         if (klass != null) { // FIXME
             setSqueakClass(klass);
@@ -48,7 +48,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash original) {
+    protected AbstractSqueakObjectWithHeader(final AbstractSqueakObjectWithHeader original) {
         squeakObjectHeader = original.squeakObjectHeader;
         setSqueakHash(HASH_UNINITIALIZED);
     }
@@ -77,7 +77,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakObjectHeader = ObjectHeader.setClassIndex(squeakObjectHeader, newClass.asClassIndex());
     }
 
-    public final void becomeOtherClass(final AbstractSqueakObjectWithClassAndHash other) {
+    public final void becomeOtherClass(final AbstractSqueakObjectWithHeader other) {
         final int otherClassIndex = ObjectHeader.getClassIndex(other.squeakObjectHeader);
         final int classIndex = ObjectHeader.getClassIndex(squeakObjectHeader);
         other.squeakObjectHeader = ObjectHeader.setClassIndex(other.squeakObjectHeader, classIndex);
@@ -113,7 +113,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return getSqueakHashValue();
     }
 
-    private final long getSqueakHashValue() {
+    private long getSqueakHashValue() {
         return ObjectHeader.getHash(squeakObjectHeader);
     }
 

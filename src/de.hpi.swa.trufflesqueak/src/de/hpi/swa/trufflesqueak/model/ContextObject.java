@@ -35,7 +35,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
+public final class ContextObject extends AbstractSqueakObjectWithHeader {
     public static final int NIL_PC_VALUE = -1;
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
 

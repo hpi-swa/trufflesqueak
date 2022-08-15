@@ -12,7 +12,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -74,7 +74,7 @@ public abstract class SqueakObjectClassIndexNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash value) {
+    protected static final int doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithHeader value) {
         return value.getSqueakClassIndex();
     }
 

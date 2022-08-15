@@ -36,7 +36,7 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
  * Represents all subclasses of ClassDescription (Class, Metaclass, TraitBehavior, ...).
  */
 @SuppressWarnings("static-method")
-public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
+public final class ClassObject extends AbstractSqueakObjectWithHeader {
     @CompilationFinal private CyclicAssumption classHierarchyStable;
     @CompilationFinal private CyclicAssumption methodDictStable;
     @CompilationFinal private CyclicAssumption classFormatStable;
@@ -91,7 +91,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return image;
     }
 
-    public final int asClassIndex() {
+    public int asClassIndex() {
         return ObjectHeader.getHash(squeakObjectHeader);
     }
 

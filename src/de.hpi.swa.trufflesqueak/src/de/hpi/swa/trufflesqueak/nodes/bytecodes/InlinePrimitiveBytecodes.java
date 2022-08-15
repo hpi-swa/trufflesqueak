@@ -11,7 +11,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -161,7 +161,7 @@ public final class InlinePrimitiveBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getSqueakHash());
+            pushNode.execute(frame, ((AbstractSqueakObjectWithHeader) popNode.execute(frame)).getSqueakHash());
         }
     }
 

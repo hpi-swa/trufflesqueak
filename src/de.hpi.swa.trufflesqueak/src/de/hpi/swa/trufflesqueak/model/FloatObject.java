@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
+public final class FloatObject extends AbstractSqueakObjectWithHeader {
     public static final int PRECISION = 53;
     public static final int WORD_LENGTH = 2;
     private double doubleValue;

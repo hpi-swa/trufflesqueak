@@ -35,7 +35,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -75,27 +75,21 @@ public final class SqueakImageContext {
 
     /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
-    @CompilationFinal public int trueClassIndex = -1;
     public final ClassObject falseClass = new ClassObject(this);
-    @CompilationFinal public int falseClassIndex = -1;
     public final PointersObject schedulerAssociation = new PointersObject(this);
     public final ClassObject bitmapClass = new ClassObject(this);
     public final ClassObject smallIntegerClass = new ClassObject(this);
-    @CompilationFinal public int smallIntegerClassIndex = -1;
     public final ClassObject byteStringClass = new ClassObject(this);
     public final ClassObject arrayClass = new ClassObject(this);
     public final PointersObject smalltalk = new PointersObject(this);
     public final ClassObject floatClass = new ClassObject(this);
-    @CompilationFinal public int floatClassIndex = -1;
     public final ClassObject methodContextClass = new ClassObject(this);
-    @CompilationFinal public int methodContextClassIndex = -1;
     public final ClassObject pointClass = new ClassObject(this);
     public final ClassObject largePositiveIntegerClass = new ClassObject(this);
     public final ClassObject messageClass = new ClassObject(this);
     public final ClassObject compiledMethodClass = new ClassObject(this);
     public final ClassObject semaphoreClass = new ClassObject(this);
     public final ClassObject characterClass = new ClassObject(this);
-    @CompilationFinal public int characterClassIndex = -1;
     public final NativeObject doesNotUnderstand = new NativeObject(this);
     public final NativeObject cannotReturn = new NativeObject(this);
     public final NativeObject mustBeBooleanSelector = new NativeObject(this);
@@ -109,15 +103,23 @@ public final class SqueakImageContext {
     public final ArrayObject specialSelectors = new ArrayObject(this);
     @CompilationFinal public ClassObject fullBlockClosureClass;
     @CompilationFinal public ClassObject smallFloatClass;
-    @CompilationFinal public int smallFloatClassIndex = -1;
     @CompilationFinal private ClassObject byteSymbolClass;
     @CompilationFinal private ClassObject foreignObjectClass;
-    @CompilationFinal private int foreignObjectClassIndex = -1;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
+
+    /* Class indices */
     @CompilationFinal public int nilClassIndex = -1;
+    @CompilationFinal public int falseClassIndex = -1;
+    @CompilationFinal public int trueClassIndex = -1;
+    @CompilationFinal public int smallIntegerClassIndex = -1;
+    @CompilationFinal public int floatClassIndex = -1;
+    @CompilationFinal public int methodContextClassIndex = -1;
+    @CompilationFinal public int characterClassIndex = -1;
+    @CompilationFinal public int smallFloatClassIndex = -1;
+    @CompilationFinal public int foreignObjectClassIndex = -1;
 
     @CompilationFinal private CompiledCodeObject dummyMethod;
 
@@ -319,7 +321,7 @@ public final class SqueakImageContext {
 
         final NativeObject smalltalkSource = asByteString(source);
         if (requestorSharedInstanceOrNil != NilObject.SINGLETON) {
-            ((AbstractSqueakObjectWithClassAndHash) requestorSharedInstanceOrNil).send(this, "currentSource:", smalltalkSource);
+            ((AbstractSqueakObjectWithHeader) requestorSharedInstanceOrNil).send(this, "currentSource:", smalltalkSource);
         }
         final PointersObject methodNode;
         try {
@@ -584,7 +586,7 @@ public final class SqueakImageContext {
     }
 
     public void setSemaphore(final int index, final AbstractSqueakObject semaphore) {
-        assert semaphore == NilObject.SINGLETON || isSemaphoreClass(((AbstractSqueakObjectWithClassAndHash) semaphore).getSqueakClass());
+        assert semaphore == NilObject.SINGLETON || isSemaphoreClass(((AbstractSqueakObjectWithHeader) semaphore).getSqueakClass());
         setSpecialObject(index, semaphore);
     }
 

@@ -14,7 +14,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -397,8 +397,8 @@ public final class PushBytecodes {
 
         public static final AbstractPushNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             final Object literal = code.getLiteral(literalIndex);
-            if (literal instanceof AbstractSqueakObjectWithClassAndHash) {
-                final String squeakClassName = ((AbstractSqueakObjectWithClassAndHash) literal).getSqueakClassName();
+            if (literal instanceof AbstractSqueakObjectWithHeader) {
+                final String squeakClassName = ((AbstractSqueakObjectWithHeader) literal).getSqueakClassName();
                 if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
                     return new PushLiteralVariableReadonlyNode(code, index, numBytecodes, literal);
                 }

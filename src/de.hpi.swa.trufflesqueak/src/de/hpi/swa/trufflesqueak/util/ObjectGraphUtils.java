@@ -17,7 +17,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
 public final class ObjectGraphUtils {
@@ -33,10 +33,10 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances(final SqueakImageContext image) {
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
+    public static AbstractCollection<AbstractSqueakObjectWithHeader> allInstances(final SqueakImageContext image) {
+        final ArrayDeque<AbstractSqueakObjectWithHeader> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
         final ObjectTracer pending = new ObjectTracer(image);
-        AbstractSqueakObjectWithClassAndHash currentObject;
+        AbstractSqueakObjectWithHeader currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
                 seen.add(currentObject);
@@ -50,7 +50,7 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public static void pointersBecomeOneWay(final SqueakImageContext image, final Object[] fromPointers, final Object[] toPointers) {
         final ObjectTracer pending = new ObjectTracer(image);
-        AbstractSqueakObjectWithClassAndHash currentObject;
+        AbstractSqueakObjectWithHeader currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
                 currentObject.pointersBecomeOneWay(fromPointers, toPointers);
@@ -61,9 +61,9 @@ public final class ObjectGraphUtils {
 
     @TruffleBoundary
     public static Object[] allInstancesOf(final SqueakImageContext image, final int targetClassIndex) {
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
+        final ArrayDeque<AbstractSqueakObjectWithHeader> result = new ArrayDeque<>();
         final ObjectTracer pending = new ObjectTracer(image);
-        AbstractSqueakObjectWithClassAndHash currentObject;
+        AbstractSqueakObjectWithHeader currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
                 if (targetClassIndex == currentObject.getSqueakClassIndex()) {
@@ -78,7 +78,7 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final int targetClassIndex) {
         final ObjectTracer pending = new ObjectTracer(image);
-        AbstractSqueakObjectWithClassAndHash currentObject;
+        AbstractSqueakObjectWithHeader currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
                 if (targetClassIndex == currentObject.getSqueakClassIndex()) {
@@ -95,7 +95,7 @@ public final class ObjectGraphUtils {
         private static final int PENDING_INITIAL_SIZE = 1 << 17;
 
         private final boolean currentMarkingFlag;
-        private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> deque = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        private final ArrayDeque<AbstractSqueakObjectWithHeader> deque = new ArrayDeque<>(PENDING_INITIAL_SIZE);
 
         private ObjectTracer(final SqueakImageContext image) {
             // Flip the marking flag
@@ -125,15 +125,15 @@ public final class ObjectGraphUtils {
             });
         }
 
-        public void addIfUnmarked(final AbstractSqueakObjectWithClassAndHash object) {
+        public void addIfUnmarked(final AbstractSqueakObjectWithHeader object) {
             if (object != null && !object.isMarked(currentMarkingFlag)) {
                 deque.add(object);
             }
         }
 
         public void addIfUnmarked(final Object object) {
-            if (object instanceof AbstractSqueakObjectWithClassAndHash) {
-                addIfUnmarked((AbstractSqueakObjectWithClassAndHash) object);
+            if (object instanceof AbstractSqueakObjectWithHeader) {
+                addIfUnmarked((AbstractSqueakObjectWithHeader) object);
             }
         }
 
@@ -141,11 +141,11 @@ public final class ObjectGraphUtils {
             return currentMarkingFlag;
         }
 
-        private AbstractSqueakObjectWithClassAndHash getNextPending() {
+        private AbstractSqueakObjectWithHeader getNextPending() {
             return deque.pollFirst();
         }
 
-        private void tracePointers(final AbstractSqueakObjectWithClassAndHash object) {
+        private void tracePointers(final AbstractSqueakObjectWithHeader object) {
             addIfUnmarked(object.getSqueakClass());
             object.tracePointers(this);
         }

@@ -79,7 +79,7 @@ public final class SqueakImageChunk {
                 object = new EmptyObject(image, objectHeader);
             } else if (format == 1) { // fixed pointers
                 final ClassObject squeakClass = getSqueakClass();
-                if (getSqueakClass().instancesAreClasses()) {
+                if (squeakClass.instancesAreClasses()) {
                     /*
                      * In rare cases, there are still some classes that are not in the class table
                      * for some reason (e.g. not completely removed from the system yet).

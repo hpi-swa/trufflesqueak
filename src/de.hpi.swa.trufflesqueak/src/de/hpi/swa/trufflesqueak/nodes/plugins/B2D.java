@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -3405,7 +3405,7 @@ public final class B2D {
             cmSize = 0;
             cmBits = null;
         } else {
-            if (!isBitmap((AbstractSqueakObjectWithClassAndHash) cmOop)) {
+            if (!isBitmap((AbstractSqueakObjectWithHeader) cmOop)) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
             cmBits = ((NativeObject) cmOop).getIntStorage();
@@ -7287,7 +7287,7 @@ public final class B2D {
         return SqueakGuards.isArrayObject(object);
     }
 
-    private static boolean isBitmap(final AbstractSqueakObjectWithClassAndHash object) {
+    private static boolean isBitmap(final AbstractSqueakObjectWithHeader object) {
         final ClassObject squeakClass = object.getSqueakClass();
         return squeakClass.getImage().isBitmapClass(squeakClass);
     }

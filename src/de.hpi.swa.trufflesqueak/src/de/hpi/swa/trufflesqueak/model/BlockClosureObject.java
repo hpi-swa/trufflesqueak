@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHash {
+public final class BlockClosureObject extends AbstractSqueakObjectWithHeader {
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledCodeObject block;
     @CompilationFinal private long startPC = -1;

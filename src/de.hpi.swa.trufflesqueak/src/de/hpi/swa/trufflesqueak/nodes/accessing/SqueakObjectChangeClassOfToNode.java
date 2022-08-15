@@ -11,7 +11,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -28,7 +28,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectBy
 /** This node should only be used in primitive nodes as it may throw a PrimitiveFailed exception. */
 public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
-    public abstract void execute(AbstractSqueakObjectWithClassAndHash receiver, ClassObject argument);
+    public abstract void execute(AbstractSqueakObjectWithHeader receiver, ClassObject argument);
 
     @Specialization(guards = "receiver.hasFormatOf(argument)")
     protected static final void doNative(final NativeObject receiver, final ClassObject argument) {
@@ -98,7 +98,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!receiver.hasFormatOf(argument)")
-    protected static final void doFail(final AbstractSqueakObjectWithClassAndHash receiver, final ClassObject argument) {
+    protected static final void doFail(final AbstractSqueakObjectWithHeader receiver, final ClassObject argument) {
         throw PrimitiveFailed.GENERIC_ERROR;
     }
 }

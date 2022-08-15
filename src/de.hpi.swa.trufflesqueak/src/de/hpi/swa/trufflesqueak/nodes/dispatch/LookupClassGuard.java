@@ -12,7 +12,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -53,8 +53,8 @@ public abstract class LookupClassGuard {
             return FloatObjectGuard.SINGLETON;
         } else if (receiver instanceof AbstractPointersObject) {
             return new AbstractPointersObjectGuard((AbstractPointersObject) receiver);
-        } else if (receiver instanceof AbstractSqueakObjectWithClassAndHash) {
-            return new AbstractSqueakObjectWithClassAndHashGuard((AbstractSqueakObjectWithClassAndHash) receiver);
+        } else if (receiver instanceof AbstractSqueakObjectWithHeader) {
+            return new AbstractSqueakObjectWithClassAndHashGuard((AbstractSqueakObjectWithHeader) receiver);
         } else {
             assert !(receiver instanceof AbstractSqueakObject);
             return ForeignObjectGuard.SINGLETON;
@@ -204,13 +204,13 @@ public abstract class LookupClassGuard {
     private static final class AbstractSqueakObjectWithClassAndHashGuard extends LookupClassGuard {
         private final int expectedClassIndex;
 
-        private AbstractSqueakObjectWithClassAndHashGuard(final AbstractSqueakObjectWithClassAndHash receiver) {
+        private AbstractSqueakObjectWithClassAndHashGuard(final AbstractSqueakObjectWithHeader receiver) {
             expectedClassIndex = receiver.getSqueakClassIndex();
         }
 
         @Override
         protected boolean check(final Object receiver) {
-            return receiver instanceof AbstractSqueakObjectWithClassAndHash && ((AbstractSqueakObjectWithClassAndHash) receiver).getSqueakClassIndex() == expectedClassIndex;
+            return receiver instanceof AbstractSqueakObjectWithHeader && ((AbstractSqueakObjectWithHeader) receiver).getSqueakClassIndex() == expectedClassIndex;
         }
 
         @Override
