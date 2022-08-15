@@ -16,6 +16,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -84,6 +85,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public SqueakImageContext getImage() {
         return image;
+    }
+
+    public final int asClassIndex() {
+        return ObjectHeader.getHash(squeakObjectHeader);
     }
 
     public long rehashForClassTable(final SqueakImageContext i) {

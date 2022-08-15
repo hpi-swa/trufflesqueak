@@ -25,7 +25,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
     public static final int HASH_UNINITIALIZED = 0;
 
-    private long squeakObjectHeader;
+    protected long squeakObjectHeader;
 
     // For special/well-known objects only.
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image) {
@@ -58,12 +58,12 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return size();
     }
 
+    public final int getSqueakClassIndex() {
+        return SqueakImageConstants.ObjectHeader.getClassIndex(squeakObjectHeader);
+    }
+
     public final ClassObject getSqueakClass() {
-        final int classIndex = SqueakImageConstants.ObjectHeader.getClassIndex(squeakObjectHeader);
-        final long majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
-        final long minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
-        final ArrayObject classTablePage = (ArrayObject) SqueakImageContext.getSlow().getHiddenRoots().getObjectStorage()[(int) majorIndex]; // FIXME
-        return (ClassObject) classTablePage.getObjectStorage()[(int) minorIndex]; // FIXME
+        return SqueakImageContext.getSlow().lookupClass(getSqueakClassIndex());
     }
 
     public final String getSqueakClassName() {

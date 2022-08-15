@@ -401,6 +401,13 @@ public final class SqueakImageContext {
         return hiddenRoots;
     }
 
+    public ClassObject lookupClass(final int classIndex) {
+        final long majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
+        final long minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
+        final ArrayObject classTablePage = (ArrayObject) hiddenRoots.getObject(majorIndex);
+        return (ClassObject) classTablePage.getObject(minorIndex);
+    }
+
     public TruffleFile getHomePath() {
         return homePath;
     }

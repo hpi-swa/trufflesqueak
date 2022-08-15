@@ -41,10 +41,10 @@ public abstract class CachedDispatchNode extends AbstractNode {
         assert getCallTargetStable().isValid() : "callTargetStable must be valid";
     }
 
-    protected static final CachedDispatchNode create(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final ClassObject receiverClass, final Object lookupResult) {
+    protected static final CachedDispatchNode create(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final int receiverClassIndex, final Object lookupResult) {
         final SqueakImageContext image = SqueakImageContext.getSlow();
         if (lookupResult == null) {
-            return createDNUNode(frame, selector, argumentCount, image, receiverClass);
+            return createDNUNode(frame, selector, argumentCount, image, image.lookupClass(receiverClassIndex));
         } else if (lookupResult instanceof CompiledCodeObject) {
             final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
             if (lookupMethod.hasPrimitive()) {

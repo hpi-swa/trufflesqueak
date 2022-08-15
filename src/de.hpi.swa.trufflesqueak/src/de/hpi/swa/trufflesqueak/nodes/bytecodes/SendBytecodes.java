@@ -141,9 +141,9 @@ public final class SendBytecodes {
         @Override
         protected Object dispatchSend(final VirtualFrame frame) {
             final Object receiver = peekAtReceiver(frame);
-            final ClassObject receiverClass = lookupClassNode.execute(receiver);
-            final Object lookupResult = lookupSelectorNode.execute(receiverClass);
-            return dispatchNode.execute(frame, receiver, receiverClass, lookupResult);
+            final int receiverClassIndex = lookupClassNode.execute(receiver);
+            final Object lookupResult = lookupSelectorNode.execute(receiverClassIndex);
+            return dispatchNode.execute(frame, receiver, receiverClassIndex, lookupResult);
         }
 
         @Override
@@ -211,11 +211,11 @@ public final class SendBytecodes {
 
         @Override
         protected Object dispatchSend(final VirtualFrame frame) {
-            final ClassObject superclass = popDirectedClass(frame).getSuperclassOrNull();
-            assert superclass != null;
-            final Object lookupResult = lookupSelectorNode.execute(superclass);
+            final int superclassIndex = popDirectedClass(frame).getSuperclassOrNull().asClassIndex();
+// assert superclass != null;
+            final Object lookupResult = lookupSelectorNode.execute(superclassIndex); // FIXME
             final Object receiver = peekAtReceiver(frame);
-            return dispatchNode.execute(frame, receiver, superclass, lookupResult);
+            return dispatchNode.execute(frame, receiver, superclassIndex, lookupResult);
         }
 
         @Override
@@ -421,7 +421,7 @@ public final class SendBytecodes {
     }
 
     private abstract static class SendSpecialSelectorQuickWithClassCheckNode extends AbstractSendSpecialSelectorQuickNode {
-        @CompilationFinal private ClassObject cachedReceiverClass;
+        @CompilationFinal private int cachedReceiverClassIndex;
         @CompilationFinal private Assumption cachedCallTargetStableAssumption;
 
         @Child protected AbstractPrimitiveNode primitiveNode;
@@ -448,9 +448,10 @@ public final class SendBytecodes {
 
         protected abstract void popArgumentsAndPush(VirtualFrame frame, Object result);
 
-        private boolean doesNotMatchClassOrMethodInvalidated(final ClassObject actualClass) {
+        private boolean doesNotMatchClassOrMethodInvalidated(final int actualClassIndex) {
             if (primitiveNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
+                final ClassObject actualClass = SqueakImageContext.getSlow().lookupClass(actualClassIndex);
                 assert actualClass != null;
                 final Object lookupResult = actualClass.lookupInMethodDictSlow(findSelector());
                 if (lookupResult instanceof CompiledCodeObject && ((CompiledCodeObject) lookupResult).hasPrimitive()) {
@@ -461,13 +462,13 @@ public final class SendBytecodes {
                         return true; // primitive not found / supported
                     }
                     primitiveNode = insert(node);
-                    cachedReceiverClass = actualClass;
+                    cachedReceiverClassIndex = actualClassIndex;
                     cachedCallTargetStableAssumption = primitiveMethod.getCallTargetStable();
                 } else {
                     return true;
                 }
             }
-            return actualClass != cachedReceiverClass || !cachedCallTargetStableAssumption.isValid();
+            return actualClassIndex != cachedReceiverClassIndex || !cachedCallTargetStableAssumption.isValid();
         }
 
         private Object peekAtReceiver(final VirtualFrame frame) {
@@ -520,7 +521,7 @@ public final class SendBytecodes {
         @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
         @Child private FrameStackReadNode peekAtReceiverNode;
         @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
-        @CompilationFinal private ClassObject pointClass;
+        @CompilationFinal private int pointClassIndex = -1;
 
         protected AbstractSendSpecialSelectorQuickPointXYNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
             super(code, index, selectorIndex);
@@ -529,7 +530,7 @@ public final class SendBytecodes {
         @Override
         public void executeVoid(final VirtualFrame frame) {
             final Object receiver = peekAtReceiver(frame);
-            if (lookupClassNode.execute(receiver) != getPointClass()) {
+            if (lookupClassNode.execute(receiver) != getPointClassIndex()) {
                 replaceWithSend(frame);
                 return;
             }
@@ -540,12 +541,12 @@ public final class SendBytecodes {
             }
         }
 
-        private ClassObject getPointClass() {
-            if (pointClass == null) {
+        private int getPointClassIndex() {
+            if (pointClassIndex == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                pointClass = getContext().pointClass;
+                pointClassIndex = getContext().pointClass.asClassIndex();
             }
-            return pointClass;
+            return pointClassIndex;
         }
 
         protected abstract int getPointInstVarIndex();

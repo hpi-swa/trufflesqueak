@@ -32,15 +32,16 @@ public abstract class LookupSelectorNode extends AbstractNode {
         return LookupSelectorNodeGen.create(selector);
     }
 
-    public abstract Object execute(ClassObject receiverClass);
+    public abstract Object execute(int receiverClassIndex);
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "INLINE_CACHE_SIZE", guards = {"receiverClass == cachedClass"}, //
+    @Specialization(limit = "INLINE_CACHE_SIZE", guards = {"receiverClassIndex == cachedClassIndex"}, //
                     assumptions = {"cachedClass.getClassHierarchyStable()", "methodDictStableAssumptions"})
-    protected static final Object doCached(final ClassObject receiverClass,
-                    @Cached("receiverClass") final ClassObject cachedClass,
-                    @Cached("receiverClass.lookupInMethodDictSlow(selector)") final Object cachedLookupResult,
-                    @Cached(value = "createMethodDictStableAssumptions(receiverClass, cachedLookupResult)", dimensions = 1) final Assumption[] methodDictStableAssumptions) {
+    protected static final Object doCached(final int receiverClassIndex,
+                    @Cached("receiverClassIndex") final int cachedClassIndex,
+                    @Cached("getContext().lookupClass(receiverClassIndex)") final ClassObject cachedClass,
+                    @Cached("cachedClass.lookupInMethodDictSlow(selector)") final Object cachedLookupResult,
+                    @Cached(value = "createMethodDictStableAssumptions(cachedClass, cachedLookupResult)", dimensions = 1) final Assumption[] methodDictStableAssumptions) {
         return cachedLookupResult;
     }
 
@@ -71,7 +72,8 @@ public abstract class LookupSelectorNode extends AbstractNode {
     }
 
     @Specialization(replaces = "doCached")
-    protected final Object doUncached(final ClassObject receiverClass) {
+    protected final Object doUncached(final int receiverClassIndex) {
+        final ClassObject receiverClass = getContext().lookupClass(receiverClassIndex); // FIXME
         final MethodCacheEntry cachedEntry = getContext().findMethodCacheEntry(receiverClass, selector);
         if (cachedEntry.getResult() == null) {
             cachedEntry.setResult(receiverClass.lookupInMethodDictSlow(selector));

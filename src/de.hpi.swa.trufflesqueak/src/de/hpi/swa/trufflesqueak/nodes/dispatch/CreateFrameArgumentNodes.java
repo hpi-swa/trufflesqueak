@@ -125,26 +125,25 @@ public final class CreateFrameArgumentNodes {
             return CreateFrameArgumentsForIndirectCallNodeGen.create(frame, selector, argumentCount);
         }
 
-        protected abstract Object[] execute(VirtualFrame frame, Object receiver, ClassObject receiverClass, Object lookupResult, CompiledCodeObject method);
+        protected abstract Object[] execute(VirtualFrame frame, Object receiver, int receiverClassIndex, Object lookupResult, CompiledCodeObject method);
 
         @Specialization
         @SuppressWarnings("unused")
-        protected final Object[] doMethod(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, @SuppressWarnings("unused") final CompiledCodeObject lookupResult,
-                        final CompiledCodeObject method) {
+        protected final Object[] doMethod(final VirtualFrame frame, final Object receiver, final int receiverClassIndex, final CompiledCodeObject lookupResult, final CompiledCodeObject method) {
             return FrameAccess.newWith(frame, method, senderNode.execute(frame, method), receiver, argumentNodes);
         }
 
         @Specialization(guards = "lookupResult == null")
-        protected final Object[] doDoesNotUnderstand(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult,
+        protected final Object[] doDoesNotUnderstand(final VirtualFrame frame, final Object receiver, final int receiverClassIndex, @SuppressWarnings("unused") final Object lookupResult,
                         final CompiledCodeObject method,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final Object[] arguments = getArguments(frame, argumentNodes);
-            final PointersObject message = getContext().newMessage(writeNode, selector, receiverClass, arguments);
+            final PointersObject message = getContext().newMessage(writeNode, selector, getContext().lookupClass(receiverClassIndex), arguments);
             return FrameAccess.newDNUWith(method, senderNode.execute(frame, method), receiver, message);
         }
 
         @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
-        protected final Object[] doObjectAsMethod(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject,
+        protected final Object[] doObjectAsMethod(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final int receiverClassIndex, final Object targetObject,
                         final CompiledCodeObject method) {
             final Object[] arguments = getArguments(frame, argumentNodes);
             return FrameAccess.newOAMWith(method, senderNode.execute(frame, method), targetObject, selector, getContext().asArrayOfObjects(arguments), receiver);

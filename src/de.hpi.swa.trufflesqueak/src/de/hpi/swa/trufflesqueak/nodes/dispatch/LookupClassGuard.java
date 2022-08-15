@@ -203,20 +203,22 @@ public abstract class LookupClassGuard {
     }
 
     private static final class AbstractSqueakObjectWithClassAndHashGuard extends LookupClassGuard {
-        private final ClassObject expectedClass;
+        private final int expectedClassIndex;
+        private final ClassObject cachedClass;
 
         private AbstractSqueakObjectWithClassAndHashGuard(final AbstractSqueakObjectWithClassAndHash receiver) {
-            expectedClass = receiver.getSqueakClass();
+            expectedClassIndex = receiver.getSqueakClassIndex();
+            cachedClass = receiver.getSqueakClass();
         }
 
         @Override
         protected boolean check(final Object receiver) {
-            return receiver instanceof AbstractSqueakObjectWithClassAndHash && ((AbstractSqueakObjectWithClassAndHash) receiver).getSqueakClass() == expectedClass;
+            return receiver instanceof AbstractSqueakObjectWithClassAndHash && ((AbstractSqueakObjectWithClassAndHash) receiver).getSqueakClassIndex() == expectedClassIndex;
         }
 
         @Override
         protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return expectedClass;
+            return cachedClass;
         }
     }
 
