@@ -57,9 +57,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static ArrayObject createObjectStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        final Object[] objects = new Object[size];
-        Arrays.fill(objects, NilObject.SINGLETON);
-        return new ArrayObject(image, classObject, objects);
+        return new ArrayObject(image, classObject, ArrayUtils.withAll(size, NilObject.SINGLETON));
     }
 
     public static ArrayObject createWithStorage(final SqueakImageContext image, final ClassObject classObject, final Object storage) {

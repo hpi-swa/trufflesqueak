@@ -14,7 +14,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 
@@ -36,6 +35,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -285,9 +285,7 @@ public final class SqueakImageWriter {
     }
 
     private ArrayObject newClassPage() {
-        final Object[] values = new Object[SqueakImageConstants.CLASS_TABLE_PAGE_SIZE];
-        Arrays.fill(values, NilObject.SINGLETON);
-        final ArrayObject newClassPage = image.asArrayOfObjects(values);
+        final ArrayObject newClassPage = image.asArrayOfObjects(ArrayUtils.withAll(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE, NilObject.SINGLETON));
         reserve(newClassPage);
         return newClassPage;
     }
