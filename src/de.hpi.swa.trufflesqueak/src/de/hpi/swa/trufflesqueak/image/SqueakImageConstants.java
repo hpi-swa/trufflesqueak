@@ -104,7 +104,8 @@ public final class SqueakImageConstants {
             return MiscUtils.bitSplit(headerWord, 0, HASH_AND_CLASS_INDEX_SIZE);
         }
 
-        public static long setClassIndex(final long headerWord, final long classIndex) {
+        public static long setClassIndex(final long headerWord, final int classIndex) {
+            assert classIndex <= HASH_AND_CLASS_INDEX_SIZE;
             return (headerWord & ~HASH_AND_CLASS_INDEX_MASK) + classIndex;
         }
 

@@ -14,7 +14,6 @@ import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
-import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -24,12 +23,12 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 public abstract class LookupClassGuard {
     protected abstract boolean check(Object receiver);
 
-    protected final ClassObject getSqueakClass(final SqueakImageContext image) {
+    protected final int getClassIndex(final SqueakImageContext image) {
         CompilerAsserts.partialEvaluationConstant(image);
-        return getSqueakClassInternal(image);
+        return getClassIndexInternal(image);
     }
 
-    protected abstract ClassObject getSqueakClassInternal(SqueakImageContext image);
+    protected abstract int getClassIndexInternal(SqueakImageContext image);
 
     protected Assumption getIsValidAssumption() {
         return Assumption.ALWAYS_VALID;
@@ -71,8 +70,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.nilClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.nilClassIndex;
         }
     }
 
@@ -85,8 +84,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.trueClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.trueClassIndex;
         }
     }
 
@@ -99,8 +98,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.falseClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.falseClassIndex;
         }
     }
 
@@ -113,8 +112,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.smallIntegerClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.smallIntegerClassIndex;
         }
     }
 
@@ -127,8 +126,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.characterClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.characterClassIndex;
         }
     }
 
@@ -141,8 +140,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.smallFloatClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.smallFloatClassIndex;
         }
     }
 
@@ -155,8 +154,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.methodContextClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.methodContextClassIndex;
         }
     }
 
@@ -169,8 +168,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.floatClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.floatClassIndex;
         }
     }
 
@@ -197,18 +196,16 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return expectedLayout.getSqueakClass();
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return expectedLayout.getClassIndex();
         }
     }
 
     private static final class AbstractSqueakObjectWithClassAndHashGuard extends LookupClassGuard {
         private final int expectedClassIndex;
-        private final ClassObject cachedClass;
 
         private AbstractSqueakObjectWithClassAndHashGuard(final AbstractSqueakObjectWithClassAndHash receiver) {
             expectedClassIndex = receiver.getSqueakClassIndex();
-            cachedClass = receiver.getSqueakClass();
         }
 
         @Override
@@ -217,8 +214,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return cachedClass;
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return expectedClassIndex;
         }
     }
 
@@ -231,8 +228,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.getForeignObjectClass();
+        protected int getClassIndexInternal(final SqueakImageContext image) {
+            return image.getForeignObjectClassIndex();
         }
     }
 }

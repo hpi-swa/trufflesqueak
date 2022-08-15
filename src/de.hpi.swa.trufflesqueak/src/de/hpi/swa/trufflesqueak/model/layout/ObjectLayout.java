@@ -15,13 +15,14 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class ObjectLayout {
-    private final ClassObject squeakClass;
+    private final int classIndex;
     @CompilationFinal(dimensions = 1) private final SlotLocation[] locations;
     private final int numPrimitiveExtension;
     private final int numObjectExtension;
@@ -30,7 +31,7 @@ public final class ObjectLayout {
 
     public ObjectLayout(final ClassObject classObject, final int instSize) {
         slowPathOperation();
-        squeakClass = classObject;
+        classIndex = classObject.asClassIndex();
         classObject.updateLayout(this);
         locations = new SlotLocation[instSize];
         Arrays.fill(locations, SlotLocation.UNINITIALIZED_LOCATION);
@@ -40,7 +41,7 @@ public final class ObjectLayout {
 
     public ObjectLayout(final ClassObject classObject, final SlotLocation[] locations) {
         slowPathOperation();
-        squeakClass = classObject;
+        classIndex = classObject.asClassIndex();
         classObject.updateLayout(this);
         this.locations = locations;
         numPrimitiveExtension = countPrimitiveExtension(locations);
@@ -81,7 +82,7 @@ public final class ObjectLayout {
 
         assert !newLocations[index].isUninitialized();
         assert slotLocationsAreConsecutive(newLocations) : "Locations are not consecutive";
-        return new ObjectLayout(squeakClass, newLocations);
+        return new ObjectLayout(SqueakImageContext.getSlow().lookupClass(classIndex), newLocations);
     }
 
     private static void slowPathOperation() {
@@ -211,8 +212,8 @@ public final class ObjectLayout {
         return isValidAssumption.isValid();
     }
 
-    public ClassObject getSqueakClass() {
-        return squeakClass;
+    public int getClassIndex() {
+        return classIndex;
     }
 
     public SlotLocation getLocation(final long index) {
@@ -268,6 +269,6 @@ public final class ObjectLayout {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return (isValid() ? "valid" : "invalid") + " ObjectLayout for " + squeakClass + " @" + Integer.toHexString(hashCode());
+        return (isValid() ? "valid" : "invalid") + " ObjectLayout for " + classIndex + " @" + Integer.toHexString(hashCode());
     }
 }

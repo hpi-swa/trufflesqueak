@@ -87,13 +87,13 @@ public final class SqueakImageChunk {
                     object = new ClassObject(image, objectHeader);
                 } else {
                     // classes should already be instantiated at this point, check a bit
-                    assert squeakClass != image.metaClass && squeakClass.getSqueakClass() != image.metaClass;
+// assert squeakClass != image.metaClass && squeakClass.getSqueakClass() != image.metaClass;
                     object = new PointersObject(image, objectHeader);
                 }
             } else if (format == 2) { // indexable fields
                 object = new ArrayObject(image, objectHeader);
             } else if (format == 3) { // fixed and indexable fields
-                if (classIndex == reader.methodContextClassIndex) {
+                if (classIndex == image.methodContextClassIndex) {
                     object = ContextObject.createWithHeader(image, objectHeader);
                 } else if (classIndex == reader.blockClosureClassIndex || classIndex == reader.fullBlockClosureClassIndex) {
                     object = BlockClosureObject.createWithHeader(image, objectHeader);
@@ -109,7 +109,7 @@ public final class SqueakImageChunk {
             } else if (format == 9) { // 64-bit integers
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
-                if (classIndex == reader.floatClassIndex) {
+                if (classIndex == image.floatClassIndex) {
                     object = FloatObject.newFrom(this);
                 } else {
                     object = NativeObject.newNativeInts(this);

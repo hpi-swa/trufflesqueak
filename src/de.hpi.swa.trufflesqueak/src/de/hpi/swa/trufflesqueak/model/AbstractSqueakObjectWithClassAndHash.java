@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -63,6 +64,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final ClassObject getSqueakClass() {
+        CompilerDirectives.bailout("Slow path");
         return SqueakImageContext.getSlow().lookupClass(getSqueakClassIndex());
     }
 
@@ -72,7 +74,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     public final void setSqueakClass(final ClassObject newClass) {
         assert newClass.getSqueakHash() != HASH_UNINITIALIZED;
-        squeakObjectHeader = ObjectHeader.setClassIndex(squeakObjectHeader, newClass.getSqueakHash());
+        squeakObjectHeader = ObjectHeader.setClassIndex(squeakObjectHeader, newClass.asClassIndex());
     }
 
     public final void becomeOtherClass(final AbstractSqueakObjectWithClassAndHash other) {
@@ -83,6 +85,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final boolean hasFormatOf(final ClassObject other) {
+        // FIXME: ObjectHeader.getFormat(squeakObjectHeader) == other.getFormat();
         return getSqueakClass().getFormat() == other.getFormat();
     }
 

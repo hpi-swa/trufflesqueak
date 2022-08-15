@@ -40,37 +40,37 @@ public abstract class SqueakObjectClassIndexNode extends AbstractNode {
 
     @Specialization(guards = "value == TRUE")
     protected final int doTrue(@SuppressWarnings("unused") final boolean value) {
-        return getContext().trueClass.asClassIndex();
+        return getContext().trueClassIndex;
     }
 
     @Specialization(guards = "value != TRUE")
     protected final int doFalse(@SuppressWarnings("unused") final boolean value) {
-        return getContext().falseClass.asClassIndex();
+        return getContext().falseClassIndex;
     }
 
     @Specialization
     protected final int doSmallInteger(@SuppressWarnings("unused") final long value) {
-        return getContext().smallIntegerClass.asClassIndex();
+        return getContext().smallIntegerClassIndex;
     }
 
     @Specialization
     protected final int doChar(@SuppressWarnings("unused") final char value) {
-        return getContext().characterClass.asClassIndex();
+        return getContext().characterClassIndex;
     }
 
     @Specialization
     protected final int doDouble(@SuppressWarnings("unused") final double value) {
-        return getContext().smallFloatClass.asClassIndex();
+        return getContext().smallFloatClassIndex;
     }
 
     @Specialization
     protected final int doCharacter(@SuppressWarnings("unused") final CharacterObject value) {
-        return getContext().characterClass.asClassIndex();
+        return getContext().characterClassIndex;
     }
 
     @Specialization
     protected final int doFloat(@SuppressWarnings("unused") final FloatObject value) {
-        return getContext().floatClass.asClassIndex();
+        return getContext().floatClassIndex;
     }
 
     @Specialization
@@ -80,6 +80,6 @@ public abstract class SqueakObjectClassIndexNode extends AbstractNode {
 
     @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"})
     protected final int doForeignObject(@SuppressWarnings("unused") final Object value) {
-        return getContext().getForeignObjectClass().asClassIndex();
+        return getContext().getForeignObjectClassIndex();
     }
 }

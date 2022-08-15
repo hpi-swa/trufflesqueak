@@ -75,21 +75,27 @@ public final class SqueakImageContext {
 
     /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
+    @CompilationFinal public int trueClassIndex = -1;
     public final ClassObject falseClass = new ClassObject(this);
+    @CompilationFinal public int falseClassIndex = -1;
     public final PointersObject schedulerAssociation = new PointersObject(this);
     public final ClassObject bitmapClass = new ClassObject(this);
     public final ClassObject smallIntegerClass = new ClassObject(this);
+    @CompilationFinal public int smallIntegerClassIndex = -1;
     public final ClassObject byteStringClass = new ClassObject(this);
     public final ClassObject arrayClass = new ClassObject(this);
     public final PointersObject smalltalk = new PointersObject(this);
     public final ClassObject floatClass = new ClassObject(this);
+    @CompilationFinal public int floatClassIndex = -1;
     public final ClassObject methodContextClass = new ClassObject(this);
+    @CompilationFinal public int methodContextClassIndex = -1;
     public final ClassObject pointClass = new ClassObject(this);
     public final ClassObject largePositiveIntegerClass = new ClassObject(this);
     public final ClassObject messageClass = new ClassObject(this);
     public final ClassObject compiledMethodClass = new ClassObject(this);
     public final ClassObject semaphoreClass = new ClassObject(this);
     public final ClassObject characterClass = new ClassObject(this);
+    @CompilationFinal public int characterClassIndex = -1;
     public final NativeObject doesNotUnderstand = new NativeObject(this);
     public final NativeObject cannotReturn = new NativeObject(this);
     public final NativeObject mustBeBooleanSelector = new NativeObject(this);
@@ -103,12 +109,15 @@ public final class SqueakImageContext {
     public final ArrayObject specialSelectors = new ArrayObject(this);
     @CompilationFinal public ClassObject fullBlockClosureClass;
     @CompilationFinal public ClassObject smallFloatClass;
+    @CompilationFinal public int smallFloatClassIndex = -1;
     @CompilationFinal private ClassObject byteSymbolClass;
     @CompilationFinal private ClassObject foreignObjectClass;
+    @CompilationFinal private int foreignObjectClassIndex = -1;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
+    @CompilationFinal public int nilClassIndex = -1;
 
     @CompilationFinal private CompiledCodeObject dummyMethod;
 
@@ -521,10 +530,16 @@ public final class SqueakImageContext {
         return foreignObjectClass;
     }
 
+    public int getForeignObjectClassIndex() {
+        assert foreignObjectClassIndex != -1;
+        return foreignObjectClassIndex;
+    }
+
     public boolean setForeignObjectClass(final ClassObject classObject) {
         if (foreignObjectClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             foreignObjectClass = classObject;
+            foreignObjectClassIndex = classObject.asClassIndex();
             return true;
         } else {
             return false;

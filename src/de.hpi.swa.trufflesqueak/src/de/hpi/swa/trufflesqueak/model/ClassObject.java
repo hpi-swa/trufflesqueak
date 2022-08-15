@@ -16,6 +16,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
@@ -65,6 +66,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
         super(original);
         image = original.image;
+        setSqueakHash(image.getNextClassHash()); // FIXME: do in one go?
+        insertIntoClassTable();
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         methodDict = original.methodDict.shallowCopy();
@@ -76,8 +79,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
         super(image, classObject);
-        setSqueakHash(image.getNextClassHash()); // FIXME: do in one go?
         this.image = image;
+        setSqueakHash(image.getNextClassHash()); // FIXME: do in one go?
+        insertIntoClassTable();
         pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON);
         instancesAreClasses = image.isMetaClass(classObject);
         // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
@@ -520,6 +524,46 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public String getClassComment() {
         return CLASS_DESCRIPTION.getClassComment(this);
+    }
+
+    private void insertIntoClassTable() {
+        final int classIndex = asClassIndex();
+        final long majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
+        final long minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
+        if (image.getHiddenRoots().getObject(majorIndex) == NilObject.SINGLETON) {
+            ensureConsecutiveClassPagesUpTo(majorIndex);
+        }
+        final ArrayObject classTablePage = (ArrayObject) image.getHiddenRoots().getObject(majorIndex);
+        final Object pageEntry = classTablePage.getObject(minorIndex);
+        if (pageEntry == this) {
+            return; /* Found myself in page (possible because we are re-using hiddenRoots). */
+        } else if (pageEntry == NilObject.SINGLETON) {
+            /* Free slot found in classTable. */
+            classTablePage.setObject(minorIndex, this);
+        } else {
+            /* classIndex clashed, re-hash class until there's no longer a clash. */
+            long newMajorIndex = majorIndex;
+            long newMinorIndex = minorIndex;
+            while (image.getHiddenRoots().getObject(newMajorIndex) != NilObject.SINGLETON || classTablePage.getObject(newMinorIndex) != NilObject.SINGLETON) {
+                final int newHash = (int) rehashForClassTable(image);
+                newMajorIndex = SqueakImageConstants.majorClassIndexOf(newHash);
+                newMinorIndex = SqueakImageConstants.minorClassIndexOf(newHash);
+            }
+            insertIntoClassTable();
+        }
+    }
+
+    /* Are all entries up to numClassTablePages must not be nil (see validClassTableRootPages). */
+    private void ensureConsecutiveClassPagesUpTo(final long majorIndex) {
+        for (int i = 0; i < majorIndex; i++) {
+            if (image.getHiddenRoots().getObject(majorIndex) == NilObject.SINGLETON) {
+                image.getHiddenRoots().setObject(majorIndex, newClassPage());
+            }
+        }
+    }
+
+    private ArrayObject newClassPage() {
+        return image.asArrayOfObjects(ArrayUtils.withAll(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE, NilObject.SINGLETON));
     }
 
     @Override

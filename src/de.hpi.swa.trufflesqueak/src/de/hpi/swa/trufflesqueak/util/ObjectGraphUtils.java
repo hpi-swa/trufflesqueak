@@ -18,7 +18,6 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
 public final class ObjectGraphUtils {
@@ -61,13 +60,13 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static Object[] allInstancesOf(final SqueakImageContext image, final ClassObject classObj) {
+    public static Object[] allInstancesOf(final SqueakImageContext image, final int targetClassIndex) {
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                if (classObj == currentObject.getSqueakClass()) {
+                if (targetClassIndex == currentObject.getSqueakClassIndex()) {
                     result.add(currentObject);
                 }
                 pending.tracePointers(currentObject);
@@ -77,12 +76,12 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final ClassObject classObj) {
+    public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final int targetClassIndex) {
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                if (classObj == currentObject.getSqueakClass()) {
+                if (targetClassIndex == currentObject.getSqueakClassIndex()) {
                     return currentObject;
                 }
                 pending.tracePointers(currentObject);

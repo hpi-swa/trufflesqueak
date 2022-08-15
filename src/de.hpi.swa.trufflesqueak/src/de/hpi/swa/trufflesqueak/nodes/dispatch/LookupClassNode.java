@@ -26,7 +26,7 @@ public abstract class LookupClassNode extends AbstractNode {
     @Specialization(guards = "guard.check(receiver)", assumptions = "guard.getIsValidAssumption()", limit = "INLINE_CACHE_SIZE")
     protected final int doCached(@SuppressWarnings("unused") final Object receiver,
                     @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard) {
-        return guard.getSqueakClass(getContext()).asClassIndex();
+        return guard.getClassIndex(getContext());
     }
 
     @Specialization(replaces = "doCached")
