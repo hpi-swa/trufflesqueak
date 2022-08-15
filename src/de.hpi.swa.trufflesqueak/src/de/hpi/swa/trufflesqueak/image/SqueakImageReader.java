@@ -256,19 +256,16 @@ public final class SqueakImageReader {
         final int size = numSlots;
         assert size >= 0 : "Negative object size";
         final int classIndex = SqueakImageConstants.ObjectHeader.getClassIndex(headerWord);
-        final int format = SqueakImageConstants.ObjectHeader.getFormat(headerWord);
-        assert 0 <= format && format != 6 && format != 8 && format <= 31 : "Unexpected format";
-        assert format != 0 || classIndex == 0 || size == 0 : "Empty objects must not have slots";
-        final int hash = SqueakImageConstants.ObjectHeader.getHash(headerWord);
         final byte[] objectData;
         if (ignoreObjectData(headerWord, classIndex, size)) {
             /* Skip some hidden objects for performance reasons. */
             objectData = null;
             skipBytes(size * SqueakImageConstants.WORD_SIZE);
         } else {
+            final int format = SqueakImageConstants.ObjectHeader.getFormat(headerWord);
             objectData = nextObjectData(size, format);
         }
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, headerWord, format, classIndex, hash, pos, objectData);
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, headerWord, pos, objectData);
         if (hiddenRootsChunk == null && isHiddenObject(classIndex)) {
             if (freePageList == null) {
                 assert classIndex == SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN && size == SqueakImageConstants.NUM_FREE_LISTS;
@@ -441,7 +438,7 @@ public final class SqueakImageReader {
                 if (classChunk != null && classChunk.getClassIndex() == metaClassIndex) {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject();
+                    classChunk.asClassObject();
                     final ClassObject classObject = classInstance.asClassObject();
                     classObject.fillin(classInstance);
                     if (inst.contains(classObject.getSuperclassOrNull())) {
@@ -465,12 +462,6 @@ public final class SqueakImageReader {
             final Object chunkObject = chunk.asObject();
             if (chunkObject instanceof AbstractSqueakObjectWithClassAndHash) {
                 final AbstractSqueakObjectWithClassAndHash obj = (AbstractSqueakObjectWithClassAndHash) chunkObject;
-// if (obj.needsSqueakClass()) {
-// obj.setSqueakClass(chunk.getSqClass());
-// }
-// if (obj.needsSqueakHash()) {
-// obj.setSqueakHash(chunk.getHash());
-// }
                 obj.fillin(chunk);
             }
         }

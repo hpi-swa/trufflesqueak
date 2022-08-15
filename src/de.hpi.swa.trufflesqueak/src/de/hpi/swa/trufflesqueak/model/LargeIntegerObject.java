@@ -131,7 +131,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     public void replaceInternalValue(final LargeIntegerObject other) {
         assert size() == other.size();
-        integer = other.getSqueakClass() == getSqueakClass() ? other.integer : other.integer.negate();
+        integer = other.getSqueakClassIndex() == getSqueakClassIndex() ? other.integer : other.integer.negate();
         bitLength = integer.bitLength();
     }
 
@@ -298,11 +298,11 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private boolean isPositive(final SqueakImageContext image) {
-        return getSqueakClass() == image.largePositiveIntegerClass;
+        return getSqueakClassIndex() == image.largePositiveIntegerClass.getSqueakHash();
     }
 
     public boolean isNegative(final SqueakImageContext image) {
-        return getSqueakClass() == image.largeNegativeIntegerClass;
+        return getSqueakClassIndex() == image.largeNegativeIntegerClass.getSqueakHash();
     }
 
     /*
@@ -518,7 +518,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public boolean sameSign(final LargeIntegerObject other) {
-        return getSqueakClass() == other.getSqueakClass();
+        return getSqueakClassIndex() == other.getSqueakClassIndex();
     }
 
     public boolean differentSign(final SqueakImageContext image, final long other) {

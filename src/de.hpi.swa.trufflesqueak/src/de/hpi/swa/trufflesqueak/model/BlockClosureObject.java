@@ -71,7 +71,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
         outerContext = (ContextObject) pointers[BLOCK_CLOSURE.OUTER_CONTEXT];

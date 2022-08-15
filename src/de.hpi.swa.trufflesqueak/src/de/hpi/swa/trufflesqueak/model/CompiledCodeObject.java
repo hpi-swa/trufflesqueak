@@ -301,7 +301,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         // header is a tagged small integer
         final long header = chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS;
         numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);

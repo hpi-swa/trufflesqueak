@@ -177,7 +177,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvertRectInto")
     protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
+        @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClassIndex() == dstRect.getSqueakClassIndex()", "srcRect.size() == 2"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
                         @Cached final AbstractPointersObjectReadNode readPointNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
@@ -261,7 +261,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTransformRectInto")
     protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
+        @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClassIndex() == dstRect.getSqueakClassIndex()", "srcRect.size() == 2"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
                         @Cached final AbstractPointersObjectReadNode readPointNode,
                         @Cached final AbstractPointersObjectReadNode readNode,

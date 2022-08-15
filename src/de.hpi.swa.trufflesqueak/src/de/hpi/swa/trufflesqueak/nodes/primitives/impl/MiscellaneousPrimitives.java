@@ -655,27 +655,27 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 168)
     protected abstract static class PrimCopyObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
-        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        @Specialization(guards = {"receiver.getSqueakClassIndex() == anotherObject.getSqueakClassIndex()", "receiver.size() == anotherObject.size()"})
         protected static final AbstractPointersObject doCopyAbstractPointers(final PointersObject receiver, final PointersObject anotherObject) {
             receiver.copyLayoutValuesFrom(anotherObject);
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        @Specialization(guards = {"receiver.getSqueakClassIndex() == anotherObject.getSqueakClassIndex()", "receiver.size() == anotherObject.size()"})
         protected static final AbstractPointersObject doCopyVariablePointers(final VariablePointersObject receiver, final VariablePointersObject anotherObject) {
             receiver.copyLayoutValuesFrom(anotherObject);
             System.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        @Specialization(guards = {"receiver.getSqueakClassIndex() == anotherObject.getSqueakClassIndex()", "receiver.size() == anotherObject.size()"})
         protected static final AbstractPointersObject doCopyWeakPointers(final WeakVariablePointersObject receiver, final WeakVariablePointersObject anotherObject) {
             receiver.copyLayoutValuesFrom(anotherObject);
             System.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+        @Specialization(guards = {"receiver.getSqueakClassIndex() == anotherObject.getSqueakClassIndex()",
                         "receiver.isByteType()", "anotherObject.isByteType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
         protected static final NativeObject doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
             final byte[] destStorage = receiver.getByteStorage();
@@ -683,7 +683,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+        @Specialization(guards = {"receiver.getSqueakClassIndex() == anotherObject.getSqueakClassIndex()",
                         "receiver.isShortType()", "anotherObject.isShortType()", "receiver.getShortLength() == anotherObject.getShortLength()"})
         protected static final NativeObject doCopyNativeShort(final NativeObject receiver, final NativeObject anotherObject) {
             final short[] destStorage = receiver.getShortStorage();
@@ -691,7 +691,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+        @Specialization(guards = {"receiver.getSqueakClassIndex() == anotherObject.getSqueakClassIndex()",
                         "receiver.isIntType()", "anotherObject.isIntType()", "receiver.getIntLength() == anotherObject.getIntLength()"})
         protected static final NativeObject doCopyNativeInt(final NativeObject receiver, final NativeObject anotherObject) {
             final int[] destStorage = receiver.getIntStorage();
@@ -699,7 +699,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+        @Specialization(guards = {"receiver.getSqueakClassIndex() == anotherObject.getSqueakClassIndex()",
                         "receiver.isLongType()", "anotherObject.isLongType()", "receiver.getLongLength() == anotherObject.getLongLength()"})
         protected static final NativeObject doCopyNativeLong(final NativeObject receiver, final NativeObject anotherObject) {
             final long[] destStorage = receiver.getLongStorage();
@@ -707,7 +707,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+        @Specialization(guards = {"receiver.getSqueakClassIndex() == anotherObject.getSqueakClassIndex()",
                         "!isNativeObject(receiver)", "!isAbstractPointersObject(receiver)", "!isContextObject(receiver)",
                         "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
         protected static final AbstractSqueakObject doCopy(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash anotherObject,
