@@ -12,6 +12,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -178,6 +179,7 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         final SqueakImageChunk chunk = new SqueakImageChunk(
                         null,
                         image,
+                        ObjectHeader.getHeader(0, 3833906, 10, 34),
                         10, // float format, 32-bit words without padding word
                         34, // classid of BoxedFloat64
                         3833906, // identityHash for 1.0

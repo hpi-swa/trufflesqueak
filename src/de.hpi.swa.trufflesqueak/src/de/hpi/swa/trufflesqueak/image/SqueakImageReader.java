@@ -49,6 +49,14 @@ public final class SqueakImageReader {
 
     private SqueakImageChunk freePageList;
 
+    protected int metaClassIndex;
+    protected long floatClassIndex;
+    protected long methodContextClassIndex;
+    protected long largePositiveIntegerClassIndex;
+    protected long largeNegativeIntegerClassIndex;
+    protected long blockClosureClassIndex;
+    protected long fullBlockClosureClassIndex;
+
     private SqueakImageReader(final SqueakImageContext image) {
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {
@@ -89,7 +97,7 @@ public final class SqueakImageReader {
         }
         initObjects();
         image.printToStdOut("Image loaded in", MiscUtils.currentTimeMillis() - start + "ms.");
-        image.initializeAfterLoadingImage((ArrayObject) hiddenRootsChunk.asObject());
+        image.setByteSymbolClass(((NativeObject) image.metaClass.getOtherPointers()[CLASS.NAME]).getSqueakClass()); // FIXME
         return image.getSqueakImage();
     }
 
@@ -260,7 +268,7 @@ public final class SqueakImageReader {
         } else {
             objectData = nextObjectData(size, format);
         }
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, format, classIndex, hash, pos, objectData);
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, headerWord, format, classIndex, hash, pos, objectData);
         if (hiddenRootsChunk == null && isHiddenObject(classIndex)) {
             if (freePageList == null) {
                 assert classIndex == SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN && size == SqueakImageConstants.NUM_FREE_LISTS;
@@ -294,13 +302,25 @@ public final class SqueakImageReader {
         return getChunk(specialObjectsChunk.getWord(idx));
     }
 
-    private void setPrebuiltObject(final SqueakImageChunk specialObjectsChunk, final int idx, final Object object) {
-        specialObjectChunk(specialObjectsChunk, idx).setObject(object);
+    private void setPrebuiltClass(final SqueakImageChunk specialObjectsChunk, final int idx, final AbstractSqueakObjectWithClassAndHash object) {
+        final SqueakImageChunk classChunk = specialObjectChunk(specialObjectsChunk, idx).getClassChunk();
+        object.setObjectHeader(classChunk.getObjectHeader());
+        classChunk.setObject(object);
+    }
+
+    private long setPrebuiltObject(final SqueakImageChunk specialObjectsChunk, final int idx, final Object object) {
+        final SqueakImageChunk specialObjectChunk = specialObjectChunk(specialObjectsChunk, idx);
+        if (object instanceof AbstractSqueakObjectWithClassAndHash) {
+            ((AbstractSqueakObjectWithClassAndHash) object).setObjectHeader(specialObjectChunk.getObjectHeader());
+        }
+        specialObjectChunk.setObject(object);
+        return specialObjectChunk.getHash();
     }
 
     private void initPrebuiltConstant() {
         final SqueakImageChunk specialChunk = getChunk(specialObjectsPointer);
         specialChunk.setObject(image.specialObjectsArray);
+        image.specialObjectsArray.setObjectHeader(specialChunk.getObjectHeader());
 
         // first we find the Metaclass, we need it to correctly instantiate
         // those classes that do not have any instances. Metaclass always
@@ -310,11 +330,13 @@ public final class SqueakImageReader {
         final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
         final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
         sqMetaclass.setObject(image.metaClass);
+        image.metaClass.setObjectHeader(sqMetaclass.getObjectHeader());
+        metaClassIndex = sqMetaclass.getHash();
 
         // also cache nil, true, and false classes
-        specialObjectChunk(specialChunk, SPECIAL_OBJECT.NIL_OBJECT).getClassChunk().setObject(image.nilClass);
-        specialObjectChunk(specialChunk, SPECIAL_OBJECT.FALSE_OBJECT).getClassChunk().setObject(image.falseClass);
-        specialObjectChunk(specialChunk, SPECIAL_OBJECT.TRUE_OBJECT).getClassChunk().setObject(image.trueClass);
+        setPrebuiltClass(specialChunk, SPECIAL_OBJECT.NIL_OBJECT, image.nilClass);
+        setPrebuiltClass(specialChunk, SPECIAL_OBJECT.FALSE_OBJECT, image.falseClass);
+        setPrebuiltClass(specialChunk, SPECIAL_OBJECT.TRUE_OBJECT, image.trueClass);
 
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.NIL_OBJECT, NilObject.SINGLETON);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.FALSE_OBJECT, BooleanObject.FALSE);
@@ -325,10 +347,10 @@ public final class SqueakImageReader {
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_STRING, image.byteStringClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_ARRAY, image.arrayClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SMALLTALK_DICTIONARY, image.smalltalk);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FLOAT, image.floatClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_METHOD_CONTEXT, image.methodContextClass);
+        floatClassIndex = setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FLOAT, image.floatClass);
+        methodContextClassIndex = setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_METHOD_CONTEXT, image.methodContextClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_POINT, image.pointClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_POSITIVE_INTEGER, image.largePositiveIntegerClass);
+        largePositiveIntegerClassIndex = setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_POSITIVE_INTEGER, image.largePositiveIntegerClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_MESSAGE, image.messageClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_COMPILED_METHOD, image.compiledMethodClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_SEMAPHORE, image.semaphoreClass);
@@ -338,12 +360,12 @@ public final class SqueakImageReader {
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_MUST_BE_BOOLEAN, image.mustBeBooleanSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BYTE_ARRAY, image.byteArrayClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_PROCESS, image.processClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BLOCK_CLOSURE, image.blockClosureClass);
+        blockClosureClassIndex = setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BLOCK_CLOSURE, image.blockClosureClass);
         if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_FULL_BLOCK_CLOSURE).isNil()) {
             image.fullBlockClosureClass = new ClassObject(image);
-            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FULL_BLOCK_CLOSURE, image.fullBlockClosureClass);
+            fullBlockClosureClassIndex = setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FULL_BLOCK_CLOSURE, image.fullBlockClosureClass);
         }
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_NEGATIVE_INTEGER, image.largeNegativeIntegerClass);
+        largeNegativeIntegerClassIndex = setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_NEGATIVE_INTEGER, image.largeNegativeIntegerClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_ABOUT_TO_RETURN, image.aboutToReturnSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_RUN_WITHIN, image.runWithInSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.PRIM_ERR_TABLE_INDEX, image.primitiveErrorTable);
@@ -373,14 +395,14 @@ public final class SqueakImageReader {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
-                if (classChunk != null && classChunk.getSqClass() == image.metaClass) {
+                if (classChunk != null && classChunk.getClassIndex() == metaClassIndex) {
                     /* Derive classIndex from current position in class table. */
                     highestKnownClassIndex = p << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT | i;
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
+                    final ClassObject metaClassObject = classChunk.asClassObject();
                     metaClassObject.setInstancesAreClasses();
-                    classInstance.asClassObject(metaClassObject);
+                    classInstance.asClassObject();
                 }
             }
         }
@@ -403,6 +425,10 @@ public final class SqueakImageReader {
         classDescriptionClass.setInstancesAreClasses();
         inst.add(classDescriptionClass);
 
+        final ArrayObject hiddenRoots = (ArrayObject) hiddenRootsChunk.asObject();
+        hiddenRoots.fillin(hiddenRootsChunk); // ensure hiddenRoots are filled in
+        image.initializeAfterLoadingImage(hiddenRoots);
+
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = getChunk(hiddenRootsChunk.getWord(p));
             if (classTablePage.isNil()) {
@@ -412,11 +438,11 @@ public final class SqueakImageReader {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
-                if (classChunk != null && classChunk.getSqClass() == image.metaClass) {
+                if (classChunk != null && classChunk.getClassIndex() == metaClassIndex) {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
-                    final ClassObject classObject = classInstance.asClassObject(metaClassObject);
+                    final ClassObject metaClassObject = classChunk.asClassObject();
+                    final ClassObject classObject = classInstance.asClassObject();
                     classObject.fillin(classInstance);
                     if (inst.contains(classObject.getSuperclassOrNull())) {
                         inst.add(classObject);
@@ -424,9 +450,10 @@ public final class SqueakImageReader {
                     }
                 }
             }
+            // ensure classTablePage is filled in
+            ((ArrayObject) classTablePage.asObject()).fillin(classTablePage);
         }
         assert image.metaClass.instancesAreClasses();
-        image.setByteSymbolClass(((NativeObject) image.metaClass.getOtherPointers()[CLASS.NAME]).getSqueakClass());
 
         /** Finally, ensure instances of Behavior are {@link ClassObject}s. */
         final ClassObject behaviorClass = classDescriptionClass.getSuperclassOrNull();
@@ -438,12 +465,12 @@ public final class SqueakImageReader {
             final Object chunkObject = chunk.asObject();
             if (chunkObject instanceof AbstractSqueakObjectWithClassAndHash) {
                 final AbstractSqueakObjectWithClassAndHash obj = (AbstractSqueakObjectWithClassAndHash) chunkObject;
-                if (obj.needsSqueakClass()) {
-                    obj.setSqueakClass(chunk.getSqClass());
-                }
-                if (obj.needsSqueakHash()) {
-                    obj.setSqueakHash(chunk.getHash());
-                }
+// if (obj.needsSqueakClass()) {
+// obj.setSqueakClass(chunk.getSqClass());
+// }
+// if (obj.needsSqueakHash()) {
+// obj.setSqueakHash(chunk.getHash());
+// }
                 obj.fillin(chunk);
             }
         }

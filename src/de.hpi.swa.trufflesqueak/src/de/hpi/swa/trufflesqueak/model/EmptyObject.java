@@ -13,12 +13,12 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 
 public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
-    public EmptyObject(final SqueakImageContext image, final ClassObject classObject) {
-        super(image, classObject);
+    public EmptyObject(final SqueakImageContext image, final long objectHeader) {
+        super(image, objectHeader);
     }
 
-    public EmptyObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
-        super(image, hash, classObject);
+    public EmptyObject(final SqueakImageContext image, final ClassObject classObject) {
+        super(image, classObject);
     }
 
     private EmptyObject(final EmptyObject original) {

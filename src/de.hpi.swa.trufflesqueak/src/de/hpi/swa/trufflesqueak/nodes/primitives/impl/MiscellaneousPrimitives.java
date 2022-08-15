@@ -26,6 +26,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -484,7 +485,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (image.hasDisplay()) {
                 return image.asByteString(SqueakDisplay.getClipboardData());
             } else {
-                return image.clipboardTextHeadless;
+                return image.clipboardTextHeadless == null ? image.asByteString("") : image.clipboardTextHeadless;
             }
         }
     }
@@ -726,7 +727,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public static final class PrimMaxIdentityHashNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
-            return (long) AbstractSqueakObjectWithClassAndHash.SQUEAK_HASH_MASK;
+            return (long) ObjectHeader.HASH_AND_CLASS_INDEX_SIZE;
         }
     }
 

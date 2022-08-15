@@ -57,6 +57,10 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         super(image);
     }
 
+    public AbstractPointersObject(final SqueakImageContext image, final long objectHeader) {
+        super(image, objectHeader);
+    }
+
     protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
         super(image, classObject);
         if (layout != null) {
@@ -68,10 +72,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         assert classObject.getLayout() == this.layout : "Layout mismatch";
         primitiveExtension = this.layout.getFreshPrimitiveExtension();
         objectExtension = this.layout.getFreshObjectExtension();
-    }
-
-    protected AbstractPointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
-        super(image, hash, classObject);
     }
 
     protected AbstractPointersObject(final AbstractPointersObject original) {

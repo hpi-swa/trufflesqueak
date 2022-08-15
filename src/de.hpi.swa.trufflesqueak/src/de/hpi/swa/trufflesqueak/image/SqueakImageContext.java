@@ -110,7 +110,15 @@ public final class SqueakImageContext {
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
 
-    public final CompiledCodeObject dummyMethod = new CompiledCodeObject(this, null, new Object[]{CompiledCodeObject.makeHeader(true, 1, 0, 0, false, true)}, compiledMethodClass);
+    @CompilationFinal private CompiledCodeObject dummyMethod;
+
+    public CompiledCodeObject dummyMethod() {
+        if (dummyMethod == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dummyMethod = new CompiledCodeObject(this, null, new Object[]{CompiledCodeObject.makeHeader(true, 1, 0, 0, false, true)}, compiledMethodClass);
+        }
+        return dummyMethod;
+    }
 
     /* Method Cache */
     private static final int METHOD_CACHE_SIZE = 2 << 12;
@@ -128,10 +136,10 @@ public final class SqueakImageContext {
     @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
     private final boolean isHeadless;
     public final SqueakContextOptions options;
-    private final SqueakSystemAttributes systemAttributes = new SqueakSystemAttributes(this);
+    @CompilationFinal private SqueakSystemAttributes systemAttributes;
 
     /* System */
-    public NativeObject clipboardTextHeadless = asByteString("");
+    public NativeObject clipboardTextHeadless;
     private boolean currentMarkingFlag;
     private ArrayObject hiddenRoots;
     private int globalClassCounter = -1;
@@ -597,6 +605,10 @@ public final class SqueakImageContext {
     }
 
     public AbstractSqueakObject getSystemAttribute(final int index) {
+        if (systemAttributes == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            systemAttributes = new SqueakSystemAttributes(this);
+        }
         return systemAttributes.getSystemAttribute(index);
     }
 

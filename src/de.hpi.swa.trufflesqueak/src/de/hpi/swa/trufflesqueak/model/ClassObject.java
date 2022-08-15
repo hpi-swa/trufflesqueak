@@ -56,8 +56,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         this.image = image;
     }
 
-    public ClassObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
-        super(image, hash, squeakClass);
+    public ClassObject(final SqueakImageContext image, final long objectHeader) {
+        super(image, objectHeader);
         this.image = image;
     }
 
@@ -74,7 +74,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        super(image, image.getNextClassHash(), classObject);
+        super(image, classObject);
+        setSqueakHash(image.getNextClassHash()); // FIXME: do in one go?
         this.image = image;
         pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON);
         instancesAreClasses = image.isMetaClass(classObject);

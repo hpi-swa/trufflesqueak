@@ -93,12 +93,19 @@ public final class SqueakImageConstants {
      */
     public static final class ObjectHeader {
         private static final int NUM_SLOTS_SIZE = 1 << 8;
-        private static final int HASH_AND_CLASS_INDEX_SIZE = 1 << 22;
+        public static final int HASH_AND_CLASS_INDEX_SIZE = 1 << 22;
+        private static final int HASH_OFFSET = 32;
+        private static final int HASH_AND_CLASS_INDEX_MASK = HASH_AND_CLASS_INDEX_SIZE - 1;
         private static final int FORMAT_SIZE = 1 << 5;
         private static final int PINNED_BIT_SHIFT = 30;
+        private static final int MARK_BIT = 1 << 54;
 
         public static int getClassIndex(final long headerWord) {
             return MiscUtils.bitSplit(headerWord, 0, HASH_AND_CLASS_INDEX_SIZE);
+        }
+
+        public static long setClassIndex(final long headerWord, final long classIndex) {
+            return (headerWord & ~HASH_AND_CLASS_INDEX_MASK) + classIndex;
         }
 
         public static int getFormat(final long headerWord) {
@@ -106,11 +113,24 @@ public final class SqueakImageConstants {
         }
 
         public static int getHash(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 32, HASH_AND_CLASS_INDEX_SIZE);
+            return MiscUtils.bitSplit(headerWord, HASH_OFFSET, HASH_AND_CLASS_INDEX_SIZE);
+        }
+
+        public static long setHash(final long headerWord, final long newHash) {
+            assert newHash <= HASH_AND_CLASS_INDEX_SIZE;
+            return (headerWord & ~((long) HASH_AND_CLASS_INDEX_MASK << HASH_OFFSET)) + (newHash << HASH_OFFSET);
         }
 
         public static int getNumSlots(final long headerWord) {
             return MiscUtils.bitSplit(headerWord, 56, NUM_SLOTS_SIZE);
+        }
+
+        public static boolean isMarked(final long headerWord) {
+            return (headerWord & MARK_BIT) != 0;
+        }
+
+        public static long toggleMarked(final long headerWord) {
+            return headerWord ^ MARK_BIT;
         }
 
         public static boolean isPinned(final long headerWord) {

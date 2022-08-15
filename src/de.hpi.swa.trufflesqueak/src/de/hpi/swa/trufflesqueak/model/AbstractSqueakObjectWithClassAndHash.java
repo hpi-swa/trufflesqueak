@@ -13,6 +13,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
@@ -21,40 +22,34 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
-    public static final int SQUEAK_HASH_MASK = (1 << 22) - 1;
-    public static final int MARK_BIT = 1 << 24;
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
     public static final int HASH_UNINITIALIZED = 0;
 
-    private int squeakObjectHeader;
-    private ClassObject squeakClass;
+    private long squeakObjectHeader;
 
     // For special/well-known objects only.
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image) {
         this(image, null);
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final int hash, final ClassObject klass) {
-        this(image.getCurrentMarkingFlag(), hash, klass);
-        assert hash >= 0 : "Squeak hashes should not be negative (will mess up object headers)";
+    public AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final long objectHeader) {
+        this(image, null);
+        squeakObjectHeader = objectHeader;
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final ClassObject klass) {
-        this(image.getCurrentMarkingFlag(), HASH_UNINITIALIZED, klass);
-    }
-
-    private AbstractSqueakObjectWithClassAndHash(final boolean markingFlag, final int hash, final ClassObject klass) {
-        squeakObjectHeader = hash;
-        squeakClass = klass;
-        if (markingFlag) {
-            toggleMarkingFlag();
+        squeakObjectHeader = HASH_UNINITIALIZED;
+        if (klass != null) { // FIXME
+            setSqueakClass(klass);
+        }
+        if (image.getCurrentMarkingFlag()) {
+            squeakObjectHeader = ObjectHeader.toggleMarked(squeakObjectHeader);
         }
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash original) {
         squeakObjectHeader = original.squeakObjectHeader;
         setSqueakHash(HASH_UNINITIALIZED);
-        squeakClass = original.squeakClass;
     }
 
     @Override
@@ -64,11 +59,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final ClassObject getSqueakClass() {
-        return squeakClass;
-    }
-
-    public final boolean needsSqueakClass() {
-        return squeakClass == null;
+        final int classIndex = SqueakImageConstants.ObjectHeader.getClassIndex(squeakObjectHeader);
+        final long majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
+        final long minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
+        final ArrayObject classTablePage = (ArrayObject) SqueakImageContext.getSlow().getHiddenRoots().getObjectStorage()[(int) majorIndex]; // FIXME
+        return (ClassObject) classTablePage.getObjectStorage()[(int) minorIndex]; // FIXME
     }
 
     public final String getSqueakClassName() {
@@ -76,13 +71,15 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final void setSqueakClass(final ClassObject newClass) {
-        squeakClass = newClass;
+        assert newClass.getSqueakHash() != HASH_UNINITIALIZED;
+        squeakObjectHeader = ObjectHeader.setClassIndex(squeakObjectHeader, newClass.getSqueakHash());
     }
 
     public final void becomeOtherClass(final AbstractSqueakObjectWithClassAndHash other) {
-        final ClassObject otherSqClass = other.squeakClass;
-        other.setSqueakClass(squeakClass);
-        setSqueakClass(otherSqClass);
+        final int otherClassIndex = ObjectHeader.getClassIndex(other.squeakObjectHeader);
+        final int classIndex = ObjectHeader.getClassIndex(squeakObjectHeader);
+        other.squeakObjectHeader = ObjectHeader.setClassIndex(other.squeakObjectHeader, classIndex);
+        squeakObjectHeader = ObjectHeader.setClassIndex(squeakObjectHeader, otherClassIndex);
     }
 
     public final boolean hasFormatOf(final ClassObject other) {
@@ -90,6 +87,10 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public abstract void fillin(SqueakImageChunk chunk);
+
+    public void setObjectHeader(final long objectHeader) {
+        squeakObjectHeader = objectHeader;
+    }
 
     @Override
     public final long getSqueakHash() {
@@ -110,28 +111,23 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     private final long getSqueakHashValue() {
-        return squeakObjectHeader & SQUEAK_HASH_MASK;
+        return ObjectHeader.getHash(squeakObjectHeader);
     }
 
     public final boolean needsSqueakHash() {
-        return (squeakObjectHeader & SQUEAK_HASH_MASK) == HASH_UNINITIALIZED;
+        return getSqueakHashValue() == HASH_UNINITIALIZED;
     }
 
     private void initializeSqueakHash() {
-        setSqueakHash(System.identityHashCode(this) & SQUEAK_HASH_MASK);
+        setSqueakHash(System.identityHashCode(this) & ObjectHeader.HASH_AND_CLASS_INDEX_SIZE);
     }
 
     public final void setSqueakHash(final int newHash) {
-        assert newHash <= SQUEAK_HASH_MASK;
-        squeakObjectHeader = (squeakObjectHeader & ~SQUEAK_HASH_MASK) + newHash;
+        squeakObjectHeader = ObjectHeader.setHash(squeakObjectHeader, newHash);
     }
 
     public final boolean getMarkingFlag() {
-        return (squeakObjectHeader & MARK_BIT) != 0;
-    }
-
-    private void toggleMarkingFlag() {
-        squeakObjectHeader ^= MARK_BIT;
+        return ObjectHeader.isMarked(squeakObjectHeader);
     }
 
     public final boolean isMarked(final boolean currentMarkingFlag) {
@@ -169,7 +165,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         if (getMarkingFlag() == currentMarkingFlag) {
             return false;
         } else {
-            toggleMarkingFlag();
+            squeakObjectHeader = ObjectHeader.toggleMarked(squeakObjectHeader);
             return true;
         }
     }

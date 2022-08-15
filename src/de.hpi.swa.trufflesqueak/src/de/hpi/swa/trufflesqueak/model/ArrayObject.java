@@ -38,13 +38,13 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         super(image); // for special ArrayObjects only
     }
 
+    public ArrayObject(final SqueakImageContext image, final long objectHeader) {
+        super(image, objectHeader);
+    }
+
     private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
         super(image, classObject);
         this.storage = storage;
-    }
-
-    public ArrayObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
-        super(image, hash, squeakClass);
     }
 
     private ArrayObject(final ArrayObject original, final Object storageCopy) {

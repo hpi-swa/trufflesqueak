@@ -32,8 +32,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         super(image, squeakClass);
     }
 
-    private BlockClosureObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
-        super(image, hash, squeakClass);
+    private BlockClosureObject(final SqueakImageContext image, final long objectHeader) {
+        super(image, objectHeader);
         copiedValues = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
@@ -59,8 +59,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         receiver = original.receiver;
     }
 
-    public static BlockClosureObject createWithHash(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
-        return new BlockClosureObject(image, hash, squeakClass);
+    public static BlockClosureObject createWithHeader(final SqueakImageContext image, final long objectHeader) {
+        return new BlockClosureObject(image, objectHeader);
     }
 
     public static BlockClosureObject create(final SqueakImageContext image, final ClassObject squeakClass, final int extraSize) {

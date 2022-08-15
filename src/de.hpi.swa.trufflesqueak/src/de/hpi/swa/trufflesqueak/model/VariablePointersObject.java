@@ -13,8 +13,8 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class VariablePointersObject extends AbstractVariablePointersObject {
 
-    public VariablePointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
-        super(image, hash, classObject);
+    public VariablePointersObject(final SqueakImageContext image, final long objectHeader) {
+        super(image, objectHeader);
     }
 
     public VariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {

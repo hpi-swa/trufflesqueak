@@ -45,8 +45,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private boolean hasModifiedSender;
     private boolean escaped;
 
-    private ContextObject(final int hash, final SqueakImageContext image) {
-        super(image, hash, image.methodContextClass);
+    private ContextObject(final long objectHeader, final SqueakImageContext image) {
+        super(image, objectHeader);
         truffleFrame = null;
     }
 
@@ -93,8 +93,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return new ContextObject(image, size);
     }
 
-    public static ContextObject createWithHash(final SqueakImageContext image, final int hash) {
-        return new ContextObject(hash, image);
+    public static ContextObject createWithHeader(final SqueakImageContext image, final long objectHeader) {
+        return new ContextObject(objectHeader, image);
     }
 
     public static ContextObject create(final SqueakImageContext image, final FrameInstance frameInstance) {
@@ -189,7 +189,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private static MaterializedFrame createTruffleFrame(final ContextObject context) {
         // Method is unknown, use dummy frame instead
         final Object[] dummyArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, new Object[2]);
-        final CompiledCodeObject dummyMethod = SqueakImageContext.getSlow().dummyMethod;
+        final CompiledCodeObject dummyMethod = SqueakImageContext.getSlow().dummyMethod();
         final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
         FrameAccess.setContext(truffleFrame, context);
         FrameAccess.setInstructionPointer(truffleFrame, 0);
