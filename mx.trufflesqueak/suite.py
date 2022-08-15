@@ -89,11 +89,11 @@ suite = {
                 "java.desktop",
                 "java.logging",
                 "java.management",
+                "jdk.management",
                 "jdk.unsupported",
             ],
             "requiresConcealed" : {
                 "java.base": ["jdk.internal.module"],
-                "jdk.management": ["com.sun.management"],
             },
             "checkstyleVersion": "8.36.1",
             "jacoco": "include",
