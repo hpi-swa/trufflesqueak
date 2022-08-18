@@ -153,7 +153,7 @@ public final class SqueakImageContext {
     public NativeObject clipboardTextHeadless;
     private boolean currentMarkingFlag;
     private ArrayObject hiddenRoots;
-    private int globalClassCounter = -1;
+    public int classTableIndex = -1;
     @CompilationFinal private SqueakDisplay display;
     public final CheckForInterruptsState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
@@ -413,10 +413,14 @@ public final class SqueakImageContext {
     }
 
     public ClassObject lookupClass(final int classIndex) {
+        return (ClassObject) lookupClassOrNil(classIndex);
+    }
+
+    public Object lookupClassOrNil(final int classIndex) {
         final long majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
         final long minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
         final ArrayObject classTablePage = (ArrayObject) hiddenRoots.getObject(majorIndex);
-        return (ClassObject) classTablePage.getObject(minorIndex);
+        return classTablePage.getObject(minorIndex);
     }
 
     public TruffleFile getHomePath() {
@@ -449,19 +453,6 @@ public final class SqueakImageContext {
             resourcesDirectoryBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath());
             resourcesPathBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath() + env.getFileNameSeparator());
         }
-    }
-
-    public long getGlobalClassCounter() {
-        return globalClassCounter;
-    }
-
-    public void setGlobalClassCounter(final int newValue) {
-        assert globalClassCounter < 0 : "globalClassCounter should only be set once";
-        globalClassCounter = newValue;
-    }
-
-    public int getNextClassHash() {
-        return ++globalClassCounter;
     }
 
     public NativeObject getDebugErrorSelector() {

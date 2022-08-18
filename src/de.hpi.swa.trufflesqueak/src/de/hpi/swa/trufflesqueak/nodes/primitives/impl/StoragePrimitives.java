@@ -185,6 +185,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected final AbstractSqueakObjectWithHeader newDirect(@SuppressWarnings("unused") final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached final SqueakObjectNewNode newNode) {
+            receiver.ensureBehaviorHash();
             try {
                 return newNode.execute(getContext(), cachedReceiver);
             } catch (final OutOfMemoryError e) {
@@ -196,6 +197,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "newDirect")
         protected final AbstractSqueakObjectWithHeader newIndirect(final ClassObject receiver,
                         @Cached final SqueakObjectNewNode newNode) {
+            receiver.ensureBehaviorHash();
             try {
                 return newNode.execute(getContext(), receiver);
             } catch (final OutOfMemoryError e) {
@@ -215,6 +217,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("createIdentityProfile()") final IntValueProfile sizeProfile,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached final SqueakObjectNewNode newNode) {
+            receiver.ensureBehaviorHash();
             try {
                 return newNode.execute(getContext(), cachedReceiver, sizeProfile.profile((int) size));
             } catch (final OutOfMemoryError e) {
@@ -226,6 +229,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
         protected final AbstractSqueakObjectWithHeader newWithArg(final ClassObject receiver, final long size,
                         @Cached final SqueakObjectNewNode newNode) {
+            receiver.ensureBehaviorHash();
             try {
                 return newNode.execute(getContext(), receiver, (int) size);
             } catch (final OutOfMemoryError e) {
@@ -565,9 +569,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
         @Specialization
-        protected static final long doClass(final ClassObject receiver,
-                        @Cached final BranchProfile needsHashProfile) {
-            return receiver.getSqueakHash(needsHashProfile);
+        protected static final long doClass(final ClassObject receiver) {
+            receiver.ensureBehaviorHash();
+            return receiver.asClassIndex();
         }
     }
 

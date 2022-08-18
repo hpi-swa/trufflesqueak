@@ -66,8 +66,7 @@ public final class ClassObject extends AbstractSqueakObjectWithHeader {
     private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
         super(original);
         image = original.image;
-        setSqueakHash(image.getNextClassHash()); // FIXME: do in one go?
-        insertIntoClassTable();
+        enterIntoClassTable();
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         methodDict = original.methodDict.shallowCopy();
@@ -80,8 +79,7 @@ public final class ClassObject extends AbstractSqueakObjectWithHeader {
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
         super(image, classObject);
         this.image = image;
-        setSqueakHash(image.getNextClassHash()); // FIXME: do in one go?
-        insertIntoClassTable();
+        enterIntoClassTable();
         pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON);
         instancesAreClasses = image.isMetaClass(classObject);
         // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
@@ -93,12 +91,6 @@ public final class ClassObject extends AbstractSqueakObjectWithHeader {
 
     public int asClassIndex() {
         return ObjectHeader.getHash(squeakObjectHeader);
-    }
-
-    public long rehashForClassTable(final SqueakImageContext i) {
-        final int newHash = i.getNextClassHash();
-        setSqueakHash(newHash);
-        return newHash;
     }
 
     /* Used by TruffleSqueakTest. */
@@ -271,12 +263,13 @@ public final class ClassObject extends AbstractSqueakObjectWithHeader {
      */
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        if (methodDict == null) {
-            if (needsSqueakHash()) {
-                final int hash = chunk.getHash();
-                /* Generate class hashes if unknown. */
-                setSqueakHash(hash != 0 ? hash : chunk.getImage().getNextClassHash());
+        if (needsSqueakHash()) {
+            final int hash = chunk.getHash();
+            if (hash != SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+                setSqueakHash(hash);
             }
+        }
+        if (methodDict == null) {
             final Object[] chunkPointers = chunk.getPointers();
             superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
             methodDict = (VariablePointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
@@ -284,8 +277,6 @@ public final class ClassObject extends AbstractSqueakObjectWithHeader {
             instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
             organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
             pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
-        } else if (needsSqueakHash()) {
-            setSqueakHash(chunk.getImage().getNextClassHash());
         }
     }
 
@@ -526,30 +517,37 @@ public final class ClassObject extends AbstractSqueakObjectWithHeader {
         return CLASS_DESCRIPTION.getClassComment(this);
     }
 
-    private void insertIntoClassTable() {
-        final int classIndex = asClassIndex();
-        final long majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
-        final long minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
-        if (image.getHiddenRoots().getObject(majorIndex) == NilObject.SINGLETON) {
-            ensureConsecutiveClassPagesUpTo(majorIndex);
+    /* see SpurMemoryManager>>#ensureBehaviorHash: */
+    public void ensureBehaviorHash() {
+        if (asClassIndex() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+            enterIntoClassTable();
         }
-        final ArrayObject classTablePage = (ArrayObject) image.getHiddenRoots().getObject(majorIndex);
-        final Object pageEntry = classTablePage.getObject(minorIndex);
-        if (pageEntry == this) {
-            return; /* Found myself in page (possible because we are re-using hiddenRoots). */
-        } else if (pageEntry == NilObject.SINGLETON) {
-            /* Free slot found in classTable. */
-            classTablePage.setObject(minorIndex, this);
-        } else {
-            /* classIndex clashed, re-hash class until there's no longer a clash. */
-            long newMajorIndex = majorIndex;
-            long newMinorIndex = minorIndex;
-            while (image.getHiddenRoots().getObject(newMajorIndex) != NilObject.SINGLETON || classTablePage.getObject(newMinorIndex) != NilObject.SINGLETON) {
-                final int newHash = (int) rehashForClassTable(image);
-                newMajorIndex = SqueakImageConstants.majorClassIndexOf(newHash);
-                newMinorIndex = SqueakImageConstants.minorClassIndexOf(newHash);
+    }
+
+    /* SpurMemoryManager>>#enterIntoClassTable: */
+    public void enterIntoClassTable() {
+        int majorIndex = SqueakImageConstants.majorClassIndexOf(image.classTableIndex);
+        final int initialMajorIndex = majorIndex;
+        assert initialMajorIndex > 0 : "classTableIndex should never index the first page; it's reserved for known classes";
+        int minorIndex = SqueakImageConstants.minorClassIndexOf(image.classTableIndex);
+        while (true) {
+            if (image.getHiddenRoots().getObject(majorIndex) == NilObject.SINGLETON) {
+                ensureConsecutiveClassPagesUpTo(majorIndex);
+                minorIndex = 0;
             }
-            insertIntoClassTable();
+            final ArrayObject page = (ArrayObject) image.getHiddenRoots().getObject(majorIndex);
+            for (int i = minorIndex; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
+                if (page.getObject(i) == NilObject.SINGLETON) {
+                    image.classTableIndex = SqueakImageConstants.classTableIndexFor(majorIndex, i);
+                    assert image.classTableIndex >= 1 << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT : "classTableIndex must never index the first page, which is reserved for classes known to the VM";
+                    page.setObject(i, this);
+                    setSqueakHash(image.classTableIndex);
+                    assert image.lookupClass(image.classTableIndex) == this;
+                    return;
+                }
+            }
+            majorIndex = Math.max(majorIndex + 1 & SqueakImageConstants.CLASS_INDEX_MASK, 1);
+            assert majorIndex != initialMajorIndex : "wrapped; table full";
         }
     }
 
@@ -557,12 +555,12 @@ public final class ClassObject extends AbstractSqueakObjectWithHeader {
     private void ensureConsecutiveClassPagesUpTo(final long majorIndex) {
         for (int i = 0; i < majorIndex; i++) {
             if (image.getHiddenRoots().getObject(majorIndex) == NilObject.SINGLETON) {
-                image.getHiddenRoots().setObject(majorIndex, newClassPage());
+                image.getHiddenRoots().setObject(majorIndex, newClassTablePage());
             }
         }
     }
 
-    private ArrayObject newClassPage() {
+    private ArrayObject newClassTablePage() {
         return image.asArrayOfObjects(ArrayUtils.withAll(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE, NilObject.SINGLETON));
     }
 

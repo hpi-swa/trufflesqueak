@@ -71,6 +71,10 @@ public final class SqueakImageReader {
         this.image = image;
     }
 
+    public SqueakImageContext getImage() {
+        return image;
+    }
+
     /*
      * Image reading happens only once per TruffleSqueak instance and should therefore be excluded
      * from Truffle compilation.
@@ -206,7 +210,9 @@ public final class SqueakImageReader {
         while (position < segmentEnd) {
             while (position < segmentEnd - SqueakImageConstants.IMAGE_BRIDGE_SIZE) {
                 final SqueakImageChunk chunk = readObject();
-                putChunk(chunk);
+                if (chunk != null) {
+                    putChunk(chunk);
+                }
             }
             assert hiddenRootsChunk != null : "hiddenRootsChunk must be known from now on.";
             final long bridge = nextLong();
@@ -270,7 +276,7 @@ public final class SqueakImageReader {
             } else {
                 assert classIndex == SqueakImageConstants.ARRAY_CLASS_INDEX_PUN &&
                                 size == SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS + SqueakImageConstants.HIDDEN_ROOT_SLOTS : "hiddenRootsObj has unexpected size";
-                hiddenRootsChunk = chunk; /* Seconds hidden object. */
+                hiddenRootsChunk = chunk; /* Second hidden object. */
             }
         }
         return chunk;
@@ -390,19 +396,19 @@ public final class SqueakImageReader {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
-                if (classChunk != null && classChunk.getClassIndex() == metaClassIndex) {
+                highestKnownClassIndex = SqueakImageConstants.classTableIndexFor(p, i);
+                if (classChunk.getClassIndex() == metaClassIndex) {
                     /* Derive classIndex from current position in class table. */
-                    highestKnownClassIndex = p << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT | i;
+                    highestKnownClassIndex = SqueakImageConstants.classTableIndexFor(p, i);
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject();
-                    metaClassObject.setInstancesAreClasses();
+                    classChunk.asClassObject().setInstancesAreClasses();
                     classInstance.asClassObject();
                 }
             }
         }
         assert highestKnownClassIndex > 0 : "Failed to find highestKnownClassIndex";
-        image.setGlobalClassCounter(highestKnownClassIndex);
+        image.classTableIndex = highestKnownClassIndex;
 
         /** Fill in metaClass. */
         final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
@@ -429,11 +435,20 @@ public final class SqueakImageReader {
             if (classTablePage.isNil()) {
                 break; /* End of classTable reached (pages are consecutive). */
             }
+            // ensure classTablePage is filled in
+            ((ArrayObject) classTablePage.asObject()).fillin(classTablePage);
+        }
+
+        for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
+            final SqueakImageChunk classTablePage = getChunk(hiddenRootsChunk.getWord(p));
+            if (classTablePage.isNil()) {
+                break; /* End of classTable reached (pages are consecutive). */
+            }
             for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
-                if (classChunk != null && classChunk.getClassIndex() == metaClassIndex) {
+                if (classChunk.getClassIndex() == metaClassIndex) {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
                     classChunk.asClassObject();
@@ -446,7 +461,7 @@ public final class SqueakImageReader {
                 }
             }
             // ensure classTablePage is filled in
-            ((ArrayObject) classTablePage.asObject()).fillin(classTablePage);
+// ((ArrayObject) classTablePage.asObject()).fillin(classTablePage);
         }
         assert image.metaClass.instancesAreClasses();
 

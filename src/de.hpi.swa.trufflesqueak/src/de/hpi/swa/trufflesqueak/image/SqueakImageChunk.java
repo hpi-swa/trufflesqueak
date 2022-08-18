@@ -48,6 +48,9 @@ public final class SqueakImageChunk {
         this.objectHeader = objectHeader;
         this.position = position;
         this.bytes = bytes;
+        if (bytes == null) { // ignored object
+            object = NilObject.SINGLETON;
+        }
     }
 
     public static SqueakImageChunk createDummyChunk(final SqueakImageContext image, final Object[] pointers) {
@@ -59,7 +62,12 @@ public final class SqueakImageChunk {
     public ClassObject asClassObject() {
         if (object == null) {
             assert getFormat() == 1;
-            object = new ClassObject(image, objectHeader);
+            final int classIndex = getClassIndex();
+            if (classIndex == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+                object = NilObject.SINGLETON;
+            } else {
+                object = new ClassObject(image, objectHeader);
+            }
         } else if (object == NilObject.SINGLETON) {
             return null;
         }
@@ -69,10 +77,13 @@ public final class SqueakImageChunk {
     public Object asObject() {
         if (object == null) {
             final int classIndex = getClassIndex();
+            if (classIndex == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+                return object = NilObject.SINGLETON;
+            }
             if (bytes == null) {
                 assert SqueakImageReader.isHiddenObject(classIndex);
                 /* Ignored object (see SqueakImageReader#ignoreObjectData) */
-                return NilObject.SINGLETON;
+                return object = NilObject.SINGLETON;
             }
             final int format = getFormat();
             if (format == 0) { // no fields
@@ -135,6 +146,7 @@ public final class SqueakImageChunk {
     }
 
     public boolean isNil() {
+// assert object != null;
         return object == NilObject.SINGLETON;
     }
 

@@ -74,6 +74,7 @@ public abstract class AbstractSqueakObjectWithHeader extends AbstractSqueakObjec
 
     public final void setSqueakClass(final ClassObject newClass) {
         assert newClass.getSqueakHash() != HASH_UNINITIALIZED;
+// assert newClass.getImage().lookupClass(newClass.asClassIndex()) == newClass; // FIXME
         squeakObjectHeader = ObjectHeader.setClassIndex(squeakObjectHeader, newClass.asClassIndex());
     }
 

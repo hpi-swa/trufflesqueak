@@ -15,6 +15,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHeader;
@@ -61,6 +62,9 @@ public final class ObjectGraphUtils {
 
     @TruffleBoundary
     public static Object[] allInstancesOf(final SqueakImageContext image, final int targetClassIndex) {
+        if (targetClassIndex == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+            return ArrayUtils.EMPTY_ARRAY;
+        }
         final ArrayDeque<AbstractSqueakObjectWithHeader> result = new ArrayDeque<>();
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHeader currentObject;
@@ -77,6 +81,9 @@ public final class ObjectGraphUtils {
 
     @TruffleBoundary
     public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final int targetClassIndex) {
+        if (targetClassIndex == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+            return NilObject.SINGLETON;
+        }
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHeader currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
