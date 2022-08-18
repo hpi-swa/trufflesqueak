@@ -441,21 +441,21 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithHeader {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        if (isCompiledBlock()) {
-            return "[] in " + getMethod().toString();
-        } else {
-            String className = "UnknownClass";
-            String selector = "unknownSelector";
-            final ClassObject methodClass = getMethodClassSlow();
-            if (methodClass != null) {
-                className = methodClass.getClassName();
-            }
-            final NativeObject selectorObj = getCompiledInSelector();
-            if (selectorObj != null) {
-                selector = selectorObj.asStringUnsafe();
-            }
-            return className + ">>" + selector;
-        }
+// if (isCompiledBlock()) {
+// return "[] in " + getMethod().toString();
+// } else {
+        final String className = "UnknownClass";
+        final String selector = "unknownSelector";
+// final ClassObject methodClass = getMethodClassSlow();
+// if (methodClass != null) {
+// className = methodClass.getClassName();
+// }
+// final NativeObject selectorObj = getCompiledInSelector();
+// if (selectorObj != null) {
+// selector = selectorObj.asStringUnsafe();
+// }
+        return className + ">>" + selector;
+// }
     }
 
     public Object[] getLiterals() {

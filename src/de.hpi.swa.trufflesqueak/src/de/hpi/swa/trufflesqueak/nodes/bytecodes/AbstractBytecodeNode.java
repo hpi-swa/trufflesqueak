@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -49,12 +48,13 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     @Override
     public final SourceSection getSourceSection() {
         CompilerAsserts.neverPartOfCompilation();
-        final Source source = code.getSource();
-        if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
-            return source.createUnavailableSection();
-        } else {
-            final int lineNumber = code.findLineNumber(index - code.getInitialPC());
-            return source.createSection(lineNumber);
-        }
+// final Source source = code.getSource();
+// if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
+// return source.createUnavailableSection();
+// } else {
+// final int lineNumber = code.findLineNumber(index - code.getInitialPC());
+// return source.createSection(lineNumber);
+// }
+        return null;
     }
 }

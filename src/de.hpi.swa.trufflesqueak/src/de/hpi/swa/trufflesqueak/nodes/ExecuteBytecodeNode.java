@@ -13,7 +13,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -203,11 +202,12 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
 
     @Override
     public SourceSection getSourceSection() {
-        if (section == null) {
-            final Source source = code.getSource();
-            section = source.createSection(1, 1, source.getLength());
-        }
-        return section;
+// if (section == null) {
+// final Source source = code.getSource();
+// section = source.createSection(1, 1, source.getLength());
+// }
+// return section;
+        return super.getSourceSection();
     }
 
     @Override
