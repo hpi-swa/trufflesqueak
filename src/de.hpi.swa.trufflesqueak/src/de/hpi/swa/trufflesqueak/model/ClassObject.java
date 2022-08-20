@@ -12,10 +12,12 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -74,7 +76,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        super(image, image.getNextClassHash(), classObject);
+        super(image, classObject);
         this.image = image;
         pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON);
         instancesAreClasses = image.isMetaClass(classObject);
@@ -83,12 +85,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public SqueakImageContext getImage() {
         return image;
-    }
-
-    public long rehashForClassTable(final SqueakImageContext i) {
-        final int newHash = i.getNextClassHash();
-        setSqueakHash(newHash);
-        return newHash;
     }
 
     /* Used by TruffleSqueakTest. */
@@ -262,10 +258,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         if (methodDict == null) {
-            if (needsSqueakHash()) {
-                final int hash = chunk.getHash();
-                /* Generate class hashes if unknown. */
-                setSqueakHash(hash != 0 ? hash : chunk.getImage().getNextClassHash());
+            if (needsSqueakHash() && chunk.getHash() != 0) {
+                setSqueakHash(chunk.getHash());
             }
             final Object[] chunkPointers = chunk.getPointers();
             superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
@@ -274,8 +268,21 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
             organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
             pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
-        } else if (needsSqueakHash()) {
-            setSqueakHash(chunk.getImage().getNextClassHash());
+        }
+    }
+
+    /* see SpurMemoryManager>>#ensureBehaviorHash: */
+    public void ensureBehaviorHash() {
+        if (getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+            image.enterIntoClassTable(this);
+        }
+    }
+
+    /* see SpurMemoryManager>>#ensureBehaviorHash: */
+    public void ensureBehaviorHash(final SqueakImageContext theImage, final BranchProfile needsHashProfile) {
+        if (getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+            needsHashProfile.enter();
+            theImage.enterIntoClassTable(this);
         }
     }
 

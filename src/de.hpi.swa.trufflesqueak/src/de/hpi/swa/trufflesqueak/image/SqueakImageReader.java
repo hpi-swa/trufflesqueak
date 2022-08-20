@@ -268,7 +268,7 @@ public final class SqueakImageReader {
             } else {
                 assert classIndex == SqueakImageConstants.ARRAY_CLASS_INDEX_PUN &&
                                 size == SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS + SqueakImageConstants.HIDDEN_ROOT_SLOTS : "hiddenRootsObj has unexpected size";
-                hiddenRootsChunk = chunk; /* Seconds hidden object. */
+                hiddenRootsChunk = chunk; /* Second hidden object. */
             }
         }
         return chunk;
@@ -385,7 +385,7 @@ public final class SqueakImageReader {
             }
         }
         assert highestKnownClassIndex > 0 : "Failed to find highestKnownClassIndex";
-        image.setGlobalClassCounter(highestKnownClassIndex);
+        image.classTableIndex = highestKnownClassIndex;
 
         /** Fill in metaClass. */
         final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);

@@ -54,6 +54,7 @@ public final class SqueakImageConstants {
     /** Class Table. */
     /* 22-bit class mask => ~ 4M classes */
     public static final int CLASS_INDEX_FIELD_WIDTH = 22;
+    public static final int CLASS_INDEX_MASK = (1 << CLASS_INDEX_FIELD_WIDTH) - 1;
     /* 1024 entries per page (2^10); 22 bit classIndex implies 2^12 pages. */
     public static final int CLASS_TABLE_MAJOR_INDEX_SHIFT = 10;
     public static final int CLASS_TABLE_MINOR_INDEX_MASK = (1 << CLASS_TABLE_MAJOR_INDEX_SHIFT) - 1;
@@ -78,6 +79,10 @@ public final class SqueakImageConstants {
         return classIndex & CLASS_TABLE_MINOR_INDEX_MASK;
     }
 
+    public static int classTableIndexFor(final int majorIndex, final int minorIndex) {
+        return majorIndex << CLASS_TABLE_MAJOR_INDEX_SHIFT | minorIndex & CLASS_TABLE_MINOR_INDEX_MASK;
+    }
+
     /**
      * Object Header Specification (see SpurMemoryManager).
      *
@@ -93,7 +98,7 @@ public final class SqueakImageConstants {
      */
     public static final class ObjectHeader {
         private static final int NUM_SLOTS_SIZE = 1 << 8;
-        private static final int HASH_AND_CLASS_INDEX_SIZE = 1 << 22;
+        public static final int HASH_AND_CLASS_INDEX_SIZE = 1 << 22;
         private static final int FORMAT_SIZE = 1 << 5;
         private static final int PINNED_BIT_SHIFT = 30;
 

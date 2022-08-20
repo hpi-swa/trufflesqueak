@@ -22,10 +22,10 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
-    public static final int SQUEAK_HASH_MASK = (1 << 22) - 1;
-    public static final int MARK_BIT = 1 << 24;
+    public static final int SQUEAK_HASH_MASK = ObjectHeader.HASH_AND_CLASS_INDEX_SIZE - 1;
+    private static final int MARK_BIT = 1 << 24;
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
-    public static final int HASH_UNINITIALIZED = 0;
+    protected static final int HASH_UNINITIALIZED = 0;
 
     /**
      * Spur uses an 64-bit object header (see {@link ObjectHeader}). In TruffleSqueak, we only care
@@ -107,7 +107,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
             /** Lazily initialize squeakHash and derive value from hashCode. */
             initializeSqueakHash();
         }
-        return getSqueakHashValue();
+        return getSqueakHashOrZero();
     }
 
     public final long getSqueakHash(final BranchProfile needsHashProfile) {
@@ -116,10 +116,10 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
             needsHashProfile.enter();
             initializeSqueakHash();
         }
-        return getSqueakHashValue();
+        return getSqueakHashOrZero();
     }
 
-    private long getSqueakHashValue() {
+    public long getSqueakHashOrZero() {
         return squeahHashAndBits & SQUEAK_HASH_MASK;
     }
 

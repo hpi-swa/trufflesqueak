@@ -61,13 +61,13 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static Object[] allInstancesOf(final SqueakImageContext image, final ClassObject classObj) {
+    public static Object[] allInstancesOf(final SqueakImageContext image, final ClassObject targetClass) {
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                if (classObj == currentObject.getSqueakClass()) {
+                if (targetClass == currentObject.getSqueakClass()) {
                     result.add(currentObject);
                 }
                 pending.tracePointers(currentObject);
@@ -77,12 +77,12 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final ClassObject classObj) {
+    public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final ClassObject targetClass) {
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                if (classObj == currentObject.getSqueakClass()) {
+                if (targetClass == currentObject.getSqueakClass()) {
                     return currentObject;
                 }
                 pending.tracePointers(currentObject);

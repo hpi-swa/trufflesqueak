@@ -23,7 +23,6 @@ import com.oracle.truffle.api.TruffleFile;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -35,7 +34,6 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -257,48 +255,6 @@ public final class SqueakImageWriter {
         }
     }
 
-    private void insertIntoClassTable(final ClassObject classObject) {
-        final int classHash = (int) classObject.getSqueakHash();
-        final long majorIndex = SqueakImageConstants.majorClassIndexOf(classHash);
-        final long minorIndex = SqueakImageConstants.minorClassIndexOf(classHash);
-        if (image.getHiddenRoots().getObject(majorIndex) == NilObject.SINGLETON) {
-            ensureConsecutiveClassPagesUpTo(majorIndex);
-        }
-        final ArrayObject classTablePage = (ArrayObject) image.getHiddenRoots().getObject(majorIndex);
-        final Object pageEntry = classTablePage.getObject(minorIndex);
-        if (pageEntry == classObject) {
-            return; /* Found myself in page (possible because we are re-using hiddenRoots). */
-        } else if (pageEntry == NilObject.SINGLETON) {
-            /* Free slot found in classTable. */
-            classTablePage.setObject(minorIndex, classObject);
-        } else {
-            /* classIndex clashed, re-hash class until there's no longer a clash. */
-            long newMajorIndex = majorIndex;
-            long newMinorIndex = minorIndex;
-            while (image.getHiddenRoots().getObject(newMajorIndex) != NilObject.SINGLETON || classTablePage.getObject(newMinorIndex) != NilObject.SINGLETON) {
-                final int newHash = (int) classObject.rehashForClassTable(image);
-                newMajorIndex = SqueakImageConstants.majorClassIndexOf(newHash);
-                newMinorIndex = SqueakImageConstants.minorClassIndexOf(newHash);
-            }
-            insertIntoClassTable(classObject);
-        }
-    }
-
-    private ArrayObject newClassPage() {
-        final ArrayObject newClassPage = image.asArrayOfObjects(ArrayUtils.withAll(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE, NilObject.SINGLETON));
-        reserve(newClassPage);
-        return newClassPage;
-    }
-
-    /* Are all entries up to numClassTablePages must not be nil (see validClassTableRootPages). */
-    private void ensureConsecutiveClassPagesUpTo(final long majorIndex) {
-        for (int i = 0; i < majorIndex; i++) {
-            if (image.getHiddenRoots().getObject(majorIndex) == NilObject.SINGLETON) {
-                image.getHiddenRoots().setObject(majorIndex, newClassPage());
-            }
-        }
-    }
-
     private long reserve(final AbstractSqueakObjectWithClassAndHash object) {
         final int numSlots = object.getNumSlots();
         final int padding = SqueakImageReader.calculateObjectPadding(object.getSqueakClass().getInstanceSpecification());
@@ -313,9 +269,6 @@ public final class SqueakImageWriter {
         allTracedObjects.add(object);
         traceQueue.addLast(object);
 
-        if (object instanceof ClassObject) {
-            insertIntoClassTable((ClassObject) object);
-        }
         return oop;
     }
 

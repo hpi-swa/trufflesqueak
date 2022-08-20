@@ -134,7 +134,8 @@ public final class SqueakImageContext {
     public NativeObject clipboardTextHeadless = asByteString("");
     private boolean currentMarkingFlag;
     private ArrayObject hiddenRoots;
-    private int globalClassCounter = -1;
+    public int classTableIndex = SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; // first page is
+                                                                             // special
     @CompilationFinal private SqueakDisplay display;
     public final CheckForInterruptsState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
@@ -393,6 +394,59 @@ public final class SqueakImageContext {
         return hiddenRoots;
     }
 
+    /* SpurMemoryManager>>#enterIntoClassTable: */
+    @TruffleBoundary
+    public void enterIntoClassTable(final ClassObject clazz) {
+        int majorIndex = SqueakImageConstants.majorClassIndexOf(classTableIndex);
+        final int initialMajorIndex = majorIndex;
+        assert initialMajorIndex > 0 : "classTableIndex should never index the first page; it's reserved for known classes";
+        int minorIndex = SqueakImageConstants.minorClassIndexOf(classTableIndex);
+        while (true) {
+            if (hiddenRoots.getObject(majorIndex) == NilObject.SINGLETON) {
+                ensureConsecutiveClassPagesUpTo(majorIndex);
+                minorIndex = 0;
+            }
+            final ArrayObject page = (ArrayObject) hiddenRoots.getObject(majorIndex);
+            for (int i = minorIndex; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
+                if (page.getObject(i) == NilObject.SINGLETON) {
+                    classTableIndex = SqueakImageConstants.classTableIndexFor(majorIndex, i);
+                    assert classTableIndex >= 1 << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT : "classTableIndex must never index the first page, which is reserved for classes known to the VM";
+                    page.setObject(i, this);
+                    clazz.setSqueakHash(classTableIndex);
+                    assert lookupClassIndex(classTableIndex) == this;
+                    return;
+                }
+            }
+            majorIndex = Math.max(majorIndex + 1 & SqueakImageConstants.CLASS_INDEX_MASK, 1);
+            assert majorIndex != initialMajorIndex : "wrapped; table full";
+        }
+    }
+
+    /* Are all entries up to numClassTablePages must not be nil (see validClassTableRootPages). */
+    private void ensureConsecutiveClassPagesUpTo(final long majorIndex) {
+        for (int i = 0; i < majorIndex; i++) {
+            if (hiddenRoots.getObject(majorIndex) == NilObject.SINGLETON) {
+                hiddenRoots.setObject(majorIndex, newClassTablePage());
+            }
+        }
+    }
+
+    private ArrayObject newClassTablePage() {
+        return asArrayOfObjects(ArrayUtils.withAll(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE, NilObject.SINGLETON));
+    }
+
+    private Object lookupClassIndex(final int classIndex) {
+        final long majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
+        final Object classTablePageOrNil = hiddenRoots.getObject(majorIndex);
+        if (classTablePageOrNil instanceof ArrayObject) {
+            final long minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
+            return ((ArrayObject) classTablePageOrNil).getObject(minorIndex);
+        } else {
+            assert classTablePageOrNil == NilObject.SINGLETON;
+            return NilObject.SINGLETON;
+        }
+    }
+
     public TruffleFile getHomePath() {
         return homePath;
     }
@@ -423,19 +477,6 @@ public final class SqueakImageContext {
             resourcesDirectoryBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath());
             resourcesPathBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath() + env.getFileNameSeparator());
         }
-    }
-
-    public long getGlobalClassCounter() {
-        return globalClassCounter;
-    }
-
-    public void setGlobalClassCounter(final int newValue) {
-        assert globalClassCounter < 0 : "globalClassCounter should only be set once";
-        globalClassCounter = newValue;
-    }
-
-    public int getNextClassHash() {
-        return ++globalClassCounter;
     }
 
     public NativeObject getDebugErrorSelector() {

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -105,6 +106,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "!classObject.isImmediateClassType()")
         protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
+            if (classObject.getSqueakHashOrZero() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+                return NilObject.SINGLETON; // Class has not been instantiated yet
+            }
             try {
                 return ObjectGraphUtils.someInstanceOf(getContext(), classObject);
             } catch (final IndexOutOfBoundsException e) {
@@ -747,7 +751,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (isNilClass.profile(image.isNilClass(classObject))) {
                 return getContext().asArrayOfObjects(NilObject.SINGLETON);
             } else {
-                return image.asArrayOfObjects(ObjectGraphUtils.allInstancesOf(image, classObject));
+                if (classObject.getSqueakHashOrZero() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+                    return getContext().newEmptyArray(); // Class has not been instantiated yet
+                } else {
+                    return image.asArrayOfObjects(ObjectGraphUtils.allInstancesOf(image, classObject));
+                }
             }
         }
     }
