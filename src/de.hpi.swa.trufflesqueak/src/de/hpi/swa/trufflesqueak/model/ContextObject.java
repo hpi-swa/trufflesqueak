@@ -45,8 +45,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private boolean hasModifiedSender;
     private boolean escaped;
 
-    private ContextObject(final int hash, final SqueakImageContext image) {
-        super(image, hash, image.methodContextClass);
+    private ContextObject(final long header, final SqueakImageContext image) {
+        super(header, image.methodContextClass);
         truffleFrame = null;
     }
 
@@ -93,8 +93,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return new ContextObject(image, size);
     }
 
-    public static ContextObject createWithHash(final SqueakImageContext image, final int hash) {
-        return new ContextObject(hash, image);
+    public static ContextObject createWithHeader(final SqueakImageContext image, final long header) {
+        return new ContextObject(header, image);
     }
 
     public static ContextObject create(final SqueakImageContext image, final FrameInstance frameInstance) {

@@ -25,7 +25,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     public static final int SQUEAK_HASH_MASK = ObjectHeader.HASH_AND_CLASS_INDEX_SIZE - 1;
     private static final int MARK_BIT = 1 << 24;
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
-    protected static final int HASH_UNINITIALIZED = 0;
+    private static final int HASH_UNINITIALIZED = 0;
 
     /**
      * Spur uses an 64-bit object header (see {@link ObjectHeader}). In TruffleSqueak, we only care
@@ -40,13 +40,14 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     private int squeahHashAndBits;
 
     // For special/well-known objects only.
-    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image) {
-        this(image, null);
+    protected AbstractSqueakObjectWithClassAndHash() {
+        this(HASH_UNINITIALIZED, null);
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final int hash, final ClassObject klass) {
-        this(image.getCurrentMarkingFlag(), hash, klass);
-        assert hash >= 0 : "Squeak hashes should not be negative (will mess up object headers)";
+    protected AbstractSqueakObjectWithClassAndHash(final long header, final ClassObject klass) {
+        squeahHashAndBits = ObjectHeader.getHash(header);
+        squeakClass = klass;
+        // mark bit zero when loading image
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final ClassObject klass) {

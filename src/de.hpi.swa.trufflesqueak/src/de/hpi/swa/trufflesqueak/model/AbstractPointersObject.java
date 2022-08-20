@@ -53,8 +53,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public long[] primitiveExtension;
     public Object[] objectExtension;
 
-    protected AbstractPointersObject(final SqueakImageContext image) {
-        super(image);
+    protected AbstractPointersObject() {
+        super();
     }
 
     protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
@@ -70,8 +70,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         objectExtension = this.layout.getFreshObjectExtension();
     }
 
-    protected AbstractPointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
-        super(image, hash, classObject);
+    protected AbstractPointersObject(final long header, final ClassObject classObject) {
+        super(header, classObject);
     }
 
     protected AbstractPointersObject(final AbstractPointersObject original) {

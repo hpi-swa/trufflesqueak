@@ -25,12 +25,12 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class PointersObject extends AbstractPointersObject {
-    public PointersObject(final SqueakImageContext image) {
-        super(image); // for special PointersObjects only
+    public PointersObject() {
+        super(); // for special PointersObjects only
     }
 
-    public PointersObject(final SqueakImageContext image, final int hash, final ClassObject klass) {
-        super(image, hash, klass);
+    public PointersObject(final long header, final ClassObject klass) {
+        super(header, klass);
     }
 
     public PointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {

@@ -88,12 +88,12 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal private RootCallTarget resumptionCallTarget;
 
     @TruffleBoundary
-    public CompiledCodeObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
-        super(image, hash, classObject);
+    public CompiledCodeObject(final long header, final ClassObject classObject) {
+        super(header, classObject);
     }
 
     public CompiledCodeObject(final SqueakImageContext image, final byte[] bc, final Object[] lits, final ClassObject classObject) {
-        this(image, AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED, classObject);
+        super(image, classObject);
         literals = lits;
         decodeHeader();
         bytes = bc;
@@ -126,7 +126,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private CompiledCodeObject(final int size, final SqueakImageContext image, final ClassObject classObject) {
-        this(image, AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED, classObject);
+        super(image, classObject);
         bytes = new byte[size];
     }
 

@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.image;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -26,45 +27,42 @@ import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakImageChunk {
-    private Object object;
-    private ClassObject sqClass;
-    private Object[] pointers;
-
-    private final int classIndex;
-    private final int position;
-
-    private final SqueakImageContext image;
     private final SqueakImageReader reader;
-    private final int format;
-    private final int hash;
+    private final SqueakImageContext image;
+    private final long header;
+    private final int position;
     private final byte[] bytes;
+
+    private Object object;
+    private ClassObject squeakClass;
+    private Object[] pointers;
 
     public SqueakImageChunk(final SqueakImageReader reader,
                     final SqueakImageContext image,
-                    final int format,
-                    final int classIndex,
-                    final int hash,
+                    final long header,
                     final int position,
                     final byte[] bytes) {
         this.reader = reader;
         this.image = image;
-        this.format = format;
-        this.classIndex = classIndex;
-        this.hash = hash;
+        this.header = header;
         this.position = position;
         this.bytes = bytes;
+        if (bytes == null) { /* Ignored object (see SqueakImageReader#ignoreObjectData) */
+            assert SqueakImageReader.isHiddenObject(getClassIndex());
+            object = NilObject.SINGLETON;
+        }
     }
 
     public static SqueakImageChunk createDummyChunk(final SqueakImageContext image, final Object[] pointers) {
-        final SqueakImageChunk chunk = new SqueakImageChunk(null, image, 0, 0, 0, 0, new byte[0]);
+        final SqueakImageChunk chunk = new SqueakImageChunk(null, image, 0, 0, new byte[0]);
         chunk.pointers = pointers;
         return chunk;
     }
 
     public ClassObject asClassObject(final ClassObject metaClassObject) {
         if (object == null) {
-            assert format == 1;
-            object = new ClassObject(image, hash, metaClassObject);
+            assert getFormat() == 1;
+            object = new ClassObject(image, header, metaClassObject);
         } else if (object == NilObject.SINGLETON) {
             return null;
         }
@@ -73,38 +71,34 @@ public final class SqueakImageChunk {
 
     public Object asObject() {
         if (object == null) {
-            if (bytes == null) {
-                assert SqueakImageReader.isHiddenObject(classIndex);
-                /* Ignored object (see SqueakImageReader#ignoreObjectData) */
-                return NilObject.SINGLETON;
-            }
-            final ClassObject squeakClass = getSqClass();
+            final int format = getFormat();
+            final ClassObject classObject = getSqueakClass();
             if (format == 0) { // no fields
-                object = new EmptyObject(image, hash, squeakClass);
+                object = new EmptyObject(header, classObject);
             } else if (format == 1) { // fixed pointers
-                if (squeakClass.instancesAreClasses()) {
+                if (classObject.instancesAreClasses()) {
                     /*
                      * In rare cases, there are still some classes that are not in the class table
                      * for some reason (e.g. not completely removed from the system yet).
                      */
-                    object = new ClassObject(image, hash, squeakClass);
+                    object = new ClassObject(image, header, classObject);
                 } else {
                     // classes should already be instantiated at this point, check a bit
-                    assert squeakClass != image.metaClass && squeakClass.getSqueakClass() != image.metaClass;
-                    object = new PointersObject(image, hash, squeakClass);
+                    assert classObject != image.metaClass && classObject.getSqueakClass() != image.metaClass;
+                    object = new PointersObject(header, classObject);
                 }
             } else if (format == 2) { // indexable fields
-                object = new ArrayObject(image, hash, squeakClass);
+                object = new ArrayObject(header, classObject);
             } else if (format == 3) { // fixed and indexable fields
-                if (squeakClass == image.methodContextClass) {
-                    object = ContextObject.createWithHash(image, hash);
-                } else if (image.isBlockClosureClass(squeakClass) || image.isFullBlockClosureClass(squeakClass)) {
-                    object = BlockClosureObject.createWithHash(image, hash, squeakClass);
+                if (classObject == image.methodContextClass) {
+                    object = ContextObject.createWithHeader(image, header);
+                } else if (image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)) {
+                    object = BlockClosureObject.createWithHeaderAndClass(header, classObject);
                 } else {
-                    object = new VariablePointersObject(image, hash, squeakClass);
+                    object = new VariablePointersObject(header, classObject);
                 }
             } else if (format == 4) { // indexable weak fields
-                object = new WeakVariablePointersObject(image, hash, squeakClass);
+                object = new WeakVariablePointersObject(image, header, classObject);
             } else if (format == 5) { // fixed weak fields
                 throw SqueakException.create("Ephemerons not (yet) supported");
             } else if (format <= 8) {
@@ -112,7 +106,7 @@ public final class SqueakImageChunk {
             } else if (format == 9) { // 64-bit integers
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
-                if (squeakClass == image.floatClass) {
+                if (classObject == image.floatClass) {
                     object = FloatObject.newFrom(this);
                 } else {
                     object = NativeObject.newNativeInts(this);
@@ -120,13 +114,13 @@ public final class SqueakImageChunk {
             } else if (format <= 15) { // 16-bit integers
                 object = NativeObject.newNativeShorts(this);
             } else if (format <= 23) { // bytes
-                if (squeakClass == image.largePositiveIntegerClass || squeakClass == image.largeNegativeIntegerClass) {
-                    object = new LargeIntegerObject(image, hash, squeakClass, getBytes()).reduceIfPossible();
+                if (classObject == image.largePositiveIntegerClass || classObject == image.largeNegativeIntegerClass) {
+                    object = new LargeIntegerObject(image, header, classObject, getBytes()).reduceIfPossible();
                 } else {
                     object = NativeObject.newNativeBytes(this);
                 }
             } else if (format <= 31) { // compiled methods
-                object = new CompiledCodeObject(image, hash, squeakClass);
+                object = new CompiledCodeObject(header, classObject);
             }
         }
         return object;
@@ -141,19 +135,21 @@ public final class SqueakImageChunk {
         return object == NilObject.SINGLETON;
     }
 
-    public int getFormat() {
+    private int getFormat() {
+        final int format = ObjectHeader.getFormat(header);
+        assert 0 <= format && format != 6 && format != 8 && format <= 31 : "Unexpected format";
         return format;
     }
 
     public int getHash() {
-        return hash;
+        return ObjectHeader.getHash(header);
     }
 
-    public ClassObject getSqClass() {
-        if (sqClass == null) {
-            sqClass = getClassChunk().asClassObject(null);
+    public ClassObject getSqueakClass() {
+        if (squeakClass == null) {
+            squeakClass = getClassChunk().asClassObject(null);
         }
-        return sqClass;
+        return squeakClass;
     }
 
     public SqueakImageContext getImage() {
@@ -169,16 +165,17 @@ public final class SqueakImageChunk {
     }
 
     public SqueakImageChunk getClassChunk() {
-        final int majorIdx = SqueakImageConstants.majorClassIndexOf(classIndex);
-        final int minorIdx = SqueakImageConstants.minorClassIndexOf(classIndex);
-        final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.getWord(majorIdx));
-        final SqueakImageChunk classChunk = reader.getChunk(classTablePage.getWord(minorIdx));
+        final int classIndex = getClassIndex();
+        final int majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
+        final int minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
+        final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.getWord(majorIndex));
+        final SqueakImageChunk classChunk = reader.getChunk(classTablePage.getWord(minorIndex));
         assert classChunk != null : "Unable to find class chunk.";
         return classChunk;
     }
 
-    public void setSqClass(final ClassObject baseSqueakObject) {
-        sqClass = baseSqueakObject;
+    public void setSqueakClass(final ClassObject baseSqueakObject) {
+        squeakClass = baseSqueakObject;
     }
 
     public Object[] getPointers() {
@@ -237,7 +234,7 @@ public final class SqueakImageChunk {
     }
 
     public int getClassIndex() {
-        return classIndex;
+        return ObjectHeader.getClassIndex(header);
     }
 
     public byte[] getBytes() {

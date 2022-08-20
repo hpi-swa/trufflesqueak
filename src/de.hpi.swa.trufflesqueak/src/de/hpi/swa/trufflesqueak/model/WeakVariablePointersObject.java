@@ -22,8 +22,8 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 public final class WeakVariablePointersObject extends AbstractVariablePointersObject {
     private ReferenceQueue<AbstractSqueakObject> weakPointersQueue;
 
-    public WeakVariablePointersObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
-        super(image, hash, classObject);
+    public WeakVariablePointersObject(final SqueakImageContext image, final long header, final ClassObject classObject) {
+        super(header, classObject);
         weakPointersQueue = image.weakPointersQueue;
     }
 

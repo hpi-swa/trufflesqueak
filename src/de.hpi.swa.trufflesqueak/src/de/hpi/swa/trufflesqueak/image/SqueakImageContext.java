@@ -76,12 +76,12 @@ public final class SqueakImageContext {
     /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
-    public final PointersObject schedulerAssociation = new PointersObject(this);
+    public final PointersObject schedulerAssociation = new PointersObject();
     public final ClassObject bitmapClass = new ClassObject(this);
     public final ClassObject smallIntegerClass = new ClassObject(this);
     public final ClassObject byteStringClass = new ClassObject(this);
     public final ClassObject arrayClass = new ClassObject(this);
-    public final PointersObject smalltalk = new PointersObject(this);
+    public final PointersObject smalltalk = new PointersObject();
     public final ClassObject floatClass = new ClassObject(this);
     public final ClassObject methodContextClass = new ClassObject(this);
     public final ClassObject pointClass = new ClassObject(this);
@@ -90,23 +90,23 @@ public final class SqueakImageContext {
     public final ClassObject compiledMethodClass = new ClassObject(this);
     public final ClassObject semaphoreClass = new ClassObject(this);
     public final ClassObject characterClass = new ClassObject(this);
-    public final NativeObject doesNotUnderstand = new NativeObject(this);
-    public final NativeObject cannotReturn = new NativeObject(this);
-    public final NativeObject mustBeBooleanSelector = new NativeObject(this);
+    public final NativeObject doesNotUnderstand = new NativeObject();
+    public final NativeObject cannotReturn = new NativeObject();
+    public final NativeObject mustBeBooleanSelector = new NativeObject();
     public final ClassObject byteArrayClass = new ClassObject(this);
     public final ClassObject processClass = new ClassObject(this);
     public final ClassObject blockClosureClass = new ClassObject(this);
     public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
-    public final NativeObject aboutToReturnSelector = new NativeObject(this);
-    public final NativeObject runWithInSelector = new NativeObject(this);
-    public final ArrayObject primitiveErrorTable = new ArrayObject(this);
-    public final ArrayObject specialSelectors = new ArrayObject(this);
+    public final NativeObject aboutToReturnSelector = new NativeObject();
+    public final NativeObject runWithInSelector = new NativeObject();
+    public final ArrayObject primitiveErrorTable = new ArrayObject();
+    public final ArrayObject specialSelectors = new ArrayObject();
     @CompilationFinal public ClassObject fullBlockClosureClass;
     @CompilationFinal public ClassObject smallFloatClass;
     @CompilationFinal private ClassObject byteSymbolClass;
     @CompilationFinal private ClassObject foreignObjectClass;
 
-    public final ArrayObject specialObjectsArray = new ArrayObject(this);
+    public final ArrayObject specialObjectsArray = new ArrayObject();
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
 

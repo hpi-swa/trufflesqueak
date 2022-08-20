@@ -54,12 +54,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private ObjectLayout layout;
 
     public ClassObject(final SqueakImageContext image) {
-        super(image);
+        super();
         this.image = image;
     }
 
-    public ClassObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
-        super(image, hash, squeakClass);
+    public ClassObject(final SqueakImageContext image, final long header, final ClassObject squeakClass) {
+        super(header, squeakClass);
         this.image = image;
     }
 
