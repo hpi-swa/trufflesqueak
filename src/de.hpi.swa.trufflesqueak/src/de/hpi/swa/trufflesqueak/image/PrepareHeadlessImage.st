@@ -1,5 +1,5 @@
 "Remove active context."
-Processor activeProcess suspendedContext: nil.
+Processor activeProcess instVarNamed: #suspendedContext put: nil.
 
 "Modify StartUpList for headless execution."
 {EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea].
