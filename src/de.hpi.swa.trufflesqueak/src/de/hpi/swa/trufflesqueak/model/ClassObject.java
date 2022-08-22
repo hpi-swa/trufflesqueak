@@ -9,10 +9,10 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -274,16 +274,16 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     /* see SpurMemoryManager>>#ensureBehaviorHash: */
     public void ensureBehaviorHash() {
         if (getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+            CompilerDirectives.transferToInterpreter();
+            /* This happens only once for a class and should thus happen on the slow path. */
             image.enterIntoClassTable(this);
         }
     }
 
-    /* see SpurMemoryManager>>#ensureBehaviorHash: */
-    public void ensureBehaviorHash(final SqueakImageContext theImage, final BranchProfile needsHashProfile) {
-        if (getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
-            needsHashProfile.enter();
-            theImage.enterIntoClassTable(this);
-        }
+    public ClassObject withEnsuredBehaviorHash() {
+        CompilerAsserts.neverPartOfCompilation();
+        ensureBehaviorHash();
+        return this;
     }
 
     public void setFormat(final long format) {

@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -155,13 +156,15 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimIdentityHashNode extends AbstractNullaryInlinePrimitiveNode {
+        private final BranchProfile needsHashProfile = BranchProfile.create();
+
         protected PrimIdentityHashNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getSqueakHash());
+            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getOrCreateSqueakHash(needsHashProfile));
         }
     }
 
@@ -205,7 +208,9 @@ public final class InlinePrimitiveBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, ((ClassObject) popNode.execute(frame)).getSqueakHash());
+            final ClassObject classObject = (ClassObject) popNode.execute(frame);
+            classObject.ensureBehaviorHash();
+            pushNode.execute(frame, classObject.getSqueakHash());
         }
     }
 

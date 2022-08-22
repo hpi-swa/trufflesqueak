@@ -426,7 +426,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             final int numSlots = getLongLength();
             assert numSlots < SqueakImageConstants.OVERFLOW_SLOTS;
             /* Free list is of format 9 and pinned. */
-            writer.writeLong(SqueakImageConstants.ObjectHeader.getHeader(numSlots, getSqueakHash(), 9, SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN, true));
+            writer.writeLong(SqueakImageConstants.ObjectHeader.getHeader(numSlots, getOrCreateSqueakHash(), 9, SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN, true));
             /* Write content. */
             for (final long value : getLongStorage()) {
                 writer.writeLong(value);

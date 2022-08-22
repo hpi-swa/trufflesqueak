@@ -89,7 +89,7 @@ public final class SqueakImageReader {
         }
         initObjects();
         image.printToStdOut("Image loaded in", MiscUtils.currentTimeMillis() - start + "ms.");
-        image.initializeAfterLoadingImage((ArrayObject) hiddenRootsChunk.asObject());
+        image.setHiddenRoots((ArrayObject) hiddenRootsChunk.asObject());
         return image.getSqueakImage();
     }
 
@@ -370,7 +370,7 @@ public final class SqueakImageReader {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
-                if (classChunk != null && classChunk.getSqueakClass() == image.metaClass) {
+                if (classChunk.getSqueakClass() == image.metaClass) {
                     /* Derive classIndex from current position in class table. */
                     highestKnownClassIndex = p << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT | i;
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
@@ -409,7 +409,7 @@ public final class SqueakImageReader {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
-                if (classChunk != null && classChunk.getSqueakClass() == image.metaClass) {
+                if (classChunk.getSqueakClass() == image.metaClass) {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
                     final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
@@ -435,10 +435,11 @@ public final class SqueakImageReader {
             final Object chunkObject = chunk.asObject();
             if (chunkObject instanceof AbstractSqueakObjectWithClassAndHash) {
                 final AbstractSqueakObjectWithClassAndHash obj = (AbstractSqueakObjectWithClassAndHash) chunkObject;
+                // FIXME:
                 if (obj.needsSqueakClass()) {
                     obj.setSqueakClass(chunk.getSqueakClass());
                 }
-                if (obj.needsSqueakHash()) {
+                if (!(obj instanceof ClassObject) && obj.needsSqueakHash()) {
                     obj.setSqueakHash(chunk.getHash());
                 }
                 obj.fillin(chunk);

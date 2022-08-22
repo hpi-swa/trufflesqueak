@@ -31,7 +31,7 @@ public final class NilObject extends AbstractSqueakObject {
     }
 
     @Override
-    public long getSqueakHash() {
+    public long getOrCreateSqueakHash() {
         return SQUEAK_HASH;
     }
 
@@ -56,7 +56,7 @@ public final class NilObject extends AbstractSqueakObject {
     }
 
     public void write(final SqueakImageWriter writer) {
-        writer.writeObjectHeader(instsize() + size(), getSqueakHash(), writer.getImage().nilClass, 0);
+        writer.writeObjectHeader(instsize() + size(), getOrCreateSqueakHash(), writer.getImage().nilClass, 0);
         writer.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
     }
 }

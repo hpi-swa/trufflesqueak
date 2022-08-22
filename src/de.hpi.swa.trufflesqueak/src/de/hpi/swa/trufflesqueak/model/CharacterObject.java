@@ -60,7 +60,7 @@ public final class CharacterObject extends AbstractSqueakObject {
     }
 
     @Override
-    public long getSqueakHash() {
+    public long getOrCreateSqueakHash() {
         return getValue();
     }
 

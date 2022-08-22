@@ -90,7 +90,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 final Object from = fromPointers[i];
                 final Object to = toPointers[i];
                 if (from instanceof AbstractSqueakObjectWithClassAndHash && to instanceof AbstractSqueakObjectWithClassAndHash) {
-                    ((AbstractSqueakObjectWithClassAndHash) to).setSqueakHash(MiscUtils.toIntExact(((AbstractSqueakObjectWithClassAndHash) from).getSqueakHash()));
+                    ((AbstractSqueakObjectWithClassAndHash) to).setSqueakHash(MiscUtils.toIntExact(((AbstractSqueakObjectWithClassAndHash) from).getOrCreateSqueakHash()));
                 }
             }
         }
@@ -183,7 +183,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
         protected final AbstractSqueakObjectWithClassAndHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
-                        @Cached("receiver") final ClassObject cachedReceiver,
+                        @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Cached final SqueakObjectNewNode newNode) {
             try {
                 return newNode.execute(getContext(), cachedReceiver);
@@ -196,6 +196,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "newDirect")
         protected final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
                         @Cached final SqueakObjectNewNode newNode) {
+            receiver.ensureBehaviorHash();
             try {
                 return newNode.execute(getContext(), receiver);
             } catch (final OutOfMemoryError e) {
@@ -213,7 +214,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
         protected final AbstractSqueakObjectWithClassAndHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
                         @Cached("createIdentityProfile()") final IntValueProfile sizeProfile,
-                        @Cached("receiver") final ClassObject cachedReceiver,
+                        @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Cached final SqueakObjectNewNode newNode) {
             try {
                 return newNode.execute(getContext(), cachedReceiver, sizeProfile.profile((int) size));
@@ -226,6 +227,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
         protected final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
                         @Cached final SqueakObjectNewNode newNode) {
+            receiver.ensureBehaviorHash();
             try {
                 return newNode.execute(getContext(), receiver, (int) size);
             } catch (final OutOfMemoryError e) {
@@ -341,7 +343,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash object,
                         @Cached final BranchProfile needsHashProfile) {
-            return object.getSqueakHash(needsHashProfile);
+            return object.getOrCreateSqueakHash(needsHashProfile);
         }
     }
 
@@ -565,10 +567,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
         @Specialization
-        protected final long doClass(final ClassObject receiver,
-                        @Cached final BranchProfile needsHashProfile) {
-            receiver.ensureBehaviorHash(getContext(), needsHashProfile);
-            return receiver.getSqueakHashOrZero();
+        protected static final long doClassUncached(final ClassObject receiver) {
+            receiver.ensureBehaviorHash();
+            return receiver.getSqueakHash();
         }
     }
 

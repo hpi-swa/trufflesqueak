@@ -134,8 +134,8 @@ public final class SqueakImageContext {
     public NativeObject clipboardTextHeadless = asByteString("");
     private boolean currentMarkingFlag;
     private ArrayObject hiddenRoots;
-    public int classTableIndex = SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; // first page is
-                                                                             // special
+    // first page of classTable is special
+    public int classTableIndex = SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
     @CompilationFinal private SqueakDisplay display;
     public final CheckForInterruptsState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
@@ -390,6 +390,42 @@ public final class SqueakImageContext {
         return currentMarkingFlag = !currentMarkingFlag;
     }
 
+    public void setHiddenRoots(final ArrayObject theHiddenRoots) {
+        assert hiddenRoots == null && theHiddenRoots.isObjectType();
+        hiddenRoots = theHiddenRoots;
+        assert validClassTableRootPages();
+    }
+
+    /* SpurMemoryManager>>#validClassTableRootPages */
+    public boolean validClassTableRootPages() {
+        final Object[] hiddenRootsObjects = hiddenRoots.getObjectStorage();
+        if (hiddenRootsObjects.length != SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS + SqueakImageConstants.HIDDEN_ROOT_SLOTS) {
+            return false;
+        }
+        // "is it in range?"
+        // "are all pages the right size?"
+        int numClassTablePages = -1;
+        for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
+            final Object classPageOrNil = hiddenRootsObjects[i];
+            if (classPageOrNil instanceof ArrayObject) {
+                if (((ArrayObject) classPageOrNil).getObjectLength() != SqueakImageConstants.CLASS_TABLE_PAGE_SIZE) {
+                    return false;
+                }
+            } else {
+                assert classPageOrNil == NilObject.SINGLETON;
+                numClassTablePages = i;
+            }
+        }
+        // "are all entries beyond numClassTablePages nil?"
+        for (int i = numClassTablePages; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
+            final Object classPageOrNil = hiddenRootsObjects[i];
+            if (classPageOrNil != NilObject.SINGLETON) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public ArrayObject getHiddenRoots() {
         return hiddenRoots;
     }
@@ -403,31 +439,23 @@ public final class SqueakImageContext {
         int minorIndex = SqueakImageConstants.minorClassIndexOf(classTableIndex);
         while (true) {
             if (hiddenRoots.getObject(majorIndex) == NilObject.SINGLETON) {
-                ensureConsecutiveClassPagesUpTo(majorIndex);
+                hiddenRoots.setObject(majorIndex, newClassTablePage());
                 minorIndex = 0;
             }
             final ArrayObject page = (ArrayObject) hiddenRoots.getObject(majorIndex);
             for (int i = minorIndex; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
-                if (page.getObject(i) == NilObject.SINGLETON) {
+                final Object entry = page.getObject(i);
+                if (entry == NilObject.SINGLETON) {
                     classTableIndex = SqueakImageConstants.classTableIndexFor(majorIndex, i);
                     assert classTableIndex >= 1 << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT : "classTableIndex must never index the first page, which is reserved for classes known to the VM";
-                    page.setObject(i, this);
+                    page.setObject(i, clazz);
                     clazz.setSqueakHash(classTableIndex);
-                    assert lookupClassIndex(classTableIndex) == this;
+                    assert lookupClassIndex(classTableIndex) == clazz;
                     return;
                 }
             }
             majorIndex = Math.max(majorIndex + 1 & SqueakImageConstants.CLASS_INDEX_MASK, 1);
             assert majorIndex != initialMajorIndex : "wrapped; table full";
-        }
-    }
-
-    /* Are all entries up to numClassTablePages must not be nil (see validClassTableRootPages). */
-    private void ensureConsecutiveClassPagesUpTo(final long majorIndex) {
-        for (int i = 0; i < majorIndex; i++) {
-            if (hiddenRoots.getObject(majorIndex) == NilObject.SINGLETON) {
-                hiddenRoots.setObject(majorIndex, newClassTablePage());
-            }
         }
     }
 
@@ -535,11 +563,6 @@ public final class SqueakImageContext {
 
     public static void initializeBeforeLoadingImage() {
         SlotLocation.initialize();
-    }
-
-    public void initializeAfterLoadingImage(final ArrayObject theHiddenRoots) {
-        assert hiddenRoots == null;
-        hiddenRoots = theHiddenRoots;
     }
 
     public ClassObject getForeignObjectClass() {

@@ -52,7 +52,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         nilClassBinding.fillin(SqueakImageChunk.createDummyChunk(image, new Object[]{
                         asByteSymbol("UndefinedObject"), image.nilClass}));
 
-        image.initializeAfterLoadingImage(ArrayObject.createEmptyStrategy(image, image.arrayClass, 0));
+        image.setHiddenRoots(ArrayObject.createEmptyStrategy(image, image.arrayClass, 0));
         context.enter();
     }
 

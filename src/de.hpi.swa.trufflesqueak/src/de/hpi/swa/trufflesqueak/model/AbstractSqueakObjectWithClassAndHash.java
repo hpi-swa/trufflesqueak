@@ -103,33 +103,25 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     public abstract void fillin(SqueakImageChunk chunk);
 
     @Override
-    public final long getSqueakHash() {
-        if (needsSqueakHash()) {
-            /** Lazily initialize squeakHash and derive value from hashCode. */
-            initializeSqueakHash();
-        }
-        return getSqueakHashOrZero();
+    public final long getOrCreateSqueakHash() {
+        return getOrCreateSqueakHash(BranchProfile.getUncached());
     }
 
-    public final long getSqueakHash(final BranchProfile needsHashProfile) {
+    public final long getOrCreateSqueakHash(final BranchProfile needsHashProfile) {
         if (needsSqueakHash()) {
             /** Lazily initialize squeakHash and derive value from hashCode. */
             needsHashProfile.enter();
-            initializeSqueakHash();
+            setSqueakHash(System.identityHashCode(this) & SQUEAK_HASH_MASK);
         }
-        return getSqueakHashOrZero();
+        return getSqueakHash();
     }
 
-    public long getSqueakHashOrZero() {
+    public long getSqueakHash() {
         return squeahHashAndBits & SQUEAK_HASH_MASK;
     }
 
     public final boolean needsSqueakHash() {
-        return (squeahHashAndBits & SQUEAK_HASH_MASK) == HASH_UNINITIALIZED;
-    }
-
-    private void initializeSqueakHash() {
-        setSqueakHash(System.identityHashCode(this) & SQUEAK_HASH_MASK);
+        return getSqueakHash() == HASH_UNINITIALIZED;
     }
 
     public final void setSqueakHash(final int newHash) {
@@ -219,13 +211,12 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     protected final boolean writeHeader(final SqueakImageWriter writer, final int formatOffset) {
-        final long numSlots = getNumSlots();
+        long numSlots = getNumSlots();
         if (numSlots >= SqueakImageConstants.OVERFLOW_SLOTS) {
             writer.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
-            writer.writeObjectHeader(SqueakImageConstants.OVERFLOW_SLOTS, getSqueakHash(), getSqueakClass(), formatOffset);
-        } else {
-            writer.writeObjectHeader(numSlots, getSqueakHash(), getSqueakClass(), formatOffset);
+            numSlots = SqueakImageConstants.OVERFLOW_SLOTS;
         }
+        writer.writeObjectHeader(numSlots, getSqueakHash(), getSqueakClass(), formatOffset);
         if (numSlots == 0) {
             writer.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
             return false;

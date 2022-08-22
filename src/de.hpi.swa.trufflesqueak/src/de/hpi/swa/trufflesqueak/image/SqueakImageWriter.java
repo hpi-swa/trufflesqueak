@@ -133,6 +133,7 @@ public final class SqueakImageWriter {
         trueOop = nextChunk += 2 * SqueakImageConstants.WORD_SIZE;
         nextChunk += 2 * SqueakImageConstants.WORD_SIZE;
         freeListOop = reserve(freeList);
+        assert image.validClassTableRootPages();
         hiddenRootsOop = reserve(image.getHiddenRoots());
 
         /*

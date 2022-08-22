@@ -80,7 +80,9 @@ public final class SqueakImageConstants {
     }
 
     public static int classTableIndexFor(final int majorIndex, final int minorIndex) {
-        return majorIndex << CLASS_TABLE_MAJOR_INDEX_SHIFT | minorIndex & CLASS_TABLE_MINOR_INDEX_MASK;
+        assert 0 <= majorIndex && majorIndex <= CLASS_TABLE_ROOT_SLOTS;
+        assert 0 <= minorIndex && minorIndex <= CLASS_TABLE_MINOR_INDEX_MASK;
+        return (majorIndex << CLASS_TABLE_MAJOR_INDEX_SHIFT) + minorIndex;
     }
 
     /**

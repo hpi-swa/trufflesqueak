@@ -37,7 +37,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public abstract class AbstractSqueakObject implements TruffleObject {
     private static final Object DEFAULT = new Object();
 
-    public abstract long getSqueakHash();
+    public abstract long getOrCreateSqueakHash();
 
     public abstract int getNumSlots();
 
