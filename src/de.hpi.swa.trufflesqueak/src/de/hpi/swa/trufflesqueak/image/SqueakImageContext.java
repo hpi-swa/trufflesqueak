@@ -391,13 +391,18 @@ public final class SqueakImageContext {
     }
 
     public void setHiddenRoots(final ArrayObject theHiddenRoots) {
-        assert hiddenRoots == null && theHiddenRoots.isObjectType();
+        assert hiddenRoots == null && (theHiddenRoots.isObjectType() || isTesting());
         hiddenRoots = theHiddenRoots;
         assert validClassTableRootPages();
     }
 
     /* SpurMemoryManager>>#validClassTableRootPages */
     public boolean validClassTableRootPages() {
+        if (!hiddenRoots.isObjectType()) {
+            assert isTesting(); // Ignore dummy images for testing
+            return true;
+        }
+
         final Object[] hiddenRootsObjects = hiddenRoots.getObjectStorage();
         if (hiddenRootsObjects.length != SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS + SqueakImageConstants.HIDDEN_ROOT_SLOTS) {
             return false;

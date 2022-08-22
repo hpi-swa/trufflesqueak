@@ -439,7 +439,7 @@ public final class SqueakImageReader {
                 if (obj.needsSqueakClass()) {
                     obj.setSqueakClass(chunk.getSqueakClass());
                 }
-                if (!(obj instanceof ClassObject) && obj.needsSqueakHash()) {
+                if (obj.getSqueakHash() != chunk.getHash()) {
                     obj.setSqueakHash(chunk.getHash());
                 }
                 obj.fillin(chunk);
