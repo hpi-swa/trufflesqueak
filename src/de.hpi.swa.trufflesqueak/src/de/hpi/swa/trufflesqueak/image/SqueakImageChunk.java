@@ -145,6 +145,10 @@ public final class SqueakImageChunk {
         return ObjectHeader.getHash(header);
     }
 
+    public long getHeader() {
+        return header;
+    }
+
     public ClassObject getSqueakClass() {
         if (squeakClass == null) {
             squeakClass = getClassChunk().asClassObject(null);
