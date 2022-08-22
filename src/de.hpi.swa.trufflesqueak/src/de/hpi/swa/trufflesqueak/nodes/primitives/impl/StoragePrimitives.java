@@ -566,7 +566,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 175)
     protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
-        @Specialization
+        /* Cache one class hash (helps String>>#hash). */
+        @SuppressWarnings("unused")
+        @Specialization(guards = "receiver == cachedClass", limit = "1")
+        protected static final long doClassCached(final ClassObject receiver,
+                        @Cached("receiver") final ClassObject cachedClass,
+                        @Cached("doClassUncached(receiver)") final long cachedHash) {
+            return cachedHash;
+        }
+
+        @Specialization(replaces = "doClassCached")
         protected static final long doClassUncached(final ClassObject receiver) {
             receiver.ensureBehaviorHash();
             return receiver.getSqueakHash();
