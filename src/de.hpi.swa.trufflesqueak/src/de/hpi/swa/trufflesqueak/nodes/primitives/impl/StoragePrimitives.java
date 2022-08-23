@@ -18,6 +18,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
@@ -193,6 +194,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newDirect")
         protected final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
                         @Cached final SqueakObjectNewNode newNode) {
@@ -224,6 +226,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
         protected final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
                         @Cached final SqueakObjectNewNode newNode) {
