@@ -16,7 +16,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
 @GenerateUncached
-@ReportPolymorphism
 public abstract class LookupMethodNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 6;
 
@@ -40,6 +39,7 @@ public abstract class LookupMethodNode extends AbstractNode {
         return cachedMethod;
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected final Object doUncached(final ClassObject classObject, final NativeObject selector) {
         final MethodCacheEntry cachedEntry = getContext().findMethodCacheEntry(classObject, selector);
