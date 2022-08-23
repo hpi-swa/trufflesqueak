@@ -178,7 +178,6 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
     private static SqueakImageChunk newFloatChunk(final byte[] data) {
         final SqueakImageChunk chunk = new SqueakImageChunk(
                         null,
-                        image,
                         ObjectHeader.getHeader(0, 3833906, 10, 34),
                         0, // position
                         data // 2 words

@@ -37,7 +37,7 @@ public final class SqueakImageReader {
 
     private final BufferedInputStream stream;
     private final HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>(750000);
-    private final SqueakImageContext image;
+    protected final SqueakImageContext image;
     private final byte[] byteArrayBuffer = new byte[Long.BYTES];
 
     private long oldBaseAddress;
@@ -73,6 +73,7 @@ public final class SqueakImageReader {
     @TruffleBoundary
     public static void load(final SqueakImageContext image) {
         new SqueakImageReader(image).run();
+        System.gc(); // Clean up after image loading
     }
 
     private Object run() {
@@ -257,7 +258,7 @@ public final class SqueakImageReader {
             final int format = SqueakImageConstants.ObjectHeader.getFormat(headerWord);
             objectData = nextObjectData(size, format);
         }
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, headerWord, pos, objectData);
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, headerWord, pos, objectData);
         if (hiddenRootsChunk == null && isHiddenObject(classIndex)) {
             if (freePageList == null) {
                 assert classIndex == SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN && size == SqueakImageConstants.NUM_FREE_LISTS;
