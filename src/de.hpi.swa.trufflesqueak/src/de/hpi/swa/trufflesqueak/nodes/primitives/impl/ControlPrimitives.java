@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
@@ -173,6 +174,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform0Cached")
         protected static final Object perform0(final VirtualFrame frame, final Object receiver, final NativeObject selector,
                         @Cached final SqueakObjectClassNode lookupClassNode,
@@ -196,6 +198,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform1Cached")
         protected static final Object perform1(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1,
                         @Cached final SqueakObjectClassNode lookupClassNode,
@@ -220,6 +223,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform2Cached")
         protected static final Object perform2(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         @Cached final SqueakObjectClassNode lookupClassNode,
@@ -244,6 +248,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform3Cached")
         protected static final Object perform3(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         final Object object3,
@@ -269,6 +274,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform4Cached")
         protected static final Object perform4(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4,
@@ -294,6 +300,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform5Cached")
         protected static final Object perform5(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         final Object object3, final Object object4, final Object object5,
@@ -320,6 +327,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return dispatchNode.executeSend(frame, cachedSelector, lookupResult, rcvrClass, getObjectArrayNode.execute(receiver, arguments));
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performCached")
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments,
                         @Cached final SqueakObjectClassNode lookupClassNode,
@@ -496,6 +504,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return performCached(frame, receiver, arguments, superClass, cachedSelector, lookupMethodNode, dispatchNode);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performCached")
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
                         @Cached final LookupMethodNode lookupMethodNode,
@@ -517,6 +526,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return performCached(frame, target, arguments, superClass, cachedSelector, lookupMethodNode, dispatchNode);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performContextCached")
         protected final Object performContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target, final NativeObject selector,
                         final ArrayObject arguments, final ClassObject superClass,
@@ -683,6 +693,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return primitiveWithArgs(frame, receiver, argumentArray, primitiveNode, toObjectArrayNode);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doPrimitiveWithArgsCached")
         protected final Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
             return primitiveWithArgsSlow(frame, receiver, primitiveIndex, argumentArray);
@@ -703,6 +714,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return primitiveWithArgs(frame, receiver, argumentArray, primitiveNode, toObjectArrayNode);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doPrimitiveWithArgsContextCached")
         protected final Object doPrimitiveWithArgsContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
                         final long primitiveIndex, final ArrayObject argumentArray) {
@@ -1110,6 +1122,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return primitiveNode.executeWithArguments(frame, toObjectArrayNode.execute(target, argumentArray));
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doNamedPrimitiveWithArgsContextCached")
         protected final Object doNamedPrimitiveWithArgsContextUncached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final CompiledCodeObject methodObject,
                         final Object target, final ArrayObject argumentArray) {

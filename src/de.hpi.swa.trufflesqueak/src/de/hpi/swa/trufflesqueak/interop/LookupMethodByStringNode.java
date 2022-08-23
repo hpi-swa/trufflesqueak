@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -47,6 +48,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
         return doUncached(classObject, selector, AbstractPointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached());
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected static final Object doUncached(final ClassObject classObject, final String selector,
                     /**

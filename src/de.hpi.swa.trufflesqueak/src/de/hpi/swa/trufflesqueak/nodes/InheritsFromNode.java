@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -36,6 +37,7 @@ public abstract class InheritsFromNode extends AbstractNode {
         return doUncached(receiver, superClass, SqueakObjectClassNode.getUncached());
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected static final boolean doUncached(final Object receiver, final ClassObject superClass,
                     @Cached final SqueakObjectClassNode classNode) {

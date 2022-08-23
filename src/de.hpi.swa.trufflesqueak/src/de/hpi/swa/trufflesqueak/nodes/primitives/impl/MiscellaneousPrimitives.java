@@ -18,6 +18,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -593,6 +594,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @TruffleBoundary
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doGetCached")
         protected final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final long index) {
             return getContext().getSystemAttribute((int) index);

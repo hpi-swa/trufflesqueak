@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -70,6 +71,7 @@ public abstract class LookupSelectorNode extends AbstractNode {
         return list.toArray(new Assumption[0]);
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected final Object doUncached(final ClassObject receiverClass) {
         final MethodCacheEntry cachedEntry = getContext().findMethodCacheEntry(receiverClass, selector);

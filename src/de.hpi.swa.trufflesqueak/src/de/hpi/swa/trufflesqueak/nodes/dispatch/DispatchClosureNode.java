@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
@@ -28,6 +29,7 @@ public abstract class DispatchClosureNode extends AbstractNode {
         return directCallNode.call(arguments);
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doDirect")
     protected static final Object doIndirect(final BlockClosureObject closure, final Object[] arguments,
                     @Cached final IndirectCallNode indirectCallNode) {

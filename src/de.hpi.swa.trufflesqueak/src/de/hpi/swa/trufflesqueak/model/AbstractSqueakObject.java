@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -82,6 +83,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         // Truffle libraries?
 
         @TruffleBoundary
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doSendCached")
         protected static final Object doSendGeneric(final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
                         @Cached final LookupMethodNode lookupNode,
