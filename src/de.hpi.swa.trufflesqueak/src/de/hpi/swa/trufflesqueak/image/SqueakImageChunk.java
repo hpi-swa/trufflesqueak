@@ -51,7 +51,7 @@ public final class SqueakImageChunk {
     }
 
     public static SqueakImageChunk createDummyChunk(final SqueakImageContext image, final Object[] pointers) {
-        final SqueakImageChunk chunk = new SqueakImageChunk(null, 0, 0, new byte[0]);
+        final SqueakImageChunk chunk = new SqueakImageChunk(SqueakImageReader.createDummy(image), 0, 0, new byte[0]);
         chunk.pointers = pointers;
         return chunk;
     }

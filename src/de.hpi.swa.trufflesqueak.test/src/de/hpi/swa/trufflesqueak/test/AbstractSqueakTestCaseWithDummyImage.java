@@ -49,8 +49,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         final ClassObject classBindingClass = setupMeta(new ClassObject(image), new Object[]{
                         bindingClass, null, 2L, null, null, null, asByteSymbol("ClassBinding"), null, null, null, null});
         nilClassBinding = new PointersObject(image, classBindingClass, null);
-        nilClassBinding.fillin(SqueakImageChunk.createDummyChunk(image, new Object[]{
-                        asByteSymbol("UndefinedObject"), image.nilClass}));
+        nilClassBinding.fillin(SqueakImageChunk.createDummyChunk(image, new Object[]{asByteSymbol("UndefinedObject"), image.nilClass}));
 
         image.setHiddenRoots(ArrayObject.createEmptyStrategy(image, image.arrayClass, 0));
         context.enter();

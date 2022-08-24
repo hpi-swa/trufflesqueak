@@ -33,6 +33,8 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
+    private static final byte[] EMPTY_BYTES = new byte[0];
+
     protected SqueakImageChunk hiddenRootsChunk;
 
     private final BufferedInputStream stream;
@@ -45,7 +47,6 @@ public final class SqueakImageReader {
     private long firstSegmentSize;
     private int position;
     private long currentAddressSwizzle;
-    private final byte[] emptyBytes = new byte[0];
 
     private SqueakImageChunk freePageList;
 
@@ -58,12 +59,16 @@ public final class SqueakImageReader {
         try {
             inputStream = new BufferedInputStream(truffleFile.newInputStream());
         } catch (final IOException e) {
-            if (!image.isTesting()) {
-                throw SqueakException.create(e);
-            }
+            throw SqueakException.create(e);
         }
         stream = inputStream;
         this.image = image;
+    }
+
+    /* For testing purposes only */
+    private SqueakImageReader(final SqueakImageContext image, final BufferedInputStream stream) {
+        this.image = image;
+        this.stream = stream;
     }
 
     /*
@@ -74,6 +79,10 @@ public final class SqueakImageReader {
     public static void load(final SqueakImageContext image) {
         new SqueakImageReader(image).run();
         System.gc(); // Clean up after image loading
+    }
+
+    public static SqueakImageReader createDummy(final SqueakImageContext image) {
+        return new SqueakImageReader(image, null);
     }
 
     private Object run() {
@@ -129,7 +138,7 @@ public final class SqueakImageReader {
         final int dataSize = paddedObjectSize - padding;
         if (size == 0) {
             skipBytes(SqueakImageConstants.WORD_SIZE); // skip trailing alignment word
-            return emptyBytes;
+            return EMPTY_BYTES;
         }
         final byte[] bytes = new byte[dataSize];
         readBytes(bytes, dataSize);

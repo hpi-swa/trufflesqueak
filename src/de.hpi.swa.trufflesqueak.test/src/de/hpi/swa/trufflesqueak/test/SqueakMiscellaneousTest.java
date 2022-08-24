@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
+import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -177,7 +178,7 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
 
     private static SqueakImageChunk newFloatChunk(final byte[] data) {
         final SqueakImageChunk chunk = new SqueakImageChunk(
-                        null,
+                        SqueakImageReader.createDummy(image),
                         ObjectHeader.getHeader(0, 3833906, 10, 34),
                         0, // position
                         data // 2 words
