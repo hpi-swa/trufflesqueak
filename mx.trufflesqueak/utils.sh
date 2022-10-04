@@ -217,20 +217,7 @@ set-up-dependencies() {
   shallow-clone-graal
   download-trufflesqueak-icon
   download-trufflesqueak-test-image
-
-  case "${java_version}" in
-    "java11")
-      set-up-labsjdk labsjdk-ce-11
-      ;;
-    "java17")
-      set-up-labsjdk labsjdk-ce-17
-      ;;
-    *)
-      echo "Failed to set up ${java_version}"
-      exit 42
-      ;;
-  esac
-
+  set-up-labsjdk "labsjdk-ce-${java_version:4}"
   set-env "INSTALLABLE_TARGET" "$(installable-filename "${java_version}")"
 }
 

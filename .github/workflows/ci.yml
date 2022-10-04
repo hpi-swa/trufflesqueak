@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
-        java: [11, 17]
+        java: [11, 17, 19]
     env:
       RUN_TESTS: "${{ matrix.os == 'ubuntu-20.04' || matrix.java == 17 }}"
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' && matrix.java == 17 }}"
