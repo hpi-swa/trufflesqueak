@@ -12,11 +12,9 @@ import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -24,17 +22,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -64,21 +54,6 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long currentTimeMillis() {
         return System.currentTimeMillis();
-    }
-
-    public static List<String> exec(final String command, final long timeoutSeconds) {
-        try {
-            final Process process = Runtime.getRuntime().exec(command);
-            final List<String> lines = new ArrayList<>();
-            final StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), lines::add);
-            final Future<?> future = Executors.newSingleThreadExecutor().submit(streamGobbler);
-            final int exitCode = process.waitFor();
-            assert exitCode == 0;
-            future.get(timeoutSeconds, TimeUnit.SECONDS);
-            return lines;
-        } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
-            return null;
-        }
     }
 
     @TruffleBoundary
@@ -346,20 +321,5 @@ public final class MiscUtils {
     @TruffleBoundary
     public static String toString(final Object value) {
         return value.toString();
-    }
-
-    private static final class StreamGobbler implements Runnable {
-        private InputStream inputStream;
-        private Consumer<String> consumer;
-
-        private StreamGobbler(final InputStream inputStream, final Consumer<String> consumer) {
-            this.inputStream = inputStream;
-            this.consumer = consumer;
-        }
-
-        @Override
-        public void run() {
-            new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer);
-        }
     }
 }
