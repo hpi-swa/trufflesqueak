@@ -834,7 +834,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 36: return 0L; // millisecond clock when current IGC/FGC completed (read-only)
                 case 37: return 0L; // number of marked objects for Roots of the world, not including Root Table entries for current IGC/FGC (read-only)
                 case 38: return 0L; // milliseconds taken by current IGC (read-only)
-                case 39: return MiscUtils.getObjectPendingFinalizationCount(); // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
+                case 39: return 0L; // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 8L; // BytesPerOop for this image
                 case 41: return (long) image.imageFormat; // imageFormatVersion for the VM
                 case 42: return 50L; // number of stack pages in use (see SmalltalkImage>>isRunningCog)

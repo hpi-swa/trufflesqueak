@@ -134,11 +134,6 @@ public final class MiscUtils {
         return System.getProperty("java.home");
     }
 
-    @TruffleBoundary
-    public static long getObjectPendingFinalizationCount() {
-        return ManagementFactory.getMemoryMXBean().getObjectPendingFinalizationCount();
-    }
-
     public static SecureRandom getSecureRandom() {
         /* SecureRandom must be initialized at (native image) runtime. */
         if (random == null) {
