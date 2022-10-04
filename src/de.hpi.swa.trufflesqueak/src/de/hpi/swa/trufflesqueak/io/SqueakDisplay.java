@@ -120,7 +120,7 @@ public final class SqueakDisplay {
 
     private static final class SqueakDisplayCanvas extends Component {
         private static final long serialVersionUID = 1L;
-        private BufferedImage bufferedImage;
+        private transient BufferedImage bufferedImage;
 
         @Override
         public boolean isOpaque() {

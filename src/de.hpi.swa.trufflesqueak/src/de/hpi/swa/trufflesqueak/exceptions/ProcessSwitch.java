@@ -14,7 +14,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 public final class ProcessSwitch extends ControlFlowException {
     private static final long serialVersionUID = 1L;
-    private final ContextObject newContext;
+    private final transient ContextObject newContext;
 
     private ProcessSwitch(final ContextObject newContext) {
         assert !newContext.isDead() : "Cannot switch to terminated context";

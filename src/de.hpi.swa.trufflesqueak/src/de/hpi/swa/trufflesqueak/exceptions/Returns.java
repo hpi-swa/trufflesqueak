@@ -15,7 +15,7 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 public final class Returns {
     private abstract static class AbstractReturn extends ControlFlowException {
         private static final long serialVersionUID = 1L;
-        protected final Object returnValue;
+        protected final transient Object returnValue;
 
         private AbstractReturn(final Object result) {
             assert result != null : "Unexpected `null` value";
@@ -29,7 +29,7 @@ public final class Returns {
 
     public static final class NonLocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        private final Object targetContextOrMarker;
+        private final transient Object targetContextOrMarker;
 
         public NonLocalReturn(final Object returnValue, final Object targetContextOrMarker) {
             super(returnValue);
@@ -54,8 +54,8 @@ public final class Returns {
 
     public static final class NonVirtualReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        private final ContextObject targetContext;
-        private final ContextObject currentContext;
+        private final transient ContextObject targetContext;
+        private final transient ContextObject currentContext;
 
         public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
             super(returnValue);

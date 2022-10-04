@@ -89,7 +89,7 @@ public final class SqueakExceptions {
     @ExportLibrary(InteropLibrary.class)
     public static final class SqueakSyntaxError extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
-        private final SourceSection sourceSection;
+        private final transient SourceSection sourceSection;
 
         public SqueakSyntaxError(final PointersObject syntaxErrorNotification) {
             super(((NativeObject) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.ERROR_MESSAGE)).asStringUnsafe());
@@ -149,7 +149,7 @@ public final class SqueakExceptions {
     @ExportLibrary(value = InteropLibrary.class, delegateTo = "squeakException")
     public static final class SqueakExceptionWrapper extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
-        protected final PointersObject squeakException;
+        protected final transient PointersObject squeakException;
 
         public SqueakExceptionWrapper(final PointersObject exception) {
             squeakException = exception;
