@@ -185,7 +185,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         @Cached final ConvertToSqueakNode convertNode) {
-            final TruffleContext innerContext = getContext().env.newContextBuilder().build();
+            final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
             final Object p = innerContext.enter(this);
             try {
                 return convertNode.executeConvert(evalString(null, languageIdOrMimeTypeObj, sourceObject));
@@ -233,7 +233,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
                         @Cached final ConvertToSqueakNode convertNode) {
-            final TruffleContext innerContext = getContext().env.newContextBuilder().build();
+            final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
             final Object p = innerContext.enter(null);
             try {
                 return convertNode.executeConvert(evalFile(languageIdOrMimeTypeObj, path));
