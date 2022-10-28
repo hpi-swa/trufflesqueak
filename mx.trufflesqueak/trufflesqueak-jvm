@@ -1,2 +1,0 @@
-DEFAULT_DYNAMIC_IMPORTS=/trufflesqueak,/vm
-COMPONENTS=nfi-libffi,sdk,st,tfl

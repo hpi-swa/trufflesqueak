@@ -222,9 +222,6 @@ suite = {
                 "README_TRUFFLESQUEAK.md": "file:README.md",
                 "lib/": "dependency:de.hpi.swa.trufflesqueak.ffi.native",
                 "native-image.properties": "file:mx.trufflesqueak/native-image.properties",
-                "bin/" : [
-                    "file:mx.trufflesqueak/launchers/<cmd:trufflesqueak>",
-                ],
             },
             "maven": False,
         },
@@ -241,6 +238,16 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
             ],
+        },
+
+        "TRUFFLESQUEAK_LAUNCHER_SCRIPTS": {
+            "native": True,
+            "platformDependent": True,
+            "description": "TruffleSqueak home distribution",
+            "layout": {
+                "bin/": ["file:mx.trufflesqueak/launchers/<cmd:trufflesqueak>"],
+            },
+            "maven": False,
         },
 
         "TRUFFLESQUEAK_SHARED": {

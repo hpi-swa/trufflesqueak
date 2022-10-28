@@ -19,18 +19,16 @@ if not exist "%tsl_exe%" (
 @REM Increase stack size (`-XX:ThreadStackSize=64M` not working)
 set extra_args=--vm.Xss64M
 
-echo %* | findstr \-\-native >nul || (
-  @REM Default to polyglot launcher in JVM mode
-  set extra_args=%extra_args% --jvm --polyglot
-  @REM Make ReflectionUtils work
-  set extra_args=%extra_args% --vm.-add-exports=java.base/jdk.internal.module=ALL-UNNAMED
-  @REM Make Truffle.getRuntime() accessible for VM introspection
-  set extra_args=%extra_args% --vm.-add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED
-  @REM Enable access to HostObject and others
-  set extra_args=%extra_args% --vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED
-  @REM Enable access to Truffle's SourceSection (for retrieving sources through interop)
-  set extra_args=%extra_args% --vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED
-)
+@REM Default to polyglot launcher in JVM mode
+set extra_args=%extra_args% --jvm --polyglot
+@REM Make ReflectionUtils work
+set extra_args=%extra_args% --vm.-add-exports=java.base/jdk.internal.module=ALL-UNNAMED
+@REM Make Truffle.getRuntime() accessible for VM introspection
+set extra_args=%extra_args% --vm.-add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED
+@REM Enable access to HostObject and others
+set extra_args=%extra_args% --vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED
+@REM Enable access to Truffle's SourceSection (for retrieving sources through interop)
+set extra_args=%extra_args% --vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED
 
 if "%VERBOSE_GRAALVM_LAUNCHERS%"=="true" echo on
 

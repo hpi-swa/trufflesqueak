@@ -180,32 +180,32 @@ def _enable_local_compression():
 
 _enable_local_compression()
 
-mx_sdk_vm.register_vm_config('trufflesqueak', ['nfi', 'nfi-libffi', 'sdk', 'st', 'tfl'],
-                                _SUITE, env_file='trufflesqueak-jvm')
-mx_sdk_vm.register_vm_config('trufflesqueak-svm', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'svm', 'svmnfi', 'svmsl', 'tfl', 'tflm'],
-                                _SUITE, env_file='trufflesqueak-svm')
+mx_sdk_vm.register_vm_config('trufflesqueak-jar', ['sdk', 'st', 'tfl'],
+                                _SUITE, env_file='trufflesqueak-jar')
+mx_sdk_vm.register_vm_config('trufflesqueak-standalone', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'tfl'],
+                                _SUITE, env_file='trufflesqueak-standalone')
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_SUITE,
     name='TruffleSqueak',
     short_name='st',
     dir_name=LANGUAGE_ID,
+    standalone_dir_name='trufflesqueak-<version>-<graalvm_os>-<arch>',
     license_files=[],  # already included in `TRUFFLESQUEAK_HOME`.
     third_party_license_files=[],
     dependencies=['Truffle'],
+    standalone_dependencies={},
     truffle_jars=[
         'trufflesqueak:TRUFFLESQUEAK',
         'trufflesqueak:TRUFFLESQUEAK_SHARED',
     ],
-    support_distributions=['trufflesqueak:TRUFFLESQUEAK_HOME'],
-    provided_executables=[
-        'bin/<cmd:trufflesqueak>',
-    ],
+    support_distributions=['trufflesqueak:TRUFFLESQUEAK_HOME'] + [] if _SVM else ['trufflesqueak:TRUFFLESQUEAK_LAUNCHER_SCRIPTS'],
+    provided_executables=[] if _SVM else ['bin/<cmd:trufflesqueak>'],
     library_configs=[
         mx_sdk.LanguageLibraryConfig(
             language=LANGUAGE_ID,
             destination='lib/<lib:%svm>' % LANGUAGE_ID,
-            launchers=['bin/<exe:trufflesqueak-launcher>'],
+            launchers=['bin/<exe:trufflesqueak>'] if _SVM else ['bin/<exe:trufflesqueak-launcher>'],
             jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
             build_args=[

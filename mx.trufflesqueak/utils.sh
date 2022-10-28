@@ -41,21 +41,31 @@ add-path() {
   echo "$(resolve-path "$1")" >> $GITHUB_PATH
 }
 
-build-component() {
-  local env_name=$1
-  local java_version=$2
-  local target=$3
-  local graalvm_home="$(mx --env "${env_name}" graalvm-home)"
+build-installable() {
+  local java_version=$1
+  local graalvm_home="$(mx --env trufflesqueak-jar graalvm-home)"
+  local distro_name="GRAALVM_TRUFFLESQUEAK_JAR_JAVA${java_version}"
+  local component_name="SMALLTALK_INSTALLABLE_JAVA${java_version}"
 
-  local distro_name="GRAALVM_TRUFFLESQUEAK${TS_INFIX}_JAVA${java_version}"
-  local component_name="SMALLTALK_INSTALLABLE${TS_INFIX}_JAVA${java_version}"
-
-  mx --env "${env_name}" --no-download-progress build --dependencies "${component_name},${distro_name}"
-  cp $(mx --env "${env_name}" paths "${component_name}") "${target}"
+  mx --env trufflesqueak-jar --no-download-progress build --dependencies "${component_name},${distro_name}"
+  cp $(mx --env trufflesqueak-jar paths "${component_name}") "${INSTALLABLE_TARGET}"
 
   add-path "${graalvm_home}/bin"
   set-env "GRAALVM_HOME" "$(resolve-path "${graalvm_home}")"
   echo "[${graalvm_home} set as \$GRAALVM_HOME]"
+}
+
+build-standalone() {
+  local java_version=$1
+  local distro_name="GRAALVM_TRUFFLESQUEAK_STANDALONE_JAVA${java_version}"
+  local component_name="SMALLTALK_STANDALONE_SVM_JAVA${java_version}"
+
+  mx --env trufflesqueak-standalone --no-download-progress build --dependencies "${component_name},${distro_name}"
+  cp "$(mx --env trufflesqueak-standalone paths "${component_name}")" "${STANDALONE_TARGET}"
+
+  local standalone_home="$(mx --env trufflesqueak-standalone standalone-home smalltalk)"
+  add-path "${standalone_home}/bin"
+  echo "[${standalone_home}/bin added to \$PATH]"
 }
 
 deploy-asset() {
@@ -68,6 +78,20 @@ deploy-asset() {
     exit 0
   fi
   local filename=$1
+  if [[ "${filename}" == *.tar ]]; then
+    echo "Compressing tarball..."
+    gzip "${filename}"
+    filename="${filename}.gz"
+  elif [[ "${filename}" == *.zip ]]; then
+    echo "Compressing zip..."
+    tmp_dir="$(mktemp -d)"
+    unzip "${filename}" -d "${tmp_dir}"
+    rm "${filename}"
+    pushd "${tmp_dir}" > /dev/null
+    zip -r "${filename}" ./*
+    popd > /dev/null
+  fi
+
   local auth="Authorization: token $2"
   local release_id
 
@@ -170,19 +194,27 @@ download-cuis-test-image() {
   echo "[Cuis test image (${DEP_CUIS_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
-format-native-image-config() {
-  readonly NI_CONFIG_BASE="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/META-INF/native-image"
-  for f in "${NI_CONFIG_BASE}/"*.json; do
-    underscore --in "${f}" --out "${f}" --wrapwidth 80 print
-  done
-}
-
-installable-filename() {
+filename-installable() {
   local java_version=$1
   local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
   echo "trufflesqueak-installable-${java_version}-${OS_NAME}-${OS_ARCH}-${git_description}.jar"
+}
+
+filename-standalone() {
+  local git_describe=$(git describe --tags --always)
+  local git_short_commit=$(git log -1 --format="%h")
+  local git_description="${git_describe:-${git_short_commit}}"
+  local file_extension="tar" && [[ "${OS_NAME}" == "windows" ]] && file_extension="zip"
+  echo "trufflesqueak-${git_description}-${OS_NAME}-${OS_ARCH}.${file_extension}"
+}
+
+format-native-image-config() {
+  readonly NI_CONFIG_BASE="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/META-INF/native-image"
+  for f in "${NI_CONFIG_BASE}/"*.json; do
+    underscore --in "${f}" --out "${f}" --wrapwidth 80 print
+  done
 }
 
 resolve-path() {
@@ -201,12 +233,15 @@ set-env() {
 
 set-up-dependencies() {
   local java_version=$1
+  local is_standalone=$2
 
-  case "$(uname -s)" in
-    "Linux")
-      sudo apt-get update --quiet --yes && sudo apt-get install --quiet --yes libz-dev libxi-dev libxtst-dev libxrender-dev libfreetype6-dev
-      ;;
-  esac
+  if [[ "${is_standalone}" == "true" ]]; then
+    case "$(uname -s)" in
+      "Linux")
+        sudo apt-get update --quiet --yes && sudo apt-get install --quiet --yes libz-dev libxi-dev libxtst-dev libxrender-dev libfreetype6-dev
+        ;;
+    esac
+  fi
 
   # Repository was shallow copied and Git did not fetch tags, so fetch the tag
   # of the commit (if any) to make it available for other Git operations.
@@ -215,10 +250,14 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
+  set-up-labsjdk "labsjdk-ce-${java_version:4}"
   download-trufflesqueak-icon
   download-trufflesqueak-test-image
-  set-up-labsjdk "labsjdk-ce-${java_version:4}"
-  set-env "INSTALLABLE_TARGET" "$(installable-filename "${java_version}")"
+  if [[ "${is_standalone}" == "true" ]]; then
+    set-env "STANDALONE_TARGET" "$(filename-standalone "${java_version}")"
+  else
+    set-env "INSTALLABLE_TARGET" "$(filename-installable "${java_version}")"
+  fi
 }
 
 set-up-labsjdk() {
