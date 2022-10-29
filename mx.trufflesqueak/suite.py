@@ -24,7 +24,7 @@ suite = {
         "test_image_tag": "21.1.0",
     },
 
-    "release": False,
+    "release": True,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
 
@@ -48,7 +48,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "release/graal-vm/22.3",
+            "version": "vm-22.3.0",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
