@@ -82,15 +82,8 @@ deploy-asset() {
     echo "Compressing tarball..."
     gzip "${filename}"
     filename="${filename}.gz"
-  elif [[ "${filename}" == *.zip ]]; then
-    echo "Compressing zip..."
-    tmp_dir="$(mktemp -d)"
-    unzip "${filename}" -d "${tmp_dir}"
-    rm "${filename}"
-    pushd "${tmp_dir}" > /dev/null
-    zip -r "${filename}" ./*
-    popd > /dev/null
   fi
+  # zip files are always compressed because mx_trufflesqueak.py forces localCompress
 
   local auth="Authorization: token $2"
   local release_id
