@@ -102,24 +102,9 @@ public final class UnsafeUtils {
         return UNSAFE.getDouble(object, address);
     }
 
-    public static double getDoubleFromBytes(final byte[] bytes, final long index) {
-        assert 0 <= index && index <= bytes.length;
-        return UNSAFE.getDouble(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-    }
-
     public static double getDoubleFromLongs(final long[] array, final long index) {
         assert 0 <= index && index < array.length;
         return UNSAFE.getDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
-    }
-
-    public static float getFloatFromBytes(final byte[] bytes, final long index) {
-        assert 0 <= index && index <= bytes.length;
-        return UNSAFE.getFloat(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-    }
-
-    public static int getInt(final byte[] bytes, final long index) {
-        assert 0 <= index && index * Integer.BYTES < bytes.length;
-        return UNSAFE.getInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Integer.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static int getInt(final int[] storage, final long index) {
@@ -131,20 +116,6 @@ public final class UnsafeUtils {
         return UNSAFE.getInt(object, address);
     }
 
-    public static int getIntFromBytes(final byte[] bytes, final long index) {
-        assert 0 <= index && index <= bytes.length;
-        return UNSAFE.getInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-    }
-
-    public static int getIntReversed(final byte[] bytes, final long index) {
-        return Integer.reverseBytes(getInt(bytes, index));
-    }
-
-    public static long getLong(final byte[] bytes, final long index) {
-        assert 0 <= index && index * Long.BYTES < bytes.length;
-        return UNSAFE.getLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Long.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-    }
-
     public static long getLong(final long[] storage, final long index) {
         assert 0 <= index && index < storage.length;
         return UNSAFE.getLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
@@ -152,11 +123,6 @@ public final class UnsafeUtils {
 
     public static long getLongAt(final AbstractPointersObject object, final long address) {
         return UNSAFE.getLong(object, address);
-    }
-
-    public static long getLongAtByteIndex(final byte[] bytes, final long index) {
-        assert 0 <= index && index < bytes.length - Long.BYTES;
-        return UNSAFE.getLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static Object getObject(final Object[] storage, final long index) {
@@ -168,11 +134,6 @@ public final class UnsafeUtils {
         return UNSAFE.getObject(object, address);
     }
 
-    public static short getShort(final byte[] bytes, final long index) {
-        assert 0 <= index && index * Short.BYTES < bytes.length;
-        return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Short.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-    }
-
     public static short getShort(final int[] ints, final long index) {
         assert 0 <= index && index * Short.BYTES / Integer.BYTES < ints.length;
         return UNSAFE.getShort(ints, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
@@ -180,12 +141,8 @@ public final class UnsafeUtils {
 
     public static short getShort(final short[] storage, final long index) {
         assert 0 <= index && index < storage.length;
-        return UNSAFE.getShort(storage, Unsafe.ARRAY_SHORT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
-    }
 
-    public static short getShortFromBytes(final byte[] bytes, final long index) {
-        assert 0 <= index && index <= bytes.length;
-        return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        return UNSAFE.getShort(storage, Unsafe.ARRAY_SHORT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
     }
 
     private static Unsafe initUnsafe() {
@@ -241,23 +198,8 @@ public final class UnsafeUtils {
         UNSAFE.putDouble(object, address, value);
     }
 
-    public static void putDoubleIntoBytes(final byte[] bytes, final long index, final double value) {
-        assert 0 <= index && index <= bytes.length;
-        UNSAFE.putDouble(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
-    }
-
     public static void putDoubleIntoLongs(final long[] array, final long index, final double value) {
         UNSAFE.putDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
-    }
-
-    public static void putFloatIntoBytes(final byte[] bytes, final long index, final float value) {
-        assert 0 <= index && index <= bytes.length;
-        UNSAFE.putFloat(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
-    }
-
-    public static void putInt(final byte[] bytes, final long index, final int value) {
-        assert 0 <= index && index * Short.BYTES < bytes.length;
-        UNSAFE.putInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Integer.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putInt(final int[] storage, final long index, final int value) {
@@ -269,20 +211,6 @@ public final class UnsafeUtils {
         UNSAFE.putInt(object, offset, value);
     }
 
-    public static void putIntIntoBytes(final byte[] bytes, final long index, final int value) {
-        assert 0 <= index && index <= bytes.length;
-        UNSAFE.putInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
-    }
-
-    public static void putIntReversed(final byte[] bytes, final long index, final int value) {
-        putInt(bytes, index, Integer.reverseBytes(value));
-    }
-
-    public static void putLong(final byte[] bytes, final long index, final long value) {
-        assert 0 <= index && index * Integer.BYTES < bytes.length;
-        UNSAFE.putLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Long.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
-    }
-
     public static void putLong(final long[] storage, final long index, final long value) {
         assert 0 <= index && index < storage.length;
         UNSAFE.putLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
@@ -292,11 +220,6 @@ public final class UnsafeUtils {
         UNSAFE.putLong(object, address, value);
     }
 
-    public static void putLongIntoBytes(final byte[] bytes, final long index, final long value) {
-        assert 0 <= index && index <= bytes.length;
-        UNSAFE.putLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
-    }
-
     public static void putObject(final Object[] storage, final long index, final Object value) {
         assert 0 <= index && index < storage.length;
         UNSAFE.putObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE, value);
@@ -304,11 +227,6 @@ public final class UnsafeUtils {
 
     public static void putObjectAt(final AbstractPointersObject object, final long address, final Object value) {
         UNSAFE.putObject(object, address, value);
-    }
-
-    public static void putShort(final byte[] bytes, final long index, final short value) {
-        assert 0 <= index && index * Short.BYTES < bytes.length;
-        UNSAFE.putShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Short.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putShort(final int[] ints, final long index, final short value) {
@@ -324,11 +242,6 @@ public final class UnsafeUtils {
     public static RuntimeException throwException(final Throwable e) {
         UNSAFE.throwException(e);
         return CompilerDirectives.shouldNotReachHere();
-    }
-
-    public static void putShortIntoBytes(final byte[] bytes, final long index, final short value) {
-        assert 0 <= index && index <= bytes.length;
-        UNSAFE.putShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static byte[] toBytes(final int[] ints) {

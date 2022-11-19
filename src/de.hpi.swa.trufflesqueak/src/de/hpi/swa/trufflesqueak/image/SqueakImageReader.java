@@ -30,7 +30,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakImageReader {
     private static final byte[] EMPTY_BYTES = new byte[0];
@@ -119,17 +119,17 @@ public final class SqueakImageReader {
 
     private short nextShort() {
         position += readBytes(byteArrayBuffer, Short.BYTES);
-        return UnsafeUtils.getShort(byteArrayBuffer, 0);
+        return VarHandleUtils.getShort(byteArrayBuffer, 0);
     }
 
     private int nextInt() {
         position += readBytes(byteArrayBuffer, Integer.BYTES);
-        return UnsafeUtils.getInt(byteArrayBuffer, 0);
+        return VarHandleUtils.getInt(byteArrayBuffer, 0);
     }
 
     private long nextLong() {
         position += readBytes(byteArrayBuffer, Long.BYTES);
-        return UnsafeUtils.getLong(byteArrayBuffer, 0);
+        return VarHandleUtils.getLong(byteArrayBuffer, 0);
     }
 
     private byte[] nextObjectData(final int size, final int format) {

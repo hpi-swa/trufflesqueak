@@ -24,7 +24,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakImageChunk {
     private final SqueakImageReader reader;
@@ -244,7 +244,7 @@ public final class SqueakImageChunk {
     }
 
     public long getWord(final int index) {
-        return UnsafeUtils.getLong(bytes, index);
+        return VarHandleUtils.getLong(bytes, index);
     }
 
     public int getWordSize() {

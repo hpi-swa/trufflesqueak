@@ -36,7 +36,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakImageWriter {
     private final SqueakImageContext image;
@@ -213,7 +213,7 @@ public final class SqueakImageWriter {
         try {
             final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ);
             try (SeekableByteChannel channel = truffleFile.newByteChannel(options)) {
-                UnsafeUtils.putLong(byteArrayBuffer, 0, position - SqueakImageConstants.IMAGE_HEADER_SIZE);
+                VarHandleUtils.putLong(byteArrayBuffer, 0, position - SqueakImageConstants.IMAGE_HEADER_SIZE);
                 channel.position(SqueakImageConstants.IMAGE_HEADER_MEMORY_SIZE_POSITION);
                 channel.write(ByteBuffer.wrap(byteArrayBuffer));
                 channel.position(SqueakImageConstants.IMAGE_HEADER_FIRST_FRAGMENT_SIZE_POSITION);
@@ -305,17 +305,17 @@ public final class SqueakImageWriter {
     }
 
     public void writeShort(final short value) {
-        UnsafeUtils.putShort(byteArrayBuffer, 0, value);
+        VarHandleUtils.putShort(byteArrayBuffer, 0, value);
         position += writeBytesFromBuffer(Short.BYTES);
     }
 
     public void writeInt(final int value) {
-        UnsafeUtils.putInt(byteArrayBuffer, 0, value);
+        VarHandleUtils.putInt(byteArrayBuffer, 0, value);
         position += writeBytesFromBuffer(Integer.BYTES);
     }
 
     public void writeLong(final long value) {
-        UnsafeUtils.putLong(byteArrayBuffer, 0, value);
+        VarHandleUtils.putLong(byteArrayBuffer, 0, value);
         position += writeBytesFromBuffer(Long.BYTES);
     }
 

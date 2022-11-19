@@ -56,7 +56,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimi
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.AbstractPrimCalloutToFFINode;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
@@ -324,7 +324,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIDoubleAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
         protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong) {
-            return UnsafeUtils.getDoubleFromBytes(byteArray.getByteStorage(), byteOffsetLong);
+            return VarHandleUtils.getDoubleFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong);
         }
     }
 
@@ -333,7 +333,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIDoubleAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
         protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong, final double value) {
-            UnsafeUtils.putDoubleIntoBytes(byteArray.getByteStorage(), byteOffsetLong, value);
+            VarHandleUtils.putDoubleIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong, value);
             return value;
         }
     }
@@ -343,7 +343,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIFloatAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
         protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong) {
-            return UnsafeUtils.getFloatFromBytes(byteArray.getByteStorage(), byteOffsetLong);
+            return VarHandleUtils.getFloatFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong);
         }
     }
 
@@ -352,7 +352,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIFloatAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
         protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong, final double value) {
-            UnsafeUtils.putFloatIntoBytes(byteArray.getByteStorage(), byteOffsetLong, (float) value);
+            VarHandleUtils.putFloatIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong, (float) value);
             return value;
         }
     }
@@ -369,7 +369,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "!isSigned"})
         protected static final long doAt2Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return Short.toUnsignedLong(UnsafeUtils.getShortFromBytes(byteArray.getByteStorage(), byteOffsetLong - 1));
+            return Short.toUnsignedLong(VarHandleUtils.getShortFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1));
         }
 
         @SuppressWarnings("unused")
@@ -381,13 +381,13 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned"})
         protected static final long doAt4Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return Integer.toUnsignedLong(UnsafeUtils.getIntFromBytes(byteArray.getByteStorage(), byteOffsetLong - 1));
+            return Integer.toUnsignedLong(VarHandleUtils.getIntFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "isSigned"})
         protected static final long doAt8Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return UnsafeUtils.getLongAtByteIndex(byteArray.getByteStorage(), (int) byteOffsetLong - 1);
+            return VarHandleUtils.getLongFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1);
         }
 
         @SuppressWarnings("unused")
@@ -436,7 +436,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_2)"})
         protected static final Object doAtPut2Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            UnsafeUtils.putShortIntoBytes(byteArray.getByteStorage(), byteOffsetLong - 1, (short) value);
+            VarHandleUtils.putShortIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, (short) value);
             return value;
         }
 
@@ -449,7 +449,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_4)"})
         protected static final Object doAtPut4Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            UnsafeUtils.putIntIntoBytes(byteArray.getByteStorage(), byteOffsetLong - 1, (int) value);
+            VarHandleUtils.putIntIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, (int) value);
             return value;
         }
 
@@ -483,7 +483,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned", "value >= 0"})
         protected static final Object doAtPut8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            UnsafeUtils.putLongIntoBytes(byteArray.getByteStorage(), byteOffsetLong - 1, value);
+            VarHandleUtils.putLongIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, value);
             return value;
         }
 

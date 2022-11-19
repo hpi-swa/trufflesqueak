@@ -51,7 +51,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final List<AttributeDescriptor<? extends Comparable<?>>> ENTRY_ATTRIBUTES = Arrays.asList(
@@ -481,7 +481,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final long readInts = readBytes / Integer.BYTES;
             // TODO: could use UnsafeUtils.copyMemory here?
             for (int index = 0; index < readInts; index++) {
-                target.setInt(startIndex - 1 + index, UnsafeUtils.getInt(bytes, index));
+                target.setInt(startIndex - 1 + index, VarHandleUtils.getInt(bytes, index));
             }
             return Math.max(readInts, 0L); // `read` can be `-1`, Squeak expects zero.
         }
@@ -652,7 +652,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final int intsLength = ints.length;
             final byte[] bytes = new byte[intsLength * Integer.BYTES];
             for (int i = 0; i < intsLength; i++) {
-                UnsafeUtils.putIntReversed(bytes, i, ints[i]);
+                VarHandleUtils.putIntReversed(bytes, i, ints[i]);
             }
             return fileWriteFromAt(fd, count, bytes, startIndex, 4);
         }

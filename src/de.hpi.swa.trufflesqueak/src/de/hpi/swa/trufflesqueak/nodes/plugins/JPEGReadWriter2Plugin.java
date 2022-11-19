@@ -35,7 +35,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimit
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
@@ -43,7 +43,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimImageHeightNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "aJPEGDecompressStruct.isByteType()")
         protected static final long doHeight(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct) {
-            return UnsafeUtils.getLong(aJPEGDecompressStruct.getByteStorage(), 0);
+            return VarHandleUtils.getLong(aJPEGDecompressStruct.getByteStorage(), 0);
         }
     }
 
@@ -62,7 +62,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimImageWidthNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "aJPEGDecompressStruct.isByteType()")
         protected static final long doWidth(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct) {
-            return UnsafeUtils.getLong(aJPEGDecompressStruct.getByteStorage(), 1);
+            return VarHandleUtils.getLong(aJPEGDecompressStruct.getByteStorage(), 1);
         }
     }
 
@@ -112,8 +112,8 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             final BufferedImage image = readImageOrPrimFail(source);
-            UnsafeUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 0, image.getHeight());
-            UnsafeUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 1, image.getWidth());
+            VarHandleUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 0, image.getHeight());
+            VarHandleUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 1, image.getWidth());
             return receiver;
         }
 

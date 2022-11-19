@@ -99,12 +99,12 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public byte getByte(final long index) {
         assert isBooleanType();
-        return UnsafeUtils.getByte((byte[]) storage, index);
+        return UnsafeUtils.getByte((byte[]) storage, (int) index);
     }
 
     public void setByte(final long index, final byte value) {
         assert isBooleanType();
-        UnsafeUtils.putByte((byte[]) storage, index, value);
+        UnsafeUtils.putByte((byte[]) storage, (int) index, value);
     }
 
     public int getBooleanLength() {

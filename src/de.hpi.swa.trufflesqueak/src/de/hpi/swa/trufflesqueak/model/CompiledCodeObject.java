@@ -359,7 +359,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             // FIXME: check bounds of compiled code objects
             throw new ArrayIndexOutOfBoundsException();
         } else {
-            return Byte.toUnsignedLong(UnsafeUtils.getByte(bytes, index - offset));
+            return Byte.toUnsignedLong(UnsafeUtils.getByte(bytes, (int) index - offset));
         }
     }
 

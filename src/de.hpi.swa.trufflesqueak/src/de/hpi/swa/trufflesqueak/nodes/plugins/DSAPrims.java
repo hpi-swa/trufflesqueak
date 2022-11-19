@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
@@ -28,7 +28,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
         protected static final Object doExpand(final Object receiver, final NativeObject buf, final NativeObject expanded) {
             final byte[] bytes = buf.getByteStorage();
             for (int i = 0; i <= 15; i++) {
-                expanded.setInt(i, UnsafeUtils.getIntReversed(bytes, i));
+                expanded.setInt(i, VarHandleUtils.getIntReversed(bytes, i));
             }
             for (int i = 16; i <= 79; i += 1) {
                 final long value = Integer.toUnsignedLong(expanded.getInt(i - 3) ^ expanded.getInt(i - 8) ^ expanded.getInt(i - 14) ^ expanded.getInt(i - 16));

@@ -11,7 +11,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     public static final int PRECISION = 53;
@@ -43,8 +43,8 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
 
     public static Object newFrom(final SqueakImageChunk chunk) {
         assert chunk.getBytes().length == 2 * Integer.BYTES;
-        final long lowValue = Integer.toUnsignedLong(UnsafeUtils.getInt(chunk.getBytes(), 0));
-        final long highValue = Integer.toUnsignedLong(UnsafeUtils.getInt(chunk.getBytes(), 1));
+        final long lowValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 0));
+        final long highValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 1));
         final double value = Double.longBitsToDouble(highValue << 32 | lowValue);
         return Double.isFinite(value) ? value : new FloatObject(chunk.getImage(), value);
     }

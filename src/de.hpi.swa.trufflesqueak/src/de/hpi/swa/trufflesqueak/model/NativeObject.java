@@ -187,7 +187,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public byte getByte(final long index) {
         assert isByteType();
-        return UnsafeUtils.getByte((byte[]) storage, index);
+        return UnsafeUtils.getByte((byte[]) storage, (int) index);
     }
 
     public int getByteUnsigned(final long index) {
@@ -196,7 +196,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setByte(final long index, final byte value) {
         assert isByteType();
-        UnsafeUtils.putByte((byte[]) storage, index, value);
+        UnsafeUtils.putByte((byte[]) storage, (int) index, value);
     }
 
     public void setByte(final long index, final int value) {
