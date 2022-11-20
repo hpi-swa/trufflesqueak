@@ -324,7 +324,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIDoubleAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
         protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong) {
-            return VarHandleUtils.getDoubleFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong);
+            return VarHandleUtils.getDoubleFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1);
         }
     }
 
@@ -333,7 +333,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIDoubleAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
         protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong, final double value) {
-            VarHandleUtils.putDoubleIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong, value);
+            VarHandleUtils.putDoubleIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, value);
             return value;
         }
     }
@@ -343,7 +343,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIFloatAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
         protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong) {
-            return VarHandleUtils.getFloatFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong);
+            return VarHandleUtils.getFloatFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1);
         }
     }
 
@@ -352,7 +352,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIFloatAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
         protected static final double doFloatAtPut(final NativeObject byteArray, final long byteOffsetLong, final double value) {
-            VarHandleUtils.putFloatIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong, (float) value);
+            VarHandleUtils.putFloatIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, (float) value);
             return value;
         }
     }
