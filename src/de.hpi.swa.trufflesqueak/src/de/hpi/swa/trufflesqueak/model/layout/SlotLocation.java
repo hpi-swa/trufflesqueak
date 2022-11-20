@@ -473,17 +473,17 @@ public abstract class SlotLocation {
     }
 
     private static final class BoolExtensionSlotLocation extends BoolLocation {
-        private final int index;
+        private final long offset;
 
         private BoolExtensionSlotLocation(final int index) {
             super(index);
-            this.index = index - NUM_PRIMITIVE_INLINE_LOCATIONS;
+            offset = UnsafeUtils.toLongsOffset(index - NUM_PRIMITIVE_INLINE_LOCATIONS);
         }
 
         @Override
         public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
-                return UnsafeUtils.getBoolFromLongs(object.primitiveExtension, index);
+                return UnsafeUtils.getBoolFromLongsOffset(object.primitiveExtension, offset);
             } else {
                 nilProfile.enter();
                 return NilObject.SINGLETON;
@@ -494,7 +494,7 @@ public abstract class SlotLocation {
         public Object read(final AbstractPointersObject object) {
             CompilerAsserts.neverPartOfCompilation();
             if (isSet(object)) {
-                return UnsafeUtils.getBoolFromLongs(object.primitiveExtension, index);
+                return UnsafeUtils.getBoolFromLongsOffset(object.primitiveExtension, offset);
             } else {
                 return NilObject.SINGLETON;
             }
@@ -504,7 +504,7 @@ public abstract class SlotLocation {
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
-                UnsafeUtils.putBoolIntoLongs(object.primitiveExtension, index, (boolean) value);
+                UnsafeUtils.putBoolIntoLongsOffset(object.primitiveExtension, offset, (boolean) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -515,7 +515,7 @@ public abstract class SlotLocation {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
-                UnsafeUtils.putBoolIntoLongs(object.primitiveExtension, index, (boolean) value);
+                UnsafeUtils.putBoolIntoLongsOffset(object.primitiveExtension, offset, (boolean) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -526,7 +526,7 @@ public abstract class SlotLocation {
             CompilerAsserts.neverPartOfCompilation();
             unsetMask(object);
             if (object.primitiveExtension != null) {
-                object.primitiveExtension[index] = 0L;
+                object.primitiveExtension[(int) UnsafeUtils.fromLongsOffset(offset)] = 0L;
             }
         }
 
@@ -537,7 +537,7 @@ public abstract class SlotLocation {
 
         @Override
         public int getFieldIndex() {
-            return SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + index;
+            return SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + (int) UnsafeUtils.fromLongsOffset(offset);
         }
     }
 
@@ -604,17 +604,17 @@ public abstract class SlotLocation {
     }
 
     private static final class CharExtensionSlotLocation extends CharLocation {
-        private final int index;
+        private final long offset;
 
         private CharExtensionSlotLocation(final int index) {
             super(index);
-            this.index = index - NUM_PRIMITIVE_INLINE_LOCATIONS;
+            offset = UnsafeUtils.toLongsOffset(index - NUM_PRIMITIVE_INLINE_LOCATIONS);
         }
 
         @Override
         public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
-                return UnsafeUtils.getCharFromLongs(object.primitiveExtension, index);
+                return UnsafeUtils.getCharFromLongsOffset(object.primitiveExtension, offset);
             } else {
                 nilProfile.enter();
                 return NilObject.SINGLETON;
@@ -625,7 +625,7 @@ public abstract class SlotLocation {
         public Object read(final AbstractPointersObject object) {
             CompilerAsserts.neverPartOfCompilation();
             if (isSet(object)) {
-                return UnsafeUtils.getCharFromLongs(object.primitiveExtension, index);
+                return UnsafeUtils.getCharFromLongsOffset(object.primitiveExtension, offset);
             } else {
                 return NilObject.SINGLETON;
             }
@@ -635,7 +635,7 @@ public abstract class SlotLocation {
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
-                UnsafeUtils.putCharIntoLongs(object.primitiveExtension, index, (char) value);
+                UnsafeUtils.putCharIntoLongsOffset(object.primitiveExtension, offset, (char) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -646,7 +646,7 @@ public abstract class SlotLocation {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
-                UnsafeUtils.putCharIntoLongs(object.primitiveExtension, index, (char) value);
+                UnsafeUtils.putCharIntoLongsOffset(object.primitiveExtension, offset, (char) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -657,7 +657,7 @@ public abstract class SlotLocation {
             CompilerAsserts.neverPartOfCompilation();
             unsetMask(object);
             if (object.primitiveExtension != null) {
-                object.primitiveExtension[index] = 0L;
+                object.primitiveExtension[(int) UnsafeUtils.fromLongsOffset(offset)] = 0L;
             }
         }
 
@@ -668,7 +668,7 @@ public abstract class SlotLocation {
 
         @Override
         public int getFieldIndex() {
-            return SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + index;
+            return SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + (int) UnsafeUtils.fromLongsOffset(offset);
         }
     }
 
@@ -735,17 +735,17 @@ public abstract class SlotLocation {
     }
 
     private static final class LongExtensionSlotLocation extends LongLocation {
-        private final int index;
+        private final long offset;
 
         private LongExtensionSlotLocation(final int index) {
             super(index);
-            this.index = index - NUM_PRIMITIVE_INLINE_LOCATIONS;
+            offset = UnsafeUtils.toLongsOffset(index - NUM_PRIMITIVE_INLINE_LOCATIONS);
         }
 
         @Override
         public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
-                return UnsafeUtils.getLong(object.primitiveExtension, index);
+                return UnsafeUtils.getLongOffset(object.primitiveExtension, offset);
             } else {
                 nilProfile.enter();
                 return NilObject.SINGLETON;
@@ -756,7 +756,7 @@ public abstract class SlotLocation {
         public Object read(final AbstractPointersObject object) {
             CompilerAsserts.neverPartOfCompilation();
             if (isSet(object)) {
-                return UnsafeUtils.getLong(object.primitiveExtension, index);
+                return UnsafeUtils.getLongOffset(object.primitiveExtension, offset);
             } else {
                 return NilObject.SINGLETON;
             }
@@ -766,7 +766,7 @@ public abstract class SlotLocation {
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
-                UnsafeUtils.putLong(object.primitiveExtension, index, (long) value);
+                UnsafeUtils.putLongOffset(object.primitiveExtension, offset, (long) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -777,7 +777,7 @@ public abstract class SlotLocation {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
-                UnsafeUtils.putLong(object.primitiveExtension, index, (long) value);
+                UnsafeUtils.putLongOffset(object.primitiveExtension, offset, (long) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -788,7 +788,7 @@ public abstract class SlotLocation {
             CompilerAsserts.neverPartOfCompilation();
             unsetMask(object);
             if (object.primitiveExtension != null) {
-                object.primitiveExtension[index] = 0L;
+                object.primitiveExtension[(int) UnsafeUtils.fromLongsOffset(offset)] = 0L;
             }
         }
 
@@ -799,7 +799,7 @@ public abstract class SlotLocation {
 
         @Override
         public int getFieldIndex() {
-            return SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + index;
+            return SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + (int) UnsafeUtils.fromLongsOffset(offset);
         }
     }
 
@@ -866,17 +866,17 @@ public abstract class SlotLocation {
     }
 
     private static final class DoubleExtensionSlotLocation extends DoubleLocation {
-        private final int index;
+        private final long offset;
 
         private DoubleExtensionSlotLocation(final int index) {
             super(index);
-            this.index = index - NUM_PRIMITIVE_INLINE_LOCATIONS;
+            offset = UnsafeUtils.toLongsOffset(index - NUM_PRIMITIVE_INLINE_LOCATIONS);
         }
 
         @Override
         public Object readProfiled(final AbstractPointersObject obj, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(obj, primitiveUsedMapProfile)) {
-                return UnsafeUtils.getDoubleFromLongs(obj.primitiveExtension, index);
+                return UnsafeUtils.getDoubleFromLongsOffset(obj.primitiveExtension, offset);
             } else {
                 nilProfile.enter();
                 return NilObject.SINGLETON;
@@ -887,7 +887,7 @@ public abstract class SlotLocation {
         public Object read(final AbstractPointersObject obj) {
             CompilerAsserts.neverPartOfCompilation();
             if (isSet(obj)) {
-                return UnsafeUtils.getDoubleFromLongs(obj.primitiveExtension, index);
+                return UnsafeUtils.getDoubleFromLongsOffset(obj.primitiveExtension, offset);
             } else {
                 return NilObject.SINGLETON;
             }
@@ -897,7 +897,7 @@ public abstract class SlotLocation {
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
-                UnsafeUtils.putDoubleIntoLongs(object.primitiveExtension, index, (double) value);
+                UnsafeUtils.putDoubleIntoLongsOffset(object.primitiveExtension, offset, (double) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -908,7 +908,7 @@ public abstract class SlotLocation {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
-                UnsafeUtils.putDoubleIntoLongs(object.primitiveExtension, index, (double) value);
+                UnsafeUtils.putDoubleIntoLongsOffset(object.primitiveExtension, offset, (double) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -919,7 +919,7 @@ public abstract class SlotLocation {
             CompilerAsserts.neverPartOfCompilation();
             unsetMask(object);
             if (object.primitiveExtension != null) {
-                object.primitiveExtension[index] = 0L;
+                object.primitiveExtension[(int) UnsafeUtils.fromLongsOffset(offset)] = 0L;
             }
         }
 
@@ -930,7 +930,7 @@ public abstract class SlotLocation {
 
         @Override
         public int getFieldIndex() {
-            return SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + index;
+            return SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + (int) UnsafeUtils.fromLongsOffset(offset);
         }
     }
 
@@ -967,28 +967,28 @@ public abstract class SlotLocation {
     }
 
     private static final class ObjectExtensionSlotLocation extends GenericLocation {
-        private final int index;
+        private final long offset;
 
         private ObjectExtensionSlotLocation(final int index) {
-            this.index = index - NUM_OBJECT_INLINE_LOCATIONS;
+            offset = UnsafeUtils.toObjectsOffset(index - NUM_PRIMITIVE_INLINE_LOCATIONS);
         }
 
         @Override
         public Object read(final AbstractPointersObject object) {
             assert isSet(object);
-            return UnsafeUtils.getObject(object.objectExtension, index);
+            return UnsafeUtils.getObjectOffset(object.objectExtension, offset);
         }
 
         @Override
         public boolean isSet(final AbstractPointersObject object) {
             CompilerAsserts.neverPartOfCompilation();
-            assert object.objectExtension == null || UnsafeUtils.getObject(object.objectExtension, index) != null : "Unexpected null value (initialized with nil)";
+            assert object.objectExtension == null || UnsafeUtils.getObjectOffset(object.objectExtension, offset) != null : "Unexpected null value (initialized with nil)";
             return object.objectExtension != null;
         }
 
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
-            UnsafeUtils.putObject(object.objectExtension, index, value);
+            UnsafeUtils.putObjectOffset(object.objectExtension, offset, value);
             assert isSet(object);
         }
 
@@ -999,7 +999,7 @@ public abstract class SlotLocation {
 
         @Override
         public int getFieldIndex() {
-            return SlotLocation.NUM_OBJECT_INLINE_LOCATIONS + index;
+            return SlotLocation.NUM_OBJECT_INLINE_LOCATIONS + (int) UnsafeUtils.fromObjectsOffset(offset);
         }
     }
 }

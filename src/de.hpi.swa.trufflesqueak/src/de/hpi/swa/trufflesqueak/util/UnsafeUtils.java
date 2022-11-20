@@ -20,6 +20,16 @@ public final class UnsafeUtils {
     private UnsafeUtils() {
     }
 
+    private static boolean checkLongsOffset(final long[] array, final long offset) {
+        final long index = fromLongsOffset(offset);
+        return 0 <= index && index < array.length;
+    }
+
+    private static boolean checkObjectsOffset(final Object[] array, final long offset) {
+        final long index = fromObjectsOffset(offset);
+        return 0 <= index && index < array.length;
+    }
+
     public static void copyBytes(final byte[] src, final long srcPos, final byte[] dest, final long destPos, final long length) {
         assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
         UNSAFE.copyMemory(src, Unsafe.ARRAY_BYTE_BASE_OFFSET + srcPos * Unsafe.ARRAY_BYTE_INDEX_SCALE,
@@ -56,6 +66,14 @@ public final class UnsafeUtils {
                         dest, Unsafe.ARRAY_SHORT_BASE_OFFSET + destPos * Unsafe.ARRAY_SHORT_INDEX_SCALE, Short.BYTES * length);
     }
 
+    public static long fromLongsOffset(final long offset) {
+        return (offset - Unsafe.ARRAY_LONG_BASE_OFFSET) / Unsafe.ARRAY_LONG_INDEX_SCALE;
+    }
+
+    public static long fromObjectsOffset(final long offset) {
+        return (offset - Unsafe.ARRAY_OBJECT_BASE_OFFSET) / Unsafe.ARRAY_OBJECT_INDEX_SCALE;
+    }
+
     public static long getAddress(final Class<?> javaClass, final String fieldName) {
         try {
             return UNSAFE.objectFieldOffset(javaClass.getField(fieldName));
@@ -74,6 +92,11 @@ public final class UnsafeUtils {
         return UNSAFE.getBoolean(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
     }
 
+    public static boolean getBoolFromLongsOffset(final long[] array, final long offset) {
+        assert checkLongsOffset(array, offset);
+        return UNSAFE.getBoolean(array, offset);
+    }
+
     public static byte getByte(final byte[] storage, final long index) {
         assert 0 <= index && index < storage.length;
         return UNSAFE.getByte(storage, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
@@ -88,9 +111,9 @@ public final class UnsafeUtils {
         return UNSAFE.getChar(object, address);
     }
 
-    public static char getCharFromLongs(final long[] array, final long index) {
-        assert 0 <= index && index < array.length;
-        return UNSAFE.getChar(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
+    public static char getCharFromLongsOffset(final long[] array, final long offset) {
+        assert checkLongsOffset(array, offset);
+        return UNSAFE.getChar(array, offset);
     }
 
     public static double getDouble(final double[] storage, final long index) {
@@ -102,9 +125,9 @@ public final class UnsafeUtils {
         return UNSAFE.getDouble(object, address);
     }
 
-    public static double getDoubleFromLongs(final long[] array, final long index) {
-        assert 0 <= index && index < array.length;
-        return UNSAFE.getDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
+    public static double getDoubleFromLongsOffset(final long[] array, final long offset) {
+        assert checkLongsOffset(array, offset);
+        return UNSAFE.getDouble(array, offset);
     }
 
     public static int getInt(final int[] storage, final long index) {
@@ -125,6 +148,11 @@ public final class UnsafeUtils {
         return UNSAFE.getLong(object, address);
     }
 
+    public static long getLongOffset(final long[] storage, final long offset) {
+        assert checkLongsOffset(storage, offset);
+        return UNSAFE.getLong(storage, offset);
+    }
+
     public static Object getObject(final Object[] storage, final long index) {
         assert 0 <= index && index < storage.length;
         return UNSAFE.getObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE);
@@ -132,6 +160,11 @@ public final class UnsafeUtils {
 
     public static Object getObjectAt(final AbstractPointersObject object, final long address) {
         return UNSAFE.getObject(object, address);
+    }
+
+    public static Object getObjectOffset(final Object[] storage, final long offset) {
+        assert checkObjectsOffset(storage, offset);
+        return UNSAFE.getObject(storage, offset);
     }
 
     public static short getShort(final int[] ints, final long index) {
@@ -165,9 +198,9 @@ public final class UnsafeUtils {
         UNSAFE.putBoolean(object, address, value);
     }
 
-    public static void putBoolIntoLongs(final long[] array, final long index, final boolean value) {
-        assert 0 <= index && index < array.length;
-        UNSAFE.putBoolean(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    public static void putBoolIntoLongsOffset(final long[] array, final long offset, final boolean value) {
+        assert checkLongsOffset(array, offset);
+        UNSAFE.putBoolean(array, offset, value);
     }
 
     public static void putByte(final byte[] storage, final long index, final byte value) {
@@ -184,9 +217,9 @@ public final class UnsafeUtils {
         UNSAFE.putChar(object, address, value);
     }
 
-    public static void putCharIntoLongs(final long[] array, final long index, final char value) {
-        assert 0 <= index && index < array.length;
-        UNSAFE.putChar(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    public static void putCharIntoLongsOffset(final long[] array, final long offset, final char value) {
+        assert checkLongsOffset(array, offset);
+        UNSAFE.putChar(array, offset, value);
     }
 
     public static void putDouble(final double[] storage, final long index, final double value) {
@@ -198,8 +231,9 @@ public final class UnsafeUtils {
         UNSAFE.putDouble(object, address, value);
     }
 
-    public static void putDoubleIntoLongs(final long[] array, final long index, final double value) {
-        UNSAFE.putDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    public static void putDoubleIntoLongsOffset(final long[] array, final long offset, final double value) {
+        assert checkLongsOffset(array, offset);
+        UNSAFE.putDouble(array, offset, value);
     }
 
     public static void putInt(final int[] storage, final long index, final int value) {
@@ -220,6 +254,11 @@ public final class UnsafeUtils {
         UNSAFE.putLong(object, address, value);
     }
 
+    public static void putLongOffset(final long[] storage, final long offset, final long value) {
+        assert checkLongsOffset(storage, offset);
+        UNSAFE.putLong(storage, offset, value);
+    }
+
     public static void putObject(final Object[] storage, final long index, final Object value) {
         assert 0 <= index && index < storage.length;
         UNSAFE.putObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE, value);
@@ -227,6 +266,11 @@ public final class UnsafeUtils {
 
     public static void putObjectAt(final AbstractPointersObject object, final long address, final Object value) {
         UNSAFE.putObject(object, address, value);
+    }
+
+    public static void putObjectOffset(final Object[] storage, final long offset, final Object value) {
+        assert checkObjectsOffset(storage, offset);
+        UNSAFE.putObject(storage, offset, value);
     }
 
     public static void putShort(final int[] ints, final long index, final short value) {
@@ -317,6 +361,14 @@ public final class UnsafeUtils {
         final long[] longs = new long[numBytes / Long.BYTES];
         UNSAFE.copyMemory(shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, longs, Unsafe.ARRAY_LONG_BASE_OFFSET, numBytes);
         return longs;
+    }
+
+    public static long toLongsOffset(final long index) {
+        return Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE;
+    }
+
+    public static long toObjectsOffset(final long index) {
+        return Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE;
     }
 
     public static short[] toShorts(final byte[] bytes) {
