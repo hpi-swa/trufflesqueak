@@ -935,34 +935,34 @@ public abstract class SlotLocation {
     }
 
     private static final class ObjectInlineSlotLocation extends GenericLocation {
-        private final int index;
+        private final long address;
 
         private ObjectInlineSlotLocation(final int index) {
-            this.index = index;
+            address = OBJECT_ADDRESSES[index];
         }
 
         @Override
         public Object read(final AbstractPointersObject object) {
             assert isSet(object);
-            return UnsafeUtils.getObjectAt(object, OBJECT_ADDRESSES[index]);
+            return UnsafeUtils.getObjectAt(object, address);
         }
 
         @Override
         public boolean isSet(final AbstractPointersObject object) {
             CompilerAsserts.neverPartOfCompilation();
-            assert UnsafeUtils.getObjectAt(object, OBJECT_ADDRESSES[index]) != null : "Unexpected null value (initialized with nil)";
+            assert UnsafeUtils.getObjectAt(object, address) != null : "Unexpected null value (initialized with nil)";
             return true;
         }
 
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
-            UnsafeUtils.putObjectAt(object, OBJECT_ADDRESSES[index], value);
+            UnsafeUtils.putObjectAt(object, address, value);
             assert isSet(object);
         }
 
         @Override
         public int getFieldIndex() {
-            return index;
+            return ArrayUtils.indexOf(OBJECT_ADDRESSES, address);
         }
     }
 
