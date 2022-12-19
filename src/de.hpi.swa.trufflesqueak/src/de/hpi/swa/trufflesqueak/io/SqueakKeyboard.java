@@ -50,7 +50,7 @@ public final class SqueakKeyboard implements KeyListener {
 
     private static int toKeyChar(final KeyEvent e) {
         //@formatter:off
-        switch(e.getKeyCode()) { // Handle special keys.
+        switch (e.getKeyCode()) { // Handle special keys.
             case KeyEvent.VK_BACK_SPACE: return 8;
             case KeyEvent.VK_TAB: return 9;
             case KeyEvent.VK_ENTER: return 13;
