@@ -119,11 +119,10 @@ public final class FrameAccess {
 
     /* Returns the code object matching the frame's descriptor. */
     public static CompiledCodeObject getMethodOrBlock(final Frame frame) {
-        final BlockClosureObject closure = getClosure(frame);
-        if (closure == null) {
-            return getCodeObject(frame);
+        if (hasClosure(frame)) {
+            return getClosure(frame).getCompiledBlock();
         } else {
-            return closure.getCompiledBlock();
+            return getCodeObject(frame);
         }
     }
 
@@ -144,11 +143,22 @@ public final class FrameAccess {
     }
 
     public static boolean hasClosure(final Frame frame) {
-        return getClosure(frame) != null;
+        return frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] instanceof BlockClosureObject;
     }
 
     public static void setClosure(final Frame frame, final BlockClosureObject closure) {
         frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+    }
+
+    public static Object[] storeParentFrameInArguments(final VirtualFrame parentFrame) {
+        assert !hasClosure(parentFrame);
+        final Object[] arguments = parentFrame.getArguments();
+        arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = parentFrame;
+        return arguments;
+    }
+
+    public static Frame restoreParentFrameFromArguments(final Object[] arguments) {
+        return (Frame) arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()];
     }
 
     public static Object getReceiver(final Frame frame) {

@@ -346,7 +346,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean hasClosure() {
-        return FrameAccess.getClosure(getTruffleFrame()) != null;
+        return FrameAccess.hasClosure(getTruffleFrame());
     }
 
     public void removeClosure() {

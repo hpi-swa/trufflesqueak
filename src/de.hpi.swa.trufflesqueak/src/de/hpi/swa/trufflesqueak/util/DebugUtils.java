@@ -175,7 +175,7 @@ public final class DebugUtils {
             lastSender[0] = FrameAccess.getSender(current);
             final Object marker = FrameAccess.getMarker(current);
             final Object context = FrameAccess.getContext(current);
-            final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
+            final String prefix = FrameAccess.hasClosure(current) ? "[] in " : "";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
             err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));
             return null;

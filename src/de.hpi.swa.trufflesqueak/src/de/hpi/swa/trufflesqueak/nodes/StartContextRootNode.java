@@ -66,13 +66,13 @@ public final class StartContextRootNode extends RootNode {
     private void initializeFrame(final VirtualFrame frame) {
         if (writeTempNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final BlockClosureObject closure = FrameAccess.getClosure(frame);
             final int numArgs = FrameAccess.getNumArguments(frame);
-            if (closure == null) {
+            if (!FrameAccess.hasClosure(frame)) {
                 initialPC = code.getInitialPC();
                 initialSP = code.getNumTemps();
                 assert numArgs == code.getNumArgs();
             } else {
+                final BlockClosureObject closure = FrameAccess.getClosure(frame);
                 initialPC = (int) closure.getStartPC();
                 initialSP = closure.getNumTemps();
                 assert numArgs == closure.getNumArgs() + closure.getNumCopied();

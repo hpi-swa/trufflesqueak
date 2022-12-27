@@ -35,11 +35,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
         }
         // Only clear stack values, not receiver, arguments, or temporary variables.
         final int initialSP;
-        final BlockClosureObject closure = FrameAccess.getClosure(frame);
-        if (closure == null) {
+        if (!FrameAccess.hasClosure(frame)) {
             initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
             assert numArgs == FrameAccess.getCodeObject(frame).getNumArgs();
         } else {
+            final BlockClosureObject closure = FrameAccess.getClosure(frame);
             initialSP = closure.getNumTemps();
             assert numArgs == closure.getNumArgs() + closure.getNumCopied();
         }

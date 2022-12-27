@@ -95,7 +95,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     if (previousContext == context) {
                         return NilObject.SINGLETON;
                     }
-                    if (FrameAccess.getClosure(current) == null && FrameAccess.getCodeObject(current).isUnwindMarked()) {
+                    if (!FrameAccess.hasClosure(current) && FrameAccess.getCodeObject(current).isUnwindMarked()) {
                         if (context != null) {
                             return context;
                         } else {
