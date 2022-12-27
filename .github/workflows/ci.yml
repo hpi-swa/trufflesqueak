@@ -187,5 +187,5 @@ jobs:
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
-        trufflesqueak --headless --experimental-options --smalltalk.resource-summary=true --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=all --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+        trufflesqueak --headless --experimental-options --smalltalk.resource-summary=true --engine.CompilationFailureAction=ExitVM --engine.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
       if: ${{ matrix.os == 'ubuntu-20.04' }}
