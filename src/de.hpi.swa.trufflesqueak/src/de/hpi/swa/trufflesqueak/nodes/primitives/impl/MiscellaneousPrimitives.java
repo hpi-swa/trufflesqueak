@@ -798,7 +798,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     protected abstract static class AbstractPrimVMParametersNode extends AbstractPrimitiveNode {
-        protected static final int PARAMS_ARRAY_SIZE = 71;
+        protected static final int PARAMS_ARRAY_SIZE = 76;
 
         protected static final Object vmParameterAt(final SqueakImageContext image, final int index) {
             //@formatter:off
@@ -868,6 +868,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 69: return 16L; // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
                 case 70: return 1L; // the vmProxyMajorVersion (the interpreterProxy VM_MAJOR_VERSION)
                 case 71: return 13L; // the vmProxyMinorVersion (the interpreterProxy VM_MINOR_VERSION)
+                case 75: return BooleanObject.TRUE; // do mixed arithmetic; if false binary arithmetic primitives will fail unless receiver and argument are of the same type
                 default: return NilObject.SINGLETON;
             }
             //@formatter:on
