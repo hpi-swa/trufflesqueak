@@ -413,7 +413,9 @@ public final class SqueakImageContext {
         for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
             final Object classPageOrNil = hiddenRootsObjects[i];
             if (classPageOrNil instanceof ArrayObject) {
-                if (((ArrayObject) classPageOrNil).getObjectLength() != SqueakImageConstants.CLASS_TABLE_PAGE_SIZE) {
+                final ArrayObject classPage = (ArrayObject) classPageOrNil;
+                final int numSlots = classPage.isEmptyType() ? classPage.getEmptyLength() : classPage.getObjectLength();
+                if (numSlots != SqueakImageConstants.CLASS_TABLE_PAGE_SIZE) {
                     return false;
                 }
             } else {
