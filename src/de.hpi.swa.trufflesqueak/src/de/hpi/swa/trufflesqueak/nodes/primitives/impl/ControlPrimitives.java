@@ -101,7 +101,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractPrimitiveStackIncrementNode extends AbstractPrimitiveNode {
-        @Child protected FrameStackPointerIncrementNode frameStackPointerIncrementNode;
+        @Child private FrameStackPointerIncrementNode frameStackPointerIncrementNode;
 
         protected final FrameStackPointerIncrementNode getFrameStackPointerIncrementNode() {
             if (frameStackPointerIncrementNode == null) {
@@ -113,7 +113,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractPrimitiveStackPushNode extends AbstractPrimitiveNode {
-        @Child protected FrameStackPushNode frameStackPushNode;
+        @Child private FrameStackPushNode frameStackPushNode;
 
         protected final FrameStackPushNode getFrameStackPushNode() {
             if (frameStackPushNode == null) {
@@ -1019,7 +1019,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractPrimExecuteMethodArgsArrayNode extends AbstractPrimitiveNode {
         @Child private ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
-        @Child protected ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
+        @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
 
         protected final Object doExecuteMethod(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject methodObject,
                         final DispatchEagerlyNode dispatchNode) {

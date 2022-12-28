@@ -8,10 +8,11 @@ package de.hpi.swa.trufflesqueak.shared;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
@@ -107,7 +108,6 @@ public final class SqueakImageLocator {
     }
 
     private static void unzip(final BufferedInputStream bis, final File destDirectory) throws IOException {
-        final byte[] buffer = new byte[2048];
         final ZipInputStream zis = new ZipInputStream(bis);
         ZipEntry zipEntry = zis.getNextEntry();
         while (zipEntry != null) {
@@ -120,12 +120,9 @@ public final class SqueakImageLocator {
                 ensureDirectory(destFile);
             } else {
                 ensureDirectory(destFile.getParentFile());
-                final FileOutputStream fos = new FileOutputStream(destFile);
-                int len;
-                while ((len = zis.read(buffer)) > 0) {
-                    fos.write(buffer, 0, len);
+                try (OutputStream fos = Files.newOutputStream(destFile.toPath())) {
+                    zis.transferTo(fos);
                 }
-                fos.close();
             }
             zipEntry = zis.getNextEntry();
         }

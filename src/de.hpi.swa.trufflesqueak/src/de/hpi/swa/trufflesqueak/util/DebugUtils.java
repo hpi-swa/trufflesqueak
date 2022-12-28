@@ -60,11 +60,10 @@ public final class DebugUtils {
 
     public static void dumpThreads(final StringBuilder sb) {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
-        sb.append("\r\n\r\n\r\n").append("Total number of threads started: ").append(ManagementFactory.getThreadMXBean().getTotalStartedThreadCount()).append("\r\n\r\n");
+        sb.append("\r\n\r\n\r\nTotal number of threads started: ").append(ManagementFactory.getThreadMXBean().getTotalStartedThreadCount()).append("\r\n\r\n");
 
         final Runtime r = Runtime.getRuntime();
-        sb.append("Total Memory : ").append(r.totalMemory()).append("\r\n").append("Max Memory   : ").append(r.maxMemory()).append("\r\n").append("Free Memory  : ").append(r.freeMemory()).append(
-                        "\r\n\r\n");
+        sb.append("Total Memory : ").append(r.totalMemory()).append("\r\nMax Memory   : ").append(r.maxMemory()).append("\r\nFree Memory  : ").append(r.freeMemory()).append("\r\n\r\n");
 
         final ThreadInfo[] threads = ManagementFactory.getThreadMXBean().dumpAllThreads(true, true);
         for (final ThreadInfo info : threads) {
@@ -110,8 +109,7 @@ public final class DebugUtils {
                 }
             }
             if (i < info.getStackTrace().length) {
-                sb.append("\t...");
-                sb.append("\r\n");
+                sb.append("\t...\r\n");
             }
 
             final LockInfo[] locks = info.getLockedSynchronizers();

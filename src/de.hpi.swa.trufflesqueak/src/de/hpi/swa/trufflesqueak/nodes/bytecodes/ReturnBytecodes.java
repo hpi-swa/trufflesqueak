@@ -62,7 +62,7 @@ public final class ReturnBytecodes {
     }
 
     private static final class ReturnFromMethodNode extends AbstractReturnKindNode {
-        private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.create();
 
         @Override
         protected Object execute(final VirtualFrame frame, final Object returnValue) {
@@ -156,7 +156,7 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class AbstractBlockReturnNode extends AbstractReturnNode {
-        private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.create();
 
         protected AbstractBlockReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);

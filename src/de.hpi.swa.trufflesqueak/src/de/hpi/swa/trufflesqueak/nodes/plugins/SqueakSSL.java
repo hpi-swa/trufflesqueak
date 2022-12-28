@@ -234,7 +234,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         return ByteBuffer.allocate(0).asReadOnlyBuffer();
     }
 
-    public static final class SqSSL {
+    private static class SqSSL {
         private State state = State.UNUSED;
         private SSLContext context;
         private SSLEngine engine;

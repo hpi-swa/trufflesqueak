@@ -19,12 +19,6 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     protected final int index;
     private final int successorIndex;
 
-    protected AbstractBytecodeNode(final AbstractBytecodeNode original) {
-        code = original.code;
-        index = original.index;
-        successorIndex = original.successorIndex;
-    }
-
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index) {
         this(code, index, 1);
     }

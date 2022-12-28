@@ -141,7 +141,7 @@ public abstract class SqueakSocket {
         sneakySetOption(option, enabled);
     }
 
-    protected final SocketOption<?> socketOptionFromString(final String name) {
+    private SocketOption<?> socketOptionFromString(final String name) {
         return asNetworkChannel().supportedOptions().stream().filter(o -> o.name().equals(name)).findFirst().orElseThrow(() -> new UnsupportedOperationException("Unknown socket option: " + name));
     }
 

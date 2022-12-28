@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.SqueakOptions;
 
 @TruffleInstrument.Registration(id = SqueakMessageInterceptor.ID, services = SqueakMessageInterceptor.class)
 public final class SqueakMessageInterceptor extends TruffleInstrument {
-    public static final String ID = "squeak-message-interceptor";
+    protected static final String ID = "squeak-message-interceptor";
     private static final String DEFAULTS = "TestCase>>runCase,TestCase>>logFailure:,TestCase>>signalFailure:,Object>>halt,Object>>inform:," + //
                     "SmalltalkImage>>logSqueakError:inContext:,UnhandledError>>defaultAction,SyntaxErrorNotification>>setClass:code:doitFlag:errorMessage:location:";
 

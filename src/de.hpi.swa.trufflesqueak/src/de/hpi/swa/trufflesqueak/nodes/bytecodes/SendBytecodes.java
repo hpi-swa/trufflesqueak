@@ -47,16 +47,12 @@ public final class SendBytecodes {
 
         @Child private FrameStackPushNode pushNode;
 
-        private final ConditionProfile nlrProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile nvrProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile nlrProfile = ConditionProfile.create();
+        private final ConditionProfile nvrProfile = ConditionProfile.create();
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numArgs) {
             super(code, index, numBytecodes);
             argumentCount = numArgs;
-        }
-
-        protected AbstractSendNode(final AbstractSendNode original) {
-            this(original.code, original.index, original.getNumBytecodes(), original.argumentCount);
         }
 
         @Override

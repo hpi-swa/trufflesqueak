@@ -41,7 +41,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primAnyBitFromTo")
     protected abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitiveFallback {
         private final BranchProfile startLargerThanStopProfile = BranchProfile.create();
-        private final ConditionProfile firstAndLastDigitIndexIdenticalProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile firstAndLastDigitIndexIdenticalProfile = ConditionProfile.create();
         private final BranchProfile firstDigitNonZeroProfile = BranchProfile.create();
         private final BranchProfile middleDigitsNonZeroProfile = BranchProfile.create();
 

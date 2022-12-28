@@ -17,8 +17,8 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /* Gets context or marker, lazily initializes the latter if necessary. */
 public final class GetContextOrMarkerNode extends AbstractNode {
-    private final ConditionProfile hasContextProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile hasMarkerProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile hasContextProfile = ConditionProfile.create();
+    private final ConditionProfile hasMarkerProfile = ConditionProfile.create();
 
     public static GetContextOrMarkerNode create() {
         return new GetContextOrMarkerNode();

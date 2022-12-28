@@ -74,6 +74,7 @@ public final class UnsafeUtils {
         return (offset - Unsafe.ARRAY_OBJECT_BASE_OFFSET) / Unsafe.ARRAY_OBJECT_INDEX_SCALE;
     }
 
+    @SuppressWarnings("deprecation")
     public static long getAddress(final Class<?> javaClass, final String fieldName) {
         try {
             return UNSAFE.objectFieldOffset(javaClass.getField(fieldName));

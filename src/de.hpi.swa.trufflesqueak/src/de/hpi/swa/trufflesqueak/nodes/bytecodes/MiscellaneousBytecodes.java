@@ -187,6 +187,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
+            // nothing to do
         }
 
         @Override

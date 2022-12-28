@@ -94,13 +94,6 @@ public final class PushBytecodes {
             shadowBlock = code.getOrCreateShadowBlock(getSuccessorIndex() - blockSize);
         }
 
-        public PushClosureNode(final PushClosureNode node) {
-            super(node);
-            shadowBlock = node.shadowBlock;
-            numArgs = node.numArgs;
-            blockSize = node.blockSize;
-        }
-
         public static PushClosureNode create(final CompiledCodeObject code, final int index, final byte i, final byte j, final byte k) {
             final int numArgs = i & 0xF;
             final int numCopied = Byte.toUnsignedInt(i) >> 4 & 0xF;
@@ -146,14 +139,6 @@ public final class PushBytecodes {
             super(code, index, numBytecodes, numCopied);
             this.literalIndex = literalIndex;
             block = (CompiledCodeObject) code.getLiteral(literalIndex);
-            blockInitialPC = block.getInitialPC();
-            blockNumArgs = block.getNumArgs();
-        }
-
-        public AbstractPushFullClosureNode(final AbstractPushFullClosureNode node) {
-            super(node);
-            literalIndex = node.literalIndex;
-            block = node.block;
             blockInitialPC = block.getInitialPC();
             blockNumArgs = block.getNumArgs();
         }

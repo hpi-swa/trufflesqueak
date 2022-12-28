@@ -36,7 +36,7 @@ public abstract class DispatchSendNode extends AbstractNode {
     public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments);
 
     public abstract static class DispatchSendSelectorNode extends DispatchSendNode {
-        @Child protected DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
+        @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
 
         public static DispatchSendSelectorNode create() {
             return DispatchSendSelectorNodeGen.create();

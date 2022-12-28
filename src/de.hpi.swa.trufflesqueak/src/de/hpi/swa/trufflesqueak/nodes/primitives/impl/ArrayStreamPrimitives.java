@@ -46,7 +46,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     protected abstract static class AbstractBasicAtOrAtPutNode extends AbstractPrimitiveNode {
-        @Child protected SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
+        @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
 
         protected final boolean inBoundsOfSqueakObject(final Object target, final int instSize, final long index) {

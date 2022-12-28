@@ -13,20 +13,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ERROR_TABLE;
 
 public final class PrimitiveExceptions {
 
-    protected static class AbstractPrimitiveFailed extends ControlFlowException {
-        private static final long serialVersionUID = 1L;
-        private final int reasonCode;
-
-        protected AbstractPrimitiveFailed(final int reasonCode) {
-            this.reasonCode = reasonCode;
-        }
-
-        public final int getReasonCode() {
-            return reasonCode;
-        }
-    }
-
-    public static final class PrimitiveFailed extends AbstractPrimitiveFailed {
+    public static final class PrimitiveFailed extends ControlFlowException {
         private static final long serialVersionUID = 1L;
 
         public static final PrimitiveFailed GENERIC_ERROR = new PrimitiveFailed(ERROR_TABLE.GENERIC_ERROR.ordinal());
@@ -36,8 +23,14 @@ public final class PrimitiveExceptions {
         public static final PrimitiveFailed INAPPROPRIATE_OPERATION = new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION.ordinal());
         public static final PrimitiveFailed INSUFFICIENT_OBJECT_MEMORY = new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY.ordinal());
 
+        private final int reasonCode;
+
         private PrimitiveFailed(final int reasonCode) {
-            super(reasonCode);
+            this.reasonCode = reasonCode;
+        }
+
+        public int getReasonCode() {
+            return reasonCode;
         }
 
         public static PrimitiveFailed andTransferToInterpreter() {
