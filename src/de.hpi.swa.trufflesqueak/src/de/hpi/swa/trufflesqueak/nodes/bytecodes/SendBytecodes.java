@@ -16,7 +16,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;

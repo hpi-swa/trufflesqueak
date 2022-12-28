@@ -8,7 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.Fallback;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public final class PrimitiveFallbacks {
     public interface UnaryPrimitiveFallback {

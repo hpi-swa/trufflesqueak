@@ -46,7 +46,7 @@ import com.oracle.truffle.api.source.Source.SourceBuilder;
 import com.oracle.truffle.api.utilities.TriState;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakExceptionWrapper;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
