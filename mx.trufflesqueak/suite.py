@@ -20,8 +20,8 @@ suite = {
         "cuis_test_image_tag": "21.3.0",
         "icon": "trufflesqueak-icon.png",
         "icon_tag": "21.0.0.1",
-        "test_image": "TruffleSqueakTestImage-6.0alpha-20228b-64bit.zip",
-        "test_image_tag": "21.1.0",
+        "test_image": "TruffleSqueakTestImage-6.0-22104-64bit.zip",
+        "test_image_tag": "22.3.0",
     },
 
     "release": False,

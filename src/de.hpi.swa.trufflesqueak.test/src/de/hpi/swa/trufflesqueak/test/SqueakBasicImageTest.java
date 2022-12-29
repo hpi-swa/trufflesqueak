@@ -81,9 +81,9 @@ public final class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage 
     }
 
     @Test
-    public void test08MethodContextRestart() {
-        // MethodContextTest>>testRestart uses #should:notTakeMoreThan: (requires process switching)
-        assertEquals(BooleanObject.TRUE, evaluate("[MethodContextTest new privRestartTest. true] value"));
+    public void test08ContextRestart() {
+        // ContextTest>>testRestart uses #should:notTakeMoreThan: (requires process switching)
+        assertEquals(BooleanObject.TRUE, evaluate("[ContextTest new privRestartTest. true] value"));
     }
 
     @Test
