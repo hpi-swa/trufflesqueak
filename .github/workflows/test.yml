@@ -5,7 +5,7 @@ jobs:
   build:
     strategy:
       matrix:
-        smalltalk: [ Squeak64-5.3, Squeak64-trunk ]
+        smalltalk: [ Squeak64-6.0, Squeak64-trunk ]
     name: ${{ matrix.smalltalk }}
     runs-on: ubuntu-latest
     steps:
