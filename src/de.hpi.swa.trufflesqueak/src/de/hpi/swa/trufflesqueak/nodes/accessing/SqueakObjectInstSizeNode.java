@@ -14,6 +14,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -87,6 +88,11 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
 
     @Specialization
     protected static final int doLarge(final LargeIntegerObject obj) {
+        return obj.instsize();
+    }
+
+    @Specialization
+    protected static final int doCharacterObject(final CharacterObject obj) {
         return obj.instsize();
     }
 }
