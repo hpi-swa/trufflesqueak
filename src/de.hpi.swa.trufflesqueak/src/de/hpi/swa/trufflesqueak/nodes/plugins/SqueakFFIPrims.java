@@ -361,51 +361,56 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFFIIntegerAt")
     protected abstract static class PrimFFIIntegerAtNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 1", "isSigned"})
+        protected static final long doAt1Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
+            return byteArray.getByte(byteOffsetLong - 1);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 1", "!isSigned"})
+        protected static final long doAt1Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
+            return byteArray.getByteUnsigned(byteOffsetLong - 1);
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "isSigned"})
         protected static final long doAt2Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return (int) doAt2Unsigned(byteArray, byteOffsetLong, byteSize, false);
+            return PrimSignedInt16AtNode.signedInt16At(byteArray, byteOffsetLong);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "!isSigned"})
         protected static final long doAt2Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return Short.toUnsignedLong(VarHandleUtils.getShortFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1));
+            return PrimUnsignedInt16AtNode.doAt(byteArray, byteOffsetLong);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "isSigned"})
         protected static final long doAt4Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return (int) doAt4Unsigned(byteArray, byteOffsetLong, byteSize, false);
+            return PrimSignedInt16AtNode.signedInt16At(byteArray, byteOffsetLong);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned"})
         protected static final long doAt4Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return Integer.toUnsignedLong(VarHandleUtils.getIntFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1));
+            return PrimUnsignedInt32AtNode.doAt(byteArray, byteOffsetLong);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "isSigned"})
         protected static final long doAt8Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return VarHandleUtils.getLongFromBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1);
+            return PrimSignedInt64AtNode.signedInt64At(byteArray, byteOffsetLong);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
         protected final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
                         @Cached final ConditionProfile positiveProfile) {
-            final long signedLong = doAt8Signed(byteArray, byteOffsetLong, byteSize, isSigned);
-            if (positiveProfile.profile(signedLong >= 0)) {
-                return signedLong;
-            } else {
-                return LargeIntegerObject.toUnsigned(getContext(), signedLong);
-            }
+            return PrimUnsignedInt64AtNode.unsignedInt64At(getContext(), byteArray, byteOffsetLong, positiveProfile);
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveFFIIntegerAtPut")
-    protected abstract static class PrimFFIIntegerAtPutNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected static final class FFIGuards {
         protected static final long MAX_VALUE_SIGNED_1 = 1L << 8 * 1 - 1;
         protected static final long MAX_VALUE_SIGNED_2 = 1L << 8 * 2 - 1;
         protected static final long MAX_VALUE_SIGNED_4 = 1L << 8 * 4 - 1;
@@ -414,64 +419,78 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         protected static final long MAX_VALUE_UNSIGNED_2 = 1L << 8 * 2;
         protected static final long MAX_VALUE_UNSIGNED_4 = 1L << 8 * 4;
 
+        protected static boolean inSignedBounds(final long value, final long max) {
+            return value >= -max && value < max;
+        }
+
+        protected static boolean inUnsignedBounds(final long value, final long max) {
+            return 0 <= value && value < max;
+        }
+
+        @TruffleBoundary
+        protected static boolean inSignedBounds(final LargeIntegerObject value, final BigInteger max) {
+            return value.getBigInteger().compareTo(BigInteger.ZERO.subtract(max)) >= 0 && value.getBigInteger().compareTo(max) < 0;
+        }
+
+        @TruffleBoundary
+        protected static boolean inUnsignedBounds(final LargeIntegerObject value) {
+            return value.isZeroOrPositive() && value.lessThanOneShiftedBy64();
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveFFIIntegerAtPut")
+    protected abstract static class PrimFFIIntegerAtPutNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 1", "isSigned", "inSignedBounds(value, MAX_VALUE_SIGNED_1)"})
-        protected static final Object doAtPut1Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
+        protected static final long doAtPut1Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
             return doAtPut1Unsigned(byteArray, byteOffsetLong, value, byteSize, isSigned);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 1", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_1)"})
-        protected static final Object doAtPut1Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            byteArray.getByteStorage()[(int) byteOffsetLong - 1] = (byte) value;
-            return value;
+        protected static final long doAtPut1Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
+            return PrimUnsignedInt8AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "isSigned", "inSignedBounds(value, MAX_VALUE_SIGNED_2)"})
-        protected static final Object doAtPut2Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
+        protected static final long doAtPut2Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
             return doAtPut2Unsigned(byteArray, byteOffsetLong, value, byteSize, isSigned);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_2)"})
-        protected static final Object doAtPut2Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            VarHandleUtils.putShortIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, (short) value);
-            return value;
+        protected static final long doAtPut2Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
+            return PrimUnsignedInt16AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "isSigned", "inSignedBounds(value, MAX_VALUE_SIGNED_4)"})
-        protected static final Object doAtPut4Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
+        protected static final long doAtPut4Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
             return doAtPut4Unsigned(byteArray, byteOffsetLong, value, byteSize, isSigned);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_4)"})
-        protected static final Object doAtPut4Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            VarHandleUtils.putIntIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, (int) value);
-            return value;
+        protected static final long doAtPut4Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
+            return PrimUnsignedInt32AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "isSigned", "value.fitsIntoLong()", "inSignedBounds(value.longValueExact(), MAX_VALUE_SIGNED_4)"})
-        protected static final Object doAtPut4SignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
+        protected static final LargeIntegerObject doAtPut4SignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize,
+                        final boolean isSigned) {
             return doAtPut4UnsignedLarge(byteArray, byteOffsetLong, value, byteSize, isSigned);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned", "value.fitsIntoLong()",
                         "inUnsignedBounds(value.longValueExact(), MAX_VALUE_UNSIGNED_4)"})
-        @ExplodeLoop
-        protected static final Object doAtPut4UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] targetBytes = byteArray.getByteStorage();
-            final byte[] sourceBytes = value.getBytes();
-            final int numSourceBytes = sourceBytes.length;
-            for (int i = 0; i < 4; i++) {
-                targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
-            }
-            return value;
+        protected static final LargeIntegerObject doAtPut4UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize,
+                        final boolean isSigned) {
+            return PrimUnsignedInt32AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
 
         @SuppressWarnings("unused")
@@ -483,8 +502,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned", "value >= 0"})
         protected static final Object doAtPut8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            VarHandleUtils.putLongIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, value);
-            return value;
+            return PrimUnsignedInt64AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
 
         @SuppressWarnings("unused")
@@ -497,6 +515,109 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned", "inUnsignedBounds(value)"})
         @ExplodeLoop
         protected static final Object doAtPut8UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
+            return PrimUnsignedInt64AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSignedInt8At")
+    protected abstract static class PrimSignedInt8AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
+        protected static final long doAt(final NativeObject byteArray, final long byteOffset) {
+            return byteArray.getByte(byteOffset - 1);
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveSignedInt8AtPut")
+    protected abstract static class PrimSignedInt8AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0", "inSignedBounds(value, MAX_VALUE_SIGNED_1)"})
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value) {
+            return PrimUnsignedInt8AtPutNode.doAtPut(byteArray, byteOffset, value);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSignedInt16At")
+    protected abstract static class PrimSignedInt16AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
+        protected static final long doAt(final NativeObject byteArray, final long byteOffset) {
+            return signedInt16At(byteArray, byteOffset);
+        }
+
+        private static short signedInt16At(final NativeObject byteArray, final long byteOffset) {
+            return VarHandleUtils.getShortFromBytes(byteArray.getByteStorage(), (int) byteOffset - 1);
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveSignedInt16AtPut")
+    protected abstract static class PrimSignedInt16AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0", "inSignedBounds(value, MAX_VALUE_SIGNED_2)"})
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value) {
+            return PrimUnsignedInt16AtPutNode.doAtPut(byteArray, byteOffset, value);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSignedInt32At")
+    protected abstract static class PrimSignedInt32AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
+        protected static final long doAt(final NativeObject byteArray, final long byteOffset) {
+            return signedInt32At(byteArray, byteOffset);
+        }
+
+        private static int signedInt32At(final NativeObject byteArray, final long byteOffset) {
+            return VarHandleUtils.getIntFromBytes(byteArray.getByteStorage(), (int) byteOffset - 1);
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveSignedInt32AtPut")
+    protected abstract static class PrimSignedInt32AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0", "inSignedBounds(value, MAX_VALUE_SIGNED_4)"})
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value) {
+            return PrimUnsignedInt32AtPutNode.doAtPut(byteArray, byteOffset, value);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "value.fitsIntoLong()", "inSignedBounds(value.longValueExact(), MAX_VALUE_SIGNED_4)"})
+        protected static final LargeIntegerObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+            return PrimUnsignedInt32AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSignedInt64At")
+    protected abstract static class PrimSignedInt64AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
+        protected static final long doAt(final NativeObject byteArray, final long byteOffset) {
+            return signedInt64At(byteArray, byteOffset);
+        }
+
+        private static long signedInt64At(final NativeObject byteArray, final long byteOffset) {
+            return VarHandleUtils.getLongFromBytes(byteArray.getByteStorage(), (int) byteOffset - 1);
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveSignedInt64AtPut")
+    protected abstract static class PrimSignedInt64AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
+        protected static final Object doAtPut(final NativeObject byteArray, final long byteOffsetLong, final long value) {
+            VarHandleUtils.putLongIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, value);
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "inSignedBounds(value, MAX_VALUE_SIGNED_8)"})
+        @ExplodeLoop
+        protected static final Object doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
             final int byteOffset = (int) byteOffsetLong - 1;
             final byte[] targetBytes = byteArray.getByteStorage();
             final byte[] sourceBytes = value.getBytes();
@@ -506,23 +627,124 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
             return value;
         }
+    }
 
-        protected static final boolean inSignedBounds(final long value, final long max) {
-            return value >= -max && value < max;
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveUnsignedInt8At")
+    protected abstract static class PrimUnsignedInt8AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
+        protected static final long doAt(final NativeObject byteArray, final long byteOffset) {
+            return byteArray.getByteUnsigned(byteOffset - 1);
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveUnsignedInt8AtPut")
+    protected abstract static class PrimUnsignedInt8AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_1)"})
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value) {
+            byteArray.setByte(byteOffset - 1, (byte) value);
+            return value;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveUnsignedInt16At")
+    protected abstract static class PrimUnsignedInt16AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
+        protected static final long doAt(final NativeObject byteArray, final long byteOffset) {
+            return Short.toUnsignedLong(PrimSignedInt16AtNode.signedInt16At(byteArray, byteOffset));
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveUnsignedInt16AtPut")
+    protected abstract static class PrimUnsignedInt16AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_2)"})
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value) {
+            VarHandleUtils.putShortIntoBytes(byteArray.getByteStorage(), (int) byteOffset - 1, (short) value);
+            return value;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveUnsignedInt32At")
+    protected abstract static class PrimUnsignedInt32AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
+        protected static final long doAt(final NativeObject byteArray, final long byteOffset) {
+            return Integer.toUnsignedLong(PrimSignedInt32AtNode.signedInt32At(byteArray, byteOffset));
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveUnsignedInt32AtPut")
+    protected abstract static class PrimUnsignedInt32AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_4)"})
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value) {
+            VarHandleUtils.putIntIntoBytes(byteArray.getByteStorage(), (int) byteOffset - 1, (int) value);
+            return value;
         }
 
-        protected static final boolean inUnsignedBounds(final long value, final long max) {
-            return 0 <= value && value < max;
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "value.fitsIntoLong()", "inUnsignedBounds(value.longValueExact(), MAX_VALUE_UNSIGNED_4)"})
+        @ExplodeLoop
+        protected static final LargeIntegerObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+            final int byteOffset = (int) byteOffsetLong - 1;
+            final byte[] targetBytes = byteArray.getByteStorage();
+            final byte[] sourceBytes = value.getBytes();
+            final int numSourceBytes = sourceBytes.length;
+            for (int i = 0; i < 4; i++) {
+                targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
+            }
+            return value;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveUnsignedInt64At")
+    protected abstract static class PrimUnsignedInt64AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
+        protected final Object doAt(final NativeObject byteArray, final long byteOffset,
+                        @Cached final ConditionProfile positiveProfile) {
+            return unsignedInt64At(getContext(), byteArray, byteOffset, positiveProfile);
         }
 
-        @TruffleBoundary
-        protected static final boolean inSignedBounds(final LargeIntegerObject value, final BigInteger max) {
-            return value.getBigInteger().compareTo(BigInteger.ZERO.subtract(max)) >= 0 && value.getBigInteger().compareTo(max) < 0;
+        private static Object unsignedInt64At(final SqueakImageContext image, final NativeObject byteArray, final long byteOffset, final ConditionProfile positiveProfile) {
+            final long signedLong = PrimSignedInt64AtNode.signedInt64At(byteArray, byteOffset);
+            if (positiveProfile.profile(signedLong >= 0)) {
+                return signedLong;
+            } else {
+                return LargeIntegerObject.toUnsigned(image, signedLong);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FFIGuards.class)
+    @SqueakPrimitive(names = "primitiveUnsignedInt64AtPut")
+    protected abstract static class PrimUnsignedInt64AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "value >= 0"})
+        protected static final Object doAtPut(final NativeObject byteArray, final long byteOffsetLong, final long value) {
+            VarHandleUtils.putLongIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, value);
+            return value;
         }
 
-        @TruffleBoundary
-        protected static final boolean inUnsignedBounds(final LargeIntegerObject value) {
-            return value.isZeroOrPositive() && value.lessThanOneShiftedBy64();
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "inUnsignedBounds(value)"})
+        @ExplodeLoop
+        protected static final Object doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+            final int byteOffset = (int) byteOffsetLong - 1;
+            final byte[] targetBytes = byteArray.getByteStorage();
+            final byte[] sourceBytes = value.getBytes();
+            final int numSourceBytes = sourceBytes.length;
+            for (int i = 0; i < 8; i++) {
+                targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
+            }
+            return value;
         }
     }
 
