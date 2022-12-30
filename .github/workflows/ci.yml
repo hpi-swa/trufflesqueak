@@ -94,7 +94,7 @@ jobs:
         copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_TARGET }}
       if: ${{ runner.os == 'Windows' }}
     - name: Run SystemReporter on TruffleSqueak
-      run: trufflesqueak --code "SystemReporter new reportText asString" images/test-64bit.image
+      run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Upload TruffleSqueak installable
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
@@ -177,7 +177,7 @@ jobs:
         copy %STANDALONE_PATH% ${{ env.STANDALONE_TARGET }}
       if: ${{ runner.os == 'Windows' }}
     - name: Run SystemReporter on TruffleSqueak standalone
-      run: trufflesqueak --code "SystemReporter new reportText asString" images/test-64bit.image
+      run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Upload TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
