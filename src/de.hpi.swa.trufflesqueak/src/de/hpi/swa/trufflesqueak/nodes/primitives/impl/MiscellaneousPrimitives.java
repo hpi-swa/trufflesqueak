@@ -803,16 +803,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected static final Object vmParameterAt(final SqueakImageContext image, final int index) {
             //@formatter:off
             switch (index) {
-                case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
-                case 2: return 1L; // end (v3)/size(Spur) of young/new-space (read-only)
+                case 1: return MiscUtils.getMemoryPoolUsageCommitted(MiscUtils.GC_OLD_GEN_SUFFIX); // end (v3)/size(Spur) of old-space (0-based, read-only)
+                case 2: return MiscUtils.getMemoryPoolUsageUsed(MiscUtils.GC_EDEN_SPACE_SUFFIX) + MiscUtils.getMemoryPoolUsageUsed(MiscUtils.GC_SURVIVOR_SPACE_SUFFIX); // end (v3)/size(Spur) of young/new-space (read-only)
                 case 3: return MiscUtils.runtimeTotalMemory(); // end (v3)/size(Spur) of heap (read-only)
                 case 4: return NilObject.SINGLETON; // nil (was allocationCount (read-only))
                 case 5: return NilObject.SINGLETON; // nil (was allocations between GCs (read-write)
                 case 6: return 0L; // survivor count tenuring threshold (read-write)
-                case 7: return MiscUtils.getCollectionCount(); // full GCs since startup (read-only)
-                case 8: return MiscUtils.getCollectionTime(); // total milliseconds in full GCs since startup (read-only)
-                case 9: return 1L; // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
-                case 10: return 1L; // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
+                case 7: return MiscUtils.getCollectionCount(MiscUtils.GC_OLD_GEN_NAMES); // full GCs since startup (read-only)
+                case 8: return MiscUtils.getCollectionTime(MiscUtils.GC_OLD_GEN_NAMES); // total milliseconds in full GCs since startup (read-only)
+                case 9: return MiscUtils.getCollectionCount(MiscUtils.GC_YOUNG_GEN_NAMES); // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
+                case 10: return MiscUtils.getCollectionTime(MiscUtils.GC_YOUNG_GEN_NAMES); // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
                 case 11: return 1L; // tenures of surving objects since startup (read-only)
                 case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: return 0L; // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
                 case 20: return MiscUtils.toSqueakMicrosecondsUTC(image.startUpMillis * 1000L); // utc microseconds at VM start-up (actually at time initialization, which precedes image load).
@@ -839,7 +839,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 41: return (long) image.imageFormat; // imageFormatVersion for the VM
                 case 42: return 50L; // number of stack pages in use (see SmalltalkImage>>isRunningCog)
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
-                case 44: return 0L; // size of eden, in bytes
+                case 44: return MiscUtils.getMemoryPoolUsageCommitted(MiscUtils.GC_EDEN_SPACE_SUFFIX); // size of eden, in bytes
                 case 45: return 0L; // desired size of eden, in bytes (stored in image file header)
                 case 46: return NilObject.SINGLETON; // machine code zone size, in bytes (Cog only; otherwise nil)
                 case 47: return NilObject.SINGLETON; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
@@ -848,7 +848,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 50: case 51: return NilObject.SINGLETON; // nil; reserved for VM parameters that persist in the image (such as eden above)
                 case 52: return 65536L; // root table capacity
                 case 53: return 2L; // number of segments (Spur only; otherwise nil)
-                case 54: return MiscUtils.runtimeFreeMemory(); // total size of free old space (Spur only, otherwise nil)
+                case 54: return MiscUtils.getMemoryPoolUsageFree(MiscUtils.GC_OLD_GEN_SUFFIX); // total size of free old space (Spur only, otherwise nil)
                 case 55: return 0L; // ratio of growth and image size at or above which a GC will be performed post scavenge
                 case 56: return NilObject.SINGLETON; // number of process switches since startup (read-only)
                 case 57: return 0L; // number of ioProcessEvents calls since startup (read-only)

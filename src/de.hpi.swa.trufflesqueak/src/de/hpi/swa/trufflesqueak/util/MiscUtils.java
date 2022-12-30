@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryUsage;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -42,6 +44,12 @@ public final class MiscUtils {
     public static final long TIME_ZONE_OFFSET_MICROSECONDS = (Calendar.getInstance().get(Calendar.ZONE_OFFSET) + Calendar.getInstance().get(Calendar.DST_OFFSET)) * 1000L;
     public static final long TIME_ZONE_OFFSET_SECONDS = TIME_ZONE_OFFSET_MICROSECONDS / 1000 / 1000;
 
+    public static final String[] GC_YOUNG_GEN_NAMES = {"G1 Young Generation", "PS Scavenge"};
+    public static final String[] GC_OLD_GEN_NAMES = {"G1 Old Generation", "PS MarkSweep"};
+    public static final String GC_EDEN_SPACE_SUFFIX = "Eden Space";
+    public static final String GC_SURVIVOR_SPACE_SUFFIX = "Survivor Space";
+    public static final String GC_OLD_GEN_SUFFIX = "Old Gen";
+
     @CompilationFinal private static volatile SecureRandom random;
 
     private MiscUtils() {
@@ -62,21 +70,59 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
-    public static long getCollectionCount() {
-        long totalCollectionCount = 0;
-        for (final GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
-            totalCollectionCount += Math.max(gcBean.getCollectionCount(), 0);
-        }
-        return totalCollectionCount;
+    public static long getCollectionCount(final String[] names) {
+        final GarbageCollectorMXBean mxBean = getGarbageCollectorMXBean(names);
+        return mxBean != null ? mxBean.getCollectionCount() : 1L; // avoid division by zero
     }
 
     @TruffleBoundary
-    public static long getCollectionTime() {
-        long totalCollectionTime = 0;
-        for (final GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
-            totalCollectionTime += Math.max(gcBean.getCollectionTime(), 0);
+    public static long getCollectionTime(final String[] names) {
+        final GarbageCollectorMXBean mxBean = getGarbageCollectorMXBean(names);
+        return mxBean != null ? mxBean.getCollectionTime() : 1L; // avoid division by zero
+    }
+
+    @TruffleBoundary
+    private static GarbageCollectorMXBean getGarbageCollectorMXBean(final String[] names) {
+        for (final GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            if (ArrayUtils.containsEqual(names, bean.getName())) {
+                return bean;
+            }
         }
-        return totalCollectionTime;
+        return null;
+    }
+
+    @TruffleBoundary
+    public static long getMemoryPoolUsageCommitted(final String suffix) {
+        final MemoryUsage usage = getUsage(suffix);
+        return usage != null ? usage.getCommitted() : 1L; // avoid division by zero
+    }
+
+    @TruffleBoundary
+    public static long getMemoryPoolUsageFree(final String suffix) {
+        final MemoryUsage usage = getUsage(suffix);
+        return usage != null ? usage.getCommitted() - usage.getUsed() : 1L;
+    }
+
+    @TruffleBoundary
+    public static long getMemoryPoolUsageUsed(final String suffix) {
+        final MemoryUsage usage = getUsage(suffix);
+        return usage != null ? usage.getUsed() : 1L; // avoid division by zero
+    }
+
+    @TruffleBoundary
+    private static MemoryUsage getUsage(final String suffix) {
+        final MemoryPoolMXBean mxBean = getMemoryPoolMXBean(suffix);
+        return mxBean == null ? null : mxBean.getUsage();
+    }
+
+    @TruffleBoundary
+    private static MemoryPoolMXBean getMemoryPoolMXBean(final String suffix) {
+        for (final MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+            if (bean.getName().endsWith(suffix)) {
+                return bean;
+            }
+        }
+        return null;
     }
 
     @TruffleBoundary
