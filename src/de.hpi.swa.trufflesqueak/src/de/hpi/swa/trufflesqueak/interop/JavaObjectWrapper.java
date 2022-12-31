@@ -59,7 +59,9 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
+import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
@@ -167,6 +169,8 @@ public final class JavaObjectWrapper implements TruffleObject {
                 case "SubstrateTruffleRuntime":
                 case "GraalTruffleRuntime": // superclass of SubstrateTruffleRuntime
                     return !ArrayUtils.containsEqual(new String[]{"getCompileQueue", "getCompilationQueueSize", "getName", "toString"}, methodName);
+                case "SubstrateOptimizedCallTarget":
+                    return !ArrayUtils.containsEqual(new String[]{"getCallCount", "getCallAndLoopCount", "getCallNodes", "getKnownCallSiteCount", "getNonTrivialNodeCount", "toString"}, methodName);
                 case "BackgroundCompileQueue":
                     return !ArrayUtils.containsEqual(new String[]{"getQueueSize", "toString"}, methodName);
                 default:
@@ -203,6 +207,8 @@ public final class JavaObjectWrapper implements TruffleObject {
                             ArrayObject.class, BlockClosureObject.class, BooleanObject.class, CharacterObject.class, ClassObject.class, CompiledCodeObject.class, ContextObject.class,
                             EmptyObject.class, FloatObject.class, LargeIntegerObject.class, NativeObject.class, NilObject.class, PointersObject.class, VariablePointersObject.class,
                             WeakVariablePointersObject.class,
+                            // For AST-based coverage in CallTargetBrowser
+                            StartContextRootNode.class, ExecuteBytecodeNode.class,
                             // TruffleSqueak's object layout
                             ObjectLayout.class,
 
@@ -211,10 +217,21 @@ public final class JavaObjectWrapper implements TruffleObject {
                 CLASSES_TO_MEMBERS.get(Array.newInstance(cls, 0).getClass()); // Add array classes
             }
 
-            // Truffle runtime class and BackgroundCompileQueue
             try {
-                CLASSES_TO_MEMBERS.get(Class.forName("com.oracle.svm.truffle.api.SubstrateTruffleRuntime"));
-                CLASSES_TO_MEMBERS.get(Class.forName("org.graalvm.compiler.truffle.runtime.BackgroundCompileQueue"));
+                for (final String className : new String[]{
+                                // Truffle runtime class and BackgroundCompileQueue
+                                "com.oracle.svm.truffle.api.SubstrateTruffleRuntime",
+                                "org.graalvm.compiler.truffle.runtime.BackgroundCompileQueue",
+                                // For CallTargetBrowser
+                                "com.oracle.svm.truffle.api.SubstrateOptimizedCallTarget",
+                                "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget",
+                                "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget$ArgumentsProfile",
+                                "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget$ReturnProfile",
+                                "org.graalvm.compiler.truffle.runtime.OptimizedDirectCallNode"
+
+                }) {
+                    CLASSES_TO_MEMBERS.get(Class.forName(className));
+                }
             } catch (final ClassNotFoundException e) {
                 e.printStackTrace();
             }
