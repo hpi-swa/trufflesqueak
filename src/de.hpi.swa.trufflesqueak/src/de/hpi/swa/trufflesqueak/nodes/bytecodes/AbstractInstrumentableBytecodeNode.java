@@ -28,12 +28,12 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @SuppressWarnings("static-method")
 public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecodeNode implements InstrumentableNode {
 
-    protected AbstractInstrumentableBytecodeNode(final AbstractInstrumentableBytecodeNode original) {
-        this(original.code, original.index - original.code.getInitialPC(), original.getNumBytecodes());
-    }
-
     public AbstractInstrumentableBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
         super(code, index, numBytecodes);
+    }
+
+    protected AbstractInstrumentableBytecodeNode(final AbstractInstrumentableBytecodeNode original) {
+        super(original);
     }
 
     @Override

@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -20,14 +19,12 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 @NodeInfo(language = SqueakLanguageConfig.ID, cost = NodeCost.NONE)
-public final class ExecuteNonFailingPrimitiveRootNode extends RootNode {
-    private final CompiledCodeObject code;
+public final class ExecuteNonFailingPrimitiveRootNode extends AbstractRootNode {
 
     @Child private AbstractPrimitiveNode primitiveNode;
 
     public ExecuteNonFailingPrimitiveRootNode(final SqueakLanguage language, final CompiledCodeObject code, final AbstractPrimitiveNode primitiveNode) {
-        super(language, code.getFrameDescriptor());
-        this.code = code;
+        super(language, code);
         this.primitiveNode = primitiveNode;
     }
 
@@ -48,7 +45,7 @@ public final class ExecuteNonFailingPrimitiveRootNode extends RootNode {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return code.toString();
+        return getCode().toString();
     }
 
     @Override

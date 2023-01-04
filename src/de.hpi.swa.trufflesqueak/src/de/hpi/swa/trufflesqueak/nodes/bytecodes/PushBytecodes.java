@@ -59,12 +59,6 @@ public final class PushBytecodes {
             popCopiedValuesNode = FrameStackPopNNode.create(numCopied);
         }
 
-        private AbstractPushClosureNode(final AbstractPushClosureNode original) {
-            super(original.code, original.index, original.getNumBytecodes());
-            numCopied = original.numCopied;
-            popCopiedValuesNode = FrameStackPopNNode.create(original.numCopied);
-        }
-
         @Override
         public final void executeVoid(final VirtualFrame frame) {
             pushNode.execute(frame, createClosure(frame, popCopiedValuesNode.execute(frame)));

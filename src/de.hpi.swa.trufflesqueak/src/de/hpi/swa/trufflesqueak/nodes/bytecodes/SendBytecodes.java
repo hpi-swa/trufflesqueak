@@ -327,6 +327,7 @@ public final class SendBytecodes {
             final SqueakImageContext image = SqueakImageContext.get(this);
             final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
             final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
+            final CompiledCodeObject code = FrameAccess.getCodeObject(frame);
             replace(new SelfSendNode(code, index - code.getInitialPC(), 1, specialSelector, numArguments)).executeVoid(frame);
         }
 

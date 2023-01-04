@@ -13,7 +13,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
@@ -29,8 +28,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @NodeInfo(language = SqueakLanguageConfig.ID, cost = NodeCost.NONE)
-public final class StartContextRootNode extends RootNode {
-    private final CompiledCodeObject code;
+public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
 
@@ -41,8 +39,7 @@ public final class StartContextRootNode extends RootNode {
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
 
     public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
-        super(language, code.getFrameDescriptor());
-        this.code = code;
+        super(language, code);
         interruptHandlerNode = CheckForInterruptsQuickNode.create(code);
         executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
@@ -68,6 +65,7 @@ public final class StartContextRootNode extends RootNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final int numArgs = FrameAccess.getNumArguments(frame);
             if (!FrameAccess.hasClosure(frame)) {
+                final CompiledCodeObject code = getCode();
                 initialPC = code.getInitialPC();
                 initialSP = code.getNumTemps();
                 assert numArgs == code.getNumArgs();
@@ -109,7 +107,7 @@ public final class StartContextRootNode extends RootNode {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return code.toString();
+        return getCode().toString();
     }
 
     @Override

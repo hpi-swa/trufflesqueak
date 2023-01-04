@@ -15,7 +15,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 public abstract class AbstractBytecodeNode extends AbstractNode {
-    protected final CompiledCodeObject code;
     protected final int index;
     private final int successorIndex;
 
@@ -24,10 +23,14 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     }
 
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-        this.code = code;
         final int initialPC = code.getInitialPC();
         this.index = initialPC + index;
         successorIndex = initialPC + index + numBytecodes;
+    }
+
+    public AbstractBytecodeNode(final AbstractBytecodeNode original) {
+        index = original.index;
+        successorIndex = original.successorIndex;
     }
 
     public abstract void executeVoid(VirtualFrame frame);
@@ -43,6 +46,7 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     @Override
     public final SourceSection getSourceSection() {
         CompilerAsserts.neverPartOfCompilation();
+        final CompiledCodeObject code = getCode();
         final Source source = code.getSource();
         if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
             return source.createUnavailableSection();

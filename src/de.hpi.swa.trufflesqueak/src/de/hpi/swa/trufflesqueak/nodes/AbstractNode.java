@@ -14,6 +14,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -30,6 +31,10 @@ public abstract class AbstractNode extends Node {
 
     public final SqueakImageContext getContext() {
         return SqueakImageContext.get(this);
+    }
+
+    protected final CompiledCodeObject getCode() {
+        return ((AbstractRootNode) getRootNode()).getCode();
     }
 
     protected final boolean isBitmap(final NativeObject object) {

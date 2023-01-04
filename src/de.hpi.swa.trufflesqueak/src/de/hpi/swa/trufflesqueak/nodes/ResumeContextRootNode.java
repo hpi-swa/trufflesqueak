@@ -12,7 +12,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -20,14 +19,14 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class ResumeContextRootNode extends RootNode {
+public final class ResumeContextRootNode extends AbstractRootNode {
     private ContextObject activeContext;
     private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();
 
     @Child private AbstractExecuteContextNode executeBytecodeNode;
 
     protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
-        super(language, context.getTruffleFrame().getFrameDescriptor());
+        super(language, context.getMethodOrBlock());
         activeContext = context;
         assert !context.isDead() : "Terminated contexts cannot be resumed";
         executeBytecodeNode = new ExecuteBytecodeNode(context.getMethodOrBlock());

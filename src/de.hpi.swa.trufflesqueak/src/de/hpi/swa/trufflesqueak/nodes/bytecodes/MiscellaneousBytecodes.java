@@ -50,7 +50,7 @@ public final class MiscellaneousBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "callPrimitive: " + code.primitiveIndex();
+            return "callPrimitive: " + getCode().primitiveIndex();
         }
     }
 
