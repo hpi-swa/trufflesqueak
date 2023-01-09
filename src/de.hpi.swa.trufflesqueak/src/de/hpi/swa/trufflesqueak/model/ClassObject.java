@@ -404,7 +404,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             final Object[] methodDictVariablePart = methodDictionary.getVariablePart();
             for (int i = 0; i < methodDictVariablePart.length; i++) {
                 if (selector == methodDictVariablePart[i]) {
-                    return readValuesNode.executeArray(methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
+                    return readValuesNode.executeArray(readValuesNode, methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();

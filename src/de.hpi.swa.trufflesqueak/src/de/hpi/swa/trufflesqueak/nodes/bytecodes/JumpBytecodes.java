@@ -20,7 +20,7 @@ public final class JumpBytecodes {
 
     public abstract static class ConditionalJumpNode extends AbstractBytecodeNode {
         private final int jumpSuccessorIndex;
-        private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile conditionProfile = ConditionProfile.create();
 
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 

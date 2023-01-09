@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameDescriptor.Builder;
@@ -109,6 +110,7 @@ public final class FrameAccess {
     }
 
     /* Returns the code object matching the frame's descriptor. */
+    @NeverDefault
     public static CompiledCodeObject getCodeObject(final Frame frame) {
         return (CompiledCodeObject) frame.getFrameDescriptor().getInfo();
     }

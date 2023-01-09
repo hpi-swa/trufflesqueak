@@ -11,11 +11,15 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
@@ -120,9 +124,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primDigitAdd")
     protected abstract static class PrimDigitAddNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs,
-                        @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
+        protected final long doLong(final long lhs, final long rhs,
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(this, differentSign(lhs, rhs))) {
                 return Math.subtractExact(lhs, rhs);
             } else {
                 return Math.addExact(lhs, rhs);
@@ -131,9 +135,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @Cached final ConditionProfile differentSignProfile) {
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             final SqueakImageContext image = getContext();
-            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
+            if (differentSignProfile.profile(this, differentSign(lhs, rhs))) {
                 return LargeIntegerObject.subtract(image, lhs, rhs);
             } else {
                 return LargeIntegerObject.add(image, lhs, rhs);
@@ -141,19 +145,19 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs,
-                        @Cached final ConditionProfile sameSignProfile) {
-            if (sameSignProfile.profile(lhs.sameSign(rhs))) {
-                return lhs.add(rhs);
-            } else {
+        protected final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs,
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(this, !lhs.sameSign(rhs))) {
                 return lhs.subtract(rhs);
+            } else {
+                return lhs.add(rhs);
             }
         }
 
         @Specialization
         protected final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
-                        @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(rhs.differentSign(getContext(), lhs))) {
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(this, rhs.differentSign(getContext(), lhs))) {
                 return LargeIntegerObject.subtract(lhs, rhs);
             } else {
                 return rhs.add(lhs);
@@ -162,8 +166,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(lhs.differentSign(getContext(), rhs))) {
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(this, lhs.differentSign(getContext(), rhs))) {
                 return lhs.subtract(rhs);
             } else {
                 return lhs.add(rhs);
@@ -175,9 +179,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primDigitSubtract")
     protected abstract static class PrimDigitSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs,
-                        @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
+        protected final long doLong(final long lhs, final long rhs,
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(this, differentSign(lhs, rhs))) {
                 return Math.addExact(lhs, rhs);
             } else {
                 return Math.subtractExact(lhs, rhs);
@@ -186,9 +190,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @Cached final ConditionProfile differentSignProfile) {
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             final SqueakImageContext image = getContext();
-            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
+            if (differentSignProfile.profile(this, differentSign(lhs, rhs))) {
                 return LargeIntegerObject.add(image, lhs, rhs);
             } else {
                 return LargeIntegerObject.subtract(image, lhs, rhs);
@@ -196,19 +200,19 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs,
-                        @Cached final ConditionProfile sameSignProfile) {
-            if (sameSignProfile.profile(lhs.sameSign(rhs))) {
-                return lhs.subtract(rhs);
-            } else {
+        protected final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs,
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(this, !lhs.sameSign(rhs))) {
                 return lhs.add(rhs);
+            } else {
+                return lhs.subtract(rhs);
             }
         }
 
         @Specialization
         protected final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
-                        @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(rhs.differentSign(getContext(), lhs))) {
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(this, rhs.differentSign(getContext(), lhs))) {
                 return rhs.add(lhs);
             } else {
                 return LargeIntegerObject.subtract(lhs, rhs);
@@ -217,8 +221,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(lhs.differentSign(getContext(), rhs))) {
+                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(this, lhs.differentSign(getContext(), rhs))) {
                 return lhs.add(rhs);
             } else {
                 return lhs.subtract(rhs);
@@ -269,9 +273,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLong(final long receiver, final LargeIntegerObject arg,
-                        @Cached final ConditionProfile positiveProfile) {
-            if (positiveProfile.profile(receiver >= 0)) {
+        protected final Object doLong(final long receiver, final LargeIntegerObject arg,
+                        @Shared("positiveProfile") @Cached final InlinedConditionProfile positiveProfile) {
+            if (positiveProfile.profile(this, receiver >= 0)) {
                 return receiver & arg.longValue();
             } else {
                 return arg.and(receiver);
@@ -279,9 +283,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg,
-                        @Cached final ConditionProfile positiveProfile) {
-            if (positiveProfile.profile(arg >= 0)) {
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long arg,
+                        @Shared("positiveProfile") @Cached final InlinedConditionProfile positiveProfile) {
+            if (positiveProfile.profile(this, arg >= 0)) {
                 return receiver.longValue() & arg;
             } else {
                 return receiver.and(arg);
@@ -350,12 +354,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primDigitCompare")
     protected abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
-        protected static final long doLong(final long lhs, final long rhs,
-                        @Cached final ConditionProfile smallerProfile,
-                        @Cached final ConditionProfile equalProfile) {
-            if (smallerProfile.profile(lhs < rhs)) {
+        protected final long doLong(final long lhs, final long rhs,
+                        @Exclusive @Cached final InlinedConditionProfile smallerProfile,
+                        @Exclusive @Cached final InlinedConditionProfile equalProfile) {
+            if (smallerProfile.profile(this, lhs < rhs)) {
                 return -1L;
-            } else if (equalProfile.profile(lhs == rhs)) {
+            } else if (equalProfile.profile(this, lhs == rhs)) {
                 return 0L;
             } else {
                 return +1L;
@@ -369,8 +373,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
-                        @Cached final ConditionProfile fitsIntoLongProfile) {
-            if (fitsIntoLongProfile.profile(rhs.fitsIntoLong())) {
+                        @Shared("fitsIntoLongProfile") @Cached final InlinedConditionProfile fitsIntoLongProfile) {
+            if (fitsIntoLongProfile.profile(this, rhs.fitsIntoLong())) {
                 final long value = rhs.longValue();
                 return value == lhs ? 0L : value < lhs ? -1L : 1L;
             } else {
@@ -380,8 +384,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final long doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Cached final ConditionProfile fitsIntoLongProfile) {
-            if (fitsIntoLongProfile.profile(lhs.fitsIntoLong())) {
+                        @Shared("fitsIntoLongProfile") @Cached final InlinedConditionProfile fitsIntoLongProfile) {
+            if (fitsIntoLongProfile.profile(this, lhs.fitsIntoLong())) {
                 final long value = lhs.longValue();
                 return value == rhs ? 0L : value < rhs ? -1L : 1L;
             } else {
@@ -395,11 +399,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization
         protected final ArrayObject doLong(final long rcvr, final long arg, final boolean negative,
-                        @Cached final BranchProfile signProfile) {
+                        @Cached final InlinedBranchProfile signProfile) {
             final SqueakImageContext image = getContext();
             long divide = rcvr / arg;
             if (negative && divide >= 0 || !negative && divide < 0) {
-                signProfile.enter();
+                signProfile.enter(this);
                 if (divide == Long.MIN_VALUE) {
                     return createArrayWithLongMinOverflowResult(image, rcvr, arg);
                 }

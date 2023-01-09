@@ -7,7 +7,10 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -22,13 +25,11 @@ import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
+@GenerateInline(true)
+@GenerateCached(false)
 public abstract class SqueakObjectBecomeNode extends AbstractNode {
 
-    public static SqueakObjectBecomeNode create() {
-        return SqueakObjectBecomeNodeGen.create();
-    }
-
-    public abstract boolean execute(Object left, Object right);
+    public abstract boolean execute(Node node, Object left, Object right);
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"left == right"})

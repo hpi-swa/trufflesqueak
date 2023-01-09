@@ -8,7 +8,8 @@ package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -104,13 +105,13 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     @Override
     public final long getOrCreateSqueakHash() {
-        return getOrCreateSqueakHash(BranchProfile.getUncached());
+        return getOrCreateSqueakHash(InlinedBranchProfile.getUncached(), null);
     }
 
-    public final long getOrCreateSqueakHash(final BranchProfile needsHashProfile) {
+    public final long getOrCreateSqueakHash(final InlinedBranchProfile needsHashProfile, final Node node) {
         if (needsSqueakHash()) {
             /** Lazily initialize squeakHash and derive value from hashCode. */
-            needsHashProfile.enter();
+            needsHashProfile.enter(node);
             setSqueakHash(System.identityHashCode(this) & SQUEAK_HASH_MASK);
         }
         return getSqueakHash();
@@ -149,12 +150,13 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     @TruffleBoundary
     public final Object send(final SqueakImageContext image, final String selector, final Object... arguments) {
-        final Object methodObject = LookupMethodByStringNode.getUncached().executeLookup(getSqueakClass(), selector);
+        final Object methodObject = LookupMethodByStringNode.getUncached().executeLookup(LookupMethodByStringNode.getUncached(), getSqueakClass(), selector);
         if (methodObject instanceof CompiledCodeObject) {
             final boolean wasActive = image.interrupt.isActive();
             image.interrupt.deactivate();
             try {
-                return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledCodeObject) methodObject, ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
+                final DispatchUneagerlyNode dispatchNode = DispatchUneagerlyNode.getUncached();
+                return dispatchNode.executeDispatch(dispatchNode, (CompiledCodeObject) methodObject, ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
             } finally {
                 if (wasActive) {
                     image.interrupt.activate();

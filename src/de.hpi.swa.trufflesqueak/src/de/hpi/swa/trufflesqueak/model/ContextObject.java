@@ -16,7 +16,8 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -286,9 +287,18 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         FrameAccess.setSender(getOrCreateTruffleFrame(), NilObject.SINGLETON);
     }
 
-    public Object getInstructionPointer(final ConditionProfile nilProfile) {
+    private Object getInstructionPointerSlow() {
         final int pc = FrameAccess.getInstructionPointer(getTruffleFrame());
-        if (nilProfile.profile(pc == NIL_PC_VALUE)) {
+        if (pc == NIL_PC_VALUE) {
+            return NilObject.SINGLETON;
+        } else {
+            return (long) pc; // Must be a long.
+        }
+    }
+
+    public Object getInstructionPointer(final InlinedConditionProfile nilProfile, final Node node) {
+        final int pc = FrameAccess.getInstructionPointer(getTruffleFrame());
+        if (nilProfile.profile(node, pc == NIL_PC_VALUE)) {
             return NilObject.SINGLETON;
         } else {
             return (long) pc; // Must be a long.
@@ -513,18 +523,19 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return arguments;
     }
 
-    public void transferTo(final SqueakImageContext image, final PointersObject newProcess, final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode,
+    public void transferTo(final Node node, final SqueakImageContext image, final PointersObject newProcess, final AbstractPointersObjectReadNode readNode,
+                    final AbstractPointersObjectWriteNode writeNode,
                     final GetActiveProcessNode getActiveProcessNode) {
         // Record a process to be awakened on the next interpreter cycle.
         final PointersObject scheduler = image.getScheduler();
-        assert newProcess != getActiveProcessNode.execute() : "trying to switch to already active process";
+        assert newProcess != getActiveProcessNode.execute(node) : "trying to switch to already active process";
         // overwritten in next line.
-        final PointersObject oldProcess = getActiveProcessNode.execute();
-        writeNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        writeNode.execute(oldProcess, PROCESS.SUSPENDED_CONTEXT, this);
-        writeNode.executeNil(newProcess, PROCESS.LIST);
-        final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
-        writeNode.executeNil(newProcess, PROCESS.SUSPENDED_CONTEXT);
+        final PointersObject oldProcess = getActiveProcessNode.execute(node);
+        writeNode.execute(node, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+        writeNode.execute(node, oldProcess, PROCESS.SUSPENDED_CONTEXT, this);
+        writeNode.executeNil(node, newProcess, PROCESS.LIST);
+        final ContextObject newActiveContext = (ContextObject) readNode.execute(node, newProcess, PROCESS.SUSPENDED_CONTEXT);
+        writeNode.executeNil(node, newProcess, PROCESS.SUSPENDED_CONTEXT);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
             throw ProcessSwitch.create(newActiveContext);
         } else {
@@ -561,7 +572,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         // TODO: make sure this works correctly
         if (truffleFrame != null) {
             final int stackPointer = getStackPointer();
-            if (getSender() == thang || thang.equals(getInstructionPointer(ConditionProfile.getUncached())) || thang.equals(stackPointer) || getCodeObject() == thang || getClosure() == thang ||
+            if (getSender() == thang || thang.equals(getInstructionPointerSlow()) || thang.equals(stackPointer) || getCodeObject() == thang ||
+                            getClosure() == thang ||
                             getReceiver() == thang) {
                 return true;
             }
@@ -655,7 +667,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             throw SqueakException.create("ContextObject must have slots:", this);
         }
         writer.writeObject(getSender());
-        writer.writeObject(getInstructionPointer(ConditionProfile.getUncached()));
+        writer.writeObject(getInstructionPointerSlow());
         writer.writeSmallInteger(getStackPointer());
         writer.writeObject(getCodeObject());
         writer.writeObject(NilObject.nullToNil(getClosure()));

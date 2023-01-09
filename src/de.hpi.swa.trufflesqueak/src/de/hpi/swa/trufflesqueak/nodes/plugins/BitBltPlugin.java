@@ -15,7 +15,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -46,9 +46,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCopyBits1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
         protected final Object doCopy(final PointersObject receiver,
-                        @Cached final ConditionProfile resultProfile) {
+                        @Cached final InlinedConditionProfile resultProfile) {
             final long result = getContext().bitblt.primitiveCopyBits(receiver, -1);
-            return resultProfile.profile(result == -1) ? receiver : result;
+            return resultProfile.profile(this, result == -1) ? receiver : result;
         }
     }
 
@@ -57,9 +57,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCopyBits2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected final Object doCopyTranslucent(final PointersObject receiver, final long factor,
-                        @Cached final ConditionProfile resultProfile) {
+                        @Cached final InlinedConditionProfile resultProfile) {
             final long result = getContext().bitblt.primitiveCopyBits(receiver, factor);
-            return resultProfile.profile(result == -1) ? receiver : result;
+            return resultProfile.profile(this, result == -1) ? receiver : result;
         }
     }
 
@@ -85,9 +85,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        private static void respecializeArrayToLongOrPrimFail(final ArrayObject array) {
+        private void respecializeArrayToLongOrPrimFail(final ArrayObject array) {
             CompilerAsserts.neverPartOfCompilation();
-            final Object[] values = ArrayObjectToObjectArrayCopyNode.getUncached().execute(array);
+            final Object[] values = ArrayObjectToObjectArrayCopyNode.getUncached().execute(this, array);
             final long[] longs = new long[values.length];
             try {
                 for (int i = 0; i < values.length; i++) {

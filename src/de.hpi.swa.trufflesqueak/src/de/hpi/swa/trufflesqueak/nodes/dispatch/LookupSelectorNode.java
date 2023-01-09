@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -29,6 +30,7 @@ public abstract class LookupSelectorNode extends AbstractNode {
         this.selector = selector;
     }
 
+    @NeverDefault
     public static LookupSelectorNode create(final NativeObject selector) {
         return LookupSelectorNodeGen.create(selector);
     }

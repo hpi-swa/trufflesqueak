@@ -7,11 +7,15 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -26,14 +30,18 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectInstSizeNode;
 
+@GenerateInline(true)
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectInstSizeNode extends AbstractNode {
 
+    @NeverDefault
     public static SqueakObjectInstSizeNode create() {
         return SqueakObjectInstSizeNodeGen.create();
     }
 
-    public abstract int execute(Object obj);
+    public abstract int execute(Node node, Object obj);
+
+    public abstract int execute(Node node, AbstractSqueakObject obj);
 
     @Specialization
     protected static final int doNil(final NilObject obj) {
@@ -46,9 +54,9 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doAbstractPointersObject(final AbstractPointersObject obj,
+    protected static final int doAbstractPointersObject(final Node node, final AbstractPointersObject obj,
                     @Cached final AbstractPointersObjectInstSizeNode instSizeNode) {
-        return instSizeNode.execute(obj);
+        return instSizeNode.execute(node, obj);
     }
 
     @Specialization

@@ -104,7 +104,7 @@ public final class PushBytecodes {
 
         @Override
         protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
-            final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
+            final ContextObject outerContext = getOrCreateContextNode.executeGet(frame, this);
             final int startPC = getSuccessorIndex() - blockSize;
             final SqueakImageContext image = getContext();
             return new BlockClosureObject(image, image.blockClosureClass, shadowBlock, startPC, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
@@ -179,7 +179,7 @@ public final class PushBytecodes {
             @Override
             protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
                 final Object receiver = popReceiverNode.execute(frame);
-                final ContextObject context = getOrCreateContextNode.executeGet(frame);
+                final ContextObject context = getOrCreateContextNode.executeGet(frame, this);
                 return createClosure(copiedValues, receiver, context);
             }
         }
@@ -194,7 +194,7 @@ public final class PushBytecodes {
             @Override
             protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
                 final Object receiver = FrameAccess.getReceiver(frame);
-                final ContextObject context = getOrCreateContextNode.executeGet(frame);
+                final ContextObject context = getOrCreateContextNode.executeGet(frame, this);
                 return createClosure(copiedValues, receiver, context);
             }
         }
@@ -236,7 +236,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, getContextNode.executeGet(frame));
+            pushNode.execute(frame, getContextNode.executeGet(frame, this));
         }
 
         @Override

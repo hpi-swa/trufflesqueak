@@ -7,10 +7,14 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -21,10 +25,12 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 public final class ContextObjectNodes {
     @GenerateUncached
+    @GenerateInline(true)
+    @GenerateCached(false)
     @ImportStatic(CONTEXT.class)
     public abstract static class ContextObjectReadNode extends AbstractNode {
 
-        public abstract Object execute(ContextObject context, long index);
+        public abstract Object execute(Node node, ContextObject context, long index);
 
         @Specialization(guards = "index == SENDER_OR_NIL")
         protected static final Object doSender(final ContextObject context, @SuppressWarnings("unused") final long index) {
@@ -32,9 +38,9 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER"})
-        protected static final Object doInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @Cached final ConditionProfile nilProfile) {
-            return context.getInstructionPointer(nilProfile);
+        protected static final Object doInstructionPointer(final Node node, final ContextObject context, @SuppressWarnings("unused") final long index,
+                        @Exclusive @Cached final InlinedConditionProfile nilProfile) {
+            return context.getInstructionPointer(nilProfile, node);
         }
 
         @Specialization(guards = "index == STACKPOINTER")
@@ -54,9 +60,9 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})
-        protected static final Object doClosure(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @Cached final ConditionProfile nilProfile) {
-            return NilObject.nullToNil(context.getClosure(), nilProfile);
+        protected static final Object doClosure(final Node node, final ContextObject context, @SuppressWarnings("unused") final long index,
+                        @Exclusive @Cached final InlinedConditionProfile nilProfile) {
+            return NilObject.nullToNil(context.getClosure(), nilProfile, node);
         }
 
         @Specialization(guards = "index == RECEIVER")
@@ -71,10 +77,12 @@ public final class ContextObjectNodes {
     }
 
     @GenerateUncached
+    @GenerateInline(true)
+    @GenerateCached(false)
     @ImportStatic(CONTEXT.class)
     public abstract static class ContextObjectWriteNode extends AbstractNode {
 
-        public abstract void execute(ContextObject context, long index, Object value);
+        public abstract void execute(Node node, ContextObject context, long index, Object value);
 
         @Specialization(guards = "index == SENDER_OR_NIL")
         protected static final void doSender(final ContextObject context, @SuppressWarnings("unused") final long index, final ContextObject value) {

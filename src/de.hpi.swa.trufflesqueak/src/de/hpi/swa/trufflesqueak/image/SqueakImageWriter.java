@@ -86,15 +86,16 @@ public final class SqueakImageWriter {
         final long start = MiscUtils.currentTimeMillis();
         nextChunk = image.flags.getOldBaseAddress();
         final PointersObject activeProcess = image.getActiveProcessSlow();
+        final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
         try {
             /* Mark thisContext as suspended during tracing and writing. */
-            AbstractPointersObjectWriteNode.getUncached().execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, thisContext);
+            writeNode.execute(writeNode, activeProcess, PROCESS.SUSPENDED_CONTEXT, thisContext);
             traceObjects();
             writeImageHeader();
             writeBody();
         } finally {
             /* Unmark thisContext as suspended. */
-            AbstractPointersObjectWriteNode.getUncached().executeNil(activeProcess, PROCESS.SUSPENDED_CONTEXT);
+            writeNode.executeNil(writeNode, activeProcess, PROCESS.SUSPENDED_CONTEXT);
             closeStream();
             finalizeImageHeader();
         }

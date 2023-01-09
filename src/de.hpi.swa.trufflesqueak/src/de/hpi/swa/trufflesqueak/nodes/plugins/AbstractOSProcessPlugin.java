@@ -17,7 +17,8 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.nfi.api.SignatureLibrary;
 
@@ -41,9 +42,9 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
             supportsNFI = SqueakImageContext.getSlow().supportsNFI();
         }
 
-        protected static final long failIfMinusOne(final long result, final BranchProfile errorProfile) {
+        protected static final long failIfMinusOne(final long result, final InlinedBranchProfile errorProfile, final Node node) {
             if (result == -1) {
-                errorProfile.enter();
+                errorProfile.enter(node);
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 return result;
@@ -108,13 +109,13 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
         @Specialization(guards = "pathString.isByteType()")
         protected final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Cached final BranchProfile errorProfile) {
+                        @Cached final InlinedBranchProfile errorProfile) {
             final SqueakImageContext image = getContext();
             try {
                 image.env.setCurrentWorkingDirectory(image.env.getPublicTruffleFile(pathString.asStringUnsafe()));
                 return NilObject.SINGLETON; // Signals success.
             } catch (UnsupportedOperationException | IllegalArgumentException | SecurityException e) {
-                errorProfile.enter();
+                errorProfile.enter(this);
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
         }

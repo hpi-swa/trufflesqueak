@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -21,9 +22,10 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DenyReplace;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -134,7 +136,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         protected final Object doCallout(final AbstractSqueakObject receiver, final Object... arguments) {
-            return doCallout(externalFunction, receiver, arguments);
+            return doCallout(this, externalFunction, receiver, arguments);
         }
     }
 
@@ -325,9 +327,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.isEmptyType()"})
-        protected static final boolean doEmptyArray(final ArrayObject receiver, final Object thang,
-                        @Cached final ConditionProfile noElementsProfile) {
-            if (noElementsProfile.profile(receiver.getEmptyStorage() == 0)) {
+        protected final boolean doEmptyArray(final ArrayObject receiver, final Object thang,
+                        @Cached final InlinedConditionProfile noElementsProfile) {
+            if (noElementsProfile.profile(this, receiver.getEmptyStorage() == 0)) {
                 return BooleanObject.FALSE;
             } else {
                 return BooleanObject.wrap(thang == NilObject.SINGLETON);
@@ -405,19 +407,19 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final boolean doPointers(final PointersObject receiver, final Object thang,
-                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+                        @Shared("identityNode") @Cached(inline = true) final SqueakObjectIdentityNode identityNode) {
             return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
         }
 
         @Specialization
         protected static final boolean doVariablePointers(final VariablePointersObject receiver, final Object thang,
-                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+                        @Shared("identityNode") @Cached(inline = true) final SqueakObjectIdentityNode identityNode) {
             return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
         }
 
         @Specialization
         protected static final boolean doWeakPointers(final WeakVariablePointersObject receiver, final Object thang,
-                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+                        @Shared("identityNode") @Cached(inline = true) final SqueakObjectIdentityNode identityNode) {
             return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
         }
     }
@@ -575,11 +577,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 148)
     public abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode {
-
         @Specialization
         protected final Object doShallowCopy(final Object receiver,
                         @Cached final SqueakObjectShallowCopyNode shallowCopyNode) {
-            return shallowCopyNode.execute(getContext(), receiver);
+            return shallowCopyNode.execute(getContext(), this, receiver);
         }
     }
 
@@ -589,7 +590,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimGetAttributeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "index == cachedIndex", limit = "1")
         protected final AbstractSqueakObject doGetCached(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long index,
-                        @Cached("toIntExact(index)") final int cachedIndex) {
+                        @Cached(value = "toIntExact(index)", neverDefault = false) final int cachedIndex) {
             return getContext().getSystemAttribute(cachedIndex);
         }
 
@@ -615,14 +616,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public abstract static class PrimCompareString3Node extends AbstractPrimCompareStringNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
         protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
-                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
+                        @SuppressWarnings("unused") @Cached(value = "asciiOrder(orderValue)") final NativeObject cachedAsciiOrder) {
             return compareAsciiOrder(receiver, other);
         }
 
         @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedOrder"}, limit = "1")
         protected static final long doCompareCached(final NativeObject receiver, final NativeObject other,
                         @SuppressWarnings("unused") final NativeObject orderValue,
-                        @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
+                        @Cached(value = "validOrder(orderValue)") final NativeObject cachedOrder) {
             return compare(receiver, other, cachedOrder);
         }
 
@@ -638,8 +639,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimGetImmutabilityNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final boolean doGet(final Object receiver,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
-            return BooleanObject.wrap(classNode.executeLookup(receiver).isImmediateClassType());
+            return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
     }
 
@@ -648,9 +650,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimSetImmutabilityNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final boolean doGet(final Object receiver, @SuppressWarnings("unused") final boolean value,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
             // FIXME: implement immutability
-            return BooleanObject.wrap(classNode.executeLookup(receiver).isImmediateClassType());
+            return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
     }
 
@@ -712,13 +715,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "!isNativeObject(receiver)", "!isAbstractPointersObject(receiver)", "!isContextObject(receiver)",
-                        "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
+                        "sizeNode.execute(node, receiver) == sizeNode.execute(node, anotherObject)"}, limit = "1")
         protected static final AbstractSqueakObject doCopy(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash anotherObject,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final SqueakObjectAt0Node at0Node) {
-            for (int i = 0; i < sizeNode.execute(receiver); i++) {
-                atput0Node.execute(receiver, i, at0Node.execute(anotherObject, i));
+            for (int i = 0; i < sizeNode.execute(node, receiver); i++) {
+                atput0Node.execute(node, receiver, i, at0Node.execute(anotherObject, i));
             }
             return receiver;
         }
@@ -746,9 +750,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"!classObject.isImmediateClassType()"})
         protected final ArrayObject allInstances(final ClassObject classObject,
-                        @Cached final ConditionProfile isNilClass) {
+                        @Cached final InlinedConditionProfile isNilClass) {
             final SqueakImageContext image = getContext();
-            if (isNilClass.profile(image.isNilClass(classObject))) {
+            if (isNilClass.profile(this, image.isNilClass(classObject))) {
                 return getContext().asArrayOfObjects(NilObject.SINGLETON);
             } else {
                 if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {

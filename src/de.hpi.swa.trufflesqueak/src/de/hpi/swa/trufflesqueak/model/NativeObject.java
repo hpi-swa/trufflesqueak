@@ -37,6 +37,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public static final int SHORT_TO_WORD = Long.SIZE / Short.SIZE;
     public static final int INTEGER_TO_WORD = Long.SIZE / Integer.SIZE;
 
+    public static final NativeObject NULL = new NativeObject();
+
     @CompilationFinal private Object storage;
 
     public NativeObject() { // constructor for special selectors
@@ -147,7 +149,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public int size() {
         CompilerAsserts.neverPartOfCompilation();
-        return NativeObjectSizeNode.getUncached().execute(this);
+        return NativeObjectSizeNode.getUncached().execute(null, this);
     }
 
     public void become(final NativeObject other) {
@@ -353,9 +355,11 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public Object executeAsSymbolSlow(final VirtualFrame frame, final Object... receiverAndArguments) {
         CompilerAsserts.neverPartOfCompilation();
         assert SqueakImageContext.getSlow().isByteSymbolClass(getSqueakClass());
-        final Object method = LookupMethodNode.getUncached().executeLookup(SqueakObjectClassNode.getUncached().executeLookup(receiverAndArguments[0]), this);
+        final Object method = LookupMethodNode.getUncached().executeLookup(LookupMethodNode.getUncached(),
+                        SqueakObjectClassNode.getUncached().executeLookup(SqueakObjectClassNode.getUncached(), receiverAndArguments[0]), this);
         if (method instanceof CompiledCodeObject) {
-            return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledCodeObject) method, receiverAndArguments, GetOrCreateContextNode.getOrCreateUncached(frame));
+            final DispatchUneagerlyNode dispatchNode = DispatchUneagerlyNode.getUncached();
+            return dispatchNode.executeDispatch(dispatchNode, (CompiledCodeObject) method, receiverAndArguments, GetOrCreateContextNode.getOrCreateUncached(frame));
         } else {
             throw SqueakException.create("Illegal uncached message send");
         }

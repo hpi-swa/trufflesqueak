@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.NeverDefault;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -121,7 +122,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         final Object[] pointers = chunk.getPointers();
         final int instSize = instsize();
         for (int i = 0; i < instSize; i++) {
-            writeNode.execute(this, i, pointers[i]);
+            writeNode.execute(writeNode, this, i, pointers[i]);
         }
         fillInVariablePart(pointers, instSize);
         assert size() == pointers.length;
@@ -129,6 +130,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     protected abstract void fillInVariablePart(Object[] pointers, int instSize);
 
+    @NeverDefault
     public final ObjectLayout getLayout() {
         if (layout == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -288,12 +290,12 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     public final Object instVarAt0Slow(final long index) {
         CompilerAsserts.neverPartOfCompilation();
-        return AbstractPointersObjectReadNode.getUncached().execute(this, index);
+        return AbstractPointersObjectReadNode.getUncached().execute(AbstractPointersObjectReadNode.getUncached(), this, index);
     }
 
     public final void instVarAtPut0Slow(final long index, final Object value) {
         CompilerAsserts.neverPartOfCompilation();
-        AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
+        AbstractPointersObjectWriteNode.getUncached().execute(AbstractPointersObjectWriteNode.getUncached(), this, index, value);
     }
 
     protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
@@ -310,7 +312,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         if (SqueakGuards.isUsedJavaPrimitive(thang)) {
             // TODO: This could be more efficient.
             for (final SlotLocation slotLocation : getLayout().getLocations()) {
-                if (slotLocation.isPrimitive() && identityNode.execute(slotLocation.read(this), thang)) {
+                if (slotLocation.isPrimitive() && identityNode.execute(identityNode, slotLocation.read(this), thang)) {
                     return true;
                 }
             }
@@ -375,7 +377,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         if (writeHeader(writer)) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             for (int i = 0; i < instsize(); i++) {
-                writer.writeObject(readNode.execute(this, i));
+                writer.writeObject(readNode.execute(readNode, this, i));
             }
             writeVariablePart(writer);
         }

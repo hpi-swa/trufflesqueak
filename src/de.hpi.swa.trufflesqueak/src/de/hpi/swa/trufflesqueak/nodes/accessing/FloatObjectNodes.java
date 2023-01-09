@@ -6,9 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -16,18 +19,16 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodesFactory.AsFloatO
 
 public final class FloatObjectNodes {
     @GenerateUncached
+    @GenerateInline(true)
+    @GenerateCached(false)
     @ImportStatic(Double.class)
     public abstract static class AsFloatObjectIfNessaryNode extends AbstractNode {
-
-        public static AsFloatObjectIfNessaryNode create() {
-            return AsFloatObjectIfNessaryNodeGen.create();
-        }
 
         public static AsFloatObjectIfNessaryNode getUncached() {
             return AsFloatObjectIfNessaryNodeGen.getUncached();
         }
 
-        public abstract Object execute(double value);
+        public abstract Object execute(Node node, double value);
 
         @Specialization(guards = "isFinite(value)")
         protected static final double doFinite(final double value) {

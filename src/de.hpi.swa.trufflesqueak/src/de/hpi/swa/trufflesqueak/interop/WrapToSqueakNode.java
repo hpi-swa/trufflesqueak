@@ -8,10 +8,12 @@ package de.hpi.swa.trufflesqueak.interop;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.strings.TruffleString;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -20,9 +22,11 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
+@SuppressWarnings("truffle-inlining")
 @GenerateUncached
 public abstract class WrapToSqueakNode extends AbstractNode {
 
+    @NeverDefault
     public static WrapToSqueakNode create() {
         return WrapToSqueakNodeGen.create();
     }
@@ -67,27 +71,27 @@ public abstract class WrapToSqueakNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doFloat(final float value,
-                    @Cached final AsFloatObjectIfNessaryNode boxNode) {
-        return boxNode.execute(value);
+    protected final Object doFloat(final float value,
+                    @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
+        return boxNode.execute(this, value);
     }
 
     @Specialization
-    protected static final Object doDouble(final double value,
-                    @Cached final AsFloatObjectIfNessaryNode boxNode) {
-        return boxNode.execute(value);
+    protected final Object doDouble(final double value,
+                    @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
+        return boxNode.execute(this, value);
     }
 
     @Specialization
     protected final NativeObject doString(final String value,
-                    @Cached final ConditionProfile wideStringProfile) {
-        return getContext().asString(value, wideStringProfile);
+                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile) {
+        return getContext().asString(value, wideStringProfile, this);
     }
 
     @Specialization
     protected final NativeObject doTruffleString(final TruffleString value,
                     @Cached final TruffleString.ToJavaStringNode toJavaString,
-                    @Cached final ConditionProfile wideStringProfile) {
+                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile) {
         return doString(toJavaString.execute(value), wideStringProfile);
     }
 

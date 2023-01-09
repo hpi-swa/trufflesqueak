@@ -7,10 +7,16 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -30,14 +36,19 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 
+@GenerateUncached
+@GenerateInline(true)
+@GenerateCached(false)
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectSizeNode extends AbstractNode {
 
-    public static SqueakObjectSizeNode create() {
-        return SqueakObjectSizeNodeGen.create();
+    public static final SqueakObjectSizeNode getUncached() {
+        return SqueakObjectSizeNodeGen.getUncached();
     }
 
-    public abstract int execute(Object obj);
+    public abstract int execute(Node node, Object obj);
+
+    public abstract int execute(Node node, AbstractSqueakObject obj);
 
     @Specialization
     protected static final int doNil(final NilObject obj) {
@@ -45,8 +56,9 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doArray(final ArrayObject obj, @Cached final ArrayObjectSizeNode sizeNode) {
-        return sizeNode.execute(obj);
+    protected static final int doArray(final Node node, final ArrayObject obj,
+                    @Cached final ArrayObjectSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
     }
 
     @Specialization
@@ -60,21 +72,21 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doPointers(final PointersObject obj,
-                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(obj);
+    protected static final int doPointers(final Node node, final PointersObject obj,
+                    @Exclusive @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
     }
 
     @Specialization
-    protected static final int doVariablePointers(final VariablePointersObject obj,
-                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(obj) + obj.getVariablePartSize();
+    protected static final int doVariablePointers(final Node node, final VariablePointersObject obj,
+                    @Exclusive @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(node, obj) + obj.getVariablePartSize();
     }
 
     @Specialization
-    protected static final int doWeakVariablePointers(final WeakVariablePointersObject obj,
-                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(obj) + obj.getVariablePartSize();
+    protected static final int doWeakVariablePointers(final Node node, final WeakVariablePointersObject obj,
+                    @Exclusive @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(node, obj) + obj.getVariablePartSize();
     }
 
     @Specialization
@@ -93,8 +105,9 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doNative(final NativeObject obj, @Cached final NativeObjectSizeNode sizeNode) {
-        return sizeNode.execute(obj);
+    protected static final int doNative(final Node node, final NativeObject obj,
+                    @Cached final NativeObjectSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
     }
 
     @Specialization

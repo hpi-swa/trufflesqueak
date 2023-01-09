@@ -8,8 +8,11 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -32,27 +35,25 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 @GenerateUncached
+@GenerateInline(true)
+@GenerateCached(false)
 public abstract class SqueakObjectNewNode extends AbstractNode {
     public static final int NEW_CACHE_SIZE = 6;
-
-    public static SqueakObjectNewNode create() {
-        return SqueakObjectNewNodeGen.create();
-    }
 
     public static SqueakObjectNewNode getUncached() {
         return SqueakObjectNewNodeGen.getUncached();
     }
 
-    public final AbstractSqueakObjectWithClassAndHash execute(final SqueakImageContext image, final ClassObject classObject) {
-        return execute(image, classObject, 0);
+    public final AbstractSqueakObjectWithClassAndHash execute(final Node node, final SqueakImageContext image, final ClassObject classObject) {
+        return execute(node, image, classObject, 0);
     }
 
-    public final AbstractSqueakObjectWithClassAndHash execute(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+    public final AbstractSqueakObjectWithClassAndHash execute(final Node node, final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         CompilerAsserts.partialEvaluationConstant(image);
-        return image.reportAllocation(executeAllocation(image, classObject, extraSize));
+        return image.reportAllocation(executeAllocation(node, image, classObject, extraSize));
     }
 
-    protected abstract AbstractSqueakObjectWithClassAndHash executeAllocation(SqueakImageContext image, ClassObject classObject, int extraSize);
+    protected abstract AbstractSqueakObjectWithClassAndHash executeAllocation(Node node, SqueakImageContext image, ClassObject classObject, int extraSize);
 
     @Specialization(guards = "classObject.isZeroSized()")
     protected static final EmptyObject doEmpty(final SqueakImageContext image, final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {

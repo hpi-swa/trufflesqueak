@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.NeverDefault;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -35,6 +36,7 @@ public abstract class LookupClassGuard {
         return Assumption.ALWAYS_VALID;
     }
 
+    @NeverDefault
     public static LookupClassGuard create(final Object receiver) {
         if (receiver == NilObject.SINGLETON) {
             return NilGuard.SINGLETON;

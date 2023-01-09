@@ -19,6 +19,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -579,23 +580,23 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return (AbstractSqueakObject) literals[literals.length - 1];
     }
 
-    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
+    public boolean hasMethodClass(final Node node, final AbstractPointersObjectReadNode readNode) {
         final AbstractSqueakObject mca = getMethodClassAssociation();
-        return mca != NilObject.SINGLETON && readNode.execute((AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
+        return mca != NilObject.SINGLETON && readNode.execute(node, (AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
     }
 
     public ClassObject getMethodClassSlow() {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-        if (hasMethodClass(readNode)) {
-            return getMethodClass(readNode);
+        if (hasMethodClass(readNode, readNode)) {
+            return getMethodClass(readNode, readNode);
         }
         return null;
     }
 
     /** CompiledMethod>>#methodClass. */
-    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
-        return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
+    public ClassObject getMethodClass(final Node node, final AbstractPointersObjectReadNode readNode) {
+        return (ClassObject) readNode.execute(node, (AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
     private long getHeader() {
