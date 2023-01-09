@@ -466,13 +466,13 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     public void testPushNewArray() {
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.getUncached();
         // pushNewArray (size 127), returnTop
         CompiledCodeObject method = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, 138, 127, 124);
         Object result = runMethod(method, rcvr);
         assertTrue(result instanceof ArrayObject);
         ArrayObject resultList = (ArrayObject) result;
-        assertEquals(127, sizeNode.execute(resultList));
+        assertEquals(127, sizeNode.execute(sizeNode, resultList));
 
         // pushNewArray and pop
         final int arraySize = CONTEXT.MAX_STACK_SIZE;
@@ -487,7 +487,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         result = runMethod(method, rcvr);
         assertTrue(result instanceof ArrayObject);
         resultList = (ArrayObject) result;
-        assertEquals(arraySize, sizeNode.execute(resultList));
+        assertEquals(arraySize, sizeNode.execute(sizeNode, resultList));
         for (int i = 0; i < arraySize; i++) {
             assertEquals(BooleanObject.wrap(i % 2 == 0), at0Node.execute(resultList, i));
         }
@@ -527,7 +527,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testStoreRemoteTemp() {
         final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.getUncached();
 
         final Object[] literals = new Object[]{2097154L, NilObject.SINGLETON, NilObject.SINGLETON}; // header
                                                                                                     // with
@@ -542,7 +542,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
             final Object result = createContext(method, rcvr).execute(frame);
             assertTrue(result instanceof ArrayObject);
             final ArrayObject resultList = (ArrayObject) result;
-            assertEquals(2, sizeNode.execute(resultList));
+            assertEquals(2, sizeNode.execute(sizeNode, resultList));
             assertEquals(BooleanObject.FALSE, at0Node.execute(resultList, 0));
             assertEquals(BooleanObject.FALSE, at0Node.execute(resultList, 1));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
@@ -553,7 +553,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testStoreAndPopRemoteTemp() {
         final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.getUncached();
 
         final Object[] literals = new Object[]{2097154L, NilObject.SINGLETON, NilObject.SINGLETON}; // header
                                                                                                     // with
@@ -568,7 +568,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
             final Object result = createContext(method, rcvr).execute(frame);
             assertTrue(result instanceof ArrayObject);
             final ArrayObject resultList = (ArrayObject) result;
-            assertEquals(2, sizeNode.execute(resultList));
+            assertEquals(2, sizeNode.execute(sizeNode, resultList));
             assertEquals(BooleanObject.FALSE, at0Node.execute(resultList, 0));
             assertEquals(BooleanObject.TRUE, at0Node.execute(resultList, 1));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {

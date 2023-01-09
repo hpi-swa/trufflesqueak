@@ -8,12 +8,15 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -61,34 +64,34 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             return floats;
         }
 
-        protected final double loadArgumentPointX(final PointersObject point, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
-            return loadArgumentPointAt(point, POINT.X, readNode, errorProfile);
+        protected final double loadArgumentPointX(final Node node, final PointersObject point, final AbstractPointersObjectReadNode readNode, final InlinedBranchProfile errorProfile) {
+            return loadArgumentPointAt(node, point, POINT.X, readNode, errorProfile);
         }
 
-        protected final double loadArgumentPointY(final PointersObject point, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
-            return loadArgumentPointAt(point, POINT.Y, readNode, errorProfile);
+        protected final double loadArgumentPointY(final Node node, final PointersObject point, final AbstractPointersObjectReadNode readNode, final InlinedBranchProfile errorProfile) {
+            return loadArgumentPointAt(node, point, POINT.Y, readNode, errorProfile);
         }
 
-        private double loadArgumentPointAt(final PointersObject point, final int index, final AbstractPointersObjectReadNode readNode, final BranchProfile errorProfile) {
+        private double loadArgumentPointAt(final Node node, final PointersObject point, final int index, final AbstractPointersObjectReadNode readNode, final InlinedBranchProfile errorProfile) {
             if (isPoint(point)) {
-                final Object value = readNode.execute(point, index);
+                final Object value = readNode.execute(node, point, index);
                 if (value instanceof Long) {
                     return (long) value;
                 } else if (value instanceof Double) {
                     return (double) value;
                 }
             }
-            errorProfile.enter();
+            errorProfile.enter(this);
             throw PrimitiveFailed.GENERIC_ERROR;
         }
 
-        protected static final double[] matrix2x3InvertPoint(final float[] m, final double m23ArgX, final double m23ArgY, final BranchProfile errorProfile) {
+        protected final double[] matrix2x3InvertPoint(final float[] m, final double m23ArgX, final double m23ArgY, final InlinedBranchProfile errorProfile) {
             final double x = m23ArgX - m[2];
             final double y = m23ArgY - m[5];
             double det = m[0] * m[4] - m[1] * m[3];
             if (det == 0.0) {
                 /* "Matrix is singular." */
-                errorProfile.enter();
+                errorProfile.enter(this);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             det = 1.0 / det;
@@ -105,33 +108,33 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             return m23ArgX * m[3] + m23ArgY * m[4] + m[5];
         }
 
-        protected final PointersObject roundAndStoreResultPoint(final double m23ResultXValue, final double m23ResultYValue,
+        protected final PointersObject roundAndStoreResultPoint(final Node node, final double m23ResultXValue, final double m23ResultYValue,
                         final AbstractPointersObjectWriteNode writeNode,
-                        final BranchProfile errorProfile) {
+                        final InlinedBranchProfile errorProfile) {
             final double m23ResultX = m23ResultXValue + 0.5;
             final double m23ResultY = m23ResultYValue + 0.5;
             if (!(okayIntValue(m23ResultX) && okayIntValue(m23ResultY))) {
-                errorProfile.enter();
+                errorProfile.enter(this);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            return getContext().asPoint(writeNode, (long) m23ResultX, (long) m23ResultY);
+            return getContext().asPoint(node, writeNode, (long) m23ResultX, (long) m23ResultY);
         }
 
-        protected final PointersObject roundAndStoreResultRect(final PointersObject dstRect, final double x0, final double y0, final double x1, final double y1,
-                        final AbstractPointersObjectWriteNode writeNode, final BranchProfile errorProfile) {
+        protected final PointersObject roundAndStoreResultRect(final Node node, final PointersObject dstRect, final double x0, final double y0, final double x1, final double y1,
+                        final AbstractPointersObjectWriteNode writeNode, final InlinedBranchProfile errorProfile) {
             final double minX = x0 + 0.5;
             final double maxX = x1 + 0.5;
             final double minY = y0 + 0.5;
             final double maxY = y1 + 0.5;
             if (!(okayIntValue(minX) && okayIntValue(maxX) && okayIntValue(minY) && okayIntValue(maxY))) {
-                errorProfile.enter();
+                errorProfile.enter(this);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             final SqueakImageContext image = getContext();
-            final PointersObject origin = image.asPoint(writeNode, (long) minX, (long) minY);
-            final PointersObject corner = image.asPoint(writeNode, (long) maxX, (long) maxY);
-            writeNode.execute(dstRect, 0, origin);
-            writeNode.execute(dstRect, 1, corner);
+            final PointersObject origin = image.asPoint(node, writeNode, (long) minX, (long) minY);
+            final PointersObject corner = image.asPoint(node, writeNode, (long) maxX, (long) maxY);
+            writeNode.execute(node, dstRect, 0, origin);
+            writeNode.execute(node, dstRect, 1, corner);
             return dstRect;
         }
 
@@ -163,14 +166,15 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject point,
+                        @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final BranchProfile errorProfile) {
-            final double m23ArgX = loadArgumentPointX(point, readNode, errorProfile);
-            final double m23ArgY = loadArgumentPointY(point, readNode, errorProfile);
+                        @Cached final InlinedBranchProfile errorProfile) {
+            final double m23ArgX = loadArgumentPointX(node, point, readNode, errorProfile);
+            final double m23ArgY = loadArgumentPointY(node, point, readNode, errorProfile);
             final float[] m = loadMatrixAsFloat(receiver);
             final double[] m23Result = matrix2x3InvertPoint(m, m23ArgX, m23ArgY, errorProfile);
-            return roundAndStoreResultPoint(m23Result[0], m23Result[1], writeNode, errorProfile);
+            return roundAndStoreResultPoint(node, m23Result[0], m23Result[1], writeNode, errorProfile);
         }
     }
 
@@ -179,16 +183,17 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
+                        @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readPointNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final BranchProfile errorProfile) {
+                        @Cached final InlinedBranchProfile errorProfile) {
             final float[] m = loadMatrixAsFloat(receiver);
 
             /* Load top-left point */
-            final PointersObject originPoint = readPointNode.executePointers(srcRect, 0);
-            final double originX = loadArgumentPointX(originPoint, readNode, errorProfile);
-            final double originY = loadArgumentPointY(originPoint, readNode, errorProfile);
+            final PointersObject originPoint = readPointNode.executePointers(node, srcRect, 0);
+            final double originX = loadArgumentPointX(node, originPoint, readNode, errorProfile);
+            final double originY = loadArgumentPointY(node, originPoint, readNode, errorProfile);
             final double[] result1 = matrix2x3InvertPoint(m, originX, originY, errorProfile);
             double minX = result1[0];
             double maxX = minX;
@@ -196,9 +201,9 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             double maxY = minY;
 
             /* Load bottom-right point */
-            final PointersObject cornerPoint = readPointNode.executePointers(srcRect, 1);
-            final double cornerX = loadArgumentPointX(cornerPoint, readNode, errorProfile);
-            final double cornerY = loadArgumentPointY(cornerPoint, readNode, errorProfile);
+            final PointersObject cornerPoint = readPointNode.executePointers(node, srcRect, 1);
+            final double cornerX = loadArgumentPointX(node, cornerPoint, readNode, errorProfile);
+            final double cornerY = loadArgumentPointY(node, cornerPoint, readNode, errorProfile);
             final double[] result2 = matrix2x3InvertPoint(m, originX, originY, errorProfile);
             minX = Math.min(minX, result2[0]);
             maxX = Math.max(maxX, result2[0]);
@@ -219,7 +224,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             minY = Math.min(minY, result4[1]);
             maxY = Math.max(maxY, result4[1]);
 
-            return roundAndStoreResultRect(dstRect, minX, minY, maxX, maxY, writeNode, errorProfile);
+            return roundAndStoreResultRect(node, dstRect, minX, minY, maxX, maxY, writeNode, errorProfile);
         }
     }
 
@@ -248,13 +253,14 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject point,
+                        @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final BranchProfile errorProfile) {
-            final double m23ArgX = loadArgumentPointX(point, readNode, errorProfile);
-            final double m23ArgY = loadArgumentPointY(point, readNode, errorProfile);
+                        @Cached final InlinedBranchProfile errorProfile) {
+            final double m23ArgX = loadArgumentPointX(node, point, readNode, errorProfile);
+            final double m23ArgY = loadArgumentPointY(node, point, readNode, errorProfile);
             final float[] m = loadMatrixAsFloat(receiver);
-            return roundAndStoreResultPoint(matrix2x3TransformPointX(m, m23ArgX, m23ArgY), matrix2x3TransformPointY(m, m23ArgX, m23ArgY), writeNode, errorProfile);
+            return roundAndStoreResultPoint(node, matrix2x3TransformPointX(m, m23ArgX, m23ArgY), matrix2x3TransformPointY(m, m23ArgX, m23ArgY), writeNode, errorProfile);
         }
     }
 
@@ -263,25 +269,26 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
+                        @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readPointNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final BranchProfile errorProfile) {
+                        @Cached final InlinedBranchProfile errorProfile) {
             final float[] m = loadMatrixAsFloat(receiver);
 
             /* Load top-left point */
-            final PointersObject point0 = readPointNode.executePointers(srcRect, 0);
-            final double originX = loadArgumentPointX(point0, readNode, errorProfile);
-            final double originY = loadArgumentPointY(point0, readNode, errorProfile);
+            final PointersObject point0 = readPointNode.executePointers(node, srcRect, 0);
+            final double originX = loadArgumentPointX(node, point0, readNode, errorProfile);
+            final double originY = loadArgumentPointY(node, point0, readNode, errorProfile);
             double minX = matrix2x3TransformPointX(m, originX, originY);
             double maxX = minX;
             double minY = matrix2x3TransformPointY(m, originX, originY);
             double maxY = minY;
 
             /* Load bottom-right point */
-            final PointersObject point1 = readPointNode.executePointers(srcRect, 1);
-            final double cornerX = loadArgumentPointX(point1, readNode, errorProfile);
-            final double cornerY = loadArgumentPointY(point1, readNode, errorProfile);
+            final PointersObject point1 = readPointNode.executePointers(node, srcRect, 1);
+            final double cornerX = loadArgumentPointX(node, point1, readNode, errorProfile);
+            final double cornerY = loadArgumentPointY(node, point1, readNode, errorProfile);
             final double m23ResultX1 = matrix2x3TransformPointX(m, cornerX, cornerY);
             final double m23ResultY1 = matrix2x3TransformPointY(m, cornerX, cornerY);
             minX = Math.min(minX, m23ResultX1);
@@ -305,7 +312,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             minY = Math.min(minY, m23ResultY3);
             maxY = Math.max(maxY, m23ResultY3);
 
-            return roundAndStoreResultRect(dstRect, minX, minY, maxX, maxY, writeNode, errorProfile);
+            return roundAndStoreResultRect(node, dstRect, minX, minY, maxX, maxY, writeNode, errorProfile);
         }
     }
 }

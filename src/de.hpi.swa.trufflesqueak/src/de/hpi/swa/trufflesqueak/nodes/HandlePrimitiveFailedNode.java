@@ -6,8 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
@@ -22,6 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSize
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 
 public abstract class HandlePrimitiveFailedNode extends AbstractNode {
+    @NeverDefault
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
         if (code.hasStoreIntoTemp1AfterCallPrimitive()) {
             return HandlePrimitiveFailedImplNodeGen.create();
@@ -38,18 +41,20 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
          * error symbol into the corresponding temporary variable. See
          * StackInterpreter>>#getErrorObjectFromPrimFailCode for more information.
          */
-        @Specialization(guards = {"reasonCode < sizeNode.execute(getContext().primitiveErrorTable)"}, limit = "1")
+        @Specialization(guards = {"reasonCode < sizeNode.execute(node, getContext().primitiveErrorTable)"}, limit = "1")
         protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final FrameStackPushNode pushNode,
+                        @Shared("pushNode") @Cached final FrameStackPushNode pushNode,
                         @Cached final ArrayObjectReadNode readNode) {
-            pushNode.execute(frame, readNode.execute(getContext().primitiveErrorTable, reasonCode));
+            pushNode.execute(frame, readNode.execute(this, getContext().primitiveErrorTable, reasonCode));
         }
 
-        @Specialization(guards = {"reasonCode >= sizeNode.execute(getContext().primitiveErrorTable)"}, limit = "1")
+        @Specialization(guards = {"reasonCode >= sizeNode.execute(node, getContext().primitiveErrorTable)"}, limit = "1")
         protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final FrameStackPushNode pushNode) {
+                        @Shared("pushNode") @Cached final FrameStackPushNode pushNode) {
             pushNode.execute(frame, (long) reasonCode);
         }
     }

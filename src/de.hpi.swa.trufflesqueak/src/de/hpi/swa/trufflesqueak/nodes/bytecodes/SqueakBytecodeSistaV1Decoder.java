@@ -264,7 +264,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 }
                 switch (primitiveIndex) {
                     case 1000:
-                        return new InlinePrimitiveBytecodes.PrimClassNode(code, index);
+                        return  InlinePrimitiveBytecodes.PrimClassNode.create(code, index);
                     case 1001:
                         return new InlinePrimitiveBytecodes.PrimNumSlotsNode(code, index);
                     case 1002:
@@ -278,7 +278,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                     case 1006:
                         return new InlinePrimitiveBytecodes.PrimNumDoubleWordsNode(code, index);
                     case 1020:
-                        return new InlinePrimitiveBytecodes.PrimIdentityHashNode(code, index);
+                        return  InlinePrimitiveBytecodes.PrimIdentityHashNode.create(code, index);
                     case 1021:
                         return new InlinePrimitiveBytecodes.PrimIdentityHashSmallIntegerNode(code, index);
                     case 1022:
@@ -348,7 +348,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                     case 3021:
                         return new InlinePrimitiveBytecodes.PrimByteEqualsNode(code, index);
                     case 4000:
-                        return new InlinePrimitiveBytecodes.PrimFillFromToWithNode(code, index);
+                        return  InlinePrimitiveBytecodes.PrimFillFromToWithNode.create(code, index);
                     default:
                         return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 3, b);
                 }

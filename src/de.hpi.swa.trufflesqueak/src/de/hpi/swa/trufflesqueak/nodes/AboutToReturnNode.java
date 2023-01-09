@@ -6,13 +6,15 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -28,6 +30,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchClosureNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class AboutToReturnNode extends AbstractNode {
+    @NeverDefault
     public static AboutToReturnNode create(final CompiledCodeObject code) {
         if (code.isUnwindMarked()) {
             return AboutToReturnImplNodeGen.create();
@@ -38,6 +41,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
 
+    @SuppressWarnings("truffle-inlining")
     @ImportStatic(FrameStackReadNode.class)
     protected abstract static class AboutToReturnImplNode extends AboutToReturnNode {
 
@@ -50,18 +54,19 @@ public abstract class AboutToReturnNode extends AbstractNode {
          */
         @Specialization(guards = {"!hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
         protected static final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
+                        @Bind("this") final Node node,
                         @Cached("createTemporaryReadNode(frame, 0)") final FrameStackReadNode blockArgumentNode,
                         @SuppressWarnings("unused") @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode,
                         @Cached("create(frame, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
                         /*
                          * It is very likely that ensure block is constant, hence the ValueProfile.
                          */
-                        @Cached("createIdentityProfile()") final ValueProfile blockProfile,
+                        @Cached final InlinedExactClassProfile blockProfile,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final DispatchClosureNode dispatchNode) {
             completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
             final BlockClosureObject closure = (BlockClosureObject) blockArgumentNode.executeRead(frame);
-            dispatchNode.execute(closure, FrameAccess.newClosureArgumentsTemplate(closure, blockProfile.profile(closure.getCompiledBlock()), getContextOrMarkerNode.execute(frame), 0));
+            dispatchNode.execute(node, closure, FrameAccess.newClosureArgumentsTemplate(closure, blockProfile.profile(node, closure.getCompiledBlock()), getContextOrMarkerNode.execute(frame), 0));
         }
 
         @SuppressWarnings("unused")
@@ -104,6 +109,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         }
     }
 
+    @NeverDefault
     protected static final SendSelectorNode createAboutToReturnSend() {
         return SendSelectorNode.create(SqueakImageContext.getSlow().aboutToReturnSelector);
     }

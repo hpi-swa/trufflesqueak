@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -29,7 +30,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -152,8 +153,6 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     public abstract static class AbstractFFIPrimitiveNode extends AbstractPrimitiveNode {
         @Child private ArgTypeConversionNode conversionNode = ArgTypeConversionNode.create();
         @Child private WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
-        @Child private AbstractPointersObjectReadNode readExternalLibNode = AbstractPointersObjectReadNode.create();
-        @Child private AbstractPointersObjectReadNode readArgumentTypeNode = AbstractPointersObjectReadNode.create();
 
         protected final PointersObject asExternalFunctionOrFail(final Object object) {
             if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass().includesExternalFunctionBehavior(getContext()))) {
@@ -163,18 +162,19 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        protected final Object doCallout(final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
+        protected final Object doCallout(final Node node, final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
             final SqueakImageContext image = getContext();
+            final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             final List<Integer> headerWordList = new ArrayList<>();
 
-            final ArrayObject argTypes = readExternalLibNode.executeArray(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
+            final ArrayObject argTypes = readNode.executeArray(node, externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
 
             if (argTypes != null && argTypes.getObjectStorage().length == arguments.length + 1) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
 
                 for (final Object argumentType : argTypesValues) {
                     if (argumentType instanceof PointersObject) {
-                        final NativeObject compiledSpec = readArgumentTypeNode.executeNative((PointersObject) argumentType, ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
+                        final NativeObject compiledSpec = readNode.executeNative(node, (PointersObject) argumentType, ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                         headerWordList.add(compiledSpec.getInt(0));
                     }
                 }
@@ -183,7 +183,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final Object[] argumentsConverted = getConvertedArgumentsFromHeaderWords(headerWordList, arguments);
             final List<String> nfiArgTypeList = getArgTypeListFromHeaderWords(headerWordList);
 
-            final String name = readExternalLibNode.executeNative(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME).asStringUnsafe();
+            final String name = readNode.executeNative(node, externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME).asStringUnsafe();
             final String moduleName = getModuleName(receiver, externalLibraryFunction);
             final String nfiCodeParams = generateNfiCodeParamsString(nfiArgTypeList);
             final String nfiCode = String.format("load \"%s\" {%s%s}", getPathOrFail(image, moduleName), name, nfiCodeParams);
@@ -229,8 +229,9 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return interopLib.invokeMember(ffiTest, name, argumentsConverted);
         }
 
-        private String getModuleName(final AbstractSqueakObject receiver, final PointersObject externalLibraryFunction) {
-            final Object moduleObject = readExternalLibNode.execute(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
+        private static String getModuleName(final AbstractSqueakObject receiver, final PointersObject externalLibraryFunction) {
+            final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+            final Object moduleObject = readNode.execute(readNode, externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
             if (moduleObject != NilObject.SINGLETON) {
                 return ((NativeObject) moduleObject).asStringUnsafe();
             } else {
@@ -266,11 +267,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCalloutWithArgs")
     protected abstract static class PrimCalloutWithArgsNode extends AbstractFFIPrimitiveNode implements BinaryPrimitiveFallback {
-        @Child private ArrayObjectToObjectArrayCopyNode getObjectArrayNode = ArrayObjectToObjectArrayCopyNode.create();
-
         @Specialization
-        protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray) {
-            return doCallout(asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(argArray));
+        protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray,
+                        @Bind("this") final Node node,
+                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
+            return doCallout(node, asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(this, argArray));
         }
     }
 
@@ -405,8 +406,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
         protected final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
-                        @Cached final ConditionProfile positiveProfile) {
-            return PrimUnsignedInt64AtNode.unsignedInt64At(getContext(), byteArray, byteOffsetLong, positiveProfile);
+                        @Cached final InlinedConditionProfile positiveProfile) {
+            return PrimUnsignedInt64AtNode.unsignedInt64At(getContext(), byteArray, byteOffsetLong, positiveProfile, this);
         }
     }
 
@@ -708,13 +709,13 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimUnsignedInt64AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
         protected final Object doAt(final NativeObject byteArray, final long byteOffset,
-                        @Cached final ConditionProfile positiveProfile) {
-            return unsignedInt64At(getContext(), byteArray, byteOffset, positiveProfile);
+                        @Cached final InlinedConditionProfile positiveProfile) {
+            return unsignedInt64At(getContext(), byteArray, byteOffset, positiveProfile, this);
         }
 
-        private static Object unsignedInt64At(final SqueakImageContext image, final NativeObject byteArray, final long byteOffset, final ConditionProfile positiveProfile) {
+        private static Object unsignedInt64At(final SqueakImageContext image, final NativeObject byteArray, final long byteOffset, final InlinedConditionProfile positiveProfile, final Node node) {
             final long signedLong = PrimSignedInt64AtNode.signedInt64At(byteArray, byteOffset);
-            if (positiveProfile.profile(signedLong >= 0)) {
+            if (positiveProfile.profile(node, signedLong >= 0)) {
                 return signedLong;
             } else {
                 return LargeIntegerObject.toUnsigned(image, signedLong);

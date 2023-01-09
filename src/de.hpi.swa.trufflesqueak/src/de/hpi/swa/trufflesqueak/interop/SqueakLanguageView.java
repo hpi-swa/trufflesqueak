@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.interop;
 import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -16,6 +17,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -49,19 +51,20 @@ public final class SqueakLanguageView implements TruffleObject {
     }
 
     @ExportMessage
-    protected Object getMetaObject(@Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
-        return classNode.executeLookup(delegate);
+    protected Object getMetaObject(@Bind("$node") final Node node, @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return classNode.executeLookup(node, delegate);
     }
 
     @ExportMessage
     protected Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects,
+                    @Bind("$node") final Node node,
                     @Cached final LookupMethodByStringNode lookupNode,
                     @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                     @Cached final DispatchUneagerlyNode dispatchNode) {
-        final ClassObject classObject = classNode.executeLookup(delegate);
-        final Object methodObject = lookupNode.executeLookup(classObject, "asString");
+        final ClassObject classObject = classNode.executeLookup(node, delegate);
+        final Object methodObject = lookupNode.executeLookup(node, classObject, "asString");
         if (methodObject instanceof CompiledCodeObject) {
-            return dispatchNode.executeDispatch((CompiledCodeObject) methodObject, new Object[]{delegate}, NilObject.SINGLETON);
+            return dispatchNode.executeDispatch(node, (CompiledCodeObject) methodObject, new Object[]{delegate}, NilObject.SINGLETON);
         } else {
             return "Unsupported";
         }

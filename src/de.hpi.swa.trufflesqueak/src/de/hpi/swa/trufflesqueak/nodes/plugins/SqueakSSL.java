@@ -30,7 +30,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -812,13 +812,13 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId,
-                        @Cached final BranchProfile errorProfile) {
+        protected final long doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId,
+                        @Cached final InlinedBranchProfile errorProfile) {
             final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
 
             if (ssl == null || property == null) {
-                errorProfile.enter();
+                errorProfile.enter(this);
                 return 0L;
             }
 
@@ -849,15 +849,15 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite the return code convention, non-zero if successful
          */
         @Specialization
-        protected static final long doSet(@SuppressWarnings("unused") final Object receiver,
+        protected final long doSet(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final long propertyId,
                         final long anInteger,
-                        @Cached final BranchProfile errorProfile) {
+                        @Cached final InlinedBranchProfile errorProfile) {
             final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
             if (ssl == null || property == null) {
-                errorProfile.enter();
+                errorProfile.enter(this);
                 return 0L;
             }
 

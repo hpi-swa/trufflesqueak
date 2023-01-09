@@ -101,6 +101,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
          */
         final Counter backJumpCounter = new Counter();
         Object returnValue = null;
+
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);

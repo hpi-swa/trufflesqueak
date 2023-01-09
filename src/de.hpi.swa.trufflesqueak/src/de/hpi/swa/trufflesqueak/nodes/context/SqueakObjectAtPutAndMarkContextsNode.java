@@ -6,9 +6,11 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -19,24 +21,29 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
  * also marks {@link ContextObject}s as escaped when stored.
  */
 @NodeInfo(cost = NodeCost.NONE)
-public final class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode {
+public abstract class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode {
     private final long index;
-    private final BranchProfile isContextObjectProfile = BranchProfile.create();
-    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
     protected SqueakObjectAtPutAndMarkContextsNode(final long variableIndex) {
         index = variableIndex;
     }
 
     public static SqueakObjectAtPutAndMarkContextsNode create(final long index) {
-        return new SqueakObjectAtPutAndMarkContextsNode(index);
+        return SqueakObjectAtPutAndMarkContextsNodeGen.create(index);
     }
 
-    public void executeWrite(final Object object, final Object value) {
-        if (value instanceof ContextObject) {
-            isContextObjectProfile.enter();
-            ((ContextObject) value).markEscaped();
-        }
-        atPut0Node.execute(object, index, value);
+    public abstract void executeWrite(Object object, Object value);
+
+    @Specialization
+    protected final void doContext(final Object object, final ContextObject value,
+                    @Shared("atPut0Node") @Cached final SqueakObjectAtPut0Node atPut0Node) {
+        value.markEscaped();
+        atPut0Node.execute(this, object, index, value);
+    }
+
+    @Specialization(guards = "!isContextObject(value)")
+    protected final void doOther(final Object object, final Object value,
+                    @Shared("atPut0Node") @Cached final SqueakObjectAtPut0Node atPut0Node) {
+        atPut0Node.execute(this, object, index, value);
     }
 }

@@ -24,7 +24,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.SqueakImage;
@@ -558,7 +558,7 @@ public final class SqueakImageContext {
         if (wideStringClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // TODO: find a better way to find wideStringClass or do this on image side instead?
-            final CompiledCodeObject method = (CompiledCodeObject) LookupMethodByStringNode.getUncached().executeLookup(byteArrayClass, "asWideString");
+            final CompiledCodeObject method = (CompiledCodeObject) LookupMethodByStringNode.getUncached().executeLookup(LookupMethodByStringNode.getUncached(), byteArrayClass, "asWideString");
             if (method != null) {
                 final PointersObject assoc = (PointersObject) method.getLiteral(1);
                 wideStringClass = (ClassObject) assoc.instVarAt0Slow(ASSOCIATION.VALUE);
@@ -593,7 +593,7 @@ public final class SqueakImageContext {
         if (linkedListClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final Object lists = getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
-            linkedListClass = SqueakObjectClassNode.getUncached().executeLookup(((ArrayObject) lists).getObject(0));
+            linkedListClass = SqueakObjectClassNode.getUncached().executeLookup(SqueakObjectClassNode.getUncached(), ((ArrayObject) lists).getObject(0));
         }
         return linkedListClass;
     }
@@ -612,7 +612,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject getActiveProcessSlow() {
-        return AbstractPointersObjectReadNode.getUncached().executePointers(getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
+        return AbstractPointersObjectReadNode.getUncached().executePointers(AbstractPointersObjectReadNode.getUncached(), getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
     public Object getSpecialObject(final int index) {
@@ -855,7 +855,7 @@ public final class SqueakImageContext {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
-    public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode) {
+    public PointersObject asFraction(final Node node, final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode) {
         if (fractionClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final Object fractionLookup = lookup("Fraction");
@@ -883,8 +883,8 @@ public final class SqueakImageContext {
         final long gcd = Math.abs(m);
         // Instantiate reduced fraction
         final PointersObject fraction = new PointersObject(this, fractionClass, fractionClass.getLayout());
-        writeNode.execute(fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
-        writeNode.execute(fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
+        writeNode.execute(node, fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
+        writeNode.execute(node, fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
         return fraction;
     }
 
@@ -905,14 +905,14 @@ public final class SqueakImageContext {
         return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
 
-    public NativeObject asString(final String value, final ConditionProfile wideStringProfile) {
-        return wideStringProfile.profile(NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
+    public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node) {
+        return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
     }
 
-    public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {
+    public PointersObject asPoint(final Node node, final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {
         final PointersObject point = new PointersObject(this, pointClass, null);
-        writeNode.execute(point, POINT.X, xPos);
-        writeNode.execute(point, POINT.Y, yPos);
+        writeNode.execute(node, point, POINT.X, xPos);
+        writeNode.execute(node, point, POINT.Y, yPos);
         return point;
     }
 
@@ -920,12 +920,12 @@ public final class SqueakImageContext {
         return ArrayObject.createWithStorage(this, arrayClass, ArrayUtils.EMPTY_ARRAY);
     }
 
-    public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
+    public PointersObject newMessage(final Node node, final AbstractPointersObjectWriteNode writeNode, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
         final PointersObject message = new PointersObject(this, messageClass, null);
-        writeNode.execute(message, MESSAGE.SELECTOR, selector);
-        writeNode.execute(message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
+        writeNode.execute(node, message, MESSAGE.SELECTOR, selector);
+        writeNode.execute(node, message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
         assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";
-        writeNode.execute(message, MESSAGE.LOOKUP_CLASS, lookupClass);
+        writeNode.execute(node, message, MESSAGE.LOOKUP_CLASS, lookupClass);
         return message;
     }
 

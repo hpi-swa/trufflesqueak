@@ -6,10 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -35,6 +38,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectRe
 @GenerateUncached
 public abstract class SqueakObjectAt0Node extends AbstractNode {
 
+    @NeverDefault
     public static SqueakObjectAt0Node create() {
         return SqueakObjectAt0NodeGen.create();
     }
@@ -47,38 +51,42 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doArray(final ArrayObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final ArrayObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
     protected static final Object doPointers(final PointersObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final AbstractPointersObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
     protected static final Object doVariablePointers(final VariablePointersObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final VariablePointersObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final Object doClass(final ClassObject obj, final long index,
+    protected final Object doClass(final ClassObject obj, final long index,
                     @Cached final ClassObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(this, obj, index);
     }
 
     @Specialization
     protected static final Object doWeakPointersVariable(final WeakVariablePointersObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final WeakVariablePointersObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final Object doNative(final NativeObject obj, final long index,
+    protected final Object doNative(final NativeObject obj, final long index,
                     @Cached final NativeObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(this, obj, index);
     }
 
     @Specialization
@@ -92,27 +100,29 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doClosure(final BlockClosureObject obj, final long index,
+    protected final Object doClosure(final BlockClosureObject obj, final long index,
                     @Cached final BlockClosureObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(this, obj, index);
     }
 
     @Specialization
     protected static final Object doContext(final ContextObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final ContextObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
     protected static final long doFloat(final FloatObject obj, final long index,
-                    @Cached final BranchProfile indexZeroProfile,
-                    @Cached final BranchProfile indexOneProfile) {
+                    @Bind("this") final Node node,
+                    @Cached final InlinedBranchProfile indexZeroProfile,
+                    @Cached final InlinedBranchProfile indexOneProfile) {
         if (index == 0) {
-            indexZeroProfile.enter();
+            indexZeroProfile.enter(node);
             return obj.getHigh();
         } else {
             assert index == 1 : "Unexpected index: " + index;
-            indexOneProfile.enter();
+            indexOneProfile.enter(node);
             return obj.getLow();
         }
     }

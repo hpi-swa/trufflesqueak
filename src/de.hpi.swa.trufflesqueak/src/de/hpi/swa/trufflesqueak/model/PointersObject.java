@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -75,45 +76,45 @@ public final class PointersObject extends AbstractPointersObject {
         return layoutValuesPointTo(identityNode, thang);
     }
 
-    public boolean isEmptyList(final AbstractPointersObjectReadNode readNode) {
-        return readNode.execute(this, LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
+    public boolean isEmptyList(final Node node, final AbstractPointersObjectReadNode readNode) {
+        return readNode.execute(node, this, LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
     }
 
     public boolean isDisplay(final SqueakImageContext image) {
         return this == image.getSpecialObject(SPECIAL_OBJECT.THE_DISPLAY);
     }
 
-    public int[] getFormBits(final AbstractPointersObjectReadNode readNode) {
-        return readNode.executeNative(this, FORM.BITS).getIntStorage();
+    public int[] getFormBits(final Node node, final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeNative(node, this, FORM.BITS).getIntStorage();
     }
 
-    public int getFormDepth(final AbstractPointersObjectReadNode readNode) {
-        return readNode.executeInt(this, FORM.DEPTH);
+    public int getFormDepth(final Node node, final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeInt(node, this, FORM.DEPTH);
     }
 
-    public int getFormHeight(final AbstractPointersObjectReadNode readNode) {
-        return readNode.executeInt(this, FORM.HEIGHT);
+    public int getFormHeight(final Node node, final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeInt(node, this, FORM.HEIGHT);
     }
 
-    public PointersObject getFormOffset(final AbstractPointersObjectReadNode readNode) {
-        return readNode.executePointers(this, FORM.OFFSET);
+    public PointersObject getFormOffset(final Node node, final AbstractPointersObjectReadNode readNode) {
+        return readNode.executePointers(node, this, FORM.OFFSET);
     }
 
-    public int getFormWidth(final AbstractPointersObjectReadNode readNode) {
-        return readNode.executeInt(this, FORM.WIDTH);
+    public int getFormWidth(final Node node, final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeInt(node, this, FORM.WIDTH);
     }
 
-    public PointersObject removeFirstLinkOfList(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode) {
+    public PointersObject removeFirstLinkOfList(final Node node, final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode) {
         // Remove the first process from the given linked list.
-        final PointersObject first = readNode.executePointers(this, LINKED_LIST.FIRST_LINK);
-        final Object last = readNode.execute(this, LINKED_LIST.LAST_LINK);
+        final PointersObject first = readNode.executePointers(node, this, LINKED_LIST.FIRST_LINK);
+        final Object last = readNode.execute(node, this, LINKED_LIST.LAST_LINK);
         if (first == last) {
-            writeNode.executeNil(this, LINKED_LIST.FIRST_LINK);
-            writeNode.executeNil(this, LINKED_LIST.LAST_LINK);
+            writeNode.executeNil(node, this, LINKED_LIST.FIRST_LINK);
+            writeNode.executeNil(node, this, LINKED_LIST.LAST_LINK);
         } else {
-            writeNode.execute(this, LINKED_LIST.FIRST_LINK, readNode.execute(first, PROCESS.NEXT_LINK));
+            writeNode.execute(node, this, LINKED_LIST.FIRST_LINK, readNode.execute(node, first, PROCESS.NEXT_LINK));
         }
-        writeNode.executeNil(first, PROCESS.NEXT_LINK);
+        writeNode.executeNil(node, first, PROCESS.NEXT_LINK);
         return first;
     }
 
@@ -147,18 +148,18 @@ public final class PointersObject extends AbstractPointersObject {
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         final ClassObject classObject = getSqueakClass();
         if (classObject.getImage().isPointClass(classObject)) {
-            return readNode.execute(this, POINT.X) + "@" + readNode.execute(this, POINT.Y);
+            return readNode.execute(readNode, this, POINT.X) + "@" + readNode.execute(readNode, this, POINT.Y);
         }
         final String squeakClassName = classObject.getClassName();
         if ("Fraction".equals(squeakClassName)) {
-            return readNode.execute(this, FRACTION.NUMERATOR) + " / " + readNode.execute(this, FRACTION.DENOMINATOR);
+            return readNode.execute(readNode, this, FRACTION.NUMERATOR) + " / " + readNode.execute(readNode, this, FRACTION.DENOMINATOR);
         }
         if ("Association".equals(squeakClassName)) {
-            return readNode.execute(this, ASSOCIATION.KEY) + " -> " + readNode.execute(this, ASSOCIATION.VALUE);
+            return readNode.execute(readNode, this, ASSOCIATION.KEY) + " -> " + readNode.execute(readNode, this, ASSOCIATION.VALUE);
         }
         final ClassObject superclass = classObject.getSuperclassOrNull();
         if (superclass != null && "Binding".equals(superclass.getClassName())) {
-            return readNode.execute(this, BINDING.KEY) + " => " + readNode.execute(this, BINDING.VALUE);
+            return readNode.execute(readNode, this, BINDING.KEY) + " => " + readNode.execute(readNode, this, BINDING.VALUE);
         }
         return super.toString();
     }

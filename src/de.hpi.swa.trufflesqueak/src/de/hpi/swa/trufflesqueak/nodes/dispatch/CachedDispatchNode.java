@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
@@ -41,6 +42,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         assert getCallTargetStable().isValid() : "callTargetStable must be valid";
     }
 
+    @NeverDefault
     protected static final CachedDispatchNode create(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final ClassObject receiverClass, final Object lookupResult) {
         final SqueakImageContext image = SqueakImageContext.getSlow();
         if (lookupResult == null) {
@@ -55,8 +57,8 @@ public abstract class CachedDispatchNode extends AbstractNode {
             }
             return AbstractCachedDispatchMethodNode.create(frame, argumentCount, lookupMethod);
         } else {
-            final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
-            final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, image.runWithInSelector);
+            final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(SqueakObjectClassNode.getUncached(), lookupResult);
+            final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(LookupMethodNode.getUncached(), lookupResultClass, image.runWithInSelector);
             if (runWithInMethod instanceof CompiledCodeObject) {
                 return AbstractCachedDispatchObjectAsMethodNode.create(frame, selector, argumentCount, lookupResult, (CompiledCodeObject) runWithInMethod);
             } else {
@@ -66,8 +68,9 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
     }
 
+    @NeverDefault
     private static CachedDispatchNode createDNUNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final SqueakImageContext image, final ClassObject receiverClass) {
-        final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(receiverClass, image.doesNotUnderstand);
+        final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(LookupMethodNode.getUncached(), receiverClass, image.doesNotUnderstand);
         if (dnuMethod instanceof CompiledCodeObject) {
             return AbstractCachedDispatchDoesNotUnderstandNode.create(frame, selector, argumentCount, (CompiledCodeObject) dnuMethod);
         } else {
@@ -181,7 +184,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return callNode.call(createFrameArguments(frame, getOrCreateContextNode.executeGet(frame)));
+            return callNode.call(createFrameArguments(frame, getOrCreateContextNode.executeGet(frame, this)));
         }
     }
 
@@ -231,7 +234,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, method, getOrCreateContextNode.executeGet(frame)));
+            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, method, getOrCreateContextNode.executeGet(frame, this)));
         }
     }
 
@@ -284,7 +287,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, object, method, getOrCreateContextNode.executeGet(frame)));
+            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, object, method, getOrCreateContextNode.executeGet(frame, this)));
         }
     }
 }

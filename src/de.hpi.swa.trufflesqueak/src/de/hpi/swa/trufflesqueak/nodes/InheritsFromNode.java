@@ -7,41 +7,40 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 
-@GenerateUncached
+@GenerateInline(true)
+@GenerateCached(false)
 public abstract class InheritsFromNode extends AbstractNode {
     protected static final int CACHE_SIZE = 3;
 
-    public static InheritsFromNode create() {
-        return InheritsFromNodeGen.create();
-    }
-
-    public abstract boolean execute(Object object, ClassObject classObject);
+    public abstract boolean execute(Node node, Object object, ClassObject classObject);
 
     @SuppressWarnings("unused")
     @Specialization(limit = "CACHE_SIZE", guards = {"object == cachedObject", "classObject == cachedClass"}, assumptions = {"cachedClass.getClassHierarchyStable()"})
-    protected static final boolean doCached(final Object object, final ClassObject classObject,
+    protected static final boolean doCached(final Node node, final Object object, final ClassObject classObject,
                     @Cached("object") final Object cachedObject,
                     @Cached("classObject") final ClassObject cachedClass,
-                    @Cached("doUncached(object, cachedClass)") final boolean inInheritanceChain) {
+                    @Cached("doUncached(node, object, cachedClass)") final boolean inInheritanceChain) {
         return inInheritanceChain;
     }
 
-    protected static final boolean doUncached(final Object receiver, final ClassObject superClass) {
-        return doUncached(receiver, superClass, SqueakObjectClassNode.getUncached());
+    protected static final boolean doUncached(final Node node, final Object receiver, final ClassObject superClass) {
+        return doUncached(node, receiver, superClass, SqueakObjectClassNode.getUncached());
     }
 
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
-    protected static final boolean doUncached(final Object receiver, final ClassObject superClass,
+    protected static final boolean doUncached(final Node node, final Object receiver, final ClassObject superClass,
                     @Cached final SqueakObjectClassNode classNode) {
-        ClassObject classObject = classNode.executeLookup(receiver);
+        ClassObject classObject = classNode.executeLookup(node, receiver);
         while (classObject != superClass) {
             classObject = classObject.getSuperclassOrNull();
             if (classObject == null) {

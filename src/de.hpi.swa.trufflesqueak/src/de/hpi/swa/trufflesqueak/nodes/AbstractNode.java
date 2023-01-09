@@ -33,6 +33,10 @@ public abstract class AbstractNode extends Node {
         return SqueakImageContext.get(this);
     }
 
+    public static final SqueakImageContext getContext(final Node node) {
+        return SqueakImageContext.get(node);
+    }
+
     protected final CompiledCodeObject getCode() {
         return ((AbstractRootNode) getRootNode()).getCode();
     }

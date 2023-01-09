@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -20,6 +21,7 @@ public final class GetContextOrMarkerNode extends AbstractNode {
     private final ConditionProfile hasContextProfile = ConditionProfile.create();
     private final ConditionProfile hasMarkerProfile = ConditionProfile.create();
 
+    @NeverDefault
     public static GetContextOrMarkerNode create() {
         return new GetContextOrMarkerNode();
     }
