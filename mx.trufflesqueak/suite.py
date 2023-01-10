@@ -11,7 +11,7 @@ suite = {
     #  METADATA
     # ==========================================================================
     "name": "trufflesqueak",
-    "mxversion": "6.9.2",
+    "mxversion": "6.11.4",
     "versionConflictResolution": "latest",
 
     "version": "23.0.0",
@@ -48,7 +48,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "vm-22.3.0",
+            "version": "chumer/GR-31342/dsl-object-inlining",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
