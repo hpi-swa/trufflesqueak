@@ -33,7 +33,11 @@ public abstract class SendSelectorNode extends Node {
         return SendSelectorNodeGen.create(selector);
     }
 
-    public abstract Object executeSend(VirtualFrame frame, Object... receiverAndArguments);
+    public final Object executeSend(final VirtualFrame frame, final Object... receiverAndArguments) {
+        return execute(frame, receiverAndArguments);
+    }
+
+    protected abstract Object execute(VirtualFrame frame, Object[] receiverAndArguments);
 
     @Specialization
     protected final Object send(final VirtualFrame frame, final Object[] receiverAndArguments,
