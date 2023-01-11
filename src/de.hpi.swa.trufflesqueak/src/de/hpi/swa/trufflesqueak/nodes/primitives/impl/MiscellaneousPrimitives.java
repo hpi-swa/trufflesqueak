@@ -136,7 +136,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         protected final Object doCallout(final AbstractSqueakObject receiver, final Object... arguments) {
-            return doCallout(externalFunction, receiver, arguments);
+            return doCallout(this, externalFunction, receiver, arguments);
         }
     }
 
