@@ -36,8 +36,8 @@ jobs:
         tar -xzf ${eclipse_tar_path} -C ${RUNNER_TEMP}
         echo "ECLIPSE_EXE=${RUNNER_TEMP}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
         echo "JDT=builtin" >> "${GITHUB_ENV}" # required by mx
-        # Set up mx, oracle/graal, and LabsJDK17
-        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-17 ~/"
+        # Set up mx, oracle/graal, and LabsJDK19
+        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-19 ~/"
         # Set up style dependencies
         sudo apt update && sudo apt install python3-pip python-setuptools
         cat ../graal/common.json |
@@ -51,10 +51,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
-        java: [17, 19]
+        java: [19]
     env:
-      RUN_TESTS: "${{ matrix.os == 'ubuntu-20.04' || matrix.java == 17 }}"
-      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' && matrix.java == 17 }}"
+      RUN_TESTS: "${{ matrix.os == 'ubuntu-20.04' || matrix.java == 19 }}"
+      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' && matrix.java == 19 }}"
       MX_ENV: "trufflesqueak-jar"
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: JAR ${{ matrix.os }} + JDK${{ matrix.java }}
@@ -140,7 +140,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
     env:
-      JAVA_VERSION: "11"
+      JAVA_VERSION: "19"
       MX_ENV: "trufflesqueak-standalone"
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: Standalone ${{ matrix.os }}
