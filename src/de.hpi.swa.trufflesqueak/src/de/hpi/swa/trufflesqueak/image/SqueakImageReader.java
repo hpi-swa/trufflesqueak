@@ -103,7 +103,7 @@ public final class SqueakImageReader {
         return image.getSqueakImage();
     }
 
-    private long readBytes(final byte[] bytes, final int length) {
+    private int readBytes(final byte[] bytes, final int length) {
         try {
             final int readBytes = stream.read(bytes, 0, length);
             assert readBytes == length : "Failed to read bytes";
@@ -152,7 +152,7 @@ public final class SqueakImageReader {
         return bytes;
     }
 
-    private void skipBytes(final long count) {
+    private void skipBytes(final int count) {
         long pending = count;
         try {
             while (pending > 0) {

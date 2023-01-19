@@ -128,10 +128,10 @@ public final class BitBlt {
     private int clipWidth;
     private int clipX;
     private int clipY;
-    private long cmBitsPerColor;
-    private long cmFlags;
+    private int cmBitsPerColor;
+    private int cmFlags;
     private int[] cmLookupTable;
-    private long cmMask;
+    private int cmMask;
 
     /** Used in {@link BitBlt#setupColorMasksFromto}. */
     private final int[] cmMaskTableTemplate = new int[]{0, 0, 0, 0};
@@ -169,7 +169,7 @@ public final class BitBlt {
                     0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                     15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30
     };
-    private long dstBitShift;
+    private int dstBitShift;
     private int dx;
     private int dy;
     private long endOfDestination;
@@ -213,7 +213,7 @@ public final class BitBlt {
     private int sx;
     private int sy;
     private long[] ungammaLookupTable;
-    private long vDir;
+    private int vDir;
     private long warpAlignMask;
     private long warpAlignShift;
     private final int[] warpBitShiftTable = new int[32];
@@ -1160,11 +1160,11 @@ public final class BitBlt {
         if (bbW < startBits) {
             startBits = bbW;
         }
-        long srcShift = (sx & sourcePPW - 1) * sourceDepth;
-        long dstShift = (dx & destPPW - 1) * destDepth;
+        int srcShift = (sx & sourcePPW - 1) * sourceDepth;
+        int dstShift = (dx & destPPW - 1) * destDepth;
         int srcShiftInc = sourceDepth;
         int dstShiftInc = destDepth;
-        long dstShiftLeft = 0;
+        int dstShiftLeft = 0;
         if (sourceMSB) {
             srcShift = 32 - sourceDepth - srcShift;
             srcShiftInc = -srcShiftInc;
@@ -1291,7 +1291,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#drawLoopX:Y: */
     private void drawLoopXY(final long xDelta, final long yDelta) {
-        final long dx1;
+        final int dx1;
         if (xDelta > 0) {
             dx1 = 1;
         } else {
@@ -1301,7 +1301,7 @@ public final class BitBlt {
                 dx1 = -1;
             }
         }
-        final long dy1;
+        final int dy1;
         if (yDelta > 0) {
             dy1 = 1;
         } else {
@@ -1791,7 +1791,7 @@ public final class BitBlt {
         /* even if identity or somesuch - may be cleared later */
         cmFlags = COLOR_MAP_PRESENT;
         boolean oldStyle = false;
-        final long cmSize;
+        final int cmSize;
         if (cmOop instanceof NativeObject && isWords((NativeObject) cmOop)) {
             /* This is an old-style color map (indexed only, with implicit RGBA conversion) */
             cmSize = slotSizeOfWords((NativeObject) cmOop);
@@ -2558,7 +2558,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#primitiveWarpBits */
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public void primitiveWarpBits(final PointersObject bbObj, final long n, final AbstractSqueakObject sourceMap) {
+    public void primitiveWarpBits(final PointersObject bbObj, final int n, final AbstractSqueakObject sourceMap) {
         if (!loadWarpBltFrom(bbObj)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -3354,7 +3354,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#warpBits */
-    private void warpBits(final long smoothingCount, final AbstractSqueakObject sourceMap) {
+    private void warpBits(final int smoothingCount, final AbstractSqueakObject sourceMap) {
         final boolean ns = noSource;
         noSource = true;
         clipRange();
@@ -3392,7 +3392,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpLoop */
-    private void warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
+    private void warpLoop(final int smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
         if (slotSizeOf(bitBltOop) < BB_WARP_BASE + 12) {
             throw PrimitiveFailed.andTransferToInterpreter();
         }
@@ -3427,7 +3427,7 @@ public final class BitBlt {
         if (failed()) {
             return;
         }
-        final long smoothingCount;
+        final int smoothingCount;
         final Object sourceMap;
         final boolean sourceMapIsWords;
         if (sourceMapOopValue != null) {
@@ -3620,15 +3620,15 @@ public final class BitBlt {
      * BitBltSimulation>>#warpPickSmoothPixels:xDeltah:yDeltah:xDeltav:yDeltav:sourceMap:smoothing:
      * dstShiftInc:
      */
-    private long warpPickSmoothPixelsxDeltahyDeltahxDeltavyDeltavsourceMapsmoothingdstShiftInc(final int nPixels, final long xDeltah, final long yDeltah, final long xDeltav,
-                    final long yDeltav, final Object sourceMap, final boolean sourceMapIsWords, final long n, final long dstShiftInc) {
+    private long warpPickSmoothPixelsxDeltahyDeltahxDeltavyDeltavsourceMapsmoothingdstShiftInc(final int nPixels, final int xDeltah, final int yDeltah, final int xDeltav,
+                    final int yDeltav, final Object sourceMap, final boolean sourceMapIsWords, final int n, final int dstShiftInc) {
         /* nope - too much stuff in here */
         final int dstMask = MASK_TABLE[destDepth];
         long destWord = 0;
-        final long xdh;
-        final long xdv;
-        final long ydh;
-        final long ydv;
+        final int xdh;
+        final int xdv;
+        final int ydh;
+        final int ydv;
         if (n == 2) {
             /* Try avoiding divides for most common n (divide by 2 is generated as shift) */
             xdh = xDeltah / 2;
@@ -3730,7 +3730,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpPickSourcePixels:xDeltah:yDeltah:xDeltav:yDeltav:dstShiftInc:flags: */
-    private long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final long nPixels, final long xDeltah, final long yDeltah, final long dstShiftInc, final long mapperFlags) {
+    private long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final int nPixels, final int xDeltah, final int yDeltah, final int dstShiftInc, final long mapperFlags) {
         final int dstMask = MASK_TABLE[destDepth];
         long destWord = 0;
         long nPix = nPixels;

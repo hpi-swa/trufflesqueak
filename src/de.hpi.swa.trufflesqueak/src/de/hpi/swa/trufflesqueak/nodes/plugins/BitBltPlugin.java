@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPri
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -139,7 +140,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimWarpBits1Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected final PointersObject doWarpBits(final PointersObject receiver, final long n) {
-            getContext().bitblt.primitiveWarpBits(receiver, n, null);
+            getContext().bitblt.primitiveWarpBits(receiver, MiscUtils.toIntExact(n), null);
             return receiver;
         }
     }
@@ -158,7 +159,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         private PointersObject warpBits(final PointersObject receiver, final long n, final AbstractSqueakObject sourceMap) {
-            getContext().bitblt.primitiveWarpBits(receiver, n, sourceMap);
+            getContext().bitblt.primitiveWarpBits(receiver, MiscUtils.toIntExact(n), sourceMap);
             return receiver;
         }
     }

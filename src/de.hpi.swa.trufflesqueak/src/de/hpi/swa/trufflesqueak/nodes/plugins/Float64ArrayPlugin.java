@@ -138,7 +138,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final double doDot64bit(final NativeObject receiver, final NativeObject aFloatVector) {
             final long[] longs1 = receiver.getLongStorage();
             final long[] longs2 = aFloatVector.getLongStorage();
-            float result = 0;
+            double result = 0;
             for (int i = 0; i < longs1.length; i++) {
                 result += Double.longBitsToDouble(longs1[i]) * Double.longBitsToDouble(longs2[i]);
             }

@@ -45,9 +45,9 @@ public final class Zip {
                     /* 0 */ 0, 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768,
                     /* 20 */ 1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384, 24576
     };
-    @CompilationFinal(dimensions = 1) private static final int[] zipBaseLength = {
+    @CompilationFinal(dimensions = 1) private static final byte[] zipBaseLength = {
                     /* 0 */ 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56,
-                    /* 20 */ 64, 80, 96, 112, 128, 160, 192, 224, 0
+                    /* 20 */ 64, 80, 96, 112, (byte) 128, (byte) 160, (byte) 192, (byte) 224, 0
     };
     private int zipBitBuf;
     private int zipBitPos;
