@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPri
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -56,7 +57,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"isPoint(start)", "isPoint(stop)", "isPoint(via)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject stop, final PointersObject via, final long leftFillIndex,
                         final long rightFillIndex) {
-            getContext().b2d.primitiveAddBezier(receiver, start, stop, via, leftFillIndex, rightFillIndex);
+            getContext().b2d.primitiveAddBezier(receiver, start, stop, via, MiscUtils.toIntExact(leftFillIndex), MiscUtils.toIntExact(rightFillIndex));
             return receiver;
         }
     }
@@ -68,7 +69,8 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final PointersObject doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
                         final long lineFill) {
-            getContext().b2d.primitiveAddBezierShape(receiver, points, nSegments, fillStyle, lineWidth, lineFill);
+            getContext().b2d.primitiveAddBezierShape(receiver, points, MiscUtils.toIntExact(nSegments), (int) fillStyle, MiscUtils.toIntExact(lineWidth),
+                            MiscUtils.toIntExact(lineFill));
             return receiver;
         }
     }
@@ -80,7 +82,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"xIndex > 0", "isPoint(origin)", "isPoint(direction)", "isPoint(normal)"})
         protected final long doAdd(final PointersObject receiver, final PointersObject form, final AbstractSqueakObject cmap, final boolean tileFlag, final PointersObject origin,
                         final PointersObject direction, final PointersObject normal, final long xIndex) {
-            return getContext().b2d.primitiveAddBitmapFill(receiver, form, cmap, tileFlag, origin, direction, normal, xIndex);
+            return getContext().b2d.primitiveAddBitmapFill(receiver, form, cmap, tileFlag, origin, direction, normal, MiscUtils.toIntExact(xIndex));
         }
     }
 
@@ -91,7 +93,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final PointersObject doAdd(final PointersObject receiver, final NativeObject points, final long nSegments, final NativeObject leftFills, final NativeObject rightFills,
                         final NativeObject lineWidths, final NativeObject lineFills, final NativeObject fillIndexList) {
-            getContext().b2d.primitiveAddCompressedShape(receiver, points, nSegments, leftFills, rightFills, lineWidths, lineFills, fillIndexList);
+            getContext().b2d.primitiveAddCompressedShape(receiver, points, MiscUtils.toIntExact(nSegments), leftFills, rightFills, lineWidths, lineFills, fillIndexList);
             return receiver;
         }
     }
@@ -114,7 +116,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long leftFill, final long rightFill) {
-            getContext().b2d.primitiveAddLine(receiver, start, end, leftFill, rightFill);
+            getContext().b2d.primitiveAddLine(receiver, start, end, MiscUtils.toIntExact(leftFill), MiscUtils.toIntExact(rightFill));
             return receiver;
         }
     }
@@ -126,7 +128,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
                         final long pixelValue32) {
-            getContext().b2d.primitiveAddOval(receiver, start, end, fillIndex, width, pixelValue32);
+            getContext().b2d.primitiveAddOval(receiver, start, end, MiscUtils.toIntExact(fillIndex), MiscUtils.toIntExact(width), MiscUtils.toIntExact(pixelValue32));
             return receiver;
         }
     }
@@ -138,7 +140,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final PointersObject doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
                         final long lineFill) {
-            getContext().b2d.primitiveAddPolygon(receiver, points, nSegments, fillStyle, lineWidth, lineFill);
+            getContext().b2d.primitiveAddPolygon(receiver, points, MiscUtils.toIntExact(nSegments), (int) fillStyle, MiscUtils.toIntExact(lineWidth), MiscUtils.toIntExact(lineFill));
             return receiver;
         }
     }
@@ -150,7 +152,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
                         final long pixelValue32) {
-            getContext().b2d.primitiveAddRect(receiver, start, end, fillIndex, width, pixelValue32);
+            getContext().b2d.primitiveAddRect(receiver, start, end, MiscUtils.toIntExact(fillIndex), MiscUtils.toIntExact(width), MiscUtils.toIntExact(pixelValue32));
             return receiver;
         }
     }
@@ -389,7 +391,8 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final PointersObject doRegister(final PointersObject receiver, final long index, final long initialX, final long initialY, final long initialZ, final long leftFillIndex,
                         final long rightFillIndex) {
-            getContext().b2d.primitiveRegisterExternalEdge(receiver, index, initialX, initialY, initialZ, leftFillIndex, rightFillIndex);
+            getContext().b2d.primitiveRegisterExternalEdge(receiver, MiscUtils.toIntExact(index), MiscUtils.toIntExact(initialX), MiscUtils.toIntExact(initialY), MiscUtils.toIntExact(initialZ),
+                            MiscUtils.toIntExact(leftFillIndex), MiscUtils.toIntExact(rightFillIndex));
             return receiver;
         }
     }
@@ -400,7 +403,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final long doRegister(final PointersObject receiver, final long index) {
-            return getContext().b2d.primitiveRegisterExternalFill(receiver, index);
+            return getContext().b2d.primitiveRegisterExternalFill(receiver, MiscUtils.toIntExact(index));
         }
     }
 
@@ -430,7 +433,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final PointersObject doSet(final PointersObject receiver, final long level) {
-            getContext().b2d.primitiveSetAALevel(receiver, level);
+            getContext().b2d.primitiveSetAALevel(receiver, MiscUtils.toIntExact(level));
             return receiver;
         }
     }
@@ -473,7 +476,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final PointersObject doSet(final PointersObject receiver, final long depth) {
-            getContext().b2d.primitiveSetDepth(receiver, depth);
+            getContext().b2d.primitiveSetDepth(receiver, MiscUtils.toIntExact(depth));
             return receiver;
         }
     }
