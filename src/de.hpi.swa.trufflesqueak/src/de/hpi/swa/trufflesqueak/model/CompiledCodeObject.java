@@ -269,7 +269,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public FrameDescriptor getFrameDescriptor() {
         if (frameDescriptor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameDescriptor = FrameAccess.newFrameDescriptor(getSqueakContextSize());
+            /* Never let synthetic compiled block escape, use outer method instead. */
+            final CompiledCodeObject exposedMethod = outerMethod != null ? outerMethod : this;
+            frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod);
         }
         return frameDescriptor;
     }

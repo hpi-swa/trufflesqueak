@@ -30,7 +30,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         if (context != null) {
             return context;
         } else {
-            final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
+            final CompiledCodeObject code = FrameAccess.getCodeObject(frame);
             return ContextObject.create(code.getSqueakClass().getImage(), frame.materialize(), code);
         }
     }
@@ -39,7 +39,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
 
     @Specialization
     protected final ContextObject doGetOrCreate(final VirtualFrame frame,
-                    @Cached("getMethodOrBlock(frame)") final CompiledCodeObject code,
+                    @Cached("getCodeObject(frame)") final CompiledCodeObject code,
                     @Cached("createCountingProfile()") final ConditionProfile hasContextProfile) {
         final ContextObject context = FrameAccess.getContext(frame);
         if (hasContextProfile.profile(context != null)) {

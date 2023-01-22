@@ -169,7 +169,7 @@ public final class DebugUtils {
             if (!FrameAccess.isTruffleSqueakFrame(current)) {
                 return null;
             }
-            final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
+            final CompiledCodeObject code = FrameAccess.getCodeObject(current);
             lastSender[0] = FrameAccess.getSender(current);
             final Object marker = FrameAccess.getMarker(current);
             final Object context = FrameAccess.getContext(current);

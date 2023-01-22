@@ -62,7 +62,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         assert FrameAccess.getContext(truffleFrame) == null;
         assert FrameAccess.getCodeObject(truffleFrame).getSqueakContextSize() == size;
         this.truffleFrame = truffleFrame;
-        methodOrBlock = FrameAccess.getMethodOrBlock(truffleFrame);
+        methodOrBlock = FrameAccess.getCodeObject(truffleFrame);
         this.size = size;
     }
 
@@ -172,15 +172,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private MaterializedFrame getOrCreateTruffleFrame() {
         if (truffleFrame == null) {
             truffleFrame = createTruffleFrame(this);
-            methodOrBlock = FrameAccess.getMethodOrBlock(truffleFrame);
-        }
-        return getTruffleFrame();
-    }
-
-    private MaterializedFrame getOrCreateTruffleFrame(final CompiledCodeObject method) {
-        if (truffleFrame == null || FrameAccess.getCodeObject(getTruffleFrame()) == null) {
-            truffleFrame = createTruffleFrame(this, truffleFrame, method);
-            methodOrBlock = method;
+            methodOrBlock = FrameAccess.getCodeObject(truffleFrame);
         }
         return getTruffleFrame();
     }
@@ -337,7 +329,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setCodeObject(final CompiledCodeObject value) {
-        FrameAccess.setCodeObject(getOrCreateTruffleFrame(value), value);
+        truffleFrame = createTruffleFrame(this, truffleFrame, value);
         methodOrBlock = value;
     }
 

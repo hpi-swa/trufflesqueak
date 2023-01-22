@@ -99,8 +99,10 @@ public final class FrameAccess {
     }
 
     /** Creates a new {@link FrameDescriptor} according to {@link SlotIndicies}. */
-    public static FrameDescriptor newFrameDescriptor(final int squeakContextSize) {
-        final Builder builder = FrameDescriptor.newBuilder();
+    public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code) {
+        final int squeakContextSize = code.getSqueakContextSize();
+        final Builder builder = FrameDescriptor.newBuilder(4 + squeakContextSize);
+        builder.info(code);
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.THIS_MARKER
         builder.addSlot(FrameSlotKind.Illegal, null, null); // SlotIndicies.THIS_CONTEXT
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.INSTRUCTION_POINTER
@@ -109,21 +111,9 @@ public final class FrameAccess {
         return builder.build();
     }
 
-    public static CompiledCodeObject getCodeObject(final Frame frame) {
-        return (CompiledCodeObject) frame.getArguments()[ArgumentIndicies.CODE_OBJECT.ordinal()];
-    }
-
-    public static void setCodeObject(final Frame frame, final CompiledCodeObject method) {
-        frame.getArguments()[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
-    }
-
     /* Returns the code object matching the frame's descriptor. */
-    public static CompiledCodeObject getMethodOrBlock(final Frame frame) {
-        if (hasClosure(frame)) {
-            return getClosure(frame).getCompiledBlock();
-        } else {
-            return getCodeObject(frame);
-        }
+    public static CompiledCodeObject getCodeObject(final Frame frame) {
+        return (CompiledCodeObject) frame.getFrameDescriptor().getInfo();
     }
 
     public static Object getSender(final Frame frame) {

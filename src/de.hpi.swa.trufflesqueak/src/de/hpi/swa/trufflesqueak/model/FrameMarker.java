@@ -26,7 +26,7 @@ public final class FrameMarker {
             return context;
         } else {
             assert this == FrameAccess.getMarker(targetFrame) : "Frame does not match";
-            final CompiledCodeObject code = FrameAccess.getMethodOrBlock(targetFrame);
+            final CompiledCodeObject code = FrameAccess.getCodeObject(targetFrame);
             return ContextObject.create(code.getSqueakClass().getImage(), targetFrame, code);
         }
     }
