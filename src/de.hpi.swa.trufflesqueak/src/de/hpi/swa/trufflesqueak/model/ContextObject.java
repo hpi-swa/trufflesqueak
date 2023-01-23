@@ -40,7 +40,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
 
     private MaterializedFrame truffleFrame;
-    private CompiledCodeObject methodOrBlock; // Code object holding truffleFrame's frame descriptor
     private int size;
     private boolean hasModifiedSender;
     private boolean escaped;
@@ -62,18 +61,18 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         assert FrameAccess.getContext(truffleFrame) == null;
         assert FrameAccess.getCodeObject(truffleFrame).getSqueakContextSize() == size;
         this.truffleFrame = truffleFrame;
-        methodOrBlock = FrameAccess.getCodeObject(truffleFrame);
         this.size = size;
     }
 
     @TruffleBoundary
     private ContextObject(final ContextObject original) {
         super(original);
-        methodOrBlock = original.methodOrBlock;
+
         hasModifiedSender = original.hasModifiedSender();
         escaped = original.escaped;
         size = original.size;
         // Create shallow copy of Truffle frame
+        final CompiledCodeObject methodOrBlock = FrameAccess.getCodeObject(original.truffleFrame);
         truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments().clone(), methodOrBlock.getFrameDescriptor());
         // Copy frame slot values
         FrameAccess.initializeMarker(truffleFrame);
@@ -127,6 +126,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         final Object closureOrNil = pointers[CONTEXT.CLOSURE_OR_NIL];
         final BlockClosureObject closure;
         final int numArgs;
+        final CompiledCodeObject methodOrBlock;
         if (closureOrNil == NilObject.SINGLETON) {
             closure = null;
             methodOrBlock = method;
@@ -162,17 +162,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public CallTarget getCallTarget() {
-        return methodOrBlock.getResumptionCallTarget(this);
-    }
-
-    public CompiledCodeObject getMethodOrBlock() {
-        return methodOrBlock;
+        return getCodeObject().getResumptionCallTarget(this);
     }
 
     private MaterializedFrame getOrCreateTruffleFrame() {
         if (truffleFrame == null) {
             truffleFrame = createTruffleFrame(this);
-            methodOrBlock = FrameAccess.getCodeObject(truffleFrame);
         }
         return getTruffleFrame();
     }
@@ -239,6 +234,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     private AbstractSqueakObject fillInSenderFromMaker(final FrameMarker value) {
+        final CompiledCodeObject methodOrBlock = getCodeObject();
         if (!methodOrBlock.hasPrimitive() || methodOrBlock.isUnwindMarked() || methodOrBlock.isExceptionHandlerMarked()) {
             /*
              * Only invalidate sender assumption if not a primitive method. The sender of a
@@ -330,7 +326,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setCodeObject(final CompiledCodeObject value) {
         truffleFrame = createTruffleFrame(this, truffleFrame, value);
-        methodOrBlock = value;
     }
 
     public BlockClosureObject getClosure() {
@@ -361,7 +356,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         final CompiledCodeObject block = value.getCompiledBlock();
         // Create and initialize new frame
         truffleFrame = Truffle.getRuntime().createMaterializedFrame(arguments, block.getFrameDescriptor());
-        methodOrBlock = block;
         FrameAccess.assertSenderNotNull(truffleFrame);
         FrameAccess.assertReceiverNotNull(truffleFrame);
         FrameAccess.initializeMarker(truffleFrame);
@@ -489,19 +483,17 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void become(final ContextObject other) {
         final MaterializedFrame otherTruffleFrame = other.truffleFrame;
-        final CompiledCodeObject otherMethodOrBlock = other.methodOrBlock;
         final int otherSize = other.size;
         final boolean otherHasModifiedSender = other.hasModifiedSender;
         final boolean otherEscaped = other.escaped;
-        other.setFields(truffleFrame, methodOrBlock, size, hasModifiedSender, escaped);
-        setFields(otherTruffleFrame, otherMethodOrBlock, otherSize, otherHasModifiedSender, otherEscaped);
+        other.setFields(truffleFrame, size, hasModifiedSender, escaped);
+        setFields(otherTruffleFrame, otherSize, otherHasModifiedSender, otherEscaped);
     }
 
-    private void setFields(final MaterializedFrame otherTruffleFrame, final CompiledCodeObject otherMethodOrBlock, final int otherSize, final boolean otherHasModifiedSender,
+    private void setFields(final MaterializedFrame otherTruffleFrame, final int otherSize, final boolean otherHasModifiedSender,
                     final boolean otherEscaped) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         truffleFrame = otherTruffleFrame;
-        methodOrBlock = otherMethodOrBlock;
         size = otherSize;
         hasModifiedSender = otherHasModifiedSender;
         escaped = otherEscaped;
@@ -608,8 +600,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                         arguments[j] = toPointer;
                     }
                 }
-
-                assert methodOrBlock != fromPointer : "Code should change and with it the frame descriptor";
                 FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
                     if (truffleFrame.isObject(slotIndex)) {
                         final Object stackValue = truffleFrame.getObject(slotIndex);

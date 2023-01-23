@@ -26,10 +26,10 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     @Child private AbstractExecuteContextNode executeBytecodeNode;
 
     protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
-        super(language, context.getMethodOrBlock());
+        super(language, context.getCodeObject());
         activeContext = context;
         assert !context.isDead() : "Terminated contexts cannot be resumed";
-        executeBytecodeNode = new ExecuteBytecodeNode(context.getMethodOrBlock());
+        executeBytecodeNode = new ExecuteBytecodeNode(context.getCodeObject());
     }
 
     public static ResumeContextRootNode create(final SqueakLanguage language, final ContextObject activeContext) {
@@ -61,7 +61,7 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     }
 
     public void setActiveContext(final ContextObject newActiveContext) {
-        assert activeContext.getMethodOrBlock() == newActiveContext.getMethodOrBlock();
+        assert activeContext.getCodeObject() == newActiveContext.getCodeObject();
         activeContext = newActiveContext;
     }
 
