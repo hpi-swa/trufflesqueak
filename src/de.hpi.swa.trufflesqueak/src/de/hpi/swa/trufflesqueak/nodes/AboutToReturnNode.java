@@ -12,7 +12,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -53,15 +52,11 @@ public abstract class AboutToReturnNode extends AbstractNode {
                         @Cached("createTemporaryReadNode(frame, 0)") final FrameStackReadNode blockArgumentNode,
                         @SuppressWarnings("unused") @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode,
                         @Cached("create(frame, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
-                        /*
-                         * It is very likely that ensure block is constant, hence the ValueProfile.
-                         */
-                        @Cached("createIdentityProfile()") final ValueProfile blockProfile,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final DispatchClosureNode dispatchNode) {
             completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
             final BlockClosureObject closure = (BlockClosureObject) blockArgumentNode.executeRead(frame);
-            dispatchNode.execute(closure, FrameAccess.newClosureArgumentsTemplate(closure, blockProfile.profile(closure.getCompiledBlock()), getContextOrMarkerNode.execute(frame), 0));
+            dispatchNode.execute(closure, FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0));
         }
 
         @SuppressWarnings("unused")

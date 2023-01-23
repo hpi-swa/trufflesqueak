@@ -55,8 +55,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
                 throw pf; // Rewrite specialization.
             } else {
                 // Slow path send to fallback code.
-                return IndirectCallNode.getUncached().call(cachedMethod.getCallTarget(),
-                                FrameAccess.newWith(cachedMethod, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
+                return IndirectCallNode.getUncached().call(cachedMethod.getCallTarget(), FrameAccess.newWith(FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
             }
         }
     }
@@ -64,18 +63,18 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     @Specialization(guards = {"method == cachedMethod"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()", "cachedMethod.getDoesNotNeedSenderAssumption()"}, replaces = "doPrimitiveEagerly")
     protected static final Object doDirect(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
-                    @Cached("method") final CompiledCodeObject cachedMethod,
+                    @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
-        return callDirect(callNode, cachedMethod, getContextOrMarkerNode.execute(frame), receiverAndArguments);
+        return callDirect(callNode, getContextOrMarkerNode.execute(frame), receiverAndArguments);
     }
 
     @Specialization(guards = {"method == cachedMethod"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, replaces = {"doPrimitiveEagerly"})
     protected final Object doDirectWithSender(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
-                    @Cached("method") final CompiledCodeObject cachedMethod,
+                    @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                     @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
-        return callDirect(callNode, cachedMethod, getOrCreateContext(frame), receiverAndArguments);
+        return callDirect(callNode, getOrCreateContext(frame), receiverAndArguments);
     }
 
     @ReportPolymorphism.Megamorphic
@@ -95,12 +94,12 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
         return callIndirect(callNode, method, getOrCreateContext(frame), receiverAndArguments);
     }
 
-    private static Object callDirect(final DirectCallNode callNode, final CompiledCodeObject cachedMethod, final Object contextOrMarker, final Object[] receiverAndArguments) {
-        return callNode.call(FrameAccess.newWith(cachedMethod, contextOrMarker, null, receiverAndArguments));
+    private static Object callDirect(final DirectCallNode callNode, final Object contextOrMarker, final Object[] receiverAndArguments) {
+        return callNode.call(FrameAccess.newWith(contextOrMarker, null, receiverAndArguments));
     }
 
     private static Object callIndirect(final IndirectCallNode callNode, final CompiledCodeObject method, final Object contextOrMarker, final Object[] receiverAndArguments) {
-        return callNode.call(method.getCallTarget(), FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
+        return callNode.call(method.getCallTarget(), FrameAccess.newWith(contextOrMarker, null, receiverAndArguments));
     }
 
     protected static final boolean doesNotNeedSender(final CompiledCodeObject method, final ValueProfile assumptionProfile) {

@@ -123,8 +123,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
             for (int i = 0; i < receiverAndArguments.length; i++) {
                 receiverAndArguments[i] = FrameAccess.getStackValue(frame, stackPointer + i, numArgs);
             }
-            return IndirectCallNode.getUncached().call(method.getCallTarget(),
-                            FrameAccess.newWith(method, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
+            return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
         }
     }
 
@@ -149,7 +148,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
 
         protected final Object[] createFrameArguments(final VirtualFrame frame, final Object sender) {
-            return FrameAccess.newWith(frame, method, sender, receiverAndArgumentsNodes);
+            return FrameAccess.newWith(frame, sender, receiverAndArgumentsNodes);
         }
     }
 
@@ -218,7 +217,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
                 return replace(new CachedDispatchDoesNotUnderstandWithSenderNode(frame, createFrameArgumentsForDNUNode.getSelector(), createFrameArgumentsForDNUNode.getArgumentCount(),
                                 method)).execute(frame);
             }
-            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, method, getContextOrMarkerNode.execute(frame)));
+            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, getContextOrMarkerNode.execute(frame)));
         }
     }
 
@@ -231,7 +230,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, method, getOrCreateContextNode.executeGet(frame)));
+            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, getOrCreateContextNode.executeGet(frame)));
         }
     }
 
@@ -271,7 +270,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
                 return replace(new CachedDispatchObjectAsMethodWithSenderNode(frame, createFrameArgumentsForOAMNode.getSelector(), createFrameArgumentsForOAMNode.getArgumentCount(), object,
                                 method)).execute(frame);
             }
-            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, object, method, getContextOrMarkerNode.execute(frame)));
+            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, object, getContextOrMarkerNode.execute(frame)));
         }
     }
 
@@ -284,7 +283,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, object, method, getOrCreateContextNode.executeGet(frame)));
+            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, object, getOrCreateContextNode.executeGet(frame)));
         }
     }
 }

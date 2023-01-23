@@ -41,8 +41,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
  *
  * <pre>
  *                            +-------------------------------+
- * METHOD                  -> | CompiledMethodObject          |
- *                            +-------------------------------+
  * SENDER_OR_SENDER_MARKER -> | FrameMarker: virtual sender   |
  *                            | ContextObject: materialized   |
  *                            | nil: terminated / top-level   |
@@ -80,11 +78,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
  */
 public final class FrameAccess {
     private enum ArgumentIndicies {
-        CODE_OBJECT, // 0
-        SENDER_OR_SENDER_MARKER, // 1
-        CLOSURE_OR_NULL, // 2
-        RECEIVER, // 3
-        ARGUMENTS_START, // 4
+        SENDER_OR_SENDER_MARKER, // 0
+        CLOSURE_OR_NULL, // 1
+        RECEIVER, // 2
+        ARGUMENTS_START, // 3
     }
 
     private enum SlotIndicies {
@@ -285,34 +282,28 @@ public final class FrameAccess {
     }
 
     public static boolean isTruffleSqueakFrame(final Frame frame) {
-        final Object[] arguments = frame.getArguments();
-        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.CODE_OBJECT.ordinal()] instanceof CompiledCodeObject;
+        return frame.getArguments().length >= ArgumentIndicies.RECEIVER.ordinal() && frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
     }
 
-    public static Object[] newWith(final CompiledCodeObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
         final int receiverAndArgumentsLength = receiverAndArguments.length;
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
-        assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
         assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
         assert receiverAndArguments[0] != null : "Receiver should never be null";
-        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        assertCodeAndClosure(closure, method);
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
         return frameArguments;
     }
 
     @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final FrameStackReadNode[] receiverAndArgumentsNodes) {
+    public static Object[] newWith(final VirtualFrame frame, final Object sender, final FrameStackReadNode[] receiverAndArgumentsNodes) {
         final int numReceiverAndArguments = receiverAndArgumentsNodes.length;
         CompilerAsserts.partialEvaluationConstant(numReceiverAndArguments);
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
-        assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
         assert numReceiverAndArguments > 0 : "At least a receiver must be provided";
-        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
         for (int i = 0; i < numReceiverAndArguments; i++) {
@@ -322,13 +313,11 @@ public final class FrameAccess {
     }
 
     @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final Object receiver, final FrameStackReadNode[] argumentsNodes) {
+    public static Object[] newWith(final VirtualFrame frame, final Object sender, final Object receiver, final FrameStackReadNode[] argumentsNodes) {
         final int argumentCount = argumentsNodes.length;
         CompilerAsserts.partialEvaluationConstant(argumentCount);
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + argumentCount];
-        assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
-        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
         frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
@@ -338,23 +327,18 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final CompiledCodeObject method, final Object sender, final BlockClosureObject closure, final int numReceiverAndArguments) {
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final int numReceiverAndArguments) {
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
-        assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
         assert numReceiverAndArguments > 0 : "At least a receiver must be provided";
-        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        assertCodeAndClosure(closure, method);
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         return frameArguments;
     }
 
-    public static Object[] newDNUWith(final CompiledCodeObject method, final Object sender, final Object receiver, final PointersObject message) {
+    public static Object[] newDNUWith(final Object sender, final Object receiver, final PointersObject message) {
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + 2];
-        assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
-        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
         frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
@@ -362,11 +346,9 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newOAMWith(final CompiledCodeObject method, final Object sender, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
+    public static Object[] newOAMWith(final Object sender, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + 4];
-        assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
-        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
         frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = object;
@@ -376,26 +358,23 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newDummyWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
+    public static Object[] newDummyWith(final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
         final int receiverAndArgumentsLength = receiverAndArguments.length;
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
         assert sender != null : "Sender should never be null";
         assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
-        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = code;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        assertCodeAndClosure(closure, code);
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
         return frameArguments;
     }
 
     /* Template because closure arguments still need to be filled in. */
-    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final CompiledCodeObject code, final Object senderOrMarker, final int numArgs) {
+    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
         final Object[] copied = closure.getCopiedValues();
         final int numCopied = copied.length;
         assert closure.getNumArgs() == numArgs : "number of required and provided block arguments do not match";
         final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs + numCopied];
-        arguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = code;
         // Sender is thisContext (or marker)
         arguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = senderOrMarker;
         arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
@@ -437,10 +416,5 @@ public final class FrameAccess {
         } else {
             return frame.materialize();
         }
-    }
-
-    private static void assertCodeAndClosure(final BlockClosureObject closure, final CompiledCodeObject code) {
-        assert closure == null || code.isCompiledBlock() || code == closure.getCompiledBlock() ||
-                        code == closure.getCompiledBlock().getOuterMethod() : "Frame's code object must be closure's outer method";
     }
 }

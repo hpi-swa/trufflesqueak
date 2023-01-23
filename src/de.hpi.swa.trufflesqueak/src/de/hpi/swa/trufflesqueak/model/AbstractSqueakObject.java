@@ -67,7 +67,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Cached final WrapToSqueakNode wrapNode) {
             final int numArgs = cachedMessage.getParameterCount() - 1;
             assert numArgs == arguments.length;
-            final Object[] frameArguments = FrameAccess.newWith(cachedMethod, NilObject.SINGLETON, null, cachedMessage.getParameterCount());
+            final Object[] frameArguments = FrameAccess.newWith(NilObject.SINGLETON, null, cachedMessage.getParameterCount());
             frameArguments[FrameAccess.getReceiverStartIndex()] = receiver;
             for (int i = 0; i < cachedMessage.getParameterCount() - 1; i++) {
                 frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(arguments[i]);

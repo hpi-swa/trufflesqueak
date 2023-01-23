@@ -79,12 +79,12 @@ public final class CreateFrameArgumentNodes {
             return new CreateFrameArgumentsForDNUNode(frame, selector, argumentCount);
         }
 
-        public Object[] execute(final VirtualFrame frame, final CompiledCodeObject method, final Object sender) {
+        public Object[] execute(final VirtualFrame frame, final Object sender) {
             final Object receiver = getReceiver(frame);
             final Object[] arguments = getArguments(frame, argumentNodes);
             final ClassObject receiverClass = classNode.executeLookup(receiver);
             final PointersObject message = getContext().newMessage(writeNode, selector, receiverClass, arguments);
-            return FrameAccess.newDNUWith(method, sender, receiver, message);
+            return FrameAccess.newDNUWith(sender, receiver, message);
         }
     }
 
@@ -97,10 +97,10 @@ public final class CreateFrameArgumentNodes {
             return new CreateFrameArgumentsForOAMNode(frame, selector, argumentCount);
         }
 
-        public Object[] execute(final VirtualFrame frame, final Object cachedObject, final CompiledCodeObject method, final Object sender) {
+        public Object[] execute(final VirtualFrame frame, final Object cachedObject, final Object sender) {
             final Object receiver = getReceiver(frame);
             final Object[] arguments = getArguments(frame, argumentNodes);
-            return FrameAccess.newOAMWith(method, sender, cachedObject, selector, getContext().asArrayOfObjects(arguments), receiver);
+            return FrameAccess.newOAMWith(sender, cachedObject, selector, getContext().asArrayOfObjects(arguments), receiver);
         }
     }
 
@@ -131,7 +131,7 @@ public final class CreateFrameArgumentNodes {
         @SuppressWarnings("unused")
         protected final Object[] doMethod(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, @SuppressWarnings("unused") final CompiledCodeObject lookupResult,
                         final CompiledCodeObject method) {
-            return FrameAccess.newWith(frame, method, senderNode.execute(frame, method), receiver, argumentNodes);
+            return FrameAccess.newWith(frame, senderNode.execute(frame, method), receiver, argumentNodes);
         }
 
         @Specialization(guards = "lookupResult == null")
@@ -140,14 +140,14 @@ public final class CreateFrameArgumentNodes {
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final Object[] arguments = getArguments(frame, argumentNodes);
             final PointersObject message = getContext().newMessage(writeNode, selector, receiverClass, arguments);
-            return FrameAccess.newDNUWith(method, senderNode.execute(frame, method), receiver, message);
+            return FrameAccess.newDNUWith(senderNode.execute(frame, method), receiver, message);
         }
 
         @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
         protected final Object[] doObjectAsMethod(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject,
                         final CompiledCodeObject method) {
             final Object[] arguments = getArguments(frame, argumentNodes);
-            return FrameAccess.newOAMWith(method, senderNode.execute(frame, method), targetObject, selector, getContext().asArrayOfObjects(arguments), receiver);
+            return FrameAccess.newOAMWith(senderNode.execute(frame, method), targetObject, selector, getContext().asArrayOfObjects(arguments), receiver);
         }
     }
 

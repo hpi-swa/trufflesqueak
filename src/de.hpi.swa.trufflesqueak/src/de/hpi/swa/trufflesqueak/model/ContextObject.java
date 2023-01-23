@@ -143,7 +143,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         }
         final int endArguments = CONTEXT.TEMP_FRAME_START + numArgs;
         final Object[] arguments = Arrays.copyOfRange(pointers, CONTEXT.RECEIVER, endArguments);
-        final Object[] frameArguments = FrameAccess.newWith(methodOrBlock, sender, closure, arguments);
+        final Object[] frameArguments = FrameAccess.newWith(sender, closure, arguments);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, methodOrBlock.getFrameDescriptor());
         FrameAccess.initializeMarker(truffleFrame);
@@ -180,7 +180,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     @TruffleBoundary
     private static MaterializedFrame createTruffleFrame(final ContextObject context) {
         // Method is unknown, use dummy frame instead
-        final Object[] dummyArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, new Object[2]);
+        final Object[] dummyArguments = FrameAccess.newDummyWith(NilObject.SINGLETON, null, new Object[2]);
         final CompiledCodeObject dummyMethod = SqueakImageContext.getSlow().dummyMethod;
         final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
         FrameAccess.setContext(truffleFrame, context);
@@ -212,7 +212,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         } else {
             // Receiver plus arguments.
             final Object[] squeakArguments = new Object[1 + method.getNumArgs()];
-            frameArguments = FrameAccess.newDummyWith(method, NilObject.SINGLETON, null, squeakArguments);
+            frameArguments = FrameAccess.newDummyWith(NilObject.SINGLETON, null, squeakArguments);
             instructionPointer = method.getInitialPC();
             stackPointer = method.getNumTemps();
         }
