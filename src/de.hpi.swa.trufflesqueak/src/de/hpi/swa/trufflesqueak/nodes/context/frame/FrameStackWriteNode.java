@@ -17,6 +17,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNodeFactory.FrameSlotWriteNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -64,7 +65,13 @@ public abstract class FrameStackWriteNode extends AbstractNode {
             frame.setDouble(slotIndex, value);
         }
 
-        @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isIllegal(frame)")
+        protected final void writeNil(final Frame frame, final NilObject value) {
+            // nothing to do
+        }
+
+        @Specialization(replaces = {"writeBool", "writeLong", "writeDouble", "writeNil"})
         protected final void writeObject(final Frame frame, final Object value) {
             /* Initialize type on first write. No-op if kind is already Object. */
             frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Object);
@@ -85,6 +92,10 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         protected final boolean isDoubleOrIllegal(final Frame frame) {
             final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(slotIndex);
             return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
+        }
+
+        protected final boolean isIllegal(final Frame frame) {
+            return frame.getFrameDescriptor().getSlotKind(slotIndex) == FrameSlotKind.Illegal;
         }
     }
 

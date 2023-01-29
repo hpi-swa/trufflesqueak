@@ -20,6 +20,7 @@ import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadClearNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadNoClearNodeGen;
@@ -76,6 +77,15 @@ public abstract class FrameStackReadNode extends AbstractNode {
             this.slotIndex = slotIndex;
         }
 
+        @Specialization(guards = "isIllegal(frame)")
+        protected static final NilObject readNil(@SuppressWarnings("unused") final Frame frame) {
+            return NilObject.SINGLETON;
+        }
+
+        protected final boolean isIllegal(final Frame frame) {
+            return frame.getFrameDescriptor().getSlotKind(slotIndex) == FrameSlotKind.Illegal;
+        }
+
         @Specialization(guards = "frame.isBoolean(slotIndex)")
         protected final boolean readBoolean(final Frame frame) {
             return frame.getBoolean(slotIndex);
@@ -90,6 +100,16 @@ public abstract class FrameStackReadNode extends AbstractNode {
         protected final double readDouble(final Frame frame) {
             return frame.getDouble(slotIndex);
         }
+
+        protected final Object getNonNullValue(final Frame frame) {
+            if (frame.getFrameDescriptor().getSlotKind(slotIndex) == FrameSlotKind.Illegal) {
+                return NilObject.SINGLETON;
+            } else {
+                final Object value = frame.getValue(slotIndex);
+                assert value != null : "Unexpected `null` value";
+                return value;
+            }
+        }
     }
 
     protected abstract static class FrameSlotReadNoClearNode extends AbstractFrameSlotReadNode {
@@ -98,7 +118,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
             super(slotIndex);
         }
 
-        @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
+        @Specialization(replaces = {"readNil", "readBoolean", "readLong", "readDouble"})
         protected final Object readObject(final Frame frame) {
             if (!frame.isObject(slotIndex)) {
                 /*
@@ -109,8 +129,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  * multiple times for the same slot of the same frame.
                  */
                 CompilerDirectives.transferToInterpreter();
-                final Object value = frame.getValue(slotIndex);
-                assert value != null : "Unexpected `null` value";
+                final Object value = getNonNullValue(frame);
                 frame.setObject(slotIndex, value);
                 return value;
             } else {
@@ -125,7 +144,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
             super(slotIndex);
         }
 
-        @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
+        @Specialization(replaces = {"readNil", "readBoolean", "readLong", "readDouble"})
         protected final Object readAndClearObject(final Frame frame) {
             final Object value;
             if (!frame.isObject(slotIndex)) {
@@ -137,7 +156,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  * multiple times for the same slot of the same frame.
                  */
                 CompilerDirectives.transferToInterpreter();
-                value = frame.getValue(slotIndex);
+                value = getNonNullValue(frame);
             } else {
                 value = frame.getObject(slotIndex);
             }
