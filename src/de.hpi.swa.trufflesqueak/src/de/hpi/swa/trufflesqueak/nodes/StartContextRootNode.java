@@ -63,23 +63,7 @@ public final class StartContextRootNode extends AbstractRootNode {
     private void initializeFrame(final VirtualFrame frame) {
         if (writeTempNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final int numArgs = FrameAccess.getNumArguments(frame);
-            if (!FrameAccess.hasClosure(frame)) {
-                final CompiledCodeObject code = getCode();
-                initialPC = code.getInitialPC();
-                initialSP = code.getNumTemps();
-                assert numArgs == code.getNumArgs();
-            } else {
-                final BlockClosureObject closure = FrameAccess.getClosure(frame);
-                initialPC = (int) closure.getStartPC();
-                initialSP = closure.getNumTemps();
-                assert numArgs == closure.getNumArgs() + closure.getNumCopied();
-            }
-            writeTempNodes = new FrameStackWriteNode[initialSP - numArgs];
-            for (int i = 0; i < writeTempNodes.length; i++) {
-                writeTempNodes[i] = insert(FrameStackWriteNode.create(frame, numArgs + i));
-                assert writeTempNodes[i] instanceof FrameSlotWriteNode;
-            }
+            initializeFields(frame);
         }
         FrameAccess.setInstructionPointer(frame, initialPC);
         FrameAccess.setStackPointer(frame, initialSP);
@@ -88,6 +72,26 @@ public final class StartContextRootNode extends AbstractRootNode {
         // Initialize remaining temporary variables with nil in newContext.
         for (final FrameStackWriteNode node : writeTempNodes) {
             node.executeWrite(frame, NilObject.SINGLETON);
+        }
+    }
+
+    private void initializeFields(final VirtualFrame frame) {
+        final int numArgs = FrameAccess.getNumArguments(frame);
+        if (!FrameAccess.hasClosure(frame)) {
+            final CompiledCodeObject code = getCode();
+            initialPC = code.getInitialPC();
+            initialSP = code.getNumTemps();
+            assert numArgs == code.getNumArgs();
+        } else {
+            final BlockClosureObject closure = FrameAccess.getClosure(frame);
+            initialPC = (int) closure.getStartPC();
+            initialSP = closure.getNumTemps();
+            assert numArgs == closure.getNumArgs() + closure.getNumCopied();
+        }
+        writeTempNodes = new FrameStackWriteNode[initialSP - numArgs];
+        for (int i = 0; i < writeTempNodes.length; i++) {
+            writeTempNodes[i] = insert(FrameStackWriteNode.create(frame, numArgs + i));
+            assert writeTempNodes[i] instanceof FrameSlotWriteNode;
         }
     }
 
