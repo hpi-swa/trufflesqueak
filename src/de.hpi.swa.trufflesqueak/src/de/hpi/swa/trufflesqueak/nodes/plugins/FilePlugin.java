@@ -75,8 +75,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final SeekableByteChannel getChannelOrPrimFail(final PointersObject handle) {
             final Object hiddenObject = getChannelOrNil(handle);
-            if (hiddenObject instanceof SeekableByteChannel) {
-                return (SeekableByteChannel) hiddenObject;
+            if (hiddenObject instanceof final SeekableByteChannel o) {
+                return o;
             } else {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }

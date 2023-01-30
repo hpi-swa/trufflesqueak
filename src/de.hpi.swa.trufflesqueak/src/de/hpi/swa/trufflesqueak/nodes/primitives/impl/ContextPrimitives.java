@@ -206,8 +206,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     return context;
                 }
                 final AbstractSqueakObject sender = context.getMaterializedSender();
-                if (sender instanceof ContextObject) {
-                    context = (ContextObject) sender;
+                if (sender instanceof final ContextObject o) {
+                    context = o;
                 } else {
                     assert sender == NilObject.SINGLETON;
                     return NilObject.SINGLETON;
@@ -264,8 +264,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (!foundMyself[0]) {
                     return findNext(receiver); // Fallback to other version.
                 }
-                if (lastSender[0] instanceof ContextObject) {
-                    return findNext((ContextObject) lastSender[0]);
+                if (lastSender[0] instanceof final ContextObject o) {
+                    return findNext(o);
                 } else {
                     return NilObject.SINGLETON;
                 }

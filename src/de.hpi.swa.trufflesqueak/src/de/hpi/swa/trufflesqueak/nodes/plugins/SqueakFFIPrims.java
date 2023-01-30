@@ -156,10 +156,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Child private AbstractPointersObjectReadNode readArgumentTypeNode = AbstractPointersObjectReadNode.create();
 
         protected final PointersObject asExternalFunctionOrFail(final Object object) {
-            if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass().includesExternalFunctionBehavior(getContext()))) {
+            if (object instanceof final PointersObject o && o.getSqueakClass().includesExternalFunctionBehavior(getContext())) {
+                return o;
+            } else {
                 throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
             }
-            return (PointersObject) object;
         }
 
         @TruffleBoundary
@@ -173,8 +174,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
 
                 for (final Object argumentType : argTypesValues) {
-                    if (argumentType instanceof PointersObject) {
-                        final NativeObject compiledSpec = readArgumentTypeNode.executeNative((PointersObject) argumentType, ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
+                    if (argumentType instanceof final PointersObject o) {
+                        final NativeObject compiledSpec = readArgumentTypeNode.executeNative(o, ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                         headerWordList.add(compiledSpec.getInt(0));
                     }
                 }

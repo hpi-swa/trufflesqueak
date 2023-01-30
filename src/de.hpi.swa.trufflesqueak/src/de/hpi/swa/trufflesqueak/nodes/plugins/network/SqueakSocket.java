@@ -159,8 +159,8 @@ public abstract class SqueakSocket {
             return null;
         }
 
-        if (address instanceof InetSocketAddress) {
-            return (InetSocketAddress) address;
+        if (address instanceof final InetSocketAddress o) {
+            return o;
         }
         throw SqueakException.create("Unknown address type");
     }

@@ -33,9 +33,9 @@ public final class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode {
     }
 
     public void executeWrite(final Object object, final Object value) {
-        if (value instanceof ContextObject) {
+        if (value instanceof final ContextObject context) {
             isContextObjectProfile.enter();
-            ((ContextObject) value).markEscaped();
+            context.markEscaped();
         }
         atPut0Node.execute(object, index, value);
     }

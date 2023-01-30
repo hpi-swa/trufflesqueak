@@ -113,8 +113,8 @@ public final class InlinePrimitiveBytecodes {
         public void executeVoid(final VirtualFrame frame) {
             final Object receiver = popNode.execute(frame);
             final long numBytes;
-            if (receiver instanceof CompiledCodeObject) {
-                numBytes = ((CompiledCodeObject) receiver).getBytes().length;
+            if (receiver instanceof final CompiledCodeObject o) {
+                numBytes = o.getBytes().length;
             } else {
                 numBytes = ((NativeObject) receiver).getByteLength();
             }

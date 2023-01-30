@@ -64,7 +64,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
             final Object[] methodDictVariablePart = methodDict.getVariablePart();
             for (int i = 0; i < methodDictVariablePart.length; i++) {
                 final Object methodSelector = methodDictVariablePart[i];
-                if (methodSelector instanceof NativeObject && Arrays.equals(selectorBytes, ((NativeObject) methodSelector).getByteStorage())) {
+                if (methodSelector instanceof final NativeObject m && Arrays.equals(selectorBytes, m.getByteStorage())) {
                     return arrayReadNode.execute(pointersReadValuesNode.executeArray(methodDict, METHOD_DICT.VALUES), i);
                 }
             }

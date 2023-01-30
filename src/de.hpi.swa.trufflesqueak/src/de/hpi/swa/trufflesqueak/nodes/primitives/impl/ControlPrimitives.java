@@ -481,8 +481,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final Object myListOrNil = readNode.execute(receiver, PROCESS.LIST);
             final Object myContext = readNode.execute(receiver, PROCESS.SUSPENDED_CONTEXT);
-            if (myListOrNil instanceof PointersObject) {
-                final PointersObject myList = (PointersObject) myListOrNil;
+            if (myListOrNil instanceof final PointersObject myList) {
                 removeProcessNode.executeRemove(receiver, myList);
                 writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
                 if (classNode.executeLookup(myList) != getContext().getLinkedListClass()) {

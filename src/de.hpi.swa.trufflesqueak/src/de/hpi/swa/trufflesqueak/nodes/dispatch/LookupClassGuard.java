@@ -52,10 +52,10 @@ public abstract class LookupClassGuard {
             return ContextObjectGuard.SINGLETON;
         } else if (receiver instanceof FloatObject) {
             return FloatObjectGuard.SINGLETON;
-        } else if (receiver instanceof AbstractPointersObject) {
-            return new AbstractPointersObjectGuard((AbstractPointersObject) receiver);
-        } else if (receiver instanceof AbstractSqueakObjectWithClassAndHash) {
-            return new AbstractSqueakObjectWithClassAndHashGuard((AbstractSqueakObjectWithClassAndHash) receiver);
+        } else if (receiver instanceof final AbstractPointersObject o) {
+            return new AbstractPointersObjectGuard(o);
+        } else if (receiver instanceof final AbstractSqueakObjectWithClassAndHash o) {
+            return new AbstractSqueakObjectWithClassAndHashGuard(o);
         } else {
             assert !(receiver instanceof AbstractSqueakObject);
             return ForeignObjectGuard.SINGLETON;
@@ -188,7 +188,7 @@ public abstract class LookupClassGuard {
 
         @Override
         protected boolean check(final Object receiver) {
-            return receiver instanceof AbstractPointersObject && ((AbstractPointersObject) receiver).getLayout() == expectedLayout;
+            return receiver instanceof final AbstractPointersObject o && o.getLayout() == expectedLayout;
         }
 
         @Override
@@ -211,7 +211,7 @@ public abstract class LookupClassGuard {
 
         @Override
         protected boolean check(final Object receiver) {
-            return receiver instanceof AbstractSqueakObjectWithClassAndHash && ((AbstractSqueakObjectWithClassAndHash) receiver).getSqueakClass() == expectedClass;
+            return receiver instanceof final AbstractSqueakObjectWithClassAndHash o && o.getSqueakClass() == expectedClass;
         }
 
         @Override

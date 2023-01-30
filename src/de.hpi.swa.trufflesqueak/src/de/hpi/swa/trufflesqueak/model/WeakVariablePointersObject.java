@@ -42,8 +42,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         super.fillInVariablePart(pointers, instSize);
         for (int i = 0; i < variablePart.length; i++) {
             final Object value = variablePart[i];
-            if (value instanceof AbstractSqueakObject) {
-                variablePart[i] = new WeakRef((AbstractSqueakObject) value, weakPointersQueue);
+            if (value instanceof final AbstractSqueakObject o) {
+                variablePart[i] = new WeakRef(o, weakPointersQueue);
             }
         }
     }
@@ -58,8 +58,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
     @Override
     public Object getFromVariablePart(final long index) {
         final Object value = super.getFromVariablePart(index);
-        if (value instanceof WeakRef) {
-            return NilObject.nullToNil(((WeakRef) value).get());
+        if (value instanceof final WeakRef o) {
+            return NilObject.nullToNil(o.get());
         } else {
             assert value != null;
             return value;
@@ -92,7 +92,7 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
 
     private boolean variablePartPointsTo(final Object thang) {
         for (final Object value : variablePart) {
-            if (value == thang || value instanceof WeakRef && ((WeakRef) value).get() == thang) {
+            if (value == thang || value instanceof final WeakRef o && o.get() == thang) {
                 return true;
             }
         }

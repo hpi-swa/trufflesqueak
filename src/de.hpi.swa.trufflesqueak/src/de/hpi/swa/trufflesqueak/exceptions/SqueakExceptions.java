@@ -158,9 +158,9 @@ public final class SqueakExceptions {
         @Override
         @TruffleBoundary
         public String getMessage() {
-            final Object messageText = squeakException.instVarAt0Slow(EXCEPTION.MESSAGE_TEXT);
-            if (messageText instanceof NativeObject && ((NativeObject) messageText).isByteType()) {
-                return ((NativeObject) messageText).asStringUnsafe();
+            final Object messageTextObject = squeakException.instVarAt0Slow(EXCEPTION.MESSAGE_TEXT);
+            if (messageTextObject instanceof final NativeObject messageText && messageText.isByteType()) {
+                return messageText.asStringUnsafe();
             } else {
                 return squeakException.getSqueakClassName();
             }

@@ -167,8 +167,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             final String[] names = new String[namesObjects.length];
             for (int i = 0; i < namesObjects.length; i++) {
                 final Object name = namesObjects[i];
-                if (name instanceof NativeObject) {
-                    names[i] = ((NativeObject) name).asStringUnsafe();
+                if (name instanceof final NativeObject o) {
+                    names[i] = o.asStringUnsafe();
                 } else {
                     throw PrimitiveFailed.andTransferToInterpreter();
                 }

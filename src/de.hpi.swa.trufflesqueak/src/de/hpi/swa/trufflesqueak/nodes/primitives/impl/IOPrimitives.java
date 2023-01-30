@@ -301,9 +301,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final boolean hasCorrectSlots(final PointersObject receiver) {
-            final Object scanMap = pointersReadNode.execute(receiver, CHARACTER_SCANNER.MAP);
             return pointersReadNode.execute(receiver, CHARACTER_SCANNER.DEST_X) instanceof Long && pointersReadNode.execute(receiver, CHARACTER_SCANNER.XTABLE) instanceof ArrayObject &&
-                            scanMap instanceof ArrayObject && arraySizeNode.execute((ArrayObject) scanMap) == 256;
+                            pointersReadNode.execute(receiver, CHARACTER_SCANNER.MAP) instanceof final ArrayObject scanMap && arraySizeNode.execute(scanMap) == 256;
         }
     }
 

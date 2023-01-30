@@ -148,7 +148,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             return false;
         }
         final Object traitInstance = pointers[CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE];
-        return traitInstance instanceof ClassObject && this != ((ClassObject) traitInstance).getSqueakClass() && ((ClassObject) traitInstance).getSqueakClass().getClassName().equals("Trait");
+        return traitInstance instanceof final ClassObject t && this != t.getSqueakClass() && t.getSqueakClass().getClassName().equals("Trait");
     }
 
     public boolean isBits() {
@@ -527,18 +527,18 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-            if (fromPointer == getSuperclassOrNull() && to[i] instanceof ClassObject) {
-                setSuperclass((ClassObject) to[i]);
+            if (fromPointer == getSuperclassOrNull() && to[i] instanceof final ClassObject o) {
+                setSuperclass(o);
             }
-            if (fromPointer == getMethodDict() && fromPointer != to[i] && to[i] instanceof VariablePointersObject) {
+            if (fromPointer == getMethodDict() && fromPointer != to[i] && to[i] instanceof final VariablePointersObject o) {
                 // Only update methodDict if changed to avoid redundant invalidation.
-                setMethodDict((VariablePointersObject) to[i]);
+                setMethodDict(o);
             }
-            if (fromPointer == getInstanceVariablesOrNull() && to[i] instanceof ArrayObject) {
-                setInstanceVariables((ArrayObject) to[i]);
+            if (fromPointer == getInstanceVariablesOrNull() && to[i] instanceof final ArrayObject o) {
+                setInstanceVariables(o);
             }
-            if (fromPointer == getOrganizationOrNull() && to[i] instanceof PointersObject) {
-                setOrganization((PointersObject) to[i]);
+            if (fromPointer == getOrganizationOrNull() && to[i] instanceof final PointersObject o) {
+                setOrganization(o);
             }
         }
         pointersBecomeOneWay(getOtherPointers(), from, to);

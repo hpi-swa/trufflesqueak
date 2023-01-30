@@ -125,8 +125,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             CompilerAsserts.neverPartOfCompilation();
             if (method.getNumLiterals() > 0) {
                 final Object literal1 = method.getLiterals()[1];
-                if (literal1 instanceof PointersObject && ((PointersObject) literal1).getSqueakClass().includesExternalFunctionBehavior(getContext())) {
-                    externalFunction = (PointersObject) literal1;
+                if (literal1 instanceof final PointersObject l1 && l1.getSqueakClass().includesExternalFunctionBehavior(getContext())) {
+                    externalFunction = l1;
                     return true;
                 }
             }

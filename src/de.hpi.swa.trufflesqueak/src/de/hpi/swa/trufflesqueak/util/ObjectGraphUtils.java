@@ -133,8 +133,8 @@ public final class ObjectGraphUtils {
         }
 
         public void addIfUnmarked(final Object object) {
-            if (object instanceof AbstractSqueakObjectWithClassAndHash) {
-                addIfUnmarked((AbstractSqueakObjectWithClassAndHash) object);
+            if (object instanceof final AbstractSqueakObjectWithClassAndHash o) {
+                addIfUnmarked(o);
             }
         }
 

@@ -75,8 +75,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         final Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
         outerContext = (ContextObject) pointers[BLOCK_CLOSURE.OUTER_CONTEXT];
-        if (pointers[BLOCK_CLOSURE.START_PC_OR_METHOD] instanceof CompiledCodeObject) {
-            block = (CompiledCodeObject) pointers[BLOCK_CLOSURE.START_PC_OR_METHOD];
+        if (pointers[BLOCK_CLOSURE.START_PC_OR_METHOD] instanceof final CompiledCodeObject code) {
+            block = code;
             receiver = pointers[BLOCK_CLOSURE.FULL_RECEIVER];
             copiedValues = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE, pointers.length);
         } else {

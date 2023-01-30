@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -29,7 +30,8 @@ public abstract class ResumeProcessNode extends AbstractNode {
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached final GetOrCreateContextNode contextNode) {
         putToSleepNode.executePutToSleep(getActiveProcessNode.execute());
-        contextNode.executeGet(frame).transferTo(getContext(), newProcess, pointersReadNode, pointersWriteNode, getActiveProcessNode);
+        final ContextObject newActiveContext = (ContextObject) pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+        contextNode.executeGet(frame).transferTo(getContext(), newProcess, newActiveContext, pointersWriteNode, getActiveProcessNode);
     }
 
     @Specialization(guards = "!hasHigherPriority(newProcess)")

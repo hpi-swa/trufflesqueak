@@ -27,7 +27,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
@@ -225,8 +224,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public AbstractSqueakObject getSender() {
         final Object value = getFrameSender();
-        if (value instanceof FrameMarker) {
-            return fillInSenderFromMaker((FrameMarker) value);
+        if (value instanceof final FrameMarker f) {
+            return fillInSenderFromMaker(f);
         } else {
             return (AbstractSqueakObject) value;
         }
@@ -513,7 +512,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return arguments;
     }
 
-    public void transferTo(final SqueakImageContext image, final PointersObject newProcess, final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode,
+    public void transferTo(final SqueakImageContext image, final PointersObject newProcess, final ContextObject newActiveContext, final AbstractPointersObjectWriteNode writeNode,
                     final GetActiveProcessNode getActiveProcessNode) {
         // Record a process to be awakened on the next interpreter cycle.
         final PointersObject scheduler = image.getScheduler();
@@ -523,7 +522,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         writeNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         writeNode.execute(oldProcess, PROCESS.SUSPENDED_CONTEXT, this);
         writeNode.executeNil(newProcess, PROCESS.LIST);
-        final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
         writeNode.executeNil(newProcess, PROCESS.SUSPENDED_CONTEXT);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
             throw ProcessSwitch.create(newActiveContext);
@@ -580,14 +578,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             for (int i = 0; i < from.length; i++) {
                 final Object fromPointer = from[i];
                 final Object toPointer = to[i];
-                if (fromPointer == getFrameSender() && toPointer instanceof ContextObject) {
-                    setSender((ContextObject) toPointer);
+                if (fromPointer == getFrameSender() && toPointer instanceof final ContextObject o) {
+                    setSender(o);
                 }
-                if (fromPointer == getCodeObject() && toPointer instanceof CompiledCodeObject) {
-                    setCodeObject((CompiledCodeObject) toPointer);
+                if (fromPointer == getCodeObject() && toPointer instanceof final CompiledCodeObject o) {
+                    setCodeObject(o);
                 }
-                if (fromPointer == getClosure() && toPointer instanceof BlockClosureObject) {
-                    setClosure((BlockClosureObject) toPointer);
+                if (fromPointer == getClosure() && toPointer instanceof final BlockClosureObject o) {
+                    setClosure(o);
                 }
                 if (fromPointer == getReceiver()) {
                     setReceiver(toPointer);

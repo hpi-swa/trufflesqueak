@@ -60,8 +60,8 @@ public final class SqueakLanguageView implements TruffleObject {
                     @Cached final DispatchUneagerlyNode dispatchNode) {
         final ClassObject classObject = classNode.executeLookup(delegate);
         final Object methodObject = lookupNode.executeLookup(classObject, "asString");
-        if (methodObject instanceof CompiledCodeObject) {
-            return dispatchNode.executeDispatch((CompiledCodeObject) methodObject, new Object[]{delegate}, NilObject.SINGLETON);
+        if (methodObject instanceof final CompiledCodeObject m) {
+            return dispatchNode.executeDispatch(m, new Object[]{delegate}, NilObject.SINGLETON);
         } else {
             return "Unsupported";
         }

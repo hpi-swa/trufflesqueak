@@ -217,8 +217,8 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         if (this == other) {
             return true;
         }
-        if (other instanceof LargeIntegerObject) {
-            return equals((LargeIntegerObject) other);
+        if (other instanceof final LargeIntegerObject o) {
+            return equals(o);
         } else {
             return super.equals(other);
         }

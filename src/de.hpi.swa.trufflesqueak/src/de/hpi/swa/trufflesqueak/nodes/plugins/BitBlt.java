@@ -1443,8 +1443,8 @@ public final class BitBlt {
                 return (int) longValue;
             }
             PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
-        } else if (fieldOop instanceof FloatObject) {
-            return floatToLong(((FloatObject) fieldOop).getValue());
+        } else if (fieldOop instanceof final FloatObject o) {
+            return floatToLong(o.getValue());
         } else if (fieldOop instanceof Double) {
             return floatToLong((double) fieldOop);
         }
@@ -1480,8 +1480,8 @@ public final class BitBlt {
             return (int) defaultValue;
         } else if (fieldOop instanceof Double) {
             return floatToLong((double) fieldOop);
-        } else if (fieldOop instanceof FloatObject) {
-            return floatToLong(((FloatObject) fieldOop).getValue());
+        } else if (fieldOop instanceof final FloatObject o) {
+            return floatToLong(o.getValue());
         }
         /* Fail if the value is not an int or float (e.g. Fraction). */
         throw PrimitiveFailed.andTransferToInterpreter();
@@ -1792,13 +1792,12 @@ public final class BitBlt {
         cmFlags = COLOR_MAP_PRESENT;
         boolean oldStyle = false;
         final int cmSize;
-        if (cmOop instanceof NativeObject && isWords((NativeObject) cmOop)) {
+        if (cmOop instanceof final NativeObject cm && isWords(cm)) {
             /* This is an old-style color map (indexed only, with implicit RGBA conversion) */
-            cmSize = slotSizeOfWords((NativeObject) cmOop);
-            cmLookupTable = ((NativeObject) cmOop).getIntStorage();
+            cmSize = slotSizeOfWords(cm);
+            cmLookupTable = cm.getIntStorage();
             oldStyle = true;
         } else {
-
             /* A new-style color map (fully qualified) */
             if (!(isPointers(cmOop) && slotSizeOf((PointersObject) cmOop) >= 3)) {
                 return false;

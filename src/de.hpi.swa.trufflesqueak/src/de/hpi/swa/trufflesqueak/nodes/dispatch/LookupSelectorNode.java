@@ -47,8 +47,7 @@ public abstract class LookupSelectorNode extends AbstractNode {
 
     protected static final Assumption[] createMethodDictStableAssumptions(final ClassObject receiverClass, final Object lookupResult) {
         final ClassObject methodClass;
-        if (lookupResult instanceof CompiledCodeObject) {
-            final CompiledCodeObject method = (CompiledCodeObject) lookupResult;
+        if (lookupResult instanceof final CompiledCodeObject method) {
             assert method.isCompiledMethod();
             methodClass = method.getMethodClassSlow();
         } else {

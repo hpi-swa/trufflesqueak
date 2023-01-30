@@ -45,8 +45,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         final SqueakImageContext image = SqueakImageContext.getSlow();
         if (lookupResult == null) {
             return createDNUNode(frame, selector, argumentCount, image, receiverClass);
-        } else if (lookupResult instanceof CompiledCodeObject) {
-            final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
+        } else if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
             if (lookupMethod.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(lookupMethod, ArgumentsLocation.ON_STACK);
                 if (primitiveNode != null) {
@@ -57,8 +56,8 @@ public abstract class CachedDispatchNode extends AbstractNode {
         } else {
             final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
             final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, image.runWithInSelector);
-            if (runWithInMethod instanceof CompiledCodeObject) {
-                return AbstractCachedDispatchObjectAsMethodNode.create(frame, selector, argumentCount, lookupResult, (CompiledCodeObject) runWithInMethod);
+            if (runWithInMethod instanceof final CompiledCodeObject method) {
+                return AbstractCachedDispatchObjectAsMethodNode.create(frame, selector, argumentCount, lookupResult, method);
             } else {
                 assert runWithInMethod == null : "runWithInMethod should not be another Object";
                 return createDNUNode(frame, selector, argumentCount, image, lookupResultClass);
@@ -68,8 +67,8 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
     private static CachedDispatchNode createDNUNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final SqueakImageContext image, final ClassObject receiverClass) {
         final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(receiverClass, image.doesNotUnderstand);
-        if (dnuMethod instanceof CompiledCodeObject) {
-            return AbstractCachedDispatchDoesNotUnderstandNode.create(frame, selector, argumentCount, (CompiledCodeObject) dnuMethod);
+        if (dnuMethod instanceof final CompiledCodeObject method) {
+            return AbstractCachedDispatchDoesNotUnderstandNode.create(frame, selector, argumentCount, method);
         } else {
             throw SqueakException.create("Unable to find DNU method in", receiverClass);
         }

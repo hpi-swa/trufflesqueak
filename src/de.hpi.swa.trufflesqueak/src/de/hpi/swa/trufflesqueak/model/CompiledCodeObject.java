@@ -485,8 +485,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                     setLiteral(j, toPointer);
                 }
             }
-            if (fromPointer == outerMethod && to[i] instanceof CompiledCodeObject) {
-                outerMethod = (CompiledCodeObject) to[i];
+            if (fromPointer == outerMethod && to[i] instanceof final CompiledCodeObject o) {
+                outerMethod = o;
             }
         }
         // Migrate all shadow blocks
@@ -554,10 +554,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          */
         CompilerAsserts.neverPartOfCompilation("Do not use getCompiledInSelector() in compiled code");
         final Object penultimateLiteral = literals[literals.length - 2];
-        if (penultimateLiteral instanceof NativeObject) {
-            return (NativeObject) penultimateLiteral;
-        } else if (penultimateLiteral instanceof VariablePointersObject) {
-            final VariablePointersObject penultimateLiteralAsPointer = (VariablePointersObject) penultimateLiteral;
+        if (penultimateLiteral instanceof final NativeObject o) {
+            return o;
+        } else if (penultimateLiteral instanceof final VariablePointersObject o) {
+            final VariablePointersObject penultimateLiteralAsPointer = o;
             assert penultimateLiteralAsPointer.size() >= ADDITIONAL_METHOD_STATE.SELECTOR;
             return (NativeObject) penultimateLiteralAsPointer.instVarAt0Slow(ADDITIONAL_METHOD_STATE.SELECTOR);
         } else {

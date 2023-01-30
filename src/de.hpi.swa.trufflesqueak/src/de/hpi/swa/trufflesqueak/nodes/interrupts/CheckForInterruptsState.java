@@ -63,14 +63,14 @@ public final class CheckForInterruptsState {
             return;
         }
         final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
-        if (interruptSema instanceof PointersObject) {
-            setInterruptSemaphore((PointersObject) interruptSema);
+        if (interruptSema instanceof final PointersObject o) {
+            setInterruptSemaphore(o);
         } else {
             assert interruptSema == NilObject.SINGLETON;
         }
         final Object timerSema = image.getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
-        if (timerSema instanceof PointersObject) {
-            setTimerSemaphore((PointersObject) timerSema);
+        if (timerSema instanceof final PointersObject o) {
+            setTimerSemaphore(o);
         } else {
             assert timerSema == NilObject.SINGLETON;
         }

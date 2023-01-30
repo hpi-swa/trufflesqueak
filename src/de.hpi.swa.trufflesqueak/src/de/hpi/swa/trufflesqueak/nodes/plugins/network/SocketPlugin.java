@@ -90,8 +90,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @TruffleBoundary(transferToInterpreterOnException = false)
     private static SqueakSocket getSocketOrPrimFail(final PointersObject socketHandle) {
         final Object socket = socketHandle.getHiddenObject();
-        if (socket instanceof SqueakSocket) {
-            return (SqueakSocket) socket;
+        if (socket instanceof final SqueakSocket o) {
+            return o;
         } else {
             throw PrimitiveFailed.andTransferToInterpreter();
         }

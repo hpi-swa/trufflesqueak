@@ -93,8 +93,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final SqueakImageContext image = SqueakImageContext.get(lookupNode);
             if (message.getLibraryClass() == InteropLibrary.class) {
                 final NativeObject selector = image.toInteropSelector(message);
-                final Object method = lookupNode.executeLookup(classNode.executeLookup(receiver), selector);
-                if (method instanceof CompiledCodeObject) {
+                final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(receiver), selector);
+                if (methodObject instanceof final CompiledCodeObject method) {
                     assert message.getLibraryClass() == InteropLibrary.class;
                     final Object[] receiverAndArguments = new Object[message.getParameterCount()];
                     receiverAndArguments[0] = receiver;
@@ -102,14 +102,14 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         receiverAndArguments[1 + i] = wrapNode.executeWrap(arguments[i]);
                     }
                     try {
-                        return dispatchNode.executeDispatch((CompiledCodeObject) method, receiverAndArguments, NilObject.SINGLETON);
+                        return dispatchNode.executeDispatch(method, receiverAndArguments, NilObject.SINGLETON);
                     } catch (final ProcessSwitch ps) {
                         CompilerDirectives.transferToInterpreter();
                         image.printToStdErr(ps);
                         throw new IllegalArgumentException();
                     }
                 } else {
-                    image.printToStdErr(selector, "method:", method);
+                    image.printToStdErr(selector, "method:", methodObject);
                 }
             }
             CompilerDirectives.transferToInterpreter();

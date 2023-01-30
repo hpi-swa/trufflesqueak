@@ -30,9 +30,9 @@ public final class TemporaryWriteMarkContextsNode extends AbstractNode {
 
     public void executeWrite(final VirtualFrame frame, final Object value) {
         assert value != null : "Unexpected `null` value";
-        if (value instanceof ContextObject) {
+        if (value instanceof final ContextObject context) {
             isContextObjectProfile.enter();
-            ((ContextObject) value).markEscaped();
+            context.markEscaped();
         }
         writeNode.executeWrite(frame, value);
     }

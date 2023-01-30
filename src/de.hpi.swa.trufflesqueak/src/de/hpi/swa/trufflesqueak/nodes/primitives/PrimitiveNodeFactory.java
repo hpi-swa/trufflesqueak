@@ -191,7 +191,7 @@ public final class PrimitiveNodeFactory {
         if (values[NAMED_PRIMITIVE_FUNCTION_NAME_INDEX] == NilObject.SINGLETON) {
             return null;
         }
-        final String moduleName = values[NAMED_PRIMITIVE_MODULE_NAME_INDEX] instanceof NativeObject ? ((NativeObject) values[0]).asStringUnsafe() : NULL_MODULE_NAME;
+        final String moduleName = values[NAMED_PRIMITIVE_MODULE_NAME_INDEX] instanceof final NativeObject m ? m.asStringUnsafe() : NULL_MODULE_NAME;
         final String functionName = ((NativeObject) values[NAMED_PRIMITIVE_FUNCTION_NAME_INDEX]).asStringUnsafe();
         if (numReceiverAndArguments == 1) { // Check for singleton plugin primitive
             final AbstractPrimitiveNode primitiveNode = SINGLETON_PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName);

@@ -3348,8 +3348,8 @@ public final class B2D {
                 workbufferAtput(destPtr + i, (int) (long) value);
             } else if (value instanceof Double) {
                 workbufferAtput(destPtr + i, (int) (double) value);
-            } else if (value instanceof FloatObject) {
-                workbufferAtput(destPtr + i, (int) ((FloatObject) value).getValue());
+            } else if (value instanceof final FloatObject o) {
+                workbufferAtput(destPtr + i, (int) o.getValue());
             } else {
                 PrimitiveFailed.andTransferToInterpreter();
             }
@@ -3880,8 +3880,8 @@ public final class B2D {
             pointSetX(pointIndex, (int) (long) value0);
         } else if (value0 instanceof Double) {
             pointSetX(pointIndex, (int) (double) value0);
-        } else if (value0 instanceof FloatObject) {
-            pointSetX(pointIndex, (int) ((FloatObject) value0).getValue());
+        } else if (value0 instanceof final FloatObject o) {
+            pointSetX(pointIndex, (int) o.getValue());
         } else {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -3890,8 +3890,8 @@ public final class B2D {
             pointSetY(pointIndex, (int) (long) value1);
         } else if (value0 instanceof Double) {
             pointSetY(pointIndex, (int) (double) value1);
-        } else if (value0 instanceof FloatObject) {
-            pointSetY(pointIndex, (int) ((FloatObject) value0).getValue());
+        } else if (value0 instanceof final FloatObject o) {
+            pointSetY(pointIndex, (int) o.getValue());
         } else {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -4015,8 +4015,7 @@ public final class B2D {
             return false;
         }
 
-        if (transformOop instanceof NativeObject) {
-            final NativeObject transformNative = (NativeObject) transformOop;
+        if (transformOop instanceof final NativeObject transformNative) {
             if (slotSizeOf(transformNative) != n) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
@@ -7276,7 +7275,7 @@ public final class B2D {
     }
 
     private static boolean isWords(final AbstractSqueakObject object) {
-        return object instanceof NativeObject && ((NativeObject) object).isIntType();
+        return object instanceof final NativeObject o && o.isIntType();
     }
 
     private static boolean isArray(final AbstractSqueakObject object) {

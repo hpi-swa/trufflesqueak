@@ -296,8 +296,8 @@ public final class SqueakImageContext {
         if (parserSharedInstance == null) {
             parserSharedInstance = (PointersObject) ((ClassObject) lookup("Parser")).send(this, "new");
             final Object polyglotRequestorClassOrNil = lookup("PolyglotRequestor");
-            if (polyglotRequestorClassOrNil instanceof ClassObject) {
-                requestorSharedInstanceOrNil = (AbstractSqueakObject) ((ClassObject) polyglotRequestorClassOrNil).send(this, "default");
+            if (polyglotRequestorClassOrNil instanceof final ClassObject polyglotRequestorClass) {
+                requestorSharedInstanceOrNil = (AbstractSqueakObject) polyglotRequestorClass.send(this, "default");
             } else {
                 requestorSharedInstanceOrNil = NilObject.SINGLETON;
             }
@@ -414,8 +414,7 @@ public final class SqueakImageContext {
         int numClassTablePages = -1;
         for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
             final Object classPageOrNil = hiddenRootsObjects[i];
-            if (classPageOrNil instanceof ArrayObject) {
-                final ArrayObject classPage = (ArrayObject) classPageOrNil;
+            if (classPageOrNil instanceof final ArrayObject classPage) {
                 final int numSlots = classPage.isEmptyType() ? classPage.getEmptyLength() : classPage.getObjectLength();
                 if (numSlots != SqueakImageConstants.CLASS_TABLE_PAGE_SIZE) {
                     return false;
@@ -475,9 +474,9 @@ public final class SqueakImageContext {
     private Object lookupClassIndex(final int classIndex) {
         final long majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
         final Object classTablePageOrNil = hiddenRoots.getObject(majorIndex);
-        if (classTablePageOrNil instanceof ArrayObject) {
+        if (classTablePageOrNil instanceof final ArrayObject classTablePage) {
             final long minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
-            return ((ArrayObject) classTablePageOrNil).getObject(minorIndex);
+            return classTablePage.getObject(minorIndex);
         } else {
             assert classTablePageOrNil == NilObject.SINGLETON;
             return NilObject.SINGLETON;
@@ -859,8 +858,8 @@ public final class SqueakImageContext {
         if (fractionClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final Object fractionLookup = lookup("Fraction");
-            if (fractionLookup instanceof ClassObject) {
-                fractionClass = (ClassObject) fractionLookup;
+            if (fractionLookup instanceof final ClassObject c) {
+                fractionClass = c;
             } else {
                 throw SqueakException.create("Unable to find Fraction class");
             }

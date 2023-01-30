@@ -443,8 +443,7 @@ public final class SqueakImageReader {
     private void fillInObjects() {
         for (final SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof AbstractSqueakObjectWithClassAndHash) {
-                final AbstractSqueakObjectWithClassAndHash obj = (AbstractSqueakObjectWithClassAndHash) chunkObject;
+            if (chunkObject instanceof final AbstractSqueakObjectWithClassAndHash obj) {
                 // FIXME:
                 if (obj.needsSqueakClass()) {
                     obj.setSqueakClass(chunk.getSqueakClass());
@@ -460,8 +459,7 @@ public final class SqueakImageReader {
     private void fillInContextObjects() {
         for (final SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof ContextObject) {
-                final ContextObject contextObject = (ContextObject) chunkObject;
+            if (chunkObject instanceof final ContextObject contextObject) {
                 assert !contextObject.hasTruffleFrame();
                 contextObject.fillinContext(chunk);
             }
@@ -480,7 +478,7 @@ public final class SqueakImageReader {
         final int minorIndex = SqueakImageConstants.minorClassIndexOf(compactIndex);
         final ArrayObject classTablePage = (ArrayObject) getChunk(hiddenRootsChunk.getWord(majorIndex)).asObject();
         final Object result = ArrayObjectReadNode.getUncached().execute(classTablePage, minorIndex);
-        return result instanceof ClassObject ? (ClassObject) result : null;
+        return result instanceof final ClassObject c ? c : null;
     }
 
     protected SqueakImageChunk getChunk(final long ptr) {

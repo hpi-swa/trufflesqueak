@@ -74,8 +74,8 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     @Specialization(replaces = "doCharacterObject")
     protected static final boolean doCharacterObjectGeneric(final CharacterObject left, final Object right) {
-        if (right instanceof CharacterObject) {
-            return doCharacterObject(left, (CharacterObject) right);
+        if (right instanceof final CharacterObject o) {
+            return doCharacterObject(left, o);
         } else {
             return BooleanObject.FALSE;
         }
@@ -108,10 +108,10 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
                 return doDouble(leftInterop.asDouble(left), rightInterop.asDouble(right));
             } else if (leftInterop.hasIdentity(left) && rightInterop.hasIdentity(right)) {
                 return BooleanObject.wrap(leftInterop.isIdentical(left, right, rightInterop));
-            } else if (left instanceof Character && right instanceof Character) {
-                return doChar((Character) left, (Character) right);
-            } else if (left instanceof CharacterObject && right instanceof CharacterObject) {
-                return doCharacterObject((CharacterObject) left, (CharacterObject) right);
+            } else if (left instanceof final Character l && right instanceof final Character r) {
+                return doChar(l, r);
+            } else if (left instanceof final CharacterObject l && right instanceof final CharacterObject r) {
+                return doCharacterObject(l, r);
             } else {
                 return BooleanObject.wrap(left == right);
             }

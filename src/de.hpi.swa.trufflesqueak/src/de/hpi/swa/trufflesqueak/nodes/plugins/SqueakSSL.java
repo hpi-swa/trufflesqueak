@@ -250,8 +250,8 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     private static SqSSL getSSLOrNull(final PointersObject handle) {
         final Object sqSSL = handle.getHiddenObject();
-        if (sqSSL instanceof SqSSL) {
-            return (SqSSL) sqSSL;
+        if (sqSSL instanceof final SqSSL o) {
+            return o;
         } else {
             return null;
         }

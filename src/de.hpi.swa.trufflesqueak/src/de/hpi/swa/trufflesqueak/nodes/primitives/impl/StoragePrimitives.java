@@ -90,8 +90,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < fromPointers.length; i++) {
                 final Object from = fromPointers[i];
                 final Object to = toPointers[i];
-                if (from instanceof AbstractSqueakObjectWithClassAndHash && to instanceof AbstractSqueakObjectWithClassAndHash) {
-                    ((AbstractSqueakObjectWithClassAndHash) to).setSqueakHash(MiscUtils.toIntExact(((AbstractSqueakObjectWithClassAndHash) from).getOrCreateSqueakHash()));
+                if (from instanceof final AbstractSqueakObjectWithClassAndHash f && to instanceof final AbstractSqueakObjectWithClassAndHash t) {
+                    t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash()));
                 }
             }
         }
@@ -113,8 +113,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         if (argument == fromPointer) {
                             final Object toPointer = toPointers[j];
                             arguments[i] = toPointer;
-                        } else if (argument instanceof AbstractSqueakObjectWithClassAndHash) {
-                            ((AbstractSqueakObjectWithClassAndHash) argument).pointersBecomeOneWay(fromPointers, toPointers);
+                        } else if (argument instanceof final AbstractSqueakObjectWithClassAndHash o) {
+                            o.pointersBecomeOneWay(fromPointers, toPointers);
                         }
                     }
                 }
@@ -145,8 +145,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null : "Unexpected `null` value";
                                 current.setObject(slotIndex, toPointer);
-                            } else if (stackObject instanceof AbstractSqueakObjectWithClassAndHash) {
-                                ((AbstractSqueakObjectWithClassAndHash) stackObject).pointersBecomeOneWay(fromPointers, toPointers);
+                            } else if (stackObject instanceof final AbstractSqueakObjectWithClassAndHash o) {
+                                o.pointersBecomeOneWay(fromPointers, toPointers);
                             }
                         }
                     }

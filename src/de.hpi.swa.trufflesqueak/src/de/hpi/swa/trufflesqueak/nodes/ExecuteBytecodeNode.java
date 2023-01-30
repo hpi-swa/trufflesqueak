@@ -104,10 +104,10 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
-            if (node instanceof AbstractSendNode) {
-                pc = node.getSuccessorIndex();
+            if (node instanceof final AbstractSendNode sendNode) {
+                pc = sendNode.getSuccessorIndex();
                 FrameAccess.setInstructionPointer(frame, pc);
-                node.executeVoid(frame);
+                sendNode.executeVoid(frame);
                 final int actualNextPc = FrameAccess.getInstructionPointer(frame);
                 if (pc != actualNextPc) {
                     /*
@@ -119,8 +119,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     pc = actualNextPc;
                 }
                 continue bytecode_loop;
-            } else if (node instanceof ConditionalJumpNode) {
-                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+            } else if (node instanceof final ConditionalJumpNode jumpNode) {
                 if (jumpNode.executeCondition(frame)) {
                     pc = jumpNode.getJumpSuccessorIndex();
                     continue bytecode_loop;
@@ -128,8 +127,8 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     pc = jumpNode.getSuccessorIndex();
                     continue bytecode_loop;
                 }
-            } else if (node instanceof UnconditionalJumpNode) {
-                final int successor = ((UnconditionalJumpNode) node).getSuccessorIndex();
+            } else if (node instanceof final UnconditionalJumpNode jumpNode) {
+                final int successor = jumpNode.getSuccessorIndex();
                 if (CompilerDirectives.hasNextTier() && successor <= pc) {
                     backJumpCounter.value++;
                     if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this)) {
@@ -141,8 +140,8 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 }
                 pc = successor;
                 continue bytecode_loop;
-            } else if (node instanceof AbstractReturnNode) {
-                returnValue = ((AbstractReturnNode) node).executeReturn(frame);
+            } else if (node instanceof final AbstractReturnNode returnNode) {
+                returnValue = returnNode.executeReturn(frame);
                 pc = LOCAL_RETURN_PC;
                 continue bytecode_loop;
             } else {

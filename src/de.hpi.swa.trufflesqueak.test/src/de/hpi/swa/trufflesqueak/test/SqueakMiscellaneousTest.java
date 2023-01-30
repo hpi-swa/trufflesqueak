@@ -173,7 +173,7 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
 
         chunk = newFloatChunk(UnsafeUtils.toBytes(new int[]{0, (int) 4294443008L}));
         final Object nan = chunk.asObject();
-        assertTrue(nan instanceof FloatObject && ((FloatObject) nan).isNaN());
+        assertTrue(nan instanceof final FloatObject o && o.isNaN());
     }
 
     private static SqueakImageChunk newFloatChunk(final byte[] data) {

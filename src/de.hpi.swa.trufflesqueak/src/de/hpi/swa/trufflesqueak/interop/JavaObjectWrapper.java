@@ -251,12 +251,12 @@ public final class JavaObjectWrapper implements TruffleObject {
             return NilObject.SINGLETON;
         } else if (SqueakGuards.isUsedJavaPrimitive(object) || object instanceof JavaObjectWrapper) {
             return object;
-        } else if (object instanceof Byte) {
-            return (long) (byte) object;
-        } else if (object instanceof Integer) {
-            return (long) (int) object;
-        } else if (object instanceof Float) {
-            return (double) (float) object;
+        } else if (object instanceof final Byte o) {
+            return (long) o;
+        } else if (object instanceof final Integer o) {
+            return (long) o;
+        } else if (object instanceof final Float o) {
+            return (double) o;
         } else {
             return CACHE.computeIfAbsent(object, o -> new JavaObjectWrapper(o));
         }
@@ -305,8 +305,8 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @Override
     public boolean equals(final Object other) {
-        if (other instanceof JavaObjectWrapper) {
-            return wrappedObject.equals(((JavaObjectWrapper) other).wrappedObject);
+        if (other instanceof final JavaObjectWrapper o) {
+            return wrappedObject.equals(o.wrappedObject);
         }
         return false;
     }
@@ -381,7 +381,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         final Field field = lookupFields().get(key);
         if (field != null) {
             try {
-                field.set(wrappedObject, value instanceof JavaObjectWrapper ? ((JavaObjectWrapper) value).wrappedObject : value);
+                field.set(wrappedObject, value instanceof final JavaObjectWrapper o ? o.wrappedObject : value);
             } catch (final Exception e) {
                 throw new UnsupportedOperationException(e);
             }
@@ -848,8 +848,8 @@ public final class JavaObjectWrapper implements TruffleObject {
     protected boolean isMetaInstance(final Object other) throws UnsupportedMessageException {
         if (isClass()) {
             final Class<?> c = asClass();
-            if (other instanceof JavaObjectWrapper) {
-                final Object otherWrappedObject = ((JavaObjectWrapper) other).wrappedObject;
+            if (other instanceof final JavaObjectWrapper o) {
+                final Object otherWrappedObject = o.wrappedObject;
                 assert otherWrappedObject != null;
                 return c.isInstance(otherWrappedObject);
             } else {
@@ -891,8 +891,8 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @TruffleBoundary
     private static Object toJavaArgument(final Object argument) {
-        if (argument instanceof JavaObjectWrapper) {
-            return ((JavaObjectWrapper) argument).wrappedObject;
+        if (argument instanceof final JavaObjectWrapper o) {
+            return o.wrappedObject;
         } else if (argument instanceof TruffleObject) {
             final InteropLibrary lib = InteropLibrary.getFactory().getUncached(argument);
             try {

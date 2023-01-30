@@ -157,8 +157,8 @@ public final class SqueakImageWriter {
     }
 
     public void traceIfNecessary(final Object object) {
-        if (object instanceof AbstractSqueakObjectWithClassAndHash && !oopMap.containsKey(object)) {
-            reserve((AbstractSqueakObjectWithClassAndHash) object);
+        if (object instanceof final AbstractSqueakObjectWithClassAndHash o && !oopMap.containsKey(o)) {
+            reserve(o);
         }
     }
 
@@ -236,8 +236,8 @@ public final class SqueakImageWriter {
             return (boolean) object ? trueOop : falseOop;
         } else if (object instanceof Character) {
             return toTaggedCharacter((char) object);
-        } else if (object instanceof CharacterObject) {
-            return toTaggedCharacter(((CharacterObject) object).getValue());
+        } else if (object instanceof final CharacterObject o) {
+            return toTaggedCharacter(o.getValue());
         } else if (object instanceof Long) {
             return toTaggedSmallInteger((long) object);
         } else if (object instanceof Double) {

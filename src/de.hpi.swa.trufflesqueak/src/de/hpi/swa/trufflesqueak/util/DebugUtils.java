@@ -178,9 +178,9 @@ public final class DebugUtils {
             err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));
             return null;
         });
-        if (lastSender[0] instanceof ContextObject) {
+        if (lastSender[0] instanceof final ContextObject c) {
             err.println("== Squeak frames ================================================================");
-            printSqStackTrace((ContextObject) lastSender[0]);
+            printSqStackTrace(c);
         }
     }
 
@@ -192,10 +192,10 @@ public final class DebugUtils {
     }
 
     private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
-        if (semaphoreOrNil instanceof PointersObject) {
-            b.append(label).append(Integer.toHexString(semaphoreOrNil.hashCode())).append(" with ").append(((AbstractPointersObject) semaphoreOrNil).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS)).append(
+        if (semaphoreOrNil instanceof final PointersObject semaphore) {
+            b.append(label).append(Integer.toHexString(semaphore.hashCode())).append(" with ").append(((AbstractPointersObject) semaphore).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS)).append(
                             " excess signals");
-            if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil)) {
+            if (!printLinkedList(b, "", semaphore)) {
                 b.append(" and no processes\n");
             }
         } else {
@@ -207,19 +207,18 @@ public final class DebugUtils {
 
     private static boolean printLinkedList(final StringBuilder b, final String label, final PointersObject linkedList) {
         Object temp = linkedList.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
-        if (temp instanceof PointersObject) {
+        if (temp instanceof final PointersObject obj) {
             b.append(label).append(" and process");
-            if (temp != linkedList.instVarAt0Slow(LINKED_LIST.LAST_LINK)) {
+            if (obj != linkedList.instVarAt0Slow(LINKED_LIST.LAST_LINK)) {
                 b.append("es:\n");
             } else {
                 b.append(":\n");
             }
-            while (temp instanceof PointersObject) {
-                final PointersObject aProcess = (PointersObject) temp;
+            while (temp instanceof final PointersObject aProcess) {
                 final Object aContext = aProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
-                if (aContext instanceof ContextObject) {
+                if (aContext instanceof final ContextObject c) {
                     b.append("\tprocess @").append(Integer.toHexString(aProcess.hashCode())).append(" with suspended context ").append(aContext).append(" and stack trace:\n");
-                    printSqMaterializedStackTraceOn(b, (ContextObject) aContext);
+                    printSqMaterializedStackTraceOn(b, c);
                 } else {
                     b.append("\tprocess @").append(Integer.toHexString(aProcess.hashCode())).append(" with suspended context nil\n");
                 }

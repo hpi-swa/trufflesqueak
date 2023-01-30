@@ -31,8 +31,8 @@ public abstract class ResolveMethodNode extends AbstractNode {
     @Specialization(guards = "lookupResult == null")
     protected static final CompiledCodeObject doDoesNotUnderstand(final SqueakImageContext image, final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult) {
         final Object dnuMethod = lookupMethod(image, receiverClass, image.doesNotUnderstand);
-        if (dnuMethod instanceof CompiledCodeObject) {
-            return (CompiledCodeObject) dnuMethod;
+        if (dnuMethod instanceof final CompiledCodeObject method) {
+            return method;
         } else {
             throw SqueakException.create("Unable to find DNU method in", receiverClass);
         }
@@ -43,8 +43,8 @@ public abstract class ResolveMethodNode extends AbstractNode {
                     @Cached final SqueakObjectClassNode classNode) {
         final ClassObject targetObjectClass = classNode.executeLookup(targetObject);
         final Object runWithInMethod = lookupMethod(image, targetObjectClass, image.runWithInSelector);
-        if (runWithInMethod instanceof CompiledCodeObject) {
-            return (CompiledCodeObject) runWithInMethod;
+        if (runWithInMethod instanceof final CompiledCodeObject method) {
+            return method;
         } else {
             assert runWithInMethod == null : "runWithInMethod should not be another Object";
             return doDoesNotUnderstand(image, targetObjectClass, runWithInMethod);

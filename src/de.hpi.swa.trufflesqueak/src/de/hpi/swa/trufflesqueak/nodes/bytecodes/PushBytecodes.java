@@ -376,8 +376,8 @@ public final class PushBytecodes {
 
         public static final AbstractPushNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             final Object literal = code.getLiteral(literalIndex);
-            if (literal instanceof AbstractSqueakObjectWithClassAndHash) {
-                final String squeakClassName = ((AbstractSqueakObjectWithClassAndHash) literal).getSqueakClassName();
+            if (literal instanceof final AbstractSqueakObjectWithClassAndHash l) {
+                final String squeakClassName = l.getSqueakClassName();
                 if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
                     return new PushLiteralVariableReadonlyNode(code, index, numBytecodes, literal);
                 }

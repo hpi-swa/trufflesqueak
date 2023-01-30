@@ -450,8 +450,7 @@ public final class SendBytecodes {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 assert actualClass != null;
                 final Object lookupResult = actualClass.lookupInMethodDictSlow(findSelector());
-                if (lookupResult instanceof CompiledCodeObject && ((CompiledCodeObject) lookupResult).hasPrimitive()) {
-                    final CompiledCodeObject primitiveMethod = (CompiledCodeObject) lookupResult;
+                if (lookupResult instanceof final CompiledCodeObject primitiveMethod && primitiveMethod.hasPrimitive()) {
                     assert primitiveMethod.getNumArgs() == findNumArguments();
                     final AbstractPrimitiveNode node = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(primitiveMethod, ArgumentsLocation.ON_STACK_REVERSED);
                     if (node == null) {
