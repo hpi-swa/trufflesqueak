@@ -44,10 +44,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
             assert numArgs == closure.getNumArgs() + closure.getNumCopied();
         }
         assert initialSP >= numArgs;
+        final int stackSlotIndex = FrameAccess.toStackSlotIndex(frame, index);
         if (clear && index >= initialSP) { // only ever clear non-temp slots
-            return FrameSlotReadClearNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
+            return FrameSlotReadClearNodeGen.create(stackSlotIndex);
         } else {
-            return FrameSlotReadNoClearNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
+            return FrameSlotReadNoClearNodeGen.create(stackSlotIndex);
         }
     }
 

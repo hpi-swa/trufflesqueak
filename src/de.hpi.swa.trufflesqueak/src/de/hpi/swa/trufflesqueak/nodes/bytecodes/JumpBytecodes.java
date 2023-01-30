@@ -64,11 +64,11 @@ public final class JumpBytecodes {
         }
 
         public static ConditionalJumpOnFalseNode createLong(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
-            return new ConditionalJumpOnFalseNode(code, index, 2, ((bytecode & 3) << 8) + Byte.toUnsignedInt(parameter));
+            return new ConditionalJumpOnFalseNode(code, index, 2, calculateLongOffset(bytecode, parameter));
         }
 
         public static ConditionalJumpOnFalseNode createLongExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final byte bytecode, final int extB) {
-            return new ConditionalJumpOnFalseNode(code, index, numBytecodes, Byte.toUnsignedInt(bytecode) + (extB << 8));
+            return new ConditionalJumpOnFalseNode(code, index, numBytecodes, calculateLongExtendedOffset(bytecode, extB));
         }
 
         @Override
@@ -93,11 +93,11 @@ public final class JumpBytecodes {
         }
 
         public static ConditionalJumpOnTrueNode createLong(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
-            return new ConditionalJumpOnTrueNode(code, index, 2, ((bytecode & 3) << 8) + Byte.toUnsignedInt(parameter));
+            return new ConditionalJumpOnTrueNode(code, index, 2, calculateLongOffset(bytecode, parameter));
         }
 
         public static ConditionalJumpOnTrueNode createLongExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final byte bytecode, final int extB) {
-            return new ConditionalJumpOnTrueNode(code, index, numBytecodes, Byte.toUnsignedInt(bytecode) + (extB << 8));
+            return new ConditionalJumpOnTrueNode(code, index, numBytecodes, calculateLongExtendedOffset(bytecode, extB << 8));
         }
 
         @Override
@@ -126,7 +126,7 @@ public final class JumpBytecodes {
         }
 
         public static UnconditionalJumpNode createLongExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final byte bytecode, final int extB) {
-            return new UnconditionalJumpNode(code, index, numBytecodes, Byte.toUnsignedInt(bytecode) + (extB << 8));
+            return new UnconditionalJumpNode(code, index, numBytecodes, calculateLongExtendedOffset(bytecode, extB));
         }
 
         @Override
@@ -141,7 +141,15 @@ public final class JumpBytecodes {
         }
     }
 
-    private static int calculateShortOffset(final int bytecode) {
+    public static int calculateShortOffset(final int bytecode) {
         return (bytecode & 7) + 1;
+    }
+
+    private static int calculateLongOffset(final int bytecode, final byte parameter) {
+        return ((bytecode & 3) << 8) + Byte.toUnsignedInt(parameter);
+    }
+
+    public static int calculateLongExtendedOffset(final byte bytecode, final int extB) {
+        return Byte.toUnsignedInt(bytecode) + (extB << 8);
     }
 }
