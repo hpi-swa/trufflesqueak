@@ -97,7 +97,7 @@ suite = {
             },
             "checkstyleVersion": "8.36.1",
             "jacoco": "include",
-            "javaCompliance": "11+",
+            "javaCompliance": "17+",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
             "workingSets": "TruffleSqueak",
         },
@@ -113,7 +113,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "11+",
+            "javaCompliance": "17+",
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.ffi.native": {
@@ -148,7 +148,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "11+",
+            "javaCompliance": "17+",
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.tck": {
@@ -160,7 +160,7 @@ suite = {
                 "mx:JUNIT"
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
-            "javaCompliance": "11+",
+            "javaCompliance": "17+",
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
@@ -173,7 +173,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "11+",
+            "javaCompliance": "17+",
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
@@ -282,7 +282,7 @@ suite = {
 
         "TRUFFLESQUEAK_TEST": {
             "description": "TruffleSqueak JUnit and SUnit tests",
-            "javaCompliance": "11+",
+            "javaCompliance": "17+",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
             ],

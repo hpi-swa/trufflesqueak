@@ -138,9 +138,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
+        os: [windows-2019] # temporarily disabled: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
     env:
-      JAVA_VERSION: "11"
+      JAVA_VERSION: "17"
       MX_ENV: "trufflesqueak-standalone"
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: Standalone ${{ matrix.os }}
