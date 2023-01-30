@@ -19,7 +19,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.HandlePrimitiveFailedNodeFactory.HandlePrimitiveFailedImplNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class HandlePrimitiveFailedNode extends AbstractNode {
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
@@ -33,24 +34,24 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
     public abstract void executeHandle(VirtualFrame frame, int reasonCode);
 
     protected abstract static class HandlePrimitiveFailedImplNode extends HandlePrimitiveFailedNode {
-        /*
-         * Look up error symbol in error table and push it to stack. The fallback code pops the
-         * error symbol into the corresponding temporary variable. See
-         * StackInterpreter>>#getErrorObjectFromPrimFailCode for more information.
-         */
         @Specialization(guards = {"reasonCode < sizeNode.execute(getContext().primitiveErrorTable)"}, limit = "1")
         protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final FrameStackPushNode pushNode,
-                        @Cached final ArrayObjectReadNode readNode) {
-            pushNode.execute(frame, readNode.execute(getContext().primitiveErrorTable, reasonCode));
+                        @Cached final ArrayObjectReadNode readNode,
+                        @Cached("createStackTopNode(frame)") final FrameStackWriteNode tempWriteNode) {
+            tempWriteNode.executeWrite(frame, readNode.execute(getContext().primitiveErrorTable, reasonCode));
         }
 
         @Specialization(guards = {"reasonCode >= sizeNode.execute(getContext().primitiveErrorTable)"}, limit = "1")
         protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final FrameStackPushNode pushNode) {
-            pushNode.execute(frame, (long) reasonCode);
+                        @Cached("createStackTopNode(frame)") final FrameStackWriteNode tempWriteNode) {
+            tempWriteNode.executeWrite(frame, (long) reasonCode);
+        }
+
+        protected static final FrameStackWriteNode createStackTopNode(final VirtualFrame frame) {
+            final int stackPointer = FrameAccess.getStackPointer(frame) - 1;
+            return FrameStackWriteNode.create(frame, stackPointer);
         }
     }
 
