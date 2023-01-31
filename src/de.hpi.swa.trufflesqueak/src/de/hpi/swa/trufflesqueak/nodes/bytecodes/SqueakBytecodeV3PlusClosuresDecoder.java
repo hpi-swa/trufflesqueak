@@ -42,28 +42,25 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
         final int bytecodeLength = bytecode.length;
         final int flagByte = Byte.toUnsignedInt(bytecode[bytecodeLength - 1]);
         final int index = (flagByte >> 2) + 1;
-        switch (index) {
-            case 1: // #decodeNoTrailer
-            case 5: // #decodeSourceBySelector
-                return bytecodeLength - 1;
-            case 2: // #decodeClearedTrailer
-            case 3: // #decodeTempsNamesQCompress
-            case 4: // #decodeTempsNamesZip
-            case 6: // #decodeSourceByStringIdentifier
-            case 7: // #decodeEmbeddedSourceQCompress
-            case 8: // #decodeEmbeddedSourceZip
-                return decodeLengthField(bytecode, bytecodeLength, flagByte);
-            case 9: // decodeVarLengthSourcePointer
+        return switch (index) {
+            // #decodeNoTrailer and #decodeSourceBySelector
+            case 1, 5 -> bytecodeLength - 1;
+            // #decodeClearedTrailer, #decodeTempsNamesQCompress, #decodeTempsNamesZip,
+            // #decodeSourceByStringIdentifier, #decodeEmbeddedSourceQCompress, and
+            // #decodeEmbeddedSourceZip
+            case 2, 3, 4, 6, 7, 8 -> decodeLengthField(bytecode, bytecodeLength, flagByte);
+            // #decodeVarLengthSourcePointer
+            case 9 -> {
                 int pos = bytecodeLength - 2;
                 while (bytecode[pos] < 0) {
                     pos--;
                 }
-                return pos;
-            case 64: // decodeSourcePointer
-                return bytecodeLength - 4;
-            default:
-                throw SqueakException.create("Undefined method encoding (see CompiledMethodTrailer).");
-        }
+                yield pos;
+            }
+            // #decodeSourcePointer
+            case 64 -> bytecodeLength - 4;
+            default -> throw SqueakException.create("Undefined method encoding (see CompiledMethodTrailer).");
+        };
     }
 
     private static int decodeLengthField(final byte[] bytecode, final int bytecodeLength, final int flagByte) {
@@ -87,127 +84,73 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
         final int b = Byte.toUnsignedInt(bytecode[index]);
-        //@formatter:off
-        switch (b) {
-            case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
-            case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D: case 0x0E: case 0x0F:
-                return PushBytecodes.PushReceiverVariableNode.create(code, index, 1, b & 15);
-            case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
-            case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
-                return new PushBytecodes.PushTemporaryLocationNode(code, index, 1, b & 15);
-            case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-            case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D: case 0x2E: case 0x2F:
-            case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-            case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D: case 0x3E: case 0x3F:
-                return new PushBytecodes.PushLiteralConstantNode(code, index, 1, b & 31);
-            case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47:
-            case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F:
-            case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
-            case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
-                return  PushBytecodes.PushLiteralVariableNode.create(code, index, 1, b & 31);
-            case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
-                return new StoreBytecodes.PopIntoReceiverVariableNode(code, index, 1, b & 7);
-            case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
-                return new StoreBytecodes.PopIntoTemporaryLocationNode(code, index, 1, b & 7);
-            case 0x70:
-                return PushBytecodes.PushReceiverNode.create(code, index);
-            case 0x71:
-                return new PushBytecodes.PushConstantTrueNode(code, index);
-            case 0x72:
-                return new PushBytecodes.PushConstantFalseNode(code, index);
-            case 0x73:
-                return new PushBytecodes.PushConstantNilNode(code, index);
-            case 0x74:
-                return new PushBytecodes.PushConstantMinusOneNode(code, index);
-            case 0x75:
-                return new PushBytecodes.PushConstantZeroNode(code, index);
-            case 0x76:
-                return new PushBytecodes.PushConstantOneNode(code, index);
-            case 0x77:
-                return new PushBytecodes.PushConstantTwoNode(code, index);
-            case 0x78:
-                return new ReturnBytecodes.ReturnReceiverNode(frame, code, index);
-            case 0x79:
-                return new ReturnBytecodes.ReturnConstantTrueNode(frame, code, index);
-            case 0x7A:
-                return new ReturnBytecodes.ReturnConstantFalseNode(frame, code, index);
-            case 0x7B:
-                return new ReturnBytecodes.ReturnConstantNilNode(frame, code, index);
-            case 0x7C:
-                return new ReturnBytecodes.ReturnTopFromMethodNode(frame, code, index);
-            case 0x7D:
-                return new ReturnBytecodes.ReturnTopFromBlockNode(code, index);
-            case 0x7E:
-            case 0x7F:
-                return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
-            case 0x80:
-                return MiscellaneousBytecodes.ExtendedBytecodes.createPush(code, index, 2, bytecode[index + 1]);
-            case 0x81:
-                return MiscellaneousBytecodes.ExtendedBytecodes.createStoreInto(code, index, 2, bytecode[index + 1]);
-            case 0x82:
-                return MiscellaneousBytecodes.ExtendedBytecodes.createPopInto(code, index, 2, bytecode[index + 1]);
-            case 0x83: {
+        return switch (b) {
+            case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F //
+                            -> PushBytecodes.PushReceiverVariableNode.create(code, index, 1, b & 15);
+            case 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F //
+                            -> new PushBytecodes.PushTemporaryLocationNode(code, index, 1, b & 15);
+            case 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F //
+                            -> new PushBytecodes.PushLiteralConstantNode(code, index, 1, b & 31);
+            case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F //
+                            -> PushBytecodes.PushLiteralVariableNode.create(code, index, 1, b & 31);
+            case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67 -> new StoreBytecodes.PopIntoReceiverVariableNode(code, index, 1, b & 7);
+            case 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F -> new StoreBytecodes.PopIntoTemporaryLocationNode(code, index, 1, b & 7);
+            case 0x70 -> PushBytecodes.PushReceiverNode.create(code, index);
+            case 0x71 -> new PushBytecodes.PushConstantTrueNode(code, index);
+            case 0x72 -> new PushBytecodes.PushConstantFalseNode(code, index);
+            case 0x73 -> new PushBytecodes.PushConstantNilNode(code, index);
+            case 0x74 -> new PushBytecodes.PushConstantMinusOneNode(code, index);
+            case 0x75 -> new PushBytecodes.PushConstantZeroNode(code, index);
+            case 0x76 -> new PushBytecodes.PushConstantOneNode(code, index);
+            case 0x77 -> new PushBytecodes.PushConstantTwoNode(code, index);
+            case 0x78 -> new ReturnBytecodes.ReturnReceiverNode(frame, code, index);
+            case 0x79 -> new ReturnBytecodes.ReturnConstantTrueNode(frame, code, index);
+            case 0x7A -> new ReturnBytecodes.ReturnConstantFalseNode(frame, code, index);
+            case 0x7B -> new ReturnBytecodes.ReturnConstantNilNode(frame, code, index);
+            case 0x7C -> new ReturnBytecodes.ReturnTopFromMethodNode(frame, code, index);
+            case 0x7D -> new ReturnBytecodes.ReturnTopFromBlockNode(code, index);
+            case 0x7E, 0x7F -> new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
+            case 0x80 -> MiscellaneousBytecodes.ExtendedBytecodes.createPush(code, index, 2, bytecode[index + 1]);
+            case 0x81 -> MiscellaneousBytecodes.ExtendedBytecodes.createStoreInto(code, index, 2, bytecode[index + 1]);
+            case 0x82 -> MiscellaneousBytecodes.ExtendedBytecodes.createPopInto(code, index, 2, bytecode[index + 1]);
+            case 0x83 -> {
                 final byte byte1 = bytecode[index + 1];
                 final NativeObject selector = (NativeObject) code.getLiteral(byte1 & 31);
                 final int numArgs = Byte.toUnsignedInt(byte1) >> 5;
-                return SendBytecodes.SelfSendNode.create(code, index, 2, selector, numArgs);
+                yield SendBytecodes.SelfSendNode.create(code, index, 2, selector, numArgs);
             }
-            case 0x84:
-                return MiscellaneousBytecodes.DoubleExtendedDoAnythingNode.create(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
-            case 0x85:
-                return new SendBytecodes.SuperSendNode(code, index, 2, bytecode[index + 1]);
-            case 0x86: {
+            case 0x84 -> MiscellaneousBytecodes.DoubleExtendedDoAnythingNode.create(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
+            case 0x85 -> new SendBytecodes.SuperSendNode(code, index, 2, bytecode[index + 1]);
+            case 0x86 -> {
                 final byte byte1 = bytecode[index + 1];
                 final NativeObject selector = (NativeObject) code.getLiteral(byte1 & 63);
                 final int numArgs = Byte.toUnsignedInt(byte1) >> 6;
-                return SendBytecodes.SelfSendNode.create(code, index, 2, selector, numArgs);
+                yield SendBytecodes.SelfSendNode.create(code, index, 2, selector, numArgs);
             }
-            case 0x87:
-                return new MiscellaneousBytecodes.PopNode(code, index);
-            case 0x88:
-                return new MiscellaneousBytecodes.DupNode(code, index);
-            case 0x89:
-                return new PushBytecodes.PushActiveContextNode(code, index);
-            case 0x8A:
-                return PushBytecodes.PushNewArrayNode.create(code, index, 2, bytecode[index + 1]);
-            case 0x8B:
-                return MiscellaneousBytecodes.CallPrimitiveNode.create(code, index, bytecode[index + 1], bytecode[index + 2]);
-            case 0x8C:
-                return new PushBytecodes.PushRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
-            case 0x8D:
-                return new StoreBytecodes.StoreIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
-            case 0x8E:
-                return new StoreBytecodes.PopIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
-            case 0x8F:
-                return PushBytecodes.PushClosureNode.create(code, index, bytecode[index + 1], bytecode[index + 2], bytecode[index + 3]);
-            case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
-                return JumpBytecodes.UnconditionalJumpNode.createShort(code, index, b);
-            case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F:
-                return JumpBytecodes.ConditionalJumpOnFalseNode.createShort(code, index, b);
-            case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
-                return JumpBytecodes.UnconditionalJumpNode.createLong(code, index, b, bytecode[index + 1]);
-            case 0xA8: case 0xA9: case 0xAA: case 0xAB:
-                return JumpBytecodes.ConditionalJumpOnTrueNode.createLong(code, index, b, bytecode[index + 1]);
-            case 0xAC: case 0xAD: case 0xAE: case 0xAF:
-                return JumpBytecodes.ConditionalJumpOnFalseNode.createLong(code, index, b, bytecode[index + 1]);
-            case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
-            case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
-            case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
-            case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
-                return SendBytecodes.AbstractSendSpecialSelectorQuickNode.create(frame, code, index, b - 176);
-            case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7:
-            case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
-                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 0);
-            case 0xE0: case 0xE1: case 0xE2: case 0xE3: case 0xE4: case 0xE5: case 0xE6: case 0xE7:
-            case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF:
-                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
-            case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7:
-            case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFE: case 0xFF:
-                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
-            default:
-                throw SqueakException.create("Not a bytecode:", b);
-        }
-        //@formatter:on
+            case 0x87 -> new MiscellaneousBytecodes.PopNode(code, index);
+            case 0x88 -> new MiscellaneousBytecodes.DupNode(code, index);
+            case 0x89 -> new PushBytecodes.PushActiveContextNode(code, index);
+            case 0x8A -> PushBytecodes.PushNewArrayNode.create(code, index, 2, bytecode[index + 1]);
+            case 0x8B -> MiscellaneousBytecodes.CallPrimitiveNode.create(code, index, bytecode[index + 1], bytecode[index + 2]);
+            case 0x8C -> new PushBytecodes.PushRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
+            case 0x8D -> new StoreBytecodes.StoreIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
+            case 0x8E -> new StoreBytecodes.PopIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
+            case 0x8F -> PushBytecodes.PushClosureNode.create(code, index, bytecode[index + 1], bytecode[index + 2], bytecode[index + 3]);
+            case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97 -> JumpBytecodes.UnconditionalJumpNode.createShort(code, index, b);
+            case 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F -> JumpBytecodes.ConditionalJumpOnFalseNode.createShort(code, index, b);
+            case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7 -> JumpBytecodes.UnconditionalJumpNode.createLong(code, index, b, bytecode[index + 1]);
+            case 0xA8, 0xA9, 0xAA, 0xAB -> JumpBytecodes.ConditionalJumpOnTrueNode.createLong(code, index, b, bytecode[index + 1]);
+            case 0xAC, 0xAD, 0xAE, 0xAF -> JumpBytecodes.ConditionalJumpOnFalseNode.createLong(code, index, b, bytecode[index + 1]);
+            case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF  //
+                            -> SendBytecodes.AbstractSendSpecialSelectorQuickNode.create(frame, code, index, b - 176);
+            case 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF //
+                            -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 0);
+            case 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF //
+                            -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
+            case 0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF //
+                            -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
+            default -> throw SqueakException.create("Not a bytecode:", b);
+        };
     }
 
     @Override
@@ -253,185 +196,104 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
 
     private static String decodeBytecodeToString(final CompiledCodeObject code, final int b0, final int index) {
         final byte[] bytecode = code.getBytes();
-        //@formatter:off
-        switch (b0) {
-            case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-            case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
-                return "pushRcvr: " + (b0 & 15);
-            case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-            case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-                return "pushTemp: " + (b0 & 15);
-            case 32: case 33: case 34: case 35: case 36: case 37: case 38: case 39:
-            case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
-            case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55:
-            case 56: case 57: case 58: case 59: case 60: case 61: case 62: case 63:
-                return "pushConstant: " + code.getLiteral(b0 & 31);
-            case 64: case 65: case 66: case 67: case 68: case 69: case 70: case 71:
-            case 72: case 73: case 74: case 75: case 76: case 77: case 78: case 79:
-            case 80: case 81: case 82: case 83: case 84: case 85: case 86: case 87:
-            case 88: case 89: case 90: case 91: case 92: case 93: case 94: case 95:
-                return "pushLitVar: " + code.getLiteral(b0 & 31);
-            case 96: case 97: case 98: case 99: case 100: case 101: case 102: case 103:
-                return "popIntoRcvr: " + (b0 & 7);
-            case 104: case 105: case 106: case 107: case 108: case 109: case 110: case 111:
-                return "popIntoTemp: " + (b0 & 7);
-            case 112:
-                return "self";
-            case 113:
-                return "pushConstant: true";
-            case 114:
-                return "pushConstant: false";
-            case 115:
-                return "pushConstant: nil";
-            case 116:
-                return "pushConstant: -1";
-            case 117:
-                return "pushConstant: 0";
-            case 118:
-                return "pushConstant: 1";
-            case 119:
-                return "pushConstant: 2";
-            case 120:
-                return "returnSelf";
-            case 121:
-                return "return: true";
-            case 122:
-                return "return: false";
-            case 123:
-                return "return: nil";
-            case 124:
-                return "returnTop";
-            case 125:
-                return "blockReturn";
-            case 126:
-            case 127:
-                return "unknown: " + b0;
-            case 128: {
+        return switch (b0) {
+            case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 -> "pushRcvr: " + (b0 & 15);
+            case 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 -> "pushTemp: " + (b0 & 15);
+            case 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 -> "pushConstant: " + code.getLiteral(b0 & 31);
+            case 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95 -> "pushLitVar: " + code.getLiteral(b0 & 31);
+            case 96, 97, 98, 99, 100, 101, 102, 103 -> "popIntoRcvr: " + (b0 & 7);
+            case 104, 105, 106, 107, 108, 109, 110, 111 -> "popIntoTemp: " + (b0 & 7);
+            case 112 -> "self";
+            case 113 -> "pushConstant: true";
+            case 114 -> "pushConstant: false";
+            case 115 -> "pushConstant: nil";
+            case 116 -> "pushConstant: -1";
+            case 117 -> "pushConstant: 0";
+            case 118 -> "pushConstant: 1";
+            case 119 -> "pushConstant: 2";
+            case 120 -> "returnSelf";
+            case 121 -> "return: true";
+            case 122 -> "return: false";
+            case 123 -> "return: nil";
+            case 124 -> "returnTop";
+            case 125 -> "blockReturn";
+            case 126, 127 -> "unknown: " + b0;
+            case 128 -> {
                 final byte b1 = bytecode[index + 1];
                 final int variableIndex = MiscellaneousBytecodes.ExtendedBytecodes.variableIndex(b1);
-                switch (MiscellaneousBytecodes.ExtendedBytecodes.variableType(b1)) {
-                    case 0:
-                        return "pushRcvr: " + variableIndex;
-                    case 1:
-                        return "pushTemp: " + variableIndex;
-                    case 2:
-                        return "pushConstant: " + code.getLiteral(variableIndex);
-                    case 3:
-                        return "pushLit: " + variableIndex;
-                    default:
-                        throw SqueakException.create("unexpected type for ExtendedPush");
-                }
+                yield switch (MiscellaneousBytecodes.ExtendedBytecodes.variableType(b1)) {
+                    case 0 -> "pushRcvr: " + variableIndex;
+                    case 1 -> "pushTemp: " + variableIndex;
+                    case 2 -> "pushConstant: " + code.getLiteral(variableIndex);
+                    case 3 -> "pushLit: " + variableIndex;
+                    default -> throw SqueakException.create("unexpected type for ExtendedPush");
+                };
             }
-            case 129: {
-                final byte b1 = bytecode[index + 1];
-                 final int variableIndex = MiscellaneousBytecodes.ExtendedBytecodes.variableIndex(b1);
-                switch (MiscellaneousBytecodes.ExtendedBytecodes.variableType(b1)) {
-                    case 0:
-                        return "storeIntoRcvr: " + variableIndex;
-                    case 1:
-                        return "storeIntoTemp: " + variableIndex;
-                    case 2:
-                        return "unknown: " + b1;
-                    case 3:
-                        return "storeIntoLit: " + variableIndex;
-                    default:
-                        throw SqueakException.create("illegal ExtendedStore bytecode");
-                }
-            }
-            case 130: {
+            case 129 -> {
                 final byte b1 = bytecode[index + 1];
                 final int variableIndex = MiscellaneousBytecodes.ExtendedBytecodes.variableIndex(b1);
-                switch (MiscellaneousBytecodes.ExtendedBytecodes.variableType(b1)) {
-                    case 0:
-                        return "popIntoRcvr: " + variableIndex;
-                    case 1:
-                        return "popIntoTemp: " + variableIndex;
-                    case 2:
-                        return "unknown: " + b1;
-                    case 3:
-                        return "popIntoLit: " + variableIndex;
-                    default:
-                        throw SqueakException.create("illegal ExtendedStore bytecode");
-                }
+                yield switch (MiscellaneousBytecodes.ExtendedBytecodes.variableType(b1)) {
+                    case 0 -> "storeIntoRcvr: " + variableIndex;
+                    case 1 -> "storeIntoTemp: " + variableIndex;
+                    case 2 -> "unknown: " + b1;
+                    case 3 -> "storeIntoLit: " + variableIndex;
+                    default -> throw SqueakException.create("illegal ExtendedStore bytecode");
+                };
             }
-            case 131:
-                return "send: " +  code.getLiteral(Byte.toUnsignedInt(bytecode[index + 1]) & 31);
-            case 132: {
+            case 130 -> {
+                final byte b1 = bytecode[index + 1];
+                final int variableIndex = MiscellaneousBytecodes.ExtendedBytecodes.variableIndex(b1);
+                yield switch (MiscellaneousBytecodes.ExtendedBytecodes.variableType(b1)) {
+                    case 0 -> "popIntoRcvr: " + variableIndex;
+                    case 1 -> "popIntoTemp: " + variableIndex;
+                    case 2 -> "unknown: " + b1;
+                    case 3 -> "popIntoLit: " + variableIndex;
+                    default -> throw SqueakException.create("illegal ExtendedStore bytecode");
+                };
+            }
+            case 131 -> "send: " + code.getLiteral(Byte.toUnsignedInt(bytecode[index + 1]) & 31);
+            case 132 -> {
                 final int b1 = Byte.toUnsignedInt(bytecode[index + 1]);
                 final int b2 = Byte.toUnsignedInt(bytecode[index + 2]);
-                switch (b1 >> 5) {
-                    case 0:
-                        return "send: " + code.getLiteral(b2);
-                    case 1:
-                        return "sendSuper: " + code.getLiteral(b2 & 31);
-                    case 2:
-                        return "pushRcvr: " + b2;
-                    case 3:
-                        return "pushConstant: " + code.getLiteral(b2);
-                    case 4:
-                        return "pushLit: " + b2;
-                    case 5:
-                        return "storeIntoRcvr: " + b2;
-                    case 6:
-                        return "popIntoRcvr: " + b2;
-                    case 7:
-                        return "storeIntoLit: " + b2;
-                    default:
-                        return "unknown: " + b1;
-                }
+                yield switch (b1 >> 5) {
+                    case 0 -> "send: " + code.getLiteral(b2);
+                    case 1 -> "sendSuper: " + code.getLiteral(b2 & 31);
+                    case 2 -> "pushRcvr: " + b2;
+                    case 3 -> "pushConstant: " + code.getLiteral(b2);
+                    case 4 -> "pushLit: " + b2;
+                    case 5 -> "storeIntoRcvr: " + b2;
+                    case 6 -> "popIntoRcvr: " + b2;
+                    case 7 -> "storeIntoLit: " + b2;
+                    default -> "unknown: " + b1;
+                };
             }
-            case 133:
-                return "sendSuper: " + code.getLiteral(Byte.toUnsignedInt(bytecode[index + 1]) & 31);
-            case 134:
-                return "send: " + code.getLiteral(Byte.toUnsignedInt(bytecode[index + 1]) & 63);
-            case 135:
-                return "pop";
-            case 136:
-                return "dup";
-            case 137:
-                return "pushThisContext:";
-            case 138:
-                return "push: (Array new: " + (Byte.toUnsignedInt(bytecode[index + 1]) & 127) + ")";
-            case 139:
-                return "callPrimitive: " + (Byte.toUnsignedInt(bytecode[index + 1]) + (Byte.toUnsignedInt(bytecode[index + 2]) << 8));
-            case 140:
-                return "pushTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);
-            case 141:
-                return "storeIntoTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);
-            case 142:
-                return "popIntoTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);
-            case 143: {
+            case 133 -> "sendSuper: " + code.getLiteral(Byte.toUnsignedInt(bytecode[index + 1]) & 31);
+            case 134 -> "send: " + code.getLiteral(Byte.toUnsignedInt(bytecode[index + 1]) & 63);
+            case 135 -> "pop";
+            case 136 -> "dup";
+            case 137 -> "pushThisContext:";
+            case 138 -> "push: (Array new: " + (Byte.toUnsignedInt(bytecode[index + 1]) & 127) + ")";
+            case 139 -> "callPrimitive: " + (Byte.toUnsignedInt(bytecode[index + 1]) + (Byte.toUnsignedInt(bytecode[index + 2]) << 8));
+            case 140 -> "pushTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);
+            case 141 -> "storeIntoTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);
+            case 142 -> "popIntoTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);
+            case 143 -> {
                 final byte b1 = bytecode[index + 1];
                 final int start = index + PushBytecodes.PushClosureNode.NUM_BYTECODES;
                 final int end = start + (Byte.toUnsignedInt(bytecode[index + 2]) << 8 | Byte.toUnsignedInt(bytecode[index + 3]));
-                return "closureNumCopied: " + (b1 >> 4 & 0xF) + " numArgs: " + (b1 & 0xF) + " bytes " + start + " to " + end;
+                yield "closureNumCopied: " + (b1 >> 4 & 0xF) + " numArgs: " + (b1 & 0xF) + " bytes " + start + " to " + end;
             }
-            case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
-                return "jumpTo: " + ((b0 & 7) + 1);
-            case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:
-                return "jumpFalse: " + ((b0 & 7) + 1);
-            case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167:
-                return "jumpTo: " + (((b0 & 7) - 4 << 8) + Byte.toUnsignedInt(bytecode[index + 1]));
-            case 168: case 169: case 170: case 171:
-                return "jumpTrue: " + (((b0 & 3) << 8) + Byte.toUnsignedInt(bytecode[index + 1]));
-            case 172: case 173: case 174: case 175:
-                return "jumpFalse: " + (((b0 & 3) << 8) + Byte.toUnsignedInt(bytecode[index + 1]));
-            case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183:
-            case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191:
-            case 192: case 193: case 194: case 195: case 196: case 197: case 198: case 199:
-            case 200: case 201: case 202: case 203: case 204: case 205: case 206: case 207:
-                return "send: " + code.getSqueakClass().getImage().getSpecialSelector(b0 - 176).asStringUnsafe();
-            case 208: case 209: case 210: case 211: case 212: case 213: case 214: case 215:
-            case 216: case 217: case 218: case 219: case 220: case 221: case 222: case 223:
-            case 224: case 225: case 226: case 227: case 228: case 229: case 230: case 231:
-            case 232: case 233: case 234: case 235: case 236: case 237: case 238: case 239:
-            case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 247:
-            case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 255:
-                return "send: " + code.getLiteral(b0 & 0xF);
-            default:
-                throw SqueakException.create("Unknown bytecode:", b0);
-        }
-        //@formatter:on
+            case 144, 145, 146, 147, 148, 149, 150, 151 -> "jumpTo: " + ((b0 & 7) + 1);
+            case 152, 153, 154, 155, 156, 157, 158, 159 -> "jumpFalse: " + ((b0 & 7) + 1);
+            case 160, 161, 162, 163, 164, 165, 166, 167 -> "jumpTo: " + (((b0 & 7) - 4 << 8) + Byte.toUnsignedInt(bytecode[index + 1]));
+            case 168, 169, 170, 171 -> "jumpTrue: " + (((b0 & 3) << 8) + Byte.toUnsignedInt(bytecode[index + 1]));
+            case 172, 173, 174, 175 -> "jumpFalse: " + (((b0 & 3) << 8) + Byte.toUnsignedInt(bytecode[index + 1]));
+            case 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207 //
+                            -> "send: " + code.getSqueakClass().getImage().getSpecialSelector(b0 - 176).asStringUnsafe();
+            case 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255 //
+                            -> "send: " + code.getLiteral(b0 & 0xF);
+            default -> throw SqueakException.create("Unknown bytecode:", b0);
+        };
     }
 
     @Override
@@ -450,60 +312,19 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
 
     private static int decodeNumBytes(final CompiledCodeObject code, final int index) {
         final int b = Byte.toUnsignedInt(code.getBytes()[index]);
-        //@formatter:off
-        switch (b) {
-            case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-            case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
-            case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-            case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-            case 32: case 33: case 34: case 35: case 36: case 37: case 38: case 39:
-            case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
-            case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55:
-            case 56: case 57: case 58: case 59: case 60: case 61: case 62: case 63:
-            case 64: case 65: case 66: case 67: case 68: case 69: case 70: case 71:
-            case 72: case 73: case 74: case 75: case 76: case 77: case 78: case 79:
-            case 80: case 81: case 82: case 83: case 84: case 85: case 86: case 87:
-            case 88: case 89: case 90: case 91: case 92: case 93: case 94: case 95:
-            case 96: case 97: case 98: case 99: case 100: case 101: case 102: case 103:
-            case 104: case 105: case 106: case 107: case 108: case 109: case 110: case 111:
-            case 112: case 113: case 114: case 115: case 116: case 117: case 118: case 119:
-            case 120: case 121: case 122: case 123: case 124: case 125: case 126: case 127:
-                return 1;
-            case 128: case 129: case 130: case 131:
-                return 2;
-            case 132:
-                return 3;
-            case 133:
-            case 134:
-                return 2;
-            case 135: case 136: case 137:
-                return 1;
-            case 138:
-                return 2;
-            case 139: case 140: case 141: case 142:
-                return 3;
-            case 143:
-                return PushBytecodes.PushClosureNode.NUM_BYTECODES;
-            case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
-            case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:
-                return 1;
-            case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167:
-            case 168: case 169: case 170: case 171: case 172: case 173: case 174: case 175:
-                return 2;
-            case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183:
-            case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191:
-            case 192: case 193: case 194: case 195: case 196: case 197: case 198: case 199:
-            case 200: case 201: case 202: case 203: case 204: case 205: case 206: case 207:
-            case 208: case 209: case 210: case 211: case 212: case 213: case 214: case 215:
-            case 216: case 217: case 218: case 219: case 220: case 221: case 222: case 223:
-            case 224: case 225: case 226: case 227: case 228: case 229: case 230: case 231:
-            case 232: case 233: case 234: case 235: case 236: case 237: case 238: case 239:
-            case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 247:
-            case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 255:
-                return 1;
-            default:
-                throw SqueakException.create("Unknown bytecode:", b);
-        }
-        //@formatter:on
+        return switch (b) {
+            case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127 -> 1;
+            case 128, 129, 130, 131 -> 2;
+            case 132 -> 3;
+            case 133, 134 -> 2;
+            case 135, 136, 137 -> 1;
+            case 138 -> 2;
+            case 139, 140, 141, 142 -> 3;
+            case 143 -> PushBytecodes.PushClosureNode.NUM_BYTECODES;
+            case 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159 -> 1;
+            case 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175 -> 2;
+            case 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255 -> 1;
+            default -> throw SqueakException.create("Unknown bytecode:", b);
+        };
     }
 }

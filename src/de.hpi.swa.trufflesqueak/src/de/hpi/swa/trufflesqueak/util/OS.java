@@ -31,16 +31,12 @@ public enum OS {
     }
 
     public static String findSqueakOSName() {
-        switch (THE_OS) {
-            case macOS:
-                return "Mac OS";
-            case Windows:
-                return "Win32";
-            case Linux:
-                return "unix";
-            default:
-                throw SqueakException.create("Unsupported Platform.");
-        }
+        return switch (THE_OS) {
+            case macOS -> "Mac OS";
+            case Windows -> "Win32";
+            case Linux -> "unix";
+            default -> throw SqueakException.create("Unsupported Platform.");
+        };
     }
 
     public static String getSqueakPlatformName() {

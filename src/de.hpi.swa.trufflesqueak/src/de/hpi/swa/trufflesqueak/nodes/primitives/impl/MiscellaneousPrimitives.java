@@ -801,75 +801,152 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected static final int PARAMS_ARRAY_SIZE = 76;
 
         protected static final Object vmParameterAt(final SqueakImageContext image, final int index) {
-            //@formatter:off
-            switch (index) {
-                case 1: return MiscUtils.getMemoryPoolUsageCommitted(MiscUtils.GC_OLD_GEN_SUFFIX); // end (v3)/size(Spur) of old-space (0-based, read-only)
-                case 2: return MiscUtils.getMemoryPoolUsageUsed(MiscUtils.GC_EDEN_SPACE_SUFFIX) + MiscUtils.getMemoryPoolUsageUsed(MiscUtils.GC_SURVIVOR_SPACE_SUFFIX); // end (v3)/size(Spur) of young/new-space (read-only)
-                case 3: return MiscUtils.runtimeTotalMemory(); // end (v3)/size(Spur) of heap (read-only)
-                case 4: return NilObject.SINGLETON; // nil (was allocationCount (read-only))
-                case 5: return NilObject.SINGLETON; // nil (was allocations between GCs (read-write)
-                case 6: return 0L; // survivor count tenuring threshold (read-write)
-                case 7: return MiscUtils.getCollectionCount(MiscUtils.GC_OLD_GEN_NAMES); // full GCs since startup (read-only)
-                case 8: return MiscUtils.getCollectionTime(MiscUtils.GC_OLD_GEN_NAMES); // total milliseconds in full GCs since startup (read-only)
-                case 9: return MiscUtils.getCollectionCount(MiscUtils.GC_YOUNG_GEN_NAMES); // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
-                case 10: return MiscUtils.getCollectionTime(MiscUtils.GC_YOUNG_GEN_NAMES); // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
-                case 11: return 1L; // tenures of surving objects since startup (read-only)
-                case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: return 0L; // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
-                case 20: return MiscUtils.toSqueakMicrosecondsUTC(image.startUpMillis * 1000L); // utc microseconds at VM start-up (actually at time initialization, which precedes image load).
-                case 21: return 0L; // root table size (read-only)
-                case 22: return 0L; // root table overflows since startup (read-only)
-                case 23: return 0L; // bytes of extra memory to reserve for VM buffers, plugins, etc (stored in image file header).
-                case 24: return 1L; // memory threshold above which shrinking object memory (rw)
-                case 25: return 1L; // memory headroom when growing object memory (rw)
-                case 26: return (long) CheckForInterruptsState.getInterruptChecksEveryNms(); // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
-                case 27: return 0L; // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL marking
-                case 28: return 0L; // number of times sweep loop iterated for current IGC/FGC (read-only)
-                case 29: return 0L; // number of times make forward loop iterated for current IGC/FGC (read-only)
-                case 30: return 0L; // number of times compact move loop iterated for current IGC/FGC (read-only)
-                case 31: return 0L; // number of grow memory requests (read-only)
-                case 32: return 0L; // number of shrink memory requests (read-only)
-                case 33: return 0L; // number of root table entries used for current IGC/FGC (read-only)
-                case 34: return 0L; // number of allocations done before current IGC/FGC (read-only)
-                case 35: return 0L; // number of survivor objects after current IGC/FGC (read-only)
-                case 36: return 0L; // millisecond clock when current IGC/FGC completed (read-only)
-                case 37: return 0L; // number of marked objects for Roots of the world, not including Root Table entries for current IGC/FGC (read-only)
-                case 38: return 0L; // milliseconds taken by current IGC (read-only)
-                case 39: return 0L; // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
-                case 40: return 8L; // BytesPerOop for this image
-                case 41: return (long) image.imageFormat; // imageFormatVersion for the VM
-                case 42: return 50L; // number of stack pages in use (see SmalltalkImage>>isRunningCog)
-                case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
-                case 44: return MiscUtils.getMemoryPoolUsageCommitted(MiscUtils.GC_EDEN_SPACE_SUFFIX); // size of eden, in bytes
-                case 45: return 0L; // desired size of eden, in bytes (stored in image file header)
-                case 46: return NilObject.SINGLETON; // machine code zone size, in bytes (Cog only; otherwise nil)
-                case 47: return NilObject.SINGLETON; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
-                case 48: return image.flags.getHeaderFlagsDecoded(); // various header flags. See #getImageHeaderFlags.
-                case 49: return (long) image.flags.getMaxExternalSemaphoreTableSize(); // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
-                case 50: case 51: return NilObject.SINGLETON; // nil; reserved for VM parameters that persist in the image (such as eden above)
-                case 52: return 65536L; // root table capacity
-                case 53: return 2L; // number of segments (Spur only; otherwise nil)
-                case 54: return MiscUtils.getMemoryPoolUsageFree(MiscUtils.GC_OLD_GEN_SUFFIX); // total size of free old space (Spur only, otherwise nil)
-                case 55: return 0L; // ratio of growth and image size at or above which a GC will be performed post scavenge
-                case 56: return NilObject.SINGLETON; // number of process switches since startup (read-only)
-                case 57: return 0L; // number of ioProcessEvents calls since startup (read-only)
-                case 58: return 0L; // number of ForceInterruptCheck calls since startup (read-only)
-                case 59: return 0L; // number of check event calls since startup (read-only)
-                case 60: return 0L; // number of stack page overflows since startup (read-only)
-                case 61: return 0L; // number of stack page divorces since startup (read-only)
-                case 62: return NilObject.SINGLETON; // compiled code compactions since startup (read-only; Cog only; otherwise nil)
-                case 63: return NilObject.SINGLETON; // total milliseconds in compiled code compactions since startup (read-only; Cog only; otherwise nil)
-                case 64: return 0L; // the number of methods that currently have jitted machine-code
-                case 65: return 49L; // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0, IMMTABILITY is bit 1
-                case 66: return 4096L; // the byte size of a stack page
-                case 67: return 0L; // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit except that of the underlying platform)
-                case 68: return 12L; // the average number of live stack pages when scanned by GC (at scavenge/gc/become et al)
-                case 69: return 16L; // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
-                case 70: return 1L; // the vmProxyMajorVersion (the interpreterProxy VM_MAJOR_VERSION)
-                case 71: return 13L; // the vmProxyMinorVersion (the interpreterProxy VM_MINOR_VERSION)
-                case 75: return BooleanObject.TRUE; // do mixed arithmetic; if false binary arithmetic primitives will fail unless receiver and argument are of the same type
-                default: return NilObject.SINGLETON;
-            }
-            //@formatter:on
+            return switch (index) {
+                // end (v3)/size(Spur) of old-space (0-based, read-only)
+                case 1 -> MiscUtils.getMemoryPoolUsageCommitted(MiscUtils.GC_OLD_GEN_SUFFIX);
+                // end (v3)/size(Spur) of young/new-space (read-only)
+                case 2 -> MiscUtils.getMemoryPoolUsageUsed(MiscUtils.GC_EDEN_SPACE_SUFFIX) + MiscUtils.getMemoryPoolUsageUsed(MiscUtils.GC_SURVIVOR_SPACE_SUFFIX);
+                // end (v3)/size(Spur) of heap (read-only)
+                case 3 -> MiscUtils.runtimeTotalMemory();
+                // nil (was allocationCount (read-only))
+                case 4 -> NilObject.SINGLETON;
+                // nil (was allocations between GCs (read-write)
+                case 5 -> NilObject.SINGLETON;
+                // survivor count tenuring threshold (read-write)
+                case 6 -> 0L;
+                // full GCs since startup (read-only)
+                case 7 -> MiscUtils.getCollectionCount(MiscUtils.GC_OLD_GEN_NAMES);
+                // total milliseconds in full GCs since startup (read-only)
+                case 8 -> MiscUtils.getCollectionTime(MiscUtils.GC_OLD_GEN_NAMES);
+                // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
+                case 9 -> MiscUtils.getCollectionCount(MiscUtils.GC_YOUNG_GEN_NAMES);
+                // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since
+                // startup (read-only)
+                case 10 -> MiscUtils.getCollectionTime(MiscUtils.GC_YOUNG_GEN_NAMES);
+                // tenures of surving objects since startup (read-only)
+                case 11 -> 1L;
+                // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
+                case 12, 13, 14, 15, 16, 17, 18, 19 -> 0L;
+                // utc microseconds at VM start-up (actually at time initialization, which precedes
+                // image load).
+                case 20 -> MiscUtils.toSqueakMicrosecondsUTC(image.startUpMillis * 1000L);
+                // root table size (read-only)
+                case 21 -> 0L;
+                // root table overflows since startup (read-only)
+                case 22 -> 0L;
+                // bytes of extra memory to reserve for VM buffers, plugins, etc (stored in image
+                // file header).
+                case 23 -> 0L;
+                // memory threshold above which shrinking object memory (rw)
+                case 24 -> 1L;
+                // memory headroom when growing object memory (rw)
+                case 25 -> 1L;
+                // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
+                case 26 -> (long) CheckForInterruptsState.getInterruptChecksEveryNms();
+                // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL
+                // marking
+                case 27 -> 0L;
+                // number of times sweep loop iterated for current IGC/FGC (read-only)
+                case 28 -> 0L;
+                // number of times make forward loop iterated for current IGC/FGC (read-only)
+                case 29 -> 0L;
+                // number of times compact move loop iterated for current IGC/FGC (read-only)
+                case 30 -> 0L;
+                // number of grow memory requests (read-only)
+                case 31 -> 0L;
+                // number of shrink memory requests (read-only)
+                case 32 -> 0L;
+                // number of root table entries used for current IGC/FGC (read-only)
+                case 33 -> 0L;
+                // number of allocations done before current IGC/FGC (read-only)
+                case 34 -> 0L;
+                // number of survivor objects after current IGC/FGC (read-only)
+                case 35 -> 0L;
+                // millisecond clock when current IGC/FGC completed (read-only)
+                case 36 -> 0L;
+                // number of marked objects for Roots of the world, not including Root Table entries
+                // for current IGC/FGC (read-only)
+                case 37 -> 0L;
+                // milliseconds taken by current IGC (read-only)
+                case 38 -> 0L;
+                // Number of finalization signals for Weak Objects pending when current IGC/FGC
+                // completed (read-only)
+                case 39 -> 0L;
+                // BytesPerOop for this image
+                case 40 -> 8L;
+                // imageFormatVersion for the VM
+                case 41 -> (long) image.imageFormat;
+                // number of stack pages in use (see SmalltalkImage>>isRunningCog)
+                case 42 -> 50L;
+                // desired number of stack pages (stored in image file header, max 65535)
+                case 43 -> 0L;
+                // size of eden, in bytes
+                case 44 -> MiscUtils.getMemoryPoolUsageCommitted(MiscUtils.GC_EDEN_SPACE_SUFFIX);
+                // desired size of eden, in bytes (stored in image file header)
+                case 45 -> 0L;
+                // machine code zone size, in bytes (Cog only; otherwise nil)
+                case 46 -> NilObject.SINGLETON;
+                // desired machine code zone size (stored in image file header; Cog only; otherwise
+                // nil)
+                case 47 -> NilObject.SINGLETON;
+                // various header flags. See #getImageHeaderFlags.
+                case 48 -> image.flags.getHeaderFlagsDecoded();
+                // max size the image promises to grow the external semaphore table to (0 sets to
+                // default, which is 256 as of writing)
+                case 49 -> (long) image.flags.getMaxExternalSemaphoreTableSize();
+                // nil; reserved for VM parameters that persist in the image (such as eden above)
+                case 50, 51 -> NilObject.SINGLETON;
+                // root table capacity
+                case 52 -> 65536L;
+                // number of segments (Spur only; otherwise nil)
+                case 53 -> 2L;
+                // total size of free old space (Spur only, otherwise nil)
+                case 54 -> MiscUtils.getMemoryPoolUsageFree(MiscUtils.GC_OLD_GEN_SUFFIX);
+                // ratio of growth and image size at or above which a GC will be performed post
+                // scavenge
+                case 55 -> 0L;
+                // number of process switches since startup (read-only)
+                case 56 -> NilObject.SINGLETON;
+                // number of ioProcessEvents calls since startup (read-only)
+                case 57 -> 0L;
+                // number of ForceInterruptCheck calls since startup (read-only)
+                case 58 -> 0L;
+                // number of check event calls since startup (read-only)
+                case 59 -> 0L;
+                // number of stack page overflows since startup (read-only)
+                case 60 -> 0L;
+                // number of stack page divorces since startup (read-only)
+                case 61 -> 0L;
+                // compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 62 -> NilObject.SINGLETON;
+                // total milliseconds in compiled code compactions since startup (read-only; Cog
+                // only; otherwise nil)
+                case 63 -> NilObject.SINGLETON;
+                // the number of methods that currently have jitted machine-code
+                case 64 -> 0L;
+                // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0,
+                // IMMTABILITY is bit 1
+                case 65 -> 49L;
+                // the byte size of a stack page
+                case 66 -> 4096L;
+                // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit
+                // except that of the underlying platform)
+                case 67 -> 0L;
+                // the average number of live stack pages when scanned by GC (at scavenge/gc/become
+                // et al)
+                case 68 -> 12L;
+                // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become
+                // et al)
+                case 69 -> 16L;
+                // the vmProxyMajorVersion (the interpreterProxy VM_MAJOR_VERSION)
+                case 70 -> 1L;
+                // the vmProxyMinorVersion (the interpreterProxy VM_MINOR_VERSION)
+                case 71 -> 13L;
+                // do mixed arithmetic; if false binary arithmetic primitives will fail unless
+                // receiver and argument are of the same type
+                case 75 -> BooleanObject.TRUE;
+                default -> NilObject.SINGLETON;
+            };
         }
     }
 

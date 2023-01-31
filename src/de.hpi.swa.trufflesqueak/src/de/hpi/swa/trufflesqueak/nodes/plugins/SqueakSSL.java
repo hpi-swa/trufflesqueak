@@ -287,27 +287,26 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         while (true) {
             final SSLEngineResult result = encoder.encode(sourceBuffer, intermediateTarget);
             switch (result.getStatus()) {
-                case BUFFER_UNDERFLOW:
+                case BUFFER_UNDERFLOW -> {
                     return result;
-
-                case BUFFER_OVERFLOW:
+                }
+                case BUFFER_OVERFLOW -> {
                     intermediateTarget = enlargeBufferFrom(intermediateTarget, bufferSize);
                     continue;
-
-                case OK:
+                }
+                case OK -> {
                     intermediateTarget.flip();
                     if (intermediateTarget.remaining() > 0) {
                         targetBuffer.put(intermediateTarget);
                     }
                     return result;
-
-                case CLOSED:
+                }
+                case CLOSED -> {
                     intermediateTarget.flip();
                     targetBuffer.put(intermediateTarget);
                     return result;
-
-                default:
-                    throw SqueakException.create("Unknown SSL engine status");
+                }
+                default -> throw SqueakException.create("Unknown SSL engine status");
             }
         }
     }
@@ -822,17 +821,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 return 0L;
             }
 
-            switch (property) {
-                case SSL_STATE:
-                    return ssl.state.id();
-                case VERSION:
-                    return Constants.VERSION;
-                case CERTIFICATE_STATE:
-                    // FIXME
-                    return 0L;
-                default:
-                    return 0L;
-            }
+            return switch (property) {
+                case SSL_STATE -> ssl.state.id();
+                case VERSION -> Constants.VERSION;
+                case CERTIFICATE_STATE -> 0L; // FIXME
+                default -> 0L;
+            };
         }
     }
 
@@ -892,16 +886,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         }
 
         private static AbstractSqueakObject getStringPropertyValue(final SqueakImageContext image, final SqSSL impl, final StringProperty property) {
-            switch (property) {
-                case PEER_NAME:
-                    return image.asByteString(impl.peerName);
-                case CERTIFICATE_NAME:
-                    return NilObject.SINGLETON; // FIXME
-                case SERVER_NAME:
-                    return image.asByteString(impl.serverName);
-                default:
-                    return NilObject.SINGLETON;
-            }
+            return switch (property) {
+                case PEER_NAME -> image.asByteString(impl.peerName);
+                case CERTIFICATE_NAME -> NilObject.SINGLETON; // FIXME
+                case SERVER_NAME -> image.asByteString(impl.serverName);
+                default -> NilObject.SINGLETON;
+            };
         }
     }
 
@@ -931,20 +921,17 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
             final String value = aString.asStringUnsafe();
 
-            switch (property) {
-                case CERTIFICATE_NAME:
+            return switch (property) {
+                case CERTIFICATE_NAME -> {
                     certificateName = value;
-                    break;
-
-                case SERVER_NAME:
+                    yield 1L;
+                }
+                case SERVER_NAME -> {
                     ssl.serverName = value;
-                    break;
-
-                default:
-                    return 0L;
-            }
-
-            return 1L;
+                    yield 1L;
+                }
+                default -> 0L;
+            };
         }
     }
 

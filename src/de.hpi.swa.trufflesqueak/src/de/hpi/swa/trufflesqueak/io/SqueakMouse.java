@@ -49,38 +49,29 @@ public final class SqueakMouse extends MouseInputAdapter {
     }
 
     private void recordMouseEvent(final MOUSE_EVENT type, final MouseEvent e) {
-        int buttons = display.buttons & MOUSE.ALL;
-        switch (type) {
-            case DOWN:
-                buttons = mapButton(e);
-                break;
-            case MOVE:
-                break; // Nothing more to do.
-            case UP:
-                buttons = 0;
-                break;
-            default:
+        final int buttons = switch (type) {
+            case DOWN -> mapButton(e);
+            case MOVE -> display.buttons & MOUSE.ALL;
+            case UP -> 0;
+            default -> {
                 LogUtils.IO.warning("Unknown mouse event: " + e);
-                break;
-        }
-
+                yield display.buttons & MOUSE.ALL;
+            }
+        };
         display.buttons = buttons | display.recordModifiers(e);
         display.addEvent(EVENT_TYPE.MOUSE, e.getX(), e.getY(), display.buttons & MOUSE.ALL, display.buttons >> 3);
     }
 
     private static int mapButton(final MouseEvent e) {
-        switch (e.getButton()) {
-            case MouseEvent.BUTTON1:
-                return e.isAltDown() ? MOUSE.YELLOW : MOUSE.RED; // left
-            case MouseEvent.BUTTON2:
-                return MOUSE.YELLOW; // middle
-            case MouseEvent.BUTTON3:
-                return MOUSE.BLUE; // right
-            case MouseEvent.NOBUTTON:
-                return 0;
-            default:
+        return switch (e.getButton()) {
+            case MouseEvent.BUTTON1 -> e.isAltDown() ? MOUSE.YELLOW : MOUSE.RED; // left
+            case MouseEvent.BUTTON2 -> MOUSE.YELLOW; // middle
+            case MouseEvent.BUTTON3 -> MOUSE.BLUE; // right
+            case MouseEvent.NOBUTTON -> 0;
+            default -> {
                 LogUtils.IO.warning("Unknown mouse button in event: " + e);
-                return 0;
-        }
+                yield 0;
+            }
+        };
     }
 }

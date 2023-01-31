@@ -943,19 +943,15 @@ public final class SqueakImageContext {
             final String messageCapitalized = messageName.substring(0, 1).toUpperCase() + messageName.substring(1);
             final String suffix;
             switch (message.getParameterCount()) {
-                case 1:
-                    suffix = "";
-                    break;
-                case 2:
-                    suffix = ":";
-                    break;
-                default:
+                case 1 -> suffix = "";
+                case 2 -> suffix = ":";
+                default -> {
                     final StringBuilder sb = new StringBuilder(":");
                     for (int i = 0; i < message.getParameterCount() - 2; i++) {
                         sb.append("and:");
                     }
                     suffix = sb.toString();
-                    break;
+                }
             }
             return asByteSymbol(libraryPrefix + messageCapitalized + suffix);
         });

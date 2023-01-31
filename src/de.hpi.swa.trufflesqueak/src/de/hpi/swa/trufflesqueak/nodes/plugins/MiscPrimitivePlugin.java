@@ -288,32 +288,26 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.BAD_INDEX;
                 }
                 switch (anInt & 3) {
-                    case 0: // skip
-                        break;
-                    case 1: { // n consecutive words of 4 bytes = the following byte
+                    case 0 -> { // skip
+                    }
+                    case 1 -> { // n consecutive words of 4 bytes = the following byte
                         final int data = ba.getByteUnsigned(i) << 24 | ba.getByteUnsigned(i) << 16 | ba.getByteUnsigned(i) << 8 | ba.getByteUnsigned(i++);
                         for (int j = 0; j < n; j++) {
                             bm.setInt(k++, data);
                         }
-                        break;
                     }
-                    case 2: { // n consecutive words = 4 following bytes
+                    case 2 -> { // n consecutive words = 4 following bytes
                         final int data = ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++);
                         for (int j = 0; j < n; j++) {
                             bm.setInt(k++, data);
                         }
-                        break;
                     }
-
-                    case 3: { // n consecutive words from the data
+                    case 3 -> { // n consecutive words from the data
                         for (int m = 0; m < n; m++) {
                             bm.setInt(k++, ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++));
                         }
-                        break;
                     }
-                    default:
-                        CompilerDirectives.transferToInterpreter();
-                        break; // cannot happen
+                    default -> CompilerDirectives.transferToInterpreter(); // cannot happen
                 }
             }
             return receiver;

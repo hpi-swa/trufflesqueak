@@ -150,41 +150,21 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private void checkResult(final TestResult result) throws Throwable {
-
         switch (test.type) {
-            case PASSING: // falls through
-            case SLOWLY_PASSING:
-            case EXPECTED_FAILURE:
+            case PASSING, SLOWLY_PASSING, EXPECTED_FAILURE -> {
                 if (result.reason != null) {
                     throw result.reason;
                 }
                 assertTrue(result.message, result.passed);
-                break;
-
-            case PASSING_WITH_NFI:
-                checkPassingIf(image.supportsNFI(), result);
-                break;
-
-            case FAILING: // falls through
-            case SLOWLY_FAILING: // falls through
-            case BROKEN_IN_SQUEAK: // falls through
-                assertFalse(result.message, result.passed);
-                break;
-
-            case FLAKY:
+            }
+            case PASSING_WITH_NFI -> checkPassingIf(image.supportsNFI(), result);
+            case FAILING, SLOWLY_FAILING, BROKEN_IN_SQUEAK -> assertFalse(result.message, result.passed);
+            case FLAKY -> {
                 // no verdict possible
-                break;
-
-            case NOT_TERMINATING:
-                fail("This test unexpectedly terminated");
-                break;
-
-            case IGNORED:
-                fail("This test should never have been run");
-                break;
-
-            default:
-                throw new IllegalArgumentException(test.type.toString());
+            }
+            case NOT_TERMINATING -> fail("This test unexpectedly terminated");
+            case IGNORED -> fail("This test should never have been run");
+            default -> throw new IllegalArgumentException(test.type.toString());
         }
     }
 

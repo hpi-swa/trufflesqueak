@@ -1410,36 +1410,18 @@ public final class B2D {
     private int drawWideEdgefrom(final int edge, final int leftX) {
         /* Not for the moment */
         final int type = edgeTypeOf(edge);
-        final int lineWidth;
-        switch (type) {
-            case 0:
-            case 1:
-                lineWidth = errorWrongIndex();
-                break;
-            case 2:
-                lineWidth = returnWideLineWidth(edge);
-                break;
-            case 3:
-                lineWidth = returnWideBezierWidth(edge);
-                break;
-            default:
-                throw SqueakException.create("Unexpected type:", type);
-        }
-        final int fill;
-        switch (type) {
-            case 0:
-            case 1:
-                fill = errorWrongIndex();
-                break;
-            case 2:
-                fill = makeUnsignedFrom(returnWideLineFill(edge));
-                break;
-            case 3:
-                fill = makeUnsignedFrom(returnWideBezierFill(edge));
-                break;
-            default:
-                throw SqueakException.create("Unexpected type:", type);
-        }
+        final int lineWidth = switch (type) {
+            case 0, 1 -> errorWrongIndex();
+            case 2 -> returnWideLineWidth(edge);
+            case 3 -> returnWideBezierWidth(edge);
+            default -> throw SqueakException.create("Unexpected type:", type);
+        };
+        final int fill = switch (type) {
+            case 0, 1 -> errorWrongIndex();
+            case 2 -> makeUnsignedFrom(returnWideLineFill(edge));
+            case 3 -> makeUnsignedFrom(returnWideBezierFill(edge));
+            default -> throw SqueakException.create("Unexpected type:", type);
+        };
         if (fill == 0) {
             return leftX;
         }
@@ -2554,20 +2536,10 @@ public final class B2D {
                 return true;
             }
             switch (type) {
-                case 0:
-                case 1:
-                    errorWrongIndex();
-                    break;
-                case 2:
-                    fillLinearGradient();
-                    break;
-                case 3:
-                    fillRadialGradient();
-                    break;
-                case 4:
-                case 5:
-                    fillBitmapSpan();
-                    break;
+                case 0, 1 -> errorWrongIndex();
+                case 2 -> fillLinearGradient();
+                case 3 -> fillRadialGradient();
+                case 4, 5 -> fillBitmapSpan();
             }
         }
         return false;
@@ -2606,24 +2578,11 @@ public final class B2D {
                 return false;
             }
             switch (type) {
-                case 0:
-                case 1:
-                case 2:
-                case 3:
-                    errorWrongIndex();
-                    break;
-                case 4:
-                    stepToFirstLine();
-                    break;
-                case 5:
-                    stepToFirstWideLine();
-                    break;
-                case 6:
-                    stepToFirstBezier();
-                    break;
-                case 7:
-                    stepToFirstWideBezier();
-                    break;
+                case 0, 1, 2, 3 -> errorWrongIndex();
+                case 4 -> stepToFirstLine();
+                case 5 -> stepToFirstWideLine();
+                case 6 -> stepToFirstBezier();
+                case 7 -> stepToFirstWideBezier();
             }
             insertEdgeIntoAET(edge);
             getStartPut(getStartGet() + 1);
@@ -2707,26 +2666,12 @@ public final class B2D {
                     return true;
                 }
                 switch (type) {
-                    case 0:
-                    case 1:
-                    case 2:
-                    case 3:
-                        errorWrongIndex();
-                        break;
-                    case 4:
-                        stepToNextLine();
-                        break;
-                    case 5:
-                        stepToNextWideLine();
-                        break;
-                    case 6:
-                        stepToNextBezier();
-                        break;
-                    case 7:
-                        stepToNextWideBezier();
-                        break;
-                    default:
-                        throw SqueakException.create("Unexpected type:", type);
+                    case 0, 1, 2, 3 -> errorWrongIndex();
+                    case 4 -> stepToNextLine();
+                    case 5 -> stepToNextWideLine();
+                    case 6 -> stepToNextBezier();
+                    case 7 -> stepToNextWideBezier();
+                    default -> throw SqueakException.create("Unexpected type:", type);
                 }
                 resortFirstAETEntry();
                 aetStartPut(aetStartGet() + 1);
@@ -6766,36 +6711,18 @@ public final class B2D {
     /* BalloonEngineBase>>#toggleWideFillOf: */
     private void toggleWideFillOf(final int edge) {
         final int type = edgeTypeOf(edge);
-        final int lineWidth;
-        switch (type) {
-            case 0:
-            case 1:
-                lineWidth = errorWrongIndex();
-                break;
-            case 2:
-                lineWidth = returnWideLineWidth(edge);
-                break;
-            case 3:
-                lineWidth = returnWideBezierWidth(edge);
-                break;
-            default:
-                throw SqueakException.create("Unexpected type:", type);
-        }
-        final int fill;
-        switch (type) {
-            case 0:
-            case 1:
-                fill = errorWrongIndex();
-                break;
-            case 2:
-                fill = returnWideLineFill(edge);
-                break;
-            case 3:
-                fill = returnWideBezierFill(edge);
-                break;
-            default:
-                throw SqueakException.create("Unexpected type:", type);
-        }
+        final int lineWidth = switch (type) {
+            case 0, 1 -> errorWrongIndex();
+            case 2 -> returnWideLineWidth(edge);
+            case 3 -> returnWideBezierWidth(edge);
+            default -> throw SqueakException.create("Unexpected type:", type);
+        };
+        final int fill = switch (type) {
+            case 0, 1 -> errorWrongIndex();
+            case 2 -> returnWideLineFill(edge);
+            case 3 -> returnWideBezierFill(edge);
+            default -> throw SqueakException.create("Unexpected type:", type);
+        };
         if (fill == 0) {
             return;
         }

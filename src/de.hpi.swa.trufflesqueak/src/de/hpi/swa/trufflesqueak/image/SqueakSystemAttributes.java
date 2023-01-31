@@ -112,46 +112,31 @@ public final class SqueakSystemAttributes {
 
     /** See SmalltalkImage>>#getSystemAttribute:. */
     public AbstractSqueakObject getSystemAttribute(final int index) {
-        switch (index) {
-            case 0:
-                return getVMPath();
-            case 1:
-                return getImagePath();
-            case 1001:
-                return getPlatformName();
-            case 1002:
-                return getOperatingSystemVersion();
-            case 1003:
-                return getPlatformProcessorType();
-            case 1004:
-                return getVMVersion();
-            case 1005:
-                return getWindowSystemName();
-            case 1006:
-                return getVmBuildId();
-            case 1007:
-                return getInterpreterClass();
-            case 1008:
-                return getSystemProperties();
-            case 1009:
-                return getVMInformation();
-            case 1201:
-                return getMaxFilenameLength();
-            case 1202:
-                return getFileLastError();
-            case 10001:
-                return getHardwareDetails();
-            case 10002:
-                return getOperatingSystemDetails();
-            case 10003:
-                return getGraphicsHardwareDetails();
-            default:
+        return switch (index) {
+            case 0 -> getVMPath();
+            case 1 -> getImagePath();
+            case 1001 -> getPlatformName();
+            case 1002 -> getOperatingSystemVersion();
+            case 1003 -> getPlatformProcessorType();
+            case 1004 -> getVMVersion();
+            case 1005 -> getWindowSystemName();
+            case 1006 -> getVmBuildId();
+            case 1007 -> getInterpreterClass();
+            case 1008 -> getSystemProperties();
+            case 1009 -> getVMInformation();
+            case 1201 -> getMaxFilenameLength();
+            case 1202 -> getFileLastError();
+            case 10001 -> getHardwareDetails();
+            case 10002 -> getOperatingSystemDetails();
+            case 10003 -> getGraphicsHardwareDetails();
+            default -> {
                 if (index >= 2 && index <= 1000) {
-                    return getCMDArgument(index - 2);
+                    yield getCMDArgument(index - 2);
                 } else {
-                    return NilObject.SINGLETON;
+                    yield NilObject.SINGLETON;
                 }
-        }
+            }
+        };
     }
 
     /** Attribute #0. */

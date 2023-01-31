@@ -89,16 +89,11 @@ public final class DebugUtils {
                 if (i == 0 && info.getLockInfo() != null) {
                     final Thread.State ts = info.getThreadState();
                     switch (ts) {
-                        case BLOCKED:
-                            sb.append("\t-  blocked on ").append(info.getLockInfo()).append("\r\n");
-                            break;
-                        case WAITING:
-                            sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
-                            break;
-                        case TIMED_WAITING:
-                            sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
-                            break;
-                        default:
+                        case BLOCKED -> sb.append("\t-  blocked on ").append(info.getLockInfo()).append("\r\n");
+                        case WAITING -> sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
+                        case TIMED_WAITING -> sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
+                        default -> {
+                        }
                     }
                 }
 

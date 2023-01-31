@@ -59,26 +59,17 @@ public final class MiscellaneousBytecodes {
         public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param1, final byte param2) {
             final int second = Byte.toUnsignedInt(param1);
             final int third = Byte.toUnsignedInt(param2);
-            switch (second >> 5) {
-                case 0:
-                    return SelfSendNode.create(code, index, numBytecodes, (NativeObject) code.getLiteral(third), second & 31);
-                case 1:
-                    return new SuperSendNode(code, index, numBytecodes, third, second & 31);
-                case 2:
-                    return PushReceiverVariableNode.create(code, index, numBytecodes, third);
-                case 3:
-                    return new PushLiteralConstantNode(code, index, numBytecodes, third);
-                case 4:
-                    return PushLiteralVariableNode.create(code, index, numBytecodes, third);
-                case 5:
-                    return new StoreIntoReceiverVariableNode(code, index, numBytecodes, third);
-                case 6:
-                    return new PopIntoReceiverVariableNode(code, index, numBytecodes, third);
-                case 7:
-                    return new StoreIntoLiteralVariableNode(code, index, numBytecodes, third);
-                default:
-                    return new UnknownBytecodeNode(code, index, numBytecodes, second);
-            }
+            return switch (second >> 5) {
+                case 0 -> SelfSendNode.create(code, index, numBytecodes, (NativeObject) code.getLiteral(third), second & 31);
+                case 1 -> new SuperSendNode(code, index, numBytecodes, third, second & 31);
+                case 2 -> PushReceiverVariableNode.create(code, index, numBytecodes, third);
+                case 3 -> new PushLiteralConstantNode(code, index, numBytecodes, third);
+                case 4 -> PushLiteralVariableNode.create(code, index, numBytecodes, third);
+                case 5 -> new StoreIntoReceiverVariableNode(code, index, numBytecodes, third);
+                case 6 -> new PopIntoReceiverVariableNode(code, index, numBytecodes, third);
+                case 7 -> new StoreIntoLiteralVariableNode(code, index, numBytecodes, third);
+                default -> new UnknownBytecodeNode(code, index, numBytecodes, second);
+            };
         }
     }
 
@@ -106,50 +97,35 @@ public final class MiscellaneousBytecodes {
 
         public static AbstractInstrumentableBytecodeNode createPopInto(final CompiledCodeObject code, final int index, final int numBytecodes, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
-            switch (variableType(nextByte)) {
-                case 0:
-                    return new PopIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);
-                case 1:
-                    return new PopIntoTemporaryLocationNode(code, index, numBytecodes, variableIndex);
-                case 2:
-                    return new UnknownBytecodeNode(code, index, numBytecodes, nextByte);
-                case 3:
-                    return new PopIntoLiteralVariableNode(code, index, numBytecodes, variableIndex);
-                default:
-                    throw SqueakException.create("illegal ExtendedStore bytecode");
-            }
+            return switch (variableType(nextByte)) {
+                case 0 -> new PopIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);
+                case 1 -> new PopIntoTemporaryLocationNode(code, index, numBytecodes, variableIndex);
+                case 2 -> new UnknownBytecodeNode(code, index, numBytecodes, nextByte);
+                case 3 -> new PopIntoLiteralVariableNode(code, index, numBytecodes, variableIndex);
+                default -> throw SqueakException.create("illegal ExtendedStore bytecode");
+            };
         }
 
         public static AbstractInstrumentableBytecodeNode createPush(final CompiledCodeObject code, final int index, final int numBytecodes, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
-            switch (variableType(nextByte)) {
-                case 0:
-                    return PushReceiverVariableNode.create(code, index, numBytecodes, variableIndex);
-                case 1:
-                    return new PushTemporaryLocationNode(code, index, numBytecodes, variableIndex);
-                case 2:
-                    return new PushLiteralConstantNode(code, index, numBytecodes, variableIndex);
-                case 3:
-                    return PushLiteralVariableNode.create(code, index, numBytecodes, variableIndex);
-                default:
-                    throw SqueakException.create("unexpected type for ExtendedPush");
-            }
+            return switch (variableType(nextByte)) {
+                case 0 -> PushReceiverVariableNode.create(code, index, numBytecodes, variableIndex);
+                case 1 -> new PushTemporaryLocationNode(code, index, numBytecodes, variableIndex);
+                case 2 -> new PushLiteralConstantNode(code, index, numBytecodes, variableIndex);
+                case 3 -> PushLiteralVariableNode.create(code, index, numBytecodes, variableIndex);
+                default -> throw SqueakException.create("unexpected type for ExtendedPush");
+            };
         }
 
         public static AbstractInstrumentableBytecodeNode createStoreInto(final CompiledCodeObject code, final int index, final int numBytecodes, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
-            switch (variableType(nextByte)) {
-                case 0:
-                    return new StoreIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);
-                case 1:
-                    return new StoreIntoTemporaryLocationNode(code, index, numBytecodes, variableIndex);
-                case 2:
-                    return new UnknownBytecodeNode(code, index, numBytecodes, nextByte);
-                case 3:
-                    return new StoreIntoLiteralVariableNode(code, index, numBytecodes, variableIndex);
-                default:
-                    throw SqueakException.create("illegal ExtendedStore bytecode");
-            }
+            return switch (variableType(nextByte)) {
+                case 0 -> new StoreIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);
+                case 1 -> new StoreIntoTemporaryLocationNode(code, index, numBytecodes, variableIndex);
+                case 2 -> new UnknownBytecodeNode(code, index, numBytecodes, nextByte);
+                case 3 -> new StoreIntoLiteralVariableNode(code, index, numBytecodes, variableIndex);
+                default -> throw SqueakException.create("illegal ExtendedStore bytecode");
+            };
         }
 
         public static int variableIndex(final byte i) {

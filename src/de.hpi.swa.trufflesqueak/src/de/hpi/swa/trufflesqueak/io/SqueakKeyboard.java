@@ -49,25 +49,23 @@ public final class SqueakKeyboard implements KeyListener {
     }
 
     private static int toKeyChar(final KeyEvent e) {
-        //@formatter:off
-        switch (e.getKeyCode()) { // Handle special keys.
-            case KeyEvent.VK_BACK_SPACE: return 8;
-            case KeyEvent.VK_TAB: return 9;
-            case KeyEvent.VK_ENTER: return 13;
-            case KeyEvent.VK_ESCAPE: return 27;
-            case KeyEvent.VK_SPACE: return 32;
-            case KeyEvent.VK_PAGE_UP: return 11;
-            case KeyEvent.VK_PAGE_DOWN: return 12;
-            case KeyEvent.VK_END: return 4;
-            case KeyEvent.VK_HOME: return 1;
-            case KeyEvent.VK_LEFT: return 28;
-            case KeyEvent.VK_UP: return 30;
-            case KeyEvent.VK_RIGHT: return 29;
-            case KeyEvent.VK_DOWN: return 31;
-            case KeyEvent.VK_INSERT: return 5;
-            case KeyEvent.VK_DELETE: return 127;
-            default: return e.getKeyChar();
-        }
-        //@formatter:on
+        return switch (e.getKeyCode()) { // Handle special keys.
+            case KeyEvent.VK_BACK_SPACE -> 8;
+            case KeyEvent.VK_TAB -> 9;
+            case KeyEvent.VK_ENTER -> 13;
+            case KeyEvent.VK_ESCAPE -> 27;
+            case KeyEvent.VK_SPACE -> 32;
+            case KeyEvent.VK_PAGE_UP -> 11;
+            case KeyEvent.VK_PAGE_DOWN -> 12;
+            case KeyEvent.VK_END -> 4;
+            case KeyEvent.VK_HOME -> 1;
+            case KeyEvent.VK_LEFT -> 28;
+            case KeyEvent.VK_UP -> 30;
+            case KeyEvent.VK_RIGHT -> 29;
+            case KeyEvent.VK_DOWN -> 31;
+            case KeyEvent.VK_INSERT -> 5;
+            case KeyEvent.VK_DELETE -> 127;
+            default -> e.getKeyChar();
+        };
     }
 }

@@ -174,9 +174,8 @@ public final class JavaObjectWrapper implements TruffleObject {
                 case "BackgroundCompileQueue":
                     return !ArrayUtils.containsEqual(new String[]{"getQueueSize", "toString"}, methodName);
                 default:
-                    break;
+                    return false;
             }
-            return false;
         }
     };
     private static final ClassValue<InteropArray> CLASSES_TO_MEMBERS = new ClassValue<>() {
