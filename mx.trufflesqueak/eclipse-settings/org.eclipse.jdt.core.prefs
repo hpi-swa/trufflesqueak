@@ -1,0 +1,4 @@
+org.eclipse.jdt.core.formatter.alignment_for_expressions_in_switch_case_with_arrow=4
+org.eclipse.jdt.core.formatter.alignment_for_expressions_in_switch_case_with_colon=4
+org.eclipse.jdt.core.formatter.alignment_for_switch_case_with_arrow=4
+org.eclipse.jdt.core.formatter.alignment_for_assertion_message=4

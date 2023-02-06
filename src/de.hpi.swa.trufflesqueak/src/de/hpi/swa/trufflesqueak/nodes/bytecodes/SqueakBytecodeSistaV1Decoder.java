@@ -93,11 +93,11 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
         final int b = Byte.toUnsignedInt(bytecode[indexWithExt]);
         return switch (b) {
             case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F //
-                            -> PushBytecodes.PushReceiverVariableNode.create(code, index, 1, b & 0xF);
+                -> PushBytecodes.PushReceiverVariableNode.create(code, index, 1, b & 0xF);
             case 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F //
-                            -> PushBytecodes.PushLiteralVariableNode.create(code, index, 1, b & 0xF);
+                -> PushBytecodes.PushLiteralVariableNode.create(code, index, 1, b & 0xF);
             case 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F //
-                            -> new PushBytecodes.PushLiteralConstantNode(code, index, 1, b & 0x1F);
+                -> new PushBytecodes.PushLiteralConstantNode(code, index, 1, b & 0x1F);
             case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47 -> new PushBytecodes.PushTemporaryLocationNode(code, index, 1, b & 0x7);
             case 0x48, 0x49, 0x4A, 0x4B -> new PushBytecodes.PushTemporaryLocationNode(code, index, 1, (b & 3) + 8);
             case 0x4C -> PushBytecodes.PushReceiverNode.create(code, index);
@@ -130,13 +130,13 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             }
             case 0x5F -> new MiscellaneousBytecodes.NopBytecodeNode(code, index);
             case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F //
-                            -> SendBytecodes.AbstractSendSpecialSelectorQuickNode.create(frame, code, index, b - 96);
+                -> SendBytecodes.AbstractSendSpecialSelectorQuickNode.create(frame, code, index, b - 96);
             case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F //
-                            -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 0);
+                -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 0);
             case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F //
-                            -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
+                -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
             case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF //
-                            -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
+                -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
             case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> JumpBytecodes.UnconditionalJumpNode.createShort(code, index, b);
             case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> JumpBytecodes.ConditionalJumpOnTrueNode.createShort(code, index, b);
             case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> JumpBytecodes.ConditionalJumpOnFalseNode.createShort(code, index, b);
@@ -326,9 +326,9 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 93, 94 -> "blockReturn";
             case 95 -> "nop";
             case 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127 //
-                            -> "send: " + code.getSqueakClass().getImage().getSpecialSelector(b - 96).asStringUnsafe();
+                -> "send: " + code.getSqueakClass().getImage().getSpecialSelector(b - 96).asStringUnsafe();
             case 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175 //
-                            -> "send: " + code.getLiteral(b & 0xF);
+                -> "send: " + code.getLiteral(b & 0xF);
             case 176, 177, 178, 179, 180, 181, 182, 183 -> "jumpTo: ";
             case 184, 185, 186, 187, 188, 189, 190, 191 -> "jumpTrue: ";
             case 192, 193, 194, 195, 196, 197, 198, 199 -> "jumpFalse: ";
