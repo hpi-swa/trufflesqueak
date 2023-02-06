@@ -69,6 +69,13 @@ suite = {
                 "version": "1.60"
             }
         },
+        "CHECKSTYLE_10.7.0" : {
+            "urls" : [
+                "https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.7.0/checkstyle-10.7.0-all.jar"
+            ],
+            "sha1": "acd1c78c07e894647e8dcbd72c4fa9a136e20d6d",
+            "licence" : "LGPLv21",
+        },
     },
 
     # ==========================================================================
@@ -95,7 +102,7 @@ suite = {
             "requiresConcealed" : {
                 "java.base": ["jdk.internal.module"],
             },
-            "checkstyleVersion": "8.36.1",
+            "checkstyleVersion": "10.7.0",
             "jacoco": "include",
             "javaCompliance": "17+",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
