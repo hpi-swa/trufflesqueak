@@ -12,8 +12,10 @@ while [ -h "$source" ] ; do
 done
 bin_dir="$( cd -P "$( dirname "$source" )" && pwd )"
 
-# Increase stack size (`-XX:ThreadStackSize=64M` not working)
-extra_args=("--vm.Xss64M")
+# Set inital heap size
+extra_args=("--vm.Xms512M")
+# Increase stack size
+extra_args+=("--vm.Xss16M")
 
 # Default to polyglot launcher in JVM mode
 extra_args+=("--jvm" "--polyglot")

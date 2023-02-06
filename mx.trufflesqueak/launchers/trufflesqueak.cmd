@@ -16,8 +16,10 @@ if not exist "%tsl_exe%" (
   exit /b 1
 )
 
-@REM Increase stack size (`-XX:ThreadStackSize=64M` not working)
-set extra_args=--vm.Xss64M
+@REM Set inital heap size
+set extra_args=--vm.Xms512M
+@REM Increase stack size
+set extra_args=%extra_args% --vm.Xss16M
 
 @REM Default to polyglot launcher in JVM mode
 set extra_args=%extra_args% --jvm --polyglot

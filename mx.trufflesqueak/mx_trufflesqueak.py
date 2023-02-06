@@ -24,7 +24,7 @@ PACKAGE_NAME = 'de.hpi.swa.trufflesqueak'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 VM_ARGS_TESTING = [
     # Tweak Runtime
-    '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
+    '-Xss16M',  # Increase stack size
 
     # Make ReflectionUtils work
     '--add-exports=java.base/jdk.internal.module=ALL-UNNAMED',
