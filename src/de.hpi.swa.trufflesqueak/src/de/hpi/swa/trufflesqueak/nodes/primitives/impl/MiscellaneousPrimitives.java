@@ -74,6 +74,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import sun.misc.Unsafe;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -873,7 +874,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // completed (read-only)
                 case 39 -> 0L;
                 // BytesPerOop for this image
-                case 40 -> 8L;
+                case 40 -> (long) Unsafe.ADDRESS_SIZE;
                 // imageFormatVersion for the VM
                 case 41 -> (long) image.imageFormat;
                 // number of stack pages in use (see SmalltalkImage>>isRunningCog)
@@ -928,7 +929,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // IMMTABILITY is bit 1
                 case 65 -> 49L;
                 // the byte size of a stack page
-                case 66 -> 4096L;
+                case 66 -> (long) UnsafeUtils.getPageSize();
                 // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit
                 // except that of the underlying platform)
                 case 67 -> 0L;

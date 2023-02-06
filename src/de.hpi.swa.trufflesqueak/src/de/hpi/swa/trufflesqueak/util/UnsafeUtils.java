@@ -168,6 +168,10 @@ public final class UnsafeUtils {
         return UNSAFE.getObject(storage, offset);
     }
 
+    public static int getPageSize() {
+        return UNSAFE.pageSize();
+    }
+
     public static short getShort(final int[] ints, final long index) {
         assert 0 <= index && index * Short.BYTES / Integer.BYTES < ints.length;
         return UNSAFE.getShort(ints, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
