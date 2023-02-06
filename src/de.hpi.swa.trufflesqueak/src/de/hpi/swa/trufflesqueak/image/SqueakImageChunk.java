@@ -36,10 +36,7 @@ public final class SqueakImageChunk {
     private ClassObject squeakClass;
     private Object[] pointers;
 
-    public SqueakImageChunk(final SqueakImageReader reader,
-                    final long header,
-                    final int position,
-                    final byte[] bytes) {
+    public SqueakImageChunk(final SqueakImageReader reader, final long header, final int position, final byte[] bytes) {
         this.reader = reader;
         this.header = header;
         this.position = position;
@@ -51,7 +48,7 @@ public final class SqueakImageChunk {
     }
 
     public static SqueakImageChunk createDummyChunk(final SqueakImageContext image, final Object[] pointers) {
-        final SqueakImageChunk chunk = new SqueakImageChunk(SqueakImageReader.createDummy(image), 0, 0, new byte[0]);
+        final SqueakImageChunk chunk = new SqueakImageChunk(new SqueakImageReader(image), 0, 0, new byte[0]);
         chunk.pointers = pointers;
         return chunk;
     }
