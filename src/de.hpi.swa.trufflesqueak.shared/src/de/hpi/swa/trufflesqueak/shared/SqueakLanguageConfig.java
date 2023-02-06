@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.shared;
 
 public final class SqueakLanguageConfig {
     public static final String ID = "smalltalk";
+    public static final String IMAGE_SOURCE_NAME = "<smalltalk image>";
     public static final String IMPLEMENTATION_NAME = "TruffleSqueak";
     public static final String MIME_TYPE = "application/x-smalltalk";
     public static final String NAME = "Squeak/Smalltalk";

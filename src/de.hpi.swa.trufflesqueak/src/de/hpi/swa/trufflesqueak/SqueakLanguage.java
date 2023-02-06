@@ -23,8 +23,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @TruffleLanguage.Registration(//
-                byteMimeTypes = SqueakLanguageConfig.MIME_TYPE, //
-                characterMimeTypes = SqueakLanguageConfig.ST_MIME_TYPE, //
+                characterMimeTypes = {SqueakLanguageConfig.MIME_TYPE, SqueakLanguageConfig.ST_MIME_TYPE}, //
                 defaultMimeType = SqueakLanguageConfig.ST_MIME_TYPE, //
                 dependentLanguages = {"nfi"}, //
                 fileTypeDetectors = SqueakFileDetector.class, //
@@ -57,13 +56,14 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     protected CallTarget parse(final ParsingRequest request) throws Exception {
         final SqueakImageContext image = SqueakImageContext.getSlow();
         final Source source = request.getSource();
-        if (source.hasBytes()) {
-            image.setImagePath(source.getPath());
+        final String imageOrSourcePath = source.getCharacters().toString();
+        if (SqueakLanguageConfig.IMAGE_SOURCE_NAME.equals(source.getName())) {
+            image.setImagePath(imageOrSourcePath);
             return image.getSqueakImage().asCallTarget();
         } else {
             image.ensureLoaded();
             if (source.isInternal()) {
-                image.printToStdOut(MiscUtils.format("Evaluating '%s'...", source.getCharacters().toString()));
+                image.printToStdOut(MiscUtils.format("Evaluating '%s'...", imageOrSourcePath));
             }
             return image.getDoItContextNode(request).getCallTarget();
         }

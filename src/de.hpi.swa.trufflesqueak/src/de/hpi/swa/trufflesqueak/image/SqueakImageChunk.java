@@ -157,10 +157,6 @@ public final class SqueakImageChunk {
         return reader.image;
     }
 
-    public SqueakImageReader getReader() {
-        return reader;
-    }
-
     public int getPosition() {
         return position;
     }
