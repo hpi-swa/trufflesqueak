@@ -28,7 +28,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -551,7 +550,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.
     public boolean isPrimitiveContext() {
-        return !hasClosure() && getCodeObject().hasPrimitive() && getInstructionPointerForBytecodeLoop() <= CallPrimitiveNode.NUM_BYTECODES;
+        return !hasClosure() && getCodeObject().hasPrimitive() && getInstructionPointerForBytecodeLoop() == getCodeObject().getInitialPC();
     }
 
     @TruffleBoundary
