@@ -69,8 +69,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final PointersObject doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
                         final long lineFill) {
-            getContext().b2d.primitiveAddBezierShape(receiver, points, MiscUtils.toIntExact(nSegments), (int) fillStyle, MiscUtils.toIntExact(lineWidth),
-                            MiscUtils.toIntExact(lineFill));
+            getContext().b2d.primitiveAddBezierShape(receiver, points, MiscUtils.toIntExact(nSegments), (int) fillStyle, MiscUtils.toIntExact(lineWidth), (int) lineFill);
             return receiver;
         }
     }
@@ -138,9 +137,8 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAddPolygonNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
 
         @Specialization
-        protected final PointersObject doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
-                        final long lineFill) {
-            getContext().b2d.primitiveAddPolygon(receiver, points, MiscUtils.toIntExact(nSegments), (int) fillStyle, MiscUtils.toIntExact(lineWidth), MiscUtils.toIntExact(lineFill));
+        protected final PointersObject doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth, final long lineFill) {
+            getContext().b2d.primitiveAddPolygon(receiver, points, MiscUtils.toIntExact(nSegments), (int) fillStyle, MiscUtils.toIntExact(lineWidth), (int) lineFill);
             return receiver;
         }
     }
