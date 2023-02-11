@@ -45,10 +45,19 @@ public abstract class FrameStackReadNode extends AbstractNode {
         }
         assert initialSP >= numArgs;
         final int stackSlotIndex = FrameAccess.toStackSlotIndex(frame, index);
+        final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
         if (clear && index >= initialSP) { // only ever clear non-temp slots
-            return FrameSlotReadClearNodeGen.create(stackSlotIndex);
+            if (stackSlotIndex < numberOfSlots) {
+                return FrameSlotReadClearNodeGen.create(stackSlotIndex);
+            } else {
+                return new FrameAuxiliarySlotReadClearNode(frame, stackSlotIndex);
+            }
         } else {
-            return FrameSlotReadNoClearNodeGen.create(stackSlotIndex);
+            if (stackSlotIndex < numberOfSlots) {
+                return FrameSlotReadNoClearNodeGen.create(stackSlotIndex);
+            } else {
+                return new FrameAuxiliarySlotReadNoClearNode(frame, stackSlotIndex);
+            }
         }
     }
 
@@ -57,7 +66,13 @@ public abstract class FrameStackReadNode extends AbstractNode {
         if (index < numArgs) {
             return FrameArgumentReadNode.getOrCreate(index);
         } else {
-            return FrameSlotReadNoClearNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
+            final int stackSlotIndex = FrameAccess.toStackSlotIndex(frame, index);
+            final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
+            if (stackSlotIndex < numberOfSlots) {
+                return FrameSlotReadNoClearNodeGen.create(stackSlotIndex);
+            } else {
+                return new FrameAuxiliarySlotReadNoClearNode(frame, stackSlotIndex);
+            }
         }
     }
 
@@ -185,6 +200,34 @@ public abstract class FrameStackReadNode extends AbstractNode {
         @Override
         public Node deepCopy() {
             return copy();
+        }
+    }
+
+    private static class FrameAuxiliarySlotReadNoClearNode extends FrameStackReadNode {
+        private final int auxiliarySlotIndex;
+
+        FrameAuxiliarySlotReadNoClearNode(final Frame frame, final int slotIndex) {
+            auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+        }
+
+        @Override
+        public Object executeReadUnsafe(final Frame frame) {
+            return frame.getAuxiliarySlot(auxiliarySlotIndex);
+        }
+    }
+
+    private static class FrameAuxiliarySlotReadClearNode extends FrameStackReadNode {
+        private final int auxiliarySlotIndex;
+
+        FrameAuxiliarySlotReadClearNode(final Frame frame, final int slotIndex) {
+            auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+        }
+
+        @Override
+        public Object executeReadUnsafe(final Frame frame) {
+            final Object value = frame.getAuxiliarySlot(auxiliarySlotIndex);
+            frame.setAuxiliarySlot(auxiliarySlotIndex, null);
+            return value;
         }
     }
 }

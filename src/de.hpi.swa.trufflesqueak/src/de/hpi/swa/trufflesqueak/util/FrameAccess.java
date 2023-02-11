@@ -97,14 +97,14 @@ public final class FrameAccess {
 
     /** Creates a new {@link FrameDescriptor} according to {@link SlotIndicies}. */
     public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code) {
-        final int squeakContextSize = code.getSqueakContextSize();
-        final Builder builder = FrameDescriptor.newBuilder(4 + squeakContextSize);
+        final int numStackSlots = code.getMaxNumStackSlots();
+        final Builder builder = FrameDescriptor.newBuilder(4 + numStackSlots);
         builder.info(code);
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.THIS_MARKER
         builder.addSlot(FrameSlotKind.Illegal, null, null); // SlotIndicies.THIS_CONTEXT
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.INSTRUCTION_POINTER
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.STACK_POINTER
-        builder.addSlots(squeakContextSize, FrameSlotKind.Illegal);
+        builder.addSlots(numStackSlots, FrameSlotKind.Illegal);
         return builder.build();
     }
 
@@ -239,8 +239,12 @@ public final class FrameAccess {
         if (stackIndex < numArguments) {
             return getArgument(frame, stackIndex);
         } else {
-            return frame.getValue(toStackSlotIndex(frame, stackIndex));
+            return getSlotValue(frame, toStackSlotIndex(frame, stackIndex));
         }
+    }
+
+    public static int getNumStackSlots(final Frame frame) {
+        return frame.getFrameDescriptor().getNumberOfSlots() - SlotIndicies.STACK_START.ordinal();
     }
 
     /* Iterates used stack slots (may not be ordered). */
@@ -251,6 +255,16 @@ public final class FrameAccess {
         }
     }
 
+    public static Object getSlotValue(final Frame frame, final int slotIndex) {
+        final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
+        if (slotIndex < numberOfSlots) {
+            return frame.getValue(slotIndex);
+        } else {
+            final int auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+            return frame.getAuxiliarySlot(auxiliarySlotIndex);
+        }
+    }
+
     /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
     public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {
         setSlot(frame, SlotIndicies.STACK_START.ordinal() + stackIndex, value);
@@ -258,21 +272,27 @@ public final class FrameAccess {
 
     public static void setSlot(final Frame frame, final int slotIndex, final Object value) {
         final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        assert SlotIndicies.STACK_START.ordinal() <= slotIndex && slotIndex <= frame.getFrameDescriptor().getNumberOfSlots();
-        final FrameSlotKind frameSlotKind = frameDescriptor.getSlotKind(slotIndex);
-        final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
-        if (value instanceof Boolean && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
-            frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Boolean);
-            frame.setBoolean(slotIndex, (boolean) value);
-        } else if (value instanceof Long && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
-            frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Long);
-            frame.setLong(slotIndex, (long) value);
-        } else if (value instanceof Double && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
-            frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
-            frame.setDouble(slotIndex, (double) value);
+        assert SlotIndicies.STACK_START.ordinal() <= slotIndex && slotIndex <= SlotIndicies.STACK_START.ordinal() + getCodeObject(frame).getSqueakContextSize();
+        final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
+        if (slotIndex < numberOfSlots) {
+            final FrameSlotKind frameSlotKind = frameDescriptor.getSlotKind(slotIndex);
+            final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
+            if (value instanceof Boolean && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
+                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Boolean);
+                frame.setBoolean(slotIndex, (boolean) value);
+            } else if (value instanceof Long && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
+                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Long);
+                frame.setLong(slotIndex, (long) value);
+            } else if (value instanceof Double && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
+                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
+                frame.setDouble(slotIndex, (double) value);
+            } else {
+                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
+                frame.setObject(slotIndex, value);
+            }
         } else {
-            frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
-            frame.setObject(slotIndex, value);
+            final int auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+            frame.setAuxiliarySlot(auxiliarySlotIndex, value);
         }
     }
 

@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -16,6 +18,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 
 public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDecoder {
     public static final SqueakBytecodeSistaV1Decoder SINGLETON = new SqueakBytecodeSistaV1Decoder();
+    private static final int SP_NIL_TAG = -42;
 
     private SqueakBytecodeSistaV1Decoder() {
     }
@@ -404,6 +407,194 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             return 2;
         } else {
             return 3;
+        }
+    }
+
+    private static int decodeNextPCDelta(final CompiledCodeObject code, final int index) {
+        int b = Byte.toUnsignedInt(code.getBytes()[index]);
+        int offset = 0;
+        while (b == 0xE0 || b == 0xE1) {
+            offset += 2;
+            b = Byte.toUnsignedInt(code.getBytes()[index + offset]);
+        }
+        return offset + decodeNumBytes(code, index);
+    }
+
+    /**
+     * The implementation is derived from StackDepthFinder. Note that the Squeak compiler no longer
+     * allows dead code (at least the one for SistaV1), which simplifies the implementation.
+     */
+    @Override
+    public int determineMaxNumStackSlots(final CompiledCodeObject code) {
+        final int trailerPosition = trailerPosition(code);
+        final int[] joins = new int[trailerPosition];
+        Arrays.fill(joins, SP_NIL_TAG);
+        int index = 0;
+        int currentStackPointer = code.getNumTemps(); // initial SP
+        int maxStackPointer = 0;
+        final int contextSize = code.getSqueakContextSize();
+        // Uncomment the following and compare with `(Character>>#isSeparator) detailedSymbolic`
+        // final int initialPC = code.getInitialPC();
+        // final StringBuilder sb = new StringBuilder();
+        while (index < trailerPosition) {
+            // sb.append(initialPC + index).append(":\t").append(currentStackPointer).append("->");
+            joins[index] = currentStackPointer;
+            currentStackPointer = decodeStackPointer(code, joins, index, currentStackPointer);
+            // sb.append(currentStackPointer).append("\n");
+            assert 0 <= currentStackPointer && currentStackPointer <= contextSize;
+            maxStackPointer = Math.max(maxStackPointer, currentStackPointer);
+            index += decodeNextPCDelta(code, index);
+        }
+        // sb.toString();
+        assert 0 <= maxStackPointer && maxStackPointer <= contextSize;
+        return maxStackPointer;
+    }
+
+    private static int decodeStackPointer(final CompiledCodeObject code, final int[] joins, final int index, final int sp) {
+        return decodeStackPointer(code, joins, index, sp, 0, 0, 0, 0);
+    }
+
+    private static int decodeStackPointer(final CompiledCodeObject code, final int[] joins, final int index, final int sp, final int extBytes, final int extA,
+                    final int extB, final int numExtB) {
+        CompilerAsserts.neverPartOfCompilation();
+        final byte[] bytecode = code.getBytes();
+        final int indexWithExt = index + extBytes;
+        final int b = Byte.toUnsignedInt(bytecode[indexWithExt]);
+        return switch (b) {
+            case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, //
+                0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, //
+                0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, //
+                0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, //
+                0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, //
+                0x50, 0x51 //
+                -> sp + 1;
+            case 0x52 -> {
+                if (extB == 0) {
+                    yield sp + 1;
+                } else {
+                    throw SqueakException.create("Not a bytecode:", b);
+                }
+            }
+            case 0x53 -> sp + 1;
+            case 0x54, 0x55, 0x56, 0x57 -> throw SqueakException.create("Not a bytecode:", b);
+            case 0x58, 0x59, 0x5A, 0x5B -> resetStackAfterBranchOrReturn(joins, index + 1, sp + 0);
+            case 0x5C -> resetStackAfterBranchOrReturn(joins, index + 1, sp - 1);
+            case 0x5D -> resetStackAfterBranchOrReturn(joins, index + 1, sp + 0);
+            case 0x5E -> {
+                if (extA == 0) {
+                    yield resetStackAfterBranchOrReturn(joins, index + 1, sp - 1);
+                } else {
+                    throw SqueakException.create("Not a bytecode:", b);
+                }
+            }
+            case 0x5F -> 0;
+            case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, //
+                0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F -> {
+                final int numArguments = code.getSqueakClass().getImage().getSpecialSelectorNumArgs(b - 96);
+                yield sp - numArguments;
+            }
+            case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F -> sp + 0;
+            case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F -> sp - 1;
+            case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF -> sp - 2;
+            case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> {
+                final int delta = JumpBytecodes.calculateShortOffset(b);
+                yield jumpAndResetStackAfterBranchOrReturn(joins, index + 1, sp + 0, delta);
+            }
+            case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> {
+                final int delta = JumpBytecodes.calculateShortOffset(b);
+                yield jumpAndResetStackAfterBranchOrReturn(joins, index + 1, sp - 1, delta);
+            }
+            case 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7 -> sp - 1;
+            case 0xD8 -> sp - 1;
+            case 0xD9 -> sp - 1;
+            case 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF -> throw SqueakException.create("Not a bytecode:", b);
+            case 0xE0 -> decodeStackPointer(code, joins, index, sp, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB, numExtB);
+            case 0xE1 -> {
+                final int byteValue = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
+                yield decodeStackPointer(code, joins, index, sp, extBytes + 2, extA, numExtB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue, numExtB + 1);
+            }
+            case 0xE2, 0xE3, 0xE4, 0xE5 -> sp + 1;
+            case 0xE6 -> throw SqueakException.create("Not a bytecode:", b);
+            case 0xE7 -> {
+                final byte param = bytecode[indexWithExt + 1];
+                final int arraySize = param & 127;
+                yield sp + 1 - (param < 0 ? arraySize : 0);
+            }
+            case 0xE8, 0xE9 -> sp + 1;
+            case 0xEA -> {
+                final int byte1 = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
+                final int numArgs = (byte1 & 7) + (extB << 3);
+                yield sp - numArgs;
+            }
+            case 0xEB -> {
+                int extBValue = extB;
+                if (extBValue >= 64) {
+                    extBValue = extBValue & 63;
+                }
+                final int byte1 = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
+                final int numArgs = (byte1 & 7) + (extBValue << 3);
+                yield sp - numArgs;
+            }
+            case 0xEC -> throw SqueakException.create("Not a bytecode:", b);
+            case 0xED -> {
+                final int delta = JumpBytecodes.calculateLongExtendedOffset(bytecode[indexWithExt + 1], extB);
+                yield jumpAndResetStackAfterBranchOrReturn(joins, index + 2 + extBytes, sp + 0, delta);
+            }
+            case 0xEE, 0xEF -> {
+                final int delta = JumpBytecodes.calculateLongExtendedOffset(bytecode[indexWithExt + 1], extB);
+                yield jumpAndResetStackAfterBranchOrReturn(joins, index + 2 + extBytes, sp - 1, delta);
+            }
+            case 0xF0, 0xF1, 0xF2 -> sp - 1;
+            case 0xF3, 0xF4, 0xF5 -> sp + 0;
+            case 0xF6, 0xF7 -> throw SqueakException.create("Not a bytecode:", b);
+            case 0xF8 -> {
+                final int i = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
+                final int j = bytecode[indexWithExt + 2] & 31;
+                final int primitiveIndex = i + (j << 8);
+                assert 1 <= primitiveIndex && primitiveIndex < 32767 : "primitiveIndex out of range";
+                if (primitiveIndex < 1000) {
+                    yield sp + 0;
+                }
+                throw SqueakException.create("Not yet implemented for inline prim");
+            }
+            case 0xF9 -> {
+                final byte byteB = bytecode[indexWithExt + 2];
+                final int numCopied = Byte.toUnsignedInt(byteB) & 63;
+                final boolean receiverOnStack = (byteB >> 7 & 1) == 1;
+                yield sp + (receiverOnStack ? -1 : 0) - numCopied + 1;
+            }
+            case 0xFA -> {
+                final byte byteA = bytecode[indexWithExt + 1];
+                final int numCopied = (Byte.toUnsignedInt(byteA) >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
+                yield sp + 1 - numCopied;
+            }
+            case 0xFB -> sp + 1;
+            case 0xFC -> sp + 0;
+            case 0xFD -> sp - 1;
+            case 0xFE, 0xFF -> throw SqueakException.create("Not a bytecode:", b);
+            default -> throw SqueakException.create("Not a bytecode:", b);
+        };
+    }
+
+    private static int jumpAndResetStackAfterBranchOrReturn(final int[] joins, final int pc, final int sp, final int delta) {
+        if (delta < 0) {
+            assert joins[pc + delta] == sp : "bad join";
+        } else {
+            joins[pc + delta] = sp;
+        }
+        return resetStackAfterBranchOrReturn(joins, pc, sp);
+    }
+
+    private static int resetStackAfterBranchOrReturn(final int[] joins, final int pc, final int sp) {
+        if (pc < joins.length) {
+            final int spAtPC = joins[pc];
+            if (spAtPC == SP_NIL_TAG) {
+                return sp;
+            } else {
+                return spAtPC;
+            }
+        } else {
+            return sp;
         }
     }
 }

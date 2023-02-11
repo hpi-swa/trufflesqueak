@@ -23,4 +23,6 @@ public abstract class AbstractSqueakBytecodeDecoder {
     public abstract boolean hasStoreIntoTemp1AfterCallPrimitive(CompiledCodeObject code);
 
     public abstract int pcPreviousTo(CompiledCodeObject code, int pc);
+
+    public abstract int determineMaxNumStackSlots(CompiledCodeObject code);
 }

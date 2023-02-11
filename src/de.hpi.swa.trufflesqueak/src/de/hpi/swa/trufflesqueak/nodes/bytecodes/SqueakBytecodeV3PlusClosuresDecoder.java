@@ -333,4 +333,9 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             default -> throw SqueakException.create("Unknown bytecode:", b);
         };
     }
+
+    @Override
+    public int determineMaxNumStackSlots(final CompiledCodeObject code) {
+        return code.getSqueakContextSize(); // FIXME: Implement for v3
+    }
 }

@@ -383,7 +383,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         if (FrameAccess.getArgumentStartIndex() + index < args.length) {
             return args[FrameAccess.getArgumentStartIndex() + index];
         } else {
-            return NilObject.nullToNil(truffleFrame.getValue(FrameAccess.toStackSlotIndex(truffleFrame, index)));
+            return NilObject.nullToNil(FrameAccess.getSlotValue(truffleFrame, FrameAccess.toStackSlotIndex(truffleFrame, index)));
         }
     }
 
@@ -662,14 +662,19 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         for (int i = 0; i < 1 + numArgs; i++) {
             writer.writeObject(args[FrameAccess.getReceiverStartIndex() + i]);
         }
-        // Write remaining stack items
+        // Write remaining stack values
+        final int numSlots = FrameAccess.getNumStackSlots(truffleFrame);
         for (int i = numArgs; i < getCodeObject().getSqueakContextSize(); i++) {
-            final int slotIndex = FrameAccess.toStackSlotIndex(truffleFrame, i);
-            final Object stackValue = truffleFrame.getValue(slotIndex);
-            if (stackValue == null) {
+            if (i < numSlots) { // stack value stored in frame slot
+                final int slotIndex = FrameAccess.toStackSlotIndex(truffleFrame, i);
+                final Object stackValue = truffleFrame.getValue(slotIndex);
+                if (stackValue == null) {
+                    writer.writeNil();
+                } else {
+                    writer.writeObject(stackValue);
+                }
+            } else { // beyond max stack depth stack values are nil
                 writer.writeNil();
-            } else {
-                writer.writeObject(stackValue);
             }
         }
     }

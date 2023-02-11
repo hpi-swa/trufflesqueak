@@ -27,7 +27,13 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         if (index < numArgs) {
             return FrameArgumentWriteNode.getOrCreate(index);
         } else {
-            return FrameSlotWriteNodeGen.create(FrameAccess.toStackSlotIndex(frame, index));
+            final int stackSlotIndex = FrameAccess.toStackSlotIndex(frame, index);
+            final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
+            if (stackSlotIndex < numberOfSlots) {
+                return FrameSlotWriteNodeGen.create(stackSlotIndex);
+            } else {
+                return new FrameAuxiliarySlotWriteNode(frame, stackSlotIndex);
+            }
         }
     }
 
@@ -126,6 +132,19 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         @Override
         public Node deepCopy() {
             return copy();
+        }
+    }
+
+    private static class FrameAuxiliarySlotWriteNode extends FrameStackWriteNode {
+        private final int auxiliarySlotIndex;
+
+        FrameAuxiliarySlotWriteNode(final Frame frame, final int slotIndex) {
+            auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+        }
+
+        @Override
+        public void executeWrite(final Frame frame, final Object value) {
+            frame.setAuxiliarySlot(auxiliarySlotIndex, value);
         }
     }
 }

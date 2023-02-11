@@ -97,7 +97,7 @@ public final class JumpBytecodes {
         }
 
         public static ConditionalJumpOnTrueNode createLongExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final byte bytecode, final int extB) {
-            return new ConditionalJumpOnTrueNode(code, index, numBytecodes, calculateLongExtendedOffset(bytecode, extB << 8));
+            return new ConditionalJumpOnTrueNode(code, index, numBytecodes, calculateLongExtendedOffset(bytecode, extB));
         }
 
         @Override

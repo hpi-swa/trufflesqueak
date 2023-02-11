@@ -292,6 +292,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return CompiledCodeHeaderDecoder.getNeedsLargeFrame(getHeader()) ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
+    public int getMaxNumStackSlots() {
+        return getDecoder().determineMaxNumStackSlots(this);
+    }
+
     public boolean getSignFlag() {
         return CompiledCodeHeaderDecoder.getSignFlag(getHeader());
     }
@@ -457,7 +461,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             if (selectorObj != null) {
                 selector = selectorObj.asStringUnsafe();
             }
-            return className + ">>" + selector;
+            return className + ">>#" + selector;
         }
     }
 
