@@ -11,11 +11,12 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
 public final class VarHandleUtils {
-    private static final VarHandle DOUBLE = MethodHandles.byteArrayViewVarHandle(double[].class, ByteOrder.nativeOrder());
-    private static final VarHandle FLOAT = MethodHandles.byteArrayViewVarHandle(float[].class, ByteOrder.nativeOrder());
-    private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.nativeOrder());
-    private static final VarHandle LONG = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.nativeOrder());
-    private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.nativeOrder());
+    private static final VarHandle DOUBLE = MethodHandles.byteArrayViewVarHandle(double[].class, ByteOrder.LITTLE_ENDIAN);
+    private static final VarHandle FLOAT = MethodHandles.byteArrayViewVarHandle(float[].class, ByteOrder.LITTLE_ENDIAN);
+    private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
+    private static final VarHandle INT_BIG_ENDIAN = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
+    private static final VarHandle LONG = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
+    private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
 
     private VarHandleUtils() {
     }
@@ -44,8 +45,8 @@ public final class VarHandleUtils {
         return (int) INT.get(storage, byteIndex);
     }
 
-    public static int getIntReversed(final byte[] bytes, final int byteIndex) {
-        return Integer.reverseBytes(getInt(bytes, byteIndex));
+    public static int getIntReversed(final byte[] storage, final int index) {
+        return (int) INT_BIG_ENDIAN.get(storage, index * Integer.BYTES);
     }
 
     public static long getLong(final byte[] storage, final int index) {
@@ -88,8 +89,8 @@ public final class VarHandleUtils {
         INT.set(storage, byteIndex, value);
     }
 
-    public static void putIntReversed(final byte[] bytes, final int byteIndex, final int value) {
-        putInt(bytes, byteIndex, Integer.reverseBytes(value));
+    public static void putIntReversed(final byte[] storage, final int index, final int value) {
+        INT_BIG_ENDIAN.set(storage, index * Integer.BYTES, value);
     }
 
     public static void putLong(final byte[] storage, final int index, final long value) {
