@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -317,19 +315,19 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void transitionFromEmptyToChars() {
         final char[] chars = new char[getEmptyStorage()];
-        Arrays.fill(chars, CHAR_NIL_TAG);
+        ArrayUtils.fill(chars, CHAR_NIL_TAG);
         storage = chars;
     }
 
     public void transitionFromEmptyToDoubles() {
         final double[] doubles = new double[getEmptyStorage()];
-        Arrays.fill(doubles, DOUBLE_NIL_TAG);
+        ArrayUtils.fill(doubles, DOUBLE_NIL_TAG);
         storage = doubles;
     }
 
     public void transitionFromEmptyToLongs() {
         final long[] longs = new long[getEmptyStorage()];
-        Arrays.fill(longs, LONG_NIL_TAG);
+        ArrayUtils.fill(longs, LONG_NIL_TAG);
         storage = longs;
     }
 

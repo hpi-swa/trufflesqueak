@@ -525,49 +525,49 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "receiver.isByteType()")
         protected static final NativeObject doNativeBytes(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getByteStorage(), (byte) value);
+            ArrayUtils.fill(receiver.getByteStorage(), (byte) value);
             return receiver;
         }
 
         @Specialization(guards = "receiver.isShortType()")
         protected static final NativeObject doNativeShorts(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getShortStorage(), (short) value);
+            ArrayUtils.fill(receiver.getShortStorage(), (short) value);
             return receiver;
         }
 
         @Specialization(guards = "receiver.isIntType()")
         protected static final NativeObject doNativeInts(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getIntStorage(), (int) value);
+            ArrayUtils.fill(receiver.getIntStorage(), (int) value);
             return receiver;
         }
 
         @Specialization(guards = {"receiver.isIntType()"}, rewriteOn = ArithmeticException.class)
         protected static final NativeObject doNativeInts(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getIntStorage(), value.intValueExact());
+            ArrayUtils.fill(receiver.getIntStorage(), value.intValueExact());
             return receiver;
         }
 
         @Specialization(guards = {"receiver.isIntType()", "value.lessThanOrEqualTo(INTEGER_MAX)"}, replaces = "doNativeInts")
         protected static final NativeObject doNativeIntsFallback(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getIntStorage(), value.intValueExact());
+            ArrayUtils.fill(receiver.getIntStorage(), value.intValueExact());
             return receiver;
         }
 
         @Specialization(guards = "receiver.isLongType()")
         protected static final NativeObject doNativeLongs(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getLongStorage(), value);
+            ArrayUtils.fill(receiver.getLongStorage(), value);
             return receiver;
         }
 
         @Specialization(guards = {"receiver.isLongType()"}, rewriteOn = ArithmeticException.class)
         protected static final NativeObject doNativeLongs(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getLongStorage(), value.longValueExact());
+            ArrayUtils.fill(receiver.getLongStorage(), value.longValueExact());
             return receiver;
         }
 
         @Specialization(guards = {"receiver.isLongType()", "value.fitsIntoLong()"}, replaces = "doNativeLongs")
         protected static final NativeObject doNativeLongsFallback(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getLongStorage(), value.longValueExact());
+            ArrayUtils.fill(receiver.getLongStorage(), value.longValueExact());
             return receiver;
         }
     }
@@ -668,14 +668,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
         protected static final AbstractPointersObject doCopyVariablePointers(final VariablePointersObject receiver, final VariablePointersObject anotherObject) {
             receiver.copyLayoutValuesFrom(anotherObject);
-            System.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
+            ArrayUtils.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
             return receiver;
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
         protected static final AbstractPointersObject doCopyWeakPointers(final WeakVariablePointersObject receiver, final WeakVariablePointersObject anotherObject) {
             receiver.copyLayoutValuesFrom(anotherObject);
-            System.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
+            ArrayUtils.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
             return receiver;
         }
 

@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -262,7 +260,7 @@ public final class ArrayObjectNodes {
         protected static final Object[] doArrayOfObjects(final Object first, final ArrayObject obj) {
             final Object[] result = new Object[1 + obj.getObjectLength()];
             result[0] = first;
-            System.arraycopy(obj.getObjectStorage(), 0, result, 1, obj.getObjectLength());
+            ArrayUtils.arraycopy(obj.getObjectStorage(), 0, result, 1, obj.getObjectLength());
             return result;
         }
 
@@ -346,12 +344,12 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isObjectType()")
         protected final void doArrayOfObjects(final Object[] target, final ArrayObject obj) {
-            System.arraycopy(obj.getObjectStorage(), 0, target, offset, obj.getObjectLength());
+            ArrayUtils.arraycopy(obj.getObjectStorage(), 0, target, offset, obj.getObjectLength());
         }
 
         @Specialization(guards = "obj.isEmptyType()")
         protected final void doEmptyArray(final Object[] target, final ArrayObject obj) {
-            Arrays.fill(target, offset, offset + obj.getEmptyLength(), NilObject.SINGLETON);
+            ArrayUtils.fill(target, offset, offset + obj.getEmptyLength(), NilObject.SINGLETON);
         }
 
         @Specialization(guards = "obj.isBooleanType()")

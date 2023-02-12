@@ -105,10 +105,10 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         object1 = anotherObject.object1;
         object2 = anotherObject.object2;
         if (anotherObject.primitiveExtension != null) {
-            System.arraycopy(anotherObject.primitiveExtension, 0, primitiveExtension, 0, anotherObject.primitiveExtension.length);
+            ArrayUtils.arraycopy(anotherObject.primitiveExtension, 0, primitiveExtension, 0, anotherObject.primitiveExtension.length);
         }
         if (anotherObject.objectExtension != null) {
-            System.arraycopy(anotherObject.objectExtension, 0, objectExtension, 0, anotherObject.objectExtension.length);
+            ArrayUtils.arraycopy(anotherObject.objectExtension, 0, objectExtension, 0, anotherObject.objectExtension.length);
         }
     }
 

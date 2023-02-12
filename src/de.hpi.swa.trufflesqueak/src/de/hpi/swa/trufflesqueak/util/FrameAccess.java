@@ -322,7 +322,7 @@ public final class FrameAccess {
         assert receiverAndArguments[0] != null : "Receiver should never be null";
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
-        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
+        ArrayUtils.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
         return frameArguments;
     }
 
@@ -394,7 +394,7 @@ public final class FrameAccess {
         assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
-        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
+        ArrayUtils.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
         return frameArguments;
     }
 
@@ -409,7 +409,7 @@ public final class FrameAccess {
         arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         arguments[ArgumentIndicies.RECEIVER.ordinal()] = closure.getReceiver();
         assert arguments[ArgumentIndicies.RECEIVER.ordinal()] != null;
-        System.arraycopy(copied, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs, numCopied);
+        ArrayUtils.arraycopy(copied, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs, numCopied);
         return arguments;
     }
 

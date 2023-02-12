@@ -452,7 +452,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 try {
                     System.arraycopy(repl.getObjectStorage(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
-                } catch (final IndexOutOfBoundsException e) {
+                } catch (final Throwable e) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
