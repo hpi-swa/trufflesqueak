@@ -68,7 +68,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     break;
                 } else {
                     current = (ContextObject) sender;
-                    if (current.getClosure() == null && current.getCodeObject().isUnwindMarked()) {
+                    if (!current.hasClosure() && current.getCodeObject().isUnwindMarked()) {
                         return current;
                     }
                 }
@@ -202,7 +202,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             ContextObject context = receiver;
             while (context.hasMaterializedSender()) {
                 if (context.getCodeObject().isExceptionHandlerMarked()) {
-                    assert context.getClosure() == null;
+                    assert !context.hasClosure();
                     return context;
                 }
                 final AbstractSqueakObject sender = context.getMaterializedSender();

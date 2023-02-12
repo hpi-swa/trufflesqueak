@@ -40,24 +40,24 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
  * TruffleSqueak frame argument layout.
  *
  * <pre>
- *                            +-------------------------------+
- * SENDER_OR_SENDER_MARKER -> | FrameMarker: virtual sender   |
- *                            | ContextObject: materialized   |
- *                            | nil: terminated / top-level   |
- *                            +-------------------------------+
- * CLOSURE_OR_NULL         -> | BlockClosure / null           |
- *                            +-------------------------------+
- * RECEIVER                -> | Object                        |
- *                            +-------------------------------+
- * ARGUMENTS_START         -> | argument0                     |
- *                            | argument1                     |
- *                            | ...                           |
- *                            | argument(nArgs-1)             |
- *                            | copiedValue1                  |
- *                            | copiedValue2                  |
- *                            | ...                           |
- *                            | copiedValue(nCopied-1)        |
- *                            +-------------------------------+
+ *                            +---------------------------------+
+ * SENDER_OR_SENDER_MARKER -> | FrameMarker: virtual sender     |
+ *                            | ContextObject: materialized     |
+ *                            | nil: terminated / top-level     |
+ *                            +---------------------------------+
+ * CLOSURE_OR_NULL         -> | BlockClosure / null / OSR Frame |
+ *                            +---------------------------------+
+ * RECEIVER                -> | Object                          |
+ *                            +---------------------------------+
+ * ARGUMENTS_START         -> | argument0                       |
+ *                            | argument1                       |
+ *                            | ...                             |
+ *                            | argument(nArgs-1)               |
+ *                            | copiedValue1                    |
+ *                            | copiedValue2                    |
+ *                            | ...                             |
+ *                            | copiedValue(nCopied-1)          |
+ *                            +---------------------------------+
  * </pre>
  *
  * TruffleSqueak frame slot layout.

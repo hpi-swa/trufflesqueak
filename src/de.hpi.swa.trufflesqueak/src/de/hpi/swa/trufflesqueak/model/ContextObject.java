@@ -335,7 +335,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void removeClosure() {
-        if (getClosure() != null) {
+        if (hasClosure()) {
             throw SqueakException.create("Not yet implemented/support");
         }
     }
@@ -449,8 +449,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         if (hasMethod()) {
-            final BlockClosureObject closure = getClosure();
-            if (closure != null) {
+            if (hasClosure()) {
                 return "CTX [] in " + getCodeObject() + " @" + Integer.toHexString(hashCode());
             } else {
                 return "CTX " + getCodeObject() + " @" + Integer.toHexString(hashCode());
