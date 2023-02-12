@@ -32,7 +32,7 @@ public final class ContextScope implements TruffleObject {
     private static final String METHOD = "method";
     private static final String CLOSURE_OR_NIL = "closureOrNil";
     private static final String RECEIVER = "receiver";
-    private static final String[] ALL_FIELDS = new String[]{SENDER, PC, STACKP, METHOD, CLOSURE_OR_NIL, RECEIVER};
+    private static final String[] ALL_FIELDS = {SENDER, PC, STACKP, METHOD, CLOSURE_OR_NIL, RECEIVER};
 
     private final Frame frame;
 

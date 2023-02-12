@@ -366,7 +366,7 @@ public final class PushBytecodes {
 
     @NodeInfo(cost = NodeCost.NONE)
     public abstract static class PushLiteralVariableNode extends AbstractPushNode {
-        private static final String[] READONLY_CLASSES = new String[]{"ClassBinding", "ReadOnlyVariableBinding"};
+        private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
         protected final Object literal;
 
         private PushLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object literal) {

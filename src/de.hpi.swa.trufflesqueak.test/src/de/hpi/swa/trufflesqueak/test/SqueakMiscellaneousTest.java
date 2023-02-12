@@ -108,9 +108,8 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
 
     @Test
     public void testSource() {
-        final Object[] literals = new Object[]{14548994L, NilObject.SINGLETON, NilObject.SINGLETON}; // header
-                                                                                                     // with
-        // numTemp=55
+        // header with numTemp=55
+        final Object[] literals = {14548994L, NilObject.SINGLETON, NilObject.SINGLETON};
         final CompiledCodeObject code = makeMethod(literals, 0x70, 0x68, 0x10, 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, 0xC9, 0x7C);
         final CharSequence source = SqueakBytecodeV3PlusClosuresDecoder.SINGLETON.decodeToString(code);
         assertEquals(String.join("\n",
@@ -126,7 +125,7 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
 
     @Test
     public void testSourceAllBytecodes() {
-        final Object[] literals = new Object[]{17235971L, image.asByteString("someSelector"), image.asByteString("someOtherSelector"), 63, nilClassBinding};
+        final Object[] literals = {17235971L, image.asByteString("someSelector"), image.asByteString("someOtherSelector"), 63, nilClassBinding};
         final CompiledCodeObject code = makeMethod(literals,
                         139, 31, 0,
                         31, 32, 67, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,

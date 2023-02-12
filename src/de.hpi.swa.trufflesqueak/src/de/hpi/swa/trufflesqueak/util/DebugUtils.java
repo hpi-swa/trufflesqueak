@@ -153,7 +153,7 @@ public final class DebugUtils {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final boolean isCIBuild = System.getenv().containsKey("GITHUB_ACTIONS");
         final int[] depth = new int[1];
-        final Object[] lastSender = new Object[]{null};
+        final Object[] lastSender = {null};
         final PrintWriter err = SqueakImageContext.getSlow().getError();
         err.println("== Truffle stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(frameInstance -> {

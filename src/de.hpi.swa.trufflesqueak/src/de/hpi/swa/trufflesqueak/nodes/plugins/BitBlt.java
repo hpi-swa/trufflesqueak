@@ -81,7 +81,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#default8To32Table */
-    @CompilationFinal(dimensions = 1) private static final long[] DEFAULT_8_TO_32_TABLE = new long[]{
+    @CompilationFinal(dimensions = 1) private static final long[] DEFAULT_8_TO_32_TABLE = {
                     0x0L, 0xFF000001L, 0xFFFFFFFFL, 0xFF808080L, 0xFFFF0000L, 0xFF00FF00L, 0xFF0000FFL, 0xFF00FFFFL,
                     0xFFFFFF00L, 0xFFFF00FFL, 0xFF202020L, 0xFF404040L, 0xFF606060L, 0xFF9F9F9FL, 0xFFBFBFBFL, 0xFFDFDFDFL,
                     0xFF080808L, 0xFF101010L, 0xFF181818L, 0xFF282828L, 0xFF303030L, 0xFF383838L, 0xFF484848L, 0xFF505050L,
@@ -134,8 +134,8 @@ public final class BitBlt {
     private int cmMask;
 
     /** Used in {@link BitBlt#setupColorMasksFromto}. */
-    private final int[] cmMaskTableTemplate = new int[]{0, 0, 0, 0};
-    private final int[] cmShiftTableTemplate = new int[]{0, 0, 0, 0};
+    private final int[] cmMaskTableTemplate = {0, 0, 0, 0};
+    private final int[] cmShiftTableTemplate = {0, 0, 0, 0};
 
     private int[] cmMaskTable;
     private int[] cmShiftTable;
@@ -158,14 +158,14 @@ public final class BitBlt {
     private int destX;
     private int destY;
     @CompilationFinal(dimensions = 1) private static final int[] DITHER_8_LOOKUP = new int[4096];
-    @CompilationFinal(dimensions = 1) private static final int[] DITHER_MATRIX_4X4 = new int[]{
+    @CompilationFinal(dimensions = 1) private static final int[] DITHER_MATRIX_4X4 = {
                     0, 8, 2, 10,
                     12, 4, 14, 6,
                     3, 11, 1, 9,
                     15, 7, 13, 5
     };
-    @CompilationFinal(dimensions = 1) private static final int[] DITHER_THRESHOLDS_16 = new int[]{0, 2, 4, 6, 8, 12, 14, 16};
-    @CompilationFinal(dimensions = 1) private static final int[] DITHER_VALUES_16 = new int[]{
+    @CompilationFinal(dimensions = 1) private static final int[] DITHER_THRESHOLDS_16 = {0, 2, 4, 6, 8, 12, 14, 16};
+    @CompilationFinal(dimensions = 1) private static final int[] DITHER_VALUES_16 = {
                     0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                     15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30
     };
@@ -183,7 +183,7 @@ public final class BitBlt {
     @SuppressWarnings("unused") private boolean isWarping;
     private long mask1;
     private long mask2;
-    @CompilationFinal(dimensions = 1) private static final int[] MASK_TABLE = new int[]{
+    @CompilationFinal(dimensions = 1) private static final int[] MASK_TABLE = {
                     0, 1, 3, 0, 15, 31, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 65535,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1
     };

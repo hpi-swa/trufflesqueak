@@ -126,7 +126,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
      * in "NEED_UNWRAP" state (expecting to be fed new input), however, both engines refuse to
      * produce new data. TLS 1.3 details: https://tls13.ulfheim.net/
      */
-    private static final String[] ENABLED_PROTOCOLS = new String[]{"TLSv1.2"};
+    private static final String[] ENABLED_PROTOCOLS = {"TLSv1.2"};
 
     private static final ByteBuffer EMPTY_BUFFER = createEmptyImmutableBuffer();
 

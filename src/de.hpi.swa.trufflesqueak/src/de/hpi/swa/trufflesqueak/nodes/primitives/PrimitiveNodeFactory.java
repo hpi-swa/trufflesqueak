@@ -76,7 +76,7 @@ public final class PrimitiveNodeFactory {
     private static final EconomicMap<String, EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>>> PLUGIN_MAP = EconomicMap.create();
 
     static {
-        final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
+        final AbstractPrimitiveFactoryHolder[] indexPrimitives = {
                         new ArithmeticPrimitives(),
                         new ArrayStreamPrimitives(),
                         new BlockClosurePrimitives(),
@@ -87,7 +87,7 @@ public final class PrimitiveNodeFactory {
                         new StoragePrimitives()};
         fillPrimitiveTable(indexPrimitives);
 
-        final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
+        final AbstractPrimitiveFactoryHolder[] plugins = {
                         new B2DPlugin(),
                         new BitBltPlugin(),
                         new BMPReadWriterPlugin(),

@@ -248,7 +248,7 @@ public final class B2D {
     private static final int GW_TIME_NEXT_GET_ENTRY = 94;
 
     /* BalloonEnginePlugin>>#circleCosTable */
-    @CompilationFinal(dimensions = 1) private static final double[] CIRCLE_COS_TABLE = new double[]{1.0, 0.98078528040323, 0.923879532511287, 0.831469612302545,
+    @CompilationFinal(dimensions = 1) private static final double[] CIRCLE_COS_TABLE = {1.0, 0.98078528040323, 0.923879532511287, 0.831469612302545,
                     0.7071067811865475, 0.555570233019602, 0.38268343236509, 0.1950903220161286,
                     0.0, -0.1950903220161283, -0.3826834323650896, -0.555570233019602,
                     -0.707106781186547, -0.831469612302545, -0.9238795325112865, -0.98078528040323,
@@ -259,7 +259,7 @@ public final class B2D {
                     1.0};
 
     /* BalloonEnginePlugin>>#circleSinTable */
-    @CompilationFinal(dimensions = 1) private static final double[] CIRCLE_SIN_TABLE = new double[]{0.0, 0.1950903220161282, 0.3826834323650897, 0.555570233019602,
+    @CompilationFinal(dimensions = 1) private static final double[] CIRCLE_SIN_TABLE = {0.0, 0.1950903220161282, 0.3826834323650897, 0.555570233019602,
                     0.707106781186547, 0.831469612302545, 0.923879532511287, 0.98078528040323,
                     1.0, 0.98078528040323, 0.923879532511287, 0.831469612302545,
                     0.7071067811865475, 0.555570233019602, 0.38268343236509, 0.1950903220161286,
@@ -270,10 +270,10 @@ public final class B2D {
                     0.0};
 
     /* BalloonEngineBase>>#smallSqrtTable */
-    @CompilationFinal(dimensions = 1) private static final int[] SMALL_SQRT_TABLE = new int[]{0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6};
+    @CompilationFinal(dimensions = 1) private static final int[] SMALL_SQRT_TABLE = {0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6};
 
     /* BalloonEnginePlugin>>#rShiftTable */
-    @CompilationFinal(dimensions = 1) private static final int[] R_SHIFT_TABLE = new int[]{0, 5, 4, 0, 3, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1};
+    @CompilationFinal(dimensions = 1) private static final int[] R_SHIFT_TABLE = {0, 5, 4, 0, 3, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1};
 
     /* Variables */
     private int aetBufferIndex;
