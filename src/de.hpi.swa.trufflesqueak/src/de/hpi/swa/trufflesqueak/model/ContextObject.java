@@ -676,5 +676,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                 writer.writeNil();
             }
         }
+        assert FrameAccess.hasUnusedAuxiliarySlots(truffleFrame) : "Auxiliary slots are used by not (yet) persisted";
     }
 }

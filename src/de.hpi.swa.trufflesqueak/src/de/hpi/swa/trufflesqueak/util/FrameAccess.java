@@ -296,6 +296,15 @@ public final class FrameAccess {
         }
     }
 
+    public static boolean hasUnusedAuxiliarySlots(final Frame frame) {
+        for (final int slotIndex : frame.getFrameDescriptor().getAuxiliarySlots().values()) {
+            if (frame.getAuxiliarySlot(slotIndex) != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static void terminate(final Frame frame) {
         setInstructionPointer(frame, ContextObject.NIL_PC_VALUE);
         setSender(frame, NilObject.SINGLETON);
