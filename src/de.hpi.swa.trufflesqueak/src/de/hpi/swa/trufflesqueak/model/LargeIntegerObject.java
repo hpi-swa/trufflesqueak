@@ -320,15 +320,19 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return reduceIfPossible(integer.add(BigInteger.valueOf(b)));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object add(final SqueakImageContext image, final long lhs, final long rhs) {
         /* Inlined version of Math.addExact(x, y) with large integer fallback. */
         final long result = lhs + rhs;
         // HD 2-12 Overflow iff both arguments have the opposite sign of the result
         if (((lhs ^ result) & (rhs ^ result)) < 0) {
-            return new LargeIntegerObject(image, BigInteger.valueOf(lhs).add(BigInteger.valueOf(rhs)));
+            return addLarge(image, lhs, rhs);
         }
         return result;
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    private static LargeIntegerObject addLarge(final SqueakImageContext image, final long lhs, final long rhs) {
+        return new LargeIntegerObject(image, BigInteger.valueOf(lhs).add(BigInteger.valueOf(rhs)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -341,16 +345,20 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return reduceIfPossible(integer.subtract(BigInteger.valueOf(b)));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object subtract(final SqueakImageContext image, final long lhs, final long rhs) {
         /* Inlined version of Math.subtractExact(x, y) with large integer fallback. */
         final long result = lhs - rhs;
         // HD 2-12 Overflow iff the arguments have different signs and
         // the sign of the result is different than the sign of x
         if (((lhs ^ rhs) & (lhs ^ result)) < 0) {
-            return new LargeIntegerObject(image, BigInteger.valueOf(lhs).subtract(BigInteger.valueOf(rhs)));
+            return subtractLarge(image, lhs, rhs);
         }
         return result;
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    private static LargeIntegerObject subtractLarge(final SqueakImageContext image, final long lhs, final long rhs) {
+        return new LargeIntegerObject(image, BigInteger.valueOf(lhs).subtract(BigInteger.valueOf(rhs)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
