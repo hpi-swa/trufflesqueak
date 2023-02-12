@@ -133,13 +133,6 @@ public final class ArrayUtils {
         return newObjects;
     }
 
-    public static Object[] copyWithLast(final Object[] objects, final Object last) {
-        final int numObjects = objects.length;
-        final Object[] newObjects = copyOf(objects, numObjects + 1);
-        newObjects[numObjects] = last;
-        return newObjects;
-    }
-
     public static void fill(final byte[] array, final byte value) {
         try {
             Arrays.fill(array, value);

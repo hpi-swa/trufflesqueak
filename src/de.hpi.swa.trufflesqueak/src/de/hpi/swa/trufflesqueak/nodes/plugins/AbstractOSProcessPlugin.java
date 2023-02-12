@@ -72,7 +72,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
             return sysCallObject;
         }
 
-        protected Object createNFISignature(final Env env, final String functionSignature) {
+        private static Object createNFISignature(final Env env, final String functionSignature) {
             final Source source = Source.newBuilder("nfi", functionSignature, "signature").build();
             return env.parseInternal(source).call();
         }

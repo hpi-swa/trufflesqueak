@@ -20,7 +20,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -79,7 +78,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     private static final String EVAL_SOURCE_NAME = "<eval>";
     private static final String INSTRUMENT_ID = "trufflesqueak-polyglot-instrument";
     private static final String INSTRUMENT_NAME = "TruffleSqueak Polyglot Instrument";
-    @CompilationFinal private static com.oracle.truffle.api.instrumentation.TruffleInstrument.Env instrumentEnv;
+    @CompilationFinal private static TruffleInstrument.Env instrumentEnv;
 
     /**
      * TODO: use @CachedLibrary("receiver") instead of @CachedLibrary(limit = "2") in this plugin
@@ -126,7 +125,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         final String[] argumentNames, final Object[] argumentValues) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String sourceText = sourceObject.asStringUnsafe();
-            final com.oracle.truffle.api.TruffleLanguage.Env env = SqueakImageContext.get(node).env;
+            final TruffleLanguage.Env env = SqueakImageContext.get(node).env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
@@ -200,7 +199,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object evalFile(final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String pathString = path.asStringUnsafe();
-            final com.oracle.truffle.api.TruffleLanguage.Env env = getContext().env;
+            final TruffleLanguage.Env env = getContext().env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
@@ -2028,7 +2027,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"value.isByteType()"})
         protected final Object doAddToHostClassPath(final Object receiver, final NativeObject value) {
             final String path = value.asStringUnsafe();
-            final com.oracle.truffle.api.TruffleLanguage.Env env = getContext().env;
+            final TruffleLanguage.Env env = getContext().env;
             try {
                 env.addToHostClassPath(env.getPublicTruffleFile(path));
                 return receiver;
@@ -2244,7 +2243,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @TruffleBoundary
-    private static String findLanguageByMimeType(final Env env, final String mimeType) {
+    private static String findLanguageByMimeType(final TruffleLanguage.Env env, final String mimeType) {
         final Map<String, LanguageInfo> languages = env.getPublicLanguages();
         for (final String registeredMimeType : languages.keySet()) {
             if (mimeType.equals(registeredMimeType)) {
@@ -2261,7 +2260,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     private static com.oracle.truffle.api.instrumentation.TruffleInstrument.Env getInstrumentEnv() {
         if (instrumentEnv == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final Env env = SqueakImageContext.getSlow().env;
+            final TruffleLanguage.Env env = SqueakImageContext.getSlow().env;
             instrumentEnv = env.lookup(env.getInstruments().get(INSTRUMENT_ID), PolyglotInstrument.class).getInstrumentEnv();
         }
         return instrumentEnv;

@@ -36,7 +36,7 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
         variablePart = Arrays.copyOfRange(pointers, instSize, pointers.length);
     }
 
-    public void become(final AbstractVariablePointersObject other) {
+    public final void become(final AbstractVariablePointersObject other) {
         becomeLayout(other);
         final Object[] otherVariablePart = other.variablePart;
         other.variablePart = variablePart;

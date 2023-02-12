@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -31,16 +30,11 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
-@GenerateUncached
 public abstract class SqueakObjectNewNode extends AbstractNode {
     public static final int NEW_CACHE_SIZE = 6;
 
     public static SqueakObjectNewNode create() {
         return SqueakObjectNewNodeGen.create();
-    }
-
-    public static SqueakObjectNewNode getUncached() {
-        return SqueakObjectNewNodeGen.getUncached();
     }
 
     public final AbstractSqueakObjectWithClassAndHash execute(final SqueakImageContext image, final ClassObject classObject) {
