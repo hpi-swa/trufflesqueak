@@ -126,7 +126,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
             for (int i = 0; i < ints.length; i++) {
-                ints[i] = Float.floatToRawIntBits((float) (Float.intBitsToFloat(ints[i]) / scalarValue));
+                ints[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints[i]) / (float) scalarValue);
             }
             return receiver;
         }
@@ -232,7 +232,29 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     }
 
-    // TODO: implement primitiveNormalize
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveNormalize")
+    public abstract static class PrimFloatArrayNormalizeNode extends AbstractPrimitiveNode {
+
+        @Specialization(guards = {"receiver.isIntType()"})
+        protected static final NativeObject doNormalize(final NativeObject receiver) {
+            final int[] ints = receiver.getIntStorage();
+            final int length = ints.length;
+            float len = 0.0F;
+            for (int i = 0; i < length; i++) {
+                final float value = Float.intBitsToFloat(ints[i]);
+                len += value * value;
+            }
+            if (len <= 0.0F) {
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
+            final float sqrtLen = (float) Math.sqrt(len);
+            for (int i = 0; i < length; i++) {
+                ints[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints[i]) / sqrtLen);
+            }
+            return receiver;
+        }
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubFloatArray")

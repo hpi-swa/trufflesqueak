@@ -56,7 +56,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doAdd(final NativeObject receiver, final double scalarValue) {
             final long[] longs = receiver.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
-                longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) + (float) scalarValue);
+                longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) + scalarValue);
             }
             return receiver;
         }
@@ -79,7 +79,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
         protected static final double doDouble(final NativeObject receiver, final long index, final double value) {
-            receiver.setLong(index - 1, Double.doubleToRawLongBits((float) value));
+            receiver.setLong(index - 1, Double.doubleToRawLongBits(value));
             return value;
         }
 
@@ -124,7 +124,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
             final long[] longs = receiver.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
-                longs[i] = Double.doubleToRawLongBits((float) (Double.longBitsToDouble(longs[i]) / scalarValue));
+                longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) / scalarValue);
             }
             return receiver;
         }
@@ -223,7 +223,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doMul(final NativeObject receiver, final double scalarValue) {
             final long[] longs = receiver.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
-                longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) * (float) scalarValue);
+                longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) * scalarValue);
             }
             return receiver;
         }
@@ -231,9 +231,27 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveNormalize") // TODO: implement primitive
+    @SqueakPrimitive(names = "primitiveNormalize")
     public abstract static class PrimFloat64ArrayNormalizeNode extends AbstractPrimitiveNode {
 
+        @Specialization(guards = {"receiver.isLongType()"})
+        protected static final NativeObject doNormalize(final NativeObject receiver) {
+            final long[] words = receiver.getLongStorage();
+            final int length = words.length;
+            double len = 0.0D;
+            for (int i = 0; i < length; i++) {
+                final double value = Double.longBitsToDouble(words[i]);
+                len += value * value;
+            }
+            if (len <= 0.0D) {
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
+            final double sqrtLen = Math.sqrt(len);
+            for (int i = 0; i < length; i++) {
+                words[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(words[i]) / sqrtLen);
+            }
+            return receiver;
+        }
     }
 
     @GenerateNodeFactory
@@ -261,7 +279,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doSub(final NativeObject receiver, final double scalarValue) {
             final long[] longs = receiver.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
-                longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) - (float) scalarValue);
+                longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) - scalarValue);
             }
             return receiver;
         }
