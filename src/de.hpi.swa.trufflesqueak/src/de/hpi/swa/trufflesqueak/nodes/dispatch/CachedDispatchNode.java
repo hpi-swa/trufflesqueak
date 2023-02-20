@@ -90,7 +90,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
     protected static final class CachedDispatchPrimitiveNode extends CachedDispatchNode {
         private final int argumentCount;
-        private final PrimitiveFailedCounter failureCounter = new PrimitiveFailedCounter();
+        private final PrimitiveFailedCounter failureCounter;
 
         @Child private AbstractPrimitiveNode primitiveNode;
 
@@ -98,19 +98,25 @@ public abstract class CachedDispatchNode extends AbstractNode {
             super(method);
             this.argumentCount = argumentCount;
             this.primitiveNode = primitiveNode;
+            failureCounter = new PrimitiveFailedCounter(primitiveNode);
         }
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            try {
-                return primitiveNode.execute(frame);
-            } catch (final PrimitiveFailed pf) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                if (failureCounter.shouldNoLongerSendEagerly()) {
-                    return replace(AbstractCachedDispatchMethodNode.create(frame, argumentCount, method)).execute(frame);
-                } else {
-                    return slowPathSendToFallbackCode(frame);
+            if (failureCounter.getAssumption().isValid()) {
+                try {
+                    return primitiveNode.execute(frame);
+                } catch (final PrimitiveFailed pf) {
+                    CompilerDirectives.transferToInterpreter();
+                    if (failureCounter.shouldRewriteToCall()) {
+                        return execute(frame);
+                    } else {
+                        return slowPathSendToFallbackCode(frame);
+                    }
                 }
+            } else {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return replace(AbstractCachedDispatchMethodNode.create(frame, argumentCount, method)).execute(frame);
             }
         }
 

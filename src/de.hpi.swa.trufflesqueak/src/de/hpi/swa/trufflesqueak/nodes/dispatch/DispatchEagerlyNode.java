@@ -42,16 +42,16 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     public abstract Object executeDispatch(VirtualFrame frame, CompiledCodeObject method, Object[] receiverAndArguments);
 
     @Specialization(guards = {"cachedMethod.hasPrimitive()", "method == cachedMethod", "primitiveNode != null"}, //
-                    limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, rewriteOn = PrimitiveFailed.class)
+                    limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()", "failureCounter.getAssumption()"}, rewriteOn = PrimitiveFailed.class)
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached("method") final CompiledCodeObject cachedMethod,
                     @Cached("getOrCreateIndexedOrNamed(cachedMethod, PROVIDED_ON_EXECUTE)") final AbstractPrimitiveNode primitiveNode,
-                    @Cached final PrimitiveFailedCounter failureCounter) {
+                    @Cached("create(primitiveNode)") final PrimitiveFailedCounter failureCounter) {
         try {
             return primitiveNode.executeWithArguments(frame, receiverAndArguments);
         } catch (final PrimitiveFailed pf) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (failureCounter.shouldNoLongerSendEagerly()) {
+            CompilerDirectives.transferToInterpreter();
+            if (failureCounter.shouldRewriteToCall()) {
                 throw pf; // Rewrite specialization.
             } else {
                 // Slow path send to fallback code.
