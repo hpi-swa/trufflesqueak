@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
-import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -160,13 +159,12 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            try {
-                method.getDoesNotNeedSenderAssumption().check();
-            } catch (final InvalidAssumptionException e) {
+            if (method.getDoesNotNeedSenderAssumption().isValid()) {
+                return callNode.call(createFrameArguments(frame, getContextOrMarkerNode.execute(frame)));
+            } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new CachedDispatchMethodWithSenderNode(frame, receiverAndArgumentsNodes.length - 1, method)).execute(frame);
             }
-            return callNode.call(createFrameArguments(frame, getContextOrMarkerNode.execute(frame)));
         }
     }
 
@@ -209,14 +207,13 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            try {
-                method.getDoesNotNeedSenderAssumption().check();
-            } catch (final InvalidAssumptionException e) {
+            if (method.getDoesNotNeedSenderAssumption().isValid()) {
+                return callNode.call(createFrameArgumentsForDNUNode.execute(frame, getContextOrMarkerNode.execute(frame)));
+            } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new CachedDispatchDoesNotUnderstandWithSenderNode(frame, createFrameArgumentsForDNUNode.getSelector(), createFrameArgumentsForDNUNode.getArgumentCount(),
                                 method)).execute(frame);
             }
-            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, getContextOrMarkerNode.execute(frame)));
         }
     }
 
@@ -262,14 +259,13 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            try {
-                method.getDoesNotNeedSenderAssumption().check();
-            } catch (final InvalidAssumptionException e) {
+            if (method.getDoesNotNeedSenderAssumption().isValid()) {
+                return callNode.call(createFrameArgumentsForOAMNode.execute(frame, object, getContextOrMarkerNode.execute(frame)));
+            } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new CachedDispatchObjectAsMethodWithSenderNode(frame, createFrameArgumentsForOAMNode.getSelector(), createFrameArgumentsForOAMNode.getArgumentCount(), object,
                                 method)).execute(frame);
             }
-            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, object, getContextOrMarkerNode.execute(frame)));
         }
     }
 
