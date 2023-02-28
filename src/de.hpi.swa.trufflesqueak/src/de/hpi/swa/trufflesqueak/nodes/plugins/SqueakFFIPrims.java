@@ -279,7 +279,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveLoadSymbolFromModule")
     protected abstract static class PrimLoadSymbolFromModuleNode extends AbstractFFIPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"moduleSymbol.isByteType()", "module.isByteType()"})
-        protected final Object doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
+        protected final NativeObject doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             final SqueakImageContext image = getContext();
             final String moduleSymbolName = moduleSymbol.asStringUnsafe();
@@ -610,22 +610,15 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSignedInt64AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
-        protected static final Object doAtPut(final NativeObject byteArray, final long byteOffsetLong, final long value) {
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffsetLong, final long value) {
             VarHandleUtils.putLongIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, value);
             return value;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "inSignedBounds(value, MAX_VALUE_SIGNED_8)"})
-        @ExplodeLoop
-        protected static final Object doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] targetBytes = byteArray.getByteStorage();
-            final byte[] sourceBytes = value.getBytes();
-            final int numSourceBytes = sourceBytes.length;
-            for (int i = 0; i < 8; i++) {
-                targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
-            }
+        protected static final LargeIntegerObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+            atPutNativeLarge(byteArray, byteOffsetLong, value);
             return value;
         }
     }
@@ -729,23 +722,27 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimUnsignedInt64AtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "value >= 0"})
-        protected static final Object doAtPut(final NativeObject byteArray, final long byteOffsetLong, final long value) {
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffsetLong, final long value) {
             VarHandleUtils.putLongIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, value);
             return value;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "inUnsignedBounds(value)"})
-        @ExplodeLoop
-        protected static final Object doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] targetBytes = byteArray.getByteStorage();
-            final byte[] sourceBytes = value.getBytes();
-            final int numSourceBytes = sourceBytes.length;
-            for (int i = 0; i < 8; i++) {
-                targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
-            }
+        protected static final LargeIntegerObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+            atPutNativeLarge(byteArray, byteOffsetLong, value);
             return value;
+        }
+    }
+
+    @ExplodeLoop
+    private static void atPutNativeLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+        final int byteOffset = (int) byteOffsetLong - 1;
+        final byte[] targetBytes = byteArray.getByteStorage();
+        final byte[] sourceBytes = value.getBytes();
+        final int numSourceBytes = sourceBytes.length;
+        for (int i = 0; i < 8; i++) {
+            targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
         }
     }
 
