@@ -428,32 +428,40 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 17)
     protected abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization
-        protected final Object doLong(final long receiver, final long arg,
-                        @Cached final ConditionProfile isPositiveProfile,
-                        @Cached final ConditionProfile isLShiftLongOverflowProfile,
-                        @Cached final ConditionProfile isArgInLongSizeRangeProfile) {
-            if (isPositiveProfile.profile(arg >= 0)) {
-                if (isLShiftLongOverflowProfile.profile(Long.numberOfLeadingZeros(receiver) - 1 < arg)) {
-                    /*
-                     * -1 in check needed, because we do not want to shift a positive long into
-                     * negative long (most significant bit indicates positive/negative).
-                     */
-                    return LargeIntegerObject.shiftLeftPositive(getContext(), receiver, (int) arg);
-                } else {
-                    return receiver << arg;
-                }
-            } else {
-                if (isArgInLongSizeRangeProfile.profile(-Long.SIZE < arg)) {
-                    /*
-                     * The result of a right shift can only become smaller than the receiver and 0
-                     * or -1 at minimum, so no BigInteger needed here.
-                     */
-                    return receiver >> -arg;
-                } else {
-                    return receiver >= 0 ? 0L : -1L;
-                }
-            }
+        @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
+        protected static final long doLongPositive(final long receiver, final long arg) {
+            return receiver << arg;
+        }
+
+        @Specialization(guards = {"arg >= 0", "isLShiftLongOverflow(receiver, arg)"})
+        protected final Object doLongPositiveOverflow(final long receiver, final long arg) {
+            /*
+             * -1 in check needed, because we do not want to shift a positive long into negative
+             * long (most significant bit indicates positive/negative).
+             */
+            return LargeIntegerObject.shiftLeftPositive(getContext(), receiver, (int) arg);
+        }
+
+        @Specialization(guards = {"arg < 0", "inLongSizeRange(arg)"})
+        protected static final long doLongNegativeInLongSizeRange(final long receiver, final long arg) {
+            /*
+             * The result of a right shift can only become smaller than the receiver and 0 or -1 at
+             * minimum, so no BigInteger needed here.
+             */
+            return receiver >> -arg;
+        }
+
+        @Specialization(guards = {"arg < 0", "!inLongSizeRange(arg)"})
+        protected static final long doLongNegative(final long receiver, @SuppressWarnings("unused") final long arg) {
+            return receiver >= 0 ? 0L : -1L;
+        }
+
+        protected static final boolean isLShiftLongOverflow(final long receiver, final long arg) {
+            return Long.numberOfLeadingZeros(receiver) - 1 < arg;
+        }
+
+        protected static final boolean inLongSizeRange(final long arg) {
+            return -Long.SIZE < arg;
         }
     }
 
