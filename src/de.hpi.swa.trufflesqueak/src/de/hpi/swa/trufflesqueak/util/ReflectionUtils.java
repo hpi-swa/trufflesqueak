@@ -30,7 +30,7 @@ public final class ReflectionUtils {
         openModuleByClass(declaringClass, ReflectionUtils.class);
     }
 
-    private static void openModuleByClass(final Class<?> declaringClass, final Class<?> accessingClass) {
+    public static void openModuleByClass(final Class<?> declaringClass, final Class<?> accessingClass) {
         final Module declaringModule = declaringClass.getModule();
         final String packageName = declaringClass.getPackageName();
         Module namedAccessingModule = null;

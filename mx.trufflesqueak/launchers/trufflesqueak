@@ -21,12 +21,6 @@ extra_args+=("--vm.Xss16M")
 extra_args+=("--jvm" "--polyglot")
 # Make ReflectionUtils work
 extra_args+=("--vm.-add-exports=java.base/jdk.internal.module=ALL-UNNAMED")
-# Make Truffle.getRuntime() accessible for VM introspection
-extra_args+=("--vm.-add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED")
-# Enable access to HostObject and others
-extra_args+=("--vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.host=ALL-UNNAMED")
-# Enable access to Truffle's SourceSection (for retrieving sources through interop)
-extra_args+=("--vm.-add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED")
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
     extra_args+=("--vm.Xdock:name=TruffleSqueak")

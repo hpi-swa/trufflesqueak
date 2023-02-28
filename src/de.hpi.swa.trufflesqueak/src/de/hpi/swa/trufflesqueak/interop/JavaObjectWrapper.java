@@ -63,7 +63,7 @@ import de.hpi.swa.trufflesqueak.nodes.ExecuteBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
+import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 
 @SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
@@ -82,10 +82,11 @@ public final class JavaObjectWrapper implements TruffleObject {
                         continue;
                     }
                     if (!field.isAccessible()) {
+                        ReflectionUtils.openModuleByClass(currentClass, JavaObjectWrapper.class);
                         try {
                             field.setAccessible(true);
                         } catch (final Exception e) {
-                            LogUtils.HOST_INTEROP.fine("Unable to access " + field + "\n" + e);
+                            e.printStackTrace();
                             continue;
                         }
                     }
@@ -117,9 +118,10 @@ public final class JavaObjectWrapper implements TruffleObject {
                     }
                     if (!method.isAccessible()) {
                         try {
+                            ReflectionUtils.openModuleByClass(currentClass, JavaObjectWrapper.class);
                             method.setAccessible(true);
                         } catch (final Exception e) {
-                            LogUtils.HOST_INTEROP.fine("Unable to access " + method + "\n" + e);
+                            e.printStackTrace();
                             continue;
                         }
                     }

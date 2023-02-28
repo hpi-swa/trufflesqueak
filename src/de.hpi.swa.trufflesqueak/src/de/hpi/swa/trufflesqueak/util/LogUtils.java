@@ -19,7 +19,6 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 public final class LogUtils {
     public static final TruffleLogger ARRAY_STATEGIES = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "array-strategies");
     public static final TruffleLogger GC = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "gc");
-    public static final TruffleLogger HOST_INTEROP = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "host-interop");
     public static final TruffleLogger INTEROP = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interop");
     public static final TruffleLogger INTERRUPTS = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interrupts");
     public static final TruffleLogger IO = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "io");
