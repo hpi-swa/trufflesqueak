@@ -501,6 +501,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryTimesModulo")
     protected abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode implements QuaternaryPrimitiveFallback {
+        private static final long LONG_MASK = 0xFFFFFFFFL;
+
         /*
          * Optimized version of montgomeryTimesModulo for integer-sized arguments.
          */
@@ -510,13 +512,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 throw RespecializeException.transferToInterpreterInvalidateAndThrow();
             }
             final long accum3 = receiver * a;
-            final long u = accum3 * mInv & 0xFFFFFFFFL;
+            final long u = accum3 * mInv & LONG_MASK;
             final long accum2 = u * m;
-            long accum = (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
+            long accum = (accum2 & LONG_MASK) + (accum3 & LONG_MASK);
             accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32);
-            long result = accum & 0xFFFFFFFFL;
+            long result = accum & LONG_MASK;
             if (!(accum >> 32 == 0 && result < m)) {
-                result = result - m & 0xFFFFFFFFL;
+                result = result - m & LONG_MASK;
             }
             return result;
         }
@@ -601,50 +603,50 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             long accum2;
             int lastDigit = 0;
             for (int i = 0; i <= limit1; i++) {
-                long accum3 = firstInts[i] & 0xFFFFFFFFL;
-                accum3 = accum3 * (secondInts[0] & 0xFFFFFFFFL) + (result[0] & 0xFFFFFFFFL);
-                final long u = accum3 * mInv & 0xFFFFFFFFL;
-                accum2 = u * (thirdInts[0] & 0xFFFFFFFFL);
-                accum = (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
-                accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32 & 0xFFFFFFFFL);
+                long accum3 = firstInts[i] & LONG_MASK;
+                accum3 = accum3 * (secondInts[0] & LONG_MASK) + (result[0] & LONG_MASK);
+                final long u = accum3 * mInv & LONG_MASK;
+                accum2 = u * (thirdInts[0] & LONG_MASK);
+                accum = (accum2 & LONG_MASK) + (accum3 & LONG_MASK);
+                accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32 & LONG_MASK);
                 for (int k = 1; k <= limit2; k++) {
-                    accum3 = firstInts[i] & 0xFFFFFFFFL;
-                    accum3 = accum3 * (secondInts[k] & 0xFFFFFFFFL) + (result[k] & 0xFFFFFFFFL);
-                    accum2 = u * (thirdInts[k] & 0xFFFFFFFFL);
-                    accum = accum + (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
-                    result[k - 1] = (int) (accum & 0xFFFFFFFFL);
-                    accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32 & 0xFFFFFFFFL);
+                    accum3 = firstInts[i] & LONG_MASK;
+                    accum3 = accum3 * (secondInts[k] & LONG_MASK) + (result[k] & LONG_MASK);
+                    accum2 = u * (thirdInts[k] & LONG_MASK);
+                    accum = accum + (accum2 & LONG_MASK) + (accum3 & LONG_MASK);
+                    result[k - 1] = (int) (accum & LONG_MASK);
+                    accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32 & LONG_MASK);
                 }
                 for (int k = secondLen; k <= limit3; k++) {
-                    accum2 = u * (thirdInts[k] & 0xFFFFFFFFL);
-                    accum = accum + (result[k] & 0xFFFFFFFFL) + (accum2 & 0xFFFFFFFFL);
-                    result[k - 1] = (int) (accum & 0xFFFFFFFFL);
-                    accum = (accum >> 32) + (accum2 >> 32) & 0xFFFFFFFFL;
+                    accum2 = u * (thirdInts[k] & LONG_MASK);
+                    accum = accum + (result[k] & LONG_MASK) + (accum2 & LONG_MASK);
+                    result[k - 1] = (int) (accum & LONG_MASK);
+                    accum = (accum >> 32) + (accum2 >> 32) & LONG_MASK;
                 }
                 accum += lastDigit;
-                result[limit3] = (int) (accum & 0xFFFFFFFFL);
+                result[limit3] = (int) (accum & LONG_MASK);
                 lastDigit = (int) (accum >> 32);
             }
             for (int i = firstLen; i <= limit3; i++) {
-                accum = result[0] & 0xFFFFFFFFL;
-                final long u = accum * mInv & 0xFFFFFFFFL;
-                accum += u * (thirdInts[0] & 0xFFFFFFFFL);
+                accum = result[0] & LONG_MASK;
+                final long u = accum * mInv & LONG_MASK;
+                accum += u * (thirdInts[0] & LONG_MASK);
                 accum = accum >> 32;
                 for (int k = 1; k <= limit3; k++) {
-                    accum2 = u * (thirdInts[k] & 0xFFFFFFFFL);
-                    accum = accum + (result[k] & 0xFFFFFFFFL) + (accum2 & 0xFFFFFFFFL);
-                    result[k - 1] = (int) (accum & 0xFFFFFFFFL);
-                    accum = (accum >> 32) + (accum2 >> 32) & 0xFFFFFFFFL;
+                    accum2 = u * (thirdInts[k] & LONG_MASK);
+                    accum = accum + (result[k] & LONG_MASK) + (accum2 & LONG_MASK);
+                    result[k - 1] = (int) (accum & LONG_MASK);
+                    accum = (accum >> 32) + (accum2 >> 32) & LONG_MASK;
                 }
                 accum += lastDigit;
-                result[limit3] = (int) (accum & 0xFFFFFFFFL);
+                result[limit3] = (int) (accum & LONG_MASK);
                 lastDigit = (int) (accum >> 32);
             }
             if (!(lastDigit == 0 && cDigitComparewithlen(thirdInts, result, thirdLen) == 1)) {
                 accum = 0;
                 for (int i = 0; i <= limit3; i++) {
-                    accum = accum + result[i] - (thirdInts[i] & 0xFFFFFFFFL);
-                    result[i] = (int) (accum & 0xFFFFFFFFL);
+                    accum = accum + result[i] - (thirdInts[i] & LONG_MASK);
+                    result[i] = (int) (accum & LONG_MASK);
                     accum = -(accum >> 63);
                 }
             }
