@@ -20,60 +20,6 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
     }
 
     @Override
-    public int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
-        final int trailerPosition = trailerPosition(code);
-        assert 0 <= targetIndex && targetIndex <= trailerPosition;
-        int index = 0;
-        int lineNumber = 1;
-        while (index != targetIndex) {
-            index += decodeNumBytes(code, index);
-            lineNumber++;
-        }
-        assert lineNumber <= trailerPosition;
-        return lineNumber;
-    }
-
-    @Override
-    public int trailerPosition(final CompiledCodeObject code) {
-        return code.isCompiledBlock() ? code.getBytes().length : trailerPosition(code.getBytes());
-    }
-
-    private static int trailerPosition(final byte[] bytecode) {
-        final int bytecodeLength = bytecode.length;
-        final int flagByte = Byte.toUnsignedInt(bytecode[bytecodeLength - 1]);
-        final int index = (flagByte >> 2) + 1;
-        return switch (index) {
-            // #decodeNoTrailer and #decodeSourceBySelector
-            case 1, 5 -> bytecodeLength - 1;
-            // #decodeClearedTrailer, #decodeTempsNamesQCompress, #decodeTempsNamesZip,
-            // #decodeSourceByStringIdentifier, #decodeEmbeddedSourceQCompress, and
-            // #decodeEmbeddedSourceZip
-            case 2, 3, 4, 6, 7, 8 -> decodeLengthField(bytecode, bytecodeLength, flagByte);
-            // #decodeVarLengthSourcePointer
-            case 9 -> {
-                int pos = bytecodeLength - 2;
-                while (bytecode[pos] < 0) {
-                    pos--;
-                }
-                yield pos;
-            }
-            // #decodeSourcePointer
-            case 64 -> bytecodeLength - 4;
-            default -> throw SqueakException.create("Undefined method encoding (see CompiledMethodTrailer).");
-        };
-    }
-
-    private static int decodeLengthField(final byte[] bytecode, final int bytecodeLength, final int flagByte) {
-        final int numBytes = (flagByte & 3) + 1;
-        int length = 0;
-        final int firstLengthValueIndex = bytecodeLength - 2;
-        for (int i = 0; i < numBytes; i++) {
-            length = (length << 8) + Byte.toUnsignedInt(bytecode[firstLengthValueIndex - i]);
-        }
-        return bytecodeLength - (1 + numBytes + length);
-    }
-
-    @Override
     public boolean hasStoreIntoTemp1AfterCallPrimitive(final CompiledCodeObject code) {
         final byte[] bytes = code.getBytes();
         return Byte.toUnsignedInt(bytes[3]) == 129 && (Byte.toUnsignedInt(bytes[4]) >> 6 & 3) == 1;
@@ -154,47 +100,7 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
     }
 
     @Override
-    public String decodeToString(final CompiledCodeObject code) {
-        CompilerAsserts.neverPartOfCompilation();
-        final StringBuilder sb = new StringBuilder();
-        final int trailerPosition = trailerPosition(code);
-        int bytecodeIndex = 0;
-        int lineIndex = 1;
-        int indent = 0;
-        final byte[] bytes = code.getBytes();
-        while (bytecodeIndex < trailerPosition) {
-            final int currentByte = Byte.toUnsignedInt(bytes[bytecodeIndex]);
-            sb.append(lineIndex);
-            for (int j = 0; j < 1 + indent; j++) {
-                sb.append(' ');
-            }
-            final int numBytecodes = decodeNumBytes(code, bytecodeIndex);
-            sb.append('<');
-            for (int j = bytecodeIndex; j < bytecodeIndex + numBytecodes; j++) {
-                if (j > bytecodeIndex) {
-                    sb.append(' ');
-                }
-                if (j < bytes.length) {
-                    sb.append(String.format("%02X", bytes[j]));
-                }
-            }
-            sb.append("> ");
-            sb.append(decodeBytecodeToString(code, currentByte, bytecodeIndex));
-            if (currentByte == 143) {
-                indent++; // increment indent on push closure
-            } else if (currentByte == 125) {
-                indent--; // decrement indent on block return
-            }
-            lineIndex++;
-            bytecodeIndex += numBytecodes;
-            if (bytecodeIndex < trailerPosition) {
-                sb.append('\n');
-            }
-        }
-        return sb.toString();
-    }
-
-    private static String decodeBytecodeToString(final CompiledCodeObject code, final int b0, final int index) {
+    protected String decodeBytecodeToString(final CompiledCodeObject code, final int b0, final int index) {
         final byte[] bytecode = code.getBytes();
         return switch (b0) {
             case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 -> "pushRcvr: " + (b0 & 15);
@@ -311,7 +217,8 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
         return previousPC;
     }
 
-    private static int decodeNumBytes(final CompiledCodeObject code, final int index) {
+    @Override
+    protected int decodeNumBytes(final CompiledCodeObject code, final int index) {
         final int b = Byte.toUnsignedInt(code.getBytes()[index]);
         return switch (b) {
             case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, //

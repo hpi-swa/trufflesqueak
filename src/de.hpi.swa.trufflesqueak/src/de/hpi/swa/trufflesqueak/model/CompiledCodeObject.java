@@ -319,7 +319,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public AbstractBytecodeNode[] asBytecodeNodesEmpty() {
-        return new AbstractBytecodeNode[getDecoder().trailerPosition(this)];
+        return new AbstractBytecodeNode[AbstractSqueakBytecodeDecoder.trailerPosition(this)];
     }
 
     public AbstractBytecodeNode bytecodeNodeAt(final VirtualFrame frame, final int pc) {

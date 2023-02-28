@@ -6,23 +6,116 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractSqueakBytecodeDecoder {
 
     public abstract AbstractBytecodeNode decodeBytecode(VirtualFrame frame, CompiledCodeObject code, int index);
 
-    public abstract String decodeToString(CompiledCodeObject code);
-
-    public abstract int findLineNumber(CompiledCodeObject code, int targetIndex);
-
-    public abstract int trailerPosition(CompiledCodeObject code);
-
     public abstract boolean hasStoreIntoTemp1AfterCallPrimitive(CompiledCodeObject code);
 
     public abstract int pcPreviousTo(CompiledCodeObject code, int pc);
 
     public abstract int determineMaxNumStackSlots(CompiledCodeObject code);
+
+    protected abstract int decodeNumBytes(CompiledCodeObject code, int index);
+
+    protected abstract String decodeBytecodeToString(CompiledCodeObject code, int currentByte, int bytecodeIndex);
+
+    public final String decodeToString(final CompiledCodeObject code) {
+        CompilerAsserts.neverPartOfCompilation();
+        final StringBuilder sb = new StringBuilder();
+        final int trailerPosition = trailerPosition(code);
+        int bytecodeIndex = 0;
+        int lineIndex = 1;
+        int indent = 0;
+        final byte[] bytes = code.getBytes();
+        while (bytecodeIndex < trailerPosition) {
+            final int currentByte = Byte.toUnsignedInt(bytes[bytecodeIndex]);
+            sb.append(lineIndex);
+            for (int j = 0; j < 1 + indent; j++) {
+                sb.append(' ');
+            }
+            final int numBytecodes = decodeNumBytes(code, bytecodeIndex);
+            sb.append('<');
+            for (int j = bytecodeIndex; j < bytecodeIndex + numBytecodes; j++) {
+                if (j > bytecodeIndex) {
+                    sb.append(' ');
+                }
+                if (j < bytes.length) {
+                    sb.append(String.format("%02X", bytes[j]));
+                }
+            }
+            sb.append("> ");
+            sb.append(decodeBytecodeToString(code, currentByte, bytecodeIndex));
+            if (currentByte == 143) {
+                indent++; // increment indent on push closure
+            } else if (currentByte == 125) {
+                indent--; // decrement indent on block return
+            }
+            lineIndex++;
+            bytecodeIndex += numBytecodes;
+            if (bytecodeIndex < trailerPosition) {
+                sb.append('\n');
+            }
+        }
+        return sb.toString();
+    }
+
+    public final int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
+        final int trailerPosition = trailerPosition(code);
+        assert 0 <= targetIndex && targetIndex <= trailerPosition : targetIndex + " not between 0 and " + trailerPosition;
+        int index = 0;
+        int lineNumber = 1;
+        while (index != targetIndex) {
+            index += decodeNumBytes(code, index);
+            lineNumber++;
+        }
+        assert lineNumber <= trailerPosition;
+        return lineNumber;
+    }
+
+    public static final int trailerPosition(final CompiledCodeObject code) {
+        return code.isCompiledBlock() ? code.getBytes().length : trailerPosition(code.getBytes());
+    }
+
+    private static int trailerPosition(final byte[] bytecode) {
+        final int bytecodeLength = bytecode.length;
+        final int flagByte = Byte.toUnsignedInt(bytecode[bytecodeLength - 1]);
+        final int index = (flagByte >> 2) + 1;
+        return switch (index) {
+            // #decodeNoTrailer and #decodeSourceBySelector
+            case 1, 5 -> bytecodeLength - 1;
+            // #decodeClearedTrailer, #decodeTempsNamesQCompress, #decodeTempsNamesZip,
+            // #decodeSourceByStringIdentifier, #decodeEmbeddedSourceQCompress, and
+            // #decodeEmbeddedSourceZip
+            case 2, 3, 4, 6, 7, 8 -> decodeLengthField(bytecode, bytecodeLength, flagByte);
+            // #decodeVarLengthSourcePointer
+            case 9 -> {
+                int pos = bytecodeLength - 2;
+                while (bytecode[pos] < 0) {
+                    pos--;
+                }
+                yield pos;
+            }
+            // #decodeSourcePointer
+            case 64 -> bytecodeLength - 4;
+            default -> throw SqueakException.create("Undefined method encoding (see CompiledMethodTrailer).");
+        };
+    }
+
+    private static int decodeLengthField(final byte[] bytecode, final int bytecodeLength, final int flagByte) {
+        final int numBytes = (flagByte & 3) + 1;
+        int length = 0;
+        final int firstLengthValueIndex = bytecodeLength - 2;
+        for (int i = 0; i < numBytes; i++) {
+            length = (length << 8) + Byte.toUnsignedInt(bytecode[firstLengthValueIndex - i]);
+        }
+        return bytecodeLength - (1 + numBytes + length);
+    }
+
 }
