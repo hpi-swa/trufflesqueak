@@ -418,25 +418,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
             final SqueakImageContext image = getContext();
             final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(arg.getBigInteger());
-            final Object[] result = new Object[2];
-            if (negative != divide[0].signum() < 0) {
-                if (divide[0].bitLength() < Long.SIZE) {
-                    final long lresult = divide[0].longValue();
-                    if (lresult == Long.MIN_VALUE) {
-                        result[0] = LargeIntegerObject.createLongMinOverflowResult(image);
-                    } else {
-                        result[0] = -lresult;
-                    }
-                } else {
-                    result[0] = new LargeIntegerObject(image, divide[0].negate());
-                }
-            } else {
-                if (divide[0].bitLength() < Long.SIZE) {
-                    result[0] = divide[0].longValue();
-                } else {
-                    result[0] = new LargeIntegerObject(image, divide[0]);
-                }
-            }
+            final Object[] result = digitDivNegative(negative, image, divide);
             if (divide[1].bitLength() < Long.SIZE) {
                 result[1] = divide[1].longValue();
             } else {
@@ -455,7 +437,14 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final ArrayObject doLargeIntegerLong(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
             final SqueakImageContext image = getContext();
-            final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(BigInteger.valueOf(arg));
+            final BigInteger bigInteger = BigInteger.valueOf(arg);
+            final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(bigInteger);
+            final Object[] result = digitDivNegative(negative, image, divide);
+            result[1] = divide[1].longValue();
+            return image.asArrayOfObjects(result);
+        }
+
+        private static Object[] digitDivNegative(final boolean negative, final SqueakImageContext image, final BigInteger[] divide) {
             final Object[] result = new Object[2];
             if (negative != divide[0].signum() < 0) {
                 if (divide[0].bitLength() < Long.SIZE) {
@@ -475,8 +464,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                     result[0] = new LargeIntegerObject(image, divide[0]);
                 }
             }
-            result[1] = divide[1].longValue();
-            return image.asArrayOfObjects(result);
+            return result;
         }
     }
 
