@@ -703,44 +703,52 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 38)
     protected abstract static class PrimFloatAtNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization
-        protected static final long doDouble(final double receiver, final long index,
-                        @Cached final BranchProfile highProfile,
-                        @Cached final BranchProfile lowProfile,
-                        @Cached final BranchProfile errorProfile) {
-            final long bits = Double.doubleToRawLongBits(receiver);
-            if (index == 1) {
-                highProfile.enter();
-                return Integer.toUnsignedLong((int) (bits >> 32));
-            } else if (index == 2) {
-                lowProfile.enter();
-                return Integer.toUnsignedLong((int) bits);
-            } else {
-                errorProfile.enter();
-                throw PrimitiveFailed.BAD_INDEX;
-            }
+        @Specialization(guards = "index == 1")
+        protected static final long doDoubleHigh(final double receiver, @SuppressWarnings("unused") final long index) {
+            return Integer.toUnsignedLong((int) (Double.doubleToRawLongBits(receiver) >> 32));
+        }
+
+        @Specialization(guards = "index == 2")
+        protected static final long doDoubleLow(final double receiver, @SuppressWarnings("unused") final long index) {
+            return Integer.toUnsignedLong((int) Double.doubleToRawLongBits(receiver));
+        }
+
+        @Specialization(guards = "index == 1")
+        protected static final long doFloatHigh(final FloatObject receiver, final long index) {
+            return doDoubleHigh(receiver.getValue(), index);
+        }
+
+        @Specialization(guards = "index == 2")
+        protected static final long doFloatLow(final FloatObject receiver, final long index) {
+            return doDoubleLow(receiver.getValue(), index);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"index != 1", "index != 2"})
+        protected static final long doDoubleFail(final Object receiver, final long index) {
+            throw PrimitiveFailed.BAD_INDEX;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 39)
     protected abstract static class PrimFloatAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization
-        protected static final long doFloatHigh(final FloatObject receiver, final long index, final long value,
-                        @Cached final BranchProfile highProfile,
-                        @Cached final BranchProfile lowProfile,
-                        @Cached final BranchProfile errorProfile) {
-            if (index == 1) {
-                highProfile.enter();
-                receiver.setHigh(value);
-            } else if (index == 2) {
-                lowProfile.enter();
-                receiver.setLow(value);
-            } else {
-                errorProfile.enter();
-                throw PrimitiveFailed.BAD_INDEX;
-            }
+        @Specialization(guards = "index == 1")
+        protected static final long doFloatHigh(final FloatObject receiver, @SuppressWarnings("unused") final long index, final long value) {
+            receiver.setHigh(value);
             return value;
+        }
+
+        @Specialization(guards = "index == 2")
+        protected static final long doFloatLow(final FloatObject receiver, @SuppressWarnings("unused") final long index, final long value) {
+            receiver.setLow(value);
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"index != 1", "index != 2"})
+        protected static final long doFloatFail(final FloatObject receiver, final long index, final long value) {
+            throw PrimitiveFailed.BAD_INDEX;
         }
     }
 
