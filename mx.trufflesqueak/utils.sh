@@ -259,7 +259,10 @@ set-up-labsjdk() {
   local dl_dir="${RUNNER_TEMP}/jdk-dl"
   local mx_suffix="" && [[ "${OS_NAME}" == "windows" ]] && mx_suffix=".cmd"
   mkdir "${dl_dir}"
+  pushd "${BASE_DIRECTORY}/../graal/" > /dev/null
+  # run fetch-jdk in graal repo, so that it picks up the latest common.json
   "${RUNNER_TEMP}/mx/mx${mx_suffix}" --quiet --java-home= fetch-jdk --jdk-id "${jdk_id}" --to "${dl_dir}" --alias "${target_dir}"
+  popd > /dev/null
   enable-jdk "${target_dir}${JAVA_HOME_SUFFIX}"
   echo "[${jdk_id} set up successfully]"
 }
