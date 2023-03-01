@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
-        java: [17, 19]
+        java: [17, 20]
     env:
       RUN_TESTS: "${{ matrix.os == 'ubuntu-20.04' || matrix.java == 17 }}"
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' && matrix.java == 17 }}"
@@ -138,9 +138,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019] # temporarily disabled: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2019] # temporarily disabled: macos-11
     env:
-      JAVA_VERSION: "17"
+      JAVA_VERSION: "20"
       MX_ENV: "trufflesqueak-standalone"
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: Standalone ${{ matrix.os }}
