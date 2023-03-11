@@ -67,19 +67,8 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
         setWords(getHigh(), value);
     }
 
-    private void setWords(final int high, final int low) {
-        setWords(Integer.toUnsignedLong(high), Integer.toUnsignedLong(low));
-    }
-
     private void setWords(final long high, final long low) {
         doubleValue = Double.longBitsToDouble(high << 32 | low);
-    }
-
-    public void setBytes(final byte[] bytes) {
-        assert bytes.length == WORD_LENGTH * 4;
-        final int high = (bytes[3] & 0xff) << 24 | (bytes[2] & 0xff) << 16 | (bytes[1] & 0xff) << 8 | bytes[0] & 0xff;
-        final int low = (bytes[7] & 0xff) << 24 | (bytes[6] & 0xff) << 16 | (bytes[5] & 0xff) << 8 | bytes[4] & 0xff;
-        setWords(high, low);
     }
 
     public byte[] getBytes() {
