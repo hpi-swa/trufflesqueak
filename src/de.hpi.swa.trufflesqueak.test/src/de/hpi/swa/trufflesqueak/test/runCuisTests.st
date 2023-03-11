@@ -3,6 +3,7 @@
 StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'; newLine; flush.
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
 Utilities classPool at: #AuthorInitials put: 'TS'.
+SmallInteger initMinValAndMaxVal. "resize SmallInteger range"
 
 nonTerminatingTestCases := OrderedCollection new.
 {
@@ -17,11 +18,11 @@ StdIOWriteStream stdout newLine; flush.
 
 failingTests := OrderedCollection new.
 {
-    #FloatTest -> #(#testHashWithSmallishLargeNegativeInteger #testHashWithSmallishLargePositiveInteger #testIsDenormalized #testPrimDivideBy #testPrimTruncated).
-    #IntegerTest -> #(#testRange "TruffleSqueak supports 64-bit SmallIntegers").
+    #FloatTest -> #(#testIsDenormalized #testPrimTruncated).
     #ProcessorTest -> #("flaky" #testGrabProcessor #testGrabProcessorOnlyForNoTimeout #testGrabProcessorOnlyForTimeout #testValueUnpreemptively).
     #ProcessTerminateUnwindNonLocalReturn -> #(test1ATerminate #test1BTerminate #test2ATerminate #test2BTerminate #test3ATerminate #test3BTerminate #test4ATerminate #test4BTerminate #test5ATerminate #test5BTerminate #test6ATerminate #test6BTerminate #test7ATerminate #test7BTerminate #test8ATerminate #test8BTerminate).
     #ProcessTest -> #(#testTerminateInEnsure #testValueEnsured).
+    #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString).
     #WeakIdentitySetTest -> #(#test). "Failing (or flaky?) on TruffleSqueak Native"
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
@@ -38,7 +39,7 @@ result := testSuite run.
 result printReport.
 exitCode := (result hasFailures or: [ result hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
 
-StdIOWriteStream stdout newLine; nextPutAll: 'Failing TestCases:'; newLine; flush.
+StdIOWriteStream stdout newLine; nextPutAll: 'Failing and Flaky TestCases:'; newLine; flush.
 testSuite := TestSuite new.
 testSuite tests addAll: failingTests.
 testSuite run printReport.
