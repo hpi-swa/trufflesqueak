@@ -10,6 +10,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 public final class SqueakImageFlags {
+    private static final int PRIMITIVE_DO_MIXED_ARITHMETIC = 0x100;
+
     @CompilationFinal private long oldBaseAddress = -1;
     @CompilationFinal private long headerFlags;
     @CompilationFinal private long snapshotScreenSize;
@@ -18,7 +20,8 @@ public final class SqueakImageFlags {
     public void initialize(final long oldBaseAddressValue, final long flags, final long screenSize, final int lastMaxExternalSemaphoreTableSize) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         oldBaseAddress = oldBaseAddressValue;
-        headerFlags = flags;
+        // TruffleSqueak only supports mixed arithmetics, unset bit to ensure flag is always true
+        headerFlags = flags & ~PRIMITIVE_DO_MIXED_ARITHMETIC;
         snapshotScreenSize = screenSize;
         maxExternalSemaphoreTableSize = lastMaxExternalSemaphoreTableSize;
     }
@@ -32,7 +35,7 @@ public final class SqueakImageFlags {
         return headerFlags;
     }
 
-    // For some reason, header flags appear to be shifted by 2.
+    // For some reason, header flags appear to be shifted by 2 (see #getImageHeaderFlagsParameter).
     public long getHeaderFlagsDecoded() {
         return headerFlags >> 2;
     }
