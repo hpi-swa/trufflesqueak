@@ -122,22 +122,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
-                return Math.subtractExact(lhs, rhs);
-            } else {
-                return Math.addExact(lhs, rhs);
-            }
+            return Math.addExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile));
         }
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs,
                         @Cached final ConditionProfile differentSignProfile) {
-            final SqueakImageContext image = getContext();
-            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
-                return LargeIntegerObject.subtract(image, lhs, rhs);
-            } else {
-                return LargeIntegerObject.add(image, lhs, rhs);
-            }
+            return LargeIntegerObject.add(getContext(), lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile));
         }
 
         @Specialization
@@ -177,22 +168,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Cached final ConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
-                return Math.addExact(lhs, rhs);
-            } else {
-                return Math.subtractExact(lhs, rhs);
-            }
+            return Math.subtractExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile));
         }
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs,
                         @Cached final ConditionProfile differentSignProfile) {
-            final SqueakImageContext image = getContext();
-            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
-                return LargeIntegerObject.add(image, lhs, rhs);
-            } else {
-                return LargeIntegerObject.subtract(image, lhs, rhs);
-            }
+            return LargeIntegerObject.subtract(getContext(), lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile));
         }
 
         @Specialization
