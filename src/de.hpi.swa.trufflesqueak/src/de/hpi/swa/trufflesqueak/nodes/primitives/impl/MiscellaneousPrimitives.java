@@ -976,11 +976,20 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @GenerateNodeFactory
+    @ImportStatic(MiscUtils.class)
     @SqueakPrimitive(indices = 254)
     protected abstract static class PrimVMParameters2Node extends AbstractPrimVMParametersNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"})
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"index == cachedIndex", "index >= 1", "index < PARAMS_ARRAY_SIZE"}, limit = "1")
+        protected final Object getVMParametersCached(final Object receiver, final long index,
+                        @Cached("toIntExact(index)") final int cachedIndex) {
+            return vmParameterAt(getContext(), cachedIndex);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"}, replaces = "getVMParametersCached")
         protected final Object getVMParameters(@SuppressWarnings("unused") final Object receiver, final long index) {
-            return vmParameterAt(getContext(), (int) index);
+            return vmParameterAt(getContext(), MiscUtils.toIntExact(index));
         }
     }
 
