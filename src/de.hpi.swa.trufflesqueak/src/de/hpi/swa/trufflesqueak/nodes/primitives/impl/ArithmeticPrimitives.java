@@ -1584,7 +1584,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return MIN_SAFE_INTEGER_LONG <= d && d <= MAX_SAFE_INTEGER_LONG;
         }
 
-        protected static final boolean differentSign(final long lhs, final long rhs) {
+        protected static final long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final ConditionProfile differentSignProfile) {
+            return differentSignProfile.profile(differentSign(lhs, rhs)) ? -rhs : rhs;
+        }
+
+        private static boolean differentSign(final long lhs, final long rhs) {
             return lhs < 0 ^ rhs < 0;
         }
     }
