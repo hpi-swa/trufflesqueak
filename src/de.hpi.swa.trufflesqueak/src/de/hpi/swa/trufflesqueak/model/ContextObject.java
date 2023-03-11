@@ -247,11 +247,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return previousContext;
     }
 
-    // should only be used when sender is not nil
-    public ContextObject getNotNilSender() {
-        return (ContextObject) getSender();
-    }
-
     public boolean hasMaterializedSender() {
         return !(FrameAccess.getSender(getTruffleFrame()) instanceof FrameMarker);
     }
