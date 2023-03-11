@@ -126,7 +126,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
             for (int i = 0; i < ints.length; i++) {
-                ints[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints[i]) / (float) scalarValue);
+                ints[i] = Float.floatToRawIntBits((float) (Float.intBitsToFloat(ints[i]) / scalarValue));
             }
             return receiver;
         }

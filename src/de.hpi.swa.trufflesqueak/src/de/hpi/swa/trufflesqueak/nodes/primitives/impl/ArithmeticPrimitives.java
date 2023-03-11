@@ -1594,7 +1594,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final double LARGE_NUMBER = Math.pow(2, LARGE_NUMBER_EXP);
 
         protected static final double timesToPower(final double matissa, final long exponent) {
-            return Math.scalb(matissa, MiscUtils.toIntExact(exponent));
+            return Math.scalb(matissa, (int) MiscUtils.clamp(exponent, Integer.MIN_VALUE, Integer.MAX_VALUE));
         }
 
         protected static final long exponentNonZero(final double receiver, final BranchProfile subnormalFloatProfile) {

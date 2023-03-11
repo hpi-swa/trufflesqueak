@@ -59,6 +59,10 @@ public final class MiscUtils {
         return (int) (value >> offset & size - 1);
     }
 
+    public static long clamp(final long value, final long min, final long max) {
+        return Math.max(min, Math.min(value, max));
+    }
+
     @TruffleBoundary
     public static long currentTimeMillis() {
         return System.currentTimeMillis();
