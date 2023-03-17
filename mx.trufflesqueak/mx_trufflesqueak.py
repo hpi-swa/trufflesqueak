@@ -21,6 +21,7 @@ _SVM = mx.suite('substratevm', fatalIfMissing=False)
 
 LANGUAGE_ID = 'smalltalk'
 PACKAGE_NAME = 'de.hpi.swa.trufflesqueak'
+USE_LIBRARY_LAUNCHER = True
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 VM_ARGS_TESTING = [
     # Tweak Runtime
@@ -178,6 +179,21 @@ mx_sdk_vm.register_vm_config('trufflesqueak-jar', ['sdk', 'st', 'tfl'],
 mx_sdk_vm.register_vm_config('trufflesqueak-standalone', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'tfl'],
                                 _SUITE, env_file='trufflesqueak-standalone')
 
+
+LAUNCHER_DESTINATION = 'bin/<exe:trufflesqueak>' if _SVM else 'bin/<exe:trufflesqueak-launcher>'
+
+BASE_LANGUAGE_CONFIG = {
+    'language': LANGUAGE_ID,
+    'jar_distributions': ['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
+    'main_class': '%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
+    'build_args': [
+        '-H:+ReportExceptionStackTraces',
+        '-H:+DumpThreadStacksOnSignal',
+        '-H:+DetectUserDirectoriesInImageHeap',
+        '-H:+TruffleCheckBlockListMethods',
+    ],
+}
+
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_SUITE,
     name='TruffleSqueak',
@@ -194,21 +210,12 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     ],
     support_distributions=['trufflesqueak:TRUFFLESQUEAK_HOME'] + [] if _SVM else ['trufflesqueak:TRUFFLESQUEAK_LAUNCHER_SCRIPTS'],
     provided_executables=[] if _SVM else ['bin/<cmd:trufflesqueak>'],
+    launcher_configs=[
+        mx_sdk.LanguageLauncherConfig(destination=LAUNCHER_DESTINATION, **BASE_LANGUAGE_CONFIG)
+    ] if not USE_LIBRARY_LAUNCHER else [],
     library_configs=[
-        mx_sdk.LanguageLibraryConfig(
-            language=LANGUAGE_ID,
-            destination='lib/<lib:%svm>' % LANGUAGE_ID,
-            launchers=['bin/<exe:trufflesqueak>'] if _SVM else ['bin/<exe:trufflesqueak-launcher>'],
-            jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
-            main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
-            build_args=[
-                '-H:+ReportExceptionStackTraces',
-                '-H:+DumpThreadStacksOnSignal',
-                '-H:+DetectUserDirectoriesInImageHeap',
-                '-H:+TruffleCheckBlockListMethods',
-            ],
-        )
-    ],
+        mx_sdk.LanguageLibraryConfig(destination='lib/<lib:%svm>' % LANGUAGE_ID, launchers=[LAUNCHER_DESTINATION], **BASE_LANGUAGE_CONFIG)
+    ] if USE_LIBRARY_LAUNCHER else [],
     stability="experimental",
     post_install_msg=None,
 ))
