@@ -1,4 +1,12 @@
 [
+  {
+    "name": "java.awt.Frame",
+    "methods": [
+      { "name": "getFrames", "parameterTypes": [ ] },
+      { "name": "getTitle", "parameterTypes": [ ] },
+      { "name": "setTitle", "parameterTypes": [ "java.lang.String" ] }
+    ]
+  },
   { "name": "java.awt.Image" },
   { "name": "java.awt.SequencedEvent" },
   { "name": "java.io.InputStream" },
