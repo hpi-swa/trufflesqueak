@@ -16,6 +16,10 @@ on:
       - 'docs/**'
       - gu-catalog.properties
 
+env:
+  VERBOSE_GRAALVM_LAUNCHERS: true
+  MX_GATE_OPTS: '--strict-mode --omit-clean --no-warning-as-error'
+
 jobs:
   style_and_build_config:
     name: Code Style + Build Config
@@ -40,23 +44,21 @@ jobs:
         mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-17 ~/"
         # Set up style dependencies
         sudo apt update && sudo apt install python3-pip python-setuptools
-        cat ../graal/common.json |
-          jq -r '.deps.common.packages | to_entries[] | select(.key | startswith("pip:")) | (.key | split(":")[1]) + .value' |
-          xargs sudo pip install
+        jq -r '.pip | to_entries[] | .key+.value' ../graal/common.json | xargs sudo pip install
     - name: Check style and perform full build
-      run: mx gate --strict-mode --tags style,fullbuild
+      run: mx gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
 
   build-jar:
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
-        java: [17, 19]
+        java: [17, 20]
     env:
       RUN_TESTS: "${{ matrix.os == 'ubuntu-20.04' || matrix.java == 17 }}"
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' && matrix.java == 17 }}"
       MX_ENV: "trufflesqueak-jar"
-      VERBOSE_GRAALVM_LAUNCHERS: true
+      
     name: JAR ${{ matrix.os }} + JDK${{ matrix.java }}
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
@@ -79,7 +81,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK_JAR_JAVA${{ matrix.java }}
+        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies SMALLTALK_INSTALLABLE_CE_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK_JAR_JAVA${{ matrix.java }}
         call mx --env ${{ env.MX_ENV }} graalvm-home > graalvm-home-with-forward-slashes.txt
         set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
         setlocal enabledelayedexpansion
@@ -87,7 +89,7 @@ jobs:
         echo %GRAALVM_HOME%\bin>>%GITHUB_PATH%
         echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
         echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
-        call mx --env ${{ env.MX_ENV }} paths SMALLTALK_INSTALLABLE_JAVA${{ matrix.java }} > installable-path-with-forward-slashes.txt
+        call mx --env ${{ env.MX_ENV }} paths SMALLTALK_INSTALLABLE_CE_JAVA${{ matrix.java }} > installable-path-with-forward-slashes.txt
         set /p INSTALLABLE_PATH=<installable-path-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "INSTALLABLE_PATH=%INSTALLABLE_PATH:/=\%"
@@ -103,16 +105,16 @@ jobs:
       run: mx.trufflesqueak/utils.sh shallow-clone-graaljs
       if: ${{ env.RUN_TESTS == 'true' }}
     - name: Run gate with Graal compiler and Graal.js
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test
+      run: mx --disable-polyglot --dy /compiler,/graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test
       if: ${{ env.RUN_TESTS == 'true' && runner.os != 'Windows' && env.RUN_WITH_COVERAGE != 'true' }}
     - name: Run gate with Graal.js and code coverage # do not use Graal compiler with JaCoCo code coverage
-      run: mx --disable-polyglot --dy /graal-js gate -j -n --strict-mode --tags build,test --jacocout coverage
+      run: mx --disable-polyglot --dy /graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
       if: ${{ env.RUN_TESTS == 'true' && runner.os != 'Windows' && env.RUN_WITH_COVERAGE == 'true' }}
     - name: Run gate with Graal compiler and Graal.js via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-polyglot --dy /compiler,/graal-js gate -j -n --strict-mode --tags build,test
+        mx --disable-polyglot --dy /compiler,/graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test
       if: ${{ env.RUN_TESTS == 'true' && runner.os == 'Windows' }}
     - name: Report code coverage
       env:
@@ -138,9 +140,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019] # temporarily disabled: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2019]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2019] # temporarily disabled: macos-11
     env:
-      JAVA_VERSION: "17"
+      JAVA_VERSION: "20"
       MX_ENV: "trufflesqueak-standalone"
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: Standalone ${{ matrix.os }}
