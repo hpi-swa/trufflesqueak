@@ -15,6 +15,7 @@ on:
       - '**.md'
       - 'docs/**'
       - gu-catalog.properties
+  workflow_dispatch:
 
 env:
   VERBOSE_GRAALVM_LAUNCHERS: true
