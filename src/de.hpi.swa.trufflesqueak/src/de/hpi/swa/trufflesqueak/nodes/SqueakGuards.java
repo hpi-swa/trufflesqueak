@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Idempotent;
+
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -132,6 +134,7 @@ public final class SqueakGuards {
         return value < 0;
     }
 
+    @Idempotent
     public static boolean isLinux() {
         return OS.isLinux();
     }
@@ -144,6 +147,7 @@ public final class SqueakGuards {
         return value == Long.MIN_VALUE;
     }
 
+    @Idempotent
     public static boolean isMacOS() {
         return OS.isMacOS();
     }

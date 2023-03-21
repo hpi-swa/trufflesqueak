@@ -17,6 +17,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Idempotent;
+import com.oracle.truffle.api.dsl.NonIdempotent;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -276,6 +278,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return frameDescriptor;
     }
 
+    @Idempotent
     public int getNumArgs() {
         return numArgs;
     }
@@ -409,6 +412,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         invalidateCallTarget();
     }
 
+    @Idempotent
     public boolean hasPrimitive() {
         return CompiledCodeHeaderDecoder.getHasPrimitive(getHeader());
     }
@@ -598,6 +602,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     /** CompiledMethod>>#methodClass. */
+    @NonIdempotent
     public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
         return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
