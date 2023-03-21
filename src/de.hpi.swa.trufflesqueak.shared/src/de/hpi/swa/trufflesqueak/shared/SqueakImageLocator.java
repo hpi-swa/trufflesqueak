@@ -11,7 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -100,7 +100,7 @@ public final class SqueakImageLocator {
 
     private static void downloadAndUnzip(final String url, final File destDirectory) {
         try {
-            final BufferedInputStream bis = new BufferedInputStream(new URL(url).openStream());
+            final BufferedInputStream bis = new BufferedInputStream(URI.create(url).toURL().openStream());
             unzip(bis, destDirectory);
         } catch (final IOException e) {
             throw new RuntimeException(e);

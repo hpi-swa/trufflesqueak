@@ -11,7 +11,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -40,7 +40,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
     @Specialization
     protected final ContextObject doGetOrCreate(final VirtualFrame frame,
                     @Cached("getCodeObject(frame)") final CompiledCodeObject code,
-                    @Cached("createCountingProfile()") final ConditionProfile hasContextProfile) {
+                    @Cached final CountingConditionProfile hasContextProfile) {
         final ContextObject context = FrameAccess.getContext(frame);
         if (hasContextProfile.profile(context != null)) {
             return context;

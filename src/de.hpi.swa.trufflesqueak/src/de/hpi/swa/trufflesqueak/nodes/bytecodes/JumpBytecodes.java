@@ -9,7 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -20,7 +20,7 @@ public final class JumpBytecodes {
 
     public abstract static class ConditionalJumpNode extends AbstractBytecodeNode {
         private final int jumpSuccessorIndex;
-        private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
+        private final CountingConditionProfile conditionProfile = CountingConditionProfile.create();
 
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
