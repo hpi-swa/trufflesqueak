@@ -11,6 +11,7 @@ import java.util.Objects;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -108,26 +109,54 @@ public abstract class FrameStackReadNode extends AbstractNode {
     }
 
     protected abstract static class FrameSlotReadNoClearNode extends AbstractFrameSlotReadNode {
+
         FrameSlotReadNoClearNode(final int slotIndex) {
             super(slotIndex);
         }
 
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readObject(final Frame frame) {
-            assert frame.isObject(slotIndex);
-            return frame.getObject(slotIndex);
+            if (!frame.isObject(slotIndex)) {
+                /*
+                 * The FrameSlotKind has been set to Object, so from now on all writes to the slot
+                 * will be Object writes. However, now we are in a frame that still has an old
+                 * non-Object value. This is a slow-path operation: we read the non-Object value,
+                 * and write it immediately as an Object value so that we do not hit this path again
+                 * multiple times for the same slot of the same frame.
+                 */
+                CompilerDirectives.transferToInterpreter();
+                final Object value = frame.getValue(slotIndex);
+                assert value != null : "Unexpected `null` value";
+                frame.setObject(slotIndex, value);
+                return value;
+            } else {
+                return frame.getObject(slotIndex);
+            }
         }
     }
 
     protected abstract static class FrameSlotReadClearNode extends AbstractFrameSlotReadNode {
+
         FrameSlotReadClearNode(final int slotIndex) {
             super(slotIndex);
         }
 
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readAndClearObject(final Frame frame) {
-            assert frame.isObject(slotIndex);
-            final Object value = frame.getObject(slotIndex);
+            final Object value;
+            if (!frame.isObject(slotIndex)) {
+                /*
+                 * The FrameSlotKind has been set to Object, so from now on all writes to the slot
+                 * will be Object writes. However, now we are in a frame that still has an old
+                 * non-Object value. This is a slow-path operation: we read the non-Object value,
+                 * and clear it immediately as an Object value so that we do not hit this path again
+                 * multiple times for the same slot of the same frame.
+                 */
+                CompilerDirectives.transferToInterpreter();
+                value = frame.getValue(slotIndex);
+            } else {
+                value = frame.getObject(slotIndex);
+            }
             frame.setObject(slotIndex, null);
             return value;
         }
