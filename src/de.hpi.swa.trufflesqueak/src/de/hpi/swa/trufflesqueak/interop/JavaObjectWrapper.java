@@ -11,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -457,6 +458,18 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
+    protected boolean fitsInBigInteger(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+        if (wrappedObject instanceof BigInteger) {
+            return true;
+        }
+        if (isNumber()) {
+            return lib.fitsInBigInteger(wrappedObject);
+        } else {
+            return false;
+        }
+    }
+
+    @ExportMessage
     protected byte asByte(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
             return lib.asByte(wrappedObject);
@@ -505,6 +518,17 @@ public final class JavaObjectWrapper implements TruffleObject {
     protected double asDouble(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
             return lib.asDouble(wrappedObject);
+        } else {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
+    protected BigInteger asBigInteger(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
+        if (wrappedObject instanceof final BigInteger w) {
+            return w;
+        } else if (isNumber()) {
+            return lib.asBigInteger(wrappedObject);
         } else {
             throw UnsupportedMessageException.create();
         }
