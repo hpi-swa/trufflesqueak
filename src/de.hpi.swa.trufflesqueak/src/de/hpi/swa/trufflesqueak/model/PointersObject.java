@@ -11,7 +11,6 @@ import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.HiddenKey;
 import com.oracle.truffle.api.object.Shape;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -38,8 +37,8 @@ public final class PointersObject extends AbstractPointersObject {
         super(header, klass);
     }
 
-    public PointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape layout) {
-        super(image, classObject, layout);
+    public PointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape shape) {
+        super(image, classObject, shape);
     }
 
     private PointersObject(final PointersObject original) {
@@ -47,7 +46,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
-        final PointersObject handle = new PointersObject(image, image.pointClass, SqueakLanguage.POINTERS_SHAPE);
+        final PointersObject handle = new PointersObject(image, image.pointClass, image.pointClass.getRootShape());
         handle.setHiddenObject(hiddenObject);
         return handle;
     }

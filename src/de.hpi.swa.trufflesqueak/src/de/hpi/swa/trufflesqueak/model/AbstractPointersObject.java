@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Shape;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -29,15 +30,16 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     @DynamicField private Object object3;
 
     protected AbstractPointersObject() {
-        super();
+        super(SqueakLanguage.POINTERS_SHAPE);
     }
 
-    protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape layout) {
-        super(image, classObject, layout);
+    protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape shape) {
+        super(image, classObject, shape);
+        assert classObject.getRootShape() == shape;
     }
 
     protected AbstractPointersObject(final long header, final ClassObject classObject) {
-        super(header, classObject);
+        super(header, classObject, classObject.getRootShape());
     }
 
     protected AbstractPointersObject(final AbstractPointersObject original) {

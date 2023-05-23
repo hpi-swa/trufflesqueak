@@ -22,8 +22,8 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
         super(header, classObject);
     }
 
-    public AbstractVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape layout, final int variableSize) {
-        super(image, classObject, layout);
+    public AbstractVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape shape, final int variableSize) {
+        super(image, classObject, shape);
         variablePart = ArrayUtils.withAll(variableSize, NilObject.SINGLETON);
     }
 

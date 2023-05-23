@@ -41,7 +41,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     private static final LanguageReference<SqueakLanguage> REFERENCE = LanguageReference.create(SqueakLanguage.class);
 
-    public static final Shape ROOT_SHAPE = Shape.newBuilder().layout(AbstractSqueakObject.class).build();
+    public static final Shape EMPTY_SHAPE = Shape.newBuilder().layout(AbstractSqueakObject.class).build();
     public static final Shape POINTERS_SHAPE = Shape.newBuilder().layout(AbstractPointersObject.class).build();
 
     public static SqueakLanguage get(final AbstractNode node) {

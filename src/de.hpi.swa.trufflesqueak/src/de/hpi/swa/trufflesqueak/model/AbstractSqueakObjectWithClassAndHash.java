@@ -46,7 +46,22 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         this(HASH_UNINITIALIZED, null);
     }
 
+    protected AbstractSqueakObjectWithClassAndHash(final Shape shape) {
+        super(shape);
+        squeahHashAndBits = ObjectHeader.getHash(HASH_UNINITIALIZED);
+        squeakClass = null;
+        // mark bit zero when loading image
+    }
+
     protected AbstractSqueakObjectWithClassAndHash(final long header, final ClassObject klass) {
+        super(SqueakLanguage.EMPTY_SHAPE);
+        squeahHashAndBits = ObjectHeader.getHash(header);
+        squeakClass = klass;
+        // mark bit zero when loading image
+    }
+
+    protected AbstractSqueakObjectWithClassAndHash(final long header, final ClassObject klass, final Shape defaultShape) {
+        super(klass != null ? klass.getRootShape() : defaultShape);
         squeahHashAndBits = ObjectHeader.getHash(header);
         squeakClass = klass;
         // mark bit zero when loading image
@@ -74,7 +89,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash original) {
-        super(original instanceof AbstractPointersObject ? SqueakLanguage.POINTERS_SHAPE : SqueakLanguage.ROOT_SHAPE);// (original.getShape());
+        super(original instanceof AbstractPointersObject ? original.getSqueakClass().getRootShape() : SqueakLanguage.EMPTY_SHAPE);
         squeahHashAndBits = original.squeahHashAndBits;
         setSqueakHash(HASH_UNINITIALIZED);
         squeakClass = original.squeakClass;

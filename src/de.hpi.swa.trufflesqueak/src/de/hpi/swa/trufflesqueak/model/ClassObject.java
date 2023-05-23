@@ -13,8 +13,10 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -50,6 +52,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private PointersObject organization;
     private Object[] pointers;
 
+    private Shape rootShape;
+
     public ClassObject(final SqueakImageContext image) {
         super();
         this.image = image;
@@ -82,6 +86,20 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public SqueakImageContext getImage() {
         return image;
+    }
+
+    public Shape getRootShape() {
+        if (rootShape == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            final Shape baseShape;
+            if (superclass != null) {
+                baseShape = superclass.getRootShape();
+            } else {
+                baseShape = SqueakLanguage.POINTERS_SHAPE;
+            }
+            rootShape = Shape.newBuilder(baseShape).dynamicType(this).build();
+        }
+        return rootShape;
     }
 
     @Override

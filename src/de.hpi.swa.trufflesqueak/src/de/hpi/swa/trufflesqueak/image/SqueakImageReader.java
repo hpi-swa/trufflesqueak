@@ -14,8 +14,10 @@ import java.util.HashSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -402,6 +404,9 @@ public final class SqueakImageReader {
                 // FIXME:
                 if (obj.needsSqueakClass()) {
                     obj.setSqueakClass(chunk.getSqueakClass());
+                    if (obj.getShape().getLayoutClass() == AbstractPointersObject.class) {
+                        DynamicObjectLibrary.getUncached().setDynamicType(obj, chunk.getSqueakClass());
+                    }
                 }
                 if (obj.getSqueakHash() != chunk.getHash()) {
                     obj.setSqueakHash(chunk.getHash());

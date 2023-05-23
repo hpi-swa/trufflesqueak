@@ -36,16 +36,15 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @SuppressWarnings("static-method")
 // @ExportLibrary(ReflectionLibrary.class)
 public abstract class AbstractSqueakObject extends DynamicObject implements TruffleObject {
+    private static final Object DEFAULT = new Object();
+
     protected AbstractSqueakObject(final Shape shape) {
         super(shape);
-        // TODO Auto-generated constructor stub
     }
 
     protected AbstractSqueakObject() {
-        super(SqueakLanguage.ROOT_SHAPE);
+        super(SqueakLanguage.EMPTY_SHAPE);
     }
-
-    private static final Object DEFAULT = new Object();
 
     public abstract long getOrCreateSqueakHash();
 

@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.object.Shape;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -174,25 +175,25 @@ public abstract class LookupClassGuard {
     }
 
     private static final class AbstractPointersObjectGuard extends LookupClassGuard {
-        private final ClassObject expectedSqueakClass;
+        private final Shape expectedShape;
 
         private AbstractPointersObjectGuard(final AbstractPointersObject receiver) {
-            expectedSqueakClass = receiver.getSqueakClass();
+            expectedShape = receiver.getShape();
         }
 
         @Override
         protected boolean check(final Object receiver) {
-            return receiver instanceof final AbstractPointersObject o && o.getSqueakClass() == expectedSqueakClass;
+            return receiver instanceof final AbstractPointersObject o && o.getShape() == expectedShape;
         }
 
         @Override
         protected Assumption getIsValidAssumption() {
-            return Assumption.ALWAYS_VALID;
+            return expectedShape.getValidAssumption();
         }
 
         @Override
         protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return expectedSqueakClass;
+            return (ClassObject) expectedShape.getDynamicType();
         }
     }
 
