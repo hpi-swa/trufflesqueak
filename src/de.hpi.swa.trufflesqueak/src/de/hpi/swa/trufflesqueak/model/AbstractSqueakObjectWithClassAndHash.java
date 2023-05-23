@@ -8,8 +8,10 @@ package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -54,6 +56,15 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         this(image.getCurrentMarkingFlag(), HASH_UNINITIALIZED, klass);
     }
 
+    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final ClassObject klass, final Shape shape) {
+        super(shape);
+        squeahHashAndBits = HASH_UNINITIALIZED;
+        squeakClass = klass;
+        if (image.getCurrentMarkingFlag()) {
+            toggleMarkingFlag();
+        }
+    }
+
     private AbstractSqueakObjectWithClassAndHash(final boolean markingFlag, final int hash, final ClassObject klass) {
         squeahHashAndBits = hash;
         squeakClass = klass;
@@ -63,6 +74,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash original) {
+        super(original instanceof AbstractPointersObject ? SqueakLanguage.POINTERS_SHAPE : SqueakLanguage.ROOT_SHAPE);// (original.getShape());
         squeahHashAndBits = original.squeahHashAndBits;
         setSqueakHash(HASH_UNINITIALIZED);
         squeakClass = original.squeakClass;

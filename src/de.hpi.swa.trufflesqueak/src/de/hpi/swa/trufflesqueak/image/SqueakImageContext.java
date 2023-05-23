@@ -52,7 +52,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.DoItRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
@@ -569,10 +568,6 @@ public final class SqueakImageContext {
         return wideStringClass;
     }
 
-    public static void initializeBeforeLoadingImage() {
-        SlotLocation.initialize();
-    }
-
     public ClassObject getForeignObjectClass() {
         assert foreignObjectClass != null;
         return foreignObjectClass;
@@ -881,7 +876,7 @@ public final class SqueakImageContext {
         }
         final long gcd = Math.abs(m);
         // Instantiate reduced fraction
-        final PointersObject fraction = new PointersObject(this, fractionClass, fractionClass.getLayout());
+        final PointersObject fraction = new PointersObject(this, fractionClass, SqueakLanguage.POINTERS_SHAPE);
         writeNode.execute(fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
         writeNode.execute(fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
         return fraction;
@@ -909,7 +904,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {
-        final PointersObject point = new PointersObject(this, pointClass, null);
+        final PointersObject point = new PointersObject(this, pointClass, SqueakLanguage.POINTERS_SHAPE);
         writeNode.execute(point, POINT.X, xPos);
         writeNode.execute(point, POINT.Y, yPos);
         return point;
@@ -920,7 +915,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
-        final PointersObject message = new PointersObject(this, messageClass, null);
+        final PointersObject message = new PointersObject(this, messageClass, SqueakLanguage.POINTERS_SHAPE);
         writeNode.execute(message, MESSAGE.SELECTOR, selector);
         writeNode.execute(message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
         assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";

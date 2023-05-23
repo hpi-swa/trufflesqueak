@@ -7,10 +7,11 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.object.Shape;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
@@ -33,7 +34,7 @@ public final class PointersObject extends AbstractPointersObject {
         super(header, klass);
     }
 
-    public PointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
+    public PointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape layout) {
         super(image, classObject, layout);
     }
 
@@ -42,7 +43,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
-        final PointersObject handle = new PointersObject(image, image.pointClass, null);
+        final PointersObject handle = new PointersObject(image, image.pointClass, SqueakLanguage.POINTERS_SHAPE);
         handle.object2 = hiddenObject;
         return handle;
     }

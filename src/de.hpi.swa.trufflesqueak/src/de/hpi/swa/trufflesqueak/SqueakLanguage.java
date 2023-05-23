@@ -13,11 +13,13 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
 import de.hpi.swa.trufflesqueak.interop.SqueakLanguageView;
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -37,6 +39,9 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @ProvidedTags({StandardTags.StatementTag.class, StandardTags.CallTag.class, StandardTags.RootTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     private static final LanguageReference<SqueakLanguage> REFERENCE = LanguageReference.create(SqueakLanguage.class);
+    public static final Shape ROOT_SHAPE = Shape.newBuilder().build();
+
+    public static final Shape POINTERS_SHAPE = Shape.newBuilder().layout(AbstractPointersObject.class).build();
 
     public static SqueakLanguage get(final AbstractNode node) {
         return REFERENCE.get(node);

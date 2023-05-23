@@ -16,15 +16,15 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.api.library.Message;
-import com.oracle.truffle.api.library.ReflectionLibrary;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.Shape;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
@@ -34,8 +34,17 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @SuppressWarnings("static-method")
-@ExportLibrary(ReflectionLibrary.class)
-public abstract class AbstractSqueakObject implements TruffleObject {
+// @ExportLibrary(ReflectionLibrary.class)
+public abstract class AbstractSqueakObject extends DynamicObject implements TruffleObject {
+    protected AbstractSqueakObject(final Shape shape) {
+        super(shape);
+        // TODO Auto-generated constructor stub
+    }
+
+    protected AbstractSqueakObject() {
+        super(SqueakLanguage.ROOT_SHAPE);
+    }
+
     private static final Object DEFAULT = new Object();
 
     public abstract long getOrCreateSqueakHash();
@@ -52,7 +61,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return "a " + getClass().getSimpleName() + " @" + Integer.toHexString(hashCode());
     }
 
-    @ExportMessage
+// @ExportMessage
     protected static class Send {
         @SuppressWarnings("unused")
         @ExplodeLoop

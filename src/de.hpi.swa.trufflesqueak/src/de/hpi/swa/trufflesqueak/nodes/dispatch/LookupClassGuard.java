@@ -18,7 +18,6 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
 public abstract class LookupClassGuard {
@@ -175,30 +174,25 @@ public abstract class LookupClassGuard {
     }
 
     private static final class AbstractPointersObjectGuard extends LookupClassGuard {
-        private final ObjectLayout expectedLayout;
+        private final ClassObject expectedSqueakClass;
 
         private AbstractPointersObjectGuard(final AbstractPointersObject receiver) {
-            if (!receiver.getLayout().isValid()) {
-                /* Ensure only valid layouts are cached. */
-                receiver.updateLayout();
-            }
-            expectedLayout = receiver.getLayout();
-            assert expectedLayout.isValid();
+            expectedSqueakClass = receiver.getSqueakClass();
         }
 
         @Override
         protected boolean check(final Object receiver) {
-            return receiver instanceof final AbstractPointersObject o && o.getLayout() == expectedLayout;
+            return receiver instanceof final AbstractPointersObject o && o.getSqueakClass() == expectedSqueakClass;
         }
 
         @Override
         protected Assumption getIsValidAssumption() {
-            return expectedLayout.getValidAssumption();
+            return Assumption.ALWAYS_VALID;
         }
 
         @Override
         protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return expectedLayout.getSqueakClass();
+            return expectedSqueakClass;
         }
     }
 

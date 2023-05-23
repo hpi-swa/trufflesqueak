@@ -11,11 +11,11 @@ import java.lang.ref.WeakReference;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
@@ -27,7 +27,7 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         weakPointersQueue = image.weakPointersQueue;
     }
 
-    public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
+    public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape layout, final int variableSize) {
         super(image, classObject, layout, variableSize);
         weakPointersQueue = image.weakPointersQueue;
     }

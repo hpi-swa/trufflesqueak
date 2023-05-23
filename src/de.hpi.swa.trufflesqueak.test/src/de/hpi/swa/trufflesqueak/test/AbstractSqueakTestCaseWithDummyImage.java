@@ -10,7 +10,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -24,7 +23,6 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
     @BeforeClass
     public static void setUpSqueakImageContext() {
-        SqueakImageContext.initializeBeforeLoadingImage();
         loadImageContext("fake.image");
         final Object[] dummySpecialObjects = new Object[100];
         final ArrayObject dummySpecialSelectors = createDummySpecialSelectors();

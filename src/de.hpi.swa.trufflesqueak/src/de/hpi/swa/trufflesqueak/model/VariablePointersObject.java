@@ -6,9 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.object.Shape;
+
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class VariablePointersObject extends AbstractVariablePointersObject {
@@ -17,7 +18,7 @@ public final class VariablePointersObject extends AbstractVariablePointersObject
         super(header, classObject);
     }
 
-    public VariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
+    public VariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape layout, final int variableSize) {
         super(image, classObject, layout, variableSize);
     }
 

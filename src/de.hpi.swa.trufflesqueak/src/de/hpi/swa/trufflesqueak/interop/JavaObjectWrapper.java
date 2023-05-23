@@ -59,7 +59,6 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
@@ -211,8 +210,6 @@ public final class JavaObjectWrapper implements TruffleObject {
                             WeakVariablePointersObject.class,
                             // For AST-based coverage in CallTargetBrowser
                             StartContextRootNode.class, ExecuteBytecodeNode.class,
-                            // TruffleSqueak's object layout
-                            ObjectLayout.class,
 
             }) {
                 CLASSES_TO_MEMBERS.get(cls);

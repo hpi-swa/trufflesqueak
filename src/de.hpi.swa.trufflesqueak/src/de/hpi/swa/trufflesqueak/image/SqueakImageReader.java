@@ -65,7 +65,6 @@ public final class SqueakImageReader {
     }
 
     private Object run() {
-        SqueakImageContext.initializeBeforeLoadingImage();
         final long start = MiscUtils.currentTimeMillis();
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {

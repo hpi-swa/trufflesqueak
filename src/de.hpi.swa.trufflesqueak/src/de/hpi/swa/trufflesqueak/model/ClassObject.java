@@ -21,7 +21,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_TRAIT;
@@ -50,8 +49,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private ArrayObject instanceVariables;
     private PointersObject organization;
     private Object[] pointers;
-
-    @CompilationFinal private ObjectLayout layout;
 
     public ClassObject(final SqueakImageContext image) {
         super();
@@ -85,25 +82,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public SqueakImageContext getImage() {
         return image;
-    }
-
-    /* Used by TruffleSqueakTest. */
-    public boolean hasLayout() {
-        return layout != null;
-    }
-
-    public ObjectLayout getLayout() {
-        if (layout == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            layout = new ObjectLayout(this, getBasicInstanceSize());
-        }
-        return layout;
-    }
-
-    public void updateLayout(final ObjectLayout newLayout) {
-        assert layout == null || !layout.isValid() : "Old layout not invalidated";
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        layout = newLayout;
     }
 
     @Override
