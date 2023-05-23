@@ -73,7 +73,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
         receiver.setSqueakClass(argument);
     }
 
-    @Specialization(guards = {"receiver.hasFormatOf(argument)"})
+    @Specialization(guards = {"receiver.hasFormatOf(argument)"}, limit = "3")
     protected static final void doPointers(final AbstractPointersObject receiver, final ClassObject argument,
                     @CachedLibrary("receiver") final DynamicObjectLibrary lib) {
         receiver.changeClassTo(lib, argument);
