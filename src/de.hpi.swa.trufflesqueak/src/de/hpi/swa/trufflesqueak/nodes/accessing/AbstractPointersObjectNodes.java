@@ -87,8 +87,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @Specialization(limit = "CACHE_LIMIT")
-        protected static final void doWrite(final AbstractPointersObject object, final long index,
-                        final Object value,
+        protected static final void doWrite(final AbstractPointersObject object, final long index, final Object value,
                         @CachedLibrary("object") final DynamicObjectLibrary lib) {
             lib.put(object, index, value);
         }

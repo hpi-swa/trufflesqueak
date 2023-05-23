@@ -8,6 +8,8 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -72,8 +74,9 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
     }
 
     @Specialization(guards = {"receiver.hasFormatOf(argument)"})
-    protected static final void doPointers(final AbstractPointersObject receiver, final ClassObject argument) {
-        receiver.changeClassTo(argument);
+    protected static final void doPointers(final AbstractPointersObject receiver, final ClassObject argument,
+                    @CachedLibrary("receiver") final DynamicObjectLibrary lib) {
+        receiver.changeClassTo(lib, argument);
     }
 
     @Specialization(guards = {"receiver.hasFormatOf(argument)"})

@@ -60,7 +60,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         final Object[] pointers = chunk.getPointers();
         final int instSize = instsize();
         for (int i = 0; i < instSize; i++) {
-            writeNode.execute(this, i, pointers[i]);
+            if (pointers[i] != NilObject.SINGLETON) {
+                writeNode.execute(this, i, pointers[i]);
+            }
         }
         fillInVariablePart(pointers, instSize);
         assert size() == pointers.length;
@@ -68,9 +70,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     protected abstract void fillInVariablePart(Object[] pointers, int instSize);
 
-    public final void changeClassTo(final ClassObject newClass) {
+    public final void changeClassTo(final DynamicObjectLibrary lib, final ClassObject newClass) {
         setSqueakClass(newClass);
-// migrateToLayout(newClass.getLayout());
+        lib.setDynamicType(this, newClass);
     }
 
     public final void becomeLayout(final AbstractPointersObject other) {
