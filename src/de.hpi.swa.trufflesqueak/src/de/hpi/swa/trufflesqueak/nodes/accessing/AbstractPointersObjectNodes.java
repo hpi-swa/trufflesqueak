@@ -95,6 +95,7 @@ public class AbstractPointersObjectNodes {
     }
 
     @GenerateUncached
+    @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class AbstractPointersObjectInstSizeNode extends AbstractNode {
         public abstract int execute(AbstractPointersObject obj);
 
@@ -104,6 +105,14 @@ public class AbstractPointersObjectNodes {
 // object,
 // @Cached("object.getLayout()") final ObjectLayout cachedLayout) {
 // return cachedLayout.getInstSize();
+// }
+
+// @Specialization(limit = "CACHE_LIMIT")
+// protected static final int doSize(final AbstractPointersObject object,
+// @CachedLibrary("object") final DynamicObjectLibrary lib) {
+// final int propertyCount = lib.getShape(object).getPropertyCount();
+// assert object.getSqueakClass().getBasicInstanceSize() == propertyCount;
+// return propertyCount;
 // }
 
         @ReportPolymorphism.Megamorphic

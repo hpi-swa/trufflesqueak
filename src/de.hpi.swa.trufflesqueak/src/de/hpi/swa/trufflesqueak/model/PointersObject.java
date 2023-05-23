@@ -7,6 +7,8 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
+import com.oracle.truffle.api.object.HiddenKey;
 import com.oracle.truffle.api.object.Shape;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -26,6 +28,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class PointersObject extends AbstractPointersObject {
+    private static final HiddenKey HIDDEN_KEY = new HiddenKey("Hidden Object");
+
     public PointersObject() {
         super(); // for special PointersObjects only
     }
@@ -44,17 +48,17 @@ public final class PointersObject extends AbstractPointersObject {
 
     public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
         final PointersObject handle = new PointersObject(image, image.pointClass, SqueakLanguage.POINTERS_SHAPE);
-        handle.object2 = hiddenObject;
+        handle.setHiddenObject(hiddenObject);
         return handle;
     }
 
     public Object getHiddenObject() {
         assert SqueakImageContext.getSlow().isPointClass(getSqueakClass()) : "Object cannot be a handle with hidden object";
-        return object2;
+        return DynamicObjectLibrary.getUncached().getOrDefault(this, HIDDEN_KEY, NilObject.SINGLETON);
     }
 
     public void setHiddenObject(final Object value) {
-        object2 = value;
+        DynamicObjectLibrary.getUncached().put(this, HIDDEN_KEY, value);
     }
 
     @Override
