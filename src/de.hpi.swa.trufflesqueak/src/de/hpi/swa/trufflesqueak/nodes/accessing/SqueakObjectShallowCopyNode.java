@@ -9,6 +9,8 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -48,18 +50,21 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final PointersObject doPointers(final PointersObject receiver) {
-        return receiver.shallowCopy();
+    protected static final PointersObject doPointers(final PointersObject receiver,
+                    @CachedLibrary(limit = "3") final DynamicObjectLibrary lib) {
+        return receiver.shallowCopy(lib);
     }
 
     @Specialization
-    protected static final VariablePointersObject doVariablePointers(final VariablePointersObject receiver) {
-        return receiver.shallowCopy();
+    protected static final VariablePointersObject doVariablePointers(final VariablePointersObject receiver,
+                    @CachedLibrary(limit = "3") final DynamicObjectLibrary lib) {
+        return receiver.shallowCopy(lib);
     }
 
     @Specialization
-    protected static final WeakVariablePointersObject doWeakPointers(final WeakVariablePointersObject receiver) {
-        return receiver.shallowCopy();
+    protected static final WeakVariablePointersObject doWeakPointers(final WeakVariablePointersObject receiver,
+                    @CachedLibrary(limit = "3") final DynamicObjectLibrary lib) {
+        return receiver.shallowCopy(lib);
     }
 
     @Specialization
@@ -100,13 +105,15 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization(guards = "!receiver.hasInstanceVariables()")
-    protected static final ClassObject doClassNoInstanceVariables(final ClassObject receiver) {
-        return receiver.shallowCopy(null);
+    protected static final ClassObject doClassNoInstanceVariables(final ClassObject receiver,
+                    @CachedLibrary(limit = "3") final DynamicObjectLibrary lib) {
+        return receiver.shallowCopy(lib, null);
     }
 
     @Specialization(guards = "receiver.hasInstanceVariables()")
     protected static final ClassObject doClass(final ClassObject receiver,
+                    @CachedLibrary(limit = "3") final DynamicObjectLibrary lib,
                     @Cached final ArrayObjectShallowCopyNode arrayCopyNode) {
-        return receiver.shallowCopy(arrayCopyNode.execute(receiver.getInstanceVariablesOrNull()));
+        return receiver.shallowCopy(lib, arrayCopyNode.execute(receiver.getInstanceVariablesOrNull()));
     }
 }

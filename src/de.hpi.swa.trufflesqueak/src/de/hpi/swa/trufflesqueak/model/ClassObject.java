@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -64,15 +65,15 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         this.image = image;
     }
 
-    private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
+    private ClassObject(final ClassObject original, final DynamicObjectLibrary lib, final ArrayObject copiedInstanceVariablesOrNull) {
         super(original);
         image = original.image;
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
-        methodDict = original.methodDict.shallowCopy();
+        methodDict = original.methodDict.shallowCopy(lib);
         format = original.format;
         instanceVariables = copiedInstanceVariablesOrNull;
-        organization = original.organization == null ? null : original.organization.shallowCopy();
+        organization = original.organization == null ? null : original.organization.shallowCopy(lib);
         pointers = original.pointers.clone();
     }
 
@@ -421,8 +422,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return (int) (format >> 16 & 0x1f);
     }
 
-    public ClassObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
-        return new ClassObject(this, copiedInstanceVariablesOrNull);
+    public ClassObject shallowCopy(final DynamicObjectLibrary lib, final ArrayObject copiedInstanceVariablesOrNull) {
+        return new ClassObject(this, lib, copiedInstanceVariablesOrNull);
     }
 
     public boolean pointsTo(final Object thang) {

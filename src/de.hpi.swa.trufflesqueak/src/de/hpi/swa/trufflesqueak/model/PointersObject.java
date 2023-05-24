@@ -41,8 +41,8 @@ public final class PointersObject extends AbstractPointersObject {
         super(image, classObject, shape);
     }
 
-    private PointersObject(final PointersObject original) {
-        super(original);
+    private PointersObject(final PointersObject original, final DynamicObjectLibrary lib) {
+        super(original, lib);
     }
 
     public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
@@ -121,8 +121,8 @@ public final class PointersObject extends AbstractPointersObject {
         return first;
     }
 
-    public PointersObject shallowCopy() {
-        return new PointersObject(this);
+    public PointersObject shallowCopy(final DynamicObjectLibrary lib) {
+        return new PointersObject(this, lib);
     }
 
     @Override

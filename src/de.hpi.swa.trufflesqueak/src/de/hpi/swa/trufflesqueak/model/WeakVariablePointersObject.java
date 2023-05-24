@@ -11,6 +11,7 @@ import java.lang.ref.WeakReference;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -32,8 +33,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         weakPointersQueue = image.weakPointersQueue;
     }
 
-    private WeakVariablePointersObject(final WeakVariablePointersObject original) {
-        super(original);
+    private WeakVariablePointersObject(final WeakVariablePointersObject original, final DynamicObjectLibrary lib) {
+        super(original, lib);
         weakPointersQueue = original.weakPointersQueue;
     }
 
@@ -99,8 +100,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         return false;
     }
 
-    public WeakVariablePointersObject shallowCopy() {
-        return new WeakVariablePointersObject(this);
+    public WeakVariablePointersObject shallowCopy(final DynamicObjectLibrary lib) {
+        return new WeakVariablePointersObject(this, lib);
     }
 
     @Override

@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Shape;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -22,12 +23,12 @@ public final class VariablePointersObject extends AbstractVariablePointersObject
         super(image, classObject, layout, variableSize);
     }
 
-    private VariablePointersObject(final VariablePointersObject original) {
-        super(original);
+    private VariablePointersObject(final VariablePointersObject original, final DynamicObjectLibrary lib) {
+        super(original, lib);
     }
 
-    public VariablePointersObject shallowCopy() {
-        return new VariablePointersObject(this);
+    public VariablePointersObject shallowCopy(final DynamicObjectLibrary lib) {
+        return new VariablePointersObject(this, lib);
     }
 
     @Override

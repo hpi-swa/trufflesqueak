@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Shape;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -27,8 +28,8 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
         variablePart = ArrayUtils.withAll(variableSize, NilObject.SINGLETON);
     }
 
-    protected AbstractVariablePointersObject(final AbstractVariablePointersObject original) {
-        super(original);
+    protected AbstractVariablePointersObject(final AbstractVariablePointersObject original, final DynamicObjectLibrary lib) {
+        super(original, lib);
         variablePart = original.variablePart.clone();
     }
 

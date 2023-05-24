@@ -42,14 +42,13 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         super(header, classObject, classObject.getRootShape());
     }
 
-    protected AbstractPointersObject(final AbstractPointersObject original) {
+    protected AbstractPointersObject(final AbstractPointersObject original, final DynamicObjectLibrary lib) {
         super(original);
-        copyLayoutValuesFrom(original);
+        copyLayoutValuesFrom(original, lib);
     }
 
-    public final void copyLayoutValuesFrom(final AbstractPointersObject anotherObject) {
-        final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
-        for (final var key : anotherObject.getShape().getKeys()) {
+    public final void copyLayoutValuesFrom(final AbstractPointersObject anotherObject, final DynamicObjectLibrary lib) {
+        for (final var key : lib.getKeyArray(anotherObject)) {
             lib.put(this, key, lib.getOrDefault(anotherObject, key, NilObject.SINGLETON));
         }
     }
@@ -72,7 +71,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     public final void changeClassTo(final DynamicObjectLibrary lib, final ClassObject newClass) {
         setSqueakClass(newClass);
-        lib.setDynamicType(this, newClass);
+        lib.resetShape(this, newClass.getRootShape());
     }
 
     public final void becomeLayout(final AbstractPointersObject other) {
