@@ -86,15 +86,34 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     public final void becomeLayout(final AbstractPointersObject other) {
         assert getClass() == other.getClass();
-        becomeOtherClass(other);
-
         CompilerDirectives.transferToInterpreterAndInvalidate();
 
         final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
-        for (final var key : other.getShape().getKeys()) {
-            final Object otherValue = lib.getOrDefault(other, key, NilObject.SINGLETON);
-            lib.put(other, key, lib.getOrDefault(this, key, NilObject.SINGLETON));
-            lib.put(this, key, otherValue);
+
+        // Copy my and other values
+        final Object[] keyArray = lib.getKeyArray(this);
+        final Object[] values = new Object[keyArray.length];
+        for (int i = 0; i < keyArray.length; i++) {
+            values[i] = lib.getOrDefault(this, keyArray[i], NilObject.SINGLETON);
+        }
+        final Object[] otherKeyArray = lib.getKeyArray(other);
+        final Object[] otherValues = new Object[otherKeyArray.length];
+        for (int i = 0; i < otherKeyArray.length; i++) {
+            otherValues[i] = lib.getOrDefault(other, otherKeyArray[i], NilObject.SINGLETON);
+        }
+
+        // Exchange classes and shapes
+        becomeOtherClass(other);
+        final Shape rootShape = getSqueakClass().getRootShape();
+        lib.resetShape(this, other.getSqueakClass().getRootShape());
+        lib.resetShape(other, rootShape);
+
+        // Exchange values
+        for (int i = 0; i < otherKeyArray.length; i++) {
+            lib.put(this, otherKeyArray[i], otherValues[i]);
+        }
+        for (int i = 0; i < keyArray.length; i++) {
+            lib.put(other, keyArray[i], values[i]);
         }
     }
 
