@@ -41,7 +41,6 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchInteropMessageNode;
 @ExportLibrary(InteropLibrary.class)
 @ImportStatic(DispatchInteropMessageNode.class)
 public abstract class AbstractSqueakObject extends DynamicObject implements TruffleObject {
-    private static final Object DEFAULT = new Object();
 
     protected AbstractSqueakObject(final Shape shape) {
         super(shape);
@@ -133,7 +132,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     protected static final Object instantiate(final AbstractSqueakObject receiver, final Object[] arguments,
                     @Cached(value = "create(INSTANTIATE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode)
                     throws UnsupportedTypeException, ArityException, UnsupportedMessageException {
-        return dispatchNode.execute(receiver);
+        return dispatchNode.execute(receiver, arguments);
     }
 
     // String Messages
@@ -307,7 +306,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     @ExportMessage
     protected static final boolean isMemberInternal(final AbstractSqueakObject receiver, final String member,
                     @Cached(value = "create(IS_MEMBER_INTERNAL)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, member);
     }
 
     // protected static final final boolean isMemberWritable(final AbstractSqueakObject receiver,
@@ -322,13 +321,13 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     @ExportMessage
     protected static final boolean hasMemberReadSideEffects(final AbstractSqueakObject receiver, final String member,
                     @Cached(value = "create(GET_EXECUTABLE_NAME)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, member);
     }
 
     @ExportMessage
     protected static final boolean hasMemberWriteSideEffects(final AbstractSqueakObject receiver, final String member,
                     @Cached(value = "create(GET_EXECUTABLE_NAME)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, member);
     }
 
     // Hashes
@@ -370,44 +369,44 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     @ExportMessage
     protected static final boolean isHashEntryModifiable(final AbstractSqueakObject receiver, final Object key,
                     @Cached(value = "create(IS_HASH_ENTRY_MODIFIABLE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, key);
     }
 
     @ExportMessage
     protected static final boolean isHashEntryInsertable(final AbstractSqueakObject receiver, final Object key,
                     @Cached(value = "create(IS_HASH_ENTRY_INSERTABLE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, key);
     }
 
     @ExportMessage
     protected static final boolean isHashEntryWritable(final AbstractSqueakObject receiver, final Object key,
                     @Cached(value = "create(IS_HASH_ENTRY_WRITABLE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, key);
     }
 
     @ExportMessage
     protected static final void writeHashEntry(final AbstractSqueakObject receiver, final Object key, final Object value,
                     @Cached(value = "create(WRITE_HASH_ENTRY)", allowUncached = true) final DispatchInteropMessageNode dispatchNode)
                     throws UnsupportedMessageException, UnknownKeyException, UnsupportedTypeException {
-        dispatchNode.execute(receiver);
+        dispatchNode.execute(receiver, key, value);
     }
 
     @ExportMessage
     protected static final boolean isHashEntryRemovable(final AbstractSqueakObject receiver, final Object key,
                     @Cached(value = "create(IS_HASH_ENTRY_REMOVABLE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, key);
     }
 
     @ExportMessage
     protected static final void removeHashEntry(final AbstractSqueakObject receiver, final Object key,
                     @Cached(value = "create(REMOVE_HASH_ENTRY)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) throws UnsupportedMessageException, UnknownKeyException {
-        dispatchNode.execute(receiver);
+        dispatchNode.execute(receiver, key);
     }
 
     @ExportMessage
     protected static final boolean isHashEntryExisting(final AbstractSqueakObject receiver, final Object key,
                     @Cached(value = "create(IS_HASH_ENTRY_EXISTING)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, key);
     }
 
     @ExportMessage
@@ -607,6 +606,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     @ExportMessage
     protected static final void toNative(final AbstractSqueakObject receiver,
                     @Cached(value = "create(TO_NATIVE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
+        dispatchNode.execute(receiver);
     }
 
 // protected static final Instant asInstant(final AbstractSqueakObject receiver,
@@ -795,7 +795,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     @ExportMessage
     protected static final Object toDisplayString(final AbstractSqueakObject receiver, final boolean allowSideEffects,
                     @Cached(value = "create(TO_DISPLAY_STRING)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.execute(receiver);
+        return dispatchNode.execute(receiver, allowSideEffects);
     }
 
     @ExportMessage
@@ -819,7 +819,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     @ExportMessage
     protected static final boolean isMetaInstance(final AbstractSqueakObject receiver, final Object instance,
                     @Cached(value = "create(IS_META_INSTANCE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) throws UnsupportedMessageException {
-        return dispatchNode.executeBoolean(receiver);
+        return dispatchNode.executeBoolean(receiver, instance);
     }
 
     @ExportMessage
