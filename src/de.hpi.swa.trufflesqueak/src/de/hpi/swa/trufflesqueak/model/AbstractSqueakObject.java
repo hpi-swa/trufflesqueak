@@ -320,13 +320,13 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
 
     @ExportMessage
     protected static final boolean hasMemberReadSideEffects(final AbstractSqueakObject receiver, final String member,
-                    @Cached(value = "create(GET_EXECUTABLE_NAME)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
+                    @Cached(value = "create(HAS_MEMBER_READ_SIDE_EFFECTS)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
         return dispatchNode.executeBoolean(receiver, member);
     }
 
     @ExportMessage
     protected static final boolean hasMemberWriteSideEffects(final AbstractSqueakObject receiver, final String member,
-                    @Cached(value = "create(GET_EXECUTABLE_NAME)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
+                    @Cached(value = "create(HAS_MEMBER_WRITE_SIDE_EFFECTS)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
         return dispatchNode.executeBoolean(receiver, member);
     }
 

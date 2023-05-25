@@ -134,7 +134,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
         final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
-        for (final var key : getShape().getKeys()) {
+        for (final var key : lib.getKeyArray(this)) {
             if (lib.getOrDefault(this, key, NilObject.SINGLETON) == thang) {
                 return true;
             }
@@ -147,7 +147,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             final Object fromPointer = from[i];
 
             final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
-            for (final var key : getShape().getKeys()) {
+            for (final var key : lib.getKeyArray(this)) {
                 if (lib.getOrDefault(this, key, NilObject.SINGLETON) == fromPointer) {
                     lib.put(this, key, to[i]);
                 }
@@ -158,7 +158,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     @Override
     public final void tracePointers(final ObjectTracer tracer) {
         final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
-        for (final var key : getShape().getKeys()) {
+        for (final var key : lib.getKeyArray(this)) {
             tracer.addIfUnmarked(lib.getOrDefault(this, key, NilObject.SINGLETON));
         }
         traceVariablePart(tracer);
@@ -170,7 +170,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public final void trace(final SqueakImageWriter writer) {
         super.trace(writer);
         final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
-        for (final var key : getShape().getKeys()) {
+        for (final var key : lib.getKeyArray(this)) {
             writer.traceIfNecessary(lib.getOrDefault(this, key, NilObject.SINGLETON));
         }
         traceVariablePart(writer);
