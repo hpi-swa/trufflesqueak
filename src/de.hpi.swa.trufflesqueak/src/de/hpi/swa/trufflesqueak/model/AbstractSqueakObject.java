@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -181,7 +182,11 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
         return dispatchNode.executeBoolean(receiver);
     }
 
-// public boolean fitsInBigInteger(Object receiver) {
+    @ExportMessage
+    protected static final boolean fitsInBigInteger(final AbstractSqueakObject receiver,
+                    @Cached(value = "create(FITS_IN_BIG_INTEGER)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
+        return dispatchNode.executeBoolean(receiver);
+    }
 
     @ExportMessage
     protected static final boolean fitsInFloat(final AbstractSqueakObject receiver,
@@ -219,7 +224,12 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
         return (long) dispatchNode.execute(receiver);
     }
 
-// public BigInteger asBigInteger(Object receiver) throws UnsupportedMessageException {
+//
+    @ExportMessage
+    protected static final BigInteger asBigInteger(final AbstractSqueakObject receiver,
+                    @Cached(value = "create(AS_BIG_INTEGER)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) throws UnsupportedMessageException {
+        return (BigInteger) dispatchNode.execute(receiver);
+    }
 
     @ExportMessage
     protected static final float asFloat(final AbstractSqueakObject receiver,
