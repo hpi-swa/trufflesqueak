@@ -70,8 +70,18 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     protected abstract void fillInVariablePart(Object[] pointers, int instSize);
 
     public final void changeClassTo(final DynamicObjectLibrary lib, final ClassObject newClass) {
+        final Object[] keyArray = lib.getKeyArray(this);
+        final Object[] values = new Object[keyArray.length];
+        for (int i = 0; i < keyArray.length; i++) {
+            values[i] = lib.getOrDefault(this, keyArray[i], NilObject.SINGLETON);
+        }
+
         setSqueakClass(newClass);
         lib.resetShape(this, newClass.getRootShape());
+
+        for (int i = 0; i < keyArray.length; i++) {
+            lib.put(this, keyArray[i], values[i]);
+        }
     }
 
     public final void becomeLayout(final AbstractPointersObject other) {
