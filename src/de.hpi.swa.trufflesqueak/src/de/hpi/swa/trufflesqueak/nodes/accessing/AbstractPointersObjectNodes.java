@@ -20,6 +20,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -98,24 +99,15 @@ public class AbstractPointersObjectNodes {
     public abstract static class AbstractPointersObjectInstSizeNode extends AbstractNode {
         public abstract int execute(AbstractPointersObject obj);
 
-// @Specialization(guards = {"object.getLayout() == cachedLayout"}, assumptions =
-// "cachedLayout.getValidAssumption()", limit = "1")
-// protected static final int doSizeCached(@SuppressWarnings("unused") final AbstractPointersObject
-// object,
-// @Cached("object.getLayout()") final ObjectLayout cachedLayout) {
-// return cachedLayout.getInstSize();
-// }
-
-// @Specialization(limit = "CACHE_LIMIT")
-// protected static final int doSize(final AbstractPointersObject object,
-// @CachedLibrary("object") final DynamicObjectLibrary lib) {
-// final int propertyCount = lib.getShape(object).getPropertyCount();
-// assert object.getSqueakClass().getBasicInstanceSize() == propertyCount;
-// return propertyCount;
-// }
+        @Specialization(guards = {"object.getSqueakClass() == cachedClass"}, assumptions = "cachedClass.getClassFormatStable()", limit = "1")
+        protected static final int doSizeCached(@SuppressWarnings("unused") final AbstractPointersObject object,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize) {
+            return cachedInstanceSize;
+        }
 
         @ReportPolymorphism.Megamorphic
-        @Specialization // (replaces = "doSizeCached")
+        @Specialization(replaces = "doSizeCached")
         protected static final int doSizeGeneric(final AbstractPointersObject object) {
             return object.getSqueakClass().getBasicInstanceSize();
         }
@@ -130,17 +122,41 @@ public class AbstractPointersObjectNodes {
 
         public abstract ArrayObject executeArray(VariablePointersObject object, long index);
 
+        @Specialization(guards = {"cachedIndex == index", "object.getSqueakClass() == cachedClass", "cachedIndex < cachedClass.getBasicInstanceSize()"}, //
+                        assumptions = "cachedClass.getClassFormatStable()", limit = "CACHE_LIMIT")
+        protected static final Object doReadCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index,
+                        @Cached("index") final long cachedIndex,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached final AbstractPointersObjectReadNode readNode) {
+            return readNode.execute(object, cachedIndex);
+        }
+
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = "index < object.instsize()") // , replaces = "doReadCached")
+        @Specialization(guards = "index < object.instsize()", replaces = "doReadCached")
         protected static final Object doReadGeneric(final VariablePointersObject object, final long index,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             return readNode.execute(object, index);
         }
 
+        @Specialization(guards = {"cachedIndex == index", "object.getSqueakClass() == cachedClass", "cachedIndex >= cachedInstanceSize"}, //
+                        assumptions = "cachedClass.getClassFormatStable()", limit = "VARIABLE_PART_INDEX_CACHE_LIMIT")
+        protected static final Object doReadFromVariablePartCachedIndex(final VariablePointersObject object, @SuppressWarnings("unused") final long index,
+                        @Cached("index") final long cachedIndex,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize) {
+            return object.getFromVariablePart(cachedIndex - cachedInstanceSize);
+        }
+
+        @Specialization(guards = {"object.getSqueakClass() == cachedClass", "index >= cachedInstanceSize"}, assumptions = "cachedClass.getClassFormatStable()", //
+                        replaces = "doReadFromVariablePartCachedIndex", limit = "VARIABLE_PART_LAYOUT_CACHE_LIMIT")
+        protected static final Object doReadFromVariablePartCachedLayout(final VariablePointersObject object, final long index,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize) {
+            return object.getFromVariablePart(index - cachedInstanceSize);
+        }
+
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = "index >= object.instsize()") // , replaces =
-                                                               // {"doReadFromVariablePartCachedIndex",
-                                                               // "doReadFromVariablePartCachedLayout"})
+        @Specialization(guards = "index >= object.instsize()", replaces = {"doReadFromVariablePartCachedIndex", "doReadFromVariablePartCachedLayout"})
         protected static final Object doReadFromVariablePartGeneric(final VariablePointersObject object, final long index) {
             return object.getFromVariablePart(index - object.instsize());
         }
@@ -153,17 +169,41 @@ public class AbstractPointersObjectNodes {
 
         public abstract void execute(VariablePointersObject object, long index, Object value);
 
+        @Specialization(guards = {"cachedIndex == index", "object.getSqueakClass() == cachedClass", "cachedIndex < cachedClass.getBasicInstanceSize()"}, //
+                        assumptions = "cachedClass.getClassFormatStable()", limit = "CACHE_LIMIT")
+        protected static final void doWriteCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+                        @Cached("index") final long cachedIndex,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached final AbstractPointersObjectWriteNode writeNode) {
+            writeNode.execute(object, cachedIndex, value);
+        }
+
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = "index < object.instsize()") // , replaces = "doWriteCached")
+        @Specialization(guards = "index < object.instsize()", replaces = "doWriteCached")
         protected static final void doWriteGeneric(final VariablePointersObject object, final long index, final Object value,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             writeNode.execute(object, index, value);
         }
 
+        @Specialization(guards = {"cachedIndex == index", "object.getSqueakClass() == cachedClass", "cachedIndex >= cachedInstanceSize"}, //
+                        assumptions = "cachedClass.getClassFormatStable()", limit = "VARIABLE_PART_INDEX_CACHE_LIMIT")
+        protected static final void doWriteIntoVariablePartCachedIndex(final VariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+                        @Cached("index") final long cachedIndex,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize) {
+            object.putIntoVariablePart(cachedIndex - cachedInstanceSize, value);
+        }
+
+        @Specialization(guards = {"object.getSqueakClass() == cachedClass", "index >= cachedInstanceSize"}, assumptions = "cachedClass.getClassFormatStable()", //
+                        replaces = "doWriteIntoVariablePartCachedIndex", limit = "VARIABLE_PART_LAYOUT_CACHE_LIMIT")
+        protected static final void doWriteIntoVariablePartCachedLayout(final VariablePointersObject object, final long index, final Object value,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize) {
+            object.putIntoVariablePart(index - cachedInstanceSize, value);
+        }
+
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = "index >= object.instsize()") // , replaces =
-                                                               // {"doWriteIntoVariablePartCachedIndex",
-                                                               // "doWriteIntoVariablePartCachedLayout"})
+        @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCachedIndex", "doWriteIntoVariablePartCachedLayout"})
         protected static final void doWriteIntoVariablePartGeneric(final VariablePointersObject object, final long index, final Object value) {
             object.putIntoVariablePart(index - object.instsize(), value);
         }
@@ -176,17 +216,43 @@ public class AbstractPointersObjectNodes {
 
         public abstract Object execute(WeakVariablePointersObject object, long index);
 
+        @Specialization(guards = {"cachedIndex == index", "object.getSqueakClass() == cachedClass", "cachedIndex < cachedClass.getBasicInstanceSize()"}, //
+                        assumptions = "cachedClass.getClassFormatStable()", limit = "CACHE_LIMIT")
+        protected static final Object doReadCached(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
+                        @Cached("index") final long cachedIndex,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached final AbstractPointersObjectReadNode readNode) {
+            return readNode.execute(object, cachedIndex);
+        }
+
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = "index < object.instsize()") // , replaces = "doReadCached")
+        @Specialization(guards = "index < object.instsize()", replaces = "doReadCached")
         protected static final Object doReadGeneric(final WeakVariablePointersObject object, final long index,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             return readNode.execute(object, index);
         }
 
+        @Specialization(guards = {"cachedIndex == index", "object.getSqueakClass() == cachedClass", "cachedIndex >= cachedInstanceSize"}, //
+                        assumptions = "cachedClass.getClassFormatStable()", limit = "VARIABLE_PART_INDEX_CACHE_LIMIT")
+        protected static final Object doReadFromVariablePartCachedIndex(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
+                        @Cached("index") final long cachedIndex,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize,
+                        @Cached final ConditionProfile weakRefProfile) {
+            return object.getFromVariablePart(cachedIndex - cachedInstanceSize, weakRefProfile);
+        }
+
+        @Specialization(guards = {"object.getSqueakClass() == cachedClass", "index >= cachedInstanceSize"}, assumptions = "cachedClass.getClassFormatStable()", //
+                        replaces = "doReadFromVariablePartCachedIndex", limit = "VARIABLE_PART_LAYOUT_CACHE_LIMIT")
+        protected static final Object doReadFromVariablePartCachedLayout(final WeakVariablePointersObject object, final long index,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize,
+                        @Cached final ConditionProfile weakRefProfile) {
+            return object.getFromVariablePart(index - cachedInstanceSize, weakRefProfile);
+        }
+
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = "index >= object.instsize()") // , replaces =
-                                                               // {"doReadFromVariablePartCachedIndex",
-                                                               // "doReadFromVariablePartCachedLayout"})
+        @Specialization(guards = "index >= object.instsize()", replaces = {"doReadFromVariablePartCachedIndex", "doReadFromVariablePartCachedLayout"})
         protected static final Object doReadFromVariablePartGeneric(final WeakVariablePointersObject object, final long index,
                         @Cached final ConditionProfile weakRefProfile) {
             return object.getFromVariablePart(index - object.instsize(), weakRefProfile);
@@ -200,17 +266,43 @@ public class AbstractPointersObjectNodes {
 
         public abstract void execute(WeakVariablePointersObject object, long index, Object value);
 
+        @Specialization(guards = {"cachedIndex == index", "object.getSqueakClass() == cachedClass", "cachedIndex < cachedClass.getBasicInstanceSize()"}, //
+                        assumptions = "cachedClass.getClassFormatStable()", limit = "CACHE_LIMIT")
+        protected static final void doWriteCached(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+                        @Cached("index") final long cachedIndex,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached final AbstractPointersObjectWriteNode writeNode) {
+            writeNode.execute(object, cachedIndex, value);
+        }
+
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = "index < object.instsize()") // , replaces = "doWriteCached")
+        @Specialization(guards = "index < object.instsize()", replaces = "doWriteCached")
         protected static final void doWriteGeneric(final WeakVariablePointersObject object, final long index, final Object value,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             writeNode.execute(object, index, value);
         }
 
+        @Specialization(guards = {"cachedIndex == index", "object.getSqueakClass() == cachedClass", "cachedIndex >= cachedInstanceSize"}, //
+                        assumptions = "cachedClass.getClassFormatStable()", limit = "VARIABLE_PART_INDEX_CACHE_LIMIT")
+        protected static final void doWriteIntoVariablePartCachedIndex(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+                        @Cached("index") final long cachedIndex,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize,
+                        @Cached final ConditionProfile primitiveProfile) {
+            object.putIntoVariablePart(cachedIndex - cachedInstanceSize, value, primitiveProfile);
+        }
+
+        @Specialization(guards = {"object.getSqueakClass() == cachedClass", "index >= cachedInstanceSize"}, assumptions = "cachedClass.getClassFormatStable()", //
+                        replaces = "doWriteIntoVariablePartCachedIndex", limit = "VARIABLE_PART_LAYOUT_CACHE_LIMIT")
+        protected static final void doWriteIntoVariablePartCachedLayout(final WeakVariablePointersObject object, final long index, final Object value,
+                        @SuppressWarnings("unused") @Cached("object.getSqueakClass()") final ClassObject cachedClass,
+                        @Cached("cachedClass.getBasicInstanceSize()") final int cachedInstanceSize,
+                        @Cached final ConditionProfile primitiveProfile) {
+            object.putIntoVariablePart(index - cachedInstanceSize, value, primitiveProfile);
+        }
+
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = "index >= object.instsize()") // , replaces =
-                                                               // {"doWriteIntoVariablePartCachedIndex",
-                                                               // "doWriteIntoVariablePartCachedLayout"})
+        @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCachedIndex", "doWriteIntoVariablePartCachedLayout"})
         protected static final void doWriteIntoVariablePartGeneric(final WeakVariablePointersObject object, final long index, final Object value,
                         @Cached final ConditionProfile primitiveProfile) {
             object.putIntoVariablePart(index - object.instsize(), value, primitiveProfile);
