@@ -93,7 +93,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     @ExportMessage
     protected static final Object execute(final AbstractSqueakObject receiver, final Object[] arguments,
                     @Cached(value = "create(EXECUTE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
-        return dispatchNode.execute(receiver, arguments);
+        return dispatchNode.execute(receiver, (Object) arguments);
     }
 
     @ExportMessage
@@ -124,7 +124,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
 
     @ExportMessage
     protected static final boolean isInstantiable(final AbstractSqueakObject receiver,
-                    @Cached(value = "create(GET_EXECUTABLE_NAME)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
+                    @Cached(value = "create(IS_INSTANTIABLE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) {
         return dispatchNode.executeBoolean(receiver);
     }
 
@@ -132,7 +132,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     protected static final Object instantiate(final AbstractSqueakObject receiver, final Object[] arguments,
                     @Cached(value = "create(INSTANTIATE)", allowUncached = true) final DispatchInteropMessageNode dispatchNode)
                     throws UnsupportedTypeException, ArityException, UnsupportedMessageException {
-        return dispatchNode.execute(receiver, arguments);
+        return dispatchNode.execute(receiver, (Object) arguments);
     }
 
     // String Messages
@@ -359,11 +359,7 @@ public abstract class AbstractSqueakObject extends DynamicObject implements Truf
     @ExportMessage
     protected static final Object readHashValueOrDefault(final AbstractSqueakObject receiver, final Object key, final Object defaultValue,
                     @Cached(value = "create(READ_HASH_VALUE_OR_DEFAULT)", allowUncached = true) final DispatchInteropMessageNode dispatchNode) throws UnsupportedMessageException {
-        try {
-            return readHashValue(receiver, key, dispatchNode);
-        } catch (final UnknownKeyException e) {
-            return defaultValue;
-        }
+        return dispatchNode.execute(receiver, key, defaultValue);
     }
 
     @ExportMessage
