@@ -402,8 +402,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "receiver.isObjectType()")
-        protected static final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
-            return BooleanObject.wrap(ArrayUtils.contains(receiver.getObjectStorage(), thang));
+        protected static final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+            for (final Object o : receiver.getObjectStorage()) {
+                if (identityNode.execute(o, thang)) {
+                    return BooleanObject.TRUE;
+                }
+            }
+            return BooleanObject.FALSE;
         }
 
         @Specialization
