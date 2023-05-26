@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.object.Shape;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -65,25 +64,25 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new ClassObject(image, classObject, classObject.getBasicInstanceSize() + METACLASS.INST_SIZE);
     }
 
-    @Specialization(guards = {"classObject.getRootShape() == cachedShape"}, assumptions = "cachedShape.getValidAssumption()", limit = "NEW_CACHE_SIZE")
+    @Specialization(guards = {"classObject == cachedClassObject"}, assumptions = "cachedClassObject.getRootShapeValidAssumption()", limit = "NEW_CACHE_SIZE")
     protected static final PointersObject doPointersCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
-                    @Cached("getPointersRootShapeOrNull(image, classObject)") final Shape cachedShape) {
+                    @Cached("getPointersClassObjectOrNull(image, classObject)") final ClassObject cachedClassObject) {
         assert extraSize == 0 && instantiatesPointersObject(image, classObject);
-        return new PointersObject(image, classObject, cachedShape);
+        return new PointersObject(image, cachedClassObject);
     }
 
     public static final boolean instantiatesPointersObject(final SqueakImageContext image, final ClassObject classObject) {
         return classObject.isNonIndexableWithInstVars() && !image.isMetaClass(classObject) && !classObject.instancesAreClasses();
     }
 
-    protected static final Shape getPointersRootShapeOrNull(final SqueakImageContext image, final ClassObject classObject) {
-        return instantiatesPointersObject(image, classObject) ? classObject.getRootShape() : null;
+    protected static final ClassObject getPointersClassObjectOrNull(final SqueakImageContext image, final ClassObject classObject) {
+        return instantiatesPointersObject(image, classObject) ? classObject : null;
     }
 
     @Specialization(guards = {"instantiatesPointersObject(image, classObject)"}, replaces = "doPointersCached")
     protected static final PointersObject doPointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
-        return new PointersObject(image, classObject, classObject.getRootShape());
+        return new PointersObject(classObject, image);
     }
 
     @Specialization(guards = "classObject.isIndexableWithNoInstVars()")
@@ -104,19 +103,19 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return BlockClosureObject.create(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.getRootShape() == cachedShape"}, assumptions = "cachedShape.getValidAssumption()", limit = "NEW_CACHE_SIZE")
+    @Specialization(guards = {"classObject == cachedClassObject"}, assumptions = "cachedClassObject.getRootShapeValidAssumption()", limit = "NEW_CACHE_SIZE")
     protected static final VariablePointersObject doVariablePointersCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
-                    @Cached(value = "getVariablePointersRootShapeOrNull(image, classObject)") final Shape cachedShape) {
+                    @Cached(value = "getVariablePointersClassObjectOrNull(image, classObject)") final ClassObject cachedClassObject) {
         assert instantiatesVariablePointersObject(image, classObject);
-        return new VariablePointersObject(image, classObject, cachedShape, extraSize);
+        return new VariablePointersObject(image, classObject, cachedClassObject.getRootShape(), extraSize);
     }
 
     public static final boolean instantiatesVariablePointersObject(final SqueakImageContext image, final ClassObject classObject) {
         return classObject.isIndexableWithInstVars() && !image.isMethodContextClass(classObject) && !image.isBlockClosureClass(classObject) && !image.isFullBlockClosureClass(classObject);
     }
 
-    protected static final Shape getVariablePointersRootShapeOrNull(final SqueakImageContext image, final ClassObject classObject) {
-        return instantiatesVariablePointersObject(image, classObject) ? classObject.getRootShape() : null;
+    protected static final ClassObject getVariablePointersClassObjectOrNull(final SqueakImageContext image, final ClassObject classObject) {
+        return instantiatesVariablePointersObject(image, classObject) ? classObject : null;
     }
 
     @Specialization(guards = {"instantiatesVariablePointersObject(image, classObject)"}, replaces = "doVariablePointersCached")
@@ -124,19 +123,19 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new VariablePointersObject(image, classObject, classObject.getRootShape(), extraSize);
     }
 
-    @Specialization(guards = {"classObject.getRootShape() == cachedShape"}, assumptions = "cachedShape.getValidAssumption()", limit = "NEW_CACHE_SIZE")
+    @Specialization(guards = {"classObject == cachedClassObject"}, assumptions = "cachedClassObject.getRootShapeValidAssumption()", limit = "NEW_CACHE_SIZE")
     protected static final WeakVariablePointersObject doWeakPointersCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
-                    @Cached(value = "getWeakPointersRootShapeOrNull(classObject)") final Shape cachedShape) {
+                    @Cached(value = "getWeakPointersClassObjectOrNull(classObject)") final ClassObject cachedClassObject) {
         assert instantiatesWeakVariablePointersObject(classObject);
-        return new WeakVariablePointersObject(image, classObject, cachedShape, extraSize);
+        return new WeakVariablePointersObject(image, cachedClassObject, cachedClassObject.getRootShape(), extraSize);
     }
 
     public static final boolean instantiatesWeakVariablePointersObject(final ClassObject classObject) {
         return classObject.isWeak();
     }
 
-    protected static final Shape getWeakPointersRootShapeOrNull(final ClassObject classObject) {
-        return instantiatesWeakVariablePointersObject(classObject) ? classObject.getRootShape() : null;
+    protected static final ClassObject getWeakPointersClassObjectOrNull(final ClassObject classObject) {
+        return instantiatesWeakVariablePointersObject(classObject) ? classObject : null;
     }
 
     @Specialization(guards = "instantiatesWeakVariablePointersObject(classObject)", replaces = "doWeakPointersCached")

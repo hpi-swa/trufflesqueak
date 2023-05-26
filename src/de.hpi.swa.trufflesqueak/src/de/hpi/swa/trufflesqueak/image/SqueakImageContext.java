@@ -876,7 +876,7 @@ public final class SqueakImageContext {
         }
         final long gcd = Math.abs(m);
         // Instantiate reduced fraction
-        final PointersObject fraction = new PointersObject(this, fractionClass, fractionClass.getRootShape());
+        final PointersObject fraction = new PointersObject(this, fractionClass);
         writeNode.execute(fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
         writeNode.execute(fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
         return fraction;
@@ -904,7 +904,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {
-        final PointersObject point = new PointersObject(this, pointClass, pointClass.getRootShape());
+        final PointersObject point = new PointersObject(this, pointClass);
         writeNode.execute(point, POINT.X, xPos);
         writeNode.execute(point, POINT.Y, yPos);
         return point;
@@ -915,7 +915,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
-        final PointersObject message = new PointersObject(this, messageClass, messageClass.getRootShape());
+        final PointersObject message = new PointersObject(this, messageClass);
         writeNode.execute(message, MESSAGE.SELECTOR, selector);
         writeNode.execute(message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
         assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";

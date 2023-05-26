@@ -53,7 +53,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private PointersObject organization;
     private Object[] pointers;
 
-    private Shape rootShape;
+    @CompilationFinal private Shape rootShape;
 
     public ClassObject(final SqueakImageContext image) {
         super();
@@ -101,6 +101,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             rootShape = Shape.newBuilder(baseShape).dynamicType(this).build();
         }
         return rootShape;
+    }
+
+    public Assumption getRootShapeValidAssumption() {
+        return getRootShape().getValidAssumption();
     }
 
     @Override

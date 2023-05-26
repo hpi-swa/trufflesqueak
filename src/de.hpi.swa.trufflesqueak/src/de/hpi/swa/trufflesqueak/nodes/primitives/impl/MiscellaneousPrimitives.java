@@ -381,7 +381,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isLongType()", "!isLong(thang)", "!isNil(thang)"})
-        protected static final boolean doArrayOfLongss(final ArrayObject receiver, final Object thang) {
+        protected static final boolean doArrayOfLongs(final ArrayObject receiver, final Object thang) {
             return BooleanObject.FALSE;
         }
 
@@ -414,20 +414,23 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final boolean doPointers(final PointersObject receiver, final Object thang,
+                        @CachedLibrary(limit = "3") final DynamicObjectLibrary lib,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
-            return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
+            return BooleanObject.wrap(receiver.pointsTo(lib, identityNode, thang));
         }
 
         @Specialization
         protected static final boolean doVariablePointers(final VariablePointersObject receiver, final Object thang,
+                        @CachedLibrary(limit = "3") final DynamicObjectLibrary lib,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
-            return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
+            return BooleanObject.wrap(receiver.pointsTo(lib, identityNode, thang));
         }
 
         @Specialization
         protected static final boolean doWeakPointers(final WeakVariablePointersObject receiver, final Object thang,
+                        @CachedLibrary(limit = "3") final DynamicObjectLibrary lib,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
-            return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
+            return BooleanObject.wrap(receiver.pointsTo(lib, identityNode, thang));
         }
     }
 

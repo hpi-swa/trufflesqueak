@@ -19,8 +19,8 @@ public final class VariablePointersObject extends AbstractVariablePointersObject
         super(header, classObject);
     }
 
-    public VariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape layout, final int variableSize) {
-        super(image, classObject, layout, variableSize);
+    public VariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape shape, final int variableSize) {
+        super(image, classObject, shape, variableSize);
     }
 
     private VariablePointersObject(final VariablePointersObject original, final DynamicObjectLibrary lib) {

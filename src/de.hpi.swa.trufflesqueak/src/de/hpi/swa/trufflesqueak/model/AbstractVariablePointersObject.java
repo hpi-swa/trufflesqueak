@@ -50,8 +50,8 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
         return instsize() + variablePart.length;
     }
 
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
-        return layoutValuesPointTo(identityNode, thang) || ArrayUtils.contains(variablePart, thang);
+    public boolean pointsTo(final DynamicObjectLibrary lib, final SqueakObjectIdentityNode identityNode, final Object thang) {
+        return layoutValuesPointTo(lib, identityNode, thang) || ArrayUtils.contains(variablePart, thang);
     }
 
     public final Object[] getVariablePart() {

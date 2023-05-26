@@ -7,9 +7,9 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.HiddenKey;
-import com.oracle.truffle.api.object.Shape;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -37,8 +37,13 @@ public final class PointersObject extends AbstractPointersObject {
         super(header, klass);
     }
 
-    public PointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape shape) {
-        super(image, classObject, shape);
+    public PointersObject(final SqueakImageContext image, final ClassObject classObject) {
+        this(classObject, image);
+        CompilerDirectives.isPartialEvaluationConstant(classObject);
+    }
+
+    public PointersObject(final ClassObject classObject, final SqueakImageContext image) {
+        super(image, classObject, classObject.getRootShape());
     }
 
     private PointersObject(final PointersObject original, final DynamicObjectLibrary lib) {
@@ -46,7 +51,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
-        final PointersObject handle = new PointersObject(image, image.pointClass, image.pointClass.getRootShape());
+        final PointersObject handle = new PointersObject(image, image.pointClass);
         handle.setHiddenObject(hiddenObject);
         return handle;
     }
@@ -75,8 +80,8 @@ public final class PointersObject extends AbstractPointersObject {
         return instsize();
     }
 
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
-        return layoutValuesPointTo(identityNode, thang);
+    public boolean pointsTo(final DynamicObjectLibrary lib, final SqueakObjectIdentityNode identityNode, final Object thang) {
+        return layoutValuesPointTo(lib, identityNode, thang);
     }
 
     public boolean isEmptyList(final AbstractPointersObjectReadNode readNode) {

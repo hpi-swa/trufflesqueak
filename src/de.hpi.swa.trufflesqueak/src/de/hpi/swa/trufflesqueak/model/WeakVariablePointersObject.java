@@ -28,8 +28,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         weakPointersQueue = image.weakPointersQueue;
     }
 
-    public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape layout, final int variableSize) {
-        super(image, classObject, layout, variableSize);
+    public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape shape, final int variableSize) {
+        super(image, classObject, shape, variableSize);
         weakPointersQueue = image.weakPointersQueue;
     }
 
@@ -87,8 +87,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
     }
 
     @Override
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
-        return layoutValuesPointTo(identityNode, thang) || variablePartPointsTo(thang);
+    public boolean pointsTo(final DynamicObjectLibrary lib, final SqueakObjectIdentityNode identityNode, final Object thang) {
+        return layoutValuesPointTo(lib, identityNode, thang) || variablePartPointsTo(thang);
     }
 
     private boolean variablePartPointsTo(final Object thang) {

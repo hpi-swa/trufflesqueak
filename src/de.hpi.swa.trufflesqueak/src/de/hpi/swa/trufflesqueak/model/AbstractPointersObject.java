@@ -36,6 +36,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject, final Shape shape) {
         super(image, classObject, shape);
         assert classObject.getRootShape() == shape;
+        CompilerAsserts.partialEvaluationConstant(image);
     }
 
     protected AbstractPointersObject(final long header, final ClassObject classObject) {
@@ -132,10 +133,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
     }
 
-    protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
-        final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
+    protected final boolean layoutValuesPointTo(final DynamicObjectLibrary lib, final SqueakObjectIdentityNode identityNode, final Object thang) {
         for (final var key : lib.getKeyArray(this)) {
-            if (lib.getOrDefault(this, key, NilObject.SINGLETON) == thang) {
+            if (identityNode.execute(lib.getOrDefault(this, key, NilObject.SINGLETON), thang)) {
                 return true;
             }
         }
@@ -143,10 +143,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to) {
+        final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-
-            final DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
             for (final var key : lib.getKeyArray(this)) {
                 if (lib.getOrDefault(this, key, NilObject.SINGLETON) == fromPointer) {
                     lib.put(this, key, to[i]);
