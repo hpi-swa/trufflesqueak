@@ -152,6 +152,17 @@ jobs:
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v3
+    - name: Set up Oracle GraalVM
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Enable Oracle GraalVM
+      shell: bash
+      run: |
+        echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
+        cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
     - name: Set up Python
       uses: actions/setup-python@v4
       with:

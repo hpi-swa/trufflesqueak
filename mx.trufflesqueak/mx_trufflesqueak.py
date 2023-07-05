@@ -6,12 +6,14 @@
 #
 
 import os
+import shutil
 import sys
 
 import mx
 import mx_gate
 import mx_sdk
 import mx_sdk_vm
+import mx_sdk_vm_impl
 import mx_truffle
 import mx_unittest
 
@@ -173,6 +175,63 @@ def _enable_local_compression():
 
 
 _enable_local_compression()
+
+
+def _copy_macro_and_language_jars():
+    staged_dist = mx_sdk_vm_impl.get_stage1_graalvm_distribution()
+    staged_graalvm_home = os.path.join(staged_dist.output, staged_dist.jdk_base)
+    # Copy macro
+    macro_src_dir = os.path.join(staged_graalvm_home, 'lib', 'svm', 'macros', 'smalltalkvm-library')
+    macro_target_dir = os.path.join(extra_graalvm_home, 'lib', 'svm', 'macros', 'smalltalkvm-library')
+    if not os.path.exists(macro_src_dir):
+        mx.abort(f'Unable to locate macro at "{macro_src_dir}".')
+    if not os.path.exists(macro_target_dir):
+        shutil.copytree(macro_src_dir, macro_target_dir)
+    else:
+        mx.warn(f'Macros already copied to "{macro_target_dir}".')
+    # Copy language JARs
+    language_src_dir = os.path.join(staged_graalvm_home, 'languages', 'smalltalk')
+    language_target_dir = os.path.join(extra_graalvm_home, 'languages', 'smalltalk')
+    if not os.path.exists(language_src_dir):
+        mx.abort(f'Unable to locate language JARs at "{language_src_dir}".')
+    if not os.path.exists(language_target_dir):
+        shutil.copytree(language_src_dir, language_target_dir)
+    else:
+        mx.warn(f'Language JARs already copied to "{language_target_dir}".')
+    # Copy launcher JAR
+    launcher_src_dir = os.path.join(staged_graalvm_home, 'lib', 'graalvm', 'trufflesqueak-launcher.jar')
+    launcher_target_dir = os.path.join(extra_graalvm_home, 'lib', 'graalvm', 'trufflesqueak-launcher.jar')
+    if not os.path.exists(launcher_src_dir):
+        mx.abort(f'Unable to locate launcher JAR at "{launcher_src_dir}".')
+    if not os.path.exists(launcher_target_dir):
+        shutil.copyfile(launcher_src_dir, launcher_target_dir)
+    else:
+        mx.warn(f'Launcher JAR already copied to "{launcher_target_dir}".')
+
+
+def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
+
+    def patched_native_image(self, build_args, output_file, allow_server=False, nonZeroIsFatal=True, out=None, err=None):
+        mx.log(f'Using EXTRA_GRAALVM_HOME at "{extra_graalvm_home}" for building...')
+        assert self._svm_supported
+        _copy_macro_and_language_jars()
+        native_image_bin = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
+        native_image_command = [native_image_bin] + build_args
+        output_directory = os.path.dirname(output_file)
+        selected_gc = 'G1' if mx.is_linux() and mx.get_arch() == 'amd64' else 'serial'
+        native_image_command += [
+            '-H:Path=' + output_directory or ".",
+            '--gc=' + selected_gc,
+        ]
+        return mx.run(native_image_command, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err)
+
+    mx_sdk_vm_impl.SvmSupport.native_image = patched_native_image
+
+
+extra_graalvm_home = os.getenv('EXTRA_GRAALVM_HOME')
+if extra_graalvm_home:
+    _use_different_graalvm_home_for_native_image(extra_graalvm_home)
+
 
 mx_sdk_vm.register_vm_config('trufflesqueak-jar', ['sdk', 'st', 'tfl'],
                                 _SUITE, env_file='trufflesqueak-jar')
