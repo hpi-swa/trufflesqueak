@@ -173,6 +173,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                 case "GraalTruffleRuntime": // superclass of SubstrateTruffleRuntime
                     return !ArrayUtils.containsEqual(new String[]{"getCompileQueue", "getCompilationQueueSize", "getName", "toString"}, methodName);
                 case "SubstrateOptimizedCallTarget":
+                case "SubstrateEnterpriseOptimizedCallTarget":
                     return !ArrayUtils.containsEqual(new String[]{"getCallCount", "getCallAndLoopCount", "getCallNodes", "getKnownCallSiteCount", "getNonTrivialNodeCount", "toString"}, methodName);
                 case "BackgroundCompileQueue":
                     return !ArrayUtils.containsEqual(new String[]{"getQueueSize", "toString"}, methodName);
@@ -226,11 +227,11 @@ public final class JavaObjectWrapper implements TruffleObject {
                                 "org.graalvm.compiler.truffle.runtime.BackgroundCompileQueue",
                                 // For CallTargetBrowser
                                 "com.oracle.svm.truffle.api.SubstrateOptimizedCallTarget",
+                                "com.oracle.svm.enterprise.truffle.SubstrateEnterpriseOptimizedCallTarget",
                                 "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget",
                                 "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget$ArgumentsProfile",
                                 "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget$ReturnProfile",
                                 "org.graalvm.compiler.truffle.runtime.OptimizedDirectCallNode"
-
                 }) {
                     CLASSES_TO_MEMBERS.get(Class.forName(className));
                 }
