@@ -14,7 +14,7 @@ suite = {
     "mxversion": "6.17.0",
     "versionConflictResolution": "latest",
 
-    "version": "23.0.0",
+    "version": "23.0.1",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-6.0-5053.zip",
         "cuis_test_image_tag": "21.3.0",
@@ -48,7 +48,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "vm-23.0.0",
+            "version": "vm-23.0.1",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
