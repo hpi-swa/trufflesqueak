@@ -266,6 +266,9 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     truffle_jars=[
         'trufflesqueak:TRUFFLESQUEAK',
         'trufflesqueak:TRUFFLESQUEAK_SHARED',
+        'trufflesqueak:BOUNCYCASTLE-PROVIDER',
+        'trufflesqueak:BOUNCYCASTLE-PKIX',
+        'trufflesqueak:BOUNCYCASTLE-UTIL',
     ],
     support_distributions=['trufflesqueak:TRUFFLESQUEAK_HOME'] + [] if _SVM else ['trufflesqueak:TRUFFLESQUEAK_LAUNCHER_SCRIPTS'],
     provided_executables=[] if _SVM else ['bin/<cmd:trufflesqueak>'],

@@ -60,14 +60,35 @@ suite = {
     #  LIBRARIES
     # ==========================================================================
     "libraries": {
-        "BOUNCY_CASTLE_CRYPTO_LIB":  {
-            "moduleName": "org.bouncycastle",
-            "sha1": "bd47ad3bd14b8e82595c7adaa143501e60842a84",
+        "BOUNCYCASTLE-PROVIDER": {
+            "digest": "sha512:dbc5b525d805823b53dbaded11547155a14f795212ce6fe1e93d6da431081ea9480718ea2fc17dc7906f8489aadb68e781afd1e771d26f9f8a09b21552bb165c",
+            "sourceDigest": "sha512:4ce8b88e26af98c3cb8a3691ace366e960e36a8225d14685447b4aa9838b92334bdb63f8ba4baf651d28c8e063e21d0cbca8f2fcf8eecd003362ae62b6c87dbd",
+            "maven": {
+              "groupId": "org.bouncycastle",
+              "artifactId": "bcprov-jdk18on",
+              "version": "1.76",
+            },
+            "moduleName": "org.bouncycastle.provider",
+        },
+        "BOUNCYCASTLE-PKIX": {
+            "digest": "sha512:b924374168e25f21ab7f6dd4f6755e55a401cbbbaa0d6f17a0c9bf59e61dc42750b200c494c413f6f8c27fc16d9312f51fc15c979e4298916f5bd0c329cbbffa",
+            "sourceDigest": "sha512:6945aedc041f9282ee3569aef46c6df8940643e5a66236c5e95fafdc4dead4b94d3d64f32750ce2f131b4fdd398aacd200968103fc3e4d22eb2dc171aedb48dd",
             "maven": {
                 "groupId": "org.bouncycastle",
-                "artifactId": "bcprov-jdk15on",
-                "version": "1.60"
-            }
+                "artifactId": "bcpkix-jdk18on",
+                "version": "1.76",
+            },
+            "moduleName": "org.bouncycastle.pkix",
+        },
+        "BOUNCYCASTLE-UTIL": {
+            "digest": "sha512:385d95b4c32053bb3734c342d5f3255bcc1cee7e35649965bb5fbf8733ec37009fd5f5e06817a45e7857a2e62e923563ce1231ee3a1de411f788dfa93d39ce41",
+            "sourceDigest": "sha512:8d2068b8a90381dde75f25059dfdf3073a2657ea8f7d65872f972aaae6b780a4156b39d922e10302f4c4ddaf22d5057c02e9a0cb2a228f0a43730dfba46b1b22",
+            "maven": {
+                "groupId": "org.bouncycastle",
+                "artifactId": "bcutil-jdk18on",
+                "version": "1.76",
+            },
+            "moduleName": "org.bouncycastle.util",
         },
         "CHECKSTYLE_10.7.0" : {
             "urls" : [
@@ -87,9 +108,11 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "TRUFFLESQUEAK_SHARED",
-                "BOUNCY_CASTLE_CRYPTO_LIB",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
+                "BOUNCYCASTLE-PROVIDER",
+                "BOUNCYCASTLE-PKIX",
+                "BOUNCYCASTLE-UTIL",
             ],
             "requires": [
                 "java.datatransfer",
@@ -214,6 +237,11 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
+            ],
+            "exclude": [
+                "BOUNCYCASTLE-PROVIDER",
+                "BOUNCYCASTLE-PKIX",
+                "BOUNCYCASTLE-UTIL",
             ],
             "javaProperties": {
                 "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
