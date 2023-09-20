@@ -56,9 +56,22 @@ build-installable() {
 }
 
 build-standalone() {
-  local java_version=$1
+  local kind=$1
+  local java_version=$2
   local distro_name="GRAALVM_TRUFFLESQUEAK_STANDALONE_JAVA${java_version}"
-  local component_name="SMALLTALK_STANDALONE_SVM_JAVA${java_version}"
+  local component_name=""
+  case "${kind}" in
+    "Native")
+      component_name="SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${java_version}"
+      ;;
+    "JVM")
+      component_name="SMALLTALK_JAVA_STANDALONE_SVM_JAVA${java_version}"
+      ;;
+    *)
+      echo "Unexpected standalone kind: ${kind}"
+      exit 1
+      ;;
+  esac
 
   mx --env trufflesqueak-standalone --no-download-progress build --dependencies "${component_name},${distro_name}"
   cp "$(mx --env trufflesqueak-standalone paths "${component_name}")" "${STANDALONE_TARGET}"

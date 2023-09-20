@@ -40,9 +40,8 @@ jobs:
         wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.26-202211231800/eclipse-SDK-4.26-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
         tar -xzf ${eclipse_tar_path} -C ${RUNNER_TEMP}
         echo "ECLIPSE_EXE=${RUNNER_TEMP}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
-        echo "JDT=builtin" >> "${GITHUB_ENV}" # required by mx
-        # Set up mx, oracle/graal, and LabsJDK17
-        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-17 ~/"
+        # Set up mx, oracle/graal, and LabsJDK21
+        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-21 ~/"
         # Set up style dependencies
         sudo apt update && sudo apt install python3-pip python-setuptools
         jq -r '.pip | to_entries[] | .key+.value' ../graal/common.json | xargs sudo pip install
@@ -54,10 +53,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2022]
-        java: [17, 20]
+        java: [21]
     env:
-      RUN_TESTS: "${{ matrix.os == 'ubuntu-20.04' || matrix.java == 17 }}"
-      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' && matrix.java == 17 }}"
+      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' }}"
       MX_ENV: "trufflesqueak-jar"
       
     name: JAR ${{ matrix.os }} + JDK${{ matrix.java }}
@@ -104,19 +102,18 @@ jobs:
     - name: Clone Graal.js repository
       shell: bash
       run: mx.trufflesqueak/utils.sh shallow-clone-graaljs
-      if: ${{ env.RUN_TESTS == 'true' }}
     - name: Run gate with Graal compiler and Graal.js
       run: mx --disable-polyglot --dy /compiler,/graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test
-      if: ${{ env.RUN_TESTS == 'true' && runner.os != 'Windows' && env.RUN_WITH_COVERAGE != 'true' }}
+      if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE != 'true' }}
     - name: Run gate with Graal.js and code coverage # do not use Graal compiler with JaCoCo code coverage
       run: mx --disable-polyglot --dy /graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
-      if: ${{ env.RUN_TESTS == 'true' && runner.os != 'Windows' && env.RUN_WITH_COVERAGE == 'true' }}
+      if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE == 'true' }}
     - name: Run gate with Graal compiler and Graal.js via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-polyglot --dy /compiler,/graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test
-      if: ${{ env.RUN_TESTS == 'true' && runner.os == 'Windows' }}
+      if: ${{ runner.os == 'Windows' }}
     - name: Report code coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -127,7 +124,6 @@ jobs:
     - name: Zip Graal compiler dumps
       shell: bash
       run: "[[ -d graal_dumps ]] && zip -r graal_dumps.zip graal_dumps || true"
-      if: ${{ env.RUN_TESTS == 'true' }}
     - name: Upload Graal compiler dumps
       uses: actions/upload-artifact@v3
       with:
@@ -135,18 +131,18 @@ jobs:
         path: graal_dumps.zip
         if-no-files-found: ignore
         retention-days: 5
-      if: ${{ env.RUN_TESTS == 'true' }}
 
   build-standalone:
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022] # temporarily disabled: macos-11
+        kind: [Native, JVM]
     env:
-      JAVA_VERSION: "20"
+      JAVA_VERSION: "21"
       MX_ENV: "trufflesqueak-standalone"
       VERBOSE_GRAALVM_LAUNCHERS: true
-    name: Standalone ${{ matrix.os }}
+    name: ${{ matrix.kind }} Standalone ${{ matrix.os }}
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
@@ -171,20 +167,21 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ env.JAVA_VERSION }} true
     - name: Build TruffleSqueak standalone
-      run: mx.trufflesqueak/utils.sh build-standalone ${{ env.JAVA_VERSION }}
+      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.kind }} ${{ env.JAVA_VERSION }}
       if: ${{ runner.os != 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies SMALLTALK_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }},GRAALVM_TRUFFLESQUEAK_STANDALONE_JAVA${{ env.JAVA_VERSION }}
+        if ${{ matrix.kind }}==Native (set "DEPENDENCY_NAME=SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") else (set "DEPENDENCY_NAME=SMALLTALK_JAVA_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") 
+        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies %DEPENDENCY_NAME%,GRAALVM_TRUFFLESQUEAK_STANDALONE_JAVA${{ env.JAVA_VERSION }}
         call mx --env ${{ env.MX_ENV }} standalone-home smalltalk > standalone-home-with-forward-slashes.txt
         set /p STANDALONE_HOME=<standalone-home-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "STANDALONE_HOME=%STANDALONE_HOME:/=\%"
         echo %STANDALONE_HOME%\bin>>%GITHUB_PATH%
         echo [%STANDALONE_HOME%\bin added to $PATH]
-        call mx --env ${{ env.MX_ENV }} paths SMALLTALK_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }} > standalone-path-with-forward-slashes.txt
+        call mx --env ${{ env.MX_ENV }} paths %DEPENDENCY_NAME% > standalone-path-with-forward-slashes.txt
         set /p STANDALONE_PATH=<standalone-path-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "STANDALONE_PATH=%STANDALONE_PATH:/=\%"
