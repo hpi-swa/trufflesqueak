@@ -180,33 +180,46 @@ _enable_local_compression()
 def _copy_macro_and_language_jars():
     staged_dist = mx_sdk_vm_impl.get_stage1_graalvm_distribution()
     staged_graalvm_home = os.path.join(staged_dist.output, staged_dist.jdk_base)
-    # Copy macro
-    macro_src_dir = os.path.join(staged_graalvm_home, 'lib', 'svm', 'macros', 'smalltalkvm-library')
-    macro_target_dir = os.path.join(extra_graalvm_home, 'lib', 'svm', 'macros', 'smalltalkvm-library')
-    if not os.path.exists(macro_src_dir):
-        mx.abort(f'Unable to locate macro at "{macro_src_dir}".')
-    if not os.path.exists(macro_target_dir):
-        shutil.copytree(macro_src_dir, macro_target_dir)
-    else:
-        mx.warn(f'Macros already copied to "{macro_target_dir}".')
-    # Copy language JARs
-    language_src_dir = os.path.join(staged_graalvm_home, 'languages', 'smalltalk')
-    language_target_dir = os.path.join(extra_graalvm_home, 'languages', 'smalltalk')
-    if not os.path.exists(language_src_dir):
-        mx.abort(f'Unable to locate language JARs at "{language_src_dir}".')
-    if not os.path.exists(language_target_dir):
-        shutil.copytree(language_src_dir, language_target_dir)
-    else:
-        mx.warn(f'Language JARs already copied to "{language_target_dir}".')
-    # Copy launcher JAR
-    launcher_src_dir = os.path.join(staged_graalvm_home, 'lib', 'graalvm', 'trufflesqueak-launcher.jar')
-    launcher_target_dir = os.path.join(extra_graalvm_home, 'lib', 'graalvm', 'trufflesqueak-launcher.jar')
-    if not os.path.exists(launcher_src_dir):
-        mx.abort(f'Unable to locate launcher JAR at "{launcher_src_dir}".')
-    if not os.path.exists(launcher_target_dir):
-        shutil.copyfile(launcher_src_dir, launcher_target_dir)
-    else:
-        mx.warn(f'Launcher JAR already copied to "{launcher_target_dir}".')
+    # Copy macros
+    for macro_dir_name in ['smalltalkvm-library', 'truffle']:
+        macro_src_dir = os.path.join(staged_graalvm_home, 'lib', 'svm', 'macros', macro_dir_name)
+        macro_target_dir = os.path.join(extra_graalvm_home, 'lib', 'svm', 'macros', macro_dir_name)
+        if not os.path.exists(macro_src_dir):
+            mx.abort(f'Unable to locate macro at "{macro_src_dir}".')
+        if not os.path.exists(macro_target_dir):
+            shutil.copytree(macro_src_dir, macro_target_dir)
+        else:
+            mx.warn(f'Macros already copied to "{macro_target_dir}".')
+    # Copy language directories
+    for language_dir_name in ['smalltalk', 'nfi']:
+        language_src_dir = os.path.join(staged_graalvm_home, 'languages', language_dir_name)
+        language_target_dir = os.path.join(extra_graalvm_home, 'languages', language_dir_name)
+        if not os.path.exists(language_src_dir):
+            mx.abort(f'Unable to locate language JARs at "{language_src_dir}".')
+        if not os.path.exists(language_target_dir):
+            shutil.copytree(language_src_dir, language_target_dir)
+        else:
+            mx.warn(f'Language JARs already copied to "{language_target_dir}".')
+    # Copy Truffle JARs
+    for truffle_jar_name in ['jniutils.jar', 'locator.jar', 'truffle-api.jar', 'truffle-runtime.jar']:
+        truffle_src_dir = os.path.join(staged_graalvm_home, 'lib', 'truffle', truffle_jar_name)
+        truffle_target_dir = os.path.join(extra_graalvm_home, 'lib', 'truffle', truffle_jar_name)
+        if not os.path.exists(truffle_src_dir):
+            mx.abort(f'Unable to locate Truffle JAR at "{truffle_src_dir}".')
+        if not os.path.exists(truffle_target_dir):
+            shutil.copyfile(truffle_src_dir, truffle_target_dir)
+        else:
+            mx.warn(f'Truffle JAR already copied to "{truffle_target_dir}".')
+    # Copy additional JARs
+    for jar_name in ['trufflesqueak-launcher.jar', 'launcher-common.jar', 'jline3.jar']:
+        launcher_src_dir = os.path.join(staged_graalvm_home, 'lib', 'graalvm', jar_name)
+        launcher_target_dir = os.path.join(extra_graalvm_home, 'lib', 'graalvm', jar_name)
+        if not os.path.exists(launcher_src_dir):
+            mx.abort(f'Unable to locate JAR at "{launcher_src_dir}".')
+        if not os.path.exists(launcher_target_dir):
+            shutil.copyfile(launcher_src_dir, launcher_target_dir)
+        else:
+            mx.warn(f'JAR already copied to "{launcher_target_dir}".')
 
 
 def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
@@ -233,9 +246,9 @@ if extra_graalvm_home:
     _use_different_graalvm_home_for_native_image(extra_graalvm_home)
 
 
-mx_sdk_vm.register_vm_config('trufflesqueak-jar', ['sdk', 'st', 'tfl'],
+mx_sdk_vm.register_vm_config('trufflesqueak-jar', ['cov', 'dap', 'ins', 'insight', 'insightheap', 'lsp', 'nfi', 'nfi-libffi', 'pro', 'sdk', 'sdkc', 'sdkni', 'sdkl', 'st', 'tfl', 'tfla', 'tflc', 'truffle-json'],
                                 _SUITE, env_file='trufflesqueak-jar')
-mx_sdk_vm.register_vm_config('trufflesqueak-standalone', ['cmp', 'nfi', 'nfi-libffi', 'sdk', 'st', 'tfl'],
+mx_sdk_vm.register_vm_config('trufflesqueak-standalone', ['cmp', 'cov', 'dap', 'ins', 'insight', 'insightheap', 'lsp', 'nfi', 'nfi-libffi', 'pro', 'sdk', 'sdkc', 'sdkl', 'sdkni', 'st', 'svm', 'svmsl', 'svmt', 'tfl', 'tfla', 'tflc', 'tflm', 'truffle-json'],
                                 _SUITE, env_file='trufflesqueak-standalone')
 
 
@@ -261,7 +274,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     standalone_dir_name='trufflesqueak-<version>-<graalvm_os>-<arch>',
     license_files=[],  # already included in `TRUFFLESQUEAK_HOME`.
     third_party_license_files=[],
-    dependencies=['Truffle'],
+    dependencies=['Truffle', 'Truffle NFI', 'Truffle NFI LIBFFI'],
     standalone_dependencies={},
     truffle_jars=[
         'trufflesqueak:TRUFFLESQUEAK',

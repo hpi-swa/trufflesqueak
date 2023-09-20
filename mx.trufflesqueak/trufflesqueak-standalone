@@ -1,4 +1,7 @@
-COMPONENTS=TruffleSqueak,GraalVM compiler,Truffle NFI LIBFFI
-DISABLE_INSTALLABLES=false
-DYNAMIC_IMPORTS=/compiler,/substratevm,/vm
-NATIVE_IMAGES=lib:smalltalkvm,trufflesqueak
+COMPONENTS=TruffleSqueak,suite:tools,GraalVM compiler,SubstrateVM,Truffle Macro
+INSTALLABLES=TruffleSqueak
+DYNAMIC_IMPORTS=/compiler,/substratevm,/tools
+NATIVE_IMAGES=lib:smalltalkvm
+GENERATE_DEBUGINFO=false
+BUILD_TARGETS=GRAALVM,GRAALVM_STANDALONES
+GRAALVM_SKIP_ARCHIVE=true

@@ -214,21 +214,21 @@ suite = {
     # ==========================================================================
     "distributions": {
         "TRUFFLESQUEAK": {
-            "description": "TruffleSqueak engine",
+            "description": "TruffleSqueak virtual machine",
+            "maven": {
+                "artifactId": "smalltalk-language",
+                "groupId": "de.hpi.swa.trufflesqueak",
+                "tag": ["default", "public"],
+            },
+            "noMavenJavadoc": True,
             "moduleInfo": {
                 "name": "de.hpi.swa.trufflesqueak",
                 "exports": [
                     "de.hpi.swa.trufflesqueak to org.graalvm.truffle",
                 ],
                 "requires": [
-                    "jdk.unsupported" # sun.misc.Unsafe
+                    "jdk.unsupported", # sun.misc.Unsafe
                 ],
-                "requiresConcealed": {
-                    "org.graalvm.truffle": [
-                        "com.oracle.truffle.api",
-                        "com.oracle.truffle.api.instrumentation",
-                    ],
-                },
             },
             "dependencies": [
                 "de.hpi.swa.trufflesqueak",
@@ -237,6 +237,7 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
+                "truffle:TRUFFLE_NFI_LIBFFI",
             ],
             "exclude": [
                 "BOUNCYCASTLE-PROVIDER",
@@ -246,6 +247,7 @@ suite = {
             "javaProperties": {
                 "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
             },
+            "useModulePath": True,
         },
 
         "TRUFFLESQUEAK_HOME": {
@@ -263,9 +265,18 @@ suite = {
 
         "TRUFFLESQUEAK_LAUNCHER": {
             "description": "TruffleSqueak launcher",
+            "maven": {
+                "groupId": "de.hpi.swa.trufflesqueak",
+                "artifactId": "smalltalk-launcher",
+                "tag": ["default", "public"],
+            },
             "moduleInfo": {
                 "name": "de.hpi.swa.trufflesqueak.launcher",
+                "exports": [
+                    "de.hpi.swa.trufflesqueak.launcher to org.graalvm.launcher",
+                ],
             },
+            "useModulePath": True,
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.launcher",
             ],
@@ -289,6 +300,9 @@ suite = {
             "description": "TruffleSqueak shared distribution",
             "moduleInfo": {
                 "name": "de.hpi.swa.trufflesqueak.shared",
+                "exports": [
+                    "de.hpi.swa.trufflesqueak.shared",
+                ],
             },
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.shared",
@@ -317,6 +331,13 @@ suite = {
 
         "TRUFFLESQUEAK_TEST": {
             "description": "TruffleSqueak JUnit and SUnit tests",
+            "moduleInfo": {
+                "name": "de.hpi.swa.trufflesqueak.test",
+                "exports": [
+                    # Export everything to junit and dependent test distributions.
+                    "de.hpi.swa.trufflesqueak.test*",
+                ],
+            },
             "javaCompliance": "17+",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
@@ -324,6 +345,8 @@ suite = {
             "exclude": ["mx:JUNIT", "mx:HAMCREST"],
             "distDependencies": ["TRUFFLESQUEAK"],
             "testDistribution": True,
+            "maven" : False,
+            "useModulePath": False,
         },
     },
 }
