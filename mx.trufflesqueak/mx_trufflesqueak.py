@@ -166,7 +166,7 @@ def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
     def patched_native_image(self, build_args, output_file, allow_server=False, nonZeroIsFatal=True, out=None, err=None):
         native_image_path = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
         dist_names = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER', 'TRUFFLE_NFI_LIBFFI', 'TRUFFLE-ENTERPRISE', 'SDK-NATIVEBRIDGE'] + mx_truffle.resolve_truffle_dist_names(use_optimized_runtime=True, use_enterprise=True)
-        selected_gc = 'G1' if mx.is_linux() and mx.get_arch() == 'amd64' else 'serial'
+        selected_gc = 'G1' if mx.is_linux() else 'serial'
         build_command = [native_image_path] + mx.get_runtime_jvm_args(names=dist_names) + [
             '-o', os.path.splitext(output_file)[0],
             '--shared',
