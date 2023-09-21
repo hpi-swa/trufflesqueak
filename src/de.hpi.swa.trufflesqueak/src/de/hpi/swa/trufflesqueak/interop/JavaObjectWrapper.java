@@ -223,15 +223,15 @@ public final class JavaObjectWrapper implements TruffleObject {
             try {
                 for (final String className : new String[]{
                                 // Truffle runtime class and BackgroundCompileQueue
-                                "com.oracle.svm.truffle.api.SubstrateTruffleRuntime",
-                                "org.graalvm.compiler.truffle.runtime.BackgroundCompileQueue",
+                                // "com.oracle.svm.truffle.api.SubstrateTruffleRuntime",
+                                "com.oracle.truffle.runtime.BackgroundCompileQueue",
                                 // For CallTargetBrowser
                                 "com.oracle.svm.truffle.api.SubstrateOptimizedCallTarget",
                                 "com.oracle.svm.enterprise.truffle.SubstrateEnterpriseOptimizedCallTarget",
-                                "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget",
-                                "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget$ArgumentsProfile",
-                                "org.graalvm.compiler.truffle.runtime.OptimizedCallTarget$ReturnProfile",
-                                "org.graalvm.compiler.truffle.runtime.OptimizedDirectCallNode"
+                                "com.oracle.truffle.runtime.OptimizedCallTarget",
+                                "com.oracle.truffle.runtime.OptimizedCallTarget$ArgumentsProfile",
+                                "com.oracle.truffle.runtime.OptimizedCallTarget$ReturnProfile",
+                                "com.oracle.truffle.runtime.OptimizedDirectCallNode"
                 }) {
                     CLASSES_TO_MEMBERS.get(Class.forName(className));
                 }

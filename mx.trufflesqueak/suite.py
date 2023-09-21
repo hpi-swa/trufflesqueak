@@ -97,6 +97,24 @@ suite = {
             "sha1": "acd1c78c07e894647e8dcbd72c4fa9a136e20d6d",
             "licence" : "LGPLv21",
         },
+        "TRUFFLE-ENTERPRISE": {
+            "digest": "sha512:2948bd1779fe1c2b0b70de76220582d54bb59a2d9048c4a09d5148a7358014ae6484a373a1076f5dad7f861723981407ea48e247a6ef7d4659eef28ee9c86354",
+            "maven": {
+                "groupId": "org.graalvm.truffle",
+                "artifactId": "truffle-enterprise",
+                "version": "23.1.0",
+            },
+            "useModulePath": True,
+        },
+        "SDK-NATIVEBRIDGE": {
+            "digest": "sha512:bc28336e23d5abc4bc7704093b0e1546ac1aa972dfabe24e94dad19b4b0a36df62c6322dc33a0dadeb2a741a8fa1cb116d4248e09362f0c16924ff25672bc61d",
+            "maven": {
+                "groupId": "org.graalvm.sdk",
+                "artifactId": "nativebridge",
+                "version": "23.1.0",
+            },
+            "useModulePath": True,
+        },
     },
 
     # ==========================================================================
@@ -258,7 +276,6 @@ suite = {
                 "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
                 "README_TRUFFLESQUEAK.md": "file:README.md",
                 "lib/": "dependency:de.hpi.swa.trufflesqueak.ffi.native",
-                "native-image.properties": "file:mx.trufflesqueak/native-image.properties",
             },
             "maven": False,
         },

@@ -177,66 +177,20 @@ def _enable_local_compression():
 _enable_local_compression()
 
 
-def _copy_macro_and_language_jars():
-    staged_dist = mx_sdk_vm_impl.get_stage1_graalvm_distribution()
-    staged_graalvm_home = os.path.join(staged_dist.output, staged_dist.jdk_base)
-    # Copy macros
-    for macro_dir_name in ['smalltalkvm-library', 'truffle']:
-        macro_src_dir = os.path.join(staged_graalvm_home, 'lib', 'svm', 'macros', macro_dir_name)
-        macro_target_dir = os.path.join(extra_graalvm_home, 'lib', 'svm', 'macros', macro_dir_name)
-        if not os.path.exists(macro_src_dir):
-            mx.abort(f'Unable to locate macro at "{macro_src_dir}".')
-        if not os.path.exists(macro_target_dir):
-            shutil.copytree(macro_src_dir, macro_target_dir)
-        else:
-            mx.warn(f'Macros already copied to "{macro_target_dir}".')
-    # Copy language directories
-    for language_dir_name in ['smalltalk', 'nfi']:
-        language_src_dir = os.path.join(staged_graalvm_home, 'languages', language_dir_name)
-        language_target_dir = os.path.join(extra_graalvm_home, 'languages', language_dir_name)
-        if not os.path.exists(language_src_dir):
-            mx.abort(f'Unable to locate language JARs at "{language_src_dir}".')
-        if not os.path.exists(language_target_dir):
-            shutil.copytree(language_src_dir, language_target_dir)
-        else:
-            mx.warn(f'Language JARs already copied to "{language_target_dir}".')
-    # Copy Truffle JARs
-    for truffle_jar_name in ['jniutils.jar', 'locator.jar', 'truffle-api.jar', 'truffle-runtime.jar']:
-        truffle_src_dir = os.path.join(staged_graalvm_home, 'lib', 'truffle', truffle_jar_name)
-        truffle_target_dir = os.path.join(extra_graalvm_home, 'lib', 'truffle', truffle_jar_name)
-        if not os.path.exists(truffle_src_dir):
-            mx.abort(f'Unable to locate Truffle JAR at "{truffle_src_dir}".')
-        if not os.path.exists(truffle_target_dir):
-            shutil.copyfile(truffle_src_dir, truffle_target_dir)
-        else:
-            mx.warn(f'Truffle JAR already copied to "{truffle_target_dir}".')
-    # Copy additional JARs
-    for jar_name in ['trufflesqueak-launcher.jar', 'launcher-common.jar', 'jline3.jar']:
-        launcher_src_dir = os.path.join(staged_graalvm_home, 'lib', 'graalvm', jar_name)
-        launcher_target_dir = os.path.join(extra_graalvm_home, 'lib', 'graalvm', jar_name)
-        if not os.path.exists(launcher_src_dir):
-            mx.abort(f'Unable to locate JAR at "{launcher_src_dir}".')
-        if not os.path.exists(launcher_target_dir):
-            shutil.copyfile(launcher_src_dir, launcher_target_dir)
-        else:
-            mx.warn(f'JAR already copied to "{launcher_target_dir}".')
-
-
 def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
 
     def patched_native_image(self, build_args, output_file, allow_server=False, nonZeroIsFatal=True, out=None, err=None):
-        mx.log(f'Using EXTRA_GRAALVM_HOME at "{extra_graalvm_home}" for building...')
-        assert self._svm_supported
-        _copy_macro_and_language_jars()
-        native_image_bin = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
-        native_image_command = [native_image_bin] + build_args
-        output_directory = os.path.dirname(output_file)
+        native_image_path = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
+        dist_names = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER', 'TRUFFLE_NFI_LIBFFI', 'TRUFFLE-ENTERPRISE', 'SDK-NATIVEBRIDGE'] + mx_truffle.resolve_truffle_dist_names(use_optimized_runtime=True, use_enterprise=True)
         selected_gc = 'G1' if mx.is_linux() and mx.get_arch() == 'amd64' else 'serial'
-        native_image_command += [
-            '-H:Path=' + output_directory or ".",
+        build_command = [native_image_path] + mx.get_runtime_jvm_args(names=dist_names, force_cp=False) + [
+            '-o', os.path.splitext(output_file)[0],
+            '--shared',
             '--gc=' + selected_gc,
+            '--module', 'de.hpi.swa.trufflesqueak.launcher/%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME
         ]
-        return mx.run(native_image_command, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err)
+        mx.log('Running {} ...'.format(' '.join(build_command)))
+        return mx.run(build_command)
 
     mx_sdk_vm_impl.SvmSupport.native_image = patched_native_image
 
