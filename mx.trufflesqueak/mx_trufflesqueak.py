@@ -184,10 +184,12 @@ if extra_graalvm_home:
     _use_different_graalvm_home_for_native_image(extra_graalvm_home)
 
 
-mx_sdk_vm.register_vm_config('trufflesqueak-jar', ['cov', 'dap', 'ins', 'insight', 'insightheap', 'lsp', 'nfi', 'nfi-libffi', 'pro', 'sdk', 'sdkc', 'sdkni', 'sdkl', 'st', 'tfl', 'tfla', 'tflc', 'truffle-json'],
+mx_sdk_vm.register_vm_config('trufflesqueak-jar', ['sdk', 'sdkc', 'sdkni', 'ins', 'cov', 'dap', 'lsp', 'sdkl', 'pro', 'insight', 'insightheap', 'tfl', 'tfla', 'tflc', 'truffle-json', 'nfi', 'nfi-libffi', 'st'],
                                 _SUITE, env_file='trufflesqueak-jar')
-mx_sdk_vm.register_vm_config('trufflesqueak-standalone', ['cmp', 'cov', 'dap', 'ins', 'insight', 'insightheap', 'lsp', 'nfi', 'nfi-libffi', 'pro', 'sdk', 'sdkc', 'sdkl', 'sdkni', 'st', 'svm', 'svmsl', 'svmt', 'tfl', 'tfla', 'tflc', 'tflm', 'truffle-json'],
-                                _SUITE, env_file='trufflesqueak-standalone')
+mx_sdk_vm.register_vm_config('trufflesqueak-jvm', ['ssmalltalkvm', 'sdk', 'sdkc', 'sdkni', 'ins', 'cov', 'dap', 'lsp', 'sdkl', 'pro', 'cmp', 'insight', 'insightheap', 'lg', 'svm', 'svmsl', 'tfl', 'tfla', 'tflc', 'truffle-json', 'nfi', 'nfi-libffi', 'svmt', 'st'],
+                                _SUITE, env_file='trufflesqueak-jvm')
+mx_sdk_vm.register_vm_config('trufflesqueak-native', ['sdk', 'sdkc', 'sdkni', 'ins', 'cov', 'dap', 'lsp', 'sdkl', 'pro', 'cmp', 'insight', 'insightheap', 'svm', 'svmsl', 'tfl', 'tfla', 'tflc', 'truffle-json', 'tflm', 'nfi', 'nfi-libffi', 'svmt', 'st'],
+                                _SUITE, env_file='trufflesqueak-native')
 
 
 LAUNCHER_DESTINATION = 'bin/<exe:trufflesqueak>' if _SVM else 'bin/<exe:trufflesqueak-launcher>'

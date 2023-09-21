@@ -23,7 +23,7 @@ env:
 
 jobs:
   style_and_build_config:
-    name: Code Style + Build Config
+    name: style and fullbuild
     timeout-minutes: 15
     runs-on: ubuntu-20.04
     steps:
@@ -58,7 +58,7 @@ jobs:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' }}"
       MX_ENV: "trufflesqueak-jar"
       
-    name: JAR ${{ matrix.os }} + JDK${{ matrix.java }}
+    name: jar ${{ matrix.os }} + JDK${{ matrix.java }}
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
@@ -137,12 +137,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022] # temporarily disabled: macos-11
-        kind: [Native, JVM]
+        type: [native, jvm]
     env:
       JAVA_VERSION: "21"
-      MX_ENV: "trufflesqueak-standalone"
+      MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
-    name: ${{ matrix.kind }} Standalone ${{ matrix.os }}
+    name: ${{ matrix.type }} ${{ matrix.os }}
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
@@ -154,11 +154,13 @@ jobs:
         java-version: ${{ env.JAVA_VERSION }}
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ matrix.type == 'native' }}
     - name: Enable Oracle GraalVM
       shell: bash
       run: |
         echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
         cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
+      if: ${{ matrix.type == 'native' }}
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -167,15 +169,15 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ env.JAVA_VERSION }} true
     - name: Build TruffleSqueak standalone
-      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.kind }} ${{ env.JAVA_VERSION }}
+      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
       if: ${{ runner.os != 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        if ${{ matrix.kind }}==Native (set "DEPENDENCY_NAME=SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") else (set "DEPENDENCY_NAME=SMALLTALK_JAVA_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") 
-        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies %DEPENDENCY_NAME%,GRAALVM_TRUFFLESQUEAK_STANDALONE_JAVA${{ env.JAVA_VERSION }}
-        call mx --env ${{ env.MX_ENV }} standalone-home smalltalk > standalone-home-with-forward-slashes.txt
+        if ${{ matrix.type }}==native (set "DEPENDENCY_NAME=SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") else (set "DEPENDENCY_NAME=SMALLTALK_JAVA_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") 
+        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies %DEPENDENCY_NAME%
+        call mx --env ${{ env.MX_ENV }} standalone-home --type ${{ matrix.type }} smalltalk > standalone-home-with-forward-slashes.txt
         set /p STANDALONE_HOME=<standalone-home-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "STANDALONE_HOME=%STANDALONE_HOME:/=\%"

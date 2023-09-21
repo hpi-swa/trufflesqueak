@@ -243,6 +243,7 @@ suite = {
                 "name": "de.hpi.swa.trufflesqueak",
                 "exports": [
                     "de.hpi.swa.trufflesqueak to org.graalvm.truffle",
+                    "de.hpi.swa.trufflesqueak*", # allow reflection
                 ],
                 "requires": [
                     "jdk.unsupported", # sun.misc.Unsafe

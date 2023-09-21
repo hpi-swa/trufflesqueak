@@ -56,27 +56,27 @@ build-installable() {
 }
 
 build-standalone() {
-  local kind=$1
+  local type=$1
   local java_version=$2
-  local distro_name="GRAALVM_TRUFFLESQUEAK_STANDALONE_JAVA${java_version}"
   local component_name=""
-  case "${kind}" in
-    "Native")
+  case "${type}" in
+    "native")
       component_name="SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${java_version}"
       ;;
-    "JVM")
+    "jvm")
       component_name="SMALLTALK_JAVA_STANDALONE_SVM_JAVA${java_version}"
       ;;
     *)
-      echo "Unexpected standalone kind: ${kind}"
+      echo "Unexpected standalone type: ${type}"
       exit 1
       ;;
   esac
+  local env_name="trufflesqueak-${type}"
 
-  mx --env trufflesqueak-standalone --no-download-progress build --dependencies "${component_name},${distro_name}"
-  cp "$(mx --env trufflesqueak-standalone paths "${component_name}")" "${STANDALONE_TARGET}"
+  mx --env "${env_name}" --no-download-progress build --dependencies "${component_name}"
+  cp "$(mx --env "${env_name}" paths "${component_name}")" "${STANDALONE_TARGET}"
 
-  local standalone_home="$(mx --env trufflesqueak-standalone standalone-home smalltalk)"
+  local standalone_home="$(mx --env "${env_name}" standalone-home --type "${type}" smalltalk)"
   add-path "${standalone_home}/bin"
   echo "[${standalone_home}/bin added to \$PATH]"
 }
