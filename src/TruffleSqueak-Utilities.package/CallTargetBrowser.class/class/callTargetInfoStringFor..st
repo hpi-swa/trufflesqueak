@@ -29,7 +29,7 @@ included call nodes:
 			ifNotNil: [ :t | (t asCollection collect: [ :ea | ea
 				ifNil: ['n/a']
 				ifNotNil: [ ea getSimpleName asString ]]) joinSeparatedBy: ', ' ] ].
-	(c getCallNodes asCollection
+	((TruffleSqueakUtilities primitiveGetDirectCallNodes: c getRootNode) asCollection
 		ifNotEmpty: [:n | (n collect: [ :ea |
 				'{1} (callCount: {2}; inliningForced: {3}; identity: {4})' format: {
 					ea getCurrentCallTarget toString asString.

@@ -18,6 +18,7 @@
 		"openNumPrimitiveExtensionHistogram" : "fn 2/1/2021 14:59",
 		"openTruffleSqueakTests" : "fn 3/30/2021 09:54",
 		"primitiveFormToBufferedImage:" : "fn 4/29/2020 12:29",
+		"primitiveGetDirectCallNodes:" : "fn 9/21/2023 17:31",
 		"primitiveGetVMObject:" : "fn 3/21/2020 16:23",
 		"primitiveVMObjectToHostObject:" : "fn 10/21/2021 09:06",
 		"registerInWorldMenu" : "fn 3/30/2021 10:31",
