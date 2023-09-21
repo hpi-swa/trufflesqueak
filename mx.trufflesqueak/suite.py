@@ -363,7 +363,7 @@ suite = {
             "distDependencies": ["TRUFFLESQUEAK"],
             "testDistribution": True,
             "maven" : False,
-            "useModulePath": False,
+            "useModulePath": True,
         },
     },
 }

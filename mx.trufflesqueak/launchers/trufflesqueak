@@ -20,7 +20,7 @@ extra_args+=("--vm.Xss16M")
 # Default to polyglot launcher in JVM mode
 extra_args+=("--jvm" "--polyglot")
 # Make ReflectionUtils work
-extra_args+=("--vm.-add-exports=java.base/jdk.internal.module=ALL-UNNAMED")
+extra_args+=("--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak")
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
     extra_args+=("--vm.Xdock:name=TruffleSqueak")

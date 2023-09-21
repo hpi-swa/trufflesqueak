@@ -24,7 +24,7 @@ set extra_args=%extra_args% --vm.Xss16M
 @REM Default to polyglot launcher in JVM mode
 set extra_args=%extra_args% --jvm --polyglot
 @REM Make ReflectionUtils work
-set extra_args=%extra_args% --vm.-add-exports=java.base/jdk.internal.module=ALL-UNNAMED
+set extra_args=%extra_args% --vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak
 
 if "%VERBOSE_GRAALVM_LAUNCHERS%"=="true" echo on
 

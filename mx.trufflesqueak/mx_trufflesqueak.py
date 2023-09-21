@@ -6,7 +6,6 @@
 #
 
 import os
-import shutil
 import sys
 
 import mx
@@ -101,32 +100,17 @@ def _add_unit_tests(tasks, supports_coverage):
             mx_unittest.unittest(unittest_args)
 
 
-# Extend `vmArgs` with `_get_runtime_jvm_args` when running `mx unittest`
 def _unittest_config_participant(config):
-    vmArgs, mainClass, mainClassArgs = config
-    jdk = mx.get_jdk(tag='default')
-    runtime_args = _get_runtime_jvm_args(jdk)
-    # Remove the cp argument from the runtime args
-    cp = None
-    for i, cp in enumerate(runtime_args[:]):
-        if cp == '-cp':
-            cp = runtime_args[i + 1]
-            runtime_args.remove('-cp')
-            runtime_args.remove(cp)
-            break
-    # Attach remaining runtime args
-    vmArgs += runtime_args
-    # Merge the classpaths
-    if cp:
-        for i, arg in enumerate(vmArgs):
-            if arg == '-cp':
-                vmArgs[i + 1] += ':' + cp
-    config = (vmArgs, mainClass, mainClassArgs)
-    return config
-
+    (vmArgs, mainClass, mainClassArgs) = config
+    vmArgs += ['-Dpolyglotimpl.DisableClassPathIsolation=true']
+    vmArgs += ['--add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak']
+    mainClassArgs += ['-JUnitOpenPackages', 'de.hpi.swa.trufflesqueak/*=de.hpi.swa.trufflesqueak.test']
+    mainClassArgs += ['-JUnitOpenPackages', 'de.hpi.swa.trufflesqueak/*=ALL-UNNAMED']
+    return (vmArgs, mainClass, mainClassArgs)
 
 mx_unittest.add_config_participant(_unittest_config_participant)
 
+mx_truffle.should_add_tck_participant(False)
 
 def _add_tck_tests(tasks, supports_coverage):
     with mx_gate.Task('TruffleSqueak TCK tests', tasks, tags=['test']) as t:
@@ -183,7 +167,7 @@ def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
         native_image_path = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
         dist_names = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER', 'TRUFFLE_NFI_LIBFFI', 'TRUFFLE-ENTERPRISE', 'SDK-NATIVEBRIDGE'] + mx_truffle.resolve_truffle_dist_names(use_optimized_runtime=True, use_enterprise=True)
         selected_gc = 'G1' if mx.is_linux() and mx.get_arch() == 'amd64' else 'serial'
-        build_command = [native_image_path] + mx.get_runtime_jvm_args(names=dist_names, force_cp=False) + [
+        build_command = [native_image_path] + mx.get_runtime_jvm_args(names=dist_names) + [
             '-o', os.path.splitext(output_file)[0],
             '--shared',
             '--gc=' + selected_gc,
