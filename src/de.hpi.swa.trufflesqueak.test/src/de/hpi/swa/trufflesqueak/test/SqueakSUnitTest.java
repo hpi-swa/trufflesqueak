@@ -62,7 +62,6 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @RunWith(Parameterized.class)
 public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
-    private static final String LOAD_TEMPLATE_FILE_NAME = "LoadTruffleSqueakPackages.st";
     private static final String TEST_CLASS_PROPERTY = "squeakTests";
 
     protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
@@ -192,11 +191,26 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static void loadTruffleSqueakPackages() {
         final long start = System.currentTimeMillis();
-        final String loadTemplate = MiscUtils.getStringResource(SqueakSUnitTest.class, LOAD_TEMPLATE_FILE_NAME);
-        if (loadTemplate == null) {
-            println("Unable to find load template for TruffleSqueak packages");
-            return;
-        }
+        final String loadTemplate = """
+                        [[[ | mc |
+                        mc := MCFileTreeRepository path: '%s'.
+                        Installer monticello
+                            mc: mc;
+                            packages: mc allPackageNames;
+                            install ]
+                                on: Warning do: [ :w | w resume ]]
+                                on: Error do: [ :e | e retry ]]
+                                on: ProgressInitiationException do: [ :e |
+                                    e isNested
+                                        ifTrue: [ e pass ]
+                                        ifFalse: [ e rearmHandlerDuring:
+                                            [[ e sendNotificationsTo: [ :min :max :current | "silence" ]]
+                                                on: ProgressNotification do: [ :notification | notification resume ]]]].
+
+                        (Smalltalk at: #TruffleSqueakUtilities) setUpAfterLoadingPackages.
+
+                        Smalltalk snapshot: true andQuit: false.
+                        """;
         evaluate(String.format(loadTemplate, getPathToInImageCode()));
         truffleSqueakPackagesLoaded = true;
         println("TruffleSqueak packages loaded and image saved in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");

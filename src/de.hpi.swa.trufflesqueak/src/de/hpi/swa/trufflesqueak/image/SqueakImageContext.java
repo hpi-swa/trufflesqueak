@@ -72,7 +72,6 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakImageContext {
     private static final ContextReference<SqueakImageContext> REFERENCE = ContextReference.create(SqueakLanguage.class);
-    private static final String PREPARE_HEADLESS_IMAGE_SCRIPT = "PrepareHeadlessImage.st";
 
     /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
@@ -215,11 +214,28 @@ public final class SqueakImageContext {
                 return;
             }
 
-            final String prepareHeadlessImageScript = MiscUtils.getStringResource(getClass(), PREPARE_HEADLESS_IMAGE_SCRIPT);
-            if (prepareHeadlessImageScript == null) {
-                printToStdErr("Unable to find " + PREPARE_HEADLESS_IMAGE_SCRIPT);
-                return;
-            }
+            final String prepareHeadlessImageScript = """
+                            "Remove active context."
+                            Processor activeProcess instVarNamed: #suspendedContext put: nil.
+
+                            "Modify StartUpList for headless execution."
+                            {EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea].
+
+                            "Start up image (see SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:)."
+                            Smalltalk
+                                clearExternalObjects;
+                                processStartUpList: true;
+                                setPlatformPreferences;
+                                recordStartupStamp.
+
+                            "Set author information."
+                            Utilities
+                                authorName: 'TruffleSqueak';
+                                setAuthorInitials: 'TruffleSqueak'.
+
+                            "Initialize fresh MorphicUIManager."
+                            Project current instVarNamed: #uiManager put: MorphicUIManager new.
+                            """;
             try {
                 evaluate(prepareHeadlessImageScript);
             } catch (final Exception e) {
