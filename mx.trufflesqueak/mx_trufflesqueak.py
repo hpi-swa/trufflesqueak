@@ -162,15 +162,16 @@ _enable_local_compression()
 def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
 
     def patched_native_image(self, build_args, output_file, allow_server=False, nonZeroIsFatal=True, out=None, err=None):
+        build_args.remove('--macro:smalltalkvm-library')
         assert 'smalltalkvm' in output_file
         native_image_path = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
         dist_names = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER', 'TRUFFLE_NFI_LIBFFI', 'TRUFFLE-ENTERPRISE', 'SDK-NATIVEBRIDGE'] + mx_truffle.resolve_truffle_dist_names(use_optimized_runtime=True, use_enterprise=True)
         selected_gc = 'G1' if mx.is_linux() else 'serial'
-        build_command = [native_image_path] + mx.get_runtime_jvm_args(names=dist_names) + [
+        build_command = [native_image_path] + build_args + mx.get_runtime_jvm_args(names=dist_names) + [
             '-o', os.path.splitext(output_file)[0],
             '--shared',
             '--gc=' + selected_gc,
-            '--module', 'de.hpi.swa.trufflesqueak.launcher/%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME
+            '--module', 'de.hpi.swa.trufflesqueak.launcher/%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
         ]
         mx.log('Running {} ...'.format(' '.join(build_command)))
         return mx.run(build_command)
