@@ -304,16 +304,6 @@ suite = {
             ],
         },
 
-        "TRUFFLESQUEAK_LAUNCHER_SCRIPTS": {
-            "native": True,
-            "platformDependent": True,
-            "description": "TruffleSqueak home distribution",
-            "layout": {
-                "bin/": ["file:mx.trufflesqueak/launchers/<cmd:trufflesqueak>"],
-            },
-            "maven": False,
-        },
-
         "TRUFFLESQUEAK_SHARED": {
             "description": "TruffleSqueak shared distribution",
             "moduleInfo": {

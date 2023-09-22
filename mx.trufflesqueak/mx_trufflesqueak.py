@@ -18,11 +18,9 @@ import mx_unittest
 
 _SUITE = mx.suite('trufflesqueak')
 _COMPILER = mx.suite('compiler', fatalIfMissing=False)
-_SVM = mx.suite('substratevm', fatalIfMissing=False)
 
 LANGUAGE_ID = 'smalltalk'
 PACKAGE_NAME = 'de.hpi.swa.trufflesqueak'
-USE_LIBRARY_LAUNCHER = True
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 VM_ARGS_TESTING = [
     # Tweak Runtime
@@ -164,6 +162,7 @@ _enable_local_compression()
 def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
 
     def patched_native_image(self, build_args, output_file, allow_server=False, nonZeroIsFatal=True, out=None, err=None):
+        assert 'smalltalkvm' in output_file
         native_image_path = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
         dist_names = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER', 'TRUFFLE_NFI_LIBFFI', 'TRUFFLE-ENTERPRISE', 'SDK-NATIVEBRIDGE'] + mx_truffle.resolve_truffle_dist_names(use_optimized_runtime=True, use_enterprise=True)
         selected_gc = 'G1' if mx.is_linux() else 'serial'
@@ -192,20 +191,6 @@ mx_sdk_vm.register_vm_config('trufflesqueak-native', ['sdk', 'sdkc', 'sdkni', 'i
                                 _SUITE, env_file='trufflesqueak-native')
 
 
-LAUNCHER_DESTINATION = 'bin/<exe:trufflesqueak>' if _SVM else 'bin/<exe:trufflesqueak-launcher>'
-
-BASE_LANGUAGE_CONFIG = {
-    'language': LANGUAGE_ID,
-    'jar_distributions': ['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
-    'main_class': '%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
-    'build_args': [
-        '-H:+ReportExceptionStackTraces',
-        '-H:+DumpThreadStacksOnSignal',
-        '-H:+DetectUserDirectoriesInImageHeap',
-        '-H:+TruffleCheckBlockListMethods',
-    ],
-}
-
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_SUITE,
     name='TruffleSqueak',
@@ -223,14 +208,25 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         'trufflesqueak:BOUNCYCASTLE-PKIX',
         'trufflesqueak:BOUNCYCASTLE-UTIL',
     ],
-    support_distributions=['trufflesqueak:TRUFFLESQUEAK_HOME'] + [] if _SVM else ['trufflesqueak:TRUFFLESQUEAK_LAUNCHER_SCRIPTS'],
-    provided_executables=[] if _SVM else ['bin/<cmd:trufflesqueak>'],
-    launcher_configs=[
-        mx_sdk.LanguageLauncherConfig(destination=LAUNCHER_DESTINATION, **BASE_LANGUAGE_CONFIG)
-    ] if not USE_LIBRARY_LAUNCHER else [],
+    support_distributions=['trufflesqueak:TRUFFLESQUEAK_HOME'],
     library_configs=[
-        mx_sdk.LanguageLibraryConfig(destination='lib/<lib:%svm>' % LANGUAGE_ID, launchers=[LAUNCHER_DESTINATION], **BASE_LANGUAGE_CONFIG)
-    ] if USE_LIBRARY_LAUNCHER else [],
+        mx_sdk.LanguageLibraryConfig(
+            language=LANGUAGE_ID,
+            jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
+            main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
+            build_args=[
+                '-H:+DumpThreadStacksOnSignal',
+                '-H:+DetectUserDirectoriesInImageHeap',
+            ],
+            destination='lib/<lib:%svm>' % LANGUAGE_ID,
+            launchers=['bin/<exe:trufflesqueak>'],
+            default_vm_args=[
+                '--vm.Xms512M',
+                '--vm.Xss16M',
+                '--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak',
+            ] + (['--vm.Xdock:name=TruffleSqueak'] if mx.is_darwin() else []),
+        )
+    ],
     stability='experimental',
     post_install_msg=None,
 ))
