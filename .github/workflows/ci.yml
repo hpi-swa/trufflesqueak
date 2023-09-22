@@ -184,6 +184,12 @@ jobs:
     - name: Run SystemReporter on TruffleSqueak standalone
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Upload TruffleSqueak standalone
+      uses: actions/upload-artifact@v3
+      with:
+        name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
+        path: ${{ env.STANDALONE_TARGET }}
+        retention-days: 7
+    - name: Deploy TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
       # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
