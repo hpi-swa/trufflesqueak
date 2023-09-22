@@ -114,7 +114,7 @@ public final class SqueakDisplay {
             try {
                 final Taskbar taskbar = Taskbar.getTaskbar();
                 if (taskbar.isSupported(Feature.ICON_IMAGE)) {
-                    taskbar.setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("trufflesqueak-icon.png")));
+                    taskbar.setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("/resources/trufflesqueak-icon.png")));
                 }
             } catch (Exception e) {
                 // Never fail if the taskbar icon cannot be set.

@@ -149,13 +149,14 @@ download-asset() {
 }
 
 download-trufflesqueak-icon() {
-  local target="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/io/trufflesqueak-icon.png"
+  local target="${BASE_DIRECTORY}/src/resources/trufflesqueak-icon.png"
 
   if ls -1 ${target} 2>/dev/null; then
     echo "[TruffleSqueak icon already downloaded]"
     return
   fi
 
+  mkdir -p $(dirname "${target}") || true
   download-asset "${DEP_ICON}" "${DEP_ICON_TAG}" "${target}"
   echo "[TruffleSqueak icon (${DEP_ICON_TAG}) downloaded successfully]"
 }
