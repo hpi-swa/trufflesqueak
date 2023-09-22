@@ -18,8 +18,6 @@ suite = {
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-6.0-5053.zip",
         "cuis_test_image_tag": "21.3.0",
-        "icon": "trufflesqueak-icon.png",
-        "icon_tag": "21.0.0.1",
         "test_image": "TruffleSqueakTestImage-6.0-22104-64bit.zip",
         "test_image_tag": "22.3.0",
     },
@@ -123,7 +121,10 @@ suite = {
     "projects": {
         "de.hpi.swa.trufflesqueak": {
             "subDir": "src",
-            "sourceDirs": ["src"],
+            "sourceDirs": [
+                "src",
+                "resources",
+            ],
             "dependencies": [
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",

@@ -46,4 +46,3 @@ lib/**/*.dylib
 lib/**/*.so
 trufflesqueak*.zip
 trufflesqueak*.jar
-/src/de.hpi.swa.trufflesqueak/src/resources/trufflesqueak-icon.png

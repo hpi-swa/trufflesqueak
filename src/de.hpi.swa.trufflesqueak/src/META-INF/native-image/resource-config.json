@@ -8,9 +8,7 @@
         "pattern": "\\QMETA-INF/services/com.oracle.truffle.api.instrumentation.TruffleInstrument$Provider\\E"
       },
       { "pattern": "\\QMETA-INF/services/java.nio.file.spi.FileSystemProvider\\E" },
-      { "pattern": "\\Qcom/oracle/truffle/nfi/backend/libffi/LibFFILanguage.class\\E" },
-      { "pattern": "\\Qde/hpi/swa/trufflesqueak/image/PrepareHeadlessImage.st\\E" },
-      { "pattern": "\\Qde/hpi/swa/trufflesqueak/io/trufflesqueak-icon.png\\E" }
+      { "pattern": "\\Qcom/oracle/truffle/nfi/backend/libffi/LibFFILanguage.class\\E" }
     ]
   },
   "bundles": [{ "name": "sun.awt.resources.awt", "classNames": ["sun.awt.resources.awt"] }]

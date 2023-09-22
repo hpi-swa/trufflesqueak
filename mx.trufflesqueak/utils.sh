@@ -145,19 +145,6 @@ download-asset() {
     "https://github.com/${GITHUB_SLUG}/releases/download/${git_tag}/${filename}"
 }
 
-download-trufflesqueak-icon() {
-  local target="${BASE_DIRECTORY}/src/resources/trufflesqueak-icon.png"
-
-  if ls -1 ${target} 2>/dev/null; then
-    echo "[TruffleSqueak icon already downloaded]"
-    return
-  fi
-
-  mkdir -p $(dirname "${target}") || true
-  download-asset "${DEP_ICON}" "${DEP_ICON_TAG}" "${target}"
-  echo "[TruffleSqueak icon (${DEP_ICON_TAG}) downloaded successfully]"
-}
-
 enable-jdk() {
   add-path "$1/bin"
   set-env "JAVA_HOME" "$(resolve-path "$1")"
@@ -248,7 +235,6 @@ set-up-dependencies() {
   set-up-mx
   shallow-clone-graal
   set-up-labsjdk "labsjdk-ce-${java_version:4}"
-  download-trufflesqueak-icon
   download-trufflesqueak-test-image
   if [[ "${kind}" != "jar" ]]; then
     set-env "STANDALONE_TARGET" "$(filename-standalone "${kind}")"
