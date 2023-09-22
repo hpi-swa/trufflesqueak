@@ -128,7 +128,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022] # temporarily disabled: macos-11
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-11]
         type: [native, jvm]
     env:
       JAVA_VERSION: "21"
