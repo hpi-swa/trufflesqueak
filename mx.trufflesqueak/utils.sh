@@ -41,14 +41,11 @@ add-path() {
   echo "$(resolve-path "$1")" >> $GITHUB_PATH
 }
 
-build-installable() {
+build-graalvm() {
   local java_version=$1
   local graalvm_home="$(mx --env trufflesqueak-jar graalvm-home)"
-  local distro_name="GRAALVM_TRUFFLESQUEAK_JAR_JAVA${java_version}"
-  local component_name="SMALLTALK_INSTALLABLE_CE_JAVA${java_version}"
 
-  mx --env trufflesqueak-jar --no-download-progress build --dependencies "${component_name},${distro_name}"
-  cp $(mx --env trufflesqueak-jar paths "${component_name}") "${INSTALLABLE_TARGET}"
+  mx --env trufflesqueak-jar --no-download-progress build --dependencies "GRAALVM_TRUFFLESQUEAK_JAR_JAVA${java_version}"
 
   add-path "${graalvm_home}/bin"
   set-env "GRAALVM_HOME" "$(resolve-path "${graalvm_home}")"
@@ -201,20 +198,13 @@ download-cuis-test-image() {
   echo "[Cuis test image (${DEP_CUIS_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
-filename-installable() {
-  local java_version=$1
-  local git_describe=$(git describe --tags --always)
-  local git_short_commit=$(git log -1 --format="%h")
-  local git_description="${git_describe:-${git_short_commit}}"
-  echo "trufflesqueak-installable-${java_version}-${OS_NAME}-${OS_ARCH}-${git_description}.jar"
-}
-
 filename-standalone() {
+  local variant="" && [[ "$1" == "jvm" ]] && variant="-jvm"
   local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
   local file_extension="tar" && [[ "${OS_NAME}" == "windows" ]] && file_extension="zip"
-  echo "trufflesqueak-${git_description}-${OS_NAME}-${OS_ARCH}.${file_extension}"
+  echo "trufflesqueak${variant}-${git_description}-${OS_NAME}-${OS_ARCH}.${file_extension}"
 }
 
 format-native-image-config() {
@@ -240,9 +230,9 @@ set-env() {
 
 set-up-dependencies() {
   local java_version=$1
-  local is_standalone=$2
+  local kind=$2
 
-  if [[ "${is_standalone}" == "true" ]]; then
+  if [[ "${kind}" == "native" ]]; then
     case "$(uname -s)" in
       "Linux")
         sudo apt-get update --quiet --yes && sudo apt-get install --quiet --yes libz-dev libxi-dev libxtst-dev libxrender-dev libfreetype6-dev
@@ -260,10 +250,8 @@ set-up-dependencies() {
   set-up-labsjdk "labsjdk-ce-${java_version:4}"
   download-trufflesqueak-icon
   download-trufflesqueak-test-image
-  if [[ "${is_standalone}" == "true" ]]; then
-    set-env "STANDALONE_TARGET" "$(filename-standalone "${java_version}")"
-  else
-    set-env "INSTALLABLE_TARGET" "$(filename-installable "${java_version}")"
+  if [[ "${kind}" != "jar" ]]; then
+    set-env "STANDALONE_TARGET" "$(filename-standalone "${kind}")"
   fi
 }
 

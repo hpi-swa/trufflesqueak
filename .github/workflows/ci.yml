@@ -72,15 +72,15 @@ jobs:
         python-version: '3.8'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }} false
-    - name: Build TruffleSqueak installable
-      run: mx.trufflesqueak/utils.sh build-installable ${{ matrix.java }}
+      run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }} jar
+    - name: Build GraalVM with TruffleSqueak
+      run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
       if: ${{ runner.os != 'Windows' }}
-    - name: Build TruffleSqueak installable via cmd.exe
+    - name: Build GraalVM with TruffleSqueak via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies SMALLTALK_INSTALLABLE_CE_JAVA${{ matrix.java }},GRAALVM_TRUFFLESQUEAK_JAR_JAVA${{ matrix.java }}
+        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies GRAALVM_TRUFFLESQUEAK_JAR_JAVA${{ matrix.java }}
         call mx --env ${{ env.MX_ENV }} graalvm-home > graalvm-home-with-forward-slashes.txt
         set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
         setlocal enabledelayedexpansion
@@ -88,17 +88,9 @@ jobs:
         echo %GRAALVM_HOME%\bin>>%GITHUB_PATH%
         echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
         echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
-        call mx --env ${{ env.MX_ENV }} paths SMALLTALK_INSTALLABLE_CE_JAVA${{ matrix.java }} > installable-path-with-forward-slashes.txt
-        set /p INSTALLABLE_PATH=<installable-path-with-forward-slashes.txt
-        setlocal enabledelayedexpansion
-        set "INSTALLABLE_PATH=%INSTALLABLE_PATH:/=\%"
-        copy %INSTALLABLE_PATH% ${{ env.INSTALLABLE_TARGET }}
       if: ${{ runner.os == 'Windows' }}
     - name: Run SystemReporter on TruffleSqueak
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Upload TruffleSqueak installable
-      shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Clone Graal.js repository
       shell: bash
       run: mx.trufflesqueak/utils.sh shallow-clone-graaljs
@@ -167,7 +159,7 @@ jobs:
         python-version: '3.8'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ env.JAVA_VERSION }} true
+      run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ env.JAVA_VERSION }} ${{ matrix.type }}
     - name: Build TruffleSqueak standalone
       run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
       if: ${{ runner.os != 'Windows' }}
@@ -196,7 +188,7 @@ jobs:
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
       # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
       # Also, it dynamically links against AWT on Windows, and the additional dlls are not being picked up for standalones yet
-      if: ${{ runner.os != 'macOS' && runner.os != 'Windows' }}
+      if: ${{ matrix.type == 'jvm' || (runner.os != 'macOS' && runner.os != 'Windows') }}
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
