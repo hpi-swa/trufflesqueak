@@ -233,12 +233,6 @@ suite = {
     "distributions": {
         "TRUFFLESQUEAK": {
             "description": "TruffleSqueak virtual machine",
-            "maven": {
-                "artifactId": "smalltalk-language",
-                "groupId": "de.hpi.swa.trufflesqueak",
-                "tag": ["default", "public"],
-            },
-            "noMavenJavadoc": True,
             "moduleInfo": {
                 "name": "de.hpi.swa.trufflesqueak",
                 "exports": [
@@ -249,6 +243,7 @@ suite = {
                     "jdk.unsupported", # sun.misc.Unsafe
                 ],
             },
+            "useModulePath": True,
             "dependencies": [
                 "de.hpi.swa.trufflesqueak",
             ],
@@ -266,7 +261,12 @@ suite = {
             "javaProperties": {
                 "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
             },
-            "useModulePath": True,
+            "maven": {
+                "artifactId": "smalltalk-language",
+                "groupId": "de.hpi.swa.trufflesqueak",
+                "tag": ["default", "public"],
+            },
+            "noMavenJavadoc": True,
         },
 
         "TRUFFLESQUEAK_HOME": {
@@ -283,11 +283,6 @@ suite = {
 
         "TRUFFLESQUEAK_LAUNCHER": {
             "description": "TruffleSqueak launcher",
-            "maven": {
-                "groupId": "de.hpi.swa.trufflesqueak",
-                "artifactId": "smalltalk-launcher",
-                "tag": ["default", "public"],
-            },
             "moduleInfo": {
                 "name": "de.hpi.swa.trufflesqueak.launcher",
                 "exports": [
@@ -302,6 +297,12 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
             ],
+            "maven": {
+                "groupId": "de.hpi.swa.trufflesqueak",
+                "artifactId": "smalltalk-launcher",
+                "tag": ["default", "public"],
+            },
+            "noMavenJavadoc": True,
         },
 
         "TRUFFLESQUEAK_SHARED": {
@@ -318,6 +319,12 @@ suite = {
             "distDependencies": [
                 "sdk:GRAAL_SDK",
             ],
+            "maven": {
+                "groupId": "de.hpi.swa.trufflesqueak",
+                "artifactId": "trufflesqueak-shared",
+                "tag": ["default", "public"],
+            },
+            "noMavenJavadoc": True,
         },
 
         "TRUFFLESQUEAK_TCK": {
@@ -335,6 +342,7 @@ suite = {
                 "sdk:POLYGLOT_TCK",
             ],
             "testDistribution": True,
+            "maven" : False,
         },
 
         "TRUFFLESQUEAK_TEST": {
@@ -346,6 +354,7 @@ suite = {
                     "de.hpi.swa.trufflesqueak.test*",
                 ],
             },
+            "useModulePath": True,
             "javaCompliance": "17+",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
@@ -354,7 +363,6 @@ suite = {
             "distDependencies": ["TRUFFLESQUEAK"],
             "testDistribution": True,
             "maven" : False,
-            "useModulePath": True,
         },
     },
 }
