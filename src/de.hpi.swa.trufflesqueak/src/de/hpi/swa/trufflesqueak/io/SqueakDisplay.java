@@ -111,9 +111,14 @@ public final class SqueakDisplay {
 
     private static void tryToSetTaskbarIcon() {
         if (Taskbar.isTaskbarSupported()) {
-            final Taskbar taskbar = Taskbar.getTaskbar();
-            if (taskbar.isSupported(Feature.ICON_IMAGE)) {
-                taskbar.setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("trufflesqueak-icon.png")));
+            try {
+                final Taskbar taskbar = Taskbar.getTaskbar();
+                if (taskbar.isSupported(Feature.ICON_IMAGE)) {
+                    taskbar.setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("trufflesqueak-icon.png")));
+                }
+            } catch (Exception e) {
+                // Never fail if the taskbar icon cannot be set.
+                e.printStackTrace();
             }
         }
     }
