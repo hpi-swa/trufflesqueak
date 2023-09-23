@@ -102,8 +102,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
 
         private boolean ignoredForAOT(final Class<?> cls) {
-            final String simpleName = cls.getSimpleName();
-            return "Class".equals(simpleName) || "SubstrateTruffleRuntime".equals(simpleName) || "GraalTruffleRuntime".equals(simpleName);
+            return "Class".equals(cls.getSimpleName());
         }
     };
     private static final ClassValue<HashMap<String, Method>> CLASSES_TO_METHODS = new ClassValue<>() {
@@ -169,14 +168,6 @@ public final class JavaObjectWrapper implements TruffleObject {
                         return true;
                     }
                     return !ArrayUtils.containsEqual(new String[]{"getCanonicalName", "getName", "getSimpleName", "isInstance", "toString"}, methodName);
-                case "SubstrateTruffleRuntime":
-                case "GraalTruffleRuntime": // superclass of SubstrateTruffleRuntime
-                    return !ArrayUtils.containsEqual(new String[]{"getCompileQueue", "getCompilationQueueSize", "getName", "toString"}, methodName);
-                case "SubstrateOptimizedCallTarget":
-                case "SubstrateEnterpriseOptimizedCallTarget":
-                    return !ArrayUtils.containsEqual(new String[]{"getCallCount", "getCallAndLoopCount", "getCallNodes", "getKnownCallSiteCount", "getNonTrivialNodeCount", "toString"}, methodName);
-                case "BackgroundCompileQueue":
-                    return !ArrayUtils.containsEqual(new String[]{"getQueueSize", "toString"}, methodName);
                 default:
                     return false;
             }
@@ -218,25 +209,6 @@ public final class JavaObjectWrapper implements TruffleObject {
             }) {
                 CLASSES_TO_MEMBERS.get(cls);
                 CLASSES_TO_MEMBERS.get(Array.newInstance(cls, 0).getClass()); // Add array classes
-            }
-
-            try {
-                for (final String className : new String[]{
-                                // Truffle runtime class and BackgroundCompileQueue
-                                // "com.oracle.svm.truffle.api.SubstrateTruffleRuntime",
-                                "com.oracle.truffle.runtime.BackgroundCompileQueue",
-                                // For CallTargetBrowser
-                                "com.oracle.svm.truffle.api.SubstrateOptimizedCallTarget",
-                                "com.oracle.svm.enterprise.truffle.SubstrateEnterpriseOptimizedCallTarget",
-                                "com.oracle.truffle.runtime.OptimizedCallTarget",
-                                "com.oracle.truffle.runtime.OptimizedCallTarget$ArgumentsProfile",
-                                "com.oracle.truffle.runtime.OptimizedCallTarget$ReturnProfile",
-                                "com.oracle.truffle.runtime.OptimizedDirectCallNode"
-                }) {
-                    CLASSES_TO_MEMBERS.get(Class.forName(className));
-                }
-            } catch (final ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
     }

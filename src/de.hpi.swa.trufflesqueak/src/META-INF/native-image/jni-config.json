@@ -87,11 +87,9 @@
     ],
     "methods": [{ "name": "<init>", "parameterTypes": ["int", "int", "int", "int"] }]
   },
+  { "name": "java.awt.MenuComponent", "fields": [{ "name": "appContext" }] },
   {
-    "name": "java.awt.MenuComponent",
-    "fields": [{ "name": "appContext" }]
-  },
-  { "name": "java.awt.MenuItem",
+    "name": "java.awt.MenuItem",
     "methods": [
       { "name": "getActionCommand", "parameterTypes": [ ] },
       { "name": "getLabel", "parameterTypes": [ ] }

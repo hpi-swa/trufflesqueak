@@ -1,10 +1,74 @@
 [
   {
+    "name": "com.oracle.svm.enterprise.truffle.SubstrateEnterpriseOptimizedCallTarget",
+    "methods": [
+      { "name": "getCallCount", "parameterTypes": [ ] },
+      { "name": "getCallAndLoopCount", "parameterTypes": [ ] },
+      { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
+      { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
+      { "name": "toString", "parameterTypes": [ ] }
+    ]
+  },
+  {
+    "name": "com.oracle.svm.truffle.api.SubstrateOptimizedCallTarget",
+    "allDeclaredFields": true,
+    "methods": [
+      { "name": "getCallCount", "parameterTypes": [ ] },
+      { "name": "getCallAndLoopCount", "parameterTypes": [ ] },
+      { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
+      { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
+      { "name": "toString", "parameterTypes": [ ] }
+    ]
+  },
+  {
+    "name": "com.oracle.svm.truffle.api.SubstrateTruffleRuntime",
+    "methods": [
+      { "name": "getCompileQueue", "parameterTypes": [ ] },
+      { "name": "getCompilationQueueSize", "parameterTypes": [ ] },
+      { "name": "getName", "parameterTypes": [ ] },
+      { "name": "toString", "parameterTypes": [ ] }
+    ]
+  },
+  {
+    "name": "com.oracle.truffle.runtime.BackgroundCompileQueue",
+    "allDeclaredFields": true,
+    "methods": [
+      { "name": "getQueueSize", "parameterTypes": [ ] },
+      { "name": "toString", "parameterTypes": [ ] }
+    ]
+  },
+  {
+    "name": "com.oracle.truffle.runtime.OptimizedCallTarget",
+    "allDeclaredFields": true,
+    "methods": [
+      { "name": "getCallCount", "parameterTypes": [ ] },
+      { "name": "getCallAndLoopCount", "parameterTypes": [ ] },
+      { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
+      { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
+      { "name": "toString", "parameterTypes": [ ] }
+    ]
+  },
+  {
+    "name": "com.oracle.truffle.runtime.OptimizedCallTarget$ArgumentsProfile",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.oracle.truffle.runtime.OptimizedCallTarget$ReturnProfile",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.oracle.truffle.runtime.OptimizedDirectCallNode",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
+  },
+  {
     "name": "java.awt.Frame",
     "methods": [
       { "name": "getFrames", "parameterTypes": [ ] },
       { "name": "getTitle", "parameterTypes": [ ] },
-      { "name": "setTitle", "parameterTypes": [ "java.lang.String" ] }
+      { "name": "setTitle", "parameterTypes": ["java.lang.String"] }
     ]
   },
   { "name": "java.awt.Image" },
