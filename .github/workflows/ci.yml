@@ -193,8 +193,7 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
       # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
-      # Also, it dynamically links against AWT on Windows, and the additional dlls are not being picked up for standalones yet
-      if: ${{ matrix.type == 'jvm' || (runner.os != 'macOS' && runner.os != 'Windows') }}
+      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
