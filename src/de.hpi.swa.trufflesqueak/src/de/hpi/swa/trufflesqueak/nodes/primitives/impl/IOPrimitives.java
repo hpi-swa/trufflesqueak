@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -878,6 +877,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return Arrays.asList(PrimScreenSizeNode.class);
+        return List.of(PrimScreenSizeNode.class);
     }
 }

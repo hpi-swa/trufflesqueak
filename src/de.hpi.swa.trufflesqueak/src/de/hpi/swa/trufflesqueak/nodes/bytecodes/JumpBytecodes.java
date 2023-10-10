@@ -32,7 +32,7 @@ public final class JumpBytecodes {
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            CompilerDirectives.shouldNotReachHere();
+            throw CompilerDirectives.shouldNotReachHere();
         }
 
         public final boolean executeCondition(final VirtualFrame frame) {
@@ -131,7 +131,7 @@ public final class JumpBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            CompilerDirectives.shouldNotReachHere();
+            throw CompilerDirectives.shouldNotReachHere();
         }
 
         @Override

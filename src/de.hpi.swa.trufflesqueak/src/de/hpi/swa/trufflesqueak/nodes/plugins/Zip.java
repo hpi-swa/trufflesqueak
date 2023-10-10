@@ -627,9 +627,9 @@ public final class Zip {
             } else {
                 /* match */
                 sum = sum + Byte.toUnsignedInt(lit) + DeflateMinMatch;
-                if (Byte.toUnsignedInt(lit) >= 256) {
-                    throw PrimitiveFailed.GENERIC_ERROR;
-                }
+                // if (Byte.toUnsignedInt(lit) >= 256) {
+                // throw PrimitiveFailed.GENERIC_ERROR;
+                // }
                 int code = zipMatchLengthCodes[Byte.toUnsignedInt(lit)];
                 if (code >= litBlCount) {
                     throw PrimitiveFailed.GENERIC_ERROR;
@@ -896,7 +896,7 @@ public final class Zip {
     }
 
     private static int div(final int a, final int b) {
-        return (int) Math.floor(a / b);
+        return (int) ((double) a / b);
     }
 
     private static int mod(final int a, final int b) {

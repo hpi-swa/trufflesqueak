@@ -305,7 +305,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setStackPointer(final int value) {
-        assert 0 <= value && value <= getCodeObject().getSqueakContextSize() : value + " not between 0 and " + getCodeObject().getSqueakContextSize() + " in " + toString();
+        assert 0 <= value && value <= getCodeObject().getSqueakContextSize() : value + " not between 0 and " + getCodeObject().getSqueakContextSize() + " in " + this;
         FrameAccess.setStackPointer(getOrCreateTruffleFrame(), value);
     }
 

@@ -183,7 +183,7 @@ public final class DebugUtils {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final StringBuilder b = new StringBuilder();
         printSqMaterializedStackTraceOn(b, context);
-        SqueakImageContext.getSlow().getOutput().println(b.toString());
+        SqueakImageContext.getSlow().getOutput().println(b);
     }
 
     private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {

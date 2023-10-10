@@ -71,7 +71,7 @@ public final class SqueakImageReader {
         if (!truffleFile.isRegularFile()) {
             throw SqueakException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
         }
-        try (BufferedInputStream inputStream = new BufferedInputStream(truffleFile.newInputStream());) {
+        try (BufferedInputStream inputStream = new BufferedInputStream(truffleFile.newInputStream())) {
             readHeader(inputStream);
             readBody(inputStream);
         } catch (final IOException e) {

@@ -51,11 +51,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final ClassObject klass) {
-        this(image.getCurrentMarkingFlag(), HASH_UNINITIALIZED, klass);
+        this(image.getCurrentMarkingFlag(), klass);
     }
 
-    private AbstractSqueakObjectWithClassAndHash(final boolean markingFlag, final int hash, final ClassObject klass) {
-        squeahHashAndBits = hash;
+    private AbstractSqueakObjectWithClassAndHash(final boolean markingFlag, final ClassObject klass) {
+        squeahHashAndBits = AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED;
         squeakClass = klass;
         if (markingFlag) {
             toggleMarkingFlag();

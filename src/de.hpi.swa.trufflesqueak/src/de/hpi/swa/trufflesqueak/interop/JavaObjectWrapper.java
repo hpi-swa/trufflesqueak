@@ -162,15 +162,13 @@ public final class JavaObjectWrapper implements TruffleObject {
                 return true;
             }
             final String classSimpleName = method.getDeclaringClass().getSimpleName();
-            switch (classSimpleName) {
-                case "Class":
-                    if (methodName.contains("Annotation")) {
-                        return true;
-                    }
-                    return !ArrayUtils.containsEqual(new String[]{"getCanonicalName", "getName", "getSimpleName", "isInstance", "toString"}, methodName);
-                default:
-                    return false;
+            if ("Class".equals(classSimpleName)) {
+                if (methodName.contains("Annotation")) {
+                    return true;
+                }
+                return !ArrayUtils.containsEqual(new String[]{"getCanonicalName", "getName", "getSimpleName", "isInstance", "toString"}, methodName);
             }
+            return false;
         }
     };
     private static final ClassValue<InteropArray> CLASSES_TO_MEMBERS = new ClassValue<>() {
@@ -233,7 +231,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         } else if (object instanceof final Float o) {
             return (double) o;
         } else {
-            return CACHE.computeIfAbsent(object, o -> new JavaObjectWrapper(o));
+            return CACHE.computeIfAbsent(object, JavaObjectWrapper::new);
         }
     }
 
@@ -351,7 +349,6 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
     protected void writeMember(final String key, final Object value) {
         final Field field = lookupFields().get(key);
         if (field != null) {

@@ -16,11 +16,9 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-
 import com.oracle.truffle.api.nodes.DirectCallNode;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.nodes.RootNode;
+
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
@@ -92,14 +90,11 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
             final Object wrappedObject = target.unwrap();
             if (wrappedObject instanceof RootNode rootNode) {
                 final List<DirectCallNode> callNodes = new ArrayList<>();
-                rootNode.accept(new NodeVisitor() {
-                    @Override
-                    public boolean visit(final Node node) {
-                        if (node instanceof DirectCallNode) {
-                            callNodes.add((DirectCallNode) node);
-                        }
-                        return true;
+                rootNode.accept(node -> {
+                    if (node instanceof DirectCallNode) {
+                        callNodes.add((DirectCallNode) node);
                     }
+                    return true;
                 });
                 return JavaObjectWrapper.wrap(callNodes.toArray(new DirectCallNode[0]));
             } else {

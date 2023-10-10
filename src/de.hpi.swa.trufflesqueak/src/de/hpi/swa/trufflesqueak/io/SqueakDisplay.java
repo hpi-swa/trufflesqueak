@@ -297,9 +297,7 @@ public final class SqueakDisplay {
             final Point hotSpot = new Point(Math.min(Math.max(offsetX, 1), width - 1), Math.min(Math.max(offsetY, 1), height - 1));
             cursor = Toolkit.getDefaultToolkit().createCustomCursor(bufferedImage, hotSpot, "TruffleSqueak Cursor");
         }
-        EventQueue.invokeLater(() -> {
-            frame.setCursor(cursor);
-        });
+        EventQueue.invokeLater(() -> frame.setCursor(cursor));
     }
 
     private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
@@ -365,9 +363,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setWindowTitle(final String title) {
-        EventQueue.invokeLater(() -> {
-            frame.setTitle(title);
-        });
+        EventQueue.invokeLater(() -> frame.setTitle(title));
     }
 
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {

@@ -53,7 +53,7 @@ public final class SqueakImageLocator {
             }
             final String[] selectedEntry = supportedImages[selection];
             if (!isQuiet) {
-                out.println(String.format("Downloading %s...", selectedEntry[0]));
+                out.printf("Downloading %s...%n", selectedEntry[0]);
             }
             downloadAndUnzip(selectedEntry[1], resourcesDirectory);
             return Objects.requireNonNull(findImageFile(resourcesDirectory));
@@ -64,7 +64,7 @@ public final class SqueakImageLocator {
         int selection;
         final Scanner userInput = new Scanner(System.in);
         for (int i = 0; i < supportedImages.length; i++) {
-            out.println(String.format("%s) %s", i + 1, supportedImages[i][0]));
+            out.printf("%s) %s%n", i + 1, supportedImages[i][0]);
         }
         out.print("Choose Smalltalk image: ");
         selection = -1;

@@ -257,7 +257,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             final SqueakImageContext image = getContext();
             if (cachedList == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedList = image.env.getPublicLanguages().values().stream().map(l -> JavaObjectWrapper.wrap(l)).toArray();
+                cachedList = image.env.getPublicLanguages().values().stream().map(JavaObjectWrapper::wrap).toArray();
             }
             return image.asArrayOfObjects(cachedList.clone());
         }
@@ -284,7 +284,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             final SqueakImageContext image = getContext();
             if (cachedList == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedList = image.env.getInternalLanguages().values().stream().map(l -> JavaObjectWrapper.wrap(l)).toArray();
+                cachedList = image.env.getInternalLanguages().values().stream().map(JavaObjectWrapper::wrap).toArray();
             }
             return image.asArrayOfObjects(cachedList.clone());
         }

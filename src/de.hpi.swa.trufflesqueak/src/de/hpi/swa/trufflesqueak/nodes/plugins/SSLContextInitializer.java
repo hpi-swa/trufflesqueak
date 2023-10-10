@@ -154,11 +154,7 @@ public final class SSLContextInitializer {
         return factory;
     }
 
-    private static final class CertificateInfo {
-
-        private final Certificate certificate;
-        private final PrivateKey privateKey;
-
+    private record CertificateInfo(Certificate certificate, PrivateKey privateKey) {
         private CertificateInfo(final Certificate certificate, final PrivateKey privateKey) {
             this.certificate = Objects.requireNonNull(certificate, "No certificate in PEM");
             this.privateKey = Objects.requireNonNull(privateKey, "No private key in PEM");

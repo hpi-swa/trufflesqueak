@@ -121,18 +121,20 @@ public final class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage 
 
     @Test
     public void test12CannotReturnAtStart() {
-        assertEquals("'bla2'", evaluate("| result | \n" +
-                        "[ result := [^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
-                        "Processor yield.\n" +
-                        "result").toString());
+        assertEquals("'bla2'", evaluate("""
+                        | result |
+                        [ result := [^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork.
+                        Processor yield.
+                        result""").toString());
     }
 
     @Test
     public void test13CannotReturnInTheMiddle() {
-        assertEquals("'bla2'", evaluate("| result | \n" +
-                        "[ result := [thisContext yourself. ^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
-                        "Processor yield.\n" +
-                        "result").toString());
+        assertEquals("'bla2'", evaluate("""
+                        | result |
+                        [ result := [thisContext yourself. ^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork.
+                        Processor yield.
+                        result""").toString());
     }
 
     @Test

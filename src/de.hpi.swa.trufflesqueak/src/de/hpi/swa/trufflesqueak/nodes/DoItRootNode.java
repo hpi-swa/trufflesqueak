@@ -28,11 +28,10 @@ public final class DoItRootNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        if (!(maybeClosure instanceof BlockClosureObject)) {
+        if (!(maybeClosure instanceof BlockClosureObject closure)) {
             return NilObject.SINGLETON;
 
         }
-        final BlockClosureObject closure = (BlockClosureObject) maybeClosure;
         if (closure.getNumArgs() != frame.getArguments().length) {
             return NilObject.SINGLETON;
         }

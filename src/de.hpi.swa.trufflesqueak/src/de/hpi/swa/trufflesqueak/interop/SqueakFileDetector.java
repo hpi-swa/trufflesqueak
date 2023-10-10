@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.interop;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 
 import com.oracle.truffle.api.TruffleFile;
@@ -16,7 +15,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 public final class SqueakFileDetector implements TruffleFile.FileTypeDetector {
 
     @Override
-    public String findMimeType(final TruffleFile file) throws IOException {
+    public String findMimeType(final TruffleFile file) {
         final String fileName = file.getName();
         if (fileName == null) {
             return null;
@@ -30,7 +29,7 @@ public final class SqueakFileDetector implements TruffleFile.FileTypeDetector {
     }
 
     @Override
-    public Charset findEncoding(final TruffleFile file) throws IOException {
+    public Charset findEncoding(final TruffleFile file) {
         return null;
     }
 }

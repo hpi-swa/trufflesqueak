@@ -124,7 +124,7 @@ public final class ContextScope implements TruffleObject {
 
     @SuppressWarnings("unused")
     @ExportMessage
-    protected void writeMember(final String member, final Object value) throws UnknownIdentifierException, UnsupportedMessageException {
+    protected void writeMember(final String member, final Object value) {
         // TODO: allow modifications
     }
 

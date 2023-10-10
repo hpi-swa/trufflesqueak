@@ -241,8 +241,8 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             final int[] ints = receiver.getIntStorage();
             final int length = ints.length;
             float len = 0.0F;
-            for (int i = 0; i < length; i++) {
-                final float value = Float.intBitsToFloat(ints[i]);
+            for (int anInt : ints) {
+                final float value = Float.intBitsToFloat(anInt);
                 len += value * value;
             }
             if (len <= 0.0F) {
