@@ -35,7 +35,6 @@ public enum OS {
             case macOS -> "Mac OS";
             case Windows -> "Win32";
             case Linux -> "unix";
-            default -> throw SqueakException.create("Unsupported Platform.");
         };
     }
 

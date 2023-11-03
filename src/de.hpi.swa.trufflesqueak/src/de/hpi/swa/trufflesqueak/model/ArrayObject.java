@@ -199,10 +199,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return (Object[]) storage;
     }
 
-    public Class<?> getStorageType() {
-        return storage.getClass();
-    }
-
     @Override
     public int instsize() {
         return 0;
@@ -240,10 +236,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isObjectType() {
         return storage instanceof Object[];
-    }
-
-    public boolean isTraceable() {
-        return isObjectType();
     }
 
     public boolean hasSameStorageType(final ArrayObject other) {

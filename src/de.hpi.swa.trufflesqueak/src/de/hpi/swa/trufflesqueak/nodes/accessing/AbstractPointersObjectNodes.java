@@ -169,8 +169,6 @@ public class AbstractPointersObjectNodes {
 
         public abstract Object execute(VariablePointersObject object, long index);
 
-        public abstract ArrayObject executeArray(VariablePointersObject object, long index);
-
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex < cachedLayout.getInstSize()"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "CACHE_LIMIT")
         protected static final Object doReadCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index,

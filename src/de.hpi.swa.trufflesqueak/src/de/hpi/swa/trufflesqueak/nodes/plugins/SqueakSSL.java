@@ -890,7 +890,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 case PEER_NAME -> image.asByteString(impl.peerName);
                 case CERTIFICATE_NAME -> NilObject.SINGLETON; // FIXME
                 case SERVER_NAME -> image.asByteString(impl.serverName);
-                default -> NilObject.SINGLETON;
             };
         }
     }

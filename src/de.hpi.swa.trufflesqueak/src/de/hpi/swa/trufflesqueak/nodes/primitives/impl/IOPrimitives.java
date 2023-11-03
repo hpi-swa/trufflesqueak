@@ -152,7 +152,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "segmentWordArray.isIntType()")
         protected static final Object doStore(final Object receiver, final ArrayObject rootsArray, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
-            /**
+            /*
              * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
              * some tests (e.g. BitmapStreamTests) run quickly.
              */
@@ -167,7 +167,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "segmentWordArray.isIntType()")
         protected static final ArrayObject doLoad(final Object receiver, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
-            /**
+            /*
              * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
              * some tests (e.g. BitmapStreamTests) run quickly.
              */

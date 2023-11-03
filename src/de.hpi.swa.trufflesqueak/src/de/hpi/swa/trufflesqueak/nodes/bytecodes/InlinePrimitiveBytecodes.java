@@ -576,7 +576,7 @@ public final class InlinePrimitiveBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final Object value = (long) pop4Node.execute(frame);
+            final Object value = pop4Node.execute(frame);
             final long to = (long) pop3Node.execute(frame);
             final long from = (long) pop2Node.execute(frame);
             final Object receiver = pop1Node.execute(frame);

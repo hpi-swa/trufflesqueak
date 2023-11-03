@@ -47,7 +47,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"0 <= newStackPointer", "newStackPointer <= LARGE_FRAMESIZE"})
         protected static final ContextObject store(final ContextObject receiver, final long newStackPointer) {
-            /**
+            /*
              * Not need to "nil any newly accessible cells" as cells are always nil-initialized and
              * their values are cleared (overwritten with nil) on stack pop.
              */

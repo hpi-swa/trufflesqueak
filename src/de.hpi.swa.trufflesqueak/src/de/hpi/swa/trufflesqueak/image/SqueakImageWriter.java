@@ -242,12 +242,12 @@ public final class SqueakImageWriter {
             return toTaggedSmallInteger((long) object);
         } else if (object instanceof Double) {
             return toTaggedSmallFloat((double) object);
-        } else if (object instanceof AbstractSqueakObject) {
-            final Long oop = oopMap.get(object);
+        } else if (object instanceof AbstractSqueakObject aso) {
+            final Long oop = oopMap.get(aso);
             if (oop != null) {
                 return oop;
             } else {
-                image.printToStdErr("Unreserved object detected: " + object + ". Replacing with nil.");
+                image.printToStdErr("Unreserved object detected: " + aso + ". Replacing with nil.");
                 return nilOop;
             }
         } else {
@@ -384,7 +384,7 @@ public final class SqueakImageWriter {
     }
 
     public void writeObjectIfTracedElseNil(final Object object) {
-        writeLong(toWord(oopMap.containsKey(object) ? object : NilObject.SINGLETON));
+        writeLong(toWord(object instanceof AbstractSqueakObject aso && oopMap.containsKey(aso) ? object : NilObject.SINGLETON));
     }
 
     private static long toTaggedCharacter(final long value) {

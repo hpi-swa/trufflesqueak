@@ -564,8 +564,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final Object penultimateLiteral = literals[literals.length - 2];
         if (penultimateLiteral instanceof final NativeObject o) {
             return o;
-        } else if (penultimateLiteral instanceof final VariablePointersObject o) {
-            final VariablePointersObject penultimateLiteralAsPointer = o;
+        } else if (penultimateLiteral instanceof final VariablePointersObject penultimateLiteralAsPointer) {
             assert penultimateLiteralAsPointer.size() >= ADDITIONAL_METHOD_STATE.SELECTOR;
             return (NativeObject) penultimateLiteralAsPointer.instVarAt0Slow(ADDITIONAL_METHOD_STATE.SELECTOR);
         } else {
