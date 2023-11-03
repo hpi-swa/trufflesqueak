@@ -213,10 +213,10 @@ public final class BitBlt {
     private int sy;
     private long[] ungammaLookupTable;
     private int vDir;
-    private long warpAlignMask;
-    private long warpAlignShift;
+    private int warpAlignMask;
+    private int warpAlignShift;
     private final int[] warpBitShiftTable = new int[32];
-    private long warpSrcMask;
+    private int warpSrcMask;
     private int width;
 
     public BitBlt(final SqueakImageContext image) {
@@ -269,9 +269,9 @@ public final class BitBlt {
                 result = blendRB | blendAG << 8;
             }
         } else {
-            final long pixMask = MASK_TABLE[destDepth];
-            final long bitsPerColor = 5;
-            final long rgbMask = 0x1F;
+            final int pixMask = MASK_TABLE[destDepth];
+            final int bitsPerColor = 5;
+            final int rgbMask = 0x1F;
             long maskShifted = destMask;
             long destShifted = destinationWord;
             long sourceShifted = sourceWord;
@@ -518,7 +518,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#alphaSourceBlendBits8 */
     private void alphaSourceBlendBits8() {
-        final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
+        final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
 
         /* So we can pre-decrement */
         int deltaY = bbH + 1;
@@ -1141,11 +1141,11 @@ public final class BitBlt {
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         assert mergeFnwith != null : "Unexpected `null` value";
         sourcePPW = div(32, sourceDepth);
-        final long sourcePixMask = MASK_TABLE[sourceDepth];
-        final long destPixMask = MASK_TABLE[destDepth];
-        final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
+        final int sourcePixMask = MASK_TABLE[sourceDepth];
+        final int destPixMask = MASK_TABLE[destDepth];
+        final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         sourceIndex = sy * sourcePitch + div(sx, sourcePPW) * 4;
-        final long scrStartBits = sourcePPW - (sx & sourcePPW - 1);
+        final int scrStartBits = sourcePPW - (sx & sourcePPW - 1);
         final int nSourceIncs;
         if (bbW < scrStartBits) {
             nSourceIncs = 0;
@@ -1154,7 +1154,7 @@ public final class BitBlt {
         }
         /* Note following two items were already calculated in destmask setup! */
         sourceDelta = sourcePitch - nSourceIncs * 4;
-        long startBits = destPPW - (dx & destPPW - 1);
+        int startBits = destPPW - (dx & destPPW - 1);
         final int endBits = (dx + bbW - 1 & destPPW - 1) + 1;
         if (bbW < startBits) {
             startBits = bbW;
@@ -1909,7 +1909,7 @@ public final class BitBlt {
     /* Color map the given source pixel. */
 
     /* BitBltSimulation>>#mapPixel:flags: */
-    private long mapPixelflags(final long sourcePixel, final long mapperFlags) {
+    private long mapPixelflags(final long sourcePixel, final int mapperFlags) {
         long pv;
 
         pv = sourcePixel;
@@ -1985,7 +1985,7 @@ public final class BitBlt {
         }
         if (destDepth < 16) {
             /* loop through all packed pixels. */
-            final long pixMask = MASK_TABLE[destDepth] & cmMask;
+            final int pixMask = MASK_TABLE[destDepth] & cmMask;
             long shiftWord = destinationWord;
             for (int i = 1; i <= destPPW; i++) {
                 tallyMapAtput(shiftWord & pixMask);
@@ -2116,8 +2116,8 @@ public final class BitBlt {
     /* BitBltSimulation>>#partitionedMul:with:nBits:nPartitions: */
     private static long partitionedMulwithnBitsnPartitions(final long word1, final long word2, final int nBits, final int nParts) {
         /* partition mask starts at the right */
-        final long sMask = MASK_TABLE[nBits];
-        final long dMask = shl(sMask, nBits);
+        final int sMask = MASK_TABLE[nBits];
+        final int dMask = shl(sMask, nBits);
         /* optimized first step */
         long result = shr(((word1 & sMask) + 1) * ((word2 & sMask) + 1) - 1 & dMask, nBits);
         if (nParts == 1) {
@@ -2235,7 +2235,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickSourcePixels:flags:srcMask:destMask:srcShiftInc:dstShiftInc: */
-    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final long mapperFlags, final long srcMask, final long dstMask, final long srcShiftInc,
+    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final int mapperFlags, final long srcMask, final long dstMask, final long srcShiftInc,
                     final long dstShiftInc) {
         long destWord = 0;
         /* Hint: Keep in register */
@@ -2808,7 +2808,7 @@ public final class BitBlt {
     /* BitBltSimulation>>#rgbComponentAlpha8 */
     private void rgbComponentAlpha8() {
         /* This particular method should be optimized in itself */
-        final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
+        final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         /* So we can pre-decrement */
         int deltaY = bbH + 1;
         int srcY = sy;
@@ -2911,7 +2911,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#rgbDiff:with: */
     private long rgbDiffwith(final long sourceWord, final long destinationWord) {
-        final long pixMask = MASK_TABLE[destDepth];
+        final int pixMask = MASK_TABLE[destDepth];
         final int bitsPerColor;
         final long rgbMask;
         if (destDepth == 16) {
@@ -3246,7 +3246,7 @@ public final class BitBlt {
         if ((cmFlags & (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) != (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
             return destinationWord;
         }
-        final long pixMask = MASK_TABLE[destDepth];
+        final int pixMask = MASK_TABLE[destDepth];
         long destShifted = destinationWord;
         long maskShifted = destMask;
         for (int i = 1; i <= destPPW; i++) {
@@ -3486,7 +3486,7 @@ public final class BitBlt {
             }
         }
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
+        final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         final int dstShiftInc;
         final int dstShiftLeft;
         if (destMSB) {
@@ -3583,7 +3583,7 @@ public final class BitBlt {
     /* BitBltSimulation>>#warpLoopSetup */
     private void warpLoopSetup() {
         /* warpSrcShift = log2(sourceDepth) */
-        long warpSrcShift = 0;
+        int warpSrcShift = 0;
         /* recycle temp */
         long words = sourceDepth;
         while (words != 1) {
@@ -3726,7 +3726,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpPickSourcePixels:xDeltah:yDeltah:xDeltav:yDeltav:dstShiftInc:flags: */
-    private long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final int nPixels, final int xDeltah, final int yDeltah, final int dstShiftInc, final long mapperFlags) {
+    private long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final int nPixels, final int xDeltah, final int yDeltah, final int dstShiftInc, final int mapperFlags) {
         final int dstMask = MASK_TABLE[destDepth];
         long destWord = 0;
         long nPix = nPixels;
@@ -3827,6 +3827,10 @@ public final class BitBlt {
     }
 
     private static long shl(final long a, final long b) {
+        return a << b;
+    }
+
+    private static int shl(final int a, final int b) {
         return a << b;
     }
 
