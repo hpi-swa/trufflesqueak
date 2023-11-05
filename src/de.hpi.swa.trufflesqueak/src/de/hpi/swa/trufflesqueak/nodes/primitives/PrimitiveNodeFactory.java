@@ -10,6 +10,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.nfi.backend.spi.NFIBackend;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -77,45 +87,45 @@ public final class PrimitiveNodeFactory {
 
     static {
         final AbstractPrimitiveFactoryHolder[] indexPrimitives = {
-                        new ArithmeticPrimitives(),
-                        new ArrayStreamPrimitives(),
-                        new BlockClosurePrimitives(),
-                        new ContextPrimitives(),
-                        new ControlPrimitives(),
-                        new IOPrimitives(),
-                        new MiscellaneousPrimitives(),
-                        new StoragePrimitives()};
+                new ArithmeticPrimitives(),
+                new ArrayStreamPrimitives(),
+                new BlockClosurePrimitives(),
+                new ContextPrimitives(),
+                new ControlPrimitives(),
+                new IOPrimitives(),
+                new MiscellaneousPrimitives(),
+                new StoragePrimitives()};
         fillPrimitiveTable(indexPrimitives);
 
         final AbstractPrimitiveFactoryHolder[] plugins = {
-                        new B2DPlugin(),
-                        new BitBltPlugin(),
-                        new BMPReadWriterPlugin(),
-                        new ClipboardExtendedPlugin(),
-                        new CroquetPlugin(),
-                        new DropPlugin(),
-                        new DSAPrims(),
-                        new FilePlugin(),
-                        new FloatArrayPlugin(),
-                        new Float64ArrayPlugin(),
-                        new TruffleSqueakPlugin(),
-                        new HostWindowPlugin(),
-                        new JPEGReaderPlugin(),
-                        new JPEGReadWriter2Plugin(),
-                        new LargeIntegers(),
-                        new LocalePlugin(),
-                        new Matrix2x3Plugin(),
-                        new MiscPrimitivePlugin(),
-                        new NullPlugin(),
-                        new PolyglotPlugin(),
-                        new SecurityPlugin(),
-                        new SocketPlugin(),
-                        new SoundCodecPrims(),
-                        new SqueakFFIPrims(),
-                        new SqueakSSL(),
-                        new UUIDPlugin(),
-                        new ZipPlugin(),
-                        OS.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
+                new B2DPlugin(),
+                new BitBltPlugin(),
+                new BMPReadWriterPlugin(),
+                new ClipboardExtendedPlugin(),
+                new CroquetPlugin(),
+                new DropPlugin(),
+                new DSAPrims(),
+                new FilePlugin(),
+                new FloatArrayPlugin(),
+                new Float64ArrayPlugin(),
+                new TruffleSqueakPlugin(),
+                new HostWindowPlugin(),
+                new JPEGReaderPlugin(),
+                new JPEGReadWriter2Plugin(),
+                new LargeIntegers(),
+                new LocalePlugin(),
+                new Matrix2x3Plugin(),
+                new MiscPrimitivePlugin(),
+                new NullPlugin(),
+                new PolyglotPlugin(),
+                new SecurityPlugin(),
+                new SocketPlugin(),
+                new SoundCodecPrims(),
+                new SqueakFFIPrims(),
+                new SqueakSSL(),
+                new UUIDPlugin(),
+                new ZipPlugin(),
+                OS.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
         fillPrimitiveTable(plugins);
         fillPluginMap(plugins);
     }
@@ -203,7 +213,38 @@ public final class PrimitiveNodeFactory {
         if (nodeFactory != null) {
             return createNode(nodeFactory, location, numReceiverAndArguments);
         } else {
-            return null;
+            System.out.println("trying to execute " + moduleName + ":" + functionName);
+
+            if (functionName.equals("primitivePluginVersion")) {
+                return null;
+            }
+            return new NonExistentPrimitiveNode();
+        }
+    }
+
+    static class NonExistentPrimitiveNode extends AbstractPrimitiveNode {
+        @Override
+        public Object execute(VirtualFrame frame) {
+            final String nfiCode = "load \"UUIDPlugin.so\" { getModuleName():STRING; }";
+            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
+            final SqueakImageContext image = getContext();
+            final Object ffiTest = image.env.parseInternal(source).call();
+            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
+
+            final String name = "getModuleName";
+            try {
+                Object returnValue = interopLib.invokeMember(ffiTest, name);
+                return returnValue;
+
+            } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        public Object executeWithArguments(VirtualFrame frame, Object... receiverAndArguments) {
+            return execute(frame);
         }
     }
 
