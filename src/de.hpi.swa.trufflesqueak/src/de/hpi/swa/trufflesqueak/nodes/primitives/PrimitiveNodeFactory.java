@@ -6,24 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.nfi.backend.spi.NFIBackend;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import org.graalvm.collections.EconomicMap;
-
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.NodeFactory;
-
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.source.Source;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -53,7 +42,6 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.SoundCodecPrims;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakSSL;
 import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
-import de.hpi.swa.trufflesqueak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Win32OSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ZipPlugin;
@@ -66,7 +54,17 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.OS;
+import org.graalvm.collections.EconomicMap;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class PrimitiveNodeFactory {
     public static final int PRIMITIVE_SIMULATION_GUARD_INDEX = 19;
@@ -123,7 +121,7 @@ public final class PrimitiveNodeFactory {
                 new SoundCodecPrims(),
                 new SqueakFFIPrims(),
                 new SqueakSSL(),
-                new UUIDPlugin(),
+                //new UUIDPlugin(),
                 new ZipPlugin(),
                 OS.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
         fillPrimitiveTable(plugins);
@@ -218,28 +216,91 @@ public final class PrimitiveNodeFactory {
             if (functionName.equals("primitivePluginVersion")) {
                 return null;
             }
-            return new NonExistentPrimitiveNode();
+            return new NonExistentPrimitiveNode(moduleName, functionName);
         }
     }
 
     static class NonExistentPrimitiveNode extends AbstractPrimitiveNode {
+        final String moduleName;
+        final String functionName;
+
+        public NonExistentPrimitiveNode(String moduleName, String functionName) {
+            this.moduleName = moduleName;
+            this.functionName = functionName;
+        }
+
         @Override
         public Object execute(VirtualFrame frame) {
-            final String nfiCode = "load \"UUIDPlugin.so\" { getModuleName():STRING; }";
-            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
-            final SqueakImageContext image = getContext();
-            final Object ffiTest = image.env.parseInternal(source).call();
-            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
-
-            final String name = "getModuleName";
+            final Object interpreterProxy = loadLibrary("libInterpreterProxy",
+                    "{ createInterpreterProxy((SINT64):SINT64,(SINT64):[UINT8],(SINT64):SINT64,():SINT64,():SINT64,():SINT64,():SINT64,(SINT64):SINT64):POINTER; }");
+            final Object uuidPlugin = loadLibrary("UUIDPlugin", "{ " +
+                "initialiseModule():VOID; " +
+                "setInterpreter(POINTER):VOID; " +
+                "shutdownModule():VOID; " +
+                functionName + "():STRING; " +
+                " }");
+            final InteropLibrary interpreterProxyLibrary = getInteropLibrary(interpreterProxy);
+            final InteropLibrary uuidPluginLibrary = getInteropLibrary(uuidPlugin);
             try {
-                Object returnValue = interopLib.invokeMember(ffiTest, name);
-                return returnValue;
 
-            } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
-                e.printStackTrace();
+                ArrayList<Object> objectRegistry = new ArrayList<>();
+                Function<Integer, Integer> byteSizeOf = (index) -> 16;
+                Function<Integer, byte[]> firstIndexableField = (index) -> ((NativeObject)objectRegistry.get(index)).getByteStorage();
+                Function<Integer, Boolean> isBytes = (integer) -> true;
+                Supplier<Integer> majorVersion = () -> 1;
+                Supplier<Integer> methodArgumentCount = () -> 0;
+                Supplier<Integer> minorVersion = () -> 17;
+                Supplier<Integer> primitiveFail = () -> { assert false; return -1; };
+                Function<Integer, Integer> stackValue = (stackIndex) -> {
+                    Object objectOnStack = FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
+                    int objectIndex = objectRegistry.size();
+                    objectRegistry.add(objectOnStack);
+                    return objectIndex;
+                };
+                final Object interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
+                    interpreterProxy,
+                    "createInterpreterProxy",
+                    byteSizeOf,
+                    firstIndexableField,
+                    isBytes,
+                    majorVersion,
+                    methodArgumentCount,
+                    minorVersion,
+                    primitiveFail,
+                    stackValue);
+                System.out.println("interpreterProxyPointer = " + interpreterProxyPointer);
+
+                final Object initialiseOk = uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
+                System.out.println("initialiseOk = " + initialiseOk);
+                final Object setInterpreterOk = uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxyPointer);
+                System.out.println("setInterpreterOk = " + setInterpreterOk);
+                final Object result = uuidPluginLibrary.invokeMember(uuidPlugin, functionName);
+                System.out.println("result = " + result);
+                final Object shutdownOk = uuidPluginLibrary.invokeMember(uuidPlugin, "shutdownModule");
+                System.out.println("shutdownOk = " + shutdownOk);
+                return result;
+            } catch (Exception e) {
+                System.out.println("error");
+                e.printStackTrace(System.err);
                 return null;
             }
+        }
+
+        private Object loadLibrary(String moduleName, String boundSymbols) {
+            final SqueakImageContext image = getContext();
+            final String libName = System.mapLibraryName(moduleName);
+            final TruffleFile libPath = image.getHomePath().resolve("lib" + File.separatorChar + libName);
+            if (!libPath.exists()) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+
+            final String nfiCode = "load \"" + libPath.getPath() + "\" " + boundSymbols;
+            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
+            return image.env.parseInternal(source).call();
+        }
+
+        private InteropLibrary getInteropLibrary(Object loadedLibrary) {
+            return InteropLibrary.getFactory().getUncached(loadedLibrary);
         }
 
         @Override
