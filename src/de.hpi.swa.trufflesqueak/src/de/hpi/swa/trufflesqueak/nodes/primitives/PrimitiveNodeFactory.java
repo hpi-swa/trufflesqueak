@@ -6,10 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -56,15 +59,13 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.OS;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 import org.graalvm.collections.EconomicMap;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 public final class PrimitiveNodeFactory {
     public static final int PRIMITIVE_SIMULATION_GUARD_INDEX = 19;
@@ -220,6 +221,57 @@ public final class PrimitiveNodeFactory {
         }
     }
 
+    @ExportLibrary(InteropLibrary.class)
+    static class TruffleExecutable implements TruffleObject {
+        ITruffleExecutable executable;
+
+        public TruffleExecutable(ITruffleExecutable executable) {
+            this.executable = executable;
+        }
+
+        static<T, R> TruffleExecutable wrapFunction(TruffleFunction<T, R> function) {
+            return new TruffleExecutable(function);
+        }
+
+        static<R> TruffleExecutable wrapSupplier(TruffleSupplier<R> supplier) {
+            return new TruffleExecutable(supplier);
+        }
+
+        @ExportMessage
+        boolean isExecutable() {
+            return true;
+        }
+
+        @ExportMessage
+        Object execute(Object... arguments) {
+            return executable.execute(arguments);
+        }
+    }
+
+    interface ITruffleExecutable {
+        Object execute(Object... arguments);
+    }
+
+    @FunctionalInterface
+    interface TruffleFunction<T, R> extends ITruffleExecutable {
+        R run(T argument);
+
+        default Object execute(Object... arguments) {
+            assert arguments.length == 1;
+            return run((T) arguments[0]);
+        }
+    }
+
+    @FunctionalInterface
+    interface TruffleSupplier<R> extends ITruffleExecutable {
+        R run();
+
+        default Object execute(Object... arguments) {
+            assert arguments.length == 0;
+            return run();
+        }
+    }
+
     static class NonExistentPrimitiveNode extends AbstractPrimitiveNode {
         final String moduleName;
         final String functionName;
@@ -232,31 +284,37 @@ public final class PrimitiveNodeFactory {
         @Override
         public Object execute(VirtualFrame frame) {
             final Object interpreterProxy = loadLibrary("libInterpreterProxy",
-                    "{ createInterpreterProxy((SINT64):SINT64,(SINT64):[UINT8],(SINT64):SINT64,():SINT64,():SINT64,():SINT64,():SINT64,(SINT64):SINT64):POINTER; }");
+                    "{ createInterpreterProxy((SINT64):SINT64,(SINT64):POINTER,(SINT64):SINT64,():SINT64,():SINT64,():SINT64,():SINT64,(SINT64):SINT64):POINTER; }");
             final Object uuidPlugin = loadLibrary("UUIDPlugin", "{ " +
-                "initialiseModule():VOID; " +
-                "setInterpreter(POINTER):VOID; " +
-                "shutdownModule():VOID; " +
-                functionName + "():STRING; " +
+                "initialiseModule():SINT64; " +
+                "setInterpreter(POINTER):SINT64; " +
+                "shutdownModule():SINT64; " +
+                functionName + "():SINT64; " +
                 " }");
             final InteropLibrary interpreterProxyLibrary = getInteropLibrary(interpreterProxy);
             final InteropLibrary uuidPluginLibrary = getInteropLibrary(uuidPlugin);
+            ArrayList<PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
             try {
 
                 ArrayList<Object> objectRegistry = new ArrayList<>();
-                Function<Integer, Integer> byteSizeOf = (index) -> 16;
-                Function<Integer, byte[]> firstIndexableField = (index) -> ((NativeObject)objectRegistry.get(index)).getByteStorage();
-                Function<Integer, Boolean> isBytes = (integer) -> true;
-                Supplier<Integer> majorVersion = () -> 1;
-                Supplier<Integer> methodArgumentCount = () -> 0;
-                Supplier<Integer> minorVersion = () -> 17;
-                Supplier<Integer> primitiveFail = () -> { assert false; return -1; };
-                Function<Integer, Integer> stackValue = (stackIndex) -> {
-                    Object objectOnStack = FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
+                TruffleExecutable byteSizeOf = TruffleExecutable.wrapSupplier(() -> 16L);
+                TruffleExecutable firstIndexableField = TruffleExecutable.wrapFunction((index) -> {
+                    byte[] storage = ((NativeObject) objectRegistry.get((int)(long)index)).getByteStorage();
+                    ByteStorage byteStorage = new ByteStorage(storage);
+                    postPrimitiveCleanups.add(byteStorage);
+                    return byteStorage;
+                });
+                TruffleExecutable isBytes = TruffleExecutable.wrapFunction((integer) -> 1L); // true
+                TruffleExecutable majorVersion = TruffleExecutable.wrapSupplier(() -> 1L);
+                TruffleExecutable methodArgumentCount = TruffleExecutable.wrapSupplier(() -> 0L);
+                TruffleExecutable minorVersion = TruffleExecutable.wrapSupplier(() -> 17L);
+                TruffleExecutable primitiveFail = TruffleExecutable.wrapSupplier(() -> { assert false; return -1L; });
+                TruffleExecutable stackValue = TruffleExecutable.wrapFunction((stackIndex) -> {
+                    Object objectOnStack = FrameAccess.getStackValue(frame, (int)(long)stackIndex, FrameAccess.getNumArguments(frame));
                     int objectIndex = objectRegistry.size();
                     objectRegistry.add(objectOnStack);
-                    return objectIndex;
-                };
+                    return (long)objectIndex;
+                });
                 final Object interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
                     interpreterProxy,
                     "createInterpreterProxy",
@@ -269,7 +327,6 @@ public final class PrimitiveNodeFactory {
                     primitiveFail,
                     stackValue);
                 System.out.println("interpreterProxyPointer = " + interpreterProxyPointer);
-
                 final Object initialiseOk = uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
                 System.out.println("initialiseOk = " + initialiseOk);
                 final Object setInterpreterOk = uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxyPointer);
@@ -282,7 +339,11 @@ public final class PrimitiveNodeFactory {
             } catch (Exception e) {
                 System.out.println("error");
                 e.printStackTrace(System.err);
-                return null;
+                throw PrimitiveFailed.GENERIC_ERROR;
+            } finally {
+                for (var postPrimitiveCleanup : postPrimitiveCleanups) {
+                    postPrimitiveCleanup.cleanup();
+                }
             }
         }
 
@@ -306,6 +367,36 @@ public final class PrimitiveNodeFactory {
         @Override
         public Object executeWithArguments(VirtualFrame frame, Object... receiverAndArguments) {
             return execute(frame);
+        }
+    }
+
+    interface PostPrimitiveCleanup {
+        void cleanup();
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    static class ByteStorage implements PostPrimitiveCleanup, TruffleObject {
+        byte[] storage;
+        public long nativeAddress;
+
+        public ByteStorage(byte[] storage) {
+            this.storage = storage;
+            nativeAddress = UnsafeUtils.allocateNativeBytes(storage);
+        }
+
+        @ExportMessage
+        public boolean isPointer() {
+            return true;
+        }
+
+        @ExportMessage
+        public long asPointer() {
+            return nativeAddress;
+        }
+
+        @Override
+        public void cleanup() {
+            UnsafeUtils.copyNativeBytesBackAndFree(nativeAddress, storage);
         }
     }
 
