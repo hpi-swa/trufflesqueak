@@ -66,6 +66,17 @@ public final class UnsafeUtils {
                         dest, Unsafe.ARRAY_SHORT_BASE_OFFSET + destPos * Unsafe.ARRAY_SHORT_INDEX_SCALE, Short.BYTES * length);
     }
 
+    public static long allocateNativeBytes(final byte[] src) {
+        final long address = UNSAFE.allocateMemory(src.length);
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, address, src.length * Byte.BYTES);
+        return address;
+    }
+
+    public static void copyNativeBytesBackAndFree(final long address, byte[] dest) {
+        UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_BYTE_BASE_OFFSET, dest.length * Byte.BYTES);
+        UNSAFE.freeMemory(address);
+    }
+
     public static long fromLongsOffset(final long offset) {
         return (offset - Unsafe.ARRAY_LONG_BASE_OFFSET) / Unsafe.ARRAY_LONG_INDEX_SCALE;
     }
