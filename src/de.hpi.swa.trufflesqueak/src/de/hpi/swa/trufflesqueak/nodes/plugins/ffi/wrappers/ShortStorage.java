@@ -5,20 +5,20 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
-public class ByteStorage extends NativeObjectStorage {
-    byte[] storage;
+public class ShortStorage extends NativeObjectStorage {
+    short[] storage;
 
-    public ByteStorage(byte[] storage) {
+    public ShortStorage(short[] storage) {
         this.storage = storage;
     }
 
     @Override
     protected void allocate() {
-        nativeAddress = UnsafeUtils.allocateNativeBytes(storage);
+        nativeAddress = UnsafeUtils.allocateNativeShorts(storage);
     }
 
     @Override
     public void cleanup() {
-        UnsafeUtils.copyNativeBytesBackAndFree(nativeAddress, storage);
+        UnsafeUtils.copyNativeShortsBackAndFree(nativeAddress, storage);
     }
 }
