@@ -10,12 +10,10 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -306,15 +304,16 @@ public final class PrimitiveNodeFactory {
                 });
                 TruffleExecutable isBytes = TruffleExecutable.wrapFunction((integer) -> 1L); // true
                 TruffleExecutable majorVersion = TruffleExecutable.wrapSupplier(() -> 1L);
-                TruffleExecutable methodArgumentCount = TruffleExecutable.wrapSupplier(() -> 0L);
+                TruffleExecutable methodArgumentCount = TruffleExecutable.wrapSupplier(() -> 0L) ;
                 TruffleExecutable minorVersion = TruffleExecutable.wrapSupplier(() -> 17L);
-                TruffleExecutable primitiveFail = TruffleExecutable.wrapSupplier(() -> { assert false; return -1L; });
+                TruffleExecutable primitiveFail = TruffleExecutable.wrapSupplier(() -> { throw PrimitiveFailed.GENERIC_ERROR; });
                 TruffleExecutable stackValue = TruffleExecutable.wrapFunction((stackIndex) -> {
                     Object objectOnStack = FrameAccess.getStackValue(frame, (int)(long)stackIndex, FrameAccess.getNumArguments(frame));
                     int objectIndex = objectRegistry.size();
                     objectRegistry.add(objectOnStack);
                     return (long)objectIndex;
                 });
+
                 final Object interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
                     interpreterProxy,
                     "createInterpreterProxy",
@@ -348,16 +347,9 @@ public final class PrimitiveNodeFactory {
         }
 
         private Object loadLibrary(String moduleName, String boundSymbols) {
-            final SqueakImageContext image = getContext();
-            final String libName = System.mapLibraryName(moduleName);
-            final TruffleFile libPath = image.getHomePath().resolve("lib" + File.separatorChar + libName);
-            if (!libPath.exists()) {
-                throw PrimitiveFailed.GENERIC_ERROR;
-            }
-
-            final String nfiCode = "load \"" + libPath.getPath() + "\" " + boundSymbols;
+            final String nfiCode = "load \"" + moduleName + "\" " + boundSymbols;
             final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
-            return image.env.parseInternal(source).call();
+            return getContext().env.parseInternal(source).call();
         }
 
         private InteropLibrary getInteropLibrary(Object loadedLibrary) {
