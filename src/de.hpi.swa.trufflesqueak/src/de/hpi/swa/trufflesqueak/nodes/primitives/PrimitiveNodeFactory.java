@@ -9,10 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -46,6 +42,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Win32OSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ZipPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy;
 import de.hpi.swa.trufflesqueak.nodes.plugins.network.SocketPlugin;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArrayStreamPrimitives;
@@ -55,12 +52,10 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 import org.graalvm.collections.EconomicMap;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -219,57 +214,6 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    @ExportLibrary(InteropLibrary.class)
-    static class TruffleExecutable implements TruffleObject {
-        ITruffleExecutable executable;
-
-        public TruffleExecutable(ITruffleExecutable executable) {
-            this.executable = executable;
-        }
-
-        static<T, R> TruffleExecutable wrapFunction(TruffleFunction<T, R> function) {
-            return new TruffleExecutable(function);
-        }
-
-        static<R> TruffleExecutable wrapSupplier(TruffleSupplier<R> supplier) {
-            return new TruffleExecutable(supplier);
-        }
-
-        @ExportMessage
-        boolean isExecutable() {
-            return true;
-        }
-
-        @ExportMessage
-        Object execute(Object... arguments) {
-            return executable.execute(arguments);
-        }
-    }
-
-    interface ITruffleExecutable {
-        Object execute(Object... arguments);
-    }
-
-    @FunctionalInterface
-    interface TruffleFunction<T, R> extends ITruffleExecutable {
-        R run(T argument);
-
-        default Object execute(Object... arguments) {
-            assert arguments.length == 1;
-            return run((T) arguments[0]);
-        }
-    }
-
-    @FunctionalInterface
-    interface TruffleSupplier<R> extends ITruffleExecutable {
-        R run();
-
-        default Object execute(Object... arguments) {
-            assert arguments.length == 0;
-            return run();
-        }
-    }
-
     static class NonExistentPrimitiveNode extends AbstractPrimitiveNode {
         final String moduleName;
         final String functionName;
@@ -281,114 +225,37 @@ public final class PrimitiveNodeFactory {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            final Object interpreterProxy = loadLibrary("libInterpreterProxy",
-                    "{ createInterpreterProxy((SINT64):SINT64,(SINT64):POINTER,(SINT64):SINT64,():SINT64,():SINT64,():SINT64,():SINT64,(SINT64):SINT64):POINTER; }");
-            final Object uuidPlugin = loadLibrary("UUIDPlugin", "{ " +
+            final Object uuidPlugin = NFIUtils.loadLibrary(getContext(), "UUIDPlugin.so", "{ " +
                 "initialiseModule():SINT64; " +
                 "setInterpreter(POINTER):SINT64; " +
                 "shutdownModule():SINT64; " +
                 functionName + "():SINT64; " +
                 " }");
-            final InteropLibrary interpreterProxyLibrary = getInteropLibrary(interpreterProxy);
-            final InteropLibrary uuidPluginLibrary = getInteropLibrary(uuidPlugin);
-            ArrayList<PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
+            final InteropLibrary uuidPluginLibrary = NFIUtils.getInteropLibrary(uuidPlugin);
+            InterpreterProxy interpreterProxy = null;
             try {
+                interpreterProxy = new InterpreterProxy(getContext(), frame);
 
-                ArrayList<Object> objectRegistry = new ArrayList<>();
-                TruffleExecutable byteSizeOf = TruffleExecutable.wrapSupplier(() -> 16L);
-                TruffleExecutable firstIndexableField = TruffleExecutable.wrapFunction((index) -> {
-                    byte[] storage = ((NativeObject) objectRegistry.get((int)(long)index)).getByteStorage();
-                    ByteStorage byteStorage = new ByteStorage(storage);
-                    postPrimitiveCleanups.add(byteStorage);
-                    return byteStorage;
-                });
-                TruffleExecutable isBytes = TruffleExecutable.wrapFunction((integer) -> 1L); // true
-                TruffleExecutable majorVersion = TruffleExecutable.wrapSupplier(() -> 1L);
-                TruffleExecutable methodArgumentCount = TruffleExecutable.wrapSupplier(() -> 0L) ;
-                TruffleExecutable minorVersion = TruffleExecutable.wrapSupplier(() -> 17L);
-                TruffleExecutable primitiveFail = TruffleExecutable.wrapSupplier(() -> { throw PrimitiveFailed.GENERIC_ERROR; });
-                TruffleExecutable stackValue = TruffleExecutable.wrapFunction((stackIndex) -> {
-                    Object objectOnStack = FrameAccess.getStackValue(frame, (int)(long)stackIndex, FrameAccess.getNumArguments(frame));
-                    int objectIndex = objectRegistry.size();
-                    objectRegistry.add(objectOnStack);
-                    return (long)objectIndex;
-                });
-
-                final Object interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
-                    interpreterProxy,
-                    "createInterpreterProxy",
-                    byteSizeOf,
-                    firstIndexableField,
-                    isBytes,
-                    majorVersion,
-                    methodArgumentCount,
-                    minorVersion,
-                    primitiveFail,
-                    stackValue);
-                System.out.println("interpreterProxyPointer = " + interpreterProxyPointer);
-                final Object initialiseOk = uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
-                System.out.println("initialiseOk = " + initialiseOk);
-                final Object setInterpreterOk = uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxyPointer);
-                System.out.println("setInterpreterOk = " + setInterpreterOk);
+                uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
+                uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxy.getPointer());
                 final Object result = uuidPluginLibrary.invokeMember(uuidPlugin, functionName);
-                System.out.println("result = " + result);
-                final Object shutdownOk = uuidPluginLibrary.invokeMember(uuidPlugin, "shutdownModule");
-                System.out.println("shutdownOk = " + shutdownOk);
+                uuidPluginLibrary.invokeMember(uuidPlugin, "shutdownModule");
+
                 return result;
             } catch (Exception e) {
                 System.out.println("error");
                 e.printStackTrace(System.err);
                 throw PrimitiveFailed.GENERIC_ERROR;
             } finally {
-                for (var postPrimitiveCleanup : postPrimitiveCleanups) {
-                    postPrimitiveCleanup.cleanup();
+                if (interpreterProxy != null) {
+                    interpreterProxy.postPrimitiveCleanups();
                 }
             }
-        }
-
-        private Object loadLibrary(String moduleName, String boundSymbols) {
-            final String nfiCode = "load \"" + moduleName + "\" " + boundSymbols;
-            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
-            return getContext().env.parseInternal(source).call();
-        }
-
-        private InteropLibrary getInteropLibrary(Object loadedLibrary) {
-            return InteropLibrary.getFactory().getUncached(loadedLibrary);
         }
 
         @Override
         public Object executeWithArguments(VirtualFrame frame, Object... receiverAndArguments) {
             return execute(frame);
-        }
-    }
-
-    interface PostPrimitiveCleanup {
-        void cleanup();
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    static class ByteStorage implements PostPrimitiveCleanup, TruffleObject {
-        byte[] storage;
-        public long nativeAddress;
-
-        public ByteStorage(byte[] storage) {
-            this.storage = storage;
-            nativeAddress = UnsafeUtils.allocateNativeBytes(storage);
-        }
-
-        @ExportMessage
-        public boolean isPointer() {
-            return true;
-        }
-
-        @ExportMessage
-        public long asPointer() {
-            return nativeAddress;
-        }
-
-        @Override
-        public void cleanup() {
-            UnsafeUtils.copyNativeBytesBackAndFree(nativeAddress, storage);
         }
     }
 
