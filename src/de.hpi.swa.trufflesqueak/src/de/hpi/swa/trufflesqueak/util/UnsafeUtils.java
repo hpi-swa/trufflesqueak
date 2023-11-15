@@ -67,13 +67,46 @@ public final class UnsafeUtils {
     }
 
     public static long allocateNativeBytes(final byte[] src) {
-        final long address = UNSAFE.allocateMemory(src.length);
+        final long address = UNSAFE.allocateMemory((long) src.length * Byte.BYTES);
         UNSAFE.copyMemory(src, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, address, src.length * Byte.BYTES);
+        return address;
+    }
+
+    public static long allocateNativeShorts(final short[] src) {
+        final long address = UNSAFE.allocateMemory((long) src.length * Short.BYTES);
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_SHORT_BASE_OFFSET, null, address, (long) src.length * Short.BYTES);
+        return address;
+    }
+
+    public static long allocateNativeInts(final int[] src) {
+        final long address = UNSAFE.allocateMemory((long) src.length * Integer.BYTES);
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_INT_BASE_OFFSET, null, address, (long) src.length * Integer.BYTES);
+        return address;
+    }
+
+    public static long allocateNativeLongs(final long[] src) {
+        final long address = UNSAFE.allocateMemory((long) src.length * Long.BYTES);
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_LONG_BASE_OFFSET, null, address, (long) src.length * Long.BYTES);
         return address;
     }
 
     public static void copyNativeBytesBackAndFree(final long address, byte[] dest) {
         UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_BYTE_BASE_OFFSET, dest.length * Byte.BYTES);
+        UNSAFE.freeMemory(address);
+    }
+
+    public static void copyNativeShortsBackAndFree(final long address, short[] dest) {
+        UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_SHORT_BASE_OFFSET, (long) dest.length * Short.BYTES);
+        UNSAFE.freeMemory(address);
+    }
+
+    public static void copyNativeIntsBackAndFree(final long address, int[] dest) {
+        UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_INT_BASE_OFFSET, (long) dest.length * Integer.BYTES);
+        UNSAFE.freeMemory(address);
+    }
+
+    public static void copyNativeLongsBackAndFree(final long address, long[] dest) {
+        UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_LONG_BASE_OFFSET, (long) dest.length * Long.BYTES);
         UNSAFE.freeMemory(address);
     }
 
