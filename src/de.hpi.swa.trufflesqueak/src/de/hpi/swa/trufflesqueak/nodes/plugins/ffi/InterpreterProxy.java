@@ -57,11 +57,11 @@ public class InterpreterProxy {
         postPrimitiveCleanups.forEach(de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy.PostPrimitiveCleanup::cleanup);
     }
 
-    private int byteSizeOf() {
+    private int byteSizeOf(long oop) {
         return 16;
     }
-    private ByteStorage firstIndexableField(long index) {
-        byte[] storage = ((NativeObject) objectRegistry.get((int) index)).getByteStorage();
+    private ByteStorage firstIndexableField(long oop) {
+        byte[] storage = ((NativeObject) objectRegistry.get((int) oop)).getByteStorage();
         ByteStorage byteStorage = new ByteStorage(storage);
         postPrimitiveCleanups.add(byteStorage);
         return byteStorage;
