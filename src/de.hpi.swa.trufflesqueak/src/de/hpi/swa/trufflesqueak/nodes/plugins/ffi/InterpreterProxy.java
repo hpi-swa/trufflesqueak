@@ -69,7 +69,7 @@ public class InterpreterProxy {
         return storage;
     }
     private int isBytes(long oop) {
-        return 1;
+        return objectRegistryGet(oop).isByteType() ? 1 : 0;
     }
     private int majorVersion() {
         return 1;
