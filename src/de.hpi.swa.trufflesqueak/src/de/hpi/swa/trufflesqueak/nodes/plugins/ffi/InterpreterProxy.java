@@ -19,7 +19,7 @@ public class InterpreterProxy {
 
     private final VirtualFrame frame;
     private final ArrayList<Object> objectRegistry = new ArrayList<>();
-    private final ArrayList<de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy.PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
+    private final ArrayList<PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
 
     private static Object interpreterProxyPointer = null;
 
@@ -54,7 +54,7 @@ public class InterpreterProxy {
         };
     }
     public void postPrimitiveCleanups() {
-        postPrimitiveCleanups.forEach(de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy.PostPrimitiveCleanup::cleanup);
+        postPrimitiveCleanups.forEach(PostPrimitiveCleanup::cleanup);
     }
 
     private int byteSizeOf(long oop) {
