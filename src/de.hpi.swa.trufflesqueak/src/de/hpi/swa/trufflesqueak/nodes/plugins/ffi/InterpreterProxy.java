@@ -56,12 +56,15 @@ public class InterpreterProxy {
     public void postPrimitiveCleanups() {
         postPrimitiveCleanups.forEach(PostPrimitiveCleanup::cleanup);
     }
+    private NativeObject objectRegistryGet(long oop) {
+        return (NativeObject) objectRegistry.get((int) oop);
+    }
 
     private int byteSizeOf(long oop) {
-        return 16;
+        return NativeObjectStorage.from(objectRegistryGet(oop)).byteSizeOf();
     }
     private NativeObjectStorage firstIndexableField(long oop) {
-        NativeObjectStorage storage = NativeObjectStorage.from((NativeObject) objectRegistry.get((int) oop));
+        NativeObjectStorage storage = NativeObjectStorage.from(objectRegistryGet(oop));
         postPrimitiveCleanups.add(storage);
         return storage;
     }

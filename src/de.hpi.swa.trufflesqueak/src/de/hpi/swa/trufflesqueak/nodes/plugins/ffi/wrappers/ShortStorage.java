@@ -13,6 +13,11 @@ public class ShortStorage extends NativeObjectStorage {
     }
 
     @Override
+    public int byteSizeOf() {
+        return storage.length * Short.BYTES;
+    }
+
+    @Override
     protected void allocate() {
         nativeAddress = UnsafeUtils.allocateNativeShorts(storage);
     }

@@ -13,6 +13,11 @@ public class ByteStorage extends NativeObjectStorage {
     }
 
     @Override
+    public int byteSizeOf() {
+        return storage.length * Byte.BYTES;
+    }
+
+    @Override
     protected void allocate() {
         nativeAddress = UnsafeUtils.allocateNativeBytes(storage);
     }
