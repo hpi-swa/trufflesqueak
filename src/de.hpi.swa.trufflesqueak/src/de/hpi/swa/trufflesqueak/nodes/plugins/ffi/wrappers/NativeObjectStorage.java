@@ -44,5 +44,7 @@ public abstract class NativeObjectStorage implements PostPrimitiveCleanup, Truff
         isAllocated = true;
     }
 
+    public abstract int byteSizeOf();
+
     protected abstract void allocate();
 }

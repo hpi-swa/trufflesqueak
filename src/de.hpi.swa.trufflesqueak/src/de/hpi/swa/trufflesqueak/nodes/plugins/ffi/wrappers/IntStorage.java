@@ -13,6 +13,11 @@ public class IntStorage extends NativeObjectStorage {
     }
 
     @Override
+    public int byteSizeOf() {
+        return storage.length * Integer.BYTES;
+    }
+
+    @Override
     protected void allocate() {
         nativeAddress = UnsafeUtils.allocateNativeInts(storage);
     }

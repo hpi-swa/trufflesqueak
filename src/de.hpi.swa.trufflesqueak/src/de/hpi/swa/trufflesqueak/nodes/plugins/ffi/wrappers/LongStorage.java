@@ -13,6 +13,11 @@ public class LongStorage extends NativeObjectStorage {
     }
 
     @Override
+    public int byteSizeOf() {
+        return storage.length * Long.BYTES;
+    }
+
+    @Override
     protected void allocate() {
         nativeAddress = UnsafeUtils.allocateNativeLongs(storage);
     }
