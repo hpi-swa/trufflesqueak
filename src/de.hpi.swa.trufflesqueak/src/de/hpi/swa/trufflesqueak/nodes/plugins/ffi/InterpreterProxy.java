@@ -9,7 +9,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.ByteStorage;
+import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 
@@ -60,11 +60,10 @@ public class InterpreterProxy {
     private int byteSizeOf(long oop) {
         return 16;
     }
-    private ByteStorage firstIndexableField(long oop) {
-        byte[] storage = ((NativeObject) objectRegistry.get((int) oop)).getByteStorage();
-        ByteStorage byteStorage = new ByteStorage(storage);
-        postPrimitiveCleanups.add(byteStorage);
-        return byteStorage;
+    private NativeObjectStorage firstIndexableField(long oop) {
+        NativeObjectStorage storage = NativeObjectStorage.from((NativeObject) objectRegistry.get((int) oop));
+        postPrimitiveCleanups.add(storage);
+        return storage;
     }
     private int isBytes(long oop) {
         return 1;
