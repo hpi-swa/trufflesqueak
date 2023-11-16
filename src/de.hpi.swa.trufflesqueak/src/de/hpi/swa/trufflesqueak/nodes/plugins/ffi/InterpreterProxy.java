@@ -12,8 +12,11 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
+import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class InterpreterProxy {
 
@@ -26,31 +29,43 @@ public class InterpreterProxy {
     public InterpreterProxy(SqueakImageContext context, VirtualFrame frame) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         this.frame = frame;
         if (interpreterProxyPointer == null) {
+            final TruffleExecutable[] truffleExecutables = getExecutables();
+            final String truffleExecutablesSignatures = Arrays.stream(truffleExecutables).map(obj -> obj.nfiSignature).collect(Collectors.joining(","));
             final Object interpreterProxy = NFIUtils.loadLibrary(
                     context,
                     "InterpreterProxy.so",
-                    "{ createInterpreterProxy((SINT64):SINT64,(SINT64):POINTER,(SINT64):SINT64,():SINT64,():SINT64,():SINT64,():SINT64,(SINT64):SINT64):POINTER; }"
+                    "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }"
             );
 
             final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
             interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
-                    interpreterProxy,"createInterpreterProxy", (Object[]) getExecutables());
+                    interpreterProxy,"createInterpreterProxy", (Object[]) truffleExecutables);
         }
     }
     public Object getPointer() {
         return interpreterProxyPointer;
     }
 
-    public NFIUtils.TruffleExecutable[] getExecutables() {
-        return new NFIUtils.TruffleExecutable[] {
-                NFIUtils.TruffleExecutable.wrap(this::byteSizeOf),
-                NFIUtils.TruffleExecutable.wrap(this::firstIndexableField),
-                NFIUtils.TruffleExecutable.wrap(this::isBytes),
-                NFIUtils.TruffleExecutable.wrap(this::majorVersion),
-                NFIUtils.TruffleExecutable.wrap(this::methodArgumentCount),
-                NFIUtils.TruffleExecutable.wrap(this::minorVersion),
-                NFIUtils.TruffleExecutable.wrap(this::primitiveFail),
-                NFIUtils.TruffleExecutable.wrap(this::stackValue),
+    public TruffleExecutable[] getExecutables() {
+        return new TruffleExecutable[] {
+                TruffleExecutable.wrap("(SINT64):SINT64", this::byteSizeOf),
+                TruffleExecutable.wrap("():SINT64", this::classString),
+                TruffleExecutable.wrap("():SINT64", this::failed),
+                TruffleExecutable.wrap("(SINT64):POINTER", this::firstIndexableField),
+                TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::instantiateClassindexableSize),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::isBytes),
+                TruffleExecutable.wrap("():SINT64", this::majorVersion),
+                TruffleExecutable.wrap("():SINT64", this::methodArgumentCount),
+                TruffleExecutable.wrap("():SINT64", this::minorVersion),
+                TruffleExecutable.wrap("():SINT64", this::nilObject),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::pop),
+                TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popthenPush),
+                TruffleExecutable.wrap("():SINT64", this::primitiveFail),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::pushInteger),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::signed32BitIntegerFor),
+                TruffleExecutable.wrap("(SINT64):SINT32", this::signed32BitValueOf),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::stackIntegerValue),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
         };
     }
     public void postPrimitiveCleanups() {
@@ -63,10 +78,19 @@ public class InterpreterProxy {
     private int byteSizeOf(long oop) {
         return NativeObjectStorage.from(objectRegistryGet(oop)).byteSizeOf();
     }
+    private int classString() {
+        return 1;// TODO
+    }
+    private int failed() {
+        return 1;// TODO
+    }
     private NativeObjectStorage firstIndexableField(long oop) {
         NativeObjectStorage storage = NativeObjectStorage.from(objectRegistryGet(oop));
         postPrimitiveCleanups.add(storage);
         return storage;
+    }
+    private int instantiateClassindexableSize(long classPointer, long size) {
+        return 1;// TODO
     }
     private int isBytes(long oop) {
         return objectRegistryGet(oop).isByteType() ? 1 : 0;
@@ -80,8 +104,29 @@ public class InterpreterProxy {
     private int minorVersion() {
         return 17;
     }
+    private int nilObject() {
+        return 1;// TODO
+    }
+    private int pop(long nItems) {
+        return 1;// TODO
+    }
+    private int popthenPush(long nItems, long oop) {
+        return 1;// TODO
+    }
     private int primitiveFail() {
         throw PrimitiveFailed.GENERIC_ERROR;
+    }
+    private int pushInteger(long integerValue) {
+        return 1;// TODO
+    }
+    private int signed32BitIntegerFor(long integerValue) {
+        return 1;// TODO
+    }
+    private int signed32BitValueOf(long oop) {
+        return 1;// TODO
+    }
+    private int stackIntegerValue(long stackIndex) {
+        return 1;// TODO
     }
     private int stackValue(long stackIndex) {
         Object objectOnStack = FrameAccess.getStackValue(frame, (int) stackIndex, FrameAccess.getNumArguments(frame));

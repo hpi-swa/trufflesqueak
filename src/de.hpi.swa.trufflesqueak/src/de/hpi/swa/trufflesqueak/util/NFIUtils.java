@@ -11,21 +11,23 @@ public class NFIUtils {
 
     @ExportLibrary(InteropLibrary.class)
     public static class TruffleExecutable implements TruffleObject {
+        public String nfiSignature;
         ITruffleExecutable executable;
 
-        public TruffleExecutable(ITruffleExecutable executable) {
+        public TruffleExecutable(String nfiSignature, ITruffleExecutable executable) {
+            this.nfiSignature = nfiSignature;
             this.executable = executable;
         }
 
-        public static<T, R> TruffleExecutable wrap(TruffleFunction<T, R> function) {
-            return new TruffleExecutable(function);
+        public static<T, R> TruffleExecutable wrap(String nfiSignature, TruffleFunction<T, R> function) {
+            return new TruffleExecutable(nfiSignature, function);
         }
-        static<S, T, R> TruffleExecutable wrap(TruffleBiFunction<S, T, R> function) {
-            return new TruffleExecutable(function);
+        public static<S, T, R> TruffleExecutable wrap(String nfiSignature, TruffleBiFunction<S, T, R> function) {
+            return new TruffleExecutable(nfiSignature, function);
         }
 
-        public static<R> TruffleExecutable wrap(TruffleSupplier<R> supplier) {
-            return new TruffleExecutable(supplier);
+        public static<R> TruffleExecutable wrap(String nfiSignature, TruffleSupplier<R> supplier) {
+            return new TruffleExecutable(nfiSignature, supplier);
         }
 
         @ExportMessage
