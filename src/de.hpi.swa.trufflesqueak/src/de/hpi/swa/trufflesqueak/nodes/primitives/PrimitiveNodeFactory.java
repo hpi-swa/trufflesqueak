@@ -37,8 +37,8 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.PolyglotPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SecurityPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SoundCodecPrims;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims;
-import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakSSL;
 import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Win32OSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ZipPlugin;
@@ -114,8 +114,8 @@ public final class PrimitiveNodeFactory {
                 new SocketPlugin(),
                 new SoundCodecPrims(),
                 new SqueakFFIPrims(),
-                new SqueakSSL(),
-                //new UUIDPlugin(),
+                //new SqueakSSL(),
+                new UUIDPlugin(),
                 new ZipPlugin(),
                 OS.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
         fillPrimitiveTable(plugins);
@@ -210,36 +210,38 @@ public final class PrimitiveNodeFactory {
             if (functionName.equals("primitivePluginVersion")) {
                 return null;
             }
-            return new NonExistentPrimitiveNode(moduleName, functionName);
+            return new NonExistentPrimitiveNode(moduleName, functionName, numReceiverAndArguments);
         }
     }
 
     static class NonExistentPrimitiveNode extends AbstractPrimitiveNode {
         final String moduleName;
         final String functionName;
+        final int numReceiverAndArguments;
 
-        public NonExistentPrimitiveNode(String moduleName, String functionName) {
+        public NonExistentPrimitiveNode(String moduleName, String functionName, int numReceiverAndArguments) {
             this.moduleName = moduleName;
             this.functionName = functionName;
+            this.numReceiverAndArguments = numReceiverAndArguments;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            final Object uuidPlugin = NFIUtils.loadLibrary(getContext(), "UUIDPlugin.so", "{ " +
-                "initialiseModule():SINT64; " +
+            final Object uuidPlugin = NFIUtils.loadLibrary(getContext(), "SqueakSSL.so", "{ " +
+                //"initialiseModule():SINT64; " +
                 "setInterpreter(POINTER):SINT64; " +
-                "shutdownModule():SINT64; " +
+                //"shutdownModule():SINT64; " +
                 functionName + "():SINT64; " +
                 " }");
             final InteropLibrary uuidPluginLibrary = NFIUtils.getInteropLibrary(uuidPlugin);
             InterpreterProxy interpreterProxy = null;
             try {
-                interpreterProxy = new InterpreterProxy(getContext(), frame);
+                interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame, numReceiverAndArguments);
 
-                uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
+                //uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
                 uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxy.getPointer());
                 final Object result = uuidPluginLibrary.invokeMember(uuidPlugin, functionName);
-                uuidPluginLibrary.invokeMember(uuidPlugin, "shutdownModule");
+                //uuidPluginLibrary.invokeMember(uuidPlugin, "shutdownModule");
 
                 return result;
             } catch (Exception e) {
