@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeFactory;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -52,6 +53,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
 import org.graalvm.collections.EconomicMap;
@@ -236,6 +238,10 @@ public final class PrimitiveNodeFactory {
             final InteropLibrary uuidPluginLibrary = NFIUtils.getInteropLibrary(uuidPlugin);
             InterpreterProxy interpreterProxy = null;
             try {
+                // A send (AbstractSendNode.executeVoid) will decrement the stack pointer by the number of arguments
+                // before transferring control. We need the stack pointer to point at the last argument,
+                // since the C code expects that. Therefore, we undo the decrement operation here.
+                FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) + numReceiverAndArguments - 1);
                 interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame, numReceiverAndArguments);
 
                 //uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
