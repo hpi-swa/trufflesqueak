@@ -242,7 +242,7 @@ public final class PrimitiveNodeFactory {
                 // before transferring control. We need the stack pointer to point at the last argument,
                 // since the C code expects that. Therefore, we undo the decrement operation here.
                 FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) + numReceiverAndArguments - 1);
-                interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame, numReceiverAndArguments);
+                interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame.materialize(), numReceiverAndArguments);
 
                 //uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
                 uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxy.getPointer());

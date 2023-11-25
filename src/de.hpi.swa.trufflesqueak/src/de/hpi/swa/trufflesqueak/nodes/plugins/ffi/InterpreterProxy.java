@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -26,14 +27,14 @@ public class InterpreterProxy {
     private static InterpreterProxy INSTANCE = null;
 
     private final SqueakImageContext context;
-    private VirtualFrame frame;
+    private MaterializedFrame frame;
     private int numReceiverAndArguments;
     private final ArrayList<Object> objectRegistry = new ArrayList<>();
     private final ArrayList<PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
 
     private static Object interpreterProxyPointer = null;
 
-    private InterpreterProxy(SqueakImageContext context, VirtualFrame frame, int numReceiverAndArguments) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+    private InterpreterProxy(SqueakImageContext context, MaterializedFrame frame, int numReceiverAndArguments) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         this.context = context;
         this.frame = frame;
         this.numReceiverAndArguments = numReceiverAndArguments;
@@ -52,7 +53,7 @@ public class InterpreterProxy {
         }
     }
 
-    public static InterpreterProxy instanceFor(SqueakImageContext context, VirtualFrame frame, int numReceiverAndArguments) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+    public static InterpreterProxy instanceFor(SqueakImageContext context, MaterializedFrame frame, int numReceiverAndArguments) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
        if (INSTANCE == null) {
            INSTANCE = new InterpreterProxy(context, frame, numReceiverAndArguments);
            return INSTANCE;
