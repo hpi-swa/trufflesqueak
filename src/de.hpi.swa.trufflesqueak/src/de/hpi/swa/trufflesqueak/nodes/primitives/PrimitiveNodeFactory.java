@@ -237,11 +237,12 @@ public final class PrimitiveNodeFactory {
                             //"initialiseModule():SINT64; " +
                             "setInterpreter(POINTER):SINT64; " +
                             //"shutdownModule():SINT64; " +
-                            functionName + "():SINT64; " +
                             " }"));
             final InteropLibrary uuidPluginLibrary = NFIUtils.getInteropLibrary(uuidPlugin);
             InterpreterProxy interpreterProxy = null;
             try {
+                Object functionSymbol = NFIUtils.loadMember(getContext(), uuidPlugin, functionName, "():SINT64");
+                InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
                 // A send (AbstractSendNode.executeVoid) will decrement the stack pointer by numReceiverAndArguments
                 // before transferring control. We need the stack pointer to point at the last argument,
                 // since the C code expects that. Therefore, we undo the decrement operation here.
@@ -250,7 +251,7 @@ public final class PrimitiveNodeFactory {
 
                 //uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
                 uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxy.getPointer());
-                final Object result = uuidPluginLibrary.invokeMember(uuidPlugin, functionName);
+                final Object result = functionInteropLibrary.execute(functionSymbol);
                 //uuidPluginLibrary.invokeMember(uuidPlugin, "shutdownModule");
 
                 return result;
