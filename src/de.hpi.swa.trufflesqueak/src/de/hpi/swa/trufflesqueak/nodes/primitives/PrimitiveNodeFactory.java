@@ -58,8 +58,10 @@ import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
 import org.graalvm.collections.EconomicMap;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class PrimitiveNodeFactory {
@@ -220,6 +222,7 @@ public final class PrimitiveNodeFactory {
         final String moduleName;
         final String functionName;
         final int numReceiverAndArguments;
+        static Map<String, Object> loadedLibraries = new HashMap<>();
 
         public NonExistentPrimitiveNode(String moduleName, String functionName, int numReceiverAndArguments) {
             this.moduleName = moduleName;
@@ -229,12 +232,13 @@ public final class PrimitiveNodeFactory {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            final Object uuidPlugin = NFIUtils.loadLibrary(getContext(), "SqueakSSL.so", "{ " +
-                //"initialiseModule():SINT64; " +
-                "setInterpreter(POINTER):SINT64; " +
-                //"shutdownModule():SINT64; " +
-                functionName + "():SINT64; " +
-                " }");
+            final Object uuidPlugin = loadedLibraries.computeIfAbsent(moduleName, (String s) ->
+                    NFIUtils.loadLibrary(getContext(), "SqueakSSL.so", "{ " +
+                            //"initialiseModule():SINT64; " +
+                            "setInterpreter(POINTER):SINT64; " +
+                            //"shutdownModule():SINT64; " +
+                            functionName + "():SINT64; " +
+                            " }"));
             final InteropLibrary uuidPluginLibrary = NFIUtils.getInteropLibrary(uuidPlugin);
             InterpreterProxy interpreterProxy = null;
             try {
