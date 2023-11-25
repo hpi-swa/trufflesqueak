@@ -128,7 +128,7 @@ public class InterpreterProxy {
         System.out.println("Pushing object " + object);
         int stackPointer = getStackPointer() + 1;
         setStackPointer(stackPointer);
-        FrameAccess.setSlot(frame, stackPointer, object);
+        FrameAccess.setStackSlot(frame, stackPointer - 1, object);
     }
 
     private Object getObjectOnStack(long reverseStackIndex) {
@@ -136,7 +136,9 @@ public class InterpreterProxy {
             primitiveFail();
             return null;
         }
-        int stackIndex = getStackPointer() - (int) reverseStackIndex;
+        // the stack pointer is the index of the object that is pushed onto the stack next,
+        // so we subtract 1 to get the index of the object that was last pushed onto the stack
+        int stackIndex = getStackPointer() - 1 - (int) reverseStackIndex;
         if (stackIndex < 0) {
             primitiveFail();
             return null;
