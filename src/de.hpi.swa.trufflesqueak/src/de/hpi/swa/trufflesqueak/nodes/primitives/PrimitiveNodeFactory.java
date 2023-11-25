@@ -253,8 +253,12 @@ public final class PrimitiveNodeFactory {
                 uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxy.getPointer());
                 final Object result = functionInteropLibrary.execute(functionSymbol);
                 //uuidPluginLibrary.invokeMember(uuidPlugin, "shutdownModule");
-
-                return result;
+                // The return value is pushed onto the stack by the Plugin via the InterpreterProxy, but TruffleSqueak
+                // expects the return value to be returned by this function (AbstractSendNode.executeVoid).
+                // Pop the return value and return it.
+                final Object returnValue = FrameAccess.getStackValue(frame, FrameAccess.getStackPointer(frame) - 1, FrameAccess.getNumArguments(frame));
+                FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) - 1);
+                return returnValue;
             } catch (Exception e) {
                 System.out.println("error");
                 e.printStackTrace(System.err);
