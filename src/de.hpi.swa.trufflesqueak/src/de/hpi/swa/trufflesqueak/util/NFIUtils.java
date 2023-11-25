@@ -1,7 +1,11 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
@@ -75,10 +79,22 @@ public class NFIUtils {
         }
     }
 
-    public static Object loadLibrary(SqueakImageContext context, String moduleName, String boundSymbols) {
-        final String nfiCode = "load \"" + moduleName + "\" " + boundSymbols;
+    public static Object executeNFI(SqueakImageContext context, String nfiCode) {
         final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
         return context.env.parseInternal(source).call();
+    }
+
+    public static Object loadLibrary(SqueakImageContext context, String moduleName, String boundSymbols) {
+        final String nfiCode = "load \"" + moduleName + "\" " + boundSymbols;
+        return executeNFI(context, nfiCode);
+    }
+
+    public static Object loadMember(SqueakImageContext context, Object library, String name, String signature) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+        InteropLibrary interopLibrary = getInteropLibrary(library);
+        Object symbol = interopLibrary.readMember(library, name);
+        Object nfiSignature = executeNFI(context, signature);
+        InteropLibrary signatureInteropLibrary = getInteropLibrary(nfiSignature);
+        return signatureInteropLibrary.invokeMember(nfiSignature, "bind", symbol);
     }
 
     public static InteropLibrary getInteropLibrary(Object loadedLibrary) {
