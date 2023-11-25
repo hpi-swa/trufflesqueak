@@ -31,6 +31,26 @@ public class InterpreterProxy {
     private int numReceiverAndArguments;
     private final ArrayList<Object> objectRegistry = new ArrayList<>();
     private final ArrayList<PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
+    private final TruffleExecutable[] executables = new TruffleExecutable[] {
+        TruffleExecutable.wrap("(SINT64):SINT64", this::byteSizeOf),
+                TruffleExecutable.wrap("():SINT64", this::classString),
+                TruffleExecutable.wrap("():SINT64", this::failed),
+                TruffleExecutable.wrap("(SINT64):POINTER", this::firstIndexableField),
+                TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::instantiateClassindexableSize),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::isBytes),
+                TruffleExecutable.wrap("():SINT64", this::majorVersion),
+                TruffleExecutable.wrap("():SINT64", this::methodArgumentCount),
+                TruffleExecutable.wrap("():SINT64", this::minorVersion),
+                TruffleExecutable.wrap("():SINT64", this::nilObject),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::pop),
+                TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popthenPush),
+                TruffleExecutable.wrap("():SINT64", this::primitiveFail),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::pushInteger),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::signed32BitIntegerFor),
+                TruffleExecutable.wrap("(SINT64):SINT32", this::signed32BitValueOf),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::stackIntegerValue),
+                TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
+    };
 
     private static Object interpreterProxyPointer = null;
 
@@ -39,8 +59,7 @@ public class InterpreterProxy {
         this.frame = frame;
         this.numReceiverAndArguments = numReceiverAndArguments;
         if (interpreterProxyPointer == null) {
-            final TruffleExecutable[] truffleExecutables = getExecutables();
-            final String truffleExecutablesSignatures = Arrays.stream(truffleExecutables).map(obj -> obj.nfiSignature).collect(Collectors.joining(","));
+            final String truffleExecutablesSignatures = Arrays.stream(executables).map(obj -> obj.nfiSignature).collect(Collectors.joining(","));
             final Object interpreterProxy = NFIUtils.loadLibrary(
                     context,
                     "InterpreterProxy.so",
@@ -49,7 +68,7 @@ public class InterpreterProxy {
 
             final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
             interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
-                    interpreterProxy,"createInterpreterProxy", (Object[]) truffleExecutables);
+                    interpreterProxy,"createInterpreterProxy", (Object[]) executables);
         }
     }
 
@@ -70,28 +89,6 @@ public class InterpreterProxy {
         return interpreterProxyPointer;
     }
 
-    public TruffleExecutable[] getExecutables() {
-        return new TruffleExecutable[] {
-                TruffleExecutable.wrap("(SINT64):SINT64", this::byteSizeOf),
-                TruffleExecutable.wrap("():SINT64", this::classString),
-                TruffleExecutable.wrap("():SINT64", this::failed),
-                TruffleExecutable.wrap("(SINT64):POINTER", this::firstIndexableField),
-                TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::instantiateClassindexableSize),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::isBytes),
-                TruffleExecutable.wrap("():SINT64", this::majorVersion),
-                TruffleExecutable.wrap("():SINT64", this::methodArgumentCount),
-                TruffleExecutable.wrap("():SINT64", this::minorVersion),
-                TruffleExecutable.wrap("():SINT64", this::nilObject),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::pop),
-                TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popthenPush),
-                TruffleExecutable.wrap("():SINT64", this::primitiveFail),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::pushInteger),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::signed32BitIntegerFor),
-                TruffleExecutable.wrap("(SINT64):SINT32", this::signed32BitValueOf),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::stackIntegerValue),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
-        };
-    }
     public void postPrimitiveCleanups() {
         postPrimitiveCleanups.forEach(PostPrimitiveCleanup::cleanup);
         postPrimitiveCleanups.clear();
