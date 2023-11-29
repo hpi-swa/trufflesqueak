@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -31,25 +30,25 @@ public class InterpreterProxy {
     private int numReceiverAndArguments;
     private final ArrayList<Object> objectRegistry = new ArrayList<>();
     private final ArrayList<PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
-    private final TruffleExecutable[] executables = new TruffleExecutable[] {
-        TruffleExecutable.wrap("(SINT64):SINT64", this::byteSizeOf),
-                TruffleExecutable.wrap("():SINT64", this::classString),
-                TruffleExecutable.wrap("():SINT64", this::failed),
-                TruffleExecutable.wrap("(SINT64):POINTER", this::firstIndexableField),
-                TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::instantiateClassindexableSize),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::isBytes),
-                TruffleExecutable.wrap("():SINT64", this::majorVersion),
-                TruffleExecutable.wrap("():SINT64", this::methodArgumentCount),
-                TruffleExecutable.wrap("():SINT64", this::minorVersion),
-                TruffleExecutable.wrap("():SINT64", this::nilObject),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::pop),
-                TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popthenPush),
-                TruffleExecutable.wrap("():SINT64", this::primitiveFail),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::pushInteger),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::signed32BitIntegerFor),
-                TruffleExecutable.wrap("(SINT64):SINT32", this::signed32BitValueOf),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::stackIntegerValue),
-                TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
+    private final TruffleExecutable[] executables = new TruffleExecutable[]{
+            TruffleExecutable.wrap("(SINT64):SINT64", this::byteSizeOf),
+            TruffleExecutable.wrap("():SINT64", this::classString),
+            TruffleExecutable.wrap("():SINT64", this::failed),
+            TruffleExecutable.wrap("(SINT64):POINTER", this::firstIndexableField),
+            TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::instantiateClassindexableSize),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::isBytes),
+            TruffleExecutable.wrap("():SINT64", this::majorVersion),
+            TruffleExecutable.wrap("():SINT64", this::methodArgumentCount),
+            TruffleExecutable.wrap("():SINT64", this::minorVersion),
+            TruffleExecutable.wrap("():SINT64", this::nilObject),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::pop),
+            TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popthenPush),
+            TruffleExecutable.wrap("():SINT64", this::primitiveFail),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::pushInteger),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::signed32BitIntegerFor),
+            TruffleExecutable.wrap("(SINT64):SINT32", this::signed32BitValueOf),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::stackIntegerValue),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
     };
 
     private static Object interpreterProxyPointer = null;
@@ -68,21 +67,21 @@ public class InterpreterProxy {
 
             final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
             interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
-                    interpreterProxy,"createInterpreterProxy", (Object[]) executables);
+                    interpreterProxy, "createInterpreterProxy", (Object[]) executables);
         }
     }
 
     public static InterpreterProxy instanceFor(SqueakImageContext context, MaterializedFrame frame, int numReceiverAndArguments) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
-       if (INSTANCE == null) {
-           INSTANCE = new InterpreterProxy(context, frame, numReceiverAndArguments);
-           return INSTANCE;
-       }
-       if (INSTANCE.context != context) {
-           throw new RuntimeException("InterpreterProxy does not support multiple SqueakImageContexts");
-       }
-       INSTANCE.frame = frame;
-       INSTANCE.numReceiverAndArguments = numReceiverAndArguments;
-       return INSTANCE;
+        if (INSTANCE == null) {
+            INSTANCE = new InterpreterProxy(context, frame, numReceiverAndArguments);
+            return INSTANCE;
+        }
+        if (INSTANCE.context != context) {
+            throw new RuntimeException("InterpreterProxy does not support multiple SqueakImageContexts");
+        }
+        INSTANCE.frame = frame;
+        INSTANCE.numReceiverAndArguments = numReceiverAndArguments;
+        return INSTANCE;
     }
 
     public Object getPointer() {
@@ -93,6 +92,7 @@ public class InterpreterProxy {
         postPrimitiveCleanups.forEach(PostPrimitiveCleanup::cleanup);
         postPrimitiveCleanups.clear();
     }
+
     private Object objectRegistryGet(long oop) {
         System.out.println("Asked for oop " + oop);
         return objectRegistry.get((int) oop);
@@ -149,23 +149,27 @@ public class InterpreterProxy {
             primitiveFail();
             return 0;
         }
-        return (Long)object;
+        return (Long) object;
     }
 
     private int byteSizeOf(long oop) {
         return NativeObjectStorage.from((NativeObject) objectRegistryGet(oop)).byteSizeOf();
     }
+
     private int classString() {
         return oopFor(context.byteStringClass);
     }
+
     private int failed() {
         return 0; // TODO: when changing primitiveFail to continue executing, properly implement this
     }
+
     private NativeObjectStorage firstIndexableField(long oop) {
         NativeObjectStorage storage = NativeObjectStorage.from((NativeObject) objectRegistryGet(oop));
         postPrimitiveCleanups.add(storage);
         return storage;
     }
+
     private int instantiateClassindexableSize(long classPointer, long size) {
         Object classObject = objectRegistryGet(classPointer);
         if (!(classObject instanceof ClassObject)) {
@@ -174,9 +178,10 @@ public class InterpreterProxy {
             return -1;
         }
         SqueakObjectNewNode objectNewNode = SqueakObjectNewNode.create();
-        AbstractSqueakObject newObject = objectNewNode.execute(context, (ClassObject) classObject, (int)size);
+        AbstractSqueakObject newObject = objectNewNode.execute(context, (ClassObject) classObject, (int) size);
         return oopFor(newObject);
     }
+
     private int isBytes(long oop) {
         Object object = objectRegistryGet(oop);
         if (!(object instanceof NativeObject)) {
@@ -184,49 +189,62 @@ public class InterpreterProxy {
         }
         return ((NativeObject) object).isByteType() ? 1 : 0;
     }
+
     private int majorVersion() {
         return 1;
     }
+
     private int methodArgumentCount() {
         return numReceiverAndArguments - 1;
     }
+
     private int minorVersion() {
         return 17;
     }
+
     private int nilObject() {
         return oopFor(NilObject.SINGLETON);
     }
+
     private int pop(long nItems) {
-        setStackPointer(getStackPointer() - (int)nItems);
+        setStackPointer(getStackPointer() - (int) nItems);
         return 1;
     }
+
     private int popthenPush(long nItems, long oop) {
         pop(nItems);
         push(oop);
         return 1;
     }
+
     private int primitiveFail() {
         // TODO: continue executing C code
         // TODO: adjust failed accordingly
         throw PrimitiveFailed.GENERIC_ERROR;
     }
+
     private int pushInteger(long integerValue) {
         pushObject(integerValue);
         return 1;
     }
+
     private int push(long oop) {
         pushObject(objectRegistryGet(oop));
         return 1;
     }
+
     private int signed32BitIntegerFor(long integerValue) {
         return oopFor(integerValue);
     }
+
     private int signed32BitValueOf(long oop) {
-        return (int)objectToLong(objectRegistryGet(oop));
+        return (int) objectToLong(objectRegistryGet(oop));
     }
+
     private long stackIntegerValue(long reverseStackIndex) {
         return objectToLong(getObjectOnStack(reverseStackIndex));
     }
+
     private int stackValue(long reverseStackIndex) {
         return oopFor(getObjectOnStack(reverseStackIndex));
     }
