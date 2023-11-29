@@ -18,6 +18,7 @@ import mx_sdk_vm_impl
 import mx_truffle
 
 # re-export custom mx project classes so they can be used from suite.py
+from mx_cmake import CMakeNinjaProject #pylint: disable=unused-import
 
 _SUITE = mx.suite('trufflesqueak')
 _COMPILER = mx.suite('compiler', fatalIfMissing=False)
