@@ -59,9 +59,7 @@ public class InterpreterProxy {
         this.numReceiverAndArguments = numReceiverAndArguments;
         if (interpreterProxyPointer == null) {
             final String truffleExecutablesSignatures = Arrays.stream(executables).map(obj -> obj.nfiSignature).collect(Collectors.joining(","));
-            final Object interpreterProxy = NFIUtils.loadLibrary(
-                    context,
-                    "InterpreterProxy.so",
+            final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
                     "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }"
             );
 
