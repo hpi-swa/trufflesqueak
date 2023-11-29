@@ -10,11 +10,14 @@ import sys
 
 import mx
 import mx_gate
+import mx_unittest
+
 import mx_sdk
 import mx_sdk_vm
 import mx_sdk_vm_impl
 import mx_truffle
-import mx_unittest
+
+# re-export custom mx project classes so they can be used from suite.py
 
 _SUITE = mx.suite('trufflesqueak')
 _COMPILER = mx.suite('compiler', fatalIfMissing=False)

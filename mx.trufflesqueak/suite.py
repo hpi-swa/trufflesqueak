@@ -167,24 +167,17 @@ suite = {
         },
         "de.hpi.swa.trufflesqueak.ffi.native": {
             "subDir": "src",
-            "native": "shared_lib",
-            "deliverable": "SqueakFFIPrims",
+            "class": "CMakeNinjaProject",
+            "vpath": True,
+            "ninja_targets": ["all"],
             "os_arch": {
-                "windows": {
-                    "<others>": {
-                        "cflags": []
-                    }
-                },
-                "linux": {
-                    "<others>": {
-                        "cflags": ["-g", "-Wall", "-Werror", "-D_GNU_SOURCE"],
-                        "ldlibs": ["-ldl"],
-                    },
-                },
                 "<others>": {
                     "<others>": {
-                        "cflags": ["-g", "-Wall", "-Werror"],
-                        "ldlibs": ["-ldl"],
+                        "cmakeConfig": {},
+                        "results": [
+                            "<lib:SqueakFFIPrims>",
+                            "<lib:InterpreterProxy>",
+                        ],
                     },
                 },
             },
@@ -277,7 +270,7 @@ suite = {
             "layout": {
                 "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
                 "README_TRUFFLESQUEAK.md": "file:README.md",
-                "lib/": "dependency:de.hpi.swa.trufflesqueak.ffi.native",
+                "lib/": "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
             },
             "maven": False,
         },
