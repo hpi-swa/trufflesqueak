@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -9,7 +10,10 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+
+import java.io.File;
 
 public class NFIUtils {
 
@@ -85,7 +89,12 @@ public class NFIUtils {
     }
 
     public static Object loadLibrary(SqueakImageContext context, String moduleName, String boundSymbols) {
-        final String nfiCode = "load \"" + moduleName + "\" " + boundSymbols;
+        final String libName = System.mapLibraryName(moduleName);
+        final TruffleFile libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName);
+        if (!libPath.exists()) {
+            throw PrimitiveFailed.GENERIC_ERROR;
+        }
+        final String nfiCode = "load \"" + libPath.getAbsoluteFile().getPath() + "\" " + boundSymbols;
         return executeNFI(context, nfiCode);
     }
 

@@ -7,7 +7,6 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeFactory;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -233,7 +232,7 @@ public final class PrimitiveNodeFactory {
         @Override
         public Object execute(VirtualFrame frame) {
             final Object uuidPlugin = loadedLibraries.computeIfAbsent(moduleName, (String s) ->
-                    NFIUtils.loadLibrary(getContext(), "SqueakSSL.so", "{ " +
+                    NFIUtils.loadLibrary(getContext(), moduleName, "{ " +
                             //"initialiseModule():SINT64; " +
                             "setInterpreter(POINTER):SINT64; " +
                             //"shutdownModule():SINT64; " +
