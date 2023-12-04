@@ -47,6 +47,22 @@ public class NFIUtils {
         Object execute(Object... arguments) {
             return executable.execute(arguments);
         }
+
+        public TruffleClosure createClosure(SqueakImageContext context) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+            return new TruffleClosure(context, this);
+        }
+    }
+
+    @ExportLibrary(value = InteropLibrary.class, delegateTo = "closure")
+    public static class TruffleClosure implements TruffleObject {
+        public final TruffleExecutable executable;
+
+        final Object closure;
+
+        public TruffleClosure(SqueakImageContext context, TruffleExecutable executable) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+            this.executable = executable;
+            this.closure = createClosure(context, executable, executable.nfiSignature);
+        }
     }
 
     public interface ITruffleExecutable {
@@ -98,12 +114,24 @@ public class NFIUtils {
         return executeNFI(context, nfiCode);
     }
 
+    public static Object createSignature(SqueakImageContext context, String signature) {
+        return executeNFI(context, signature);
+    }
+
+    public static Object invokeSignatureMethod(SqueakImageContext context, String signature, String method, Object... args) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+        Object nfiSignature = createSignature(context, signature);
+        InteropLibrary signatureInteropLibrary = getInteropLibrary(nfiSignature);
+        return signatureInteropLibrary.invokeMember(nfiSignature, method, args);
+    }
+
+    public static Object createClosure(SqueakImageContext context, Object executable, String signature) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+        return invokeSignatureMethod(context, signature, "createClosure", executable);
+    }
+
     public static Object loadMember(SqueakImageContext context, Object library, String name, String signature) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         InteropLibrary interopLibrary = getInteropLibrary(library);
         Object symbol = interopLibrary.readMember(library, name);
-        Object nfiSignature = executeNFI(context, signature);
-        InteropLibrary signatureInteropLibrary = getInteropLibrary(nfiSignature);
-        return signatureInteropLibrary.invokeMember(nfiSignature, "bind", symbol);
+        return invokeSignatureMethod(context, signature, "bind", symbol);
     }
 
     public static InteropLibrary getInteropLibrary(Object loadedLibrary) {
