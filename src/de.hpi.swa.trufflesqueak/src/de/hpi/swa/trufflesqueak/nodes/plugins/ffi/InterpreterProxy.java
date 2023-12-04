@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
+import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleClosure;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
 
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ public class InterpreterProxy {
             TruffleExecutable.wrap("(SINT64):SINT64", this::stackIntegerValue),
             TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
     };
+    private final TruffleClosure[] closures;
 
     private static Object interpreterProxyPointer = null;
 
@@ -57,15 +59,19 @@ public class InterpreterProxy {
         this.context = context;
         this.frame = frame;
         this.numReceiverAndArguments = numReceiverAndArguments;
+        closures = new TruffleClosure[executables.length];
+        for (int i = 0; i < executables.length; i++) {
+            closures[i] = executables[i].createClosure(context);
+        }
         if (interpreterProxyPointer == null) {
-            final String truffleExecutablesSignatures = Arrays.stream(executables).map(obj -> obj.nfiSignature).collect(Collectors.joining(","));
+            final String truffleExecutablesSignatures = Arrays.stream(closures).map(obj -> obj.executable.nfiSignature).collect(Collectors.joining(","));
             final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
                     "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }"
             );
 
             final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
             interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
-                    interpreterProxy, "createInterpreterProxy", (Object[]) executables);
+                    interpreterProxy, "createInterpreterProxy", (Object[]) closures);
         }
     }
 
