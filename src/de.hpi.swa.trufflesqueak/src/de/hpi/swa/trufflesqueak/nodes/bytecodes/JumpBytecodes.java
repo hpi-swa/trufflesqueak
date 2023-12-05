@@ -24,6 +24,7 @@ public final class JumpBytecodes {
 
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
+        @SuppressWarnings("this-escape")
         protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes);
             jumpSuccessorIndex = getSuccessorIndex() + offset;

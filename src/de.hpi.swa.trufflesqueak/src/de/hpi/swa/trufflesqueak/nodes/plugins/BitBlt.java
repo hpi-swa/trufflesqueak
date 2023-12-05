@@ -3599,9 +3599,9 @@ public final class BitBlt {
         warpAlignMask = shl(1, warpAlignShift) - 1;
         for (int i = 0; i <= warpAlignMask; i++) {
             if (sourceMSB) {
-                warpBitShiftTable[i] = (int) (32 - shl(i + 1, warpSrcShift));
+                warpBitShiftTable[i] = 32 - shl(i + 1, warpSrcShift);
             } else {
-                warpBitShiftTable[i] = (int) shl(i, warpSrcShift);
+                warpBitShiftTable[i] = shl(i, warpSrcShift);
             }
         }
     }
