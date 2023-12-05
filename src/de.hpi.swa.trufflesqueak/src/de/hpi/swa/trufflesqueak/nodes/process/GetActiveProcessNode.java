@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
+import com.oracle.truffle.api.dsl.NeverDefault;
+
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -14,6 +16,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 public final class GetActiveProcessNode extends AbstractNode {
     @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
+    @NeverDefault
     public static GetActiveProcessNode create() {
         return new GetActiveProcessNode();
     }

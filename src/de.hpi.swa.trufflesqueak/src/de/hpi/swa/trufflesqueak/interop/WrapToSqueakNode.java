@@ -10,6 +10,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.strings.TruffleString;
@@ -23,6 +24,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @GenerateUncached
 public abstract class WrapToSqueakNode extends AbstractNode {
 
+    @NeverDefault
     public static WrapToSqueakNode create() {
         return WrapToSqueakNodeGen.create();
     }

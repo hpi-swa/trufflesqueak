@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -38,6 +39,7 @@ public abstract class DispatchSendNode extends AbstractNode {
     public abstract static class DispatchSendSelectorNode extends DispatchSendNode {
         @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
 
+        @NeverDefault
         public static DispatchSendSelectorNode create() {
             return DispatchSendSelectorNodeGen.create();
         }

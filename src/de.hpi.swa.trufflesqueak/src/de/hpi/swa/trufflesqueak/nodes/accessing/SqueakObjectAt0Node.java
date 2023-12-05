@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -35,6 +36,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectRe
 @GenerateUncached
 public abstract class SqueakObjectAt0Node extends AbstractNode {
 
+    @NeverDefault
     public static SqueakObjectAt0Node create() {
         return SqueakObjectAt0NodeGen.create();
     }

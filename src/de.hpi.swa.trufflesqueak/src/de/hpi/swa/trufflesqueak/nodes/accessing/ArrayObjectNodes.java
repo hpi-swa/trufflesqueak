@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -31,6 +32,7 @@ public final class ArrayObjectNodes {
     @GenerateUncached
     public abstract static class ArrayObjectReadNode extends AbstractNode {
 
+        @NeverDefault
         public static ArrayObjectReadNode create() {
             return ArrayObjectReadNodeGen.create();
         }
@@ -129,6 +131,7 @@ public final class ArrayObjectNodes {
     @GenerateUncached
     public abstract static class ArrayObjectSizeNode extends AbstractNode {
 
+        @NeverDefault
         public static ArrayObjectSizeNode create() {
             return ArrayObjectSizeNodeGen.create();
         }
@@ -173,6 +176,7 @@ public final class ArrayObjectNodes {
     @GenerateUncached
     public abstract static class ArrayObjectToObjectArrayCopyNode extends AbstractNode {
 
+        @NeverDefault
         public static ArrayObjectToObjectArrayCopyNode create() {
             return ArrayObjectToObjectArrayCopyNodeGen.create();
         }
@@ -246,6 +250,7 @@ public final class ArrayObjectNodes {
     @GenerateUncached
     public abstract static class ArrayObjectToObjectArrayWithFirstNode extends AbstractNode {
 
+        @NeverDefault
         public static ArrayObjectToObjectArrayWithFirstNode create() {
             return ArrayObjectToObjectArrayWithFirstNodeGen.create();
         }
@@ -332,6 +337,7 @@ public final class ArrayObjectNodes {
             this.offset = offset;
         }
 
+        @NeverDefault
         public static ArrayObjectCopyIntoObjectArrayNode create(final int offset) {
             return ArrayObjectCopyIntoObjectArrayNodeGen.create(offset);
         }
@@ -393,6 +399,7 @@ public final class ArrayObjectNodes {
     @ImportStatic(ArrayObject.class)
     public abstract static class ArrayObjectWriteNode extends AbstractNode {
 
+        @NeverDefault
         public static ArrayObjectWriteNode create() {
             return ArrayObjectWriteNodeGen.create();
         }

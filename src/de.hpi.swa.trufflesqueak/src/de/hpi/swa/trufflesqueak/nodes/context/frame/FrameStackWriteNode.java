@@ -11,6 +11,7 @@ import java.util.Objects;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -22,6 +23,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNodeFactory.F
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class FrameStackWriteNode extends AbstractNode {
+    @NeverDefault
     public static FrameStackWriteNode create(final Frame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {

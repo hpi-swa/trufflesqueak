@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -29,6 +30,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectInstSizeNode extends AbstractNode {
 
+    @NeverDefault
     public static SqueakObjectInstSizeNode create() {
         return SqueakObjectInstSizeNodeGen.create();
     }

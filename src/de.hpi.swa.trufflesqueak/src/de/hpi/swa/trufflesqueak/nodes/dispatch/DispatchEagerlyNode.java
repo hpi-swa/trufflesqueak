@@ -10,6 +10,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -35,6 +36,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
 
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
+    @NeverDefault
     public static DispatchEagerlyNode create() {
         return DispatchEagerlyNodeGen.create();
     }

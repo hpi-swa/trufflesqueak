@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -23,6 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 @GenerateUncached
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectClassNode extends AbstractNode {
+    @NeverDefault
     public static SqueakObjectClassNode create() {
         return SqueakObjectClassNodeGen.create();
     }

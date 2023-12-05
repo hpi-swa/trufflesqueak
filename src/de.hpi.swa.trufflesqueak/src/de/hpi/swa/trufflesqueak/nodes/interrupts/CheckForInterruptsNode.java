@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -34,6 +35,7 @@ public final class CheckForInterruptsNode extends Node {
         signalSemaporeNode = SignalSemaphoreNode.create();
     }
 
+    @NeverDefault
     public static CheckForInterruptsNode create() {
         return new CheckForInterruptsNode(SqueakImageContext.getSlow());
     }

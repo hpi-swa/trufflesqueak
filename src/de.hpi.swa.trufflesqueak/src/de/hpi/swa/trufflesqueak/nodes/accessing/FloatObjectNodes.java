@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -19,6 +20,7 @@ public final class FloatObjectNodes {
     @ImportStatic(Double.class)
     public abstract static class AsFloatObjectIfNessaryNode extends AbstractNode {
 
+        @NeverDefault
         public static AsFloatObjectIfNessaryNode create() {
             return AsFloatObjectIfNessaryNodeGen.create();
         }

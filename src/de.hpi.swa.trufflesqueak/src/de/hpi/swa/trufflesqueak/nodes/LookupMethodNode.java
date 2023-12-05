@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -19,6 +20,7 @@ import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 public abstract class LookupMethodNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 6;
 
+    @NeverDefault
     public static LookupMethodNode create() {
         return LookupMethodNodeGen.create();
     }

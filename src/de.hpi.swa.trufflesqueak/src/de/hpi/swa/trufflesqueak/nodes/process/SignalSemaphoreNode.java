@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -20,6 +21,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 
 public abstract class SignalSemaphoreNode extends AbstractNode {
 
+    @NeverDefault
     public static SignalSemaphoreNode create() {
         return SignalSemaphoreNodeGen.create();
     }

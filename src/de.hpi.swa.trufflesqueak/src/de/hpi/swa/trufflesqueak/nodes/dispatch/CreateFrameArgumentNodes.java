@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -121,6 +122,7 @@ public final class CreateFrameArgumentNodes {
             }
         }
 
+        @NeverDefault
         protected static CreateFrameArgumentsForIndirectCallNode create(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
             return CreateFrameArgumentsForIndirectCallNodeGen.create(frame, selector, argumentCount);
         }
@@ -165,6 +167,7 @@ public final class CreateFrameArgumentNodes {
     @NodeInfo(cost = NodeCost.NONE)
     protected abstract static class GetOrCreateContextOrMarkerNode extends AbstractNode {
 
+        @NeverDefault
         protected static GetOrCreateContextOrMarkerNode create() {
             return GetOrCreateContextOrMarkerNodeGen.create();
         }

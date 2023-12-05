@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
@@ -49,6 +50,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
             tempWriteNode.executeWrite(frame, (long) reasonCode);
         }
 
+        @NeverDefault
         protected static final FrameStackWriteNode createStackTopNode(final VirtualFrame frame) {
             final int stackPointer = FrameAccess.getStackPointer(frame) - 1;
             return FrameStackWriteNode.create(frame, stackPointer);

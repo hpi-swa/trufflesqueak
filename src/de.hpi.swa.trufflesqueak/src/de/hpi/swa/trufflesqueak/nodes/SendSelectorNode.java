@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -30,6 +31,7 @@ public final class SendSelectorNode extends Node {
         this.selector = selector;
     }
 
+    @NeverDefault
     public static SendSelectorNode create(final NativeObject selector) {
         return new SendSelectorNode(selector);
     }

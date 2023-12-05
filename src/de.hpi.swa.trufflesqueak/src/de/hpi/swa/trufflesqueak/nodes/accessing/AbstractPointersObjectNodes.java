@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -42,6 +43,7 @@ public class AbstractPointersObjectNodes {
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class AbstractPointersObjectReadNode extends AbstractNode {
 
+        @NeverDefault
         public static AbstractPointersObjectReadNode create() {
             return AbstractPointersObjectReadNodeGen.create();
         }
@@ -86,6 +88,7 @@ public class AbstractPointersObjectNodes {
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class AbstractPointersObjectWriteNode extends AbstractNode {
 
+        @NeverDefault
         public static AbstractPointersObjectWriteNode create() {
             return AbstractPointersObjectWriteNodeGen.create();
         }

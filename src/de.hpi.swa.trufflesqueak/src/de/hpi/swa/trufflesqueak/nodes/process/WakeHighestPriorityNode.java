@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -26,6 +27,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 
 public abstract class WakeHighestPriorityNode extends AbstractNode {
 
+    @NeverDefault
     public static WakeHighestPriorityNode create() {
         return WakeHighestPriorityNodeGen.create();
     }

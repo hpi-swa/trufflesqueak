@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
@@ -99,6 +100,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         }
     }
 
+    @NeverDefault
     protected static final SendSelectorNode createAboutToReturnSend() {
         return SendSelectorNode.create(SqueakImageContext.getSlow().aboutToReturnSelector);
     }

@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
+import com.oracle.truffle.api.dsl.NeverDefault;
+
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
@@ -23,6 +25,7 @@ public final class AddLastLinkToListNode extends AbstractNode {
     @Child private AbstractPointersObjectWriteNode writeLastLinkNode = AbstractPointersObjectWriteNode.create();
     @Child private AbstractPointersObjectWriteNode writeListNode = AbstractPointersObjectWriteNode.create();
 
+    @NeverDefault
     public static AddLastLinkToListNode create() {
         return new AddLastLinkToListNode();
     }
