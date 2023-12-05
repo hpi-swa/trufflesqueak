@@ -475,7 +475,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"receiver != getActiveProcessNode.execute()"}, limit = "1")
         protected final Object doSuspendOtherProcess(final PointersObject receiver,
                         @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached final SqueakObjectClassNode classNode,
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
@@ -484,7 +483,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (myListOrNil instanceof final PointersObject myList) {
                 removeProcessNode.executeRemove(receiver, myList);
                 writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
-                if (classNode.executeLookup(myList) != getContext().getLinkedListClass()) {
+                if (myList.getSqueakClass() != getContext().getLinkedListClass()) {
                     backupContextToBlockingSendTo((ContextObject) myContext, myList);
                     return NilObject.SINGLETON;
                 } else {
@@ -790,9 +789,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
+    @DenyReplace
     @SqueakPrimitive(indices = 130)
-    protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode {
+    public static final class PrimFullGCNode extends AbstractSingletonPrimitiveNode {
         private static final MBeanServer SERVER = TruffleOptions.AOT ? null : ManagementFactory.getPlatformMBeanServer();
         private static final String OPERATION_NAME = "gcRun";
         private static final Object[] PARAMS = {null};
@@ -811,8 +810,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization
-        protected final long doGC(@SuppressWarnings("unused") final Object receiver) {
+        @Override
+        public Object execute() {
             if (TruffleOptions.AOT) {
                 /* System.gc() triggers full GC by default in SVM (see https://git.io/JvY7g). */
                 MiscUtils.systemGC();
@@ -1364,6 +1363,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         PrimQuickReturnOneNode.class,
                         PrimQuickReturnTwoNode.class,
                         PrimBytesLeftNode.class,
+                        PrimFullGCNode.class,
                         PrimIncrementalGCNode.class);
     }
 }
