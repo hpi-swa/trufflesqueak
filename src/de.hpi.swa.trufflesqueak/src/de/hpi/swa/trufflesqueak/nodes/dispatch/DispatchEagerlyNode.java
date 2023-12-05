@@ -80,7 +80,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     }
 
     @ReportPolymorphism.Megamorphic
-    @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
+    @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"})
     protected static final Object doIndirect(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
@@ -89,7 +89,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     }
 
     @ReportPolymorphism.Megamorphic
-    @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
+    @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"})
     protected final Object doIndirectWithSender(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
                     @Cached final IndirectCallNode callNode) {

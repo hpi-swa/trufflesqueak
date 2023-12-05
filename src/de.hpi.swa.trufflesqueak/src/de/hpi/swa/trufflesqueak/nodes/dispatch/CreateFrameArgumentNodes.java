@@ -174,14 +174,14 @@ public final class CreateFrameArgumentNodes {
 
         protected abstract Object execute(VirtualFrame frame, CompiledCodeObject code);
 
-        @Specialization(guards = "doesNotNeedSender(code, assumptionProfile)", limit = "1")
+        @Specialization(guards = "doesNotNeedSender(code, assumptionProfile)")
         protected static final Object doGetContextOrMarker(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code,
                         @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode) {
             return getContextOrMarkerNode.execute(frame);
         }
 
-        @Specialization(guards = "!doesNotNeedSender(code, assumptionProfile)", limit = "1")
+        @Specialization(guards = "!doesNotNeedSender(code, assumptionProfile)")
         protected static final ContextObject doGetOrCreateContext(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code,
                         @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
                         @Cached final GetOrCreateContextNode getOrCreateContextNode) {

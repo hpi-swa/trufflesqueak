@@ -35,7 +35,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
     public abstract void executeHandle(VirtualFrame frame, int reasonCode);
 
     protected abstract static class HandlePrimitiveFailedImplNode extends HandlePrimitiveFailedNode {
-        @Specialization(guards = {"reasonCode < sizeNode.execute(getContext().primitiveErrorTable)"}, limit = "1")
+        @Specialization(guards = {"reasonCode < sizeNode.execute(getContext().primitiveErrorTable)"})
         protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final ArrayObjectReadNode readNode,
@@ -43,7 +43,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
             tempWriteNode.executeWrite(frame, readNode.execute(getContext().primitiveErrorTable, reasonCode));
         }
 
-        @Specialization(guards = {"reasonCode >= sizeNode.execute(getContext().primitiveErrorTable)"}, limit = "1")
+        @Specialization(guards = {"reasonCode >= sizeNode.execute(getContext().primitiveErrorTable)"})
         protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached("createStackTopNode(frame)") final FrameStackWriteNode tempWriteNode) {
