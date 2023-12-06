@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -21,9 +22,10 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DenyReplace;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -327,8 +329,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.isEmptyType()"})
         protected static final boolean doEmptyArray(final ArrayObject receiver, final Object thang,
-                        @Cached final ConditionProfile noElementsProfile) {
-            if (noElementsProfile.profile(receiver.getEmptyStorage() == 0)) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile noElementsProfile) {
+            if (noElementsProfile.profile(node, receiver.getEmptyStorage() == 0)) {
                 return BooleanObject.FALSE;
             } else {
                 return BooleanObject.wrap(thang == NilObject.SINGLETON);
@@ -747,9 +750,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"!classObject.isImmediateClassType()"})
         protected final ArrayObject allInstances(final ClassObject classObject,
-                        @Cached final ConditionProfile isNilClass) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile isNilClass) {
             final SqueakImageContext image = getContext();
-            if (isNilClass.profile(image.isNilClass(classObject))) {
+            if (isNilClass.profile(node, image.isNilClass(classObject))) {
                 return getContext().asArrayOfObjects(NilObject.SINGLETON);
             } else {
                 if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {

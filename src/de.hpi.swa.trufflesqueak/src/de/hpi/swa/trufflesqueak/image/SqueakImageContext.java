@@ -24,7 +24,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.SqueakImage;
@@ -920,8 +920,8 @@ public final class SqueakImageContext {
         return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
 
-    public NativeObject asString(final String value, final ConditionProfile wideStringProfile) {
-        return wideStringProfile.profile(NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
+    public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node) {
+        return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {

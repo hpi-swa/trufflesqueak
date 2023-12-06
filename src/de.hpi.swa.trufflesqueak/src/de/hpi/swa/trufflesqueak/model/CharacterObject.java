@@ -7,7 +7,8 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 
@@ -51,8 +52,8 @@ public final class CharacterObject extends AbstractSqueakObject {
         }
     }
 
-    public static Object valueOf(final long value, final ConditionProfile isImmediateProfile) {
-        if (isImmediateProfile.profile(value <= Character.MAX_VALUE)) {
+    public static Object valueOf(final long value, final InlinedConditionProfile isImmediateProfile, final Node node) {
+        if (isImmediateProfile.profile(node, value <= Character.MAX_VALUE)) {
             return (char) value;
         } else {
             return new CharacterObject(value);

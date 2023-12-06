@@ -29,8 +29,12 @@ public abstract class AbstractNode extends Node {
         return SqueakLanguage.get(this);
     }
 
+    public static SqueakImageContext getContext(final Node node) {
+        return SqueakImageContext.get(node);
+    }
+
     public final SqueakImageContext getContext() {
-        return SqueakImageContext.get(this);
+        return getContext(this);
     }
 
     protected final CompiledCodeObject getCode() {

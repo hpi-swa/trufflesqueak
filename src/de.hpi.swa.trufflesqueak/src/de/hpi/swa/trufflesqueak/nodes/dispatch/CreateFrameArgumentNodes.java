@@ -17,7 +17,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -176,20 +176,20 @@ public final class CreateFrameArgumentNodes {
 
         @Specialization(guards = "doesNotNeedSender(code, assumptionProfile)")
         protected static final Object doGetContextOrMarker(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code,
-                        @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
+                        @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode) {
             return getContextOrMarkerNode.execute(frame);
         }
 
         @Specialization(guards = "!doesNotNeedSender(code, assumptionProfile)")
         protected static final ContextObject doGetOrCreateContext(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code,
-                        @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
+                        @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
                         @Cached final GetOrCreateContextNode getOrCreateContextNode) {
             return getOrCreateContextNode.executeGet(frame);
         }
 
-        protected static final boolean doesNotNeedSender(final CompiledCodeObject code, final ValueProfile assumptionProfile) {
-            return assumptionProfile.profile(code.getDoesNotNeedSenderAssumption()).isValid();
+        protected final boolean doesNotNeedSender(final CompiledCodeObject code, final InlinedExactClassProfile assumptionProfile) {
+            return assumptionProfile.profile(this, code.getDoesNotNeedSenderAssumption()).isValid();
         }
     }
 }

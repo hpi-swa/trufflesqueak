@@ -8,8 +8,10 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -19,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimIdentityHashNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 
@@ -155,16 +158,20 @@ public final class InlinePrimitiveBytecodes {
         }
     }
 
-    protected static final class PrimIdentityHashNode extends AbstractNullaryInlinePrimitiveNode {
-        private final BranchProfile needsHashProfile = BranchProfile.create();
+    protected abstract static class PrimIdentityHashNode extends AbstractNullaryInlinePrimitiveNode {
 
         protected PrimIdentityHashNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getOrCreateSqueakHash(needsHashProfile));
+        public static PrimIdentityHashNode create(final CompiledCodeObject code, final int index) {
+            return PrimIdentityHashNodeGen.create(code, index);
+        }
+
+        @Specialization
+        protected final void doIdentityHash(final VirtualFrame frame,
+                        @Cached final InlinedBranchProfile needsHashProfile) {
+            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getOrCreateSqueakHash(needsHashProfile, this));
         }
     }
 

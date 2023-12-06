@@ -26,11 +26,13 @@ import javax.net.ssl.SSLSession;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -812,12 +814,13 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         protected static final long doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId,
-                        @Cached final BranchProfile errorProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile errorProfile) {
             final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
 
             if (ssl == null || property == null) {
-                errorProfile.enter();
+                errorProfile.enter(node);
                 return 0L;
             }
 
@@ -847,11 +850,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                         final PointersObject sslHandle,
                         final long propertyId,
                         final long anInteger,
-                        @Cached final BranchProfile errorProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile errorProfile) {
             final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
             if (ssl == null || property == null) {
-                errorProfile.enter();
+                errorProfile.enter(node);
                 return 0L;
             }
 

@@ -16,7 +16,8 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -279,9 +280,9 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         FrameAccess.setSender(getOrCreateTruffleFrame(), NilObject.SINGLETON);
     }
 
-    public Object getInstructionPointer(final ConditionProfile nilProfile) {
+    public Object getInstructionPointer(final InlinedConditionProfile nilProfile, final Node node) {
         final int pc = FrameAccess.getInstructionPointer(getTruffleFrame());
-        if (nilProfile.profile(pc == NIL_PC_VALUE)) {
+        if (nilProfile.profile(node, pc == NIL_PC_VALUE)) {
             return NilObject.SINGLETON;
         } else {
             return (long) pc; // Must be a long.
@@ -552,7 +553,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         // TODO: make sure this works correctly
         if (truffleFrame != null) {
             final int stackPointer = getStackPointer();
-            if (getSender() == thang || thang.equals(getInstructionPointer(ConditionProfile.getUncached())) || thang.equals(stackPointer) || getCodeObject() == thang || getClosure() == thang ||
+            if (getSender() == thang || thang.equals(getInstructionPointer(InlinedConditionProfile.getUncached(), null)) || thang.equals(stackPointer) || getCodeObject() == thang ||
+                            getClosure() == thang ||
                             getReceiver() == thang) {
                 return true;
             }
@@ -646,7 +648,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             throw SqueakException.create("ContextObject must have slots:", this);
         }
         writer.writeObject(getSender());
-        writer.writeObject(getInstructionPointer(ConditionProfile.getUncached()));
+        writer.writeObject(getInstructionPointer(InlinedConditionProfile.getUncached(), null));
         writer.writeSmallInteger(getStackPointer());
         writer.writeObject(getCodeObject());
         writer.writeObject(NilObject.nullToNil(getClosure()));

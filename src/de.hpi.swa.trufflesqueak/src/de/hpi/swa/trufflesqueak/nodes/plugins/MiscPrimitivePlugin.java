@@ -16,8 +16,9 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -322,9 +323,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
         protected static final long doFindCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
                         final long start,
+                        @Bind("this") final Node node,
                         @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
-                        @Shared("notFoundProfile") @Cached final ConditionProfile notFoundProfile) {
-            return doFind(receiver, string, cachedInclusionMap, start, notFoundProfile);
+                        @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
+            return doFind(receiver, string, cachedInclusionMap, start, node, notFoundProfile);
         }
 
         protected static final NativeObject validInclusionMapOrNull(final NativeObject inclusionMap) {
@@ -333,13 +335,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindCached")
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
-                        @Shared("notFoundProfile") @Cached final ConditionProfile notFoundProfile) {
+                        @Bind("this") final Node node,
+                        @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
             final int stringSize = string.getByteLength();
             long index = start - 1;
             while (index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0) {
                 index++;
             }
-            return notFoundProfile.profile(index >= stringSize) ? 0L : index + 1;
+            return notFoundProfile.profile(node, index >= stringSize) ? 0L : index + 1;
         }
 
         @Fallback
@@ -355,15 +358,16 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable,
-                        @Cached final ConditionProfile quickReturnProfile,
-                        @Cached final BranchProfile foundProfile,
-                        @Cached final BranchProfile notFoundProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile quickReturnProfile,
+                        @Cached final InlinedBranchProfile foundProfile,
+                        @Cached final InlinedBranchProfile notFoundProfile) {
             if (!key.isByteType() || !body.isByteType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
             final int keyLength = key.getByteLength();
-            if (quickReturnProfile.profile(keyLength == 0)) {
+            if (quickReturnProfile.profile(node, keyLength == 0)) {
                 return 0L;
             } else {
                 final int bodyLength = body.getByteLength();
@@ -371,14 +375,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     int index = 0;
                     while (matchTable.getByte(body.getByteUnsigned(startIndex + index)) == matchTable.getByte(key.getByteUnsigned(index))) {
                         if (index == keyLength - 1) {
-                            foundProfile.enter();
+                            foundProfile.enter(node);
                             return startIndex + 1;
                         } else {
                             index++;
                         }
                     }
                 }
-                notFoundProfile.enter();
+                notFoundProfile.enter(node);
                 return 0L;
             }
         }
@@ -390,16 +394,17 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
-                        @Cached final BranchProfile foundProfile,
-                        @Cached final BranchProfile notFoundProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile foundProfile,
+                        @Cached final InlinedBranchProfile notFoundProfile) {
             final byte valueByte = (byte) value;
             for (long i = start - 1; i < string.getByteLength(); i++) {
                 if (string.getByte(i) == valueByte) {
-                    foundProfile.enter();
+                    foundProfile.enter(node);
                     return i + 1;
                 }
             }
-            notFoundProfile.enter();
+            notFoundProfile.enter(node);
             return 0L;
         }
     }

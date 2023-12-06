@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -18,7 +19,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -282,25 +283,28 @@ public class AbstractPointersObjectNodes {
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex >= cachedLayout.getInstSize()"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "VARIABLE_PART_INDEX_CACHE_LIMIT")
         protected static final Object doReadFromVariablePartCachedIndex(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
+                        @Bind("this") final Node node,
                         @Cached("index") final long cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Exclusive @Cached final ConditionProfile weakRefProfile) {
-            return object.getFromVariablePart(cachedIndex - cachedLayout.getInstSize(), weakRefProfile);
+                        @Exclusive @Cached final InlinedConditionProfile weakRefProfile) {
+            return object.getFromVariablePart(cachedIndex - cachedLayout.getInstSize(), weakRefProfile, node);
         }
 
         @Specialization(guards = {"object.getLayout() == cachedLayout", "index >= cachedLayout.getInstSize()"}, assumptions = "cachedLayout.getValidAssumption()", //
                         replaces = "doReadFromVariablePartCachedIndex", limit = "VARIABLE_PART_LAYOUT_CACHE_LIMIT")
         protected static final Object doReadFromVariablePartCachedLayout(final WeakVariablePointersObject object, final long index,
+                        @Bind("this") final Node node,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Exclusive @Cached final ConditionProfile weakRefProfile) {
-            return object.getFromVariablePart(index - cachedLayout.getInstSize(), weakRefProfile);
+                        @Exclusive @Cached final InlinedConditionProfile weakRefProfile) {
+            return object.getFromVariablePart(index - cachedLayout.getInstSize(), weakRefProfile, node);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doReadFromVariablePartCachedIndex", "doReadFromVariablePartCachedLayout"})
         protected static final Object doReadFromVariablePartGeneric(final WeakVariablePointersObject object, final long index,
-                        @Exclusive @Cached final ConditionProfile weakRefProfile) {
-            return object.getFromVariablePart(index - object.instsize(), weakRefProfile);
+                        @Bind("this") final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile weakRefProfile) {
+            return object.getFromVariablePart(index - object.instsize(), weakRefProfile, node);
         }
     }
 
@@ -330,25 +334,28 @@ public class AbstractPointersObjectNodes {
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex >= cachedLayout.getInstSize()"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "VARIABLE_PART_INDEX_CACHE_LIMIT")
         protected static final void doWriteIntoVariablePartCachedIndex(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+                        @Bind("this") final Node node,
                         @Cached("index") final long cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Exclusive @Cached final ConditionProfile primitiveProfile) {
-            object.putIntoVariablePart(cachedIndex - cachedLayout.getInstSize(), value, primitiveProfile);
+                        @Exclusive @Cached final InlinedConditionProfile primitiveProfile) {
+            object.putIntoVariablePart(cachedIndex - cachedLayout.getInstSize(), value, primitiveProfile, node);
         }
 
         @Specialization(guards = {"object.getLayout() == cachedLayout", "index >= cachedLayout.getInstSize()"}, assumptions = "cachedLayout.getValidAssumption()", //
                         replaces = "doWriteIntoVariablePartCachedIndex", limit = "VARIABLE_PART_LAYOUT_CACHE_LIMIT")
         protected static final void doWriteIntoVariablePartCachedLayout(final WeakVariablePointersObject object, final long index, final Object value,
+                        @Bind("this") final Node node,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Exclusive @Cached final ConditionProfile primitiveProfile) {
-            object.putIntoVariablePart(index - cachedLayout.getInstSize(), value, primitiveProfile);
+                        @Exclusive @Cached final InlinedConditionProfile primitiveProfile) {
+            object.putIntoVariablePart(index - cachedLayout.getInstSize(), value, primitiveProfile, node);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCachedIndex", "doWriteIntoVariablePartCachedLayout"})
         protected static final void doWriteIntoVariablePartGeneric(final WeakVariablePointersObject object, final long index, final Object value,
-                        @Exclusive @Cached final ConditionProfile primitiveProfile) {
-            object.putIntoVariablePart(index - object.instsize(), value, primitiveProfile);
+                        @Bind("this") final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile primitiveProfile) {
+            object.putIntoVariablePart(index - object.instsize(), value, primitiveProfile, node);
         }
     }
 }

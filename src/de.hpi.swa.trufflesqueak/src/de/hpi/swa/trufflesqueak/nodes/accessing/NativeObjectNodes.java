@@ -11,7 +11,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -44,9 +44,9 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = "obj.isLongType()")
         protected final Object doNativeLongs(final NativeObject obj, final long index,
-                        @Cached final ConditionProfile positiveValueProfile) {
+                        @Cached final InlinedConditionProfile positiveValueProfile) {
             final long value = obj.getLong(index);
-            if (positiveValueProfile.profile(value >= 0)) {
+            if (positiveValueProfile.profile(this, value >= 0)) {
                 return value;
             } else {
                 return LargeIntegerObject.toUnsigned(getContext(), value);

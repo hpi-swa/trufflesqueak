@@ -6,11 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -107,14 +109,15 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final long doFloat(final FloatObject obj, final long index,
-                    @Cached final BranchProfile indexZeroProfile,
-                    @Cached final BranchProfile indexOneProfile) {
+                    @Bind("this") final Node node,
+                    @Cached final InlinedBranchProfile indexZeroProfile,
+                    @Cached final InlinedBranchProfile indexOneProfile) {
         if (index == 0) {
-            indexZeroProfile.enter();
+            indexZeroProfile.enter(node);
             return obj.getHigh();
         } else {
             assert index == 1 : "Unexpected index: " + index;
-            indexOneProfile.enter();
+            indexOneProfile.enter(node);
             return obj.getLow();
         }
     }

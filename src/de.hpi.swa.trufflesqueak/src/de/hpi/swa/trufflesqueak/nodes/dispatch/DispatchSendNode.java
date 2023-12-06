@@ -14,7 +14,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
@@ -67,12 +67,12 @@ public abstract class DispatchSendNode extends AbstractNode {
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Shared("lookupNode") @Cached final LookupMethodNode lookupNode,
-                        @Cached final ConditionProfile isDoesNotUnderstandProfile) {
+                        @Cached final InlinedConditionProfile isDoesNotUnderstandProfile) {
             final SqueakImageContext image = getContext();
             final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
             final ClassObject targetClass = classNode.executeLookup(targetObject);
             final Object newLookupResult = lookupNode.executeLookup(targetClass, image.runWithInSelector);
-            if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
+            if (isDoesNotUnderstandProfile.profile(this, newLookupResult == null)) {
                 final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, image.doesNotUnderstand);
                 return dispatchNode.executeDispatch(frame, (CompiledCodeObject) doesNotUnderstandMethod,
                                 new Object[]{targetObject, image.newMessage(writeNode, selector, targetClass, arguments)});

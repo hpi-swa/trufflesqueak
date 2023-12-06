@@ -11,14 +11,16 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.ExactMath;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
@@ -287,9 +289,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"}, replaces = "doLong")
         protected final Object doLongFraction(final long lhs, final long rhs,
-                        @Cached final ConditionProfile fractionProfile,
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile fractionProfile,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            if (fractionProfile.profile(SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
+            if (fractionProfile.profile(node, SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
                 return lhs / rhs;
             } else {
                 return getContext().asFraction(lhs, rhs, writeNode);
@@ -378,8 +381,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg,
-                        @Cached final ConditionProfile positiveProfile) {
-            return receiver & (positiveProfile.profile(receiver >= 0) ? arg.longValue() : arg.longValueExact());
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile positiveProfile) {
+            return receiver & (positiveProfile.profile(node, receiver >= 0) ? arg.longValue() : arg.longValueExact());
         }
 
         @Specialization(replaces = "doLongLargeQuick")
@@ -1029,8 +1033,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver.isInfinite()")
         protected static final double doFloatInfinite(@SuppressWarnings("unused") final FloatObject receiver,
-                        @Cached final ConditionProfile isNegativeInfinityProfile) {
-            return isNegativeInfinityProfile.profile(receiver.getValue() == Double.NEGATIVE_INFINITY) ? -0.0D : 0.0D;
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile isNegativeInfinityProfile) {
+            return isNegativeInfinityProfile.profile(node, receiver.getValue() == Double.NEGATIVE_INFINITY) ? -0.0D : 0.0D;
         }
     }
 
@@ -1044,8 +1049,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!receiver.isZero()")
         protected static final long doFloat(final FloatObject receiver,
-                        @Cached final BranchProfile subnormalFloatProfile) {
-            return exponentNonZero(receiver.getValue(), subnormalFloatProfile);
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile subnormalFloatProfile) {
+            return exponentNonZero(receiver.getValue(), subnormalFloatProfile, node);
         }
     }
 
@@ -1418,8 +1424,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSmallFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "inSafeIntegerRange(receiver)")
         protected static final long doDouble(final double receiver,
-                        @Cached final ConditionProfile positiveProfile) {
-            return (long) (positiveProfile.profile(receiver >= 0) ? Math.floor(receiver) : Math.ceil(receiver));
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile positiveProfile) {
+            return (long) (positiveProfile.profile(node, receiver >= 0) ? Math.floor(receiver) : Math.ceil(receiver));
         }
 
         @Specialization(guards = "!inSafeIntegerRange(receiver)")
@@ -1453,8 +1460,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isZero(receiver)")
         protected static final long doDouble(final double receiver,
-                        @Cached final BranchProfile subnormalFloatProfile) {
-            return exponentNonZero(receiver, subnormalFloatProfile);
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile subnormalFloatProfile) {
+            return exponentNonZero(receiver, subnormalFloatProfile, node);
         }
     }
 
@@ -1551,8 +1559,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimHighBitNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
         protected static final long doLong(final long receiver,
-                        @Cached final ConditionProfile negativeProfile) {
-            return Long.SIZE - Long.numberOfLeadingZeros(negativeProfile.profile(receiver < 0) ? -receiver : receiver);
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile negativeProfile) {
+            return Long.SIZE - Long.numberOfLeadingZeros(negativeProfile.profile(node, receiver < 0) ? -receiver : receiver);
         }
     }
 
@@ -1584,8 +1593,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return MIN_SAFE_INTEGER_LONG <= d && d <= MAX_SAFE_INTEGER_LONG;
         }
 
-        protected static final long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final ConditionProfile differentSignProfile) {
-            return differentSignProfile.profile(differentSign(lhs, rhs)) ? -rhs : rhs;
+        protected static final long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final InlinedConditionProfile differentSignProfile, final Node node) {
+            return differentSignProfile.profile(node, differentSign(lhs, rhs)) ? -rhs : rhs;
         }
 
         private static boolean differentSign(final long lhs, final long rhs) {
@@ -1601,11 +1610,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return Math.scalb(matissa, (int) MiscUtils.clamp(exponent, Integer.MIN_VALUE, Integer.MAX_VALUE));
         }
 
-        protected static final long exponentNonZero(final double receiver, final BranchProfile subnormalFloatProfile) {
+        protected static final long exponentNonZero(final double receiver, final InlinedBranchProfile subnormalFloatProfile, final Node node) {
             final int exp = Math.getExponent(receiver);
             if (exp == Double.MIN_EXPONENT - 1) {
                 // we have a subnormal float (actual zero was handled above)
-                subnormalFloatProfile.enter();
+                subnormalFloatProfile.enter(node);
                 // make it normal by multiplying a large number and subtract the number's exponent
                 return Math.getExponent(receiver * LARGE_NUMBER) - LARGE_NUMBER_EXP;
             } else {

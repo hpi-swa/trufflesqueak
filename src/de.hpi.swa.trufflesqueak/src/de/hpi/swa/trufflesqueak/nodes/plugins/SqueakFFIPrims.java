@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -29,7 +30,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -406,8 +407,9 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
         protected final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
-                        @Cached final ConditionProfile positiveProfile) {
-            return PrimUnsignedInt64AtNode.unsignedInt64At(getContext(), byteArray, byteOffsetLong, positiveProfile);
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile positiveProfile) {
+            return PrimUnsignedInt64AtNode.unsignedInt64At(getContext(), byteArray, byteOffsetLong, positiveProfile, node);
         }
     }
 
@@ -702,13 +704,14 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimUnsignedInt64AtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
         protected final Object doAt(final NativeObject byteArray, final long byteOffset,
-                        @Cached final ConditionProfile positiveProfile) {
-            return unsignedInt64At(getContext(), byteArray, byteOffset, positiveProfile);
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile positiveProfile) {
+            return unsignedInt64At(getContext(), byteArray, byteOffset, positiveProfile, node);
         }
 
-        private static Object unsignedInt64At(final SqueakImageContext image, final NativeObject byteArray, final long byteOffset, final ConditionProfile positiveProfile) {
+        private static Object unsignedInt64At(final SqueakImageContext image, final NativeObject byteArray, final long byteOffset, final InlinedConditionProfile positiveProfile, final Node node) {
             final long signedLong = PrimSignedInt64AtNode.signedInt64At(byteArray, byteOffset);
-            if (positiveProfile.profile(signedLong >= 0)) {
+            if (positiveProfile.profile(node, signedLong >= 0)) {
                 return signedLong;
             } else {
                 return LargeIntegerObject.toUnsigned(image, signedLong);

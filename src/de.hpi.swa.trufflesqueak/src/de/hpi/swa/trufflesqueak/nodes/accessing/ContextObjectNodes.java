@@ -6,12 +6,14 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -34,8 +36,9 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER"})
         protected static final Object doInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @Exclusive @Cached final ConditionProfile nilProfile) {
-            return context.getInstructionPointer(nilProfile);
+                        @Bind("this") final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile nilProfile) {
+            return context.getInstructionPointer(nilProfile, node);
         }
 
         @Specialization(guards = "index == STACKPOINTER")
@@ -56,8 +59,9 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})
         protected static final Object doClosure(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @Exclusive @Cached final ConditionProfile nilProfile) {
-            return NilObject.nullToNil(context.getClosure(), nilProfile);
+                        @Bind("this") final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile nilProfile) {
+            return NilObject.nullToNil(context.getClosure(), nilProfile, node);
         }
 
         @Specialization(guards = "index == RECEIVER")

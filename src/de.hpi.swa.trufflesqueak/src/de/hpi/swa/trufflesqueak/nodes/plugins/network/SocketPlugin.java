@@ -20,7 +20,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -149,10 +149,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
-                        @Cached final ConditionProfile hasResultProfile) {
+                        @Cached final InlinedConditionProfile hasResultProfile) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
             LogUtils.SOCKET.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
-            return hasResultProfile.profile(lastNameLookup == null) ? NilObject.SINGLETON : getContext().asByteArray(lastNameLookup);
+            return hasResultProfile.profile(this, lastNameLookup == null) ? NilObject.SINGLETON : getContext().asByteArray(lastNameLookup);
         }
     }
 
@@ -605,11 +605,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long semaphoreIndex,
                         final long aReadSemaphore,
                         final long aWriteSemaphore,
-                        @Cached final ConditionProfile socketTypeProfile) {
+                        @Cached final InlinedConditionProfile socketTypeProfile) {
 
             final SqueakSocket socket;
             try {
-                if (socketTypeProfile.profile(socketType == 1)) {
+                if (socketTypeProfile.profile(this, socketType == 1)) {
                     socket = createSqueakUDPSocket();
                 } else {
                     assert socketType == 0;

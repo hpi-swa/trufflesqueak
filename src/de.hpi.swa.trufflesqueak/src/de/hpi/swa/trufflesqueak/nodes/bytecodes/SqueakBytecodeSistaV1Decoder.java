@@ -160,7 +160,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                     case 1004 -> new InlinePrimitiveBytecodes.PrimNumShortsNode(code, index);
                     case 1005 -> new InlinePrimitiveBytecodes.PrimNumWordsNode(code, index);
                     case 1006 -> new InlinePrimitiveBytecodes.PrimNumDoubleWordsNode(code, index);
-                    case 1020 -> new InlinePrimitiveBytecodes.PrimIdentityHashNode(code, index);
+                    case 1020 -> InlinePrimitiveBytecodes.PrimIdentityHashNode.create(code, index);
                     case 1021 -> new InlinePrimitiveBytecodes.PrimIdentityHashSmallIntegerNode(code, index);
                     case 1022 -> new InlinePrimitiveBytecodes.PrimIdentityHashCharacterNode(code, index);
                     case 1023 -> new InlinePrimitiveBytecodes.PrimIdentityHashSmallFloatNode(code, index);

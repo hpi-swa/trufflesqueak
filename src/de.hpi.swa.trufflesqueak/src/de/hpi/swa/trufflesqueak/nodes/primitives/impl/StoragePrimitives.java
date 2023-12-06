@@ -13,6 +13,7 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -24,11 +25,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.nodes.DenyReplace;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.IntValueProfile;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedIntValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
@@ -215,12 +218,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         public static final int NEW_CACHE_SIZE = 6;
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
-        protected final AbstractSqueakObjectWithClassAndHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
-                        @Cached("createIdentityProfile()") final IntValueProfile sizeProfile,
+        protected static final AbstractSqueakObjectWithClassAndHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
+                        @Bind("this") final Node node,
+                        @Cached(value = "createIdentityProfile()", inline = true) final InlinedIntValueProfile sizeProfile,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
-                return newNode.execute(getContext(), cachedReceiver, sizeProfile.profile((int) size));
+                return newNode.execute(getContext(node), cachedReceiver, sizeProfile.profile(node, (int) size));
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -346,8 +350,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash object,
-                        @Cached final BranchProfile needsHashProfile) {
-            return object.getOrCreateSqueakHash(needsHashProfile);
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile needsHashProfile) {
+            return object.getOrCreateSqueakHash(needsHashProfile, node);
         }
     }
 
@@ -473,8 +478,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"0 <= receiver", "receiver <= MAX_VALUE"}, replaces = "doLongExact")
         protected static final Object doLong(final long receiver,
-                        @Cached final ConditionProfile isImmediateProfile) {
-            return CharacterObject.valueOf(receiver, isImmediateProfile);
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile isImmediateProfile) {
+            return CharacterObject.valueOf(receiver, isImmediateProfile, node);
         }
     }
 
@@ -489,8 +495,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"0 <= target", "target <= MAX_VALUE"}, replaces = "doClassLongExact")
         protected static final Object doClassLong(@SuppressWarnings("unused") final Object receiver, final long target,
-                        @Cached final ConditionProfile isImmediateProfile) {
-            return CharacterObject.valueOf(target, isImmediateProfile);
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile isImmediateProfile) {
+            return CharacterObject.valueOf(target, isImmediateProfile, node);
         }
     }
 
@@ -670,8 +677,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
-                        @Cached final ConditionProfile copyHashProfile) {
-            return performPointersBecomeOneWay(fromArray, toArray, copyHashProfile.profile(copyHash));
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile copyHashProfile) {
+            return performPointersBecomeOneWay(fromArray, toArray, copyHashProfile.profile(node, copyHash));
         }
 
         @SuppressWarnings("unused")

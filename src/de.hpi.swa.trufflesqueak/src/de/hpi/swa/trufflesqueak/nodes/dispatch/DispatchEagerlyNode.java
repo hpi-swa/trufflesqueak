@@ -17,7 +17,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -84,7 +84,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"})
     protected static final Object doIndirect(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Exclusive @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
-                    @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
+                    @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
                     @Exclusive @Cached final IndirectCallNode callNode) {
         return callIndirect(callNode, method, getContextOrMarkerNode.execute(frame), receiverAndArguments);
     }
@@ -92,7 +92,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     @ReportPolymorphism.Megamorphic
     @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"})
     protected final Object doIndirectWithSender(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
-                    @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
+                    @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
                     @Exclusive @Cached final IndirectCallNode callNode) {
         return callIndirect(callNode, method, getOrCreateContext(frame), receiverAndArguments);
     }
@@ -105,8 +105,8 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
         return callNode.call(method.getCallTarget(), FrameAccess.newWith(contextOrMarker, null, receiverAndArguments));
     }
 
-    protected static final boolean doesNotNeedSender(final CompiledCodeObject method, final ValueProfile assumptionProfile) {
-        return assumptionProfile.profile(method.getDoesNotNeedSenderAssumption()).isValid();
+    protected final boolean doesNotNeedSender(final CompiledCodeObject method, final InlinedExactClassProfile assumptionProfile) {
+        return assumptionProfile.profile(this, method.getDoesNotNeedSenderAssumption()).isValid();
     }
 
     private ContextObject getOrCreateContext(final VirtualFrame frame) {

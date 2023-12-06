@@ -6,7 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -22,8 +23,8 @@ public final class NilObject extends AbstractSqueakObject {
         return object == null ? SINGLETON : object;
     }
 
-    public static AbstractSqueakObject nullToNil(final AbstractSqueakObject object, final ConditionProfile profile) {
-        return profile.profile(object == null) ? SINGLETON : object;
+    public static AbstractSqueakObject nullToNil(final AbstractSqueakObject object, final InlinedConditionProfile profile, final Node node) {
+        return profile.profile(node, object == null) ? SINGLETON : object;
     }
 
     public static Object nullToNil(final Object object) {

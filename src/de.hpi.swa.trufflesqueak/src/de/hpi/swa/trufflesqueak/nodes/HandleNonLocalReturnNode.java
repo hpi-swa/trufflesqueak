@@ -6,10 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -32,8 +34,9 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
 
     @Specialization
     protected final Object doHandle(final VirtualFrame frame, final NonLocalReturn nlr,
-                    @Cached final ConditionProfile hasModifiedSenderProfile) {
-        if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
+                    @Bind("this") final Node node,
+                    @Cached final InlinedConditionProfile hasModifiedSenderProfile) {
+        if (hasModifiedSenderProfile.profile(node, FrameAccess.hasModifiedSender(frame))) {
             aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
             // Sender might have changed.
             final ContextObject newSender = FrameAccess.getSenderContext(frame);
