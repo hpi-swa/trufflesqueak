@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -63,19 +64,19 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
 
     @Specialization
     protected static final int doPointers(final PointersObject obj,
-                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
         return sizeNode.execute(obj);
     }
 
     @Specialization
     protected static final int doVariablePointers(final VariablePointersObject obj,
-                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
         return sizeNode.execute(obj) + obj.getVariablePartSize();
     }
 
     @Specialization
     protected static final int doWeakVariablePointers(final WeakVariablePointersObject obj,
-                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
         return sizeNode.execute(obj) + obj.getVariablePartSize();
     }
 

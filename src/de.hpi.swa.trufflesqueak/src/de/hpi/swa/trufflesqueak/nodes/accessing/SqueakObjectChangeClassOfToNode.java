@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -44,7 +45,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
     @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isShorts()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 2)"}, limit = "1")
     protected static final void doNativeConvertToShorts(final NativeObject receiver, final ClassObject argument,
-                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+                    @Exclusive @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
                     @Cached final NativeGetShortsNode getShortsNode) {
         receiver.setSqueakClass(argument);
         receiver.convertToShortsStorage(getShortsNode.execute(receiver));
@@ -52,7 +53,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
     @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isWords()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 4)"}, limit = "1")
     protected static final void doNativeConvertToInts(final NativeObject receiver, final ClassObject argument,
-                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+                    @Exclusive @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
                     @Cached final NativeGetIntsNode getIntsNode) {
         receiver.setSqueakClass(argument);
         receiver.convertToIntsStorage(getIntsNode.execute(receiver));
@@ -60,7 +61,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
     @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isLongs()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 8)"}, limit = "1")
     protected static final void doNativeConvertToLongs(final NativeObject receiver, final ClassObject argument,
-                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+                    @Exclusive @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
                     @Cached final NativeGetLongsNode getLongsNode) {
         receiver.setSqueakClass(argument);
         receiver.convertToLongsStorage(getLongsNode.execute(receiver));

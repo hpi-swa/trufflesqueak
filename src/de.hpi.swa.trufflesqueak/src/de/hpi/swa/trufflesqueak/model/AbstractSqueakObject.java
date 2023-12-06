@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -59,12 +60,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         @Specialization(guards = {"message == cachedMessage", "classNode.executeLookup(receiver) == cachedClass", "cachedMethod != null"}, limit = "8", //
                         assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()", "cachedMethod.getCallTargetStable()"})
         protected static final Object doSendCached(final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
-                        @Cached final SqueakObjectClassNode classNode,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Cached("message") final Message cachedMessage,
                         @Cached("classNode.executeLookup(receiver)") final ClassObject cachedClass,
                         @Cached("lookupMethod(cachedClass, cachedMessage)") final CompiledCodeObject cachedMethod,
                         @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode,
-                        @Cached final WrapToSqueakNode wrapNode) {
+                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) {
             final int numArgs = cachedMessage.getParameterCount() - 1;
             assert numArgs == arguments.length;
             final Object[] frameArguments = FrameAccess.newWith(NilObject.SINGLETON, null, cachedMessage.getParameterCount());
@@ -87,9 +88,9 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         @Specialization(replaces = "doSendCached")
         protected static final Object doSendGeneric(final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
                         @Cached final LookupMethodNode lookupNode,
-                        @Cached final SqueakObjectClassNode classNode,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Cached final DispatchUneagerlyNode dispatchNode,
-                        @Cached final WrapToSqueakNode wrapNode) throws Exception {
+                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws Exception {
             final SqueakImageContext image = SqueakImageContext.get(lookupNode);
             if (message.getLibraryClass() == InteropLibrary.class) {
                 final NativeObject selector = image.toInteropSelector(message);

@@ -54,7 +54,7 @@ public abstract class DispatchSendNode extends AbstractNode {
         protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
                         final Object[] rcvrAndArgs,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final LookupMethodNode lookupNode) {
+                        @Shared("lookupNode") @Cached final LookupMethodNode lookupNode) {
             final SqueakImageContext image = getContext();
             final CompiledCodeObject doesNotUnderstandMethod = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, image.doesNotUnderstand);
             final PointersObject message = image.newMessage(writeNode, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
@@ -66,7 +66,7 @@ public abstract class DispatchSendNode extends AbstractNode {
                         final Object[] rcvrAndArgs,
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final LookupMethodNode lookupNode,
+                        @Shared("lookupNode") @Cached final LookupMethodNode lookupNode,
                         @Cached final ConditionProfile isDoesNotUnderstandProfile) {
             final SqueakImageContext image = getContext();
             final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);

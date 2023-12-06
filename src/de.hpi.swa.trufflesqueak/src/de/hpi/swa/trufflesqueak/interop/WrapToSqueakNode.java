@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.interop;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -70,26 +71,26 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final Object doFloat(final float value,
-                    @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                    @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
         return boxNode.execute(value);
     }
 
     @Specialization
     protected static final Object doDouble(final double value,
-                    @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                    @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
         return boxNode.execute(value);
     }
 
     @Specialization
     protected final NativeObject doString(final String value,
-                    @Cached final ConditionProfile wideStringProfile) {
+                    @Shared("wideStringProfile") @Cached final ConditionProfile wideStringProfile) {
         return getContext().asString(value, wideStringProfile);
     }
 
     @Specialization
     protected final NativeObject doTruffleString(final TruffleString value,
                     @Cached final TruffleString.ToJavaStringNode toJavaString,
-                    @Cached final ConditionProfile wideStringProfile) {
+                    @Shared("wideStringProfile") @Cached final ConditionProfile wideStringProfile) {
         return doString(toJavaString.execute(value), wideStringProfile);
     }
 

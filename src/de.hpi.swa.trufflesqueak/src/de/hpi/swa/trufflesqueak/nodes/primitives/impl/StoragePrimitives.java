@@ -14,6 +14,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -185,7 +186,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
         protected final AbstractSqueakObjectWithClassAndHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
-                        @Cached final SqueakObjectNewNode newNode) {
+                        @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
                 return newNode.execute(getContext(), cachedReceiver);
             } catch (final OutOfMemoryError e) {
@@ -197,7 +198,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newDirect")
         protected final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
-                        @Cached final SqueakObjectNewNode newNode) {
+                        @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
                 return newNode.execute(getContext(), receiver);
@@ -217,7 +218,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected final AbstractSqueakObjectWithClassAndHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
                         @Cached("createIdentityProfile()") final IntValueProfile sizeProfile,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
-                        @Cached final SqueakObjectNewNode newNode) {
+                        @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
                 return newNode.execute(getContext(), cachedReceiver, sizeProfile.profile((int) size));
             } catch (final OutOfMemoryError e) {
@@ -229,7 +230,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
         protected final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
-                        @Cached final SqueakObjectNewNode newNode) {
+                        @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
                 return newNode.execute(getContext(), receiver, (int) size);

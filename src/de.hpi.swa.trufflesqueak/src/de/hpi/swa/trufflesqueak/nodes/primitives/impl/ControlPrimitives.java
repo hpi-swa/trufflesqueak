@@ -24,6 +24,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -168,8 +169,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
         protected static final Object perform0Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -178,8 +179,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform0Cached")
         protected static final Object perform0(final VirtualFrame frame, final Object receiver, final NativeObject selector,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             return dispatchUncached(frame, selector, new Object[]{receiver}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -192,8 +193,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
         protected static final Object perform1Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -202,8 +203,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform1Cached")
         protected static final Object perform1(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             return dispatchUncached(frame, selector, new Object[]{receiver, object1}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -217,8 +218,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
         protected static final Object perform2Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -227,8 +228,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform2Cached")
         protected static final Object perform2(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -242,8 +243,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform3Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         final Object object3,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -253,8 +254,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform3Cached")
         protected static final Object perform3(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         final Object object3,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -268,8 +269,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform4Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3, object4}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -279,8 +280,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform4Cached")
         protected static final Object perform4(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3, object4}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -294,8 +295,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform5Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         final Object object3, final Object object4, final Object object5,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3, object4, object5}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -305,8 +306,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform5Cached")
         protected static final Object perform5(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         final Object object3, final Object object4, final Object object5,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3, object4, object5}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
@@ -320,8 +321,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
         protected final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, cachedSelector);
@@ -331,8 +332,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performCached")
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments,
-                        @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
@@ -555,7 +556,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
                         final ClassObject superClass,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return performCached(frame, receiver, arguments, superClass, cachedSelector, lookupMethodNode, dispatchNode);
         }
@@ -563,7 +564,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performCached")
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             return performGeneric(frame, receiver, selector, arguments, superClass, lookupMethodNode, dispatchNode);
         }
@@ -577,7 +578,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object performContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target,
                         @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return performCached(frame, target, arguments, superClass, cachedSelector, lookupMethodNode, dispatchNode);
         }
@@ -586,7 +587,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "performContextCached")
         protected final Object performContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target, final NativeObject selector,
                         final ArrayObject arguments, final ClassObject superClass,
-                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             return performGeneric(frame, target, selector, arguments, superClass, lookupMethodNode, dispatchNode);
         }

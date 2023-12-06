@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -64,7 +65,7 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
     @Specialization
     protected static final ArrayObject doArray(final ArrayObject receiver,
-                    @Cached final ArrayObjectShallowCopyNode copyNode) {
+                    @Exclusive @Cached final ArrayObjectShallowCopyNode copyNode) {
         return copyNode.execute(receiver);
     }
 
@@ -106,7 +107,7 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
     @Specialization(guards = "receiver.hasInstanceVariables()")
     protected static final ClassObject doClass(final ClassObject receiver,
-                    @Cached final ArrayObjectShallowCopyNode arrayCopyNode) {
+                    @Exclusive @Cached final ArrayObjectShallowCopyNode arrayCopyNode) {
         return receiver.shallowCopy(arrayCopyNode.execute(receiver.getInstanceVariablesOrNull()));
     }
 }

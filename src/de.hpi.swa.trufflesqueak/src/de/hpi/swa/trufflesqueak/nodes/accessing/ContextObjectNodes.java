@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -33,7 +34,7 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER"})
         protected static final Object doInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @Cached final ConditionProfile nilProfile) {
+                        @Exclusive @Cached final ConditionProfile nilProfile) {
             return context.getInstructionPointer(nilProfile);
         }
 
@@ -55,7 +56,7 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})
         protected static final Object doClosure(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @Cached final ConditionProfile nilProfile) {
+                        @Exclusive @Cached final ConditionProfile nilProfile) {
             return NilObject.nullToNil(context.getClosure(), nilProfile);
         }
 

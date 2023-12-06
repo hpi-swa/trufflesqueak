@@ -775,19 +775,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAddFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final Object doDouble(final FloatObject lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs.getValue() + rhs);
         }
 
         @Specialization(guards = "isExactDouble(rhs)")
         protected static final Object doLong(final FloatObject lhs, final long rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs, boxNode);
         }
 
         @Specialization
         protected static final Object doFloat(final FloatObject lhs, final FloatObject rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }
@@ -797,19 +797,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSubtractFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final Object doDouble(final FloatObject lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs.getValue() - rhs);
         }
 
         @Specialization(guards = "isExactDouble(rhs)")
         protected static final Object doLong(final FloatObject lhs, final long rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs, boxNode);
         }
 
         @Specialization
         protected static final Object doFloat(final FloatObject lhs, final FloatObject rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }
@@ -959,7 +959,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "isExactDouble(rhs)")
         protected static final Object doLong(final FloatObject lhs, final long rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs, boxNode);
         }
 
@@ -981,7 +981,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "isExactDouble(rhs)")
         protected static final Object doLong(final FloatObject lhs, final long rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs, boxNode);
         }
 
@@ -1363,19 +1363,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doDoubleFinite")
         protected static final Object doDouble(final double lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs * rhs);
         }
 
         @Specialization(guards = "isExactDouble(rhs)", replaces = "doLongFinite")
         protected static final Object doLong(final double lhs, final long rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs, boxNode);
         }
 
         @Specialization
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }
@@ -1396,19 +1396,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isZero(rhs)"}, replaces = "doDoubleFinite")
         protected static final Object doDouble(final double lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs / rhs);
         }
 
         @Specialization(guards = {"!isZero(rhs)", "isExactDouble(rhs)"}, replaces = "doLongFinite")
         protected static final Object doLong(final double lhs, final long rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs, boxNode);
         }
 
         @Specialization(guards = {"!rhs.isZero()"})
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }

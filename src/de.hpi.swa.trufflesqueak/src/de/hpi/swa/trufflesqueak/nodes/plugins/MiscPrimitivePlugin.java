@@ -11,6 +11,7 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -322,7 +323,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doFindCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
                         final long start,
                         @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
-                        @Cached final ConditionProfile notFoundProfile) {
+                        @Shared("notFoundProfile") @Cached final ConditionProfile notFoundProfile) {
             return doFind(receiver, string, cachedInclusionMap, start, notFoundProfile);
         }
 
@@ -332,7 +333,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindCached")
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
-                        @Cached final ConditionProfile notFoundProfile) {
+                        @Shared("notFoundProfile") @Cached final ConditionProfile notFoundProfile) {
             final int stringSize = string.getByteLength();
             long index = start - 1;
             while (index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0) {

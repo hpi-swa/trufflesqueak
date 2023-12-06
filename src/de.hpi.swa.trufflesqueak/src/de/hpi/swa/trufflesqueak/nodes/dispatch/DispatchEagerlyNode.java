@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -66,7 +67,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()", "cachedMethod.getDoesNotNeedSenderAssumption()"}, replaces = "doPrimitiveEagerly")
     protected static final Object doDirect(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
-                    @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
+                    @Exclusive @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
         return callDirect(callNode, getContextOrMarkerNode.execute(frame), receiverAndArguments);
     }
@@ -82,9 +83,9 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     @ReportPolymorphism.Megamorphic
     @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"})
     protected static final Object doIndirect(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
-                    @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
+                    @Exclusive @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
-                    @Cached final IndirectCallNode callNode) {
+                    @Exclusive @Cached final IndirectCallNode callNode) {
         return callIndirect(callNode, method, getContextOrMarkerNode.execute(frame), receiverAndArguments);
     }
 
@@ -92,7 +93,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"})
     protected final Object doIndirectWithSender(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
-                    @Cached final IndirectCallNode callNode) {
+                    @Exclusive @Cached final IndirectCallNode callNode) {
         return callIndirect(callNode, method, getOrCreateContext(frame), receiverAndArguments);
     }
 

@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -246,7 +247,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"}, replaces = "doAtIntFinite")
         protected static final Object doAtInt(final NativeObject receiver, final long index,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(Float.intBitsToFloat(receiver.getInt(index - 1)));
         }
 
@@ -257,7 +258,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, replaces = "doAtLongFinite")
         protected static final Object doAtLong(final NativeObject receiver, final long index,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(Double.longBitsToDouble(receiver.getLong(index - 1)));
         }
     }
