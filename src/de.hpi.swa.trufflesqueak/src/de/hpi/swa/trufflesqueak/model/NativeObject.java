@@ -147,7 +147,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public int size() {
         CompilerAsserts.neverPartOfCompilation();
-        return NativeObjectSizeNode.getUncached().execute(this);
+        return NativeObjectSizeNode.getUncached().execute(null, this);
     }
 
     public void become(final NativeObject other) {

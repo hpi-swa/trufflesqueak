@@ -18,6 +18,8 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -46,7 +48,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
-import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrimsFactory.ArgTypeConversionNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.FFIConstants.FFI_ERROR;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.FFIConstants.FFI_TYPES;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -63,14 +64,12 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
     /** "primitiveCallout" implemented as {@link AbstractPrimCalloutToFFINode}. */
 
+    @GenerateInline
+    @GenerateCached(false)
     @ImportStatic(FFI_TYPES.class)
-    protected abstract static class ArgTypeConversionNode extends Node {
+    public abstract static class ArgTypeConversionNode extends Node {
 
-        protected static ArgTypeConversionNode create() {
-            return ArgTypeConversionNodeGen.create();
-        }
-
-        public abstract Object execute(int headerWord, Object value);
+        public abstract Object execute(Node node, int headerWord, Object value);
 
         @Specialization(guards = {"getAtomicType(headerWord) == 5"})
         protected static final short doShort(@SuppressWarnings("unused") final int headerWord, final boolean value) {
@@ -151,7 +150,6 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     }
 
     public abstract static class AbstractFFIPrimitiveNode extends AbstractPrimitiveNode {
-        @Child private ArgTypeConversionNode conversionNode = ArgTypeConversionNode.create();
         @Child private WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
         @Child private AbstractPointersObjectReadNode readExternalLibNode = AbstractPointersObjectReadNode.create();
         @Child private AbstractPointersObjectReadNode readArgumentTypeNode = AbstractPointersObjectReadNode.create();
@@ -165,7 +163,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        protected final Object doCallout(final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
+        protected final Object doCallout(final ArgTypeConversionNode conversionNode, final Node inlineTarget, final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver,
+                        final Object... arguments) {
             final SqueakImageContext image = getContext();
             final List<Integer> headerWordList = new ArrayList<>();
 
@@ -182,7 +181,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 }
             }
 
-            final Object[] argumentsConverted = getConvertedArgumentsFromHeaderWords(headerWordList, arguments);
+            final Object[] argumentsConverted = getConvertedArgumentsFromHeaderWords(conversionNode, inlineTarget, headerWordList, arguments);
             final List<String> nfiArgTypeList = getArgTypeListFromHeaderWords(headerWordList);
 
             final String name = readExternalLibNode.executeNative(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME).asStringUnsafe();
@@ -192,7 +191,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             try {
                 final Object value = calloutToLib(image, name, argumentsConverted, nfiCode);
                 assert value != null;
-                return wrapNode.executeWrap(conversionNode.execute(headerWordList.get(0), value));
+                return wrapNode.executeWrap(conversionNode.execute(inlineTarget, headerWordList.get(0), value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
                 e.printStackTrace();
                 // TODO: return correct error code.
@@ -204,11 +203,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private Object[] getConvertedArgumentsFromHeaderWords(final List<Integer> headerWordList, final Object[] arguments) {
+        private Object[] getConvertedArgumentsFromHeaderWords(final ArgTypeConversionNode conversionNode, final Node inlineTarget, final List<Integer> headerWordList, final Object[] arguments) {
             final Object[] argumentsConverted = new Object[arguments.length];
 
             for (int j = 1; j < headerWordList.size(); j++) {
-                argumentsConverted[j - 1] = conversionNode.execute(headerWordList.get(j), arguments[j - 1]);
+                argumentsConverted[j - 1] = conversionNode.execute(inlineTarget, headerWordList.get(j), arguments[j - 1]);
             }
             return argumentsConverted;
         }
@@ -271,8 +270,10 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Child private ArrayObjectToObjectArrayCopyNode getObjectArrayNode = ArrayObjectToObjectArrayCopyNode.create();
 
         @Specialization
-        protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray) {
-            return doCallout(asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(argArray));
+        protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray,
+                        @Bind("this") final Node node,
+                        @Cached final ArgTypeConversionNode conversionNode) {
+            return doCallout(conversionNode, node, asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(argArray));
         }
     }
 

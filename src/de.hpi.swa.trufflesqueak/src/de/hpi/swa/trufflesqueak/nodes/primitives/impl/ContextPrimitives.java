@@ -11,6 +11,7 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -19,6 +20,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -281,8 +283,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"index < receiver.getStackSize()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
+                        @Bind("this") final Node node,
                         @Cached final ContextObjectReadNode readNode) {
-            return readNode.execute(receiver, CONTEXT.RECEIVER + index);
+            return readNode.execute(node, receiver, CONTEXT.RECEIVER + index);
         }
     }
 
@@ -292,8 +295,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = "index < receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
+                        @Bind("this") final Node node,
                         @Cached final ContextObjectWriteNode writeNode) {
-            writeNode.execute(receiver, CONTEXT.RECEIVER + index, value);
+            writeNode.execute(node, receiver, CONTEXT.RECEIVER + index, value);
             return value;
         }
     }

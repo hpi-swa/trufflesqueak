@@ -9,7 +9,10 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -29,14 +32,16 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectShallowCopyNode;
 
+@GenerateInline
+@GenerateCached(false)
 public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
-    public final Object execute(final SqueakImageContext image, final Object object) {
+    public final Object execute(final Node node, final SqueakImageContext image, final Object object) {
         CompilerAsserts.partialEvaluationConstant(image);
-        return image.reportAllocation(executeAllocation(object));
+        return image.reportAllocation(executeAllocation(node, object));
     }
 
-    protected abstract Object executeAllocation(Object obj);
+    protected abstract Object executeAllocation(Node node, Object obj);
 
     @Specialization
     protected static final NilObject doNil(final NilObject receiver) {
@@ -64,9 +69,9 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ArrayObject doArray(final ArrayObject receiver,
+    protected static final ArrayObject doArray(final Node node, final ArrayObject receiver,
                     @Exclusive @Cached final ArrayObjectShallowCopyNode copyNode) {
-        return copyNode.execute(receiver);
+        return copyNode.execute(node, receiver);
     }
 
     @Specialization
@@ -95,9 +100,9 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final NativeObject doNative(final NativeObject receiver,
+    protected static final NativeObject doNative(final Node node, final NativeObject receiver,
                     @Cached final NativeObjectShallowCopyNode copyNode) {
-        return copyNode.execute(receiver);
+        return copyNode.execute(node, receiver);
     }
 
     @Specialization(guards = "!receiver.hasInstanceVariables()")
@@ -106,8 +111,8 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization(guards = "receiver.hasInstanceVariables()")
-    protected static final ClassObject doClass(final ClassObject receiver,
+    protected static final ClassObject doClass(final Node node, final ClassObject receiver,
                     @Exclusive @Cached final ArrayObjectShallowCopyNode arrayCopyNode) {
-        return receiver.shallowCopy(arrayCopyNode.execute(receiver.getInstanceVariablesOrNull()));
+        return receiver.shallowCopy(arrayCopyNode.execute(node, receiver.getInstanceVariablesOrNull()));
     }
 }

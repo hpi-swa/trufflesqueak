@@ -11,6 +11,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -150,9 +152,11 @@ public class AbstractPointersObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     public abstract static class AbstractPointersObjectInstSizeNode extends AbstractNode {
-        public abstract int execute(AbstractPointersObject obj);
+        public abstract int execute(Node node, AbstractPointersObject obj);
 
         @Specialization(guards = {"object.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "1")
         protected static final int doSizeCached(@SuppressWarnings("unused") final AbstractPointersObject object,

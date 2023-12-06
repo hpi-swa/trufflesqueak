@@ -23,6 +23,7 @@ import javax.management.ReflectionException;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleOptions;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -33,6 +34,7 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -599,8 +601,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimIdentical2Node extends AbstractPrimitiveNode {
         @Specialization
         protected static final boolean doObject(final Object a, final Object b,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectIdentityNode identityNode) {
-            return identityNode.execute(a, b);
+            return identityNode.execute(node, a, b);
         }
     }
 
@@ -610,8 +613,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimIdentical3Node extends AbstractPrimitiveNode {
         @Specialization
         public static final boolean doObject(@SuppressWarnings("unused") final Object context, final Object a, final Object b,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectIdentityNode identityNode) {
-            return identityNode.execute(a, b);
+            return identityNode.execute(node, a, b);
         }
     }
 
@@ -686,8 +690,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final AbstractSqueakObject doPrimChangeClass(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash argument,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
-            changeClassOfToNode.execute(receiver, argument.getSqueakClass());
+            changeClassOfToNode.execute(node, receiver, argument.getSqueakClass());
             return receiver;
         }
 
@@ -876,8 +881,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final ClassObject doPrimAdoptInstance(final ClassObject receiver, final AbstractSqueakObjectWithClassAndHash argument,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
-            changeClassOfToNode.execute(argument, receiver);
+            changeClassOfToNode.execute(node, argument, receiver);
             return receiver;
         }
     }
@@ -920,8 +926,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
         @Specialization
         public static final boolean doObject(final Object a, final Object b,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectIdentityNode identityNode) {
-            return !identityNode.execute(a, b);
+            return !identityNode.execute(node, a, b);
         }
     }
 

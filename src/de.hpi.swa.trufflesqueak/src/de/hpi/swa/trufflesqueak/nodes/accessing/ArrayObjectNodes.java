@@ -10,6 +10,8 @@ import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -32,7 +34,9 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ArrayObjectNodes {
+
     @GenerateUncached
+    @GenerateCached
     public abstract static class ArrayObjectReadNode extends AbstractNode {
 
         @NeverDefault
@@ -100,9 +104,11 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateInline
+    @GenerateCached(false)
     public abstract static class ArrayObjectShallowCopyNode extends AbstractNode {
 
-        public abstract ArrayObject execute(ArrayObject obj);
+        public abstract ArrayObject execute(Node node, ArrayObject obj);
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final ArrayObject doEmptyArray(final ArrayObject obj) {

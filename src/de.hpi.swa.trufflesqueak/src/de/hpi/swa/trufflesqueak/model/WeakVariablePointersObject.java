@@ -87,8 +87,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
     }
 
     @Override
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
-        return layoutValuesPointTo(identityNode, thang) || variablePartPointsTo(thang);
+    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {
+        return layoutValuesPointTo(identityNode, inlineTarget, thang) || variablePartPointsTo(thang);
     }
 
     private boolean variablePartPointsTo(final Object thang) {

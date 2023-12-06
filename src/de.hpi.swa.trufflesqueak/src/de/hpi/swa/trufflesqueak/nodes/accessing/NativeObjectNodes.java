@@ -6,9 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -24,10 +25,12 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodesFactory.NativeO
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class NativeObjectNodes {
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     public abstract static class NativeObjectReadNode extends AbstractNode {
 
-        public abstract Object execute(NativeObject obj, long index);
+        public abstract Object execute(Node node, NativeObject obj, long index);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final long doNativeBytes(final NativeObject obj, final long index) {
@@ -45,8 +48,7 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final Object doNativeLongs(final NativeObject obj, final long index,
-                        @Bind("this") final Node node,
+        protected static final Object doNativeLongs(final Node node, final NativeObject obj, final long index,
                         @Cached final InlinedConditionProfile positiveValueProfile) {
             final long value = obj.getLong(index);
             if (positiveValueProfile.profile(node, value >= 0)) {
@@ -57,11 +59,13 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     @ImportStatic(NativeObject.class)
     public abstract static class NativeObjectWriteNode extends AbstractNode {
 
-        public abstract void execute(NativeObject obj, long index, Object value);
+        public abstract void execute(Node node, NativeObject obj, long index, Object value);
 
         @Specialization(guards = {"obj.isByteType()", "value >= 0", "value <= BYTE_MAX"})
         protected static final void doNativeBytes(final NativeObject obj, final long index, final long value) {
@@ -157,14 +161,16 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     public abstract static class NativeObjectSizeNode extends AbstractNode {
 
         public static NativeObjectSizeNode getUncached() {
             return NativeObjectSizeNodeGen.getUncached();
         }
 
-        public abstract int execute(NativeObject obj);
+        public abstract int execute(Node node, NativeObject obj);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final int doNativeBytes(final NativeObject obj) {
@@ -187,9 +193,11 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateInline
+    @GenerateCached(false)
     public abstract static class NativeObjectByteSizeNode extends AbstractNode {
 
-        public abstract int execute(NativeObject obj);
+        public abstract int execute(Node node, NativeObject obj);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final int doNativeBytes(final NativeObject obj) {
@@ -212,9 +220,11 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateInline
+    @GenerateCached(false)
     public abstract static class NativeGetBytesNode extends AbstractNode {
 
-        public abstract byte[] execute(NativeObject obj);
+        public abstract byte[] execute(Node node, NativeObject obj);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final byte[] doNativeBytes(final NativeObject obj) {
@@ -237,9 +247,11 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateInline
+    @GenerateCached(false)
     public abstract static class NativeGetShortsNode extends AbstractNode {
 
-        public abstract short[] execute(NativeObject obj);
+        public abstract short[] execute(Node node, NativeObject obj);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final short[] doNativeBytes(final NativeObject obj) {
@@ -262,9 +274,11 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateInline
+    @GenerateCached(false)
     public abstract static class NativeGetIntsNode extends AbstractNode {
 
-        public abstract int[] execute(NativeObject obj);
+        public abstract int[] execute(Node node, NativeObject obj);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final int[] doNativeBytes(final NativeObject obj) {
@@ -287,9 +301,11 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateInline
+    @GenerateCached(false)
     public abstract static class NativeGetLongsNode extends AbstractNode {
 
-        public abstract long[] execute(NativeObject obj);
+        public abstract long[] execute(Node node, NativeObject obj);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final long[] doNativeBytes(final NativeObject obj) {
@@ -312,9 +328,11 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateInline
+    @GenerateCached(false)
     public abstract static class NativeObjectShallowCopyNode extends AbstractNode {
 
-        public abstract NativeObject execute(NativeObject obj);
+        public abstract NativeObject execute(Node node, NativeObject obj);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final NativeObject doNativeBytes(final NativeObject obj) {

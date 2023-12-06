@@ -8,10 +8,12 @@ package de.hpi.swa.trufflesqueak.interop;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -45,12 +47,13 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     }
 
     protected static final Object doUncachedSlow(final ClassObject classObject, final String selector) {
-        return doUncached(classObject, selector, AbstractPointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached());
+        return doUncached(classObject, selector, null, AbstractPointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached());
     }
 
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected static final Object doUncached(final ClassObject classObject, final String selector,
+                    @Bind("this") final Node node,
                     /**
                      * An AbstractPointersObjectReadNode is sufficient for accessing `values`
                      * instance variable here.

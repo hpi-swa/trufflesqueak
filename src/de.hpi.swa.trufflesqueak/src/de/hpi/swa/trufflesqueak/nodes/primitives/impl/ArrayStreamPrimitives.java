@@ -49,16 +49,15 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     protected abstract static class AbstractBasicAtOrAtPutNode extends AbstractPrimitiveNode {
-        @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
-        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
 
-        protected final boolean inBoundsOfSqueakObject(final Object target, final int instSize, final long index) {
-            return SqueakGuards.inBounds1(index + instSize, sizeNode.execute(target));
+        protected final boolean inBoundsOfSqueakObject(final Object target, final int instSize, final long index, final SqueakObjectSizeNode sizeNode, final Node node) {
+            return SqueakGuards.inBounds1(index + instSize, sizeNode.execute(node, target));
         }
 
-        protected final Object basicAt(final Object receiver, final long index, final SqueakObjectAt0Node at0Node, final InlinedBranchProfile outOfBounceProfile, final Node node) {
-            final int instSize = instSizeNode.execute(receiver);
-            if (inBoundsOfSqueakObject(receiver, instSize, index)) {
+        protected final Object basicAt(final Object receiver, final long index, final SqueakObjectSizeNode sizeNode, final SqueakObjectInstSizeNode instSizeNode, final SqueakObjectAt0Node at0Node,
+                        final InlinedBranchProfile outOfBounceProfile, final Node node) {
+            final int instSize = instSizeNode.execute(node, receiver);
+            if (inBoundsOfSqueakObject(receiver, instSize, index, sizeNode, node)) {
                 return at0Node.execute(receiver, index - 1 + instSize);
             } else {
                 outOfBounceProfile.enter(node);
@@ -66,10 +65,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             }
         }
 
-        protected final Object basicAtPut(final AbstractSqueakObject receiver, final long index, final Object value, final SqueakObjectAtPut0Node atput0Node,
-                        final InlinedBranchProfile outOfBounceProfile, final Node node) {
-            final int instSize = instSizeNode.execute(receiver);
-            if (inBoundsOfSqueakObject(receiver, instSize, index)) {
+        protected final Object basicAtPut(final AbstractSqueakObject receiver, final long index, final Object value, final SqueakObjectSizeNode sizeNode, final SqueakObjectInstSizeNode instSizeNode,
+                        final SqueakObjectAtPut0Node atput0Node, final InlinedBranchProfile outOfBounceProfile, final Node node) {
+            final int instSize = instSizeNode.execute(node, receiver);
+            if (inBoundsOfSqueakObject(receiver, instSize, index, sizeNode, node)) {
                 atput0Node.execute(receiver, index - 1 + instSize, value);
                 return value;
             } else {
@@ -86,9 +85,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization
         protected final Object doSqueakObject(final Object receiver, final long index,
                         @Bind("this") final Node node,
+                        @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final SqueakObjectInstSizeNode instSizeNode,
                         @Cached final SqueakObjectAt0Node at0Node,
                         @Cached final InlinedBranchProfile outOfBounceProfile) {
-            return basicAt(receiver, index, at0Node, outOfBounceProfile, node);
+            return basicAt(receiver, index, sizeNode, instSizeNode, at0Node, outOfBounceProfile, node);
         }
     }
 
@@ -99,9 +100,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization
         protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
                         @Bind("this") final Node node,
+                        @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final SqueakObjectInstSizeNode instSizeNode,
                         @Cached final SqueakObjectAt0Node at0Node,
                         @Cached final InlinedBranchProfile outOfBounceProfile) {
-            return basicAt(target, index, at0Node, outOfBounceProfile, node);
+            return basicAt(target, index, sizeNode, instSizeNode, at0Node, outOfBounceProfile, node);
         }
     }
 
@@ -112,9 +115,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
                         @Bind("this") final Node node,
+                        @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final SqueakObjectInstSizeNode instSizeNode,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final InlinedBranchProfile outOfBounceProfile) {
-            return basicAtPut(receiver, index, value, atput0Node, outOfBounceProfile, node);
+            return basicAtPut(receiver, index, value, sizeNode, instSizeNode, atput0Node, outOfBounceProfile, node);
         }
     }
 
@@ -125,9 +130,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization
         protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
                         @Bind("this") final Node node,
+                        @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final SqueakObjectInstSizeNode instSizeNode,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final InlinedBranchProfile outOfBounceProfile) {
-            return basicAtPut(target, index, value, atput0Node, outOfBounceProfile, node);
+            return basicAtPut(target, index, value, sizeNode, instSizeNode, atput0Node, outOfBounceProfile, node);
         }
     }
 
@@ -137,9 +144,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
         protected static final long doSqueakObject(final AbstractSqueakObject receiver,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode) {
-            return sizeNode.execute(receiver) - instSizeNode.execute(receiver);
+            return sizeNode.execute(node, receiver) - instSizeNode.execute(node, receiver);
         }
     }
 
@@ -149,9 +157,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode) {
-            return sizeNode.execute(target) - instSizeNode.execute(target);
+            return sizeNode.execute(node, target) - instSizeNode.execute(node, target);
         }
     }
 
@@ -255,8 +264,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"}, replaces = "doAtIntFinite")
         protected static final Object doAtInt(final NativeObject receiver, final long index,
+                        @Bind("this") final Node node,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(Float.intBitsToFloat(receiver.getInt(index - 1)));
+            return boxNode.execute(node, Float.intBitsToFloat(receiver.getInt(index - 1)));
         }
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, rewriteOn = RespecializeException.class)
@@ -266,8 +276,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, replaces = "doAtLongFinite")
         protected static final Object doAtLong(final NativeObject receiver, final long index,
+                        @Bind("this") final Node node,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(Double.longBitsToDouble(receiver.getLong(index - 1)));
+            return boxNode.execute(node, Double.longBitsToDouble(receiver.getLong(index - 1)));
         }
     }
 

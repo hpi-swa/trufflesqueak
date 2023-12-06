@@ -73,14 +73,16 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final Object doFloat(final float value,
+                    @Bind("this") final Node node,
                     @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-        return boxNode.execute(value);
+        return boxNode.execute(node, value);
     }
 
     @Specialization
     protected static final Object doDouble(final double value,
+                    @Bind("this") final Node node,
                     @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-        return boxNode.execute(value);
+        return boxNode.execute(node, value);
     }
 
     @Specialization

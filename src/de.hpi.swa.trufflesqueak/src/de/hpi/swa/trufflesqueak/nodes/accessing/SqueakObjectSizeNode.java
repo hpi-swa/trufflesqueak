@@ -8,8 +8,11 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.NeverDefault;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -32,15 +35,17 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 
+@GenerateInline
+@GenerateUncached
+@GenerateCached(false)
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectSizeNode extends AbstractNode {
 
-    @NeverDefault
-    public static SqueakObjectSizeNode create() {
-        return SqueakObjectSizeNodeGen.create();
+    public static final SqueakObjectSizeNode getUncached() {
+        return SqueakObjectSizeNodeGen.getUncached();
     }
 
-    public abstract int execute(Object obj);
+    public abstract int execute(Node node, Object obj);
 
     @Specialization
     protected static final int doNil(final NilObject obj) {
@@ -63,21 +68,21 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doPointers(final PointersObject obj,
+    protected static final int doPointers(final Node node, final PointersObject obj,
                     @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(obj);
+        return sizeNode.execute(node, obj);
     }
 
     @Specialization
-    protected static final int doVariablePointers(final VariablePointersObject obj,
+    protected static final int doVariablePointers(final Node node, final VariablePointersObject obj,
                     @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(obj) + obj.getVariablePartSize();
+        return sizeNode.execute(node, obj) + obj.getVariablePartSize();
     }
 
     @Specialization
-    protected static final int doWeakVariablePointers(final WeakVariablePointersObject obj,
+    protected static final int doWeakVariablePointers(final Node node, final WeakVariablePointersObject obj,
                     @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(obj) + obj.getVariablePartSize();
+        return sizeNode.execute(node, obj) + obj.getVariablePartSize();
     }
 
     @Specialization
@@ -96,8 +101,9 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doNative(final NativeObject obj, @Cached final NativeObjectSizeNode sizeNode) {
-        return sizeNode.execute(obj);
+    protected static final int doNative(final Node node, final NativeObject obj,
+                    @Cached final NativeObjectSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
     }
 
     @Specialization

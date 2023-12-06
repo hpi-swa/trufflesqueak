@@ -69,8 +69,9 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doClass(final ClassObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final ClassObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
@@ -81,8 +82,9 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doNative(final NativeObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final NativeObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
@@ -97,14 +99,16 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doClosure(final BlockClosureObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final BlockClosureObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
     protected static final Object doContext(final ContextObject obj, final long index,
+                    @Bind("this") final Node node,
                     @Cached final ContextObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization

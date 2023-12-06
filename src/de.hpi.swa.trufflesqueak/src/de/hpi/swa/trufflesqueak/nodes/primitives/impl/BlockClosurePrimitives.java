@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -212,9 +213,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {206, 222})
     protected abstract static class PrimClosureValueAryNode extends AbstractClosurePrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(argArray)"}, assumptions = {
+        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(node, argArray)"}, assumptions = {
                         "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
+                        @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Shared("copyIntoNode") @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
@@ -225,13 +227,14 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = {"closure.getNumArgs() == sizeNode.execute(argArray)"}, replaces = "doValueDirect")
+        @Specialization(guards = {"closure.getNumArgs() == sizeNode.execute(node, argArray)"}, replaces = "doValueDirect")
         protected final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
-                        @SuppressWarnings("unused") @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
+                        @Bind("this") final Node node,
+                        @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
                         @Shared("copyIntoNode") @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached final IndirectCallNode indirectCallNode) {
             final CompiledCodeObject block = closure.getCompiledBlock();
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), sizeNode.execute(argArray));
+            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), sizeNode.execute(node, argArray));
             copyIntoNode.execute(frameArguments, argArray);
             return indirectCallNode.call(block.getCallTarget(), frameArguments);
         }
@@ -362,9 +365,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 208)
     protected abstract static class PrimFullClosureValueWithArgsNode extends AbstractClosurePrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(argArray)"}, assumptions = {
+        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(node, argArray)"}, assumptions = {
                         "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Shared("copyIntoNode") @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
@@ -375,8 +379,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @ReportPolymorphism.Megamorphic
-        @Specialization(guards = {"block.getNumArgs() == sizeNode.execute(argArray)"}, replaces = "doValueDirect")
+        @Specialization(guards = {"block.getNumArgs() == sizeNode.execute(node, argArray)"}, replaces = "doValueDirect")
         protected final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
                         @Bind("closure.getCompiledBlock()") final CompiledCodeObject block,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
                         @Shared("copyIntoNode") @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,

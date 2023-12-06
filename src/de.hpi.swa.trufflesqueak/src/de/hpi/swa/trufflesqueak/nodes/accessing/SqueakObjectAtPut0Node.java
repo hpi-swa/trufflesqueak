@@ -47,8 +47,9 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doNative(final NativeObject obj, final long index, final Object value,
+                    @Bind("this") final Node node,
                     @Cached final NativeObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
@@ -82,8 +83,9 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doClass(final ClassObject obj, final long index, final Object value,
+                    @Bind("this") final Node node,
                     @Cached final ClassObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
@@ -93,14 +95,16 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doClosure(final BlockClosureObject obj, final long index, final Object value,
+                    @Bind("this") final Node node,
                     @Cached final BlockClosureObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
     protected static final void doContext(final ContextObject obj, final long index, final Object value,
+                    @Bind("this") final Node node,
                     @Cached final ContextObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization

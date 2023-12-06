@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -71,8 +72,8 @@ public final class PointersObject extends AbstractPointersObject {
         return instsize();
     }
 
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
-        return layoutValuesPointTo(identityNode, thang);
+    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {
+        return layoutValuesPointTo(identityNode, inlineTarget, thang);
     }
 
     public boolean isEmptyList(final AbstractPointersObjectReadNode readNode) {
