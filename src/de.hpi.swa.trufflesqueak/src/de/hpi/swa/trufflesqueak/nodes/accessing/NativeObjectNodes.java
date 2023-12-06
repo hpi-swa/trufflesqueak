@@ -6,11 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -43,13 +45,14 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected final Object doNativeLongs(final NativeObject obj, final long index,
+        protected static final Object doNativeLongs(final NativeObject obj, final long index,
+                        @Bind("this") final Node node,
                         @Cached final InlinedConditionProfile positiveValueProfile) {
             final long value = obj.getLong(index);
-            if (positiveValueProfile.profile(this, value >= 0)) {
+            if (positiveValueProfile.profile(node, value >= 0)) {
                 return value;
             } else {
-                return LargeIntegerObject.toUnsigned(getContext(), value);
+                return LargeIntegerObject.toUnsigned(getContext(node), value);
             }
         }
     }

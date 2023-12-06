@@ -7,11 +7,13 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
@@ -64,15 +66,16 @@ public abstract class DispatchSendNode extends AbstractNode {
         @Specialization(guards = {"!isCompiledCodeObject(targetObject)"})
         protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
                         final Object[] rcvrAndArgs,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Shared("lookupNode") @Cached final LookupMethodNode lookupNode,
                         @Cached final InlinedConditionProfile isDoesNotUnderstandProfile) {
-            final SqueakImageContext image = getContext();
+            final SqueakImageContext image = getContext(node);
             final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
             final ClassObject targetClass = classNode.executeLookup(targetObject);
             final Object newLookupResult = lookupNode.executeLookup(targetClass, image.runWithInSelector);
-            if (isDoesNotUnderstandProfile.profile(this, newLookupResult == null)) {
+            if (isDoesNotUnderstandProfile.profile(node, newLookupResult == null)) {
                 final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, image.doesNotUnderstand);
                 return dispatchNode.executeDispatch(frame, (CompiledCodeObject) doesNotUnderstandMethod,
                                 new Object[]{targetObject, image.newMessage(writeNode, selector, targetClass, arguments)});
