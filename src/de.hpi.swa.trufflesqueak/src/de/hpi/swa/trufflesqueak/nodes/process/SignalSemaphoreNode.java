@@ -8,9 +8,12 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -19,6 +22,8 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
+@GenerateInline
+@GenerateCached(true)
 public abstract class SignalSemaphoreNode extends AbstractNode {
 
     @NeverDefault
@@ -26,7 +31,7 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
         return SignalSemaphoreNodeGen.create();
     }
 
-    public abstract void executeSignal(VirtualFrame frame, Object semaphore);
+    public abstract void executeSignal(VirtualFrame frame, Node node, Object semaphore);
 
     @Specialization(guards = {"isSemaphore(semaphore)", "semaphore.isEmptyList(readNode)"})
     protected static final void doSignalEmpty(final PointersObject semaphore,
@@ -36,11 +41,11 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
     }
 
     @Specialization(guards = {"isSemaphore(semaphore)", "!semaphore.isEmptyList(readNode)"})
-    protected static final void doSignal(final VirtualFrame frame, final PointersObject semaphore,
+    protected static final void doSignal(final VirtualFrame frame, final Node node, final PointersObject semaphore,
                     @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
                     @Cached final ResumeProcessNode resumeProcessNode) {
-        resumeProcessNode.executeResume(frame, semaphore.removeFirstLinkOfList(readNode, writeNode));
+        resumeProcessNode.executeResume(frame, node, semaphore.removeFirstLinkOfList(readNode, writeNode));
     }
 
     @Specialization
@@ -48,8 +53,9 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
         // nothing to do
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "object == null")
-    protected static final void doNothing(@SuppressWarnings("unused") final Object object) {
+    protected static final void doNothing(final Object object) {
         // nothing to do
     }
 }

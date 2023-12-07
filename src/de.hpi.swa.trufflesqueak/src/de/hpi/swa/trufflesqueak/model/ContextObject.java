@@ -507,12 +507,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transferTo(final SqueakImageContext image, final PointersObject newProcess, final ContextObject newActiveContext, final AbstractPointersObjectWriteNode writeNode,
-                    final GetActiveProcessNode getActiveProcessNode) {
+                    final GetActiveProcessNode getActiveProcessNode, final Node inlineTarget) {
         // Record a process to be awakened on the next interpreter cycle.
         final PointersObject scheduler = image.getScheduler();
-        assert newProcess != getActiveProcessNode.execute() : "trying to switch to already active process";
+        assert newProcess != getActiveProcessNode.execute(inlineTarget) : "trying to switch to already active process";
         // overwritten in next line.
-        final PointersObject oldProcess = getActiveProcessNode.execute();
+        final PointersObject oldProcess = getActiveProcessNode.execute(inlineTarget);
         writeNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         writeNode.execute(oldProcess, PROCESS.SUSPENDED_CONTEXT, this);
         writeNode.executeNil(newProcess, PROCESS.LIST);

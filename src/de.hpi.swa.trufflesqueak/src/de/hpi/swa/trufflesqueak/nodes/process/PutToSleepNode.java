@@ -6,8 +6,9 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -22,17 +23,14 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 /*
  * Save the given process on the scheduler process list for its priority.
  */
+@GenerateInline
+@GenerateCached(false)
 public abstract class PutToSleepNode extends AbstractNode {
 
-    public static PutToSleepNode create() {
-        return PutToSleepNodeGen.create();
-    }
-
-    public abstract void executePutToSleep(PointersObject process);
+    public abstract void executePutToSleep(Node node, PointersObject process);
 
     @Specialization
-    protected static final void putToSleep(final PointersObject process,
-                    @Bind("this") final Node node,
+    protected static final void putToSleep(final Node node, final PointersObject process,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
                     @Cached final AddLastLinkToListNode addLastLinkToListNode) {

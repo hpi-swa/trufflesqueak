@@ -6,22 +6,25 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import com.oracle.truffle.api.dsl.NeverDefault;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 
-public final class GetActiveProcessNode extends AbstractNode {
-    @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
+@GenerateInline
+@GenerateCached(false)
+public abstract class GetActiveProcessNode extends AbstractNode {
+    public abstract PointersObject execute(Node node);
 
-    @NeverDefault
-    public static GetActiveProcessNode create() {
-        return new GetActiveProcessNode();
-    }
-
-    public PointersObject execute() {
-        return readNode.executePointers(getContext().getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
+    @Specialization
+    protected static final PointersObject getActiveProcess(final Node node,
+                    @Cached final AbstractPointersObjectReadNode readNode) {
+        return readNode.executePointers(getContext(node).getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 }
