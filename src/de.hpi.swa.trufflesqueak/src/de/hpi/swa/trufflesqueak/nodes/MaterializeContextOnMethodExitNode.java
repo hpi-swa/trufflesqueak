@@ -38,7 +38,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
                     @Cached final GetOrCreateContextNode getOrCreateContextNode) {
         final SqueakImageContext image = getContext();
         final ContextObject lastSeenContext = image.lastSeenContext;
-        final ContextObject context = getOrCreateContextNode.executeGet(frame);
+        final ContextObject context = getOrCreateContextNode.executeGet(frame, node);
         if (isNotLastSeenContextProfile.profile(node, context != lastSeenContext)) {
             assert context.hasTruffleFrame();
             if (lastSeenContext != null && !lastSeenContext.hasMaterializedSender()) {

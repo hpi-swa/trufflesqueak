@@ -50,7 +50,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     protected abstract static class AbstractBasicAtOrAtPutNode extends AbstractPrimitiveNode {
 
-        protected final boolean inBoundsOfSqueakObject(final Object target, final int instSize, final long index, final SqueakObjectSizeNode sizeNode, final Node node) {
+        protected static final boolean inBoundsOfSqueakObject(final Object target, final int instSize, final long index, final SqueakObjectSizeNode sizeNode, final Node node) {
             return SqueakGuards.inBounds1(index + instSize, sizeNode.execute(node, target));
         }
 

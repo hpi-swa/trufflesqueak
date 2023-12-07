@@ -418,10 +418,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 88)
     protected abstract static class PrimSuspendNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
-        @Specialization(guards = "receiver == getActiveProcessNode.execute(node)")
+        @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
         protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Bind("this") final Node node,
-                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
+                        @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
             try {
@@ -434,10 +434,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw CompilerDirectives.shouldNotReachHere();
         }
 
-        @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"})
+        @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
         protected static final PointersObject doSuspendOtherProcess(final PointersObject receiver,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
-                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
+                        @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
@@ -457,10 +457,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 578)
     protected abstract static class PrimSuspendBackingUpV2Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
-        @Specialization(guards = "receiver == getActiveProcessNode.execute(node)")
-        protected final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+        @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
+        protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Bind("this") final Node node,
-                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
+                        @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
             try {
@@ -473,10 +473,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return NilObject.SINGLETON;
         }
 
-        @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"})
-        protected final Object doSuspendOtherProcess(final PointersObject receiver,
+        @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
+        protected static final Object doSuspendOtherProcess(final PointersObject receiver,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
-                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
+                        @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
@@ -485,7 +485,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (myListOrNil instanceof final PointersObject myList) {
                 removeProcessNode.executeRemove(receiver, myList);
                 writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
-                if (myList.getSqueakClass() != getContext().getLinkedListClass()) {
+                if (myList.getSqueakClass() != getContext(node).getLinkedListClass()) {
                     backupContextToBlockingSendTo((ContextObject) myContext, myList);
                     return NilObject.SINGLETON;
                 } else {
@@ -1076,7 +1076,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         @Specialization(guards = {"ownerIsNil(rcvrMutex)"})
-        protected final boolean doNilOwner(final PointersObject rcvrMutex,
+        protected static final boolean doNilOwner(final PointersObject rcvrMutex,
                         @Bind("this") final Node node,
                         @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
@@ -1086,15 +1086,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"ownerIsActiveProcess(rcvrMutex, getActiveProcessNode, node)"})
         protected static final boolean doOwnerIsActiveProcess(@SuppressWarnings("unused") final PointersObject rcvrMutex,
-                        @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
                         @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
             return BooleanObject.TRUE;
         }
 
         @Specialization(guards = {"!ownerIsNil(rcvrMutex)", "!ownerIsActiveProcess(rcvrMutex, getActiveProcessNode, node)"})
         protected static final Object doFallback(@SuppressWarnings("unused") final PointersObject rcvrMutex,
-                        @Bind("this") final Node node,
-                        @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
             return NilObject.SINGLETON;
         }
 
@@ -1108,7 +1108,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractPrimExecuteMethodArgsArrayNode extends AbstractPrimitiveNode {
-        protected final Object doExecuteMethod(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject methodObject,
+        protected static final Object doExecuteMethod(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject methodObject,
                         final ArrayObjectSizeNode sizeNode, final ArrayObjectReadNode readNode, final DispatchEagerlyNode dispatchNode, final Node inlineTarget) {
             final int numArgs = sizeNode.execute(inlineTarget, argArray);
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];

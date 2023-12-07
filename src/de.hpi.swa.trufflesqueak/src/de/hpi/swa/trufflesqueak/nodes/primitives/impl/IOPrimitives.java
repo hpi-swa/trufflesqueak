@@ -133,8 +133,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         public final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Cached final GetOrCreateContextNode getOrCreateContextNode) {
-            writeImage(getOrCreateContextNode.executeGet(frame));
+                        @Bind("this") final Node node,
+                        @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
+            writeImage(getOrCreateContextNode.executeGet(frame, node));
             /* Return false to signal that the image is not resuming. */
             return BooleanObject.FALSE;
         }
@@ -474,11 +475,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"!rcvr.hasSameStorageType(repl)"})
             protected static final void doArraysWithDifferenStorageTypes(final Node node, final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
+                            @Exclusive @Cached final ArrayObjectSizeNode sizeNode,
                             @Exclusive @Cached final ArrayObjectSizeNode replSizeNode,
                             @Cached final ArrayObjectReadNode readNode,
-                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final ArrayObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (!inBounds(sizeNode.execute(node, rcvr), start, stop, replSizeNode.execute(node, repl), replStart)) {
                     errorProfile.enter(node);
                     throw PrimitiveFailed.BAD_INDEX;
@@ -491,10 +492,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization
             protected static final void doArrayObjectPointers(final Node node, final ArrayObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
-                            @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
+                            @Exclusive @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final VariablePointersObjectReadNode readNode,
-                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final ArrayObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), sizeNode.execute(node, rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
                     errorProfile.enter(node);
                     throw PrimitiveFailed.BAD_INDEX;
@@ -508,10 +509,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Specialization
             protected static final void doArrayObjectWeakPointers(final Node node, final ArrayObject rcvr, final long start, final long stop, final WeakVariablePointersObject repl,
                             final long replStart,
-                            @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
+                            @Exclusive @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final WeakVariablePointersObjectReadNode readNode,
-                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final ArrayObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), sizeNode.execute(node, rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
                     errorProfile.enter(node);
                     throw PrimitiveFailed.BAD_INDEX;

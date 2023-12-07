@@ -86,7 +86,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetDirectCallNodesNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         @CompilerDirectives.TruffleBoundary
-        protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final JavaObjectWrapper target) {
+        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final JavaObjectWrapper target) {
             final Object wrappedObject = target.unwrap();
             if (wrappedObject instanceof RootNode rootNode) {
                 final List<DirectCallNode> callNodes = new ArrayList<>();

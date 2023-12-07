@@ -203,7 +203,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private Object[] getConvertedArgumentsFromHeaderWords(final ArgTypeConversionNode conversionNode, final Node inlineTarget, final List<Integer> headerWordList, final Object[] arguments) {
+        private static Object[] getConvertedArgumentsFromHeaderWords(final ArgTypeConversionNode conversionNode, final Node inlineTarget, final List<Integer> headerWordList,
+                        final Object[] arguments) {
             final Object[] argumentsConverted = new Object[arguments.length];
 
             for (int j = 1; j < headerWordList.size(); j++) {

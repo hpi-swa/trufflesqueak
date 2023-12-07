@@ -37,7 +37,7 @@ public abstract class ResumeProcessNode extends AbstractNode {
                     @Cached final GetOrCreateContextNode contextNode) {
         putToSleepNode.executePutToSleep(node, getActiveProcessNode.execute(node));
         final ContextObject newActiveContext = (ContextObject) pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
-        contextNode.executeGet(frame).transferTo(getContext(node), newProcess, newActiveContext, pointersWriteNode, getActiveProcessNode, node);
+        contextNode.executeGet(frame, node).transferTo(getContext(node), newProcess, newActiveContext, pointersWriteNode, getActiveProcessNode, node);
     }
 
     @Specialization(guards = "!hasHigherPriority(newProcess, pointersReadNode, getActiveProcessNode, node)")
