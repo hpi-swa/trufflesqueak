@@ -54,8 +54,9 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doArray(final ArrayObject obj, final long index, final Object value,
+                    @Bind("this") final Node node,
                     @Cached final ArrayObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
@@ -66,8 +67,9 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doVariablePointers(final VariablePointersObject obj, final long index, final Object value,
+                    @Bind("this") final Node node,
                     @Cached final VariablePointersObjectWriteNode writeNode) {
-        writeNode.execute(obj, (int) index, value);
+        writeNode.execute(node, obj, (int) index, value);
     }
 
     @Specialization
@@ -77,8 +79,9 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doWeakPointers(final WeakVariablePointersObject obj, final long index, final Object value,
+                    @Bind("this") final Node node,
                     @Cached final WeakVariablePointersObjectWriteNode writeNode) {
-        writeNode.execute(obj, (int) index, value);
+        writeNode.execute(node, obj, (int) index, value);
     }
 
     @Specialization

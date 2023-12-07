@@ -6,10 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -36,6 +38,7 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
 
     @Specialization
     protected final void doWake(final VirtualFrame frame,
+                    @Bind("this") final Node node,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final ArrayObjectSizeNode arraySizeNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
@@ -46,8 +49,8 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
         final ArrayObject schedLists = pointersReadNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
-        for (long p = arraySizeNode.execute(schedLists) - 1; p >= 0; p--) {
-            final PointersObject processList = (PointersObject) arrayReadNode.execute(schedLists, p);
+        for (long p = arraySizeNode.execute(node, schedLists) - 1; p >= 0; p--) {
+            final PointersObject processList = (PointersObject) arrayReadNode.execute(node, schedLists, p);
             while (!processList.isEmptyList(pointersReadNode)) {
                 final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
                 final Object newContext = pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);

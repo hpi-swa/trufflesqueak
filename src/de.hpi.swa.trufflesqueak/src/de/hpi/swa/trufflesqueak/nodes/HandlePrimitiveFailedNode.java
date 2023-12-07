@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -35,16 +36,18 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNode {
     public abstract void executeHandle(VirtualFrame frame, int reasonCode);
 
     protected abstract static class HandlePrimitiveFailedImplNode extends HandlePrimitiveFailedNode {
-        @Specialization(guards = {"reasonCode < sizeNode.execute(getContext().primitiveErrorTable)"})
-        protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
+        @Specialization(guards = {"reasonCode < sizeNode.execute(node, getContext().primitiveErrorTable)"})
+        protected static final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
+                        @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final ArrayObjectReadNode readNode,
                         @Cached("createStackTopNode(frame)") final FrameStackWriteNode tempWriteNode) {
-            tempWriteNode.executeWrite(frame, readNode.execute(getContext().primitiveErrorTable, reasonCode));
+            tempWriteNode.executeWrite(frame, readNode.execute(node, getContext(node).primitiveErrorTable, reasonCode));
         }
 
-        @Specialization(guards = {"reasonCode >= sizeNode.execute(getContext().primitiveErrorTable)"})
+        @Specialization(guards = {"reasonCode >= sizeNode.execute(node, getContext().primitiveErrorTable)"})
         protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached("createStackTopNode(frame)") final FrameStackWriteNode tempWriteNode) {
             tempWriteNode.executeWrite(frame, (long) reasonCode);

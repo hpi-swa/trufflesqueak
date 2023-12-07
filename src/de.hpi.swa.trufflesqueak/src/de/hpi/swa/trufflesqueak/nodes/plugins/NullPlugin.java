@@ -11,11 +11,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DenyReplace;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -90,12 +92,13 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
             return objectWithTwoSlots;
         }
 
-        @Specialization(guards = "sizeNode.execute(arrayWithTwoSlots) == 2", limit = "1")
+        @Specialization(guards = "sizeNode.execute(node, arrayWithTwoSlots) == 2", limit = "1")
         protected static final ArrayObject doUTC(@SuppressWarnings("unused") final Object receiver, final ArrayObject arrayWithTwoSlots,
+                        @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final ArrayObjectWriteNode writeNode) {
-            writeNode.execute(arrayWithTwoSlots, 0, getUTCMicroseconds());
-            writeNode.execute(arrayWithTwoSlots, 1, getOffsetFromGTMInSeconds());
+                        @Cached(inline = true) final ArrayObjectWriteNode writeNode) {
+            writeNode.execute(node, arrayWithTwoSlots, 0, getUTCMicroseconds());
+            writeNode.execute(node, arrayWithTwoSlots, 1, getOffsetFromGTMInSeconds());
             return arrayWithTwoSlots;
         }
     }

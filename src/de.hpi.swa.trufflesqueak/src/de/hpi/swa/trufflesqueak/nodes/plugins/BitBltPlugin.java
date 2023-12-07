@@ -91,7 +91,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         private static void respecializeArrayToLongOrPrimFail(final ArrayObject array) {
             CompilerAsserts.neverPartOfCompilation();
-            final Object[] values = ArrayObjectToObjectArrayCopyNode.getUncached().execute(array);
+            final Object[] values = ArrayObjectToObjectArrayCopyNode.getUncached().execute(null, array);
             final long[] longs = new long[values.length];
             try {
                 for (int i = 0; i < values.length; i++) {

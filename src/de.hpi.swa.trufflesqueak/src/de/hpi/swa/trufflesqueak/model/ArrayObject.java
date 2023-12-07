@@ -84,7 +84,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
             // Use a fresh write node because uncached node is too generic.
             final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.create();
             for (int i = 0; i < valuesLength; i++) {
-                writeNode.execute(this, i, pointers[i]);
+                writeNode.execute(writeNode, this, i, pointers[i]);
             }
         }
     }
@@ -208,7 +208,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public int size() {
         CompilerAsserts.neverPartOfCompilation();
-        return ArrayObjectSizeNode.getUncached().execute(this);
+        return ArrayObjectSizeNode.getUncached().execute(null, this);
     }
 
     public ArrayObject shallowCopy(final Object storageCopy) {

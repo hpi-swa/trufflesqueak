@@ -99,7 +99,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static void patchImageForTesting() {
         image.interrupt.start();
         final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
-        final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
+        final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(null, lists, PRIORITY_10_LIST_INDEX);
         final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
         final Object lastLink = priority10List.instVarAt0Slow(LINKED_LIST.LAST_LINK);
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";

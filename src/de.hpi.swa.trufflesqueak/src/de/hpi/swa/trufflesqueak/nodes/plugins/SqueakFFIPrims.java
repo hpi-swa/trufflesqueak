@@ -267,13 +267,12 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCalloutWithArgs")
     protected abstract static class PrimCalloutWithArgsNode extends AbstractFFIPrimitiveNode implements BinaryPrimitiveFallback {
-        @Child private ArrayObjectToObjectArrayCopyNode getObjectArrayNode = ArrayObjectToObjectArrayCopyNode.create();
-
         @Specialization
         protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray,
                         @Bind("this") final Node node,
+                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final ArgTypeConversionNode conversionNode) {
-            return doCallout(conversionNode, node, asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(argArray));
+            return doCallout(conversionNode, node, asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(node, argArray));
         }
     }
 

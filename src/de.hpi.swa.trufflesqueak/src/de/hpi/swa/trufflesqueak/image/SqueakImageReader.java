@@ -433,7 +433,7 @@ public final class SqueakImageReader {
         final int majorIndex = SqueakImageConstants.majorClassIndexOf(compactIndex);
         final int minorIndex = SqueakImageConstants.minorClassIndexOf(compactIndex);
         final ArrayObject classTablePage = (ArrayObject) getChunk(hiddenRootsChunk.getWord(majorIndex)).asObject();
-        final Object result = ArrayObjectReadNode.getUncached().execute(classTablePage, minorIndex);
+        final Object result = ArrayObjectReadNode.getUncached().execute(null, classTablePage, minorIndex);
         return result instanceof final ClassObject c ? c : null;
     }
 

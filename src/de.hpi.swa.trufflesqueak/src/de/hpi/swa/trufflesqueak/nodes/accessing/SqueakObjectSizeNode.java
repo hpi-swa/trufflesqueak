@@ -53,8 +53,8 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doArray(final ArrayObject obj, @Cached final ArrayObjectSizeNode sizeNode) {
-        return sizeNode.execute(obj);
+    protected static final int doArray(final Node node, final ArrayObject obj, @Cached final ArrayObjectSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
     }
 
     @Specialization

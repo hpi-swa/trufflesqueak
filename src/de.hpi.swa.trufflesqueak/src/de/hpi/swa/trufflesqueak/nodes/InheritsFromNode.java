@@ -7,22 +7,23 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 
+@GenerateInline
 @GenerateUncached
+@GenerateCached(false)
 public abstract class InheritsFromNode extends AbstractNode {
     protected static final int CACHE_SIZE = 3;
 
-    public static InheritsFromNode create() {
-        return InheritsFromNodeGen.create();
-    }
-
-    public abstract boolean execute(Object object, ClassObject classObject);
+    public abstract boolean execute(Node node, Object object, ClassObject classObject);
 
     @SuppressWarnings("unused")
     @Specialization(limit = "CACHE_SIZE", guards = {"object == cachedObject", "classObject == cachedClass"}, assumptions = {"cachedClass.getClassHierarchyStable()"})

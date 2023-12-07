@@ -35,20 +35,16 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ArrayObjectNodes {
 
+    @GenerateInline
     @GenerateUncached
-    @GenerateCached
+    @GenerateCached(false)
     public abstract static class ArrayObjectReadNode extends AbstractNode {
-
-        @NeverDefault
-        public static ArrayObjectReadNode create() {
-            return ArrayObjectReadNodeGen.create();
-        }
 
         public static ArrayObjectReadNode getUncached() {
             return ArrayObjectReadNodeGen.getUncached();
         }
 
-        public abstract Object execute(ArrayObject obj, long index);
+        public abstract Object execute(Node node, ArrayObject obj, long index);
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()"})
@@ -58,8 +54,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isBooleanType()")
-        protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index,
-                        @Bind("this") final Node node,
+        protected static final Object doArrayOfBooleans(final Node node, final ArrayObject obj, final long index,
                         @Exclusive @Cached final InlinedConditionProfile falseProfile,
                         @Exclusive @Cached final InlinedConditionProfile trueProfile) {
             final byte value = obj.getByte(index);
@@ -74,24 +69,21 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isCharType()")
-        protected static final Object doArrayOfChars(final ArrayObject obj, final long index,
-                        @Bind("this") final Node node,
+        protected static final Object doArrayOfChars(final Node node, final ArrayObject obj, final long index,
                         @Shared("nilProfile") @Cached final InlinedConditionProfile nilProfile) {
             final char value = obj.getChar(index);
             return nilProfile.profile(node, value == ArrayObject.CHAR_NIL_TAG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final Object doArrayOfLongs(final ArrayObject obj, final long index,
-                        @Bind("this") final Node node,
+        protected static final Object doArrayOfLongs(final Node node, final ArrayObject obj, final long index,
                         @Shared("nilProfile") @Cached final InlinedConditionProfile nilProfile) {
             final long value = obj.getLong(index);
             return nilProfile.profile(node, value == ArrayObject.LONG_NIL_TAG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isDoubleType()")
-        protected static final Object doArrayOfDoubles(final ArrayObject obj, final long index,
-                        @Bind("this") final Node node,
+        protected static final Object doArrayOfDoubles(final Node node, final ArrayObject obj, final long index,
                         @Shared("nilProfile") @Cached final InlinedConditionProfile nilProfile) {
             final double value = obj.getDouble(index);
             return nilProfile.profile(node, Double.doubleToRawLongBits(value) == ArrayObject.DOUBLE_NIL_TAG_LONG) ? NilObject.SINGLETON : value;
@@ -141,19 +133,16 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     public abstract static class ArrayObjectSizeNode extends AbstractNode {
-
-        @NeverDefault
-        public static ArrayObjectSizeNode create() {
-            return ArrayObjectSizeNodeGen.create();
-        }
 
         public static ArrayObjectSizeNode getUncached() {
             return ArrayObjectSizeNodeGen.getUncached();
         }
 
-        public abstract int execute(ArrayObject obj);
+        public abstract int execute(Node node, ArrayObject obj);
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final int doEmptyArrayObject(final ArrayObject obj) {
@@ -186,19 +175,16 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     public abstract static class ArrayObjectToObjectArrayCopyNode extends AbstractNode {
-
-        @NeverDefault
-        public static ArrayObjectToObjectArrayCopyNode create() {
-            return ArrayObjectToObjectArrayCopyNodeGen.create();
-        }
 
         public static ArrayObjectToObjectArrayCopyNode getUncached() {
             return ArrayObjectToObjectArrayCopyNodeGen.getUncached();
         }
 
-        public abstract Object[] execute(ArrayObject obj);
+        public abstract Object[] execute(Node node, ArrayObject obj);
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
@@ -211,8 +197,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isBooleanType()")
-        protected static final Object[] doArrayOfBooleans(final ArrayObject obj,
-                        @Bind("this") final Node node,
+        protected static final Object[] doArrayOfBooleans(final Node node, final ArrayObject obj,
                         @Cached final InlinedBranchProfile isNilTagProfile) {
             final byte[] booleans = obj.getBooleanStorage();
             final int length = booleans.length;
@@ -224,8 +209,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isCharType()")
-        protected static final Object[] doArrayOfChars(final ArrayObject obj,
-                        @Bind("this") final Node node,
+        protected static final Object[] doArrayOfChars(final Node node, final ArrayObject obj,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final char[] chars = obj.getCharStorage();
             final int length = chars.length;
@@ -238,8 +222,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final Object[] doArrayOfLongs(final ArrayObject obj,
-                        @Bind("this") final Node node,
+        protected static final Object[] doArrayOfLongs(final Node node, final ArrayObject obj,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final long[] longs = obj.getLongStorage();
             final int length = longs.length;
@@ -251,8 +234,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isDoubleType()")
-        protected static final Object[] doArrayOfDoubles(final ArrayObject obj,
-                        @Bind("this") final Node node,
+        protected static final Object[] doArrayOfDoubles(final Node node, final ArrayObject obj,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final double[] doubles = obj.getDoubleStorage();
             final int length = doubles.length;
@@ -264,19 +246,16 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     public abstract static class ArrayObjectToObjectArrayWithFirstNode extends AbstractNode {
-
-        @NeverDefault
-        public static ArrayObjectToObjectArrayWithFirstNode create() {
-            return ArrayObjectToObjectArrayWithFirstNodeGen.create();
-        }
 
         public static ArrayObjectToObjectArrayWithFirstNode getUncached() {
             return ArrayObjectToObjectArrayWithFirstNodeGen.getUncached();
         }
 
-        public abstract Object[] execute(Object first, ArrayObject obj);
+        public abstract Object[] execute(Node node, Object first, ArrayObject obj);
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object[] doArrayOfObjects(final Object first, final ArrayObject obj) {
@@ -294,8 +273,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isBooleanType()")
-        protected static final Object[] doArrayOfBooleans(final Object first, final ArrayObject obj,
-                        @Bind("this") final Node node,
+        protected static final Object[] doArrayOfBooleans(final Node node, final Object first, final ArrayObject obj,
                         @Cached final InlinedBranchProfile isNilTagProfile) {
             final byte[] booleans = obj.getBooleanStorage();
             final int length = booleans.length;
@@ -308,8 +286,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isCharType()")
-        protected static final Object[] doArrayOfChars(final Object first, final ArrayObject obj,
-                        @Bind("this") final Node node,
+        protected static final Object[] doArrayOfChars(final Node node, final Object first, final ArrayObject obj,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final char[] chars = obj.getCharStorage();
             final int length = chars.length;
@@ -323,8 +300,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final Object[] doArrayOfLongs(final Object first, final ArrayObject obj,
-                        @Bind("this") final Node node,
+        protected static final Object[] doArrayOfLongs(final Node node, final Object first, final ArrayObject obj,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final long[] longs = obj.getLongStorage();
             final int length = longs.length;
@@ -337,8 +313,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isDoubleType()")
-        protected static final Object[] doArrayOfDoubles(final Object first, final ArrayObject obj,
-                        @Bind("this") final Node node,
+        protected static final Object[] doArrayOfDoubles(final Node node, final Object first, final ArrayObject obj,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final double[] doubles = obj.getDoubleStorage();
             final int length = doubles.length;
@@ -421,6 +396,7 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
     @ImportStatic(ArrayObject.class)
     public abstract static class ArrayObjectWriteNode extends AbstractNode {
@@ -430,7 +406,7 @@ public final class ArrayObjectNodes {
             return ArrayObjectWriteNodeGen.create();
         }
 
-        public abstract void execute(ArrayObject obj, long index, Object value);
+        public abstract void execute(Node node, ArrayObject obj, long index, Object value);
 
         @Specialization(guards = {"obj.isEmptyType()"})
         protected static final void doEmptyArray(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
@@ -445,8 +421,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final void doEmptyArrayToChar(final ArrayObject obj, final long index, final char value,
-                        @Bind("this") final Node node,
+        protected static final void doEmptyArrayToChar(final Node node, final ArrayObject obj, final long index, final char value,
                         @Shared("nilTagProfile") @Cached final InlinedBranchProfile nilTagProfile) {
             if (ArrayObject.isCharNilTag(value)) {
                 nilTagProfile.enter(node);
@@ -458,8 +433,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final void doEmptyArrayToLong(final ArrayObject obj, final long index, final long value,
-                        @Bind("this") final Node node,
+        protected static final void doEmptyArrayToLong(final Node node, final ArrayObject obj, final long index, final long value,
                         @Shared("nilTagProfile") @Cached final InlinedBranchProfile nilTagProfile) {
             if (ArrayObject.isLongNilTag(value)) {
                 nilTagProfile.enter(node);
@@ -471,8 +445,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final void doEmptyArrayToDouble(final ArrayObject obj, final long index, final double value,
-                        @Bind("this") final Node node,
+        protected static final void doEmptyArrayToDouble(final Node node, final ArrayObject obj, final long index, final double value,
                         @Shared("isNilTagBranchProfile") @Cached final InlinedBranchProfile isNilTagBranchProfile) {
             if (ArrayObject.isDoubleNilTag(value)) {
                 isNilTagBranchProfile.enter(node);
@@ -501,8 +474,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isBooleanType()"}, replaces = {"doArrayOfBooleans", "doArrayOfBooleansNil"})
-        protected static final void doArrayOfBooleansGeneric(final ArrayObject obj, final long index, final Object value,
-                        @Bind("this") final Node node,
+        protected static final void doArrayOfBooleansGeneric(final Node node, final ArrayObject obj, final long index, final Object value,
                         @Shared("isNilTagBranchProfile") @Cached final InlinedBranchProfile isNilTagBranchProfile) {
             obj.transitionFromBooleansToObjects(isNilTagBranchProfile, node);
             doArrayOfObjects(obj, index, value);
@@ -514,8 +486,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isCharType()", "isCharNilTag(value)"})
-        protected static final void doArrayOfCharsNilTagClash(final ArrayObject obj, final long index, final char value,
-                        @Bind("this") final Node node,
+        protected static final void doArrayOfCharsNilTagClash(final Node node, final ArrayObject obj, final long index, final char value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             /** `value` happens to be char nil tag, need to despecialize to be able store it. */
             obj.transitionFromCharsToObjects(isNilTagProfile, node);
@@ -528,8 +499,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isCharType()"}, replaces = {"doArrayOfChars", "doArrayOfCharsNilTagClash", "doArrayOfCharsNil"})
-        protected static final void doArrayOfCharsGeneric(final ArrayObject obj, final long index, final Object value,
-                        @Bind("this") final Node node,
+        protected static final void doArrayOfCharsGeneric(final Node node, final ArrayObject obj, final long index, final Object value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             obj.transitionFromCharsToObjects(isNilTagProfile, node);
             doArrayOfObjects(obj, index, value);
@@ -541,8 +511,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isLongType()", "isLongNilTag(value)"})
-        protected static final void doArrayOfLongsNilTagClash(final ArrayObject obj, final long index, final long value,
-                        @Bind("this") final Node node,
+        protected static final void doArrayOfLongsNilTagClash(final Node node, final ArrayObject obj, final long index, final long value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             /** `value` happens to be long nil tag, need to despecialize to be able store it. */
             obj.transitionFromLongsToObjects(isNilTagProfile, node);
@@ -555,8 +524,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isLongType()"}, replaces = {"doArrayOfLongs", "doArrayOfLongsNilTagClash", "doArrayOfLongsNil"})
-        protected static final void doArrayOfLongsGeneric(final ArrayObject obj, final long index, final Object value,
-                        @Bind("this") final Node node,
+        protected static final void doArrayOfLongsGeneric(final Node node, final ArrayObject obj, final long index, final Object value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             obj.transitionFromLongsToObjects(isNilTagProfile, node);
             doArrayOfObjects(obj, index, value);
@@ -568,8 +536,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isDoubleType()", "isDoubleNilTag(value)"})
-        protected static final void doArrayOfDoublesNilTagClash(final ArrayObject obj, final long index, final double value,
-                        @Bind("this") final Node node,
+        protected static final void doArrayOfDoublesNilTagClash(final Node node, final ArrayObject obj, final long index, final double value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             // `value` happens to be double nil tag, need to despecialize to be able store it.
             obj.transitionFromDoublesToObjects(isNilTagProfile, node);
@@ -582,8 +549,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = {"obj.isDoubleType()"}, replaces = {"doArrayOfDoubles", "doArrayOfDoublesNilTagClash", "doArrayOfDoublesNil"})
-        protected static final void doArrayOfDoublesGeneric(final ArrayObject obj, final long index, final Object value,
-                        @Bind("this") final Node node,
+        protected static final void doArrayOfDoublesGeneric(final Node node, final ArrayObject obj, final long index, final Object value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             obj.transitionFromDoublesToObjects(isNilTagProfile, node);
             doArrayOfObjects(obj, index, value);

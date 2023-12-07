@@ -379,20 +379,20 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 128)
     protected abstract static class PrimArrayBecomeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = {"sizeNode.execute(receiver) == sizeNode.execute(other)"})
+        @Specialization(guards = {"sizeNode.execute(node, receiver) == sizeNode.execute(node, other)"})
         protected final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other,
                         @Bind("this") final Node node,
                         @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final SqueakObjectBecomeNode becomeNode,
                         @Cached final ArrayObjectReadNode readNode,
                         @Cached final InlinedBranchProfile failProfile) {
-            final int receiverSize = sizeNode.execute(receiver);
+            final int receiverSize = sizeNode.execute(node, receiver);
             int numBecomes = 0;
             final Object[] lefts = new Object[receiverSize];
             final Object[] rights = new Object[receiverSize];
             for (int i = 0; i < receiverSize; i++) {
-                final Object left = readNode.execute(receiver, i);
-                final Object right = readNode.execute(other, i);
+                final Object left = readNode.execute(node, receiver, i);
+                final Object right = readNode.execute(node, other, i);
                 if (becomeNode.execute(node, left, right)) {
                     lefts[numBecomes] = left;
                     rights[numBecomes] = right;
@@ -409,9 +409,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"sizeNode.execute(receiver) != sizeNode.execute(other)"})
+        @Specialization(guards = {"sizeNode.execute(node, receiver) != sizeNode.execute(node, other)"})
         @SuppressWarnings("unused")
         protected static final ArrayObject doBadSize(final ArrayObject receiver, final ArrayObject other,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
                         @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode) {
             throw PrimitiveFailed.BAD_ARGUMENT;
         }
