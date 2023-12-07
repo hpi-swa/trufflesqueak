@@ -47,7 +47,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsL
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -66,11 +65,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      * Literals are cached in the AST and bytes are represented by nodes, so this should not affect
      * performance. Find out why it does affect performance.
      */
+    @CompilationFinal private long header;
     @CompilationFinal(dimensions = 1) private Object[] literals;
     @CompilationFinal(dimensions = 1) private byte[] bytes;
-    @CompilationFinal private int numArgs;
-    @CompilationFinal private int numLiterals;
-    @CompilationFinal private int numTemps;
 
     /*
      * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
@@ -97,13 +94,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public CompiledCodeObject(final SqueakImageContext image, final byte[] bc, final Object[] lits, final ClassObject classObject) {
         super(image, classObject);
         literals = lits;
-        decodeHeader();
         bytes = bc;
     }
 
     private CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
         frameDescriptor = original.frameDescriptor;
+        this.header = original.header;
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
     }
 
@@ -120,11 +117,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         outerMethod = currentOuterCode;
 
         // header info and data
+        header = outerCode.header;
         literals = outerCode.literals;
         bytes = outerCode.bytes;
-        numArgs = outerCode.numArgs;
-        numLiterals = outerCode.numLiterals;
-        numTemps = outerCode.numTemps;
     }
 
     private CompiledCodeObject(final int size, final SqueakImageContext image, final ClassObject classObject) {
@@ -161,7 +156,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private void setLiteralsAndBytes(final Object[] literals, final byte[] bytes) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.literals = literals;
-        decodeHeader();
         this.bytes = bytes;
         renewCallTarget();
     }
@@ -280,15 +274,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Idempotent
     public int getNumArgs() {
-        return numArgs;
+        return CompiledCodeHeaderDecoder.getNumArguments(getHeader());
     }
 
     public int getNumTemps() {
-        return numTemps;
+        return CompiledCodeHeaderDecoder.getNumTemps(getHeader());
     }
 
     public int getNumLiterals() {
-        return numLiterals;
+        return CompiledCodeHeaderDecoder.getNumLiterals(header);
     }
 
     public int getSqueakContextSize() {
@@ -312,13 +306,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // header is a tagged small integer
-        final long header = chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS;
-        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
-        assert literals == null;
-        literals = chunk.getPointers(1 + numLiterals);
-        decodeHeader();
-        assert bytes == null;
-        bytes = Arrays.copyOfRange(chunk.getBytes(), literals.length * SqueakImageConstants.WORD_SIZE, chunk.getBytes().length);
+        header = chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS;
+        assert literals == null && bytes == null;
+        literals = chunk.getPointers(1, CompiledCodeHeaderDecoder.getNumLiterals(header));
+        bytes = Arrays.copyOfRange(chunk.getBytes(), getBytecodeOffset(), chunk.getBytes().length);
     }
 
     public AbstractBytecodeNode[] asBytecodeNodesEmpty() {
@@ -333,24 +324,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return getDecoder().findLineNumber(this, index);
     }
 
-    private void decodeHeader() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        final long header = getHeader();
-        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
-        numTemps = CompiledCodeHeaderDecoder.getNumTemps(header);
-        numArgs = CompiledCodeHeaderDecoder.getNumArguments(header);
-    }
-
     public void become(final CompiledCodeObject other) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
+        final long header2 = other.header;
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;
         final EconomicMap<Integer, CompiledCodeObject> shadowBlocks2 = other.shadowBlocks;
         final CompiledCodeObject outerMethod2 = other.outerMethod;
+        other.header = header;
         other.setLiteralsAndBytes(literals, bytes);
         other.shadowBlocks = shadowBlocks;
         other.outerMethod = outerMethod;
         other.callTargetStable().invalidate();
+        header = header2;
         setLiteralsAndBytes(literals2, bytes2);
         shadowBlocks = shadowBlocks2;
         outerMethod = outerMethod2;
@@ -358,7 +344,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public int getBytecodeOffset() {
-        return (1 + numLiterals) * SqueakImageConstants.WORD_SIZE; // header plus numLiterals
+        return (1 + getNumLiterals()) * SqueakImageConstants.WORD_SIZE; // header plus numLiterals
     }
 
     public long at0(final long index) {
@@ -393,22 +379,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
-    public Object getLiteral(final long longIndex) {
-        return literals[(int) (1 + longIndex)]; // +1 for skipping header.
+    public Object getLiteral(final long index) {
+        return literals[(int) index];
     }
 
-    public void setLiteral(final long longIndex, final Object obj) {
-        final int index = (int) longIndex;
+    public void setLiteral(final long index, final Object obj) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        if (index == 0) {
-            assert obj instanceof Long;
-            final int oldNumLiterals = numLiterals;
-            literals[0] = obj;
-            decodeHeader();
-            assert numLiterals == oldNumLiterals;
-        } else {
-            literals[index] = obj;
-        }
+        literals[(int) index] = obj;
         invalidateCallTarget();
     }
 
@@ -524,6 +501,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
         if (writeHeader(writer, formatOffset)) {
             assert SqueakImageConstants.SMALL_INTEGER_MIN_VAL <= getHeader() && getHeader() <= SqueakImageConstants.SMALL_INTEGER_MAX_VAL : "Method header out of SmallInteger range";
+            writer.writeLong(getHeader());
             writer.writeObjects(literals);
             writer.writeBytes(getBytes());
             final int byteOffset = getBytes().length % SqueakImageConstants.WORD_SIZE;
@@ -606,16 +584,18 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
-    private long getHeader() {
-        return (long) literals[0];
+    public long getHeader() {
+        return header;
     }
 
     public void setHeader(final long header) {
-        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
-        literals = ArrayUtils.withAll(1 + numLiterals, NilObject.SINGLETON);
         // keep negative method headers in SmallInteger range
-        literals[0] = header | (header < 0 ? NEGATIVE_METHOD_HEADER_MASK : 0);
-        decodeHeader();
+        this.header = header | (header < 0 ? NEGATIVE_METHOD_HEADER_MASK : 0);
+        assert literals == null || getNumLiterals() == literals.length;
+    }
+
+    public void initalizeLiterals() {
+        literals = ArrayUtils.withAll(getNumLiterals(), NilObject.SINGLETON);
     }
 
     public boolean hasStoreIntoTemp1AfterCallPrimitive() {
@@ -663,29 +643,26 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      *   sign bit:       1 bit:    selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag)
      * </pre>
      */
-    private static final class CompiledCodeHeaderDecoder {
-        private static final int NUM_LITERALS_SIZE = 1 << 15;
-        private static final int NUM_TEMPS_TEMPS_SIZE = 1 << 6;
-        private static final int NUM_ARGUMENTS_SIZE = 1 << 4;
+    public static final class CompiledCodeHeaderDecoder {
 
-        private static int getNumLiterals(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 0, NUM_LITERALS_SIZE);
+        public static int getNumLiterals(final long headerWord) {
+            return (int) headerWord & 0x7FFF;
         }
 
         private static boolean getHasPrimitive(final long headerWord) {
-            return (headerWord & 1 << 16) != 0;
+            return (headerWord & 0x10000) != 0;
         }
 
         private static boolean getNeedsLargeFrame(final long headerWord) {
-            return (headerWord & 1 << 17) != 0;
+            return (headerWord & 0x20000) != 0;
         }
 
         private static int getNumTemps(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 18, NUM_TEMPS_TEMPS_SIZE);
+            return (int) (headerWord >> 18) & 0x3F;
         }
 
         private static int getNumArguments(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 24, NUM_ARGUMENTS_SIZE);
+            return (int) (headerWord >> 24) & 0x0F;
         }
 
         private static boolean getSignFlag(final long headerWord) {

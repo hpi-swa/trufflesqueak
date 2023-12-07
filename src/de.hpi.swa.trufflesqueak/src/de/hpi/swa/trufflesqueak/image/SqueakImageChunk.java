@@ -184,11 +184,11 @@ public final class SqueakImageChunk {
         return pointers;
     }
 
-    public Object[] getPointers(final int end) {
+    public Object[] getPointers(final int start, final int count) {
         if (pointers == null) {
-            pointers = new Object[end];
-            for (int i = 0; i < end; i++) {
-                pointers[i] = decodePointer(getWord(i));
+            pointers = new Object[count];
+            for (int i = 0; i < count; i++) {
+                pointers[i] = decodePointer(getWord(start + i));
             }
         }
         return pointers;
