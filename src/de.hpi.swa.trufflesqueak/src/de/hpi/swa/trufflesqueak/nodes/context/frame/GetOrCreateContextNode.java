@@ -46,7 +46,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
 
     public final ContextObject executeGet(final VirtualFrame frame) {
         return executeGet(frame, null);
-    };
+    }
 
     @Specialization
     protected static final ContextObject doGetOrCreate(final VirtualFrame frame, final Node node,

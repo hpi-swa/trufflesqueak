@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
@@ -25,6 +26,7 @@ import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.library.ReflectionLibrary;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -87,6 +89,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doSendCached")
         protected static final Object doSendGeneric(final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
+                        @Bind("this") final Node node,
                         @Cached final LookupMethodNode lookupNode,
                         @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Cached final DispatchUneagerlyNode dispatchNode,
@@ -103,7 +106,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         receiverAndArguments[1 + i] = wrapNode.executeWrap(arguments[i]);
                     }
                     try {
-                        return dispatchNode.executeDispatch(method, receiverAndArguments, NilObject.SINGLETON);
+                        return dispatchNode.executeDispatch(node, method, receiverAndArguments, NilObject.SINGLETON);
                     } catch (final ProcessSwitch ps) {
                         CompilerDirectives.transferToInterpreter();
                         image.printToStdErr(ps);

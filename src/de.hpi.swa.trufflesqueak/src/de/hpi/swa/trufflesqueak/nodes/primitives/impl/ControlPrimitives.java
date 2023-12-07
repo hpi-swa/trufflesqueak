@@ -358,6 +358,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 86)
     protected abstract static class PrimWaitNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
         @Specialization
+        @SuppressWarnings("truffle-static-method")
         protected final PointersObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
                         @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
@@ -371,7 +372,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 writeNode.execute(receiver, SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
                 return receiver;
             } else {
-                addLastLinkToListNode.execute(getActiveProcessNode.execute(node), receiver);
+                addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), receiver);
                 try {
                     wakeHighestPriorityNode.executeWake(frame, node);
                 } catch (final ProcessSwitch ps) {
@@ -392,6 +393,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimResumeNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
 
         @Specialization
+        @SuppressWarnings("truffle-static-method")
         protected final Object doResume(final VirtualFrame frame, final PointersObject receiver,
                         @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
@@ -904,6 +906,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 167)
     protected abstract static class PrimYieldNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
         @Specialization
+        @SuppressWarnings("truffle-static-method")
         protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
                         @Bind("this") final Node node,
                         @Cached final ArrayObjectReadNode arrayReadNode,
@@ -918,7 +921,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (processList.isEmptyList(pointersReadNode)) {
                 return NilObject.SINGLETON;
             }
-            addLastLinkToListNode.execute(activeProcess, processList);
+            addLastLinkToListNode.execute(node, activeProcess, processList);
             try {
                 wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
@@ -1023,7 +1026,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final FrameStackPushNode pushNode) {
-            addLastLinkToListNode.execute(getActiveProcessNode.execute(node), mutex);
+            addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), mutex);
             try {
                 wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
@@ -1057,7 +1060,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
-            addLastLinkToListNode.execute(effectiveProcess, mutex);
+            addLastLinkToListNode.execute(node, effectiveProcess, mutex);
             try {
                 wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
@@ -1087,7 +1090,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"ownerIsActiveProcess(rcvrMutex, getActiveProcessNode, node)"})
         protected static final boolean doOwnerIsActiveProcess(@SuppressWarnings("unused") final PointersObject rcvrMutex,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
-                        @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
+                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
             return BooleanObject.TRUE;
         }
 
@@ -1125,7 +1128,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimExecuteMethodArgsArray3Node extends AbstractPrimExecuteMethodArgsArrayNode implements TernaryPrimitiveFallback {
         /** Deprecated since Kernel-eem.1204. Kept for backward compatibility. */
         @Specialization
-        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject methodObject,
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject methodObject,
                         @Bind("this") final Node node,
                         @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final ArrayObjectReadNode readNode,
@@ -1138,7 +1141,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 188)
     protected abstract static class PrimExecuteMethodArgsArray4Node extends AbstractPrimExecuteMethodArgsArrayNode implements QuaternaryPrimitiveFallback {
         @Specialization
-        protected final Object doExecute(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
+        protected static final Object doExecute(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
                         final CompiledCodeObject methodObject,
                         @Bind("this") final Node node,
                         @Cached final ArrayObjectSizeNode sizeNode,

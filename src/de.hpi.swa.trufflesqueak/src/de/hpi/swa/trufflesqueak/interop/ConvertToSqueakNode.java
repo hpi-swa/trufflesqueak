@@ -8,10 +8,13 @@ package de.hpi.swa.trufflesqueak.interop;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -21,9 +24,11 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 /**
  * Converts an object to a TruffleSqueak object, returns `nil` if conversion is not possible.
  */
+@GenerateInline
+@GenerateCached(false)
 public abstract class ConvertToSqueakNode extends AbstractNode {
 
-    public abstract Object executeConvert(Object value);
+    public abstract Object executeConvert(Node node, Object value);
 
     @Specialization(guards = "lib.isBoolean(value)", limit = "1")
     protected static final boolean doBoolean(final Object value,

@@ -7,11 +7,14 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -20,16 +23,18 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /** Uneagerly version of {@link DispatchEagerlyNode} but with uncached version. */
+@GenerateInline
 @GenerateUncached
+@GenerateCached(false)
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchUneagerlyNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 3;
 
-    public static DispatchUneagerlyNode getUncached() {
-        return DispatchUneagerlyNodeGen.getUncached();
+    public static final Object executeUncached(final CompiledCodeObject method, final Object[] receiverAndArguments, final Object contextOrMarker) {
+        return DispatchUneagerlyNodeGen.getUncached().executeDispatch(null, method, receiverAndArguments, contextOrMarker);
     }
 
-    public abstract Object executeDispatch(CompiledCodeObject method, Object[] receiverAndArguments, Object contextOrMarker);
+    public abstract Object executeDispatch(Node node, CompiledCodeObject method, Object[] receiverAndArguments, Object contextOrMarker);
 
     @Specialization(guards = {"method == cachedMethod"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = "cachedMethod.getCallTargetStable()")

@@ -186,11 +186,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+                        @Bind("this") final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
             final Object p = innerContext.enter(this);
             try {
-                return convertNode.executeConvert(evalString(null, languageIdOrMimeTypeObj, sourceObject));
+                return convertNode.executeConvert(node, evalString(null, languageIdOrMimeTypeObj, sourceObject));
             } finally {
                 innerContext.leave(this, p);
                 innerContext.close();
@@ -234,11 +235,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
+                        @Bind("this") final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
             final Object p = innerContext.enter(null);
             try {
-                return convertNode.executeConvert(evalFile(languageIdOrMimeTypeObj, path));
+                return convertNode.executeConvert(node, evalFile(languageIdOrMimeTypeObj, path));
             } finally {
                 innerContext.leave(null, p);
                 innerContext.close();

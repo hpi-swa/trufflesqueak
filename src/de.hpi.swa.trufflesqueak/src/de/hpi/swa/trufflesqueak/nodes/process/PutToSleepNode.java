@@ -37,6 +37,6 @@ public abstract class PutToSleepNode extends AbstractNode {
         final long priority = pointersReadNode.executeLong(process, PROCESS.PRIORITY);
         final ArrayObject processLists = pointersReadNode.executeArray(getContext(node).getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject processList = (PointersObject) arrayReadNode.execute(node, processLists, priority - 1);
-        addLastLinkToListNode.execute(process, processList);
+        addLastLinkToListNode.execute(node, process, processList);
     }
 }

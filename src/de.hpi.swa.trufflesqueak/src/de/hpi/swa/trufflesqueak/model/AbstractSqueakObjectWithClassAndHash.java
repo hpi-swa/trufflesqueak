@@ -150,12 +150,12 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     @TruffleBoundary
     public final Object send(final SqueakImageContext image, final String selector, final Object... arguments) {
-        final Object methodObject = LookupMethodByStringNode.getUncached().executeLookup(getSqueakClass(), selector);
+        final Object methodObject = LookupMethodByStringNode.executeUncached(getSqueakClass(), selector);
         if (methodObject instanceof final CompiledCodeObject method) {
             final boolean wasActive = image.interrupt.isActive();
             image.interrupt.deactivate();
             try {
-                return DispatchUneagerlyNode.getUncached().executeDispatch(method, ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
+                return DispatchUneagerlyNode.executeUncached(method, ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
             } finally {
                 if (wasActive) {
                     image.interrupt.activate();

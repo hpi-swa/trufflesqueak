@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -50,6 +51,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
          */
         @Specialization(guards = {"!hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
         protected static final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
+                        @Bind("this") final Node node,
                         @Cached("createTemporaryReadNode(frame, 0)") final FrameStackReadNode blockArgumentNode,
                         @SuppressWarnings("unused") @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode,
                         @Cached("create(frame, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
@@ -57,7 +59,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
                         @Cached final DispatchClosureNode dispatchNode) {
             completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
             final BlockClosureObject closure = (BlockClosureObject) blockArgumentNode.executeRead(frame);
-            dispatchNode.execute(closure, FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0));
+            dispatchNode.execute(node, closure, FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0));
         }
 
         @SuppressWarnings("unused")
