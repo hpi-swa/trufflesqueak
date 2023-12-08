@@ -35,7 +35,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
                     @Bind("this") final Node node,
                     @Cached final InlinedConditionProfile isNotLastSeenContextProfile,
                     @Cached final InlinedConditionProfile continueProfile,
-                    @Cached final GetOrCreateContextNode getOrCreateContextNode) {
+                    @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
         final SqueakImageContext image = getContext();
         final ContextObject lastSeenContext = image.lastSeenContext;
         final ContextObject context = getOrCreateContextNode.executeGet(frame, node);

@@ -188,8 +188,8 @@ public final class CreateFrameArgumentNodes {
         protected static final ContextObject doGetOrCreateContext(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
-                        @Cached final GetOrCreateContextNode getOrCreateContextNode) {
-            return getOrCreateContextNode.executeGet(frame);
+                        @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
+            return getOrCreateContextNode.executeGet(frame, node);
         }
 
         protected static final boolean doesNotNeedSender(final CompiledCodeObject code, final InlinedExactClassProfile assumptionProfile, final Node node) {

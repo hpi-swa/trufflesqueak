@@ -187,11 +187,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         public static final int NEW_CACHE_SIZE = 6;
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
-        protected final AbstractSqueakObjectWithClassAndHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
+        protected static final AbstractSqueakObjectWithClassAndHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
+                        @Bind("this") final Node node,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
-                return newNode.execute(getContext(), cachedReceiver);
+                return newNode.execute(node, getContext(node), cachedReceiver);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -200,11 +201,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newDirect")
-        protected final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
+        protected static final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
+                        @Bind("this") final Node node,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
-                return newNode.execute(getContext(), receiver);
+                return newNode.execute(node, getContext(node), receiver);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -224,7 +226,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
-                return newNode.execute(getContext(node), cachedReceiver, sizeProfile.profile(node, (int) size));
+                return newNode.execute(node, getContext(node), cachedReceiver, sizeProfile.profile(node, (int) size));
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -233,11 +235,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
+        protected static final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
+                        @Bind("this") final Node node,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
-                return newNode.execute(getContext(), receiver, (int) size);
+                return newNode.execute(node, getContext(node), receiver, (int) size);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
