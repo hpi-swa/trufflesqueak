@@ -46,6 +46,10 @@ public final class ArrayObjectNodes {
 
         public abstract Object execute(Node node, ArrayObject obj, long index);
 
+        public static final Object executeUncached(final ArrayObject obj, final long index) {
+            return getUncached().execute(null, obj, index);
+        }
+
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()"})
         protected static final NilObject doEmptyArray(final ArrayObject obj, final long index) {
@@ -138,11 +142,11 @@ public final class ArrayObjectNodes {
     @GenerateCached(false)
     public abstract static class ArrayObjectSizeNode extends AbstractNode {
 
-        public static ArrayObjectSizeNode getUncached() {
-            return ArrayObjectSizeNodeGen.getUncached();
-        }
-
         public abstract int execute(Node node, ArrayObject obj);
+
+        public static final int executeUncached(final ArrayObject obj) {
+            return ArrayObjectSizeNodeGen.getUncached().execute(null, obj);
+        }
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final int doEmptyArrayObject(final ArrayObject obj) {
@@ -180,11 +184,11 @@ public final class ArrayObjectNodes {
     @GenerateCached(false)
     public abstract static class ArrayObjectToObjectArrayCopyNode extends AbstractNode {
 
-        public static ArrayObjectToObjectArrayCopyNode getUncached() {
-            return ArrayObjectToObjectArrayCopyNodeGen.getUncached();
-        }
-
         public abstract Object[] execute(Node node, ArrayObject obj);
+
+        public static final Object[] executeUncached(final ArrayObject obj) {
+            return ArrayObjectToObjectArrayCopyNodeGen.getUncached().execute(null, obj);
+        }
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
@@ -251,11 +255,11 @@ public final class ArrayObjectNodes {
     @GenerateCached(false)
     public abstract static class ArrayObjectToObjectArrayWithFirstNode extends AbstractNode {
 
-        public static ArrayObjectToObjectArrayWithFirstNode getUncached() {
-            return ArrayObjectToObjectArrayWithFirstNodeGen.getUncached();
-        }
-
         public abstract Object[] execute(Node node, Object first, ArrayObject obj);
+
+        public static final Object[] executeUncached(final Object first, final ArrayObject obj) {
+            return ArrayObjectToObjectArrayWithFirstNodeGen.getUncached().execute(null, first, obj);
+        }
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object[] doArrayOfObjects(final Object first, final ArrayObject obj) {

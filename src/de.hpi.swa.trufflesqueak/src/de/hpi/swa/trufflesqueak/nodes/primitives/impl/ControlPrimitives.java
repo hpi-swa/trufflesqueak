@@ -743,12 +743,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object primitiveWithArgsSlow(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
             /* Deopt might be acceptable because primitive is mostly used for debugging anyway. */
             CompilerDirectives.transferToInterpreter();
-            final int arraySize = ArrayObjectSizeNode.getUncached().execute(null, argumentArray);
+            final int arraySize = ArrayObjectSizeNode.executeUncached(argumentArray);
             final AbstractPrimitiveNode primitiveNode = insert(createPrimitiveNode(primitiveIndex, arraySize));
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
-                final Object[] receiverAndArguments = ArrayObjectToObjectArrayWithFirstNode.getUncached().execute(null, receiver, argumentArray);
+                final Object[] receiverAndArguments = ArrayObjectToObjectArrayWithFirstNode.executeUncached(receiver, argumentArray);
                 return primitiveNode.executeWithArguments(frame, receiverAndArguments);
             }
         }
@@ -1225,13 +1225,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final Object target, final ArrayObject argumentArray) {
             /* Deopt might be acceptable because primitive is mostly used for debugging anyway. */
             CompilerDirectives.transferToInterpreter();
-            final int arraySize = ArrayObjectSizeNode.getUncached().execute(null, argumentArray);
+            final int arraySize = ArrayObjectSizeNode.executeUncached(argumentArray);
             assert arraySize == methodObject.getNumArgs();
             final AbstractPrimitiveNode primitiveNode = insert(createPrimitiveNode(methodObject));
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
-                final Object[] receiverAndArguments = ArrayObjectToObjectArrayWithFirstNode.getUncached().execute(null, target, argumentArray);
+                final Object[] receiverAndArguments = ArrayObjectToObjectArrayWithFirstNode.executeUncached(target, argumentArray);
                 return primitiveNode.executeWithArguments(frame, receiverAndArguments);
             }
         }

@@ -208,7 +208,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public int size() {
         CompilerAsserts.neverPartOfCompilation();
-        return ArrayObjectSizeNode.getUncached().execute(null, this);
+        return ArrayObjectSizeNode.executeUncached(this);
     }
 
     public ArrayObject shallowCopy(final Object storageCopy) {

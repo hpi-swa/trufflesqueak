@@ -166,11 +166,11 @@ public final class NativeObjectNodes {
     @GenerateCached(false)
     public abstract static class NativeObjectSizeNode extends AbstractNode {
 
-        public static NativeObjectSizeNode getUncached() {
-            return NativeObjectSizeNodeGen.getUncached();
-        }
-
         public abstract int execute(Node node, NativeObject obj);
+
+        public static final int executeUncached(final NativeObject obj) {
+            return NativeObjectSizeNodeGen.getUncached().execute(null, obj);
+        }
 
         @Specialization(guards = "obj.isByteType()")
         protected static final int doNativeBytes(final NativeObject obj) {
