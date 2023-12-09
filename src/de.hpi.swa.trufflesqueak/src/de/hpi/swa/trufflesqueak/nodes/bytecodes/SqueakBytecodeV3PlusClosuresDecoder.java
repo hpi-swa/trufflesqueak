@@ -78,7 +78,7 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             case 0x89 -> new PushBytecodes.PushActiveContextNode(code, index);
             case 0x8A -> PushBytecodes.PushNewArrayNode.create(code, index, 2, bytecode[index + 1]);
             case 0x8B -> MiscellaneousBytecodes.CallPrimitiveNode.create(code, index, bytecode[index + 1], bytecode[index + 2]);
-            case 0x8C -> new PushBytecodes.PushRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
+            case 0x8C -> PushBytecodes.PushRemoteTempNode.create(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8D -> new StoreBytecodes.StoreIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8E -> new StoreBytecodes.PopIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8F -> PushBytecodes.PushClosureNode.create(code, index, bytecode[index + 1], bytecode[index + 2], bytecode[index + 3]);

@@ -1383,7 +1383,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @NodeInfo(cost = NodeCost.NONE)
     public abstract static class PrimLoadInstVarNode extends AbstractPrimitiveNode {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final long variableIndex;
 
         protected PrimLoadInstVarNode(final long variableIndex) {
@@ -1395,8 +1394,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doReceiverVariable(final Object receiver) {
-            return at0Node.execute(receiver, variableIndex);
+        protected final Object doReceiverVariable(final Object receiver,
+                        @Bind("this") final Node node,
+                        @Cached final SqueakObjectAt0Node at0Node) {
+            return at0Node.execute(node, receiver, variableIndex);
         }
     }
 

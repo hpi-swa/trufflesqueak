@@ -41,11 +41,11 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSi
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectSizeNode extends AbstractNode {
 
-    public static final SqueakObjectSizeNode getUncached() {
-        return SqueakObjectSizeNodeGen.getUncached();
-    }
-
     public abstract int execute(Node node, Object obj);
+
+    public static final int executeUncached(final Object obj) {
+        return SqueakObjectSizeNodeGen.getUncached().execute(null, obj);
+    }
 
     @Specialization
     protected static final int doNil(final NilObject obj) {

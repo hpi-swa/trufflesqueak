@@ -289,7 +289,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(receiver, index - 1);
+            return at0Node.execute(node, receiver, index - 1);
         }
     }
 
@@ -303,7 +303,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(target, index - 1);
+            return at0Node.execute(node, target, index - 1);
         }
     }
 
@@ -540,7 +540,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(receiver, index - 1);
+            return at0Node.execute(node, receiver, index - 1);
         }
     }
 
@@ -553,7 +553,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(target, index - 1);
+            return at0Node.execute(node, target, index - 1);
         }
     }
 

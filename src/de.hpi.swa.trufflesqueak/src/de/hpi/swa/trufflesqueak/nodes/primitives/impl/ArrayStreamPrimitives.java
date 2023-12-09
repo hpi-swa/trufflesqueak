@@ -55,11 +55,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         protected static final Object basicAt(final Object receiver, final long index, final SqueakObjectSizeNode sizeNode, final SqueakObjectInstSizeNode instSizeNode,
-                        final SqueakObjectAt0Node at0Node,
-                        final InlinedBranchProfile outOfBounceProfile, final Node node) {
+                        final SqueakObjectAt0Node at0Node, final InlinedBranchProfile outOfBounceProfile, final Node node) {
             final int instSize = instSizeNode.execute(node, receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index, sizeNode, node)) {
-                return at0Node.execute(receiver, index - 1 + instSize);
+                return at0Node.execute(node, receiver, index - 1 + instSize);
             } else {
                 outOfBounceProfile.enter(node);
                 throw PrimitiveFailed.BAD_INDEX;
@@ -67,8 +66,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         protected static final Object basicAtPut(final AbstractSqueakObject receiver, final long index, final Object value, final SqueakObjectSizeNode sizeNode,
-                        final SqueakObjectInstSizeNode instSizeNode,
-                        final SqueakObjectAtPut0Node atput0Node, final InlinedBranchProfile outOfBounceProfile, final Node node) {
+                        final SqueakObjectInstSizeNode instSizeNode, final SqueakObjectAtPut0Node atput0Node, final InlinedBranchProfile outOfBounceProfile, final Node node) {
             final int instSize = instSizeNode.execute(node, receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index, sizeNode, node)) {
                 atput0Node.execute(receiver, index - 1 + instSize, value);
