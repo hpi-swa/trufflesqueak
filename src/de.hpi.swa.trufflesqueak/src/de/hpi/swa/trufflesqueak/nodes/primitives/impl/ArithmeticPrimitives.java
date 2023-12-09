@@ -14,6 +14,9 @@ import com.oracle.truffle.api.ExactMath;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -29,6 +32,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
@@ -721,23 +725,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 38)
     protected abstract static class PrimFloatAtNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "index == 1")
-        protected static final long doDoubleHigh(final double receiver, @SuppressWarnings("unused") final long index) {
-            return Integer.toUnsignedLong((int) (Double.doubleToRawLongBits(receiver) >> 32));
+        protected static final long doHigh(final Object receiver, @SuppressWarnings("unused") final long index,
+                        @Bind("this") final Node node,
+                        @Shared("toDoubleNode") @Cached final ToDoubleNode toDoubleNode) {
+            return Integer.toUnsignedLong((int) (Double.doubleToRawLongBits(toDoubleNode.execute(node, receiver)) >> 32));
         }
 
         @Specialization(guards = "index == 2")
-        protected static final long doDoubleLow(final double receiver, @SuppressWarnings("unused") final long index) {
-            return Integer.toUnsignedLong((int) Double.doubleToRawLongBits(receiver));
-        }
-
-        @Specialization(guards = "index == 1")
-        protected static final long doFloatHigh(final FloatObject receiver, final long index) {
-            return doDoubleHigh(receiver.getValue(), index);
-        }
-
-        @Specialization(guards = "index == 2")
-        protected static final long doFloatLow(final FloatObject receiver, final long index) {
-            return doDoubleLow(receiver.getValue(), index);
+        protected static final long doLow(final Object receiver, @SuppressWarnings("unused") final long index,
+                        @Bind("this") final Node node,
+                        @Shared("toDoubleNode") @Cached final ToDoubleNode toDoubleNode) {
+            return Integer.toUnsignedLong((int) Double.doubleToRawLongBits(toDoubleNode.execute(node, receiver)));
         }
 
         @SuppressWarnings("unused")
@@ -1648,6 +1646,27 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 return exp;
             }
+        }
+    }
+
+    @GenerateInline
+    @GenerateCached(false)
+    protected abstract static class ToDoubleNode extends AbstractNode {
+        protected abstract double execute(Node inliningTarget, Object value);
+
+        @Specialization
+        protected static final double doDouble(final double value) {
+            return value;
+        }
+
+        @Specialization
+        protected static final double doFloatObject(final FloatObject value) {
+            return value.getValue();
+        }
+
+        @Fallback
+        protected static final double doFallback(@SuppressWarnings("unused") final Object value) {
+            throw PrimitiveFailed.BAD_RECEIVER;
         }
     }
 

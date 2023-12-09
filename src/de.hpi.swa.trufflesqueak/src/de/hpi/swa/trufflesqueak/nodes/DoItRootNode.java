@@ -31,10 +31,8 @@ public abstract class DoItRootNode extends RootNode {
     }
 
     public static DoItRootNode create(final SqueakImageContext image, final SqueakLanguage language, final Object closure) {
-        return DoItRootNodeGen.create(image, language, closure);
+        return DoItRootNodeGen.create(image, (TruffleLanguage<?>) language, closure);
     }
-
-    public abstract Object execute(VirtualFrame frame);
 
     @Specialization
     protected final Object doIt(final VirtualFrame frame,

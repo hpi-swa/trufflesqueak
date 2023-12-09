@@ -13,6 +13,8 @@ import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -24,6 +26,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
@@ -236,11 +239,13 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < aByteArrayLength; i++) {
                 final int wordIndex = i / 2;
                 final long value = aByteArray.getByteUnsigned(i) << 8;
+                final int intValue;
                 if (i % 2 == 0) {
-                    aSoundBuffer.setInt(wordIndex, aSoundBuffer.getInt(wordIndex) & 0xffff0000 | (int) value & 0xffff);
+                    intValue = aSoundBuffer.getInt(wordIndex) & 0xffff0000 | (int) value & 0xffff;
                 } else {
-                    aSoundBuffer.setInt(wordIndex, (int) value << 16 | aSoundBuffer.getInt(wordIndex) & 0xffff);
+                    intValue = (int) value << 16 | aSoundBuffer.getInt(wordIndex) & 0xffff;
                 }
+                aSoundBuffer.setInt(wordIndex, intValue);
             }
             return receiver;
         }
@@ -424,19 +429,11 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveStringHash")
     /* Byte(Array|String|Symbol)>>#hashWithInitialHash: */
     public abstract static class PrimStringHash2Node extends AbstractPrimStringHashNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = {"string.isByteType()"})
-        protected static final long doNativeObject(final NativeObject string, final long initialHash) {
-            return calculateHash(initialHash, string.getByteStorage());
-        }
-
         @Specialization
-        protected static final long doLargeInteger(final LargeIntegerObject largeInteger, final long initialHash) {
-            return calculateHash(initialHash, largeInteger.getBytes());
-        }
-
-        @Specialization(guards = {"isLongMinValue(value)"})
-        protected static final long doLongMinValue(@SuppressWarnings("unused") final long value, final long initialHash) {
-            return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
+        protected static final long doStringHash(final Object receiver, final long initialHash,
+                        @Bind("this") final Node node,
+                        @Cached final GetHashBytesNode getHashBytesNode) {
+            return calculateHash(initialHash, getHashBytesNode.execute(node, receiver));
         }
     }
 
@@ -444,19 +441,37 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveStringHash")
     /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
     public abstract static class PrimStringHash3Node extends AbstractPrimStringHashNode implements TernaryPrimitiveFallback {
-        @Specialization(guards = {"string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final long initialHash) {
-            return calculateHash(initialHash, string.getByteStorage());
+        @Specialization
+        protected static final long doStringHash(@SuppressWarnings("unused") final Object receiver, final Object target, final long initialHash,
+                        @Bind("this") final Node node,
+                        @Cached final GetHashBytesNode getHashBytesNode) {
+            return calculateHash(initialHash, getHashBytesNode.execute(node, target));
+        }
+    }
+
+    @GenerateInline
+    @GenerateCached(false)
+    protected abstract static class GetHashBytesNode extends AbstractNode {
+        protected abstract byte[] execute(Node inliningTarget, Object value);
+
+        @Specialization(guards = {"value.isByteType()"})
+        protected static final byte[] doNativeObject(final NativeObject value) {
+            return value.getByteStorage();
         }
 
         @Specialization
-        protected static final long doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject largeInteger, final long initialHash) {
-            return calculateHash(initialHash, largeInteger.getBytes());
+        protected static final byte[] doLargeInteger(final LargeIntegerObject value) {
+            return value.getBytes();
         }
 
         @Specialization(guards = {"isLongMinValue(value)"})
-        protected static final long doLongMinValue(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long value, final long initialHash) {
-            return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
+        protected static final byte[] doLongMinValue(@SuppressWarnings("unused") final long value) {
+            return LargeIntegerObject.getLongMinOverflowResultBytes();
+        }
+
+        @Fallback
+        protected static final byte[] doFallback(@SuppressWarnings("unused") final Object value) {
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 

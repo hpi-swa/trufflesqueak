@@ -83,7 +83,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAt2Node extends AbstractBasicAtOrAtPutNode implements BinaryPrimitiveFallback {
         @Specialization
-        protected final Object doSqueakObject(final Object receiver, final long index,
+        protected static final Object doSqueakObject(final Object receiver, final long index,
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
@@ -98,7 +98,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAt3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitiveFallback {
         @Specialization
-        protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
+        protected static final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
@@ -113,7 +113,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPut3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitiveFallback {
         @Specialization
-        protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
+        protected static final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
@@ -128,7 +128,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPut4Node extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitiveFallback {
         @Specialization
-        protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
+        protected static final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
