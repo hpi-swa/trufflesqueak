@@ -34,7 +34,7 @@ public abstract class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode 
         return SqueakObjectAtPutAndMarkContextsNodeGen.create(index);
     }
 
-    public abstract void executeWrite(final Object object, final Object value);
+    public abstract void executeWrite(Object object, Object value);
 
     @Specialization
     public void doWrite(final Object object, final Object value,

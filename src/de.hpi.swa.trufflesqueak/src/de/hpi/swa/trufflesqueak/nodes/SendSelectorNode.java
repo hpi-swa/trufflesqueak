@@ -44,7 +44,7 @@ public abstract class SendSelectorNode extends Node {
                     @Cached final LookupMethodNode lookupMethodNode,
                     @Cached final DispatchEagerlyNode dispatchNode) {
         final ClassObject rcvrClass = lookupClassNode.executeLookup(node, receiverAndArguments[0]);
-        final CompiledCodeObject method = (CompiledCodeObject) lookupMethodNode.executeLookup(rcvrClass, selector);
+        final CompiledCodeObject method = (CompiledCodeObject) lookupMethodNode.executeLookup(node, rcvrClass, selector);
         final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
         assert result != null : "Result of a message send should not be null";
         return result;

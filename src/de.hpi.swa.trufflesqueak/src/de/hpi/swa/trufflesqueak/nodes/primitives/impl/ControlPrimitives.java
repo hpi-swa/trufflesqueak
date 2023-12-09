@@ -140,14 +140,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object dispatchCached(final VirtualFrame frame, final NativeObject selector, final Object[] receiverAndArguments, final SqueakObjectClassNode lookupClassNode,
                         final LookupMethodNode lookupMethodNode, final DispatchSendNode dispatchNode, final Node inlineTarget) {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(inlineTarget, receiverAndArguments[0]);
-            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
+            final Object lookupResult = lookupMethodNode.executeLookup(inlineTarget, rcvrClass, selector);
             return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, receiverAndArguments);
         }
 
         protected static final Object dispatchUncached(final VirtualFrame frame, final NativeObject selector, final Object[] receiverAndArguments, final SqueakObjectClassNode lookupClassNode,
                         final LookupMethodNode lookupMethodNode, final DispatchSendSelectorNode dispatchNode, final Node inlineTarget) {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(inlineTarget, receiverAndArguments[0]);
-            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
+            final Object lookupResult = lookupMethodNode.executeLookup(inlineTarget, rcvrClass, selector);
             return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, receiverAndArguments);
         }
     }
@@ -325,7 +325,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(node, receiver);
-            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, cachedSelector);
+            final Object lookupResult = lookupMethodNode.executeLookup(node, rcvrClass, cachedSelector);
             return dispatchNode.executeSend(frame, cachedSelector, lookupResult, rcvrClass, getObjectArrayNode.execute(node, receiver, arguments));
         }
 
@@ -338,7 +338,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final LookupMethodNode lookupMethodNode,
                         @Cached final DispatchSendSelectorNode dispatchNode) {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(node, receiver);
-            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
+            final Object lookupResult = lookupMethodNode.executeLookup(node, rcvrClass, selector);
             return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, getObjectArrayNode.execute(node, receiver, arguments));
         }
     }
@@ -539,7 +539,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final InheritsFromNode inheritsFromNode, final LookupMethodNode lookupMethodNode, final DispatchSendNode dispatchNode,
                         final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode, final Node inlineTarget) {
             if (inheritsFromNode.execute(inlineTarget, receiver, superClass)) {
-                final Object lookupResult = lookupMethodNode.executeLookup(superClass, cachedSelector);
+                final Object lookupResult = lookupMethodNode.executeLookup(inlineTarget, superClass, cachedSelector);
                 return dispatchNode.executeSend(frame, cachedSelector, lookupResult, superClass, getObjectArrayNode.execute(inlineTarget, receiver, arguments));
             } else {
                 CompilerDirectives.transferToInterpreter();
@@ -551,7 +551,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final InheritsFromNode inheritsFromNode, final LookupMethodNode lookupMethodNode, final DispatchSendSelectorNode dispatchNode,
                         final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode, final Node inlineTarget) {
             if (inheritsFromNode.execute(inlineTarget, receiver, superClass)) {
-                final Object lookupResult = lookupMethodNode.executeLookup(superClass, selector);
+                final Object lookupResult = lookupMethodNode.executeLookup(inlineTarget, superClass, selector);
                 return dispatchNode.executeSend(frame, selector, lookupResult, superClass, getObjectArrayNode.execute(inlineTarget, receiver, arguments));
             } else {
                 CompilerDirectives.transferToInterpreter();

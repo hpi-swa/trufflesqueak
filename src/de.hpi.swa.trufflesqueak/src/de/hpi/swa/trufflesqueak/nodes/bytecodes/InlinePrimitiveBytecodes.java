@@ -591,7 +591,7 @@ public final class InlinePrimitiveBytecodes {
             super(code, index);
         }
 
-        public static AbstractBytecodeNode create(CompiledCodeObject code, int index) {
+        public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index) {
             return PrimFillFromToWithNodeGen.create(code, index);
         }
 

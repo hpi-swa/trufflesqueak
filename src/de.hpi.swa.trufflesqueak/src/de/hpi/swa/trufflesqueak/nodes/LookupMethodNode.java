@@ -7,29 +7,28 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
-import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
+@GenerateInline
 @GenerateUncached
+@GenerateCached(false)
 public abstract class LookupMethodNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 6;
 
-    @NeverDefault
-    public static LookupMethodNode create() {
-        return LookupMethodNodeGen.create();
-    }
+    public abstract Object executeLookup(Node node, ClassObject sqClass, NativeObject selector);
 
-    public static LookupMethodNode getUncached() {
-        return LookupMethodNodeGen.getUncached();
+    public static final Object executeUncached(final ClassObject sqClass, final NativeObject selector) {
+        return LookupMethodNodeGen.getUncached().executeLookup(null, sqClass, selector);
     }
-
-    public abstract Object executeLookup(ClassObject sqClass, NativeObject selector);
 
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass", "selector == cachedSelector"}, //

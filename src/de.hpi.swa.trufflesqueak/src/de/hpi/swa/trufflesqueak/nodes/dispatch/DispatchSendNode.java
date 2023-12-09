@@ -55,10 +55,11 @@ public abstract class DispatchSendNode extends AbstractNode {
         @Specialization(guards = {"lookupResult == null"})
         protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
                         final Object[] rcvrAndArgs,
+                        @Bind("this") final Node node,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Shared("lookupNode") @Cached final LookupMethodNode lookupNode) {
             final SqueakImageContext image = getContext();
-            final CompiledCodeObject doesNotUnderstandMethod = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, image.doesNotUnderstand);
+            final CompiledCodeObject doesNotUnderstandMethod = (CompiledCodeObject) lookupNode.executeLookup(node, rcvrClass, image.doesNotUnderstand);
             final PointersObject message = image.newMessage(writeNode, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
             return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message});
         }
@@ -74,9 +75,9 @@ public abstract class DispatchSendNode extends AbstractNode {
             final SqueakImageContext image = getContext(node);
             final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
             final ClassObject targetClass = classNode.executeLookup(node, targetObject);
-            final Object newLookupResult = lookupNode.executeLookup(targetClass, image.runWithInSelector);
+            final Object newLookupResult = lookupNode.executeLookup(node, targetClass, image.runWithInSelector);
             if (isDoesNotUnderstandProfile.profile(node, newLookupResult == null)) {
-                final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, image.doesNotUnderstand);
+                final Object doesNotUnderstandMethod = lookupNode.executeLookup(node, targetClass, image.doesNotUnderstand);
                 return dispatchNode.executeDispatch(frame, (CompiledCodeObject) doesNotUnderstandMethod,
                                 new Object[]{targetObject, image.newMessage(writeNode, selector, targetClass, arguments)});
             } else {

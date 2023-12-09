@@ -98,7 +98,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final SqueakImageContext image = SqueakImageContext.get(lookupNode);
             if (message.getLibraryClass() == InteropLibrary.class) {
                 final NativeObject selector = image.toInteropSelector(message);
-                final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(node, receiver), selector);
+                final Object methodObject = lookupNode.executeLookup(node, classNode.executeLookup(node, receiver), selector);
                 if (methodObject instanceof final CompiledCodeObject method) {
                     assert message.getLibraryClass() == InteropLibrary.class;
                     final Object[] receiverAndArguments = new Object[message.getParameterCount()];

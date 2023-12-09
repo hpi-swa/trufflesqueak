@@ -11,6 +11,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -34,7 +36,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodesFactory.CreateFrameArgumentsForDNUNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodesFactory.CreateFrameArgumentsForIndirectCallNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodesFactory.GetOrCreateContextOrMarkerNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class CreateFrameArgumentNodes {
@@ -116,7 +117,6 @@ public final class CreateFrameArgumentNodes {
     protected abstract static class CreateFrameArgumentsForIndirectCallNode extends AbstractNode {
         private final NativeObject selector;
         @Children private FrameStackReadNode[] argumentNodes;
-        @Child private GetOrCreateContextOrMarkerNode senderNode = GetOrCreateContextOrMarkerNode.create();
 
         protected CreateFrameArgumentsForIndirectCallNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
             this.selector = selector;
@@ -139,24 +139,30 @@ public final class CreateFrameArgumentNodes {
         @Specialization
         @SuppressWarnings("unused")
         protected final Object[] doMethod(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, @SuppressWarnings("unused") final CompiledCodeObject lookupResult,
-                        final CompiledCodeObject method) {
-            return FrameAccess.newWith(frame, senderNode.execute(frame, method), receiver, argumentNodes);
+                        final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
+            return FrameAccess.newWith(frame, senderNode.execute(frame, node, method), receiver, argumentNodes);
         }
 
         @Specialization(guards = "lookupResult == null")
         protected final Object[] doDoesNotUnderstand(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult,
                         final CompiledCodeObject method,
-                        @Cached final AbstractPointersObjectWriteNode writeNode) {
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectWriteNode writeNode,
+                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
             final Object[] arguments = getArguments(frame, argumentNodes);
             final PointersObject message = getContext().newMessage(writeNode, selector, receiverClass, arguments);
-            return FrameAccess.newDNUWith(senderNode.execute(frame, method), receiver, message);
+            return FrameAccess.newDNUWith(senderNode.execute(frame, node, method), receiver, message);
         }
 
         @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
         protected final Object[] doObjectAsMethod(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject,
-                        final CompiledCodeObject method) {
+                        final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
             final Object[] arguments = getArguments(frame, argumentNodes);
-            return FrameAccess.newOAMWith(senderNode.execute(frame, method), targetObject, selector, getContext().asArrayOfObjects(arguments), receiver);
+            return FrameAccess.newOAMWith(senderNode.execute(frame, node, method), targetObject, selector, getContext().asArrayOfObjects(arguments), receiver);
         }
     }
 
@@ -171,29 +177,24 @@ public final class CreateFrameArgumentNodes {
         return arguments;
     }
 
+    @GenerateInline
+    @GenerateCached(false)
     @NodeInfo(cost = NodeCost.NONE)
     protected abstract static class GetOrCreateContextOrMarkerNode extends AbstractNode {
 
-        @NeverDefault
-        protected static GetOrCreateContextOrMarkerNode create() {
-            return GetOrCreateContextOrMarkerNodeGen.create();
-        }
-
-        protected abstract Object execute(VirtualFrame frame, CompiledCodeObject code);
+        protected abstract Object execute(VirtualFrame frame, Node node, CompiledCodeObject code);
 
         @Specialization(guards = "doesNotNeedSender(code, assumptionProfile, node)")
-        protected static final Object doGetContextOrMarker(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+        protected static final Object doGetContextOrMarker(final VirtualFrame frame, @SuppressWarnings("unused") final Node node, @SuppressWarnings("unused") final CompiledCodeObject code,
                         @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode) {
             return getContextOrMarkerNode.execute(frame);
         }
 
         @Specialization(guards = "!doesNotNeedSender(code, assumptionProfile, node)")
-        protected static final ContextObject doGetOrCreateContext(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+        protected static final ContextObject doGetOrCreateContext(final VirtualFrame frame, @SuppressWarnings("unused") final Node node, @SuppressWarnings("unused") final CompiledCodeObject code,
                         @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
-                        @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
+                        @Cached final GetOrCreateContextNode getOrCreateContextNode) {
             return getOrCreateContextNode.executeGet(frame, node);
         }
 

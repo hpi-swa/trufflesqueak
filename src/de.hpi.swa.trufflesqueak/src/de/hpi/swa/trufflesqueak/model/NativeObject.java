@@ -353,7 +353,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public Object executeAsSymbolSlow(final VirtualFrame frame, final Object... receiverAndArguments) {
         CompilerAsserts.neverPartOfCompilation();
         assert SqueakImageContext.getSlow().isByteSymbolClass(getSqueakClass());
-        final Object method = LookupMethodNode.getUncached().executeLookup(SqueakObjectClassNode.executeUncached(receiverAndArguments[0]), this);
+        final Object method = LookupMethodNode.executeUncached(SqueakObjectClassNode.executeUncached(receiverAndArguments[0]), this);
         if (method instanceof CompiledCodeObject) {
             return DispatchUneagerlyNode.executeUncached((CompiledCodeObject) method, receiverAndArguments, GetOrCreateContextNode.getOrCreateUncached(frame));
         } else {
