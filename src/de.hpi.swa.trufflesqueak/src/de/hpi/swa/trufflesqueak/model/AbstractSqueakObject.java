@@ -74,7 +74,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final Object[] frameArguments = FrameAccess.newWith(NilObject.SINGLETON, null, cachedMessage.getParameterCount());
             frameArguments[FrameAccess.getReceiverStartIndex()] = receiver;
             for (int i = 0; i < cachedMessage.getParameterCount() - 1; i++) {
-                frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(arguments[i]);
+                frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(node, arguments[i]);
             }
             return callNode.call(frameArguments);
         }
@@ -104,7 +104,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                     final Object[] receiverAndArguments = new Object[message.getParameterCount()];
                     receiverAndArguments[0] = receiver;
                     for (int i = 0; i < arguments.length; i++) {
-                        receiverAndArguments[1 + i] = wrapNode.executeWrap(arguments[i]);
+                        receiverAndArguments[1 + i] = wrapNode.executeWrap(node, arguments[i]);
                     }
                     try {
                         return dispatchNode.executeDispatch(node, method, receiverAndArguments, NilObject.SINGLETON);

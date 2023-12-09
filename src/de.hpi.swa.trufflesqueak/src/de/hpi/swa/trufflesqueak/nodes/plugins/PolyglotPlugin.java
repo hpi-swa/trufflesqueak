@@ -149,8 +149,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+                        @Bind("this") final Node node,
                         @Cached final WrapToSqueakNode wrapNode) {
-            return wrapNode.executeWrap(evalString(this, languageIdOrMimeTypeObj, sourceObject));
+            return wrapNode.executeWrap(node, evalString(this, languageIdOrMimeTypeObj, sourceObject));
         }
     }
 
@@ -176,7 +177,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 }
             }
             final Object[] values = toObjectArrayNode.execute(node, argumentValues);
-            return wrapNode.executeWrap(evalString(node, languageIdOrMimeTypeObj, sourceObject, names, values));
+            return wrapNode.executeWrap(node, evalString(node, languageIdOrMimeTypeObj, sourceObject, names, values));
         }
     }
 
@@ -224,8 +225,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
+                        @Bind("this") final Node node,
                         @Cached final WrapToSqueakNode wrapNode) {
-            return wrapNode.executeWrap(evalFile(languageIdOrMimeTypeObj, path));
+            return wrapNode.executeWrap(node, evalFile(languageIdOrMimeTypeObj, path));
         }
     }
 
@@ -376,7 +378,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(lib.execute(object, getObjectArrayNode.execute(node, argumentArray)));
+                return wrapNode.executeWrap(node, lib.execute(object, getObjectArrayNode.execute(node, argumentArray)));
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
@@ -409,7 +411,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(lib.instantiate(object, getObjectArrayNode.execute(node, argumentArray)));
+                return wrapNode.executeWrap(node, lib.instantiate(object, getObjectArrayNode.execute(node, argumentArray)));
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
@@ -892,10 +894,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimReadArrayElementNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"lib.isArrayElementReadable(object, to0(index))"}, limit = "2")
         protected static final Object doReadArrayElement(@SuppressWarnings("unused") final Object receiver, final Object object, final long index,
+                        @Bind("this") final Node node,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(lib.readArrayElement(object, index - 1));
+                return wrapNode.executeWrap(node, lib.readArrayElement(object, index - 1));
             } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1097,7 +1100,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(lib.invokeMember(object, member.asStringUnsafe(), getObjectArrayNode.execute(node, argumentArray)));
+                return wrapNode.executeWrap(node, lib.invokeMember(object, member.asStringUnsafe(), getObjectArrayNode.execute(node, argumentArray)));
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
@@ -1113,10 +1116,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimReadMemberNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(object, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doReadMember(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
+                        @Bind("this") final Node node,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(lib.readMember(object, member.asStringUnsafe()));
+                return wrapNode.executeWrap(node, lib.readMember(object, member.asStringUnsafe()));
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }

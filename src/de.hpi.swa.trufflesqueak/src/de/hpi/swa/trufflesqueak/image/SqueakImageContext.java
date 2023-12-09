@@ -293,7 +293,7 @@ public final class SqueakImageContext {
                 sourceCode = String.format("[ :%s | %s ]", String.join(" :", request.getArgumentNames()), source.getCharacters().toString());
             }
         }
-        return new DoItRootNode(this, language, evaluate(sourceCode));
+        return DoItRootNode.create(this, language, evaluate(sourceCode));
     }
 
     private static boolean isFileInFormat(final Source source) {
