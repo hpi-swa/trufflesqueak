@@ -73,7 +73,7 @@ public abstract class DispatchSendNode extends AbstractNode {
                         @Cached final InlinedConditionProfile isDoesNotUnderstandProfile) {
             final SqueakImageContext image = getContext(node);
             final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
-            final ClassObject targetClass = classNode.executeLookup(targetObject);
+            final ClassObject targetClass = classNode.executeLookup(node, targetObject);
             final Object newLookupResult = lookupNode.executeLookup(targetClass, image.runWithInSelector);
             if (isDoesNotUnderstandProfile.profile(node, newLookupResult == null)) {
                 final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, image.doesNotUnderstand);

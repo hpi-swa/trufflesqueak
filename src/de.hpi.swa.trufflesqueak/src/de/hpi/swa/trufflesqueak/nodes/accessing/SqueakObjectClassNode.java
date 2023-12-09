@@ -6,9 +6,11 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
-import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -21,21 +23,23 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
+@GenerateInline
 @GenerateUncached
+@GenerateCached(false)
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectClassNode extends AbstractNode {
-    @NeverDefault
-    public static SqueakObjectClassNode create() {
-        return SqueakObjectClassNodeGen.create();
-    }
 
     public static SqueakObjectClassNode getUncached() {
         return SqueakObjectClassNodeGen.getUncached();
     }
 
-    public abstract ClassObject executeLookup(Object receiver);
+    public abstract ClassObject executeLookup(Node node, Object receiver);
 
-    public abstract ClassObject executeLookup(AbstractSqueakObject receiver);
+    public abstract ClassObject executeLookup(Node node, AbstractSqueakObject receiver);
+
+    public static final ClassObject executeUncached(final Object receiver) {
+        return SqueakObjectClassNodeGen.getUncached().executeLookup(null, receiver);
+    }
 
     @Specialization
     protected final ClassObject doNil(@SuppressWarnings("unused") final NilObject value) {

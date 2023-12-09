@@ -608,7 +608,7 @@ public final class SqueakImageContext {
         if (linkedListClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final Object lists = getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
-            linkedListClass = SqueakObjectClassNode.getUncached().executeLookup(((ArrayObject) lists).getObject(0));
+            linkedListClass = SqueakObjectClassNode.executeUncached(((ArrayObject) lists).getObject(0));
         }
         return linkedListClass;
     }

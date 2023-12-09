@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodesFactory.CreateFrameArgumentsForDNUNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodesFactory.CreateFrameArgumentsForIndirectCallNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodesFactory.GetOrCreateContextOrMarkerNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -70,22 +71,26 @@ public final class CreateFrameArgumentNodes {
         }
     }
 
-    public static final class CreateFrameArgumentsForDNUNode extends AbstractCreateFrameArgumentsForExceptionalNode {
-        @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
-        @Child private SqueakObjectClassNode classNode = SqueakObjectClassNode.create();
+    public abstract static class CreateFrameArgumentsForDNUNode extends AbstractCreateFrameArgumentsForExceptionalNode {
 
-        private CreateFrameArgumentsForDNUNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
+        protected CreateFrameArgumentsForDNUNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
             super(frame, selector, argumentCount);
         }
 
         public static CreateFrameArgumentsForDNUNode create(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
-            return new CreateFrameArgumentsForDNUNode(frame, selector, argumentCount);
+            return CreateFrameArgumentsForDNUNodeGen.create(frame, selector, argumentCount);
         }
 
-        public Object[] execute(final VirtualFrame frame, final Object sender) {
+        public abstract Object[] execute(VirtualFrame frame, Object sender);
+
+        @Specialization
+        protected final Object[] doCreate(final VirtualFrame frame, final Object sender,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectWriteNode writeNode,
+                        @Cached final SqueakObjectClassNode classNode) {
             final Object receiver = getReceiver(frame);
             final Object[] arguments = getArguments(frame, argumentNodes);
-            final ClassObject receiverClass = classNode.executeLookup(receiver);
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final PointersObject message = getContext().newMessage(writeNode, selector, receiverClass, arguments);
             return FrameAccess.newDNUWith(sender, receiver, message);
         }

@@ -671,8 +671,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimGetImmutabilityNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final boolean doGet(final Object receiver,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
-            return BooleanObject.wrap(classNode.executeLookup(receiver).isImmediateClassType());
+            return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
     }
 
@@ -681,9 +682,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimSetImmutabilityNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final boolean doGet(final Object receiver, @SuppressWarnings("unused") final boolean value,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
             // FIXME: implement immutability
-            return BooleanObject.wrap(classNode.executeLookup(receiver).isImmediateClassType());
+            return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
     }
 

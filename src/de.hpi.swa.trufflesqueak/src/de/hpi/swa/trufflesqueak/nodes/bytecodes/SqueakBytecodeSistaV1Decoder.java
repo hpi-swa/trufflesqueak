@@ -153,7 +153,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                     yield new MiscellaneousBytecodes.CallPrimitiveNode(code, index, primitiveIndex);
                 }
                 yield switch (primitiveIndex) {
-                    case 1000 -> new InlinePrimitiveBytecodes.PrimClassNode(code, index);
+                    case 1000 -> InlinePrimitiveBytecodes.PrimClassNode.create(code, index);
                     case 1001 -> new InlinePrimitiveBytecodes.PrimNumSlotsNode(code, index);
                     case 1002 -> new InlinePrimitiveBytecodes.PrimBasicSizeNode(code, index);
                     case 1003 -> new InlinePrimitiveBytecodes.PrimNumBytesNode(code, index);

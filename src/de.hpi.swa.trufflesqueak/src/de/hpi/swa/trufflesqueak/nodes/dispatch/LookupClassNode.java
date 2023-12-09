@@ -6,10 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -34,7 +36,8 @@ public abstract class LookupClassNode extends AbstractNode {
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected static final ClassObject doGeneric(final Object receiver,
+                    @Bind("this") final Node node,
                     @Cached final SqueakObjectClassNode classNode) {
-        return classNode.executeLookup(receiver);
+        return classNode.executeLookup(node, receiver);
     }
 }

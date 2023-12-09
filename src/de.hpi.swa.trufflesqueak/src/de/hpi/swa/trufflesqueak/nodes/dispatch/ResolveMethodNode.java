@@ -44,9 +44,9 @@ public abstract class ResolveMethodNode extends AbstractNode {
     }
 
     @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
-    protected static final CompiledCodeObject doObjectAsMethod(final SqueakImageContext image, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject,
+    protected static final CompiledCodeObject doObjectAsMethod(final Node node, final SqueakImageContext image, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject,
                     @Cached final SqueakObjectClassNode classNode) {
-        final ClassObject targetObjectClass = classNode.executeLookup(targetObject);
+        final ClassObject targetObjectClass = classNode.executeLookup(node, targetObject);
         final Object runWithInMethod = lookupMethod(image, targetObjectClass, image.runWithInSelector);
         if (runWithInMethod instanceof final CompiledCodeObject method) {
             return method;

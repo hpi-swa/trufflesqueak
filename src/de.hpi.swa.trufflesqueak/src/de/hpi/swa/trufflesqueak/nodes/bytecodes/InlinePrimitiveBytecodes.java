@@ -8,9 +8,11 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -21,6 +23,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimIdentityHashNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
@@ -72,16 +75,23 @@ public final class InlinePrimitiveBytecodes {
         }
     }
 
-    protected static final class PrimClassNode extends AbstractNullaryInlinePrimitiveNode {
-        @Child private SqueakObjectClassNode classNode = SqueakObjectClassNode.create();
+    protected abstract static class PrimClassNode extends AbstractInstrumentableBytecodeNode {
 
         protected PrimClassNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+            super(code, index, 1);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, classNode.executeLookup(popNode.execute(frame)));
+        public static PrimClassNode create(final CompiledCodeObject code, final int index) {
+            return PrimClassNodeGen.create(code, index);
+        }
+
+        @Specialization
+        protected static final void doClass(final VirtualFrame frame,
+                        @Bind("this") final Node node,
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final FrameStackPopNode popNode,
+                        @Cached final FrameStackPushNode pushNode) {
+            pushNode.execute(frame, classNode.executeLookup(node, popNode.execute(frame)));
         }
     }
 

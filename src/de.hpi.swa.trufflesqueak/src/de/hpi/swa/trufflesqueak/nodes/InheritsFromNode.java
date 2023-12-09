@@ -35,14 +35,14 @@ public abstract class InheritsFromNode extends AbstractNode {
     }
 
     protected static final boolean doUncached(final Object receiver, final ClassObject superClass) {
-        return doUncached(receiver, superClass, SqueakObjectClassNode.getUncached());
+        return doUncached(null, receiver, superClass, SqueakObjectClassNode.getUncached());
     }
 
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
-    protected static final boolean doUncached(final Object receiver, final ClassObject superClass,
+    protected static final boolean doUncached(final Node node, final Object receiver, final ClassObject superClass,
                     @Cached final SqueakObjectClassNode classNode) {
-        ClassObject classObject = classNode.executeLookup(receiver);
+        ClassObject classObject = classNode.executeLookup(node, receiver);
         while (classObject != superClass) {
             classObject = classObject.getSuperclassOrNull();
             if (classObject == null) {

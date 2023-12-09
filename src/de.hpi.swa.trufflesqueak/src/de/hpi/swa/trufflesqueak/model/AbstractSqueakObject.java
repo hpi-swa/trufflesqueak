@@ -59,12 +59,13 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     protected static class Send {
         @SuppressWarnings("unused")
         @ExplodeLoop
-        @Specialization(guards = {"message == cachedMessage", "classNode.executeLookup(receiver) == cachedClass", "cachedMethod != null"}, limit = "8", //
+        @Specialization(guards = {"message == cachedMessage", "classNode.executeLookup(node, receiver) == cachedClass", "cachedMethod != null"}, limit = "8", //
                         assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()", "cachedMethod.getCallTargetStable()"})
         protected static final Object doSendCached(final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
                         @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Cached("message") final Message cachedMessage,
-                        @Cached("classNode.executeLookup(receiver)") final ClassObject cachedClass,
+                        @Cached("classNode.executeLookup(node, receiver)") final ClassObject cachedClass,
                         @Cached("lookupMethod(cachedClass, cachedMessage)") final CompiledCodeObject cachedMethod,
                         @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode,
                         @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) {
@@ -97,7 +98,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final SqueakImageContext image = SqueakImageContext.get(lookupNode);
             if (message.getLibraryClass() == InteropLibrary.class) {
                 final NativeObject selector = image.toInteropSelector(message);
-                final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(receiver), selector);
+                final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(node, receiver), selector);
                 if (methodObject instanceof final CompiledCodeObject method) {
                     assert message.getLibraryClass() == InteropLibrary.class;
                     final Object[] receiverAndArguments = new Object[message.getParameterCount()];

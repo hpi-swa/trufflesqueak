@@ -55,7 +55,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
             }
             return AbstractCachedDispatchMethodNode.create(frame, argumentCount, lookupMethod);
         } else {
-            final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
+            final ClassObject lookupResultClass = SqueakObjectClassNode.executeUncached(lookupResult);
             final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, image.runWithInSelector);
             if (runWithInMethod instanceof final CompiledCodeObject method) {
                 return AbstractCachedDispatchObjectAsMethodNode.create(frame, selector, argumentCount, lookupResult, method);
