@@ -755,7 +755,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final SqueakObjectAt0Node at0Node) {
             for (int i = 0; i < receiverSize; i++) {
-                atput0Node.execute(receiver, i, at0Node.execute(node, anotherObject, i));
+                atput0Node.execute(node, receiver, i, at0Node.execute(node, anotherObject, i));
             }
             return receiver;
         }

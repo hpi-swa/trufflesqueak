@@ -570,6 +570,7 @@ public final class PushBytecodes {
             return PushRemoteTempNodeGen.create(code, index, numBytecodes, indexInArray, indexOfArray);
         }
 
+        @SuppressWarnings("truffle-static-method")
         @Specialization
         protected final void doPushRemoteTemp(final VirtualFrame frame,
                         @Bind("this") final Node node,

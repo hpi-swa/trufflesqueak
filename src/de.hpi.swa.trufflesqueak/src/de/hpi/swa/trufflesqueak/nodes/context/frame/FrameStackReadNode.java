@@ -13,6 +13,7 @@ import org.graalvm.collections.EconomicMap;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -27,6 +28,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @ImportStatic(FrameSlotKind.class)
 public abstract class FrameStackReadNode extends AbstractNode {
 
+    @NeverDefault
     public static final FrameStackReadNode create(final Frame frame, final int index, final boolean clear) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {

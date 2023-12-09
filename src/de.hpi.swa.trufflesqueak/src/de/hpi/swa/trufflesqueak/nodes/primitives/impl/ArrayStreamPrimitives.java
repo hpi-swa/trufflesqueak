@@ -69,7 +69,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                         final SqueakObjectInstSizeNode instSizeNode, final SqueakObjectAtPut0Node atput0Node, final InlinedBranchProfile outOfBounceProfile, final Node node) {
             final int instSize = instSizeNode.execute(node, receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index, sizeNode, node)) {
-                atput0Node.execute(receiver, index - 1 + instSize, value);
+                atput0Node.execute(node, receiver, index - 1 + instSize, value);
                 return value;
             } else {
                 outOfBounceProfile.enter(node);

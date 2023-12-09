@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimFillFromToWithNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimIdentityHashNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
@@ -584,22 +585,27 @@ public final class InlinePrimitiveBytecodes {
         }
     }
 
-    protected static final class PrimFillFromToWithNode extends AbstractQuaternaryInlinePrimitiveNode {
-        @Child private SqueakObjectAtPut0Node atPutNode = SqueakObjectAtPut0Node.create();
+    protected abstract static class PrimFillFromToWithNode extends AbstractQuaternaryInlinePrimitiveNode {
 
         protected PrimFillFromToWithNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
+        public static AbstractBytecodeNode create(CompiledCodeObject code, int index) {
+            return PrimFillFromToWithNodeGen.create(code, index);
+        }
+
+        @Specialization
+        protected final void doFillFromToWith(final VirtualFrame frame,
+                        @Bind("this") final Node node,
+                        @Cached final SqueakObjectAtPut0Node atPutNode) {
             final Object value = pop4Node.execute(frame);
             final long to = (long) pop3Node.execute(frame);
             final long from = (long) pop2Node.execute(frame);
             final Object receiver = pop1Node.execute(frame);
             // TODO: maybe there's a more efficient way to fill pointers object?
             for (long i = from; i < to; i++) {
-                atPutNode.execute(receiver, i, value);
+                atPutNode.execute(node, receiver, i, value);
             }
             pushNode.execute(frame, receiver);
         }

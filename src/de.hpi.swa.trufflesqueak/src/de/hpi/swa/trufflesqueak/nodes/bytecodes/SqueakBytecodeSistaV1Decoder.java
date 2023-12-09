@@ -195,7 +195,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                     case 3003 -> new InlinePrimitiveBytecodes.PrimWordAtPutNode(code, index);
                     case 3004 -> new InlinePrimitiveBytecodes.PrimDoubleWordAtPutNode(code, index);
                     case 3021 -> new InlinePrimitiveBytecodes.PrimByteEqualsNode(code, index);
-                    case 4000 -> new InlinePrimitiveBytecodes.PrimFillFromToWithNode(code, index);
+                    case 4000 -> InlinePrimitiveBytecodes.PrimFillFromToWithNode.create(code, index);
                     default -> new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 3, b);
                 };
             }

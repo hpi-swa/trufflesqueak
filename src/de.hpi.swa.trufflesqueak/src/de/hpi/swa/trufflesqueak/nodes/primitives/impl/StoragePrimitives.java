@@ -316,7 +316,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atPut0Node) {
-            atPut0Node.execute(receiver, index - 1, value);
+            atPut0Node.execute(node, receiver, index - 1, value);
             return value;
         }
     }
@@ -331,7 +331,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atPut0Node) {
-            atPut0Node.execute(target, index - 1, value);
+            atPut0Node.execute(node, target, index - 1, value);
             return value;
         }
     }
@@ -566,7 +566,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atPut0Node) {
-            atPut0Node.execute(receiver, index - 1, value);
+            atPut0Node.execute(node, receiver, index - 1, value);
             return value;
         }
     }
@@ -580,7 +580,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atPut0Node) {
-            atPut0Node.execute(target, index - 1, value);
+            atPut0Node.execute(node, target, index - 1, value);
             return value;
         }
     }
