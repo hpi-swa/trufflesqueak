@@ -33,6 +33,15 @@ public class NFIUtils {
         public static<S, T, R> TruffleExecutable wrap(String nfiSignature, TruffleBiFunction<S, T, R> function) {
             return new TruffleExecutable(nfiSignature, function);
         }
+        public static<S, T, U, R> TruffleExecutable wrap(String nfiSignature, TruffleTriFunction<S, T, U, R> function) {
+            return new TruffleExecutable(nfiSignature, function);
+        }
+        public static<S, T, U, V, R> TruffleExecutable wrap(String nfiSignature, TruffleQuadFunction<S, T, U, V, R> function) {
+            return new TruffleExecutable(nfiSignature, function);
+        }
+        public static<S, T, U, V, W, R> TruffleExecutable wrap(String nfiSignature, TruffleQuintFunction<S, T, U, V, W, R> function) {
+            return new TruffleExecutable(nfiSignature, function);
+        }
 
         public static<R> TruffleExecutable wrap(String nfiSignature, TruffleSupplier<R> supplier) {
             return new TruffleExecutable(nfiSignature, supplier);
@@ -86,6 +95,36 @@ public class NFIUtils {
         default Object execute(Object... arguments) {
             assert arguments.length == 2;
             return run((S) arguments[0], (T) arguments[1]);
+        }
+    }
+
+    @FunctionalInterface
+    public interface TruffleTriFunction<S, T, U, R> extends ITruffleExecutable {
+        R run(S argument1, T argument2, U argument3);
+
+        default Object execute(Object... arguments) {
+            assert arguments.length == 3;
+            return run((S) arguments[0], (T) arguments[1], (U) arguments[2]);
+        }
+    }
+
+    @FunctionalInterface
+    public interface TruffleQuadFunction<S, T, U, V, R> extends ITruffleExecutable {
+        R run(S argument1, T argument2, U argument3, V argument4);
+
+        default Object execute(Object... arguments) {
+            assert arguments.length == 4;
+            return run((S) arguments[0], (T) arguments[1], (U) arguments[2], (V) arguments[3]);
+        }
+    }
+
+    @FunctionalInterface
+    public interface TruffleQuintFunction<S, T, U, V, W, R> extends ITruffleExecutable {
+        R run(S argument1, T argument2, U argument3, V argument4, W argument5);
+
+        default Object execute(Object... arguments) {
+            assert arguments.length == 5;
+            return run((S) arguments[0], (T) arguments[1], (U) arguments[2], (V) arguments[3], (W) arguments[4]);
         }
     }
 

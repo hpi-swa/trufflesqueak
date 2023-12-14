@@ -35,22 +35,49 @@ public class InterpreterProxy {
             TruffleExecutable.wrap("(SINT64):SINT64", this::byteSizeOf),
             TruffleExecutable.wrap("():SINT64", this::classString),
             TruffleExecutable.wrap("():SINT64", this::failed),
+            TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchIntegerofObject),
+            TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchLong32ofObject),
+            TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchPointerofObject),
             TruffleExecutable.wrap("(SINT64):POINTER", this::firstIndexableField),
+            TruffleExecutable.wrap("(SINT64):DOUBLE", this::floatValueOf),
             TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::instantiateClassindexableSize),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::integerObjectOf),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::integerValueOf),
+            TruffleExecutable.wrap("(STRING,STRING):POINTER", this::ioLoadFunctionFrom),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::isArray),
             TruffleExecutable.wrap("(SINT64):SINT64", this::isBytes),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::isPointers),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::isPositiveMachineIntegerObject),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::isWords),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::isWordsOrBytes),
             TruffleExecutable.wrap("():SINT64", this::majorVersion),
             TruffleExecutable.wrap("():SINT64", this::methodArgumentCount),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::methodReturnInteger),
+            TruffleExecutable.wrap("():SINT64", this::methodReturnReceiver),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::methodReturnValue),
             TruffleExecutable.wrap("():SINT64", this::minorVersion),
             TruffleExecutable.wrap("():SINT64", this::nilObject),
             TruffleExecutable.wrap("(SINT64):SINT64", this::pop),
             TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popthenPush),
+            TruffleExecutable.wrap("(UINT64):SINT64", this::positive32BitIntegerFor),
+            TruffleExecutable.wrap("(SINT64):UINT64", this::positive32BitValueOf),
+            TruffleExecutable.wrap("(SINT64):UINT64", this::positive64BitValueOf),
             TruffleExecutable.wrap("():SINT64", this::primitiveFail),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::primitiveFailFor),
+            TruffleExecutable.wrap("(SINT64,SINT64,SINT64,SINT64,SINT64):SINT64", this::showDisplayBitsLeftTopRightBottom),
             TruffleExecutable.wrap("(SINT64):SINT64", this::pushInteger),
             TruffleExecutable.wrap("(SINT64):SINT64", this::signed32BitIntegerFor),
-            TruffleExecutable.wrap("(SINT64):SINT32", this::signed32BitValueOf),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::signed32BitValueOf),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::slotSizeOf),
             TruffleExecutable.wrap("(SINT64):SINT64", this::stackIntegerValue),
+            TruffleExecutable.wrap("(SINT64):SINT64", this::stackObjectValue),
             TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
+            TruffleExecutable.wrap("():SINT64", this::statNumGCs),
+            TruffleExecutable.wrap("(SINT64,SINT64,SINT64):SINT64", this::storeIntegerofObjectwithValue),
+            TruffleExecutable.wrap("(SINT64,SINT64,UINT64):UINT64", this::storeLong32ofObjectwithValue),
     };
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final TruffleClosure[] closures;
 
     private static Object interpreterProxyPointer = null;
@@ -237,21 +264,63 @@ public class InterpreterProxy {
         return 1;
     }
 
-    private int signed32BitIntegerFor(long integerValue) {
-        return oopFor(integerValue);
-    }
+    private long fetchIntegerofObject(long fieldIndex, long objectPointer) {/* TODO */ System.out.println("Missing implementation for fetchIntegerofObject"); return 0;}
 
-    private int signed32BitValueOf(long oop) {
-        return (int) objectToLong(objectRegistryGet(oop));
-    }
+    private long fetchLong32ofObject(long fieldIndex, long oop) {/* TODO */ System.out.println("Missing implementation for fetchLong32ofObject"); return 0;}
 
-    private long stackIntegerValue(long reverseStackIndex) {
-        return objectToLong(getObjectOnStack(reverseStackIndex));
-    }
+    private long fetchPointerofObject(long index, long oop) {/* TODO */ System.out.println("Missing implementation for fetchPointerofObject"); return 0;}
 
-    private int stackValue(long reverseStackIndex) {
-        return oopFor(getObjectOnStack(reverseStackIndex));
-    }
+    private double floatValueOf(long oop) {/* TODO */ System.out.println("Missing implementation for floatValueOf"); return 0;}
+
+    private long integerObjectOf(long value) {/* TODO */ System.out.println("Missing implementation for integerObjectOf"); return 0;}
+
+    private long integerValueOf(long oop) {/* TODO */ System.out.println("Missing implementation for integerValueOf"); return 0;}
+
+    private NativeObjectStorage ioLoadFunctionFrom(String functionName, String moduleName) {/* TODO */ System.out.println("Missing implementation for ioLoadFunctionFrom"); return null;}
+
+    private long isArray(long oop) {/* TODO */ System.out.println("Missing implementation for isArray"); return 0;}
+
+    private long isPointers(long oop) {/* TODO */ System.out.println("Missing implementation for isPointers"); return 0;}
+
+    private long isPositiveMachineIntegerObject(long oop) {/* TODO */ System.out.println("Missing implementation for isPositiveMachineIntegerObject"); return 0;}
+
+    private long isWords(long oop) {/* TODO */ System.out.println("Missing implementation for isWords"); return 0;}
+
+    private long isWordsOrBytes(long oop) {/* TODO */ System.out.println("Missing implementation for isWordsOrBytes"); return 0;}
+
+    private long methodReturnInteger(long integer) {/* TODO */ System.out.println("Missing implementation for methodReturnInteger"); return 0;}
+
+    private long methodReturnReceiver() {/* TODO */ System.out.println("Missing implementation for methodReturnReceiver"); return 0;}
+
+    private long methodReturnValue(long oop) {/* TODO */ System.out.println("Missing implementation for methodReturnValue"); return 0;}
+
+    private long positive32BitIntegerFor(long integerValue) {/* TODO */ System.out.println("Missing implementation for positive32BitIntegerFor"); return 0;}
+
+    private long positive32BitValueOf(long oop) {/* TODO */ System.out.println("Missing implementation for positive32BitValueOf"); return 0;}
+
+    private long positive64BitValueOf(long oop) {/* TODO */ System.out.println("Missing implementation for positive64BitValueOf"); return 0;}
+
+    private long primitiveFailFor(long reasonCode) {/* TODO */ System.out.println("Missing implementation for primitiveFailFor"); return 0;}
+
+    private long showDisplayBitsLeftTopRightBottom(long aForm, long l, long t, long r, long b) {/* TODO */ System.out.println("Missing implementation for showDisplayBitsLeftTopRightBottom"); return 0;}
+
+    private long signed32BitIntegerFor(long integerValue) {/* TODO */ System.out.println("Missing implementation for signed32BitIntegerFor"); return 0;}
+
+    private long signed32BitValueOf(long oop) {/* TODO */ System.out.println("Missing implementation for signed32BitValueOf"); return 0;}
+
+    private long slotSizeOf(long oop) {/* TODO */ System.out.println("Missing implementation for slotSizeOf"); return 0;}
+
+    private long stackIntegerValue(long offset) {/* TODO */ System.out.println("Missing implementation for stackIntegerValue"); return 0;}
+
+    private long stackObjectValue(long offset) {/* TODO */ System.out.println("Missing implementation for stackObjectValue"); return 0;}
+
+    private long stackValue(long offset) {/* TODO */ System.out.println("Missing implementation for stackValue"); return 0;}
+
+    private long statNumGCs() {/* TODO */ System.out.println("Missing implementation for statNumGCs"); return 0;}
+
+    private long storeIntegerofObjectwithValue(long index, long oop, long integer) {/* TODO */ System.out.println("Missing implementation for storeIntegerofObjectwithValue"); return 0;}
+
+    private long storeLong32ofObjectwithValue(long fieldIndex, long oop, long anInteger) {/* TODO */ System.out.println("Missing implementation for storeLong32ofObjectwithValue"); return 0;}
 
     public interface PostPrimitiveCleanup {
         void cleanup();
