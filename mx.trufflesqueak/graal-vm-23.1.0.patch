@@ -22,3 +22,16 @@ index 0e4f50a6153..592df19dd4f 100644
                                  'source_type': 'dependency',
                                  'dependency': dependency,
                                  'exclude': [],
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
+index e7efa981ffc..ab20d32f2e9 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
+@@ -175,7 +175,7 @@ public final class NodeUtil {
+             current = current.getParent();
+         } while (current != null);
+ 
+-        if (!(prev instanceof ExecutableNode)) {
++        if (prev.isAdoptable() && !(prev instanceof ExecutableNode)) {
+             failNotAdopted(node, prev);
+         }
+         return true;
