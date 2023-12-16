@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSize
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
+@SuppressWarnings("truffle-inlining")
 public abstract class HandlePrimitiveFailedNode extends AbstractNode {
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
         if (code.hasStoreIntoTemp1AfterCallPrimitive()) {

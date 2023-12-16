@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
+@SuppressWarnings("truffle-inlining")
 public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
     public static MaterializeContextOnMethodExitNode create() {
         return MaterializeContextOnMethodExitNodeGen.create();

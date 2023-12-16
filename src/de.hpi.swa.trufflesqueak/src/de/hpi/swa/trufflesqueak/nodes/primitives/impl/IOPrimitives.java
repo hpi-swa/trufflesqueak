@@ -256,7 +256,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isByteType()", "stopIndex <= sourceString.getByteLength()", "receiver.size() >= 4",
                         "arraySizeNode.execute(node, stops) >= 258", "hasCorrectSlots(pointersReadNode, arraySizeNode, node, receiver)"}, limit = "1")
-        protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
+        protected static final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
                         final ArrayObject stops, final long kernData,
                         @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
@@ -299,12 +299,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return arrayReadNode.execute(node, stops, END_OF_RUN);
         }
 
-        private void storeStateInReceiver(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final PointersObject receiver, final long scanDestX, final long scanLastIndex) {
+        private static void storeStateInReceiver(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final PointersObject receiver, final long scanDestX,
+                        final long scanLastIndex) {
             writeNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.DEST_X, scanDestX);
             writeNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.LAST_INDEX, scanLastIndex);
         }
 
-        protected final boolean hasCorrectSlots(final AbstractPointersObjectReadNode readNode, final ArrayObjectSizeNode arraySizeNode, final Node inlineTarget, final PointersObject receiver) {
+        protected static final boolean hasCorrectSlots(final AbstractPointersObjectReadNode readNode, final ArrayObjectSizeNode arraySizeNode, final Node inlineTarget, final PointersObject receiver) {
             return readNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.DEST_X) instanceof Long &&
                             readNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.XTABLE) instanceof ArrayObject &&
                             readNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.MAP) instanceof final ArrayObject scanMap && arraySizeNode.execute(inlineTarget, scanMap) == 256;

@@ -47,7 +47,7 @@ public abstract class DispatchUneagerlyNode extends AbstractNode {
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doDirect")
     protected static final Object doIndirect(final CompiledCodeObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
-                    @Cached final IndirectCallNode callNode) {
+                    @Cached(inline = false) final IndirectCallNode callNode) {
         return callNode.call(method.getCallTarget(), FrameAccess.newWith(contextOrMarker, null, receiverAndArguments));
     }
 }

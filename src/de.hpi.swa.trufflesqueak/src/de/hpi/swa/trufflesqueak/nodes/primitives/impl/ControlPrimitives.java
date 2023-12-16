@@ -992,7 +992,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Cached final ResumeProcessNode resumeProcessNode,
-                            @Cached final FrameStackPointerIncrementNode frameStackPointerIncrementNode) {
+                            @Cached(inline = false) final FrameStackPointerIncrementNode frameStackPointerIncrementNode) {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode, node);
                 writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
                 try {
@@ -1058,7 +1058,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final PointersObject effectiveProcess,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushNode) {
+                        @Cached(inline = false) final FrameStackPushNode pushNode) {
             addLastLinkToListNode.execute(node, effectiveProcess, mutex);
             try {
                 wakeHighestPriorityNode.executeWake(frame, node);

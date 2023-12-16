@@ -30,14 +30,14 @@ public abstract class DispatchClosureNode extends AbstractNode {
     @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
     protected static final Object doDirect(final BlockClosureObject closure, final Object[] arguments,
                     @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
-                    @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
+                    @Cached(value = "create(cachedBlock.getCallTarget())", inline = false) final DirectCallNode directCallNode) {
         return directCallNode.call(arguments);
     }
 
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doDirect")
     protected static final Object doIndirect(final BlockClosureObject closure, final Object[] arguments,
-                    @Cached final IndirectCallNode indirectCallNode) {
+                    @Cached(inline = false) final IndirectCallNode indirectCallNode) {
         return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), arguments);
     }
 }

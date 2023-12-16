@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SelfSendNode;
 
+@SuppressWarnings("truffle-inlining")
 @ImportStatic(SelfSendNode.class)
 public abstract class LookupClassNode extends AbstractNode {
 

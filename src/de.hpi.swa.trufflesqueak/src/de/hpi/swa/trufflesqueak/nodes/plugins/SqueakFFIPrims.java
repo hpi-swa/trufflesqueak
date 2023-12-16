@@ -228,7 +228,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return interopLib.invokeMember(ffiTest, name, argumentsConverted);
         }
 
-        private String getModuleName(final AbstractPointersObjectReadNode readExternalLibNode, final Node inlineTarget, final AbstractSqueakObject receiver,
+        private static String getModuleName(final AbstractPointersObjectReadNode readExternalLibNode, final Node inlineTarget, final AbstractSqueakObject receiver,
                         final PointersObject externalLibraryFunction) {
             final Object moduleObject = readExternalLibNode.execute(inlineTarget, externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
             if (moduleObject != NilObject.SINGLETON) {

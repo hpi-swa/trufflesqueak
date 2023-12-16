@@ -19,7 +19,7 @@ on:
 
 env:
   VERBOSE_GRAALVM_LAUNCHERS: true
-  MX_GATE_OPTS: '--strict-mode --omit-clean --no-warning-as-error'
+  MX_GATE_OPTS: '--strict-mode --omit-clean'
 
 jobs:
   style_and_build_config:

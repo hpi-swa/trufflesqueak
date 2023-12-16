@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchClosureNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
+@SuppressWarnings("truffle-inlining")
 public abstract class AboutToReturnNode extends AbstractNode {
     public static AboutToReturnNode create(final CompiledCodeObject code) {
         if (code.isUnwindMarked()) {

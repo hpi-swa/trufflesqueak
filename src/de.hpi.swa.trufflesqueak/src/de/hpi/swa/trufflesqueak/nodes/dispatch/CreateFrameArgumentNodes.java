@@ -187,7 +187,7 @@ public final class CreateFrameArgumentNodes {
         @Specialization(guards = "doesNotNeedSender(code, assumptionProfile, node)")
         protected static final Object doGetContextOrMarker(final VirtualFrame frame, @SuppressWarnings("unused") final Node node, @SuppressWarnings("unused") final CompiledCodeObject code,
                         @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
-                        @Cached final GetContextOrMarkerNode getContextOrMarkerNode) {
+                        @Cached(inline = false) final GetContextOrMarkerNode getContextOrMarkerNode) {
             return getContextOrMarkerNode.execute(frame);
         }
 
