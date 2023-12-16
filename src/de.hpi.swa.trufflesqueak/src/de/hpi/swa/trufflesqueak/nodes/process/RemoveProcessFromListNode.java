@@ -6,7 +6,11 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -19,33 +23,40 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 public abstract class RemoveProcessFromListNode extends AbstractNode {
-    @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
-    @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
 
-    public final void executeRemove(final PointersObject process, final PointersObject list) {
-        final Object first = readNode.execute(list, LINKED_LIST.FIRST_LINK);
-        final Object last = readNode.execute(list, LINKED_LIST.LAST_LINK);
+    public final void executeRemove(final PointersObject process, final PointersObject list,
+                    final AbstractPointersObjectReadNode readNode,
+                    final AbstractPointersObjectWriteNode writeNode,
+                    final Node inlineTarget) {
+        final Object first = readNode.execute(inlineTarget, list, LINKED_LIST.FIRST_LINK);
+        final Object last = readNode.execute(inlineTarget, list, LINKED_LIST.LAST_LINK);
         executeRemove(process, list, first, last);
-        writeNode.executeNil(process, PROCESS.NEXT_LINK);
+        writeNode.executeNil(inlineTarget, process, PROCESS.NEXT_LINK);
     }
 
     protected abstract void executeRemove(PointersObject process, PointersObject list, Object first, Object last);
 
     @Specialization(guards = "process == first")
-    protected final void doRemoveEqual(final PointersObject process, final PointersObject list, @SuppressWarnings("unused") final PointersObject first, final AbstractSqueakObject last) {
-        final Object next = readNode.execute(process, PROCESS.NEXT_LINK);
-        writeNode.execute(list, LINKED_LIST.FIRST_LINK, next);
+    protected final void doRemoveEqual(final PointersObject process, final PointersObject list, @SuppressWarnings("unused") final PointersObject first, final AbstractSqueakObject last,
+                    @Bind("this") final Node node,
+                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
+                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+        final Object next = readNode.execute(node, process, PROCESS.NEXT_LINK);
+        writeNode.execute(node, list, LINKED_LIST.FIRST_LINK, next);
         if (process == last) {
-            writeNode.executeNil(list, LINKED_LIST.LAST_LINK);
+            writeNode.executeNil(node, list, LINKED_LIST.LAST_LINK);
         }
     }
 
     @Specialization(guards = "process != first")
-    protected final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final PointersObject first, final AbstractSqueakObject last) {
+    protected final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final PointersObject first, final AbstractSqueakObject last,
+                    @Bind("this") final Node node,
+                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
+                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
         PointersObject temp = first;
         Object next;
         while (true) {
-            next = readNode.execute(temp, PROCESS.NEXT_LINK);
+            next = readNode.execute(node, temp, PROCESS.NEXT_LINK);
             if (next == process) {
                 break;
             } else if (next == NilObject.SINGLETON) {
@@ -54,10 +65,10 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
                 temp = (PointersObject) next;
             }
         }
-        next = readNode.execute(process, PROCESS.NEXT_LINK);
-        writeNode.execute(temp, PROCESS.NEXT_LINK, next);
+        next = readNode.execute(node, process, PROCESS.NEXT_LINK);
+        writeNode.execute(node, temp, PROCESS.NEXT_LINK, next);
         if (process == last) {
-            writeNode.execute(list, LINKED_LIST.LAST_LINK, temp);
+            writeNode.execute(node, list, LINKED_LIST.LAST_LINK, temp);
         }
     }
 

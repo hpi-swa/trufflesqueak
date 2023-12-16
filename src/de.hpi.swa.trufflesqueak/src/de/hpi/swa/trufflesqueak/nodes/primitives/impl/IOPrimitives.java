@@ -20,7 +20,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -62,7 +61,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWrit
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
@@ -185,15 +183,16 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimBeCursor1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
         protected final PointersObject doCursor(final PointersObject receiver,
+                        @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode cursorReadNode,
                         @Cached final AbstractPointersObjectReadNode offsetReadNode) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
-                final PointersObject offset = receiver.getFormOffset(cursorReadNode);
-                final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
-                final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
-                image.getDisplay().setCursor(receiver.getFormBits(cursorReadNode), null, receiver.getFormWidth(cursorReadNode), receiver.getFormHeight(cursorReadNode),
-                                receiver.getFormDepth(cursorReadNode), offsetX, offsetY);
+                final PointersObject offset = receiver.getFormOffset(cursorReadNode, node);
+                final int offsetX = Math.abs(offsetReadNode.executeInt(node, offset, POINT.X));
+                final int offsetY = Math.abs(offsetReadNode.executeInt(node, offset, POINT.Y));
+                image.getDisplay().setCursor(receiver.getFormBits(cursorReadNode, node), null, receiver.getFormWidth(cursorReadNode, node), receiver.getFormHeight(cursorReadNode, node),
+                                receiver.getFormDepth(cursorReadNode, node), offsetX, offsetY);
             }
             return receiver;
         }
@@ -210,17 +209,17 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final InlinedConditionProfile depthProfile) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
-                final int[] words = receiver.getFormBits(cursorReadNode);
-                final int depth = receiver.getFormDepth(cursorReadNode);
-                final int height = receiver.getFormHeight(cursorReadNode);
-                final int width = receiver.getFormWidth(cursorReadNode);
-                final PointersObject offset = receiver.getFormOffset(cursorReadNode);
-                final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
-                final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
+                final int[] words = receiver.getFormBits(cursorReadNode, node);
+                final int depth = receiver.getFormDepth(cursorReadNode, node);
+                final int height = receiver.getFormHeight(cursorReadNode, node);
+                final int width = receiver.getFormWidth(cursorReadNode, node);
+                final PointersObject offset = receiver.getFormOffset(cursorReadNode, node);
+                final int offsetX = Math.abs(offsetReadNode.executeInt(node, offset, POINT.X));
+                final int offsetY = Math.abs(offsetReadNode.executeInt(node, offset, POINT.Y));
                 final int[] mask;
                 final int realDepth;
                 if (depthProfile.profile(node, depth == 1)) {
-                    mask = cursorReadNode.executeNative(maskObject, FORM.BITS).getIntStorage();
+                    mask = cursorReadNode.executeNative(node, maskObject, FORM.BITS).getIntStorage();
                     realDepth = 2;
                 } else {
                     mask = null;
@@ -255,27 +254,26 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final long END_OF_RUN = 257 - 1;
         private static final long CROSSED_X = 258 - 1;
 
-        @Child protected AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
-        @Child private AbstractPointersObjectWriteNode pointersWriteNode = AbstractPointersObjectWriteNode.create();
-
         @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isByteType()", "stopIndex <= sourceString.getByteLength()", "receiver.size() >= 4",
-                        "arraySizeNode.execute(node, stops) >= 258", "hasCorrectSlots(receiver, arraySizeNode, node)"}, limit = "1")
+                        "arraySizeNode.execute(node, stops) >= 258", "hasCorrectSlots(pointersReadNode, arraySizeNode, node, receiver)"}, limit = "1")
         protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
                         final ArrayObject stops, final long kernData,
                         @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode pointersReadNode,
+                        @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                         @Cached final ArrayObjectSizeNode arraySizeNode,
                         @Cached final ArrayObjectReadNode arrayReadNode) {
-            final ArrayObject scanXTable = pointersReadNode.executeArray(receiver, CHARACTER_SCANNER.XTABLE);
-            final ArrayObject scanMap = pointersReadNode.executeArray(receiver, CHARACTER_SCANNER.MAP);
+            final ArrayObject scanXTable = pointersReadNode.executeArray(node, receiver, CHARACTER_SCANNER.XTABLE);
+            final ArrayObject scanMap = pointersReadNode.executeArray(node, receiver, CHARACTER_SCANNER.MAP);
 
             final int maxGlyph = arraySizeNode.execute(node, scanXTable) - 2;
-            long scanDestX = pointersReadNode.executeLong(receiver, CHARACTER_SCANNER.DEST_X);
+            long scanDestX = pointersReadNode.executeLong(node, receiver, CHARACTER_SCANNER.DEST_X);
             long scanLastIndex = startIndex;
             while (scanLastIndex <= stopIndex) {
                 final long ascii = sourceString.getByte(scanLastIndex - 1) & 0xFF;
                 final Object stopReason = arrayReadNode.execute(node, stops, ascii);
                 if (stopReason != NilObject.SINGLETON) {
-                    storeStateInReceiver(receiver, scanDestX, scanLastIndex);
+                    storeStateInReceiver(pointersWriteNode, node, receiver, scanDestX, scanLastIndex);
                     return stopReason;
                 }
                 if (arraySizeNode.execute(node, scanMap) <= ascii) {
@@ -291,24 +289,25 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 sourceX2 = (long) arrayReadNode.execute(node, scanXTable, glyphIndex + 1);
                 final long nextDestX = scanDestX + sourceX2 - sourceX1;
                 if (nextDestX > rightX) {
-                    storeStateInReceiver(receiver, scanDestX, scanLastIndex);
+                    storeStateInReceiver(pointersWriteNode, node, receiver, scanDestX, scanLastIndex);
                     return arrayReadNode.execute(node, stops, CROSSED_X);
                 }
                 scanDestX = nextDestX + kernData;
                 scanLastIndex++;
             }
-            storeStateInReceiver(receiver, scanDestX, stopIndex);
+            storeStateInReceiver(pointersWriteNode, node, receiver, scanDestX, stopIndex);
             return arrayReadNode.execute(node, stops, END_OF_RUN);
         }
 
-        private void storeStateInReceiver(final PointersObject receiver, final long scanDestX, final long scanLastIndex) {
-            pointersWriteNode.execute(receiver, CHARACTER_SCANNER.DEST_X, scanDestX);
-            pointersWriteNode.execute(receiver, CHARACTER_SCANNER.LAST_INDEX, scanLastIndex);
+        private void storeStateInReceiver(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final PointersObject receiver, final long scanDestX, final long scanLastIndex) {
+            writeNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.DEST_X, scanDestX);
+            writeNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.LAST_INDEX, scanLastIndex);
         }
 
-        protected final boolean hasCorrectSlots(final PointersObject receiver, final ArrayObjectSizeNode arraySizeNode, final Node inlineTarget) {
-            return pointersReadNode.execute(receiver, CHARACTER_SCANNER.DEST_X) instanceof Long && pointersReadNode.execute(receiver, CHARACTER_SCANNER.XTABLE) instanceof ArrayObject &&
-                            pointersReadNode.execute(receiver, CHARACTER_SCANNER.MAP) instanceof final ArrayObject scanMap && arraySizeNode.execute(inlineTarget, scanMap) == 256;
+        protected final boolean hasCorrectSlots(final AbstractPointersObjectReadNode readNode, final ArrayObjectSizeNode arraySizeNode, final Node inlineTarget, final PointersObject receiver) {
+            return readNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.DEST_X) instanceof Long &&
+                            readNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.XTABLE) instanceof ArrayObject &&
+                            readNode.execute(inlineTarget, receiver, CHARACTER_SCANNER.MAP) instanceof final ArrayObject scanMap && arraySizeNode.execute(inlineTarget, scanMap) == 256;
         }
     }
 
@@ -679,7 +678,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (inBounds(rcvrSize, rcvrSize, start, stop, replSize, replSize, replStart)) {
                     final long repOff = replStart - start;
                     for (long i = start - 1; i < stop; i++) {
-                        writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                        writeNode.execute(node, rcvr, i, readNode.execute(node, repl, repOff + i));
                     }
                 } else {
                     errorProfile.enter(node);
@@ -701,7 +700,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 final long repOff = replStart - start;
                 for (long i = start - 1; i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(node, repl, repOff + i));
+                    writeNode.execute(node, rcvr, i, readNode.execute(node, repl, repOff + i));
                 }
             }
 
@@ -813,16 +812,16 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @DenyReplace
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 106)
-    public static final class PrimScreenSizeNode extends AbstractSingletonPrimitiveNode {
-        @Child AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
-
-        @Override
-        public Object execute() {
+    public abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode {
+        @Specialization
+        protected static final Object doScreenSize(@SuppressWarnings("unused") final Object receiver,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectWriteNode writeNode) {
             final long x;
             final long y;
-            final SqueakImageContext image = getContext();
+            final SqueakImageContext image = getContext(node);
             if (image.hasDisplay() && image.getDisplay().isVisible()) {
                 x = image.getDisplay().getWindowWidth();
                 y = image.getDisplay().getWindowHeight();
@@ -830,7 +829,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 x = image.flags.getSnapshotScreenWidth();
                 y = image.flags.getSnapshotScreenHeight();
             }
-            return image.asPoint(writeNode, x, y);
+            return image.asPoint(writeNode, node, x, y);
         }
     }
 
@@ -899,10 +898,5 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return IOPrimitivesFactory.getFactories();
-    }
-
-    @Override
-    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return List.of(PrimScreenSizeNode.class);
     }
 }

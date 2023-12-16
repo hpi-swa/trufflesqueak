@@ -53,9 +53,9 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doPointers(final PointersObject obj, final long index,
+    protected static final Object doPointers(final Node node, final PointersObject obj, final long index,
                     @Cached final AbstractPointersObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization

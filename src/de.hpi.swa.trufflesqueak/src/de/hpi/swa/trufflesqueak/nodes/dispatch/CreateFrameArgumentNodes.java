@@ -92,7 +92,7 @@ public final class CreateFrameArgumentNodes {
             final Object receiver = getReceiver(frame);
             final Object[] arguments = getArguments(frame, argumentNodes);
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
-            final PointersObject message = getContext().newMessage(writeNode, selector, receiverClass, arguments);
+            final PointersObject message = getContext().newMessage(writeNode, node, selector, receiverClass, arguments);
             return FrameAccess.newDNUWith(sender, receiver, message);
         }
     }
@@ -152,7 +152,7 @@ public final class CreateFrameArgumentNodes {
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
             final Object[] arguments = getArguments(frame, argumentNodes);
-            final PointersObject message = getContext().newMessage(writeNode, selector, receiverClass, arguments);
+            final PointersObject message = getContext().newMessage(writeNode, node, selector, receiverClass, arguments);
             return FrameAccess.newDNUWith(senderNode.execute(frame, node, method), receiver, message);
         }
 

@@ -60,7 +60,7 @@ public abstract class DispatchSendNode extends AbstractNode {
                         @Shared("lookupNode") @Cached final LookupMethodNode lookupNode) {
             final SqueakImageContext image = getContext();
             final CompiledCodeObject doesNotUnderstandMethod = (CompiledCodeObject) lookupNode.executeLookup(node, rcvrClass, image.doesNotUnderstand);
-            final PointersObject message = image.newMessage(writeNode, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
+            final PointersObject message = image.newMessage(writeNode, node, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
             return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message});
         }
 
@@ -79,7 +79,7 @@ public abstract class DispatchSendNode extends AbstractNode {
             if (isDoesNotUnderstandProfile.profile(node, newLookupResult == null)) {
                 final Object doesNotUnderstandMethod = lookupNode.executeLookup(node, targetClass, image.doesNotUnderstand);
                 return dispatchNode.executeDispatch(frame, (CompiledCodeObject) doesNotUnderstandMethod,
-                                new Object[]{targetObject, image.newMessage(writeNode, selector, targetClass, arguments)});
+                                new Object[]{targetObject, image.newMessage(writeNode, node, selector, targetClass, arguments)});
             } else {
                 return dispatchNode.executeDispatch(frame, (CompiledCodeObject) newLookupResult, new Object[]{targetObject, selector, image.asArrayOfObjects(arguments), rcvrAndArgs[0]});
             }

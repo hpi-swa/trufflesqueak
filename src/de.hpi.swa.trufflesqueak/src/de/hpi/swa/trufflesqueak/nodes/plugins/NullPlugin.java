@@ -86,9 +86,10 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimUtcWithOffset2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "objectWithTwoSlots.size() == 2")
         protected static final PointersObject doUTC(@SuppressWarnings("unused") final Object receiver, final PointersObject objectWithTwoSlots,
+                        @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(objectWithTwoSlots, 0, getUTCMicroseconds());
-            writeNode.execute(objectWithTwoSlots, 1, getOffsetFromGTMInSeconds());
+            writeNode.execute(node, objectWithTwoSlots, 0, getUTCMicroseconds());
+            writeNode.execute(node, objectWithTwoSlots, 1, getOffsetFromGTMInSeconds());
             return objectWithTwoSlots;
         }
 

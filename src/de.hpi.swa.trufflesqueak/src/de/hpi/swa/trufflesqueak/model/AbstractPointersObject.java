@@ -122,7 +122,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         final Object[] pointers = chunk.getPointers();
         final int instSize = instsize();
         for (int i = 0; i < instSize; i++) {
-            writeNode.execute(this, i, pointers[i]);
+            writeNode.execute(null, this, i, pointers[i]);
         }
         fillInVariablePart(pointers, instSize);
         assert size() == pointers.length;
@@ -289,12 +289,12 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     public final Object instVarAt0Slow(final long index) {
         CompilerAsserts.neverPartOfCompilation();
-        return AbstractPointersObjectReadNode.getUncached().execute(this, index);
+        return AbstractPointersObjectReadNode.getUncached().execute(null, this, index);
     }
 
     public final void instVarAtPut0Slow(final long index, final Object value) {
         CompilerAsserts.neverPartOfCompilation();
-        AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
+        AbstractPointersObjectWriteNode.getUncached().execute(null, this, index, value);
     }
 
     protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {
@@ -376,7 +376,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         if (writeHeader(writer)) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             for (int i = 0; i < instsize(); i++) {
-                writer.writeObject(readNode.execute(this, i));
+                writer.writeObject(readNode.execute(null, this, i));
             }
             writeVariablePart(writer);
         }

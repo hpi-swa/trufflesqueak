@@ -16,10 +16,12 @@ import javax.imageio.ImageIO;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleOptions;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -135,14 +137,15 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
         protected static final Object doRead(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source, final PointersObject form,
                         final boolean ditherFlag, final NativeObject aJPEGErrorMgr2Struct,
+                        @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             if (TruffleOptions.AOT) { /* ImageIO not yet working properly when AOT-compiled. */
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            final NativeObject bits = readNode.executeNative(form, FORM.BITS);
-            final int width = readNode.executeInt(form, FORM.WIDTH);
-            final int height = readNode.executeInt(form, FORM.HEIGHT);
-            final long depth = Math.abs(readNode.executeLong(form, FORM.DEPTH));
+            final NativeObject bits = readNode.executeNative(node, form, FORM.BITS);
+            final int width = readNode.executeInt(node, form, FORM.WIDTH);
+            final int height = readNode.executeInt(node, form, FORM.HEIGHT);
+            final long depth = Math.abs(readNode.executeLong(node, form, FORM.DEPTH));
             if (!bits.isIntType() || depth != 32) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
@@ -169,14 +172,15 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"aJPEGCompressStruct.isByteType()", "destination.isByteType()"})
         protected static final long doWrite(final Object receiver, final NativeObject aJPEGCompressStruct, final NativeObject destination, final PointersObject form,
                         final long quality, final boolean progressiveFlag, final NativeObject aJPEGErrorMgr2Struct,
+                        @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             if (TruffleOptions.AOT) { /* ImageIO not yet working properly when AOT-compiled. */
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            final NativeObject bits = readNode.executeNative(form, FORM.BITS);
-            final int width = readNode.executeInt(form, FORM.WIDTH);
-            final int height = readNode.executeInt(form, FORM.HEIGHT);
-            final long depth = readNode.executeLong(form, FORM.DEPTH);
+            final NativeObject bits = readNode.executeNative(node, form, FORM.BITS);
+            final int width = readNode.executeInt(node, form, FORM.WIDTH);
+            final int height = readNode.executeInt(node, form, FORM.HEIGHT);
+            final long depth = readNode.executeLong(node, form, FORM.DEPTH);
             if (!bits.isIntType() || depth != 32) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }

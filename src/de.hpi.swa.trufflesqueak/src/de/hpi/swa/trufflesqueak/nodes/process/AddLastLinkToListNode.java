@@ -29,19 +29,19 @@ public abstract class AddLastLinkToListNode extends AbstractNode {
     public abstract void execute(Node node, PointersObject process, PointersObject list);
 
     @Specialization
-    protected static final void addLastLinkToList(final PointersObject process, final PointersObject list,
+    protected static final void addLastLinkToList(final Node node, final PointersObject process, final PointersObject list,
                     @Cached final AbstractPointersObjectReadNode readEmptyNode,
                     @Cached final AbstractPointersObjectReadNode readNode,
                     @Cached final AbstractPointersObjectWriteNode writeNode,
                     @Cached final AbstractPointersObjectWriteNode writeLastLinkNode,
                     @Cached final AbstractPointersObjectWriteNode writeListNode) {
-        if (list.isEmptyList(readEmptyNode)) {
-            writeNode.execute(list, LINKED_LIST.FIRST_LINK, process);
+        if (list.isEmptyList(readEmptyNode, node)) {
+            writeNode.execute(node, list, LINKED_LIST.FIRST_LINK, process);
         } else {
-            final PointersObject lastLink = readNode.executePointers(list, LINKED_LIST.LAST_LINK);
-            writeNode.execute(lastLink, PROCESS.NEXT_LINK, process);
+            final PointersObject lastLink = readNode.executePointers(node, list, LINKED_LIST.LAST_LINK);
+            writeNode.execute(node, lastLink, PROCESS.NEXT_LINK, process);
         }
-        writeLastLinkNode.execute(list, LINKED_LIST.LAST_LINK, process);
-        writeListNode.execute(process, PROCESS.LIST, list);
+        writeLastLinkNode.execute(node, list, LINKED_LIST.LAST_LINK, process);
+        writeListNode.execute(node, process, PROCESS.LIST, list);
     }
 }

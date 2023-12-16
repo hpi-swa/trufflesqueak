@@ -14,7 +14,6 @@ import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
-import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -42,31 +41,28 @@ public class AbstractPointersObjectNodes {
     protected static final int VARIABLE_PART_INDEX_CACHE_LIMIT = 3;
     protected static final int VARIABLE_PART_LAYOUT_CACHE_LIMIT = 1;
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class AbstractPointersObjectReadNode extends AbstractNode {
-
-        @NeverDefault
-        public static AbstractPointersObjectReadNode create() {
-            return AbstractPointersObjectReadNodeGen.create();
-        }
 
         public static AbstractPointersObjectReadNode getUncached() {
             return AbstractPointersObjectReadNodeGen.getUncached();
         }
 
-        public abstract Object execute(AbstractPointersObject obj, long index);
+        public abstract Object execute(Node node, AbstractPointersObject obj, long index);
 
-        public abstract long executeLong(AbstractPointersObject obj, long index);
+        public abstract long executeLong(Node node, AbstractPointersObject obj, long index);
 
-        public abstract ArrayObject executeArray(AbstractPointersObject obj, long index);
+        public abstract ArrayObject executeArray(Node node, AbstractPointersObject obj, long index);
 
-        public abstract NativeObject executeNative(AbstractPointersObject obj, long index);
+        public abstract NativeObject executeNative(Node node, AbstractPointersObject obj, long index);
 
-        public abstract PointersObject executePointers(AbstractPointersObject obj, long index);
+        public abstract PointersObject executePointers(Node node, AbstractPointersObject obj, long index);
 
-        public final int executeInt(final AbstractPointersObject obj, final long index) {
-            return MiscUtils.toIntExact(executeLong(obj, index));
+        public final int executeInt(final Node node, final AbstractPointersObject obj, final long index) {
+            return MiscUtils.toIntExact(executeLong(node, obj, index));
         }
 
         @SuppressWarnings("unused")
@@ -87,23 +83,20 @@ public class AbstractPointersObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class AbstractPointersObjectWriteNode extends AbstractNode {
-
-        @NeverDefault
-        public static AbstractPointersObjectWriteNode create() {
-            return AbstractPointersObjectWriteNodeGen.create();
-        }
 
         public static AbstractPointersObjectWriteNode getUncached() {
             return AbstractPointersObjectWriteNodeGen.getUncached();
         }
 
-        public abstract void execute(AbstractPointersObject obj, long index, Object value);
+        public abstract void execute(Node node, AbstractPointersObject obj, long index, Object value);
 
-        public final void executeNil(final AbstractPointersObject obj, final long index) {
-            execute(obj, index, NilObject.SINGLETON);
+        public final void executeNil(final Node node, final AbstractPointersObject obj, final long index) {
+            execute(node, obj, index, NilObject.SINGLETON);
         }
 
         @SuppressWarnings("unused")
@@ -181,18 +174,18 @@ public class AbstractPointersObjectNodes {
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex < cachedLayout.getInstSize()"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "CACHE_LIMIT")
-        protected static final Object doReadCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index,
+        protected static final Object doReadCached(final Node node, final VariablePointersObject object, @SuppressWarnings("unused") final long index,
                         @Cached("index") final long cachedIndex,
                         @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(object, cachedIndex);
+            return readNode.execute(node, object, cachedIndex);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index < object.instsize()", replaces = "doReadCached")
-        protected static final Object doReadGeneric(final VariablePointersObject object, final long index,
+        protected static final Object doReadGeneric(final Node node, final VariablePointersObject object, final long index,
                         @Exclusive @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(object, index);
+            return readNode.execute(node, object, index);
         }
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex >= cachedLayout.getInstSize()"}, //
@@ -228,18 +221,18 @@ public class AbstractPointersObjectNodes {
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex < cachedLayout.getInstSize()"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "CACHE_LIMIT")
-        protected static final void doWriteCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+        protected static final void doWriteCached(final Node node, final VariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
                         @Cached("index") final long cachedIndex,
                         @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(object, cachedIndex, value);
+            writeNode.execute(node, object, cachedIndex, value);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index < object.instsize()", replaces = "doWriteCached")
-        protected static final void doWriteGeneric(final VariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteGeneric(final Node node, final VariablePointersObject object, final long index, final Object value,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(object, index, value);
+            writeNode.execute(node, object, index, value);
         }
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex >= cachedLayout.getInstSize()"}, //
@@ -275,18 +268,18 @@ public class AbstractPointersObjectNodes {
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex < cachedLayout.getInstSize()"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "CACHE_LIMIT")
-        protected static final Object doReadCached(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
+        protected static final Object doReadCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
                         @Cached("index") final long cachedIndex,
                         @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(object, cachedIndex);
+            return readNode.execute(node, object, cachedIndex);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index < object.instsize()", replaces = "doReadCached")
-        protected static final Object doReadGeneric(final WeakVariablePointersObject object, final long index,
+        protected static final Object doReadGeneric(final Node node, final WeakVariablePointersObject object, final long index,
                         @Exclusive @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(object, index);
+            return readNode.execute(node, object, index);
         }
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex >= cachedLayout.getInstSize()"}, //
@@ -325,18 +318,18 @@ public class AbstractPointersObjectNodes {
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex < cachedLayout.getInstSize()"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "CACHE_LIMIT")
-        protected static final void doWriteCached(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+        protected static final void doWriteCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
                         @Cached("index") final long cachedIndex,
                         @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(object, cachedIndex, value);
+            writeNode.execute(node, object, cachedIndex, value);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index < object.instsize()", replaces = "doWriteCached")
-        protected static final void doWriteGeneric(final WeakVariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteGeneric(final Node node, final WeakVariablePointersObject object, final long index, final Object value,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(object, index, value);
+            writeNode.execute(node, object, index, value);
         }
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex >= cachedLayout.getInstSize()"}, //

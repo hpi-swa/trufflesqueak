@@ -21,6 +21,7 @@ import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NonIdempotent;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -586,24 +587,24 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return (AbstractSqueakObject) literals[literals.length - 1];
     }
 
-    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
+    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
         final AbstractSqueakObject mca = getMethodClassAssociation();
-        return mca != NilObject.SINGLETON && readNode.execute((AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
+        return mca != NilObject.SINGLETON && readNode.execute(inlineTarget, (AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
     }
 
     public ClassObject getMethodClassSlow() {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-        if (hasMethodClass(readNode)) {
-            return getMethodClass(readNode);
+        if (hasMethodClass(readNode, null)) {
+            return getMethodClass(readNode, null);
         }
         return null;
     }
 
     /** CompiledMethod>>#methodClass. */
     @NonIdempotent
-    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
-        return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
+    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
+        return (ClassObject) readNode.execute(inlineTarget, (AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
     private long getHeader() {

@@ -6,16 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.Taskbar;
+import java.awt.*;
 import java.awt.Taskbar.Feature;
-import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -156,12 +148,12 @@ public final class SqueakDisplay {
 
         private void setSqueakDisplay(final PointersObject squeakDisplay) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            final NativeObject bitmap = readNode.executeNative(squeakDisplay, FORM.BITS);
+            final NativeObject bitmap = readNode.executeNative(null, squeakDisplay, FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            final int width = readNode.executeInt(squeakDisplay, FORM.WIDTH);
-            final int height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
+            final int width = readNode.executeInt(null, squeakDisplay, FORM.WIDTH);
+            final int height = readNode.executeInt(null, squeakDisplay, FORM.HEIGHT);
             assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
                 bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height, false);

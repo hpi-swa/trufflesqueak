@@ -7,7 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -33,19 +33,19 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
 
     public abstract void executeSignal(VirtualFrame frame, Node node, Object semaphore);
 
-    @Specialization(guards = {"isSemaphore(semaphore)", "semaphore.isEmptyList(readNode)"})
-    protected static final void doSignalEmpty(final PointersObject semaphore,
-                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
-                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-        writeNode.execute(semaphore, SEMAPHORE.EXCESS_SIGNALS, readNode.executeLong(semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
+    @Specialization(guards = {"isSemaphore(semaphore)", "semaphore.isEmptyList(readNode, node)"}, limit = "1")
+    protected static final void doSignalEmpty(final Node node, final PointersObject semaphore,
+                    @Exclusive @Cached final AbstractPointersObjectReadNode readNode,
+                    @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
+        writeNode.execute(node, semaphore, SEMAPHORE.EXCESS_SIGNALS, readNode.executeLong(node, semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
     }
 
-    @Specialization(guards = {"isSemaphore(semaphore)", "!semaphore.isEmptyList(readNode)"})
+    @Specialization(guards = {"isSemaphore(semaphore)", "!semaphore.isEmptyList(readNode, node)"}, limit = "1")
     protected static final void doSignal(final VirtualFrame frame, final Node node, final PointersObject semaphore,
-                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
-                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
+                    @Exclusive @Cached final AbstractPointersObjectReadNode readNode,
+                    @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                     @Cached final ResumeProcessNode resumeProcessNode) {
-        resumeProcessNode.executeResume(frame, node, semaphore.removeFirstLinkOfList(readNode, writeNode));
+        resumeProcessNode.executeResume(frame, node, semaphore.removeFirstLinkOfList(readNode, writeNode, node));
     }
 
     @Specialization

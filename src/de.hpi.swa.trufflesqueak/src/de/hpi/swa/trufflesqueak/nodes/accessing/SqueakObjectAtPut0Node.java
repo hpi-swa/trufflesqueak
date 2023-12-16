@@ -55,9 +55,9 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doPointers(final PointersObject obj, final long index, final Object value,
+    protected static final void doPointers(final Node node, final PointersObject obj, final long index, final Object value,
                     @Cached final AbstractPointersObjectWriteNode writeNode) {
-        writeNode.execute(obj, (int) index, value);
+        writeNode.execute(node, obj, (int) index, value);
     }
 
     @Specialization

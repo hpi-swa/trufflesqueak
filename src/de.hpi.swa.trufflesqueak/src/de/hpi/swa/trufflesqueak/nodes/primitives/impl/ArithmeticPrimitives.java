@@ -302,7 +302,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             if (fractionProfile.profile(node, SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
                 return lhs / rhs;
             } else {
-                return getContext().asFraction(lhs, rhs, writeNode);
+                return getContext().asFraction(lhs, rhs, writeNode, node);
             }
         }
 
@@ -484,26 +484,30 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         // TODO: Object/Object specialization sufficient
         @Specialization
         protected final PointersObject doLong(final long xPos, final Object yPos,
+                        @Bind("this") final Node node,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, xPos, yPos);
+            return getContext().asPoint(writeNode, node, xPos, yPos);
         }
 
         @Specialization
         protected final PointersObject doDouble(final double xPos, final Object yPos,
+                        @Bind("this") final Node node,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, xPos, yPos);
+            return getContext().asPoint(writeNode, node, xPos, yPos);
         }
 
         @Specialization
         protected final PointersObject doLargeInteger(final LargeIntegerObject xPos, final Object yPos,
+                        @Bind("this") final Node node,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, xPos, yPos);
+            return getContext().asPoint(writeNode, node, xPos, yPos);
         }
 
         @Specialization
         protected final PointersObject doFloatObject(final FloatObject xPos, final Object yPos,
+                        @Bind("this") final Node node,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, xPos, yPos);
+            return getContext().asPoint(writeNode, node, xPos, yPos);
         }
     }
 
