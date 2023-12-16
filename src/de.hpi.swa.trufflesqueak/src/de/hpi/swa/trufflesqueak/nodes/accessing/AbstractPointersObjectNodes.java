@@ -53,6 +53,10 @@ public class AbstractPointersObjectNodes {
 
         public abstract Object execute(Node node, AbstractPointersObject obj, long index);
 
+        public static final Object executeUncached(final AbstractPointersObject obj, final long index) {
+            return getUncached().execute(null, obj, index);
+        }
+
         public abstract long executeLong(Node node, AbstractPointersObject obj, long index);
 
         public abstract ArrayObject executeArray(Node node, AbstractPointersObject obj, long index);
@@ -94,6 +98,10 @@ public class AbstractPointersObjectNodes {
         }
 
         public abstract void execute(Node node, AbstractPointersObject obj, long index, Object value);
+
+        public static final void executeUncached(final AbstractPointersObject obj, final long index, final Object value) {
+            getUncached().execute(null, obj, index, value);
+        }
 
         public final void executeNil(final Node node, final AbstractPointersObject obj, final long index) {
             execute(node, obj, index, NilObject.SINGLETON);

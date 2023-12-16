@@ -1304,11 +1304,7 @@ public final class B2D {
             rightX = temp;
         }
         edgeXValueOfput(bezier, leftX);
-        if (rightX - leftX > lineWidth) {
-            wideBezierWidthOfput(bezier, rightX - leftX);
-        } else {
-            wideBezierWidthOfput(bezier, lineWidth);
-        }
+        wideBezierWidthOfput(bezier, Math.max(rightX - leftX, lineWidth));
     }
 
     /* BalloonEngineBase>>#computeSqrt: */
@@ -2497,16 +2493,8 @@ public final class B2D {
         }
         int x0;
         int x1;
-        if (leftX < spanEndAAGet()) {
-            x0 = spanEndAAGet();
-        } else {
-            x0 = leftX;
-        }
-        if (rightX > shl(spanSizeGet(), aaShiftGet())) {
-            x1 = shl(spanSizeGet(), aaShiftGet());
-        } else {
-            x1 = rightX;
-        }
+        x0 = Math.max(leftX, spanEndAAGet());
+        x1 = Math.min(rightX, shl(spanSizeGet(), aaShiftGet()));
         if (x0 < fillMinXGet()) {
             x0 = fillMinXGet();
         }
@@ -5695,7 +5683,7 @@ public final class B2D {
             di = dj;
             dj = tt;
         }
-        if (n <= 2) {
+        if (n == 2) {
             return;
         }
         /* ij is the midpoint of i and j. */
@@ -5721,7 +5709,7 @@ public final class B2D {
             array[ij] = tmp;
             dij = di;
         }
-        if (n <= 3) {
+        if (n == 3) {
             return;
         }
         int k = i;

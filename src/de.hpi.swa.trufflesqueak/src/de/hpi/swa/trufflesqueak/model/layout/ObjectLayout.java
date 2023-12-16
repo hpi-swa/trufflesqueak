@@ -55,7 +55,7 @@ public final class ObjectLayout {
             throw SqueakException.create("Only the latest layout should be evolved");
         }
         final SlotLocation oldLocation = locations[index];
-        assert index < locations.length && !oldLocation.isGeneric();
+        assert !oldLocation.isGeneric();
         invalidate();
         final SlotLocation[] newLocations = locations.clone();
         newLocations[index] = SlotLocation.UNINITIALIZED_LOCATION;

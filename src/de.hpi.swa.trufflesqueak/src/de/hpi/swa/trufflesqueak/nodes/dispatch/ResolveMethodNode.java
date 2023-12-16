@@ -52,7 +52,7 @@ public abstract class ResolveMethodNode extends AbstractNode {
             return method;
         } else {
             assert runWithInMethod == null : "runWithInMethod should not be another Object";
-            return doDoesNotUnderstand(image, targetObjectClass, runWithInMethod);
+            return doDoesNotUnderstand(image, targetObjectClass, null);
         }
     }
 

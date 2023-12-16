@@ -289,12 +289,12 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     public final Object instVarAt0Slow(final long index) {
         CompilerAsserts.neverPartOfCompilation();
-        return AbstractPointersObjectReadNode.getUncached().execute(null, this, index);
+        return AbstractPointersObjectReadNode.executeUncached(this, index);
     }
 
     public final void instVarAtPut0Slow(final long index, final Object value) {
         CompilerAsserts.neverPartOfCompilation();
-        AbstractPointersObjectWriteNode.getUncached().execute(null, this, index, value);
+        AbstractPointersObjectWriteNode.executeUncached(this, index, value);
     }
 
     protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {

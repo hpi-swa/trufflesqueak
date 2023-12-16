@@ -238,7 +238,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         @Bind("aByteArray.getByteLength()") final int aByteArrayLength) {
             for (int i = 0; i < aByteArrayLength; i++) {
                 final int wordIndex = i / 2;
-                final long value = aByteArray.getByteUnsigned(i) << 8;
+                final long value = (long) aByteArray.getByteUnsigned(i) << 8;
                 final int intValue;
                 if (i % 2 == 0) {
                     intValue = aSoundBuffer.getInt(wordIndex) & 0xffff0000 | (int) value & 0xffff;

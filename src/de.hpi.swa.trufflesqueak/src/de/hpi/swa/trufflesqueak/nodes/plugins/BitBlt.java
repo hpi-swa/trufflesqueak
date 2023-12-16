@@ -144,11 +144,11 @@ public final class BitBlt {
     private Object destBits;
     private int destBitsBaseOffset;
     private int destBitsIndexScale;
-    private long destDelta;
+    private int destDelta;
     private int destDepth;
     private PointersObject destForm;
     private int destHeight;
-    private long destIndex;
+    private int destIndex;
     private long destMask;
     private boolean destMSB;
     private int destPitch;
@@ -176,8 +176,8 @@ public final class BitBlt {
     private long[] gammaLookupTable;
     private AbstractSqueakObject halftoneForm;
     private int[] halftoneBits;
-    private long halftoneHeight;
-    private long hDir;
+    private int halftoneHeight;
+    private int hDir;
     private int height;
     @SuppressWarnings("unused") private boolean isWarping;
     private long mask1;
@@ -197,7 +197,7 @@ public final class BitBlt {
     private Object sourceBits;
     private int sourceBitsBaseOffset;
     private int sourceBitsIndexScale;
-    private long sourceDelta;
+    private int sourceDelta;
     private int sourceDepth;
     private PointersObject sourceForm;
     private int sourceHeight;
@@ -208,7 +208,7 @@ public final class BitBlt {
     private int sourceWidth;
     private int sourceX;
     private int sourceY;
-    private long srcBitShift;
+    private int srcBitShift;
     private int sx;
     private int sy;
     private long[] ungammaLookupTable;
@@ -880,7 +880,7 @@ public final class BitBlt {
         assert -32 <= skew && skew <= 32; // Modified (image uses 31 instead of 32).
 
         /* Byte delta */
-        final long hInc = hDir * 4;
+        final int hInc = hDir * 4;
         final long unskew;
         final long skewMask;
         if (skew < 0) {
@@ -915,7 +915,7 @@ public final class BitBlt {
         }
     }
 
-    private void copyLoopCombinationRule3(final long initialHalftoneWord, final long hInc, final long notSkewMask, final long skewMask, final long unskew) {
+    private void copyLoopCombinationRule3(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final long unskew) {
         long halftoneWord = initialHalftoneWord;
         int y = dy;
         for (int i = 1; i <= bbH; i++) {
@@ -998,7 +998,7 @@ public final class BitBlt {
         }
     }
 
-    private void copyLoopGeneralCase(final long initialHalftoneWord, final long hInc, final long notSkewMask, final long skewMask, final long unskew) {
+    private void copyLoopGeneralCase(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final long unskew) {
         long halftoneWord = initialHalftoneWord;
         int y = dy;
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
@@ -1625,7 +1625,7 @@ public final class BitBlt {
         }
         destPPW = div(32, destDepth);
         destPitch = div(destWidth + destPPW - 1, destPPW) * 4;
-        final long destBitsSize;
+        final int destBitsSize;
         if (isWords(destBitsNative)) {
             destBits = destBitsNative.getIntStorage();
             destBitsSize = destBitsNative.getIntLength() * Integer.BYTES;
@@ -2235,13 +2235,13 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickSourcePixels:flags:srcMask:destMask:srcShiftInc:dstShiftInc: */
-    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final int mapperFlags, final long srcMask, final long dstMask, final long srcShiftInc,
-                    final long dstShiftInc) {
+    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final int mapperFlags, final long srcMask, final long dstMask, final int srcShiftInc,
+                    final int dstShiftInc) {
         long destWord = 0;
         /* Hint: Keep in register */
-        long srcShift = srcBitShift;
+        int srcShift = srcBitShift;
         /* Hint: Keep in register */
-        long dstShift = dstBitShift;
+        int dstShift = dstBitShift;
         /* always > 0 so we can use do { } while(--nPix); */
         long nPix = nPixels;
         if (mapperFlags == (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
@@ -2289,7 +2289,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickWarpPixelAtX:y: */
-    private long pickWarpPixelAtXy(final long xx, final long yy) {
+    private int pickWarpPixelAtXy(final long xx, final long yy) {
         /*
          * note: it would be much faster if we could just avoid these stupid tests for being inside
          * sourceForm.
@@ -2303,7 +2303,7 @@ public final class BitBlt {
         /* Extract pixel from word */
         final long sourceWord = srcLongAt(srcIndex);
         srcBitShift = warpBitShiftTable[(int) (x & warpAlignMask)];
-        return shr(sourceWord, srcBitShift) & warpSrcMask;
+        return (int) shr(sourceWord, srcBitShift) & warpSrcMask;
     }
 
     /*
@@ -2955,7 +2955,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbMap16To32: */
-    private static long rgbMap16To32(final long sourcePixel) {
+    private static int rgbMap16To32(final int sourcePixel) {
         return (sourcePixel & 0x1F) << 3 | (sourcePixel & 0x3E0) << 6 | (sourcePixel & 0x7C00) << 9;
     }
 
@@ -2965,7 +2965,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbMap32To32: */
-    private static long rgbMap32To32(final long sourcePixel) {
+    private static int rgbMap32To32(final int sourcePixel) {
         return sourcePixel;
     }
 
@@ -3642,31 +3642,29 @@ public final class BitBlt {
             int x = sx;
             int y = sy;
             /* Pick and average n*n subpixels */
-            long a = 0;
-            long r = 0;
-            long g = 0;
-            long b = 0;
+            int a = 0;
+            int r = 0;
+            int g = 0;
+            int b = 0;
             /* actual number of pixels (not clipped and not transparent) */
-            long nPix = 0;
+            int nPix = 0;
             long j = n;
             do {
                 int xx = x;
                 int yy = y;
                 long k = n;
                 do {
-                    long rgb = pickWarpPixelAtXy(xx, yy);
+                    int rgb = pickWarpPixelAtXy(xx, yy);
                     if (!(combinationRule == 25 && rgb == 0)) {
                         /* If not clipped and not transparent, then tally rgb values */
                         nPix++;
                         if (sourceDepth < 16) {
                             /* Get RGBA values from sourcemap table */
-                            final int rawValue;
                             if (sourceMapIsWords) {
-                                rawValue = UnsafeUtils.getInt((int[]) sourceMap, rgb);
+                                rgb = UnsafeUtils.getInt((int[]) sourceMap, rgb);
                             } else {
-                                rawValue = VarHandleUtils.getInt((byte[]) sourceMap, (int) rgb);
+                                rgb = VarHandleUtils.getInt((byte[]) sourceMap, rgb);
                             }
-                            rgb = Integer.toUnsignedLong(rawValue);
                         } else {
                             /* Already in RGB format */
                             if (sourceDepth == 16) {
@@ -3816,6 +3814,10 @@ public final class BitBlt {
 
     private static boolean failed() {
         return false;
+    }
+
+    private static int div(final int a, final int b) {
+        return a / b;
     }
 
     private static int div(final long a, final long b) {

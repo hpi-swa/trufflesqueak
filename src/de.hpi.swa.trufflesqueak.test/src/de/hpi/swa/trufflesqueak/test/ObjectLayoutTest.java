@@ -196,7 +196,7 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
     }
 
     private static void writeAndValidate(final AbstractPointersObject obj, final int index, final Object value) {
-        AbstractPointersObjectWriteNode.getUncached().execute(null, obj, index, value);
-        assertEquals("Write failed", AbstractPointersObjectReadNode.getUncached().execute(null, obj, index), value);
+        AbstractPointersObjectWriteNode.executeUncached(obj, index, value);
+        assertEquals("Write failed", AbstractPointersObjectReadNode.executeUncached(obj, index), value);
     }
 }

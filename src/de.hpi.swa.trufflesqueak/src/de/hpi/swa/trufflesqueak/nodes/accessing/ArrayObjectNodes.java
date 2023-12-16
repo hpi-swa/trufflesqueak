@@ -492,7 +492,7 @@ public final class ArrayObjectNodes {
         @Specialization(guards = {"obj.isCharType()", "isCharNilTag(value)"})
         protected static final void doArrayOfCharsNilTagClash(final Node node, final ArrayObject obj, final long index, final char value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
-            /** `value` happens to be char nil tag, need to despecialize to be able store it. */
+            /** `value` happens to be char nil tag, need to despecialize to be able to store it. */
             obj.transitionFromCharsToObjects(isNilTagProfile, node);
             doArrayOfObjects(obj, index, value);
         }
@@ -517,7 +517,7 @@ public final class ArrayObjectNodes {
         @Specialization(guards = {"obj.isLongType()", "isLongNilTag(value)"})
         protected static final void doArrayOfLongsNilTagClash(final Node node, final ArrayObject obj, final long index, final long value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
-            /** `value` happens to be long nil tag, need to despecialize to be able store it. */
+            /** `value` happens to be long nil tag, need to despecialize to be able to store it. */
             obj.transitionFromLongsToObjects(isNilTagProfile, node);
             doArrayOfObjects(obj, index, value);
         }
@@ -542,7 +542,7 @@ public final class ArrayObjectNodes {
         @Specialization(guards = {"obj.isDoubleType()", "isDoubleNilTag(value)"})
         protected static final void doArrayOfDoublesNilTagClash(final Node node, final ArrayObject obj, final long index, final double value,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
-            // `value` happens to be double nil tag, need to despecialize to be able store it.
+            // `value` happens to be double nil tag, need to despecialize to be able to store it.
             obj.transitionFromDoublesToObjects(isNilTagProfile, node);
             doArrayOfObjects(obj, index, value);
         }
