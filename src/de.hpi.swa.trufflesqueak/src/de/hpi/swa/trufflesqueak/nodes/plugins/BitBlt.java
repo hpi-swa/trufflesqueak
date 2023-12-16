@@ -3875,15 +3875,11 @@ public final class BitBlt {
 
     private long srcLongAt(final long index) {
         /**
-         * Unfortunately, BitBlt tries to read past the end or before the start of
-         * {@link sourceBits} sometimes, so return `0` in these cases. An example is
-         * #testPivelValueAt (confirmed by SqueakJS's BitBltPlugin) or `PolygonMorph
-         * arrowPrototype`.
+         * BitBlt sometimes tries to read past the end or before the start of {@link sourceBits}
+         * sometimes. An example is #testPivelValueAt (confirmed by SqueakJS's BitBltPlugin) or
+         * `PolygonMorph arrowPrototype`.
          */
-        if (0 <= index && index < endOfSource) {
-            return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * sourceBitsIndexScale));
-        } else {
-            return 0L;
-        }
+        assert 0 <= index && index <= endOfSource;
+        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * sourceBitsIndexScale));
     }
 }
