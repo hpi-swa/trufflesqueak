@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -58,6 +59,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SEMAPHORE;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.InheritsFromNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
@@ -995,79 +997,46 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 186)
-    protected abstract static class AbstractPrimEnterCriticalSectionNode extends AbstractPrimitiveNode {
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
-
-        protected final boolean ownerIsNil(final PointersObject mutex) {
-            return readNode.execute(mutex, MUTEX.OWNER) == NilObject.SINGLETON;
-        }
-
-        protected final boolean activeProcessMutexOwner(final PointersObject mutex, final GetActiveProcessNode getActiveProcessNode, final Node inlineTarget) {
-            return readNode.execute(mutex, MUTEX.OWNER) == getActiveProcessNode.execute(inlineTarget);
-        }
-
-        protected final boolean isMutexOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
-            return readNode.execute(mutex, MUTEX.OWNER) == effectiveProcess;
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 186)
-    protected abstract static class PrimEnterCriticalSection1Node extends AbstractPrimEnterCriticalSectionNode implements UnaryPrimitiveFallback {
-        @Specialization(guards = "ownerIsNil(mutex)")
-        protected static final boolean doEnterNilOwner(final PointersObject mutex,
-                        @Bind("this") final Node node,
-                        @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
-            writeNode.execute(mutex, MUTEX.OWNER, getActiveProcessNode.execute(node));
-            return BooleanObject.FALSE;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "activeProcessMutexOwner(mutex, getActiveProcessNode, node)")
-        protected static final boolean doEnterActiveProcessOwner(final PointersObject mutex,
-                        @Bind("this") final Node node,
-                        @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
-            return BooleanObject.TRUE;
-        }
-
-        @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(mutex, getActiveProcessNode, node)"}, limit = "1")
+    protected abstract static class PrimEnterCriticalSection1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+        @Specialization
         protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex,
                         @Bind("this") final Node node,
-                        @Cached final AddLastLinkToListNode addLastLinkToListNode,
-                        @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached final FrameStackPushNode pushNode) {
-            addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), mutex);
-            try {
-                wakeHighestPriorityNode.executeWake(frame, node);
-            } catch (final ProcessSwitch ps) {
-                /* Leave `false` as result on stack. */
-                pushNode.execute(frame, BooleanObject.FALSE);
-                throw ps;
-            }
-            throw CompilerDirectives.shouldNotReachHere();
+                        @Cached final AbstractPointersObjectReadNode readNode,
+                        @Cached final EnterCriticalSectionNode enterCriticalSectionNode,
+                        @Cached final GetActiveProcessNode getActiveProcessNode) {
+            return enterCriticalSectionNode.execute(frame, mutex, readNode.execute(mutex, MUTEX.OWNER), getActiveProcessNode.execute(node));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 186)
-    protected abstract static class PrimEnterCriticalSection2Node extends AbstractPrimEnterCriticalSectionNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = "ownerIsNil(mutex)")
-        protected static final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess,
+    protected abstract static class PrimEnterCriticalSection2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization
+        protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex, final PointersObject effectiveProcess,
+                        @Cached final AbstractPointersObjectReadNode readNode,
+                        @Cached final EnterCriticalSectionNode enterCriticalSectionNode) {
+            return enterCriticalSectionNode.execute(frame, mutex, readNode.execute(mutex, MUTEX.OWNER), effectiveProcess);
+        }
+    }
+
+    protected abstract static class EnterCriticalSectionNode extends AbstractNode {
+        protected abstract Object execute(VirtualFrame frame, PointersObject mutex, Object mutexOwner, PointersObject effectiveProcess);
+
+        @Specialization
+        protected static final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NilObject mutexOwner, final PointersObject effectiveProcess,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             writeNode.execute(mutex, MUTEX.OWNER, effectiveProcess);
             return BooleanObject.FALSE;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isMutexOwner(mutex, effectiveProcess)")
-        protected static final boolean doEnterActiveProcessOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
+        @Specialization(guards = "mutexOwner == effectiveProcess")
+        protected static final boolean doEnterActiveProcessOwner(final PointersObject mutex, final PointersObject mutexOwner, final PointersObject effectiveProcess) {
             return BooleanObject.TRUE;
         }
 
-        @Specialization(guards = {"!ownerIsNil(mutex)", "!isMutexOwner(mutex, effectiveProcess)"})
-        protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess,
+        @Fallback
+        protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final Object mutexOwner, final PointersObject effectiveProcess,
                         @Bind("this") final Node node,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
