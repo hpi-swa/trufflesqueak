@@ -14,6 +14,9 @@ import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -30,10 +33,10 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -492,7 +495,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryTimesModulo")
-    protected abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode {
         private static final long LONG_MASK = 0xFFFFFFFFL;
 
         /*
@@ -515,68 +518,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return result;
         }
 
+        @Specialization(replaces = "doLongQuick")
+        protected final Object doGeneric(final Object receiver, final Object a, final Object m, final Object mInv,
+                        @Bind("this") final Node node,
+                        @Cached final ToIntsNode receiverToIntsNode,
+                        @Cached final ToIntsNode aToIntsNode,
+                        @Cached final ToIntsNode mToIntsNode,
+                        @Cached final ToExactLongNode toExactLongNode) {
+            return doLargeInteger(receiverToIntsNode.execute(node, receiver), aToIntsNode.execute(node, a), mToIntsNode.execute(node, m), toExactLongNode.execute(node, mInv));
+        }
+
         private static boolean fitsInOneWord(final long value) {
             return value <= NativeObject.INTEGER_MAX;
-        }
-
-        @Specialization(replaces = "doLongQuick")
-        @TruffleBoundary
-        protected final Object doLong(final long receiver, final long a, final long m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected final Object doLong(final long receiver, final LargeIntegerObject a, final long m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected final Object doLong(final long receiver, final long a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected final Object doLong(final long receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final long m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final long m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final LargeIntegerObject mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv.longValueExact());
-        }
-
-        private static int[] toInts(final LargeIntegerObject value) {
-            return UnsafeUtils.toIntsExact(value.getBytes());
-        }
-
-        private static int[] toInts(final long value) {
-            if (fitsInOneWord(value)) {
-                return new int[]{(int) value};
-            } else {
-                return new int[]{(int) value, (int) (value >> 32)};
-            }
         }
 
         private Object doLargeInteger(final int[] firstInts, final int[] secondInts, final int[] thirdInts, final long mInv) {
@@ -663,6 +616,52 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             return 0;
         }
+
+        @GenerateInline
+        @GenerateCached(false)
+        protected abstract static class ToIntsNode extends AbstractNode {
+            protected abstract int[] execute(Node inliningTarget, Object value);
+
+            @Specialization
+            protected static final int[] doLargeInteger(final LargeIntegerObject value) {
+                return UnsafeUtils.toIntsExact(value.getBytes());
+            }
+
+            @Specialization
+            protected static final int[] doLong(final long value) {
+                if (fitsInOneWord(value)) {
+                    return new int[]{(int) value};
+                } else {
+                    return new int[]{(int) value, (int) (value >> 32)};
+                }
+            }
+
+            @Fallback
+            protected static final int[] doFallback(@SuppressWarnings("unused") final Object value) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+
+        @GenerateInline
+        @GenerateCached(false)
+        protected abstract static class ToExactLongNode extends AbstractNode {
+            protected abstract long execute(Node inliningTarget, Object value);
+
+            @Specialization
+            protected static final long doLong(final long value) {
+                return value;
+            }
+
+            @Specialization
+            protected static final long doLargeInteger(final LargeIntegerObject value) {
+                return value.longValueExact();
+            }
+
+            @Fallback
+            protected static final long doFallback(@SuppressWarnings("unused") final Object value) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
     }
 
     @GenerateNodeFactory
@@ -678,7 +677,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
          * Left to support LargeIntegerObjects adapted from NativeObjects (see
          * SecureHashAlgorithmTest>>testEmptyInput).
          */
-        @TruffleBoundary
         @Specialization(guards = {"receiver.isByteType()", "getContext().isLargeIntegerClass(receiver.getSqueakClass())"})
         protected final Object doNativeObject(final NativeObject receiver) {
             return new LargeIntegerObject(getContext(), receiver.getSqueakClass(), receiver.getByteStorage().clone()).reduceIfPossible();

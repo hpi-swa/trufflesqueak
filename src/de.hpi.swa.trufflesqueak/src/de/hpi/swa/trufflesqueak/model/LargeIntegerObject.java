@@ -44,6 +44,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         exposedSize = bytes.length;
     }
 
+    @TruffleBoundary
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
         super(image, klass);
         integer = new BigInteger(isPositive(image) ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
