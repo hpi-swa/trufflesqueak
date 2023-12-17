@@ -52,10 +52,4 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
     protected static final void doNothing(@SuppressWarnings("unused") final NilObject nil) {
         // nothing to do
     }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "object == null")
-    protected static final void doNothing(final Object object) {
-        // nothing to do
-    }
 }

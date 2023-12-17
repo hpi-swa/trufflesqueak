@@ -43,12 +43,12 @@ public final class CheckForInterruptsNode extends Node {
         if (istate.interruptPending()) {
             LogUtils.INTERRUPTS.fine("User interrupt");
             istate.interruptPending = false; // reset interrupt flag
-            signalSemaporeNode.executeSignal(frame, this, istate.getInterruptSemaphore());
+            signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
         }
         if (istate.nextWakeUpTickTrigger()) {
             LogUtils.INTERRUPTS.fine("Timer interrupt");
             istate.nextWakeupTick = 0; // reset timer interrupt
-            signalSemaporeNode.executeSignal(frame, this, istate.getTimerSemaphore());
+            signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
         }
         if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
             LogUtils.INTERRUPTS.fine("Finalization interrupt");

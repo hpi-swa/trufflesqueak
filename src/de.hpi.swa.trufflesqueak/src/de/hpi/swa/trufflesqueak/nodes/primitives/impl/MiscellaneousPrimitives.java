@@ -88,14 +88,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
-            image.interrupt.setTimerSemaphore(semaphore);
             image.interrupt.setNextWakeupTick(msTime);
         }
 
         protected final void resetTimerSemaphore() {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, NilObject.SINGLETON);
-            image.interrupt.setTimerSemaphore(null);
             image.interrupt.setNextWakeupTick(0);
         }
     }
@@ -499,18 +497,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimInterruptSemaphoreNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization
-        protected final Object get(final Object receiver, final PointersObject semaphore) {
+        protected final Object set(final Object receiver, final PointersObject semaphore) {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
-            image.interrupt.setInterruptSemaphore(semaphore);
             return receiver;
         }
 
         @Specialization
-        protected final Object get(final Object receiver, final NilObject semaphore) {
+        protected final Object set(final Object receiver, final NilObject semaphore) {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
-            image.interrupt.setInterruptSemaphore(null);
             return receiver;
         }
     }
