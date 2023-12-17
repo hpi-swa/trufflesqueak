@@ -145,7 +145,9 @@ public final class FrameAccess {
     }
 
     public static Frame restoreParentFrameFromArguments(final Object[] arguments) {
-        return (Frame) arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()];
+        final Object frame = arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()];
+        arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
+        return (Frame) frame;
     }
 
     public static Object getReceiver(final Frame frame) {
