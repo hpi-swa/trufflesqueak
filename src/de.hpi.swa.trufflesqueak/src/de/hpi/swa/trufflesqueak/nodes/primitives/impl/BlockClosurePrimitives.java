@@ -12,7 +12,6 @@ import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -93,10 +92,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {201, 221})
-    @ImportStatic(AbstractClosurePrimitiveNode.class)
-    public abstract static class PrimClosureValue0Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
-        @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
-
+    public abstract static class PrimClosureValue0Node extends AbstractClosurePrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 0"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
@@ -394,6 +390,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        return BlockClosurePrimitivesFactory.getFactories();
+        return List.copyOf(BlockClosurePrimitivesFactory.getFactories());
     }
 }

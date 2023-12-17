@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives.AbstractClosurePrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
@@ -201,12 +202,17 @@ public final class JumpBytecodes {
 
     private static boolean needsCheck(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes, final int offset) {
         CompilerAsserts.neverPartOfCompilation();
-        if (offset < 0) { // backjumps only
+        if (offset < 0) { // back-jumps only
             final int backJumpIndex = index + numBytecodes + offset;
             for (int i = backJumpIndex; i < index; i++) {
                 if (bytecodeNodes[i] instanceof final AbstractSendNode abs) {
                     // NodeUtil.printTree(System.out, abs);
-                    if (NodeUtil.findFirstNodeInstance(abs, DirectCallNode.class) != null || NodeUtil.findFirstNodeInstance(abs, IndirectCallNode.class) != null) {
+                    /*
+                     * Search for call nodes but reject the ones from closure primitives as they do
+                     * not check for interrupts.
+                     */
+                    if ((NodeUtil.findFirstNodeInstance(abs, DirectCallNode.class) != null || NodeUtil.findFirstNodeInstance(abs, IndirectCallNode.class) != null) &&
+                                    NodeUtil.findFirstNodeInstance(abs, AbstractClosurePrimitiveNode.class) == null) {
                         return false;
                     }
                 }
