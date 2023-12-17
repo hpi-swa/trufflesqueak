@@ -68,6 +68,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         image.interrupt.deactivate();
         try {
             return performInteropSendNode.execute(node, receiver, message, arguments);
+        } catch (final ProcessSwitch ps) {
+            CompilerDirectives.transferToInterpreter();
+            image.printToStdErr(ps);
+            throw new IllegalArgumentException();
         } finally {
             if (wasActive) {
                 image.interrupt.activate();
@@ -128,13 +132,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                     for (int i = 0; i < arguments.length; i++) {
                         receiverAndArguments[1 + i] = wrapNode.executeWrap(node, arguments[i]);
                     }
-                    try {
-                        return dispatchNode.executeDispatch(node, method, receiverAndArguments, NilObject.SINGLETON);
-                    } catch (final ProcessSwitch ps) {
-                        CompilerDirectives.transferToInterpreter();
-                        image.printToStdErr(ps);
-                        throw new IllegalArgumentException();
-                    }
+                    return dispatchNode.executeDispatch(node, method, receiverAndArguments, NilObject.SINGLETON);
                 } else {
                     image.printToStdErr(selector, "method:", methodObject);
                 }
