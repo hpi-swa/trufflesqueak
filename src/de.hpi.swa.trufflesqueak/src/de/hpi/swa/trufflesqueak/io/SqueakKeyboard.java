@@ -27,7 +27,7 @@ public final class SqueakKeyboard implements KeyListener {
         if (keyChar != KeyEvent.CHAR_UNDEFINED) {
             addKeyboardEvent(KEYBOARD_EVENT.CHAR, keyChar);
         }
-        if (e.isMetaDown() && keyChar == '.') {
+        if ((e.isAltDown() || e.isMetaDown()) && keyChar == '.') {
             display.image.interrupt.setInterruptPending();
         }
     }

@@ -334,8 +334,8 @@ public final class SqueakDisplay {
     public int recordModifiers(final InputEvent e) {
         final int shiftValue = e.isShiftDown() ? KEYBOARD.SHIFT : 0;
         final int ctrlValue = e.isControlDown() ? KEYBOARD.CTRL : 0;
-        final int optValue = e.isAltDown() || e.isAltGraphDown() ? KEYBOARD.ALT : 0;
-        final int cmdValue = e.isMetaDown() ? KEYBOARD.CMD : 0;
+        final int optValue = e.isAltGraphDown() ? KEYBOARD.ALT : 0;
+        final int cmdValue = e.isAltDown() || e.isMetaDown() ? KEYBOARD.CMD : 0;
         final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
         return modifiers;
