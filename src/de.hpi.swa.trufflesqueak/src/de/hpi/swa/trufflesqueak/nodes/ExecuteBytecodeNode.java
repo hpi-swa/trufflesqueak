@@ -129,19 +129,16 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 }
             } else if (node instanceof final AbstractUnconditionalJumpNode jumpNode) {
                 final int successor = jumpNode.getSuccessorIndex();
-                if (CompilerDirectives.hasNextTier() && successor <= pc) {
+                if (successor <= pc) {
                     backJumpCounter.value++;
                     if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this)) {
                         returnValue = BytecodeOSRNode.tryOSR(this, successor, null, null, frame);
                         if (returnValue != null) {
                             break bytecode_loop;
                         }
-                    }
-                    if (backJumpCounter.value % 1000 == 0) {
+                    } else if (backJumpCounter.value % 10_000 == 0) {
                         jumpNode.executeCheck(frame);
                     }
-                } else {
-                    jumpNode.executeCheck(frame);
                 }
                 pc = successor;
                 continue bytecode_loop;
