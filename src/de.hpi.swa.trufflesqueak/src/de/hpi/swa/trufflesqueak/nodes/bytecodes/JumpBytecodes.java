@@ -38,8 +38,8 @@ public final class JumpBytecodes {
 
         public final boolean executeCondition(final VirtualFrame frame) {
             final Object result = popNode.execute(frame);
-            if (result instanceof Boolean) {
-                return conditionProfile.profile(check((boolean) result));
+            if (result instanceof Boolean r) {
+                return conditionProfile.profile(check(r));
             } else {
                 CompilerDirectives.transferToInterpreter();
                 FrameAccess.setInstructionPointer(frame, FrameAccess.getCodeObject(frame).getInitialPC() + getSuccessorIndex());

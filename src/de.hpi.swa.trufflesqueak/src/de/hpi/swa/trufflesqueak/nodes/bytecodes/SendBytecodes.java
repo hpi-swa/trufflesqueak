@@ -64,24 +64,25 @@ public final class SendBytecodes {
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
+            Object result;
             try {
                 decrementStackPointerByNumReceiverAndArguments(frame);
-                final Object result = dispatchSend(frame);
-                assert result != null : "Result of a message send should not be null";
-                getPushNode().execute(frame, result);
+                result = dispatchSend(frame);
             } catch (final NonLocalReturn nlr) {
                 if (nlrProfile.profile(nlr.getTargetContextOrMarker() == FrameAccess.getMarker(frame) || nlr.getTargetContextOrMarker() == FrameAccess.getContext(frame))) {
-                    getPushNode().execute(frame, nlr.getReturnValue());
+                    result = nlr.getReturnValue();
                 } else {
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {
                 if (nvrProfile.profile(nvr.getTargetContext() == FrameAccess.getContext(frame))) {
-                    getPushNode().execute(frame, nvr.getReturnValue());
+                    result = nvr.getReturnValue();
                 } else {
                     throw nvr;
                 }
             }
+            assert result != null : "Result of a message send should not be null";
+            getPushNode().execute(frame, result);
         }
 
         private void decrementStackPointerByNumReceiverAndArguments(final VirtualFrame frame) {

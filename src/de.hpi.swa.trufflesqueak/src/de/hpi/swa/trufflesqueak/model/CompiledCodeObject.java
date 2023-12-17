@@ -574,7 +574,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     /** CompiledMethod>>#methodClassAssociation. */
-    private AbstractSqueakObject getMethodClassAssociation() {
+    private Object getMethodClassAssociation() {
         /**
          * From the CompiledMethod class description:
          *
@@ -584,11 +584,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          * may be nil (as would be the case for example of methods providing a pool of inst var
          * accessors).
          */
-        return (AbstractSqueakObject) literals[literals.length - 1];
+        return literals[literals.length - 1];
     }
 
     public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
-        final AbstractSqueakObject mca = getMethodClassAssociation();
+        final Object mca = getMethodClassAssociation();
         return mca != NilObject.SINGLETON && readNode.execute(inlineTarget, (AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
     }
 
