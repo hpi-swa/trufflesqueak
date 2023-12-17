@@ -128,7 +128,6 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     continue bytecode_loop;
                 }
             } else if (node instanceof final AbstractUnconditionalJumpNode jumpNode) {
-                jumpNode.executeCheck(frame);
                 final int successor = jumpNode.getSuccessorIndex();
                 if (CompilerDirectives.hasNextTier() && successor <= pc) {
                     backJumpCounter.value++;
@@ -138,6 +137,11 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                             break bytecode_loop;
                         }
                     }
+                    if (backJumpCounter.value % 1000 == 0) {
+                        jumpNode.executeCheck(frame);
+                    }
+                } else {
+                    jumpNode.executeCheck(frame);
                 }
                 pc = successor;
                 continue bytecode_loop;
