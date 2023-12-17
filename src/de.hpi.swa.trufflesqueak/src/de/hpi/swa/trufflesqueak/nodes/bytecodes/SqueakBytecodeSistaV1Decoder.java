@@ -30,12 +30,12 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
     }
 
     @Override
-    public AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
-        return decodeBytecode(frame, code, index, 0, 0, 0, 0);
+    public AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index) {
+        return decodeBytecode(frame, code, bytecodeNodes, index, 0, 0, 0, 0);
     }
 
-    private static AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int extBytes, final int extA, final int extB,
-                    final int numExtB) {
+    private static AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int extBytes,
+                    final int extA, final int extB, final int numExtB) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
         final int indexWithExt = index + extBytes;
@@ -86,7 +86,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
             case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF //
                 -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
-            case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> JumpBytecodes.UnconditionalJumpNode.createShort(code, index, b);
+            case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> JumpBytecodes.createUnconditionalShortJump(code, bytecodeNodes, index, b);
             case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> JumpBytecodes.ConditionalJumpOnTrueNode.createShort(code, index, b);
             case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> JumpBytecodes.ConditionalJumpOnFalseNode.createShort(code, index, b);
             case 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF -> new StoreBytecodes.PopIntoReceiverVariableNode(code, index, 1, b & 7);
@@ -95,10 +95,10 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             // FIXME: Unconditional trap
             case 0xD9 -> SendBytecodes.SelfSendNode.create(code, index, 1, code.getSqueakClass().getImage().getSpecialSelector(SPECIAL_OBJECT.SELECTOR_SISTA_TRAP), 1);
             case 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF -> new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
-            case 0xE0 -> decodeBytecode(frame, code, index, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB, numExtB);
+            case 0xE0 -> decodeBytecode(frame, code, bytecodeNodes, index, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB, numExtB);
             case 0xE1 -> {
                 final int byteValue = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
-                yield decodeBytecode(frame, code, index, extBytes + 2, extA, numExtB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue, numExtB + 1);
+                yield decodeBytecode(frame, code, bytecodeNodes, index, extBytes + 2, extA, numExtB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue, numExtB + 1);
             }
             case 0xE2 -> PushBytecodes.PushReceiverVariableNode.create(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xE3 -> PushBytecodes.PushLiteralVariableNode.create(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
@@ -132,7 +132,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 }
             }
             case 0xEC -> new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
-            case 0xED -> JumpBytecodes.UnconditionalJumpNode.createLongExtended(code, index, 2 + extBytes, bytecode[indexWithExt + 1], extB);
+            case 0xED -> JumpBytecodes.createUnconditionalLongExtendedJump(code, bytecodeNodes, index, 2 + extBytes, bytecode[indexWithExt + 1], extB);
             case 0xEE -> JumpBytecodes.ConditionalJumpOnTrueNode.createLongExtended(code, index, 2 + extBytes, bytecode[indexWithExt + 1], extB);
             case 0xEF -> JumpBytecodes.ConditionalJumpOnFalseNode.createLongExtended(code, index, 2 + extBytes, bytecode[indexWithExt + 1], extB);
             case 0xF0 -> new StoreBytecodes.PopIntoReceiverVariableNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));

@@ -26,7 +26,7 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
     }
 
     @Override
-    public AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+    public AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
         final int b = Byte.toUnsignedInt(bytecode[index]);
@@ -82,9 +82,9 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             case 0x8D -> new StoreBytecodes.StoreIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8E -> new StoreBytecodes.PopIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8F -> PushBytecodes.PushClosureNode.create(code, index, bytecode[index + 1], bytecode[index + 2], bytecode[index + 3]);
-            case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97 -> JumpBytecodes.UnconditionalJumpNode.createShort(code, index, b);
+            case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97 -> JumpBytecodes.createUnconditionalShortJump(code, bytecodeNodes, index, b);
             case 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F -> JumpBytecodes.ConditionalJumpOnFalseNode.createShort(code, index, b);
-            case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7 -> JumpBytecodes.UnconditionalJumpNode.createLong(code, index, b, bytecode[index + 1]);
+            case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7 -> JumpBytecodes.createUnconditionalLongJump(code, bytecodeNodes, index, b, bytecode[index + 1]);
             case 0xA8, 0xA9, 0xAA, 0xAB -> JumpBytecodes.ConditionalJumpOnTrueNode.createLong(code, index, b, bytecode[index + 1]);
             case 0xAC, 0xAD, 0xAE, 0xAF -> JumpBytecodes.ConditionalJumpOnFalseNode.createLong(code, index, b, bytecode[index + 1]);
             case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF  //

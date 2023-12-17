@@ -38,6 +38,10 @@ public abstract class CheckForInterruptsQuickNode extends Node {
         }
     }
 
+    public static CheckForInterruptsQuickNode create() {
+        return new CheckForInterruptsQuickImplNode(SqueakImageContext.getSlow());
+    }
+
     public abstract void execute(VirtualFrame frame);
 
     @DenyReplace
