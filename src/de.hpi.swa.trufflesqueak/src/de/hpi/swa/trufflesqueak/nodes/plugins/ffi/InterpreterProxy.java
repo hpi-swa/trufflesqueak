@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleClosure;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
@@ -373,7 +374,9 @@ public class InterpreterProxy {
         return oopFor(getObjectOnStack(offset));
     }
 
-    private long statNumGCs() {/* TODO */ System.out.println("Missing implementation for statNumGCs"); return 0;}
+    private long statNumGCs() {
+        return MiscUtils.getCollectionCount();
+    }
 
     private long storeIntegerofObjectwithValue(long index, long oop, long integer) {/* TODO */ System.out.println("Missing implementation for storeIntegerofObjectwithValue"); return 0;}
 
