@@ -71,7 +71,7 @@ public final class SqueakImageReader {
         if (!truffleFile.isRegularFile()) {
             throw SqueakException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
         }
-        try (BufferedInputStream inputStream = new BufferedInputStream(truffleFile.newInputStream());) {
+        try (BufferedInputStream inputStream = new BufferedInputStream(truffleFile.newInputStream())) {
             readHeader(inputStream);
             readBody(inputStream);
         } catch (final IOException e) {
@@ -433,7 +433,7 @@ public final class SqueakImageReader {
         final int majorIndex = SqueakImageConstants.majorClassIndexOf(compactIndex);
         final int minorIndex = SqueakImageConstants.minorClassIndexOf(compactIndex);
         final ArrayObject classTablePage = (ArrayObject) getChunk(hiddenRootsChunk.getWord(majorIndex)).asObject();
-        final Object result = ArrayObjectReadNode.getUncached().execute(classTablePage, minorIndex);
+        final Object result = ArrayObjectReadNode.executeUncached(classTablePage, minorIndex);
         return result instanceof final ClassObject c ? c : null;
     }
 

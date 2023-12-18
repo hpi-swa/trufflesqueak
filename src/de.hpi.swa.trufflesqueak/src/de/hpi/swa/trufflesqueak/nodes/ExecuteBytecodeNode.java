@@ -23,8 +23,8 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.AbstractUnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -127,15 +127,17 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     pc = jumpNode.getSuccessorIndex();
                     continue bytecode_loop;
                 }
-            } else if (node instanceof final UnconditionalJumpNode jumpNode) {
+            } else if (node instanceof final AbstractUnconditionalJumpNode jumpNode) {
                 final int successor = jumpNode.getSuccessorIndex();
-                if (CompilerDirectives.hasNextTier() && successor <= pc) {
+                if (successor <= pc) {
                     backJumpCounter.value++;
                     if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this)) {
                         returnValue = BytecodeOSRNode.tryOSR(this, successor, null, null, frame);
                         if (returnValue != null) {
                             break bytecode_loop;
                         }
+                    } else if (backJumpCounter.value % 10_000 == 0) {
+                        jumpNode.executeCheck(frame);
                     }
                 }
                 pc = successor;
@@ -173,7 +175,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     private AbstractBytecodeNode fetchNextBytecodeNode(final VirtualFrame frame, final int pcZeroBased) {
         if (bytecodeNodes[pcZeroBased] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            bytecodeNodes[pcZeroBased] = insert(code.bytecodeNodeAt(frame, pcZeroBased));
+            bytecodeNodes[pcZeroBased] = insert(code.bytecodeNodeAt(frame, bytecodeNodes, pcZeroBased));
             notifyInserted(bytecodeNodes[pcZeroBased]);
         }
         return bytecodeNodes[pcZeroBased];

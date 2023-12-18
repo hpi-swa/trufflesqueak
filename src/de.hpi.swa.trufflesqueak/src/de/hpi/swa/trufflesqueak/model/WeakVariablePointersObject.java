@@ -11,7 +11,8 @@ import java.lang.ref.WeakReference;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -66,9 +67,9 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         }
     }
 
-    public Object getFromVariablePart(final long index, final ConditionProfile weakRefProfile) {
+    public Object getFromVariablePart(final long index, final InlinedConditionProfile weakRefProfile, final Node node) {
         final Object value = super.getFromVariablePart(index);
-        if (weakRefProfile.profile(value instanceof WeakRef)) {
+        if (weakRefProfile.profile(node, value instanceof WeakRef)) {
             return NilObject.nullToNil(((WeakRef) value).get());
         } else {
             assert value != null;
@@ -78,16 +79,16 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
 
     @Override
     public void putIntoVariablePart(final long index, final Object value) {
-        putIntoVariablePart(index, value, ConditionProfile.getUncached());
+        putIntoVariablePart(index, value, InlinedConditionProfile.getUncached(), null);
     }
 
-    public void putIntoVariablePart(final long index, final Object value, final ConditionProfile profile) {
-        super.putIntoVariablePart(index, profile.profile(value instanceof AbstractSqueakObject) ? new WeakRef((AbstractSqueakObject) value, weakPointersQueue) : value);
+    public void putIntoVariablePart(final long index, final Object value, final InlinedConditionProfile profile, final Node node) {
+        super.putIntoVariablePart(index, profile.profile(node, value instanceof AbstractSqueakObject) ? new WeakRef((AbstractSqueakObject) value, weakPointersQueue) : value);
     }
 
     @Override
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
-        return layoutValuesPointTo(identityNode, thang) || variablePartPointsTo(thang);
+    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {
+        return layoutValuesPointTo(identityNode, inlineTarget, thang) || variablePartPointsTo(thang);
     }
 
     private boolean variablePartPointsTo(final Object thang) {

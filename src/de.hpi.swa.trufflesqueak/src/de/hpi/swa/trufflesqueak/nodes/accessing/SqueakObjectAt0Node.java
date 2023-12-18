@@ -7,9 +7,12 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -32,53 +35,51 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ClassObjectNodes.ClassObjectRead
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
 
+@GenerateInline
 @GenerateUncached
+@GenerateCached(false)
 public abstract class SqueakObjectAt0Node extends AbstractNode {
 
-    public static SqueakObjectAt0Node create() {
-        return SqueakObjectAt0NodeGen.create();
-    }
+    public abstract Object execute(Node node, Object obj, long index);
 
-    public static SqueakObjectAt0Node getUncached() {
-        return SqueakObjectAt0NodeGen.getUncached();
+    public static final Object executeUncached(final Object obj, final long index) {
+        return SqueakObjectAt0NodeGen.getUncached().execute(null, obj, index);
     }
-
-    public abstract Object execute(Object obj, long index);
 
     @Specialization
-    protected static final Object doArray(final ArrayObject obj, final long index,
+    protected static final Object doArray(final Node node, final ArrayObject obj, final long index,
                     @Cached final ArrayObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final Object doPointers(final PointersObject obj, final long index,
+    protected static final Object doPointers(final Node node, final PointersObject obj, final long index,
                     @Cached final AbstractPointersObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final Object doVariablePointers(final VariablePointersObject obj, final long index,
+    protected static final Object doVariablePointers(final Node node, final VariablePointersObject obj, final long index,
                     @Cached final VariablePointersObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final Object doClass(final ClassObject obj, final long index,
+    protected static final Object doClass(final Node node, final ClassObject obj, final long index,
                     @Cached final ClassObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final Object doWeakPointersVariable(final WeakVariablePointersObject obj, final long index,
+    protected static final Object doWeakPointersVariable(final Node node, final WeakVariablePointersObject obj, final long index,
                     @Cached final WeakVariablePointersObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final Object doNative(final NativeObject obj, final long index,
+    protected static final Object doNative(final Node node, final NativeObject obj, final long index,
                     @Cached final NativeObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
@@ -92,27 +93,27 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doClosure(final BlockClosureObject obj, final long index,
+    protected static final Object doClosure(final Node node, final BlockClosureObject obj, final long index,
                     @Cached final BlockClosureObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final Object doContext(final ContextObject obj, final long index,
+    protected static final Object doContext(final Node node, final ContextObject obj, final long index,
                     @Cached final ContextObjectReadNode readNode) {
-        return readNode.execute(obj, index);
+        return readNode.execute(node, obj, index);
     }
 
     @Specialization
-    protected static final long doFloat(final FloatObject obj, final long index,
-                    @Cached final BranchProfile indexZeroProfile,
-                    @Cached final BranchProfile indexOneProfile) {
+    protected static final long doFloat(final Node node, final FloatObject obj, final long index,
+                    @Cached final InlinedBranchProfile indexZeroProfile,
+                    @Cached final InlinedBranchProfile indexOneProfile) {
         if (index == 0) {
-            indexZeroProfile.enter();
+            indexZeroProfile.enter(node);
             return obj.getHigh();
         } else {
             assert index == 1 : "Unexpected index: " + index;
-            indexOneProfile.enter();
+            indexOneProfile.enter(node);
             return obj.getLow();
         }
     }

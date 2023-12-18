@@ -41,9 +41,9 @@ public final class PrimitiveFailed extends ControlFlowException {
         throw new PrimitiveFailed(reason);
     }
 
-    public static PrimitiveFailed andTransferToInterpreterWithError(final Exception e) {
+    public static PrimitiveFailed andTransferToInterpreterWithError(final Throwable t) {
         CompilerDirectives.transferToInterpreter();
-        e.printStackTrace();
+        t.printStackTrace();
         throw GENERIC_ERROR;
     }
 }

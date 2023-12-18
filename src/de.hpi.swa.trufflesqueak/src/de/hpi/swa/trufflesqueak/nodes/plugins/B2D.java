@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -1303,11 +1304,7 @@ public final class B2D {
             rightX = temp;
         }
         edgeXValueOfput(bezier, leftX);
-        if (rightX - leftX > lineWidth) {
-            wideBezierWidthOfput(bezier, rightX - leftX);
-        } else {
-            wideBezierWidthOfput(bezier, lineWidth);
-        }
+        wideBezierWidthOfput(bezier, Math.max(rightX - leftX, lineWidth));
     }
 
     /* BalloonEngineBase>>#computeSqrt: */
@@ -2496,16 +2493,8 @@ public final class B2D {
         }
         int x0;
         int x1;
-        if (leftX < spanEndAAGet()) {
-            x0 = spanEndAAGet();
-        } else {
-            x0 = leftX;
-        }
-        if (rightX > shl(spanSizeGet(), aaShiftGet())) {
-            x1 = shl(spanSizeGet(), aaShiftGet());
-        } else {
-            x1 = rightX;
-        }
+        x0 = Math.max(leftX, spanEndAAGet());
+        x1 = Math.min(rightX, shl(spanSizeGet(), aaShiftGet()));
         if (x0 < fillMinXGet()) {
             x0 = fillMinXGet();
         }
@@ -3289,15 +3278,7 @@ public final class B2D {
     private void loadArrayTransformFromintolength(final ArrayObject transformOop, final int destPtr, final int n) {
         for (int i = 0; i < n; i++) {
             final Object value = transformOop.getObjectStorage()[i];
-            if (value instanceof Long) {
-                workbufferAtput(destPtr + i, (int) (long) value);
-            } else if (value instanceof Double) {
-                workbufferAtput(destPtr + i, (int) (double) value);
-            } else if (value instanceof final FloatObject o) {
-                workbufferAtput(destPtr + i, (int) o.getValue());
-            } else {
-                PrimitiveFailed.andTransferToInterpreter();
-            }
+            workbufferAtput(destPtr + i, toInt(value));
         }
     }
 
@@ -3351,20 +3332,20 @@ public final class B2D {
             cmBits = null;
         } else {
             if (!isBitmap((AbstractSqueakObjectWithClassAndHash) cmOop)) {
-                PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             cmBits = ((NativeObject) cmOop).getIntStorage();
             cmSize = cmBits.length;
         }
         if (!isPointers(formOop)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         if (slotSizeOf(formOop) < 5) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         bmBits = fetchNativeofObject(0, formOop);
         if (!isBitmap(bmBits)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         bmBitsSize = slotSizeOf(bmBits);
         bmWidth = fetchIntegerofObject(1, formOop);
@@ -3372,18 +3353,18 @@ public final class B2D {
         bmDepth = fetchIntegerofObject(3, formOop);
         assert !failed();
         if (!(bmWidth >= 0 && bmHeight >= 0)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         if (!(bmDepth == 32 || bmDepth == 8 || bmDepth == 16 || bmDepth == 1 || bmDepth == 2 || bmDepth == 4)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         if (!(cmSize == 0 || cmSize == 1L << bmDepth)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         ppw = div(32, bmDepth);
         bmRaster = div(bmWidth + ppw - 1, ppw);
         if (bmBitsSize != bmRaster * bmHeight) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         bmFill = allocateBitmapFillcolormap(cmSize, cmBits);
         assert !engineStopped;
@@ -3573,7 +3554,7 @@ public final class B2D {
     private int loadEdgeStateFrom(final PointersObject edgeOop) {
         final int edge = lastExportedEdgeGet();
         if (slotSizeOf(edgeOop) < ET_BALLOON_EDGE_DATA_SIZE) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_EDGE_DATA_TOO_SMALL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_EDGE_DATA_TOO_SMALL);
         }
         edgeXValueOfput(edge, fetchIntegerofObject(ET_X_VALUE_INDEX, edgeOop));
         edgeYValueOfput(edge, fetchIntegerofObject(ET_Y_VALUE_INDEX, edgeOop));
@@ -3820,26 +3801,8 @@ public final class B2D {
     /* BalloonEngineBase>>#loadPoint:from: */
     private void loadPointfrom(final int pointIndex, final PointersObject pointOop) {
         assert SqueakImageContext.getSlow().isPointClass(pointOop.getSqueakClass()) : "Not a point (VMMaker code lets primitive fail)";
-        final Object value0 = fetchObjectofObject(0, pointOop);
-        if (value0 instanceof Long) {
-            pointSetX(pointIndex, (int) (long) value0);
-        } else if (value0 instanceof Double) {
-            pointSetX(pointIndex, (int) (double) value0);
-        } else if (value0 instanceof final FloatObject o) {
-            pointSetX(pointIndex, (int) o.getValue());
-        } else {
-            PrimitiveFailed.andTransferToInterpreter();
-        }
-        final Object value1 = fetchObjectofObject(1, pointOop);
-        if (value1 instanceof Long) {
-            pointSetY(pointIndex, (int) (long) value1);
-        } else if (value0 instanceof Double) {
-            pointSetY(pointIndex, (int) (double) value1);
-        } else if (value0 instanceof final FloatObject o) {
-            pointSetY(pointIndex, (int) o.getValue());
-        } else {
-            PrimitiveFailed.andTransferToInterpreter();
-        }
+        pointSetX(pointIndex, toInt(fetchObjectofObject(0, pointOop)));
+        pointSetY(pointIndex, toInt(fetchObjectofObject(1, pointOop)));
     }
 
     /* BalloonEnginePlugin>>#loadPolygon:nPoints:fill:lineWidth:lineFill:pointsShort: */
@@ -3962,13 +3925,13 @@ public final class B2D {
 
         if (transformOop instanceof final NativeObject transformNative) {
             if (slotSizeOf(transformNative) != n) {
-                PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             loadWordTransformFromintolength(transformNative, destPtr, n);
         } else {
             final ArrayObject transformArray = (ArrayObject) transformOop;
             if (slotSizeOf(transformArray) != n) {
-                PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             loadArrayTransformFromintolength(transformArray, destPtr, n);
         }
@@ -4332,17 +4295,17 @@ public final class B2D {
         }
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_WAITING_FOR_EDGE);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final int edge = loadEdgeStateFrom(edgeEntry);
         if (!needAvailableSpace(1)) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
         if (edgeNumLinesOf(edge) > 0) {
             insertEdgeIntoAET(edge);
         }
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         statePut(GE_STATE_ADDING_FROM_GET);
         storeEngineStateInto(engine);
@@ -4362,10 +4325,10 @@ public final class B2D {
 
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (!(isFillOkay(leftFill) && isFillOkay(rightFill))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         // if ((leftFill == rightFill) && false) {
         // return receiver;
@@ -4374,7 +4337,7 @@ public final class B2D {
         loadPointfrom(GW_POINT_2, via);
         loadPointfrom(GW_POINT_3, end);
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+            throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         transformPoints(3);
         nSegments = loadAndSubdivideBezierFromviatoisWide(false);
@@ -4389,10 +4352,10 @@ public final class B2D {
         if (engineStopped) {
             /* Make sure the stack is okay */
             wbStackClear();
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         storeEngineStateInto(engine);
     }
@@ -4408,23 +4371,23 @@ public final class B2D {
 
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (isWords(points)) {
             /* Either PointArray or ShortPointArray */
             pointsIsArray = false;
             length = slotSizeOf((NativeObject) points);
             if (!(length == nSegments * 3 || length == nSegments * 6)) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
         } else {
             /* Must be Array of points */
             if (!isArray(points)) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
             length = slotSizeOf((ArrayObject) points);
             if (length != nSegments * 3) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
             pointsIsArray = true;
         }
@@ -4434,15 +4397,15 @@ public final class B2D {
             segSize = GL_WIDE_SIZE;
         }
         if (!needAvailableSpace(segSize * nSegments)) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
         if (!(isFillOkay(lineFillValue) && isFillOkay(fillIndexValue))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         final int lineFill = transformColor(lineFillValue);
         final int fillIndex = transformColor(fillIndexValue);
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if ((lineFill == 0 || lineWidth == 0) && fillIndex == 0) {
             return;
@@ -4459,10 +4422,10 @@ public final class B2D {
             loadShapenSegmentsfilllineWidthlineFillpointsShort(((NativeObject) points).getIntStorage(), nSegments, fillIndex, lineWidth, lineFill, nSegments * 3 == length);
         }
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
@@ -4476,21 +4439,21 @@ public final class B2D {
 
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         loadPointfrom(GW_POINT_1, origin);
         loadPointfrom(GW_POINT_2, direction);
         loadPointfrom(GW_POINT_3, normal);
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
         }
         fill = loadBitmapFillcolormaptilefromalongnormalxIndex(formOop, cmOop, tileFlag, xIndex - 1);
         if (engineStopped) {
             /* Make sure the stack is okay */
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         storeEngineStateInto(engine);
         return fill;
@@ -4503,17 +4466,17 @@ public final class B2D {
         final boolean pointsShort;
 
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+            throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (!checkCompressedShapesegmentsleftFillsrightFillslineWidthslineFillsfillIndexList(points, nSegments, leftFills, rightFills, lineWidths, lineFills, fillIndexList)) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_CHECK_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_CHECK_FAILED);
         }
         if (!needAvailableSpace(GL_BASE_SIZE * nSegments)) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
 
         /* Then actually load the compressed shape */
@@ -4521,10 +4484,10 @@ public final class B2D {
         loadCompressedShapesegmentsleftFillsrightFillslineWidthslineFillsfillIndexListpointShort(points.getIntStorage(), nSegments, leftFills.getIntStorage(), rightFills.getIntStorage(),
                         lineWidths.getIntStorage(), lineFills.getIntStorage(), fillIndexList.getIntStorage(), pointsShort);
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
@@ -4536,21 +4499,21 @@ public final class B2D {
                     final boolean isRadial) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         loadPointfrom(GW_POINT_1, origin);
         loadPointfrom(GW_POINT_2, direction);
         loadPointfrom(GW_POINT_3, normal);
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
         }
         final int fill = loadGradientFillfromalongnormalisRadial(colorRamp, isRadial);
         if (engineStopped) {
             /* Make sure the stack is okay */
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         storeEngineStateInto(engine);
         return fill;
@@ -4561,28 +4524,28 @@ public final class B2D {
     public void primitiveAddLine(final PointersObject receiver, final PointersObject start, final PointersObject end, final int leftFillValue, final int rightFillValue) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (!(isFillOkay(leftFillValue) && isFillOkay(rightFillValue))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         loadPointfrom(GW_POINT_1, start);
         loadPointfrom(GW_POINT_2, end);
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
         }
         transformPoints(2);
         final int leftFill = transformColor(leftFillValue);
         final int rightFill = transformColor(rightFillValue);
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         loadWideLinefromtolineFillleftFillrightFill(0, GW_POINT_1, GW_POINT_2, 0, leftFill, rightFill);
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         storeEngineStateInto(engine);
     }
@@ -4593,21 +4556,21 @@ public final class B2D {
                     final int borderIndexValue) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (!(isFillOkay(borderIndexValue) && isFillOkay(fillIndexValue))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         final int fillIndex = transformColor(fillIndexValue);
         final int borderIndex = transformColor(borderIndexValue);
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (fillIndex == 0 && (borderIndex == 0 || borderWidthValue <= 0)) {
             return;
         }
         if (!needAvailableSpace(16 * GB_BASE_SIZE)) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
         final int borderWidth;
         if (borderWidthValue > 0 && borderIndex != 0) {
@@ -4618,15 +4581,15 @@ public final class B2D {
         loadPointfrom(GW_POINT_1, start);
         loadPointfrom(GW_POINT_2, end);
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
         }
         loadOvallineFillleftFillrightFill(borderWidth, borderIndex, 0, fillIndex);
         if (engineStopped) {
             wbStackClear();
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
@@ -4642,23 +4605,23 @@ public final class B2D {
 
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (isWords(points)) {
             /* Either PointArray or ShortPointArray */
             pointsIsArray = false;
             length = slotSizeOf((NativeObject) points);
             if (!(length == nPoints || nPoints * 2 == length)) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
         } else {
             /* Must be Array of points */
             if (!isArray(points)) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
             length = slotSizeOf((ArrayObject) points);
             if (length != nPoints) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
             pointsIsArray = true;
         }
@@ -4668,15 +4631,15 @@ public final class B2D {
             segSize = GL_WIDE_SIZE;
         }
         if (!needAvailableSpace(segSize * nPoints)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         if (!(isFillOkay(lineFillValue) && isFillOkay(fillIndexValue))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         final int lineFill = transformColor(lineFillValue);
         final int fillIndex = transformColor(fillIndexValue);
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if ((lineFill == 0 || lineWidth == 0) && fillIndex == 0) {
             return;
@@ -4690,10 +4653,10 @@ public final class B2D {
             loadPolygonnPointsfilllineWidthlineFillpointsShort(((NativeObject) points).getIntStorage(), nPoints, fillIndex, lineWidth, lineFill, nPoints == length);
         }
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
@@ -4705,21 +4668,21 @@ public final class B2D {
                     final int borderIndexValue) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (!(isFillOkay(borderIndexValue) && isFillOkay(fillIndexValue))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         final int borderIndex = transformColor(borderIndexValue);
         final int fillIndex = transformColor(fillIndexValue);
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (fillIndex == 0 && (borderIndex == 0 || borderWidthValue == 0)) {
             return;
         }
         if (!needAvailableSpace(4 * GL_BASE_SIZE)) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
         final int borderWidth;
         if (borderWidthValue > 0 && borderIndex != 0) {
@@ -4730,7 +4693,7 @@ public final class B2D {
         loadPointfrom(GW_POINT_1, start);
         loadPointfrom(GW_POINT_3, end);
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
         }
         point2SetX(point3GetX());
         point2SetY(point1GetY());
@@ -4739,7 +4702,7 @@ public final class B2D {
         transformPoints(4);
         loadRectanglelineFillleftFillrightFill(borderWidth, borderIndex, 0, fillIndex);
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
@@ -4757,7 +4720,7 @@ public final class B2D {
         }
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_WAITING_CHANGE);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         edge = loadEdgeStateFrom(edgeEntry);
         if (edgeNumLinesOf(edge) == 0) {
@@ -4782,14 +4745,14 @@ public final class B2D {
         /* Make sure the old buffer is properly initialized */
         final int failureCode1 = loadWorkBufferFrom(buf1);
         if (failureCode1 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode1);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode1);
         }
         if (fetchClassOf(buf1) != fetchClassOf(buf2)) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_CLASS_MISMATCH);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_CLASS_MISMATCH);
         }
         diff = slotSizeOf(buf2) - slotSizeOf(buf1);
         if (diff < 0) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_SIZE_MISMATCH);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_SIZE_MISMATCH);
         }
         final int[] src = workBuffer;
         final int[] dst = buf2.getIntStorage();
@@ -4805,7 +4768,7 @@ public final class B2D {
         }
         final int failureCode2 = loadWorkBufferFrom(buf2);
         if (failureCode2 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode2);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
     }
 
@@ -4819,14 +4782,14 @@ public final class B2D {
         }
         final int failureCode1 = quickLoadEngineFromrequiredState(receiver, GE_STATE_BLIT_BUFFER);
         if (failureCode1 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode1);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode1);
         }
         final int failureCode2 = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine));
         if (failureCode2 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode2);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
         if (!loadBitBltFrom(fetchPointerofObject(BE_BITBLT_INDEX, engine))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_BITBLT_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_BITBLT_LOAD_FAILED);
         }
         if ((currentYGet() & aaScanMaskGet()) == aaScanMaskGet()) {
             displaySpanBufferAt(currentYGet());
@@ -4861,7 +4824,7 @@ public final class B2D {
         }
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final boolean finished = finishedProcessing();
         storeEngineStateInto(engine);
@@ -4876,7 +4839,7 @@ public final class B2D {
     public long primitiveGetAALevel(final PointersObject receiver) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         return aaLevelGet();
     }
@@ -4885,7 +4848,7 @@ public final class B2D {
     public void primitiveGetBezierStats(final PointersObject receiver, final NativeObject statOop) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final int[] stats = statOop.getIntStorage();
         stats[0] += workBuffer[GW_BEZIER_MONOTON_SUBDIVISIONS];
@@ -4895,14 +4858,14 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveGetClipRect */
-    public void primitiveGetClipRect(final AbstractPointersObjectWriteNode writeNode, final PointersObject receiver, final PointersObject rectOop) {
+    public void primitiveGetClipRect(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final PointersObject receiver, final PointersObject rectOop) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        PointersObject pointOop = image.asPoint(writeNode, clipMinXGet(), clipMinYGet());
+        PointersObject pointOop = image.asPoint(writeNode, inlineTarget, clipMinXGet(), clipMinYGet());
         storeValue(0, rectOop, pointOop);
-        pointOop = image.asPoint(writeNode, clipMaxXGet(), clipMaxYGet());
+        pointOop = image.asPoint(writeNode, inlineTarget, clipMaxXGet(), clipMaxYGet());
         storeValue(1, rectOop, pointOop);
     }
 
@@ -4910,7 +4873,7 @@ public final class B2D {
     public void primitiveGetCounts(final PointersObject receiver, final NativeObject statOop) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final int[] stats = statOop.getIntStorage();
         stats[0] += workBuffer[GW_COUNT_INITIALIZING];
@@ -4928,7 +4891,7 @@ public final class B2D {
     public long primitiveGetDepth(final PointersObject receiver) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         return currentZGet();
     }
@@ -4944,29 +4907,29 @@ public final class B2D {
          */
         engine = receiver;
         if (slotSizeOf(engine) < BE_BALLOON_ENGINE_SIZE) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_TOO_SMALL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_TOO_SMALL);
         }
         final int failCode = loadWorkBufferFrom(fetchNativeofObject(BE_WORKBUFFER_INDEX, engine));
         if (failCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failCode);
         }
         return stopReasonGet();
     }
 
     /* BalloonEngineBase>>#primitiveGetOffset */
-    public PointersObject primitiveGetOffset(final AbstractPointersObjectWriteNode writeNode, final PointersObject receiver) {
+    public PointersObject primitiveGetOffset(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final PointersObject receiver) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        return image.asPoint(writeNode, destOffsetXGet(), destOffsetYGet());
+        return image.asPoint(writeNode, inlineTarget, destOffsetXGet(), destOffsetYGet());
     }
 
     /* BalloonEngineBase>>#primitiveGetTimes */
     public void primitiveGetTimes(final PointersObject receiver, final NativeObject statsArray) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final int[] stats = statsArray.getIntStorage();
         stats[0] += workBuffer[GW_TIME_INITIALIZING];
@@ -5021,15 +4984,15 @@ public final class B2D {
         }
         final int failureCode1 = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode1 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode1);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode1);
         }
         final int failureCode2 = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine));
         if (failureCode2 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode2);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
         initializeGETProcessing();
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         statePut(GE_STATE_ADDING_FROM_GET);
         if (!failed()) {
@@ -5053,30 +5016,30 @@ public final class B2D {
         }
         final int failureCode1 = quickLoadEngineFromrequiredState(receiver, GE_STATE_WAITING_FOR_FILL);
         if (failureCode1 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode1);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode1);
         }
         final int failureCode2 = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine));
         if (failureCode2 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode2);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
         /* Check bitmap */
         if (slotSizeOf(fillOop) < FT_BALLOON_FILL_DATA_SIZE) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_FILL_DATA_TOO_SMALL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_FILL_DATA_TOO_SMALL);
         }
         value = fetchIntegerofObject(FT_INDEX_INDEX, fillOop);
         if (objectIndexOf(lastExportedFillGet()) != value) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         value = fetchIntegerofObject(FT_MIN_X_INDEX, fillOop);
         if (lastExportedLeftXGet() != value) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         value = fetchIntegerofObject(FT_MAX_X_INDEX, fillOop);
         if (lastExportedRightXGet() != value) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         if (slotSizeOf(bitsOop) < lastExportedRightXGet() - lastExportedLeftXGet()) {
-            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+            throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         if (failed()) {
             return;
@@ -5096,7 +5059,7 @@ public final class B2D {
 
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         needFlush = needsFlush();
         storeEngineStateInto(engine);
@@ -5108,7 +5071,7 @@ public final class B2D {
     public void primitiveNeedsFlushPut(final PointersObject receiver, final boolean needFlush) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (needFlush) {
             needsFlushPut(1);
@@ -5131,7 +5094,7 @@ public final class B2D {
         }
         final int failureCode = quickLoadEngineFromrequiredStateor(receiver, GE_STATE_UPDATE_EDGES, GE_STATE_COMPLETED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         hasEdge = false;
         if (stateGet() != GE_STATE_COMPLETED) {
@@ -5165,14 +5128,14 @@ public final class B2D {
         }
         final int failureCode1 = quickLoadEngineFromrequiredState(receiver, GE_STATE_SCANNING_AET);
         if (failureCode1 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode1);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode1);
         }
         final int failureCode2 = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine));
         if (failureCode2 != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode2);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
         if (!loadFormsFrom(fetchArrayofObject(BE_FORMS_INDEX, engine))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_FORM_LOAD_FAILED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_FORM_LOAD_FAILED);
         }
         if (clearSpanBufferGet() != 0) {
             if ((currentYGet() & aaScanMaskGet()) == 0) {
@@ -5182,13 +5145,13 @@ public final class B2D {
         }
         hasFill = findNextExternalFillFromAET();
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (hasFill) {
             storeFillStateInto(fillOop);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         if (hasFill) {
             statePut(GE_STATE_WAITING_FOR_FILL);
@@ -5218,7 +5181,7 @@ public final class B2D {
         }
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_ADDING_FROM_GET);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         hasEdge = findNextExternalEntryFromGET();
         if (hasEdge) {
@@ -5227,7 +5190,7 @@ public final class B2D {
             getStartPut(getStartGet() + 1);
         }
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_EDGE);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_EDGE);
         }
         if (hasEdge) {
             statePut(GE_STATE_WAITING_FOR_EDGE);
@@ -5254,13 +5217,13 @@ public final class B2D {
 
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         if (!allocateObjEntry(GE_BASE_EDGE_SIZE)) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
         if (!(isFillOkay(leftFillIndex) && isFillOkay(rightFillIndex))) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         edge = objUsed;
         /* Install type and length */
@@ -5274,7 +5237,7 @@ public final class B2D {
         edgeLeftFillOfput(edge, transformColor(leftFillIndex));
         edgeRightFillOfput(edge, transformColor(rightFillIndex));
         if (engineStopped) {
-            PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
+            throw PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (!failed()) {
             storeEngineStateInto(engine);
@@ -5288,12 +5251,12 @@ public final class B2D {
 
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         fill = 0;
         while (fill == 0) {
             if (!allocateObjEntry(GE_BASE_EDGE_SIZE)) {
-                PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
+                throw PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
             }
             fill = objUsed;
             /* Install type and length */
@@ -5313,7 +5276,7 @@ public final class B2D {
     public long primitiveRenderImage(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
         final int failCode = loadRenderingState(receiver, edge, fill);
         if (failCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failCode);
         }
         proceedRenderingScanline();
         if (engineStopped) {
@@ -5330,7 +5293,7 @@ public final class B2D {
     public long primitiveRenderScanline(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
         final int failCode = loadRenderingState(receiver, edge, fill);
         if (failCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failCode);
         }
         proceedRenderingScanline();
         return storeRenderingState(edge, fill);
@@ -5341,7 +5304,7 @@ public final class B2D {
     public void primitiveSetAALevel(final PointersObject receiver, final int level) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         setAALevel(level);
         storeEngineStateInto(engine);
@@ -5355,7 +5318,7 @@ public final class B2D {
         assert pluginName.isByteType();
         final int length = pluginName.getByteLength();
         if (length >= 256) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         // Implemented as NOOP.
         return receiver;
@@ -5366,12 +5329,12 @@ public final class B2D {
     public void primitiveSetClipRect(final PointersObject receiver, final PointersObject rectOop) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         loadPointfrom(GW_POINT_1, fetchPointerofObject(0, rectOop));
         loadPointfrom(GW_POINT_2, fetchPointerofObject(1, rectOop));
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
+            throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         clipMinXPut(point1GetX());
         clipMinYPut(point1GetY());
@@ -5385,7 +5348,7 @@ public final class B2D {
     public void primitiveSetColorTransform(final PointersObject receiver, final AbstractSqueakObject transformOop) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         loadColorTransformFrom(transformOop);
         storeEngineStateInto(engine);
@@ -5396,7 +5359,7 @@ public final class B2D {
     public void primitiveSetDepth(final PointersObject receiver, final int depth) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         currentZPut(depth);
         storeEngineStateInto(engine);
@@ -5407,7 +5370,7 @@ public final class B2D {
     public void primitiveSetEdgeTransform(final PointersObject receiver, final AbstractSqueakObject transformOop) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         loadEdgeTransformFrom(transformOop);
         storeEngineStateInto(engine);
@@ -5418,7 +5381,7 @@ public final class B2D {
     public void primitiveSetOffset(final PointersObject receiver, final PointersObject pointOop) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
-            PrimitiveFailed.andTransferToInterpreter(failureCode);
+            throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         loadPointfrom(GW_POINT_1, pointOop);
         destOffsetXPut(point1GetX());
@@ -5720,7 +5683,7 @@ public final class B2D {
             di = dj;
             dj = tt;
         }
-        if (n <= 2) {
+        if (n == 2) {
             return;
         }
         /* ij is the midpoint of i and j. */
@@ -5746,7 +5709,7 @@ public final class B2D {
             array[ij] = tmp;
             dij = di;
         }
-        if (n <= 3) {
+        if (n == 3) {
             return;
         }
         int k = i;
@@ -6490,7 +6453,7 @@ public final class B2D {
     /* BalloonEngineBase>>#storeEdgeStateFrom:into: */
     private void storeEdgeStateFrominto(final int edge, final PointersObject edgeOop) {
         if (slotSizeOf(edgeOop) < ET_BALLOON_EDGE_DATA_SIZE) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         storeValue(ET_INDEX_INDEX, edgeOop, objectIndexOf(edge));
         storeValue(ET_X_VALUE_INDEX, edgeOop, edgeXValueOf(edge));
@@ -6515,7 +6478,7 @@ public final class B2D {
         leftX = lastExportedLeftXGet();
         rightX = lastExportedRightXGet();
         if (slotSizeOf(fillOop) < FT_BALLOON_FILL_DATA_SIZE) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         storeValue(FT_INDEX_INDEX, fillOop, objectIndexOf(fillIndex));
         storeValue(FT_MIN_X_INDEX, fillOop, leftX);
@@ -7248,5 +7211,17 @@ public final class B2D {
 
     private static int shr(final int a, final int b) {
         return b > 31 ? 0 : a >>> b;
+    }
+
+    private static int toInt(final Object value) {
+        if (value instanceof Long longValue) {
+            return longValue.intValue();
+        } else if (value instanceof Double doubleValue) {
+            return doubleValue.intValue();
+        } else if (value instanceof final FloatObject floatValue) {
+            return (int) floatValue.getValue();
+        } else {
+            throw PrimitiveFailed.andTransferToInterpreter();
+        }
     }
 }

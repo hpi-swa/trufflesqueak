@@ -13,14 +13,16 @@ import java.util.List;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -148,11 +150,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * lookup was unsuccessful.
          */
         @Specialization
-        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
-                        @Cached final ConditionProfile hasResultProfile) {
+        protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile hasResultProfile) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
             LogUtils.SOCKET.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
-            return hasResultProfile.profile(lastNameLookup == null) ? NilObject.SINGLETON : getContext().asByteArray(lastNameLookup);
+            return hasResultProfile.profile(node, lastNameLookup == null) ? NilObject.SINGLETON : getContext(node).asByteArray(lastNameLookup);
         }
     }
 
@@ -597,7 +600,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractPrimitiveNode implements OctonaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization
-        protected final PointersObject doWork(final PointersObject receiver,
+        protected static final PointersObject doWork(final PointersObject receiver,
                         final long netType,
                         final long socketType,
                         final long rcvBufSize,
@@ -605,11 +608,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long semaphoreIndex,
                         final long aReadSemaphore,
                         final long aWriteSemaphore,
-                        @Cached final ConditionProfile socketTypeProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile socketTypeProfile) {
 
             final SqueakSocket socket;
             try {
-                if (socketTypeProfile.profile(socketType == 1)) {
+                if (socketTypeProfile.profile(node, socketType == 1)) {
                     socket = createSqueakUDPSocket();
                 } else {
                     assert socketType == 0;
@@ -618,7 +622,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (final IOException e) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
-            return PointersObject.newHandleWithHiddenObject(getContext(), socket);
+            return PointersObject.newHandleWithHiddenObject(getContext(node), socket);
         }
 
         @TruffleBoundary(transferToInterpreterOnException = false)

@@ -6,12 +6,14 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -42,10 +44,11 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
+                    @Bind("this") final Node node,
                     @Cached final ResolveMethodNode methodNode,
                     @Cached("create(frame, selector, argumentCount)") final CreateFrameArgumentsForIndirectCallNode argumentsNode,
                     @Cached final IndirectCallNode callNode) {
-        final CompiledCodeObject method = methodNode.execute(getContext(), receiverClass, lookupResult);
+        final CompiledCodeObject method = methodNode.execute(node, getContext(), receiverClass, lookupResult);
         return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, receiver, receiverClass, lookupResult, method));
     }
 }

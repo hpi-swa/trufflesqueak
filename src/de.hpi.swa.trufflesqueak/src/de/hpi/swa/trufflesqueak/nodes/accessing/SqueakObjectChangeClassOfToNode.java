@@ -7,7 +7,11 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -26,9 +30,11 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeGetShort
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectByteSizeNode;
 
 /** This node should only be used in primitive nodes as it may throw a PrimitiveFailed exception. */
+@GenerateInline
+@GenerateCached(false)
 public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
-    public abstract void execute(AbstractSqueakObjectWithClassAndHash receiver, ClassObject argument);
+    public abstract void execute(Node node, AbstractSqueakObjectWithClassAndHash receiver, ClassObject argument);
 
     @Specialization(guards = "receiver.hasFormatOf(argument)")
     protected static final void doNative(final NativeObject receiver, final ClassObject argument) {
@@ -36,34 +42,34 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
     }
 
     @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isBytes()"})
-    protected static final void doNativeConvertToBytes(final NativeObject receiver, final ClassObject argument,
+    protected static final void doNativeConvertToBytes(final Node node, final NativeObject receiver, final ClassObject argument,
                     @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+        receiver.convertToBytesStorage(getBytesNode.execute(node, receiver));
     }
 
-    @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isShorts()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 2)"}, limit = "1")
-    protected static final void doNativeConvertToShorts(final NativeObject receiver, final ClassObject argument,
-                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+    @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isShorts()", "isIntegralWhenDividedBy(byteSize.execute(node, receiver), 2)"}, limit = "1")
+    protected static final void doNativeConvertToShorts(final Node node, final NativeObject receiver, final ClassObject argument,
+                    @SuppressWarnings("unused") @Exclusive @Cached final NativeObjectByteSizeNode byteSize,
                     @Cached final NativeGetShortsNode getShortsNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToShortsStorage(getShortsNode.execute(receiver));
+        receiver.convertToShortsStorage(getShortsNode.execute(node, receiver));
     }
 
-    @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isWords()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 4)"}, limit = "1")
-    protected static final void doNativeConvertToInts(final NativeObject receiver, final ClassObject argument,
-                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+    @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isWords()", "isIntegralWhenDividedBy(byteSize.execute(node, receiver), 4)"}, limit = "1")
+    protected static final void doNativeConvertToInts(final Node node, final NativeObject receiver, final ClassObject argument,
+                    @SuppressWarnings("unused") @Exclusive @Cached final NativeObjectByteSizeNode byteSize,
                     @Cached final NativeGetIntsNode getIntsNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToIntsStorage(getIntsNode.execute(receiver));
+        receiver.convertToIntsStorage(getIntsNode.execute(node, receiver));
     }
 
-    @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isLongs()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 8)"}, limit = "1")
-    protected static final void doNativeConvertToLongs(final NativeObject receiver, final ClassObject argument,
-                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+    @Specialization(guards = {"!receiver.hasFormatOf(argument)", "argument.isLongs()", "isIntegralWhenDividedBy(byteSize.execute(node, receiver), 8)"}, limit = "1")
+    protected static final void doNativeConvertToLongs(final Node node, final NativeObject receiver, final ClassObject argument,
+                    @SuppressWarnings("unused") @Exclusive @Cached final NativeObjectByteSizeNode byteSize,
                     @Cached final NativeGetLongsNode getLongsNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToLongsStorage(getLongsNode.execute(receiver));
+        receiver.convertToLongsStorage(getLongsNode.execute(node, receiver));
     }
 
     @Specialization(guards = {"argument.isBytes()"})

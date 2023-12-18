@@ -13,14 +13,17 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 
 public abstract class DispatchSuperSendNode extends AbstractDispatchNode {
-    protected final CompiledCodeObject method;
+    protected final ClassObject methodClass;
 
     public DispatchSuperSendNode(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
         super(selector, argumentCount);
-        method = code.getMethod();
+        /*
+         * Assuming method literals can no longer change the moment the method is executed for the
+         * first time, cache the method class. Its hierarchy must still be checked for stability.
+         */
+        methodClass = code.getMethod().getMethodClassSlow();
     }
 
     public static DispatchSuperSendNode create(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
@@ -29,11 +32,9 @@ public abstract class DispatchSuperSendNode extends AbstractDispatchNode {
 
     public abstract Object execute(VirtualFrame frame);
 
-    @Specialization(guards = {"method.getMethodClass(readNode) == cachedMethodClass"}, assumptions = {"cachedMethodClass.getClassHierarchyStable()", "dispatchNode.getCallTargetStable()"})
+    @Specialization(assumptions = {"methodClass.getClassHierarchyStable()", "dispatchNode.getCallTargetStable()"})
     protected static final Object doCached(final VirtualFrame frame,
-                    @SuppressWarnings("unused") @Cached final AbstractPointersObjectReadNode readNode,
-                    @SuppressWarnings("unused") @Cached("method.getMethodClassSlow()") final ClassObject cachedMethodClass,
-                    @Cached("create(frame, selector, argumentCount, cachedMethodClass, lookupInSuperClassSlow(cachedMethodClass))") final CachedDispatchNode dispatchNode) {
+                    @Cached("create(frame, selector, argumentCount, methodClass, lookupInSuperClassSlow(methodClass))") final CachedDispatchNode dispatchNode) {
         return dispatchNode.execute(frame);
     }
 }

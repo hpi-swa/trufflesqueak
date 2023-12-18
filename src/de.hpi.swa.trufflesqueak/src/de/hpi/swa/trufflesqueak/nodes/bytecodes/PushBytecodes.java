@@ -8,10 +8,14 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -25,6 +29,10 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushLiteralVariableNodeFactory.PushLiteralVariableReadonlyNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushLiteralVariableNodeFactory.PushLiteralVariableWritableNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushReceiverVariableNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushRemoteTempNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
@@ -365,7 +373,7 @@ public final class PushBytecodes {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public abstract static class PushLiteralVariableNode extends AbstractPushNode {
+    public abstract static class PushLiteralVariableNode extends AbstractInstrumentableBytecodeNode {
         private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
         protected final Object literal;
 
@@ -374,15 +382,15 @@ public final class PushBytecodes {
             this.literal = literal;
         }
 
-        public static final AbstractPushNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
+        public static final AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             final Object literal = code.getLiteral(literalIndex);
             if (literal instanceof final AbstractSqueakObjectWithClassAndHash l) {
                 final String squeakClassName = l.getSqueakClassName();
                 if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
-                    return new PushLiteralVariableReadonlyNode(code, index, numBytecodes, literal);
+                    return PushLiteralVariableReadonlyNodeGen.create(code, index, numBytecodes, literal);
                 }
             }
-            return new PushLiteralVariableWritableNode(code, index, numBytecodes, literal);
+            return PushLiteralVariableWritableNodeGen.create(code, index, numBytecodes, literal);
         }
 
         @Override
@@ -391,21 +399,23 @@ public final class PushBytecodes {
             return "pushLitVar: " + literal;
         }
 
-        private static final class PushLiteralVariableWritableNode extends PushLiteralVariableNode {
-            @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-            private final ValueProfile valueProfile = ValueProfile.createIdentityProfile();
+        protected abstract static class PushLiteralVariableWritableNode extends PushLiteralVariableNode {
 
             protected PushLiteralVariableWritableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object literal) {
                 super(code, index, numBytecodes, literal);
             }
 
-            @Override
-            public void executeVoid(final VirtualFrame frame) {
-                pushNode.execute(frame, valueProfile.profile(at0Node.execute(literal, ASSOCIATION.VALUE)));
+            @Specialization
+            protected final void doPushLiteralVariable(final VirtualFrame frame,
+                            @Bind("this") final Node node,
+                            @Cached final InlinedExactClassProfile valueProfile,
+                            @Cached final SqueakObjectAt0Node at0Node,
+                            @Cached final FrameStackPushNode pushNode) {
+                pushNode.execute(frame, valueProfile.profile(node, at0Node.execute(node, literal, ASSOCIATION.VALUE)));
             }
         }
 
-        private static final class PushLiteralVariableReadonlyNode extends PushLiteralVariableNode {
+        protected abstract static class PushLiteralVariableReadonlyNode extends PushLiteralVariableNode {
             private final Object pushValue;
 
             protected PushLiteralVariableReadonlyNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object literal) {
@@ -413,14 +423,16 @@ public final class PushBytecodes {
                 pushValue = getPushValue(literal);
             }
 
-            @Override
-            public void executeVoid(final VirtualFrame frame) {
+            @Specialization
+            protected final void doPushLiteralVariable(final VirtualFrame frame,
+                            @Cached final FrameStackPushNode pushNode) {
                 assert pushValue == getPushValue(literal) : "value of binding changed unexpectedly";
                 pushNode.execute(frame, pushValue);
             }
 
             private static Object getPushValue(final Object literal) {
-                return SqueakObjectAt0Node.getUncached().execute(literal, ASSOCIATION.VALUE);
+                CompilerAsserts.neverPartOfCompilation();
+                return SqueakObjectAt0Node.executeUncached(literal, ASSOCIATION.VALUE);
             }
         }
     }
@@ -518,8 +530,7 @@ public final class PushBytecodes {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public static final class PushReceiverVariableNode extends AbstractPushNode {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+    public abstract static class PushReceiverVariableNode extends AbstractInstrumentableBytecodeNode {
         private final int variableIndex;
 
         protected PushReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
@@ -528,12 +539,15 @@ public final class PushBytecodes {
         }
 
         public static PushReceiverVariableNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
-            return new PushReceiverVariableNode(code, index, numBytecodes, varIndex);
+            return PushReceiverVariableNodeGen.create(code, index, numBytecodes, varIndex);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, at0Node.execute(FrameAccess.getReceiver(frame), variableIndex));
+        @Specialization
+        protected final void doPushReceiver(final VirtualFrame frame,
+                        @Bind("this") final Node node,
+                        @Cached final SqueakObjectAt0Node at0Node,
+                        @Cached final FrameStackPushNode pushNode) {
+            pushNode.execute(frame, at0Node.execute(node, FrameAccess.getReceiver(frame), variableIndex));
         }
 
         @Override
@@ -544,11 +558,9 @@ public final class PushBytecodes {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public static final class PushRemoteTempNode extends AbstractPushNode {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private FrameStackReadNode readTempNode;
-        private final int indexInArray;
-        private final int indexOfArray;
+    public abstract static class PushRemoteTempNode extends AbstractInstrumentableBytecodeNode {
+        protected final int indexInArray;
+        protected final int indexOfArray;
 
         public PushRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
             super(code, index, numBytecodes);
@@ -556,13 +568,18 @@ public final class PushBytecodes {
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            if (readTempNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                readTempNode = insert(FrameStackReadNode.create(frame, indexOfArray, false));
-            }
-            pushNode.execute(frame, at0Node.execute(readTempNode.executeRead(frame), indexInArray));
+        public static PushRemoteTempNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
+            return PushRemoteTempNodeGen.create(code, index, numBytecodes, indexInArray, indexOfArray);
+        }
+
+        @SuppressWarnings("truffle-static-method")
+        @Specialization
+        protected final void doPushRemoteTemp(final VirtualFrame frame,
+                        @Bind("this") final Node node,
+                        @Cached("create(frame, indexOfArray, false)") final FrameStackReadNode readTempNode,
+                        @Cached final SqueakObjectAt0Node at0Node,
+                        @Cached final FrameStackPushNode pushNode) {
+            pushNode.execute(frame, at0Node.execute(node, readTempNode.executeRead(frame), indexInArray));
         }
 
         @Override

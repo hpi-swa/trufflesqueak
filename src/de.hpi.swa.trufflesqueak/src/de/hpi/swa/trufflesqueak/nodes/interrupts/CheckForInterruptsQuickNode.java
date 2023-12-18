@@ -38,6 +38,10 @@ public abstract class CheckForInterruptsQuickNode extends Node {
         }
     }
 
+    public static CheckForInterruptsQuickNode create() {
+        return new CheckForInterruptsQuickImplNode(SqueakImageContext.getSlow());
+    }
+
     public abstract void execute(VirtualFrame frame);
 
     @DenyReplace
@@ -86,13 +90,13 @@ public abstract class CheckForInterruptsQuickNode extends Node {
             if (istate.interruptPending()) {
                 LogUtils.INTERRUPTS.fine("User interrupt");
                 istate.interruptPending = false; // reset interrupt flag
-                signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
+                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
             }
             // Timer interrupts skipped
             if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
                 LogUtils.INTERRUPTS.fine("Finalization interrupt");
                 istate.setPendingFinalizations(false);
-                signalSemaporeNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
             }
             if (istate.hasSemaphoresToSignal()) {
                 LogUtils.INTERRUPTS.fine("Semaphore interrupt");
@@ -101,7 +105,7 @@ public abstract class CheckForInterruptsQuickNode extends Node {
                     final Object[] semaphores = externalObjects.getObjectStorage();
                     Integer semaIndex;
                     while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                        signalSemaporeNode.executeSignal(frame, semaphores[semaIndex - 1]);
+                        signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
                     }
                 }
             }

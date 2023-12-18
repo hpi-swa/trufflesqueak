@@ -7,9 +7,12 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -32,37 +35,35 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ClassObjectNodes.ClassObjectWrit
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 
+@GenerateInline
+@GenerateCached(false)
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
-    public static SqueakObjectAtPut0Node create() {
-        return SqueakObjectAtPut0NodeGen.create();
-    }
-
-    public abstract void execute(Object obj, long index, Object value);
+    public abstract void execute(Node node, Object obj, long index, Object value);
 
     @Specialization
-    protected static final void doNative(final NativeObject obj, final long index, final Object value,
+    protected static final void doNative(final Node node, final NativeObject obj, final long index, final Object value,
                     @Cached final NativeObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
-    protected static final void doArray(final ArrayObject obj, final long index, final Object value,
+    protected static final void doArray(final Node node, final ArrayObject obj, final long index, final Object value,
                     @Cached final ArrayObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
-    protected static final void doPointers(final PointersObject obj, final long index, final Object value,
+    protected static final void doPointers(final Node node, final PointersObject obj, final long index, final Object value,
                     @Cached final AbstractPointersObjectWriteNode writeNode) {
-        writeNode.execute(obj, (int) index, value);
+        writeNode.execute(node, obj, (int) index, value);
     }
 
     @Specialization
-    protected static final void doVariablePointers(final VariablePointersObject obj, final long index, final Object value,
+    protected static final void doVariablePointers(final Node node, final VariablePointersObject obj, final long index, final Object value,
                     @Cached final VariablePointersObjectWriteNode writeNode) {
-        writeNode.execute(obj, (int) index, value);
+        writeNode.execute(node, obj, (int) index, value);
     }
 
     @Specialization
@@ -71,15 +72,15 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doWeakPointers(final WeakVariablePointersObject obj, final long index, final Object value,
+    protected static final void doWeakPointers(final Node node, final WeakVariablePointersObject obj, final long index, final Object value,
                     @Cached final WeakVariablePointersObjectWriteNode writeNode) {
-        writeNode.execute(obj, (int) index, value);
+        writeNode.execute(node, obj, (int) index, value);
     }
 
     @Specialization
-    protected static final void doClass(final ClassObject obj, final long index, final Object value,
+    protected static final void doClass(final Node node, final ClassObject obj, final long index, final Object value,
                     @Cached final ClassObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
@@ -88,28 +89,28 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doClosure(final BlockClosureObject obj, final long index, final Object value,
+    protected static final void doClosure(final Node node, final BlockClosureObject obj, final long index, final Object value,
                     @Cached final BlockClosureObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
-    protected static final void doContext(final ContextObject obj, final long index, final Object value,
+    protected static final void doContext(final Node node, final ContextObject obj, final long index, final Object value,
                     @Cached final ContextObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
+        writeNode.execute(node, obj, index, value);
     }
 
     @Specialization
-    protected static final void doFloat(final FloatObject obj, final long index, final long value,
-                    @Cached final BranchProfile indexZeroProfile,
-                    @Cached final BranchProfile indexOneProfile) {
+    protected static final void doFloat(final Node node, final FloatObject obj, final long index, final long value,
+                    @Cached final InlinedBranchProfile indexZeroProfile,
+                    @Cached final InlinedBranchProfile indexOneProfile) {
         assert 0 <= value && value <= NativeObject.INTEGER_MAX : "`value` out of range";
         if (index == 0) {
-            indexZeroProfile.enter();
+            indexZeroProfile.enter(node);
             obj.setHigh(value);
         } else {
             assert index == 1 : "Unexpected index: " + index;
-            indexOneProfile.enter();
+            indexOneProfile.enter(node);
             obj.setLow(value);
         }
     }

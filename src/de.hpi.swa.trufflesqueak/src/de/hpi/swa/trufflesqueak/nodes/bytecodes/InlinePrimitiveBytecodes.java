@@ -8,8 +8,12 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -19,6 +23,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimFillFromToWithNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimIdentityHashNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 
@@ -69,16 +76,23 @@ public final class InlinePrimitiveBytecodes {
         }
     }
 
-    protected static final class PrimClassNode extends AbstractNullaryInlinePrimitiveNode {
-        @Child private SqueakObjectClassNode classNode = SqueakObjectClassNode.create();
+    protected abstract static class PrimClassNode extends AbstractInstrumentableBytecodeNode {
 
         protected PrimClassNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+            super(code, index, 1);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, classNode.executeLookup(popNode.execute(frame)));
+        public static PrimClassNode create(final CompiledCodeObject code, final int index) {
+            return PrimClassNodeGen.create(code, index);
+        }
+
+        @Specialization
+        protected static final void doClass(final VirtualFrame frame,
+                        @Bind("this") final Node node,
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final FrameStackPopNode popNode,
+                        @Cached final FrameStackPushNode pushNode) {
+            pushNode.execute(frame, classNode.executeLookup(node, popNode.execute(frame)));
         }
     }
 
@@ -155,16 +169,20 @@ public final class InlinePrimitiveBytecodes {
         }
     }
 
-    protected static final class PrimIdentityHashNode extends AbstractNullaryInlinePrimitiveNode {
-        private final BranchProfile needsHashProfile = BranchProfile.create();
+    protected abstract static class PrimIdentityHashNode extends AbstractNullaryInlinePrimitiveNode {
 
         protected PrimIdentityHashNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getOrCreateSqueakHash(needsHashProfile));
+        public static PrimIdentityHashNode create(final CompiledCodeObject code, final int index) {
+            return PrimIdentityHashNodeGen.create(code, index);
+        }
+
+        @Specialization
+        protected final void doIdentityHash(final VirtualFrame frame,
+                        @Cached final InlinedBranchProfile needsHashProfile) {
+            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getOrCreateSqueakHash(needsHashProfile, this));
         }
     }
 
@@ -567,22 +585,27 @@ public final class InlinePrimitiveBytecodes {
         }
     }
 
-    protected static final class PrimFillFromToWithNode extends AbstractQuaternaryInlinePrimitiveNode {
-        @Child private SqueakObjectAtPut0Node atPutNode = SqueakObjectAtPut0Node.create();
+    protected abstract static class PrimFillFromToWithNode extends AbstractQuaternaryInlinePrimitiveNode {
 
         protected PrimFillFromToWithNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            final Object value = (long) pop4Node.execute(frame);
+        public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index) {
+            return PrimFillFromToWithNodeGen.create(code, index);
+        }
+
+        @Specialization
+        protected final void doFillFromToWith(final VirtualFrame frame,
+                        @Bind("this") final Node node,
+                        @Cached final SqueakObjectAtPut0Node atPutNode) {
+            final Object value = pop4Node.execute(frame);
             final long to = (long) pop3Node.execute(frame);
             final long from = (long) pop2Node.execute(frame);
             final Object receiver = pop1Node.execute(frame);
             // TODO: maybe there's a more efficient way to fill pointers object?
             for (long i = from; i < to; i++) {
-                atPutNode.execute(receiver, i, value);
+                atPutNode.execute(node, receiver, i, value);
             }
             pushNode.execute(frame, receiver);
         }

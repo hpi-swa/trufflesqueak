@@ -9,12 +9,20 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives.AbstractClosurePrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class JumpBytecodes {
 
@@ -24,6 +32,7 @@ public final class JumpBytecodes {
 
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
+        @SuppressWarnings("this-escape")
         protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes);
             jumpSuccessorIndex = getSuccessorIndex() + offset;
@@ -32,13 +41,13 @@ public final class JumpBytecodes {
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            CompilerDirectives.shouldNotReachHere();
+            throw CompilerDirectives.shouldNotReachHere();
         }
 
         public final boolean executeCondition(final VirtualFrame frame) {
             final Object result = popNode.execute(frame);
-            if (result instanceof Boolean) {
-                return conditionProfile.profile(check((boolean) result));
+            if (result instanceof Boolean r) {
+                return conditionProfile.profile(check(r));
             } else {
                 CompilerDirectives.transferToInterpreter();
                 FrameAccess.setInstructionPointer(frame, FrameAccess.getCodeObject(frame).getInitialPC() + getSuccessorIndex());
@@ -112,33 +121,105 @@ public final class JumpBytecodes {
         }
     }
 
-    public static final class UnconditionalJumpNode extends AbstractBytecodeNode {
-        private UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+    public abstract static class AbstractUnconditionalJumpNode extends AbstractBytecodeNode {
+        private AbstractUnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes + offset);
-        }
-
-        public static UnconditionalJumpNode createShort(final CompiledCodeObject code, final int index, final int bytecode) {
-            return new UnconditionalJumpNode(code, index, 1, calculateShortOffset(bytecode));
-        }
-
-        public static UnconditionalJumpNode createLong(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
-            return new UnconditionalJumpNode(code, index, 2, ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter));
-        }
-
-        public static UnconditionalJumpNode createLongExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final byte bytecode, final int extB) {
-            return new UnconditionalJumpNode(code, index, numBytecodes, calculateLongExtendedOffset(bytecode, extB));
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            CompilerDirectives.shouldNotReachHere();
+            throw CompilerDirectives.shouldNotReachHere();
         }
+
+        public abstract void executeCheck(VirtualFrame frame);
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "jumpTo: " + getSuccessorIndex();
         }
+    }
+
+    public static final class UnconditionalJumpWithoutCheckNode extends AbstractUnconditionalJumpNode {
+        protected UnconditionalJumpWithoutCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+            super(code, index, numBytecodes, offset);
+        }
+
+        @Override
+        public void executeCheck(final VirtualFrame frame) {
+            // nothing to do
+        }
+    }
+
+    protected static final class UnconditionalJumpWithCheckNode extends AbstractUnconditionalJumpNode {
+        @Child private CheckForInterruptsNode interruptHandlerNode = CheckForInterruptsNode.create();
+
+        protected UnconditionalJumpWithCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+            super(code, index, numBytecodes, offset);
+            LogUtils.INTERRUPTS.fine(() -> "Added interrupt check to backjump in " + code);
+        }
+
+        @Override
+        public void executeCheck(final VirtualFrame frame) {
+            try {
+                interruptHandlerNode.execute(frame);
+            } catch (ProcessSwitch ps) {
+                // persist PC
+                FrameAccess.setInstructionPointer(frame, getSuccessorIndex());
+                throw ps;
+            }
+        }
+    }
+
+    public static AbstractUnconditionalJumpNode createUnconditionalShortJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode) {
+        final int offset = calculateShortOffset(bytecode);
+        if (needsCheck(bytecodeNodes, index, 1, offset)) {
+            return new UnconditionalJumpWithCheckNode(code, index, 1, offset);
+        } else {
+            return new UnconditionalJumpWithoutCheckNode(code, index, 1, offset);
+        }
+    }
+
+    public static AbstractUnconditionalJumpNode createUnconditionalLongJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode,
+                    final byte parameter) {
+        final int offset = ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter);
+        if (needsCheck(bytecodeNodes, index, 2, offset)) {
+            return new UnconditionalJumpWithCheckNode(code, index, 2, offset);
+        } else {
+            return new UnconditionalJumpWithoutCheckNode(code, index, 2, offset);
+        }
+    }
+
+    public static AbstractUnconditionalJumpNode createUnconditionalLongExtendedJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes,
+                    final byte bytecode, final int extB) {
+        final int offset = calculateLongExtendedOffset(bytecode, extB);
+        if (needsCheck(bytecodeNodes, index, numBytecodes, offset)) {
+            return new UnconditionalJumpWithCheckNode(code, index, numBytecodes, offset);
+        } else {
+            return new UnconditionalJumpWithoutCheckNode(code, index, numBytecodes, offset);
+        }
+    }
+
+    private static boolean needsCheck(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes, final int offset) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (offset < 0) { // back-jumps only
+            final int backJumpIndex = index + numBytecodes + offset;
+            for (int i = backJumpIndex; i < index; i++) {
+                if (bytecodeNodes[i] instanceof final AbstractSendNode abs) {
+                    // NodeUtil.printTree(System.out, abs);
+                    /*
+                     * Search for call nodes but reject the ones from closure primitives as they do
+                     * not check for interrupts.
+                     */
+                    if ((NodeUtil.findFirstNodeInstance(abs, DirectCallNode.class) != null || NodeUtil.findFirstNodeInstance(abs, IndirectCallNode.class) != null) &&
+                                    NodeUtil.findFirstNodeInstance(abs, AbstractClosurePrimitiveNode.class) == null) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public static int calculateShortOffset(final int bytecode) {

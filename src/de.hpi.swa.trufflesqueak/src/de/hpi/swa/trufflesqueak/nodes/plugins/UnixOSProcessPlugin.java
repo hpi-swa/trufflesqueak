@@ -15,6 +15,7 @@ import java.util.Set;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -24,9 +25,10 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -166,13 +168,14 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimFileProtectionMaskNode extends AbstractFilePrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final ArrayObject doFileProtectionMask(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Cached final BranchProfile errorProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile errorProfile) {
             final SqueakImageContext image = getContext();
             try {
                 final TruffleFile file = image.env.getPublicTruffleFile(pathString.asStringUnsafe());
                 return getProtectionMask(image, file.getPosixPermissions());
             } catch (final IOException | UnsupportedOperationException | SecurityException e) {
-                errorProfile.enter();
+                errorProfile.enter(node);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
@@ -183,7 +186,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimFileStatNode extends AbstractFilePrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final ArrayObject doFileStat(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Cached final BranchProfile errorProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile errorProfile) {
             final SqueakImageContext image = getContext();
             try {
                 final TruffleFile file = image.env.getPublicTruffleFile(pathString.asStringUnsafe());
@@ -192,7 +196,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
                 final ArrayObject mask = getProtectionMask(image, file.getPosixPermissions());
                 return image.asArrayOfObjects(uid, gid, mask);
             } catch (final IOException | UnsupportedOperationException | SecurityException e) {
-                errorProfile.enter();
+                errorProfile.enter(node);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
@@ -258,9 +262,10 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimGetPGidNode extends AbstractSysCallPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetPGid(@SuppressWarnings("unused") final Object receiver, final long pid,
+                        @Bind("this") final Node node,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
-            return failIfMinusOne(getValue(lib, pid), errorProfile);
+                        @Cached final InlinedBranchProfile errorProfile) {
+            return failIfMinusOne(getValue(lib, pid), errorProfile, node);
         }
 
         @Override
@@ -279,9 +284,10 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimGetPGrpNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetPGrp(@SuppressWarnings("unused") final Object receiver,
+                        @Bind("this") final Node node,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
-            return failIfMinusOne(getValue(lib), errorProfile);
+                        @Cached final InlinedBranchProfile errorProfile) {
+            return failIfMinusOne(getValue(lib), errorProfile, node);
         }
 
         @Override
@@ -355,12 +361,13 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimRealpathNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final NativeObject doRealpath(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Cached final BranchProfile errorProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedBranchProfile errorProfile) {
             final SqueakImageContext image = getContext();
             try {
                 return image.asByteString(image.env.getPublicTruffleFile(pathString.asStringUnsafe()).getCanonicalFile().getPath());
             } catch (final IOException e) {
-                errorProfile.enter();
+                errorProfile.enter(node);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
@@ -559,9 +566,10 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimSetSidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSetSid(@SuppressWarnings("unused") final Object receiver,
+                        @Bind("this") final Node node,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
-            return failIfMinusOne(getValue(lib), errorProfile);
+                        @Cached final InlinedBranchProfile errorProfile) {
+            return failIfMinusOne(getValue(lib), errorProfile, node);
         }
 
         @Override

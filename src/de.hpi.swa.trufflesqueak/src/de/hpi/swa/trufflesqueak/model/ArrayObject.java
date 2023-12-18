@@ -7,8 +7,9 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -83,7 +84,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
             // Use a fresh write node because uncached node is too generic.
             final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.create();
             for (int i = 0; i < valuesLength; i++) {
-                writeNode.execute(this, i, pointers[i]);
+                writeNode.execute(writeNode, this, i, pointers[i]);
             }
         }
     }
@@ -199,10 +200,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return (Object[]) storage;
     }
 
-    public Class<?> getStorageType() {
-        return storage.getClass();
-    }
-
     @Override
     public int instsize() {
         return 0;
@@ -211,7 +208,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public int size() {
         CompilerAsserts.neverPartOfCompilation();
-        return ArrayObjectSizeNode.getUncached().execute(this);
+        return ArrayObjectSizeNode.executeUncached(this);
     }
 
     public ArrayObject shallowCopy(final Object storageCopy) {
@@ -242,10 +239,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return storage instanceof Object[];
     }
 
-    public boolean isTraceable() {
-        return isObjectType();
-    }
-
     public boolean hasSameStorageType(final ArrayObject other) {
         return storage.getClass() == other.storage.getClass();
     }
@@ -254,56 +247,56 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         storage = newStorage;
     }
 
-    public static Object toObjectFromBoolean(final byte value, final BranchProfile isNilTagProfile) {
+    public static Object toObjectFromBoolean(final byte value, final InlinedBranchProfile isNilTagProfile, final Node node) {
         if (value == BOOLEAN_FALSE_TAG) {
             return BooleanObject.FALSE;
         } else if (value == BOOLEAN_TRUE_TAG) {
             return BooleanObject.TRUE;
         } else {
-            isNilTagProfile.enter();
+            isNilTagProfile.enter(node);
             assert value == BOOLEAN_NIL_TAG;
             return NilObject.SINGLETON;
         }
     }
 
-    public static Object toObjectFromChar(final char value, final ConditionProfile isNilTagProfile) {
-        return isNilTagProfile.profile(isCharNilTag(value)) ? NilObject.SINGLETON : value;
+    public static Object toObjectFromChar(final char value, final InlinedConditionProfile isNilTagProfile, final Node node) {
+        return isNilTagProfile.profile(node, isCharNilTag(value)) ? NilObject.SINGLETON : value;
     }
 
-    public static Object toObjectFromLong(final long value, final ConditionProfile isNilTagProfile) {
-        return isNilTagProfile.profile(isLongNilTag(value)) ? NilObject.SINGLETON : value;
+    public static Object toObjectFromLong(final long value, final InlinedConditionProfile isNilTagProfile, final Node node) {
+        return isNilTagProfile.profile(node, isLongNilTag(value)) ? NilObject.SINGLETON : value;
     }
 
-    public static Object toObjectFromDouble(final double value, final ConditionProfile isNilTagProfile) {
-        return isNilTagProfile.profile(isDoubleNilTag(value)) ? NilObject.SINGLETON : value;
+    public static Object toObjectFromDouble(final double value, final InlinedConditionProfile isNilTagProfile, final Node node) {
+        return isNilTagProfile.profile(node, isDoubleNilTag(value)) ? NilObject.SINGLETON : value;
     }
 
-    public void transitionFromBooleansToObjects(final BranchProfile isNilTagProfile) {
+    public void transitionFromBooleansToObjects(final InlinedBranchProfile isNilTagProfile, final Node node) {
         LogUtils.ARRAY_STATEGIES.finer("transition from Booleans to Objects");
         final byte[] booleans = getBooleanStorage();
         final Object[] objects = new Object[booleans.length];
         for (int i = 0; i < booleans.length; i++) {
-            objects[i] = toObjectFromBoolean(booleans[i], isNilTagProfile);
+            objects[i] = toObjectFromBoolean(booleans[i], isNilTagProfile, node);
         }
         storage = objects;
     }
 
-    public void transitionFromCharsToObjects(final ConditionProfile isNilTagProfile) {
+    public void transitionFromCharsToObjects(final InlinedConditionProfile isNilTagProfile, final Node node) {
         LogUtils.ARRAY_STATEGIES.finer("transition from Chars to Objects");
         final char[] chars = getCharStorage();
         final Object[] objects = new Object[chars.length];
         for (int i = 0; i < chars.length; i++) {
-            objects[i] = toObjectFromChar(chars[i], isNilTagProfile);
+            objects[i] = toObjectFromChar(chars[i], isNilTagProfile, node);
         }
         storage = objects;
     }
 
-    public void transitionFromDoublesToObjects(final ConditionProfile isNilTagProfile) {
+    public void transitionFromDoublesToObjects(final InlinedConditionProfile isNilTagProfile, final Node node) {
         LogUtils.ARRAY_STATEGIES.finer("transition from Doubles to Objects");
         final double[] doubles = getDoubleStorage();
         final Object[] objects = new Object[doubles.length];
         for (int i = 0; i < doubles.length; i++) {
-            objects[i] = toObjectFromDouble(doubles[i], isNilTagProfile);
+            objects[i] = toObjectFromDouble(doubles[i], isNilTagProfile, node);
         }
         storage = objects;
     }
@@ -335,12 +328,12 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         storage = ArrayUtils.withAll(getEmptyLength(), NilObject.SINGLETON);
     }
 
-    public void transitionFromLongsToObjects(final ConditionProfile isNilTagProfile) {
+    public void transitionFromLongsToObjects(final InlinedConditionProfile isNilTagProfile, final Node node) {
         LogUtils.ARRAY_STATEGIES.finer("transition from Longs to Objects");
         final long[] longs = getLongStorage();
         final Object[] objects = new Object[longs.length];
         for (int i = 0; i < longs.length; i++) {
-            objects[i] = toObjectFromLong(longs[i], isNilTagProfile);
+            objects[i] = toObjectFromLong(longs[i], isNilTagProfile, node);
         }
         storage = objects;
     }

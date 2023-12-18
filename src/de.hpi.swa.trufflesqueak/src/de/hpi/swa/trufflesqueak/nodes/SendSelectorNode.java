@@ -6,6 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NeverDefault;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -19,24 +23,28 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyNode;
  * Performs a send to receiver with arguments. For use in other node. Selector must resolve to a
  * {@link CompiledCodeObject}, object-as-method is not allowed.
  */
-public final class SendSelectorNode extends Node {
+public abstract class SendSelectorNode extends Node {
     private final NativeObject selector;
 
-    @Child private SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
-    @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
-    @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
-
-    private SendSelectorNode(final NativeObject selector) {
+    protected SendSelectorNode(final NativeObject selector) {
         this.selector = selector;
     }
 
+    @NeverDefault
     public static SendSelectorNode create(final NativeObject selector) {
-        return new SendSelectorNode(selector);
+        return SendSelectorNodeGen.create(selector);
     }
 
-    public Object executeSend(final VirtualFrame frame, final Object... receiverAndArguments) {
-        final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
-        final CompiledCodeObject method = (CompiledCodeObject) lookupMethodNode.executeLookup(rcvrClass, selector);
+    public abstract Object executeSend(VirtualFrame frame, Object[] receiverAndArguments);
+
+    @Specialization
+    protected final Object doSend(final VirtualFrame frame, final Object[] receiverAndArguments,
+                    @Bind("this") final Node node,
+                    @Cached final SqueakObjectClassNode lookupClassNode,
+                    @Cached final LookupMethodNode lookupMethodNode,
+                    @Cached final DispatchEagerlyNode dispatchNode) {
+        final ClassObject rcvrClass = lookupClassNode.executeLookup(node, receiverAndArguments[0]);
+        final CompiledCodeObject method = (CompiledCodeObject) lookupMethodNode.executeLookup(node, rcvrClass, selector);
         final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
         assert result != null : "Result of a message send should not be null";
         return result;

@@ -8,6 +8,8 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.nodes.Node;
+
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
@@ -48,8 +50,8 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
         return instsize() + variablePart.length;
     }
 
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
-        return layoutValuesPointTo(identityNode, thang) || ArrayUtils.contains(variablePart, thang);
+    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {
+        return layoutValuesPointTo(identityNode, inlineTarget, thang) || ArrayUtils.contains(variablePart, thang);
     }
 
     public final Object[] getVariablePart() {

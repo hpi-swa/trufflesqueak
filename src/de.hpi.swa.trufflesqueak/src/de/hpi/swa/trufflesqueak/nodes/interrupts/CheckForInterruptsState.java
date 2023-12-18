@@ -13,13 +13,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -46,8 +42,6 @@ public final class CheckForInterruptsState {
     private boolean shouldTrigger;
     private boolean shouldTriggerNoTimer;
 
-    @CompilationFinal private PointersObject interruptSemaphore;
-    private PointersObject timerSemaphore;
     private ScheduledFuture<?> interruptChecks;
 
     public CheckForInterruptsState(final SqueakImageContext image) {
@@ -61,18 +55,6 @@ public final class CheckForInterruptsState {
     public void start() {
         if (image.options.disableInterruptHandler) {
             return;
-        }
-        final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
-        if (interruptSema instanceof final PointersObject o) {
-            setInterruptSemaphore(o);
-        } else {
-            assert interruptSema == NilObject.SINGLETON;
-        }
-        final Object timerSema = image.getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
-        if (timerSema instanceof final PointersObject o) {
-            setTimerSemaphore(o);
-        } else {
-            assert timerSema == NilObject.SINGLETON;
         }
         executor = Executors.newSingleThreadScheduledExecutor(r -> {
             final Thread t = new Thread(r, CHECK_FOR_INTERRUPTS_THREAD_NAME);
@@ -179,22 +161,6 @@ public final class CheckForInterruptsState {
     private void resetTriggers() {
         shouldTrigger = false;
         shouldTriggerNoTimer = false;
-    }
-
-    public PointersObject getInterruptSemaphore() {
-        return interruptSemaphore;
-    }
-
-    public void setInterruptSemaphore(final PointersObject interruptSemaphore) {
-        this.interruptSemaphore = interruptSemaphore;
-    }
-
-    public PointersObject getTimerSemaphore() {
-        return timerSemaphore;
-    }
-
-    public void setTimerSemaphore(final PointersObject timerSemaphore) {
-        this.timerSemaphore = timerSemaphore;
     }
 
     /*

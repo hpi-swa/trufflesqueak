@@ -397,14 +397,13 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public Object lookupInMethodDictSlow(final NativeObject selector) {
-        final AbstractPointersObjectReadNode readValuesNode = AbstractPointersObjectReadNode.getUncached();
         ClassObject lookupClass = this;
         while (lookupClass != null) {
             final VariablePointersObject methodDictionary = lookupClass.getMethodDict();
             final Object[] methodDictVariablePart = methodDictionary.getVariablePart();
             for (int i = 0; i < methodDictVariablePart.length; i++) {
                 if (selector == methodDictVariablePart[i]) {
-                    return readValuesNode.executeArray(methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
+                    return AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();

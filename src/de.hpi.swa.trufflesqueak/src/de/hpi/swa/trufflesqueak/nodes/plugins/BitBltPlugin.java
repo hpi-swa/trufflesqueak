@@ -10,12 +10,14 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -46,9 +48,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCopyBits1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
         protected final Object doCopy(final PointersObject receiver,
-                        @Cached final ConditionProfile resultProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile resultProfile) {
             final long result = getContext().bitblt.primitiveCopyBits(receiver, -1);
-            return resultProfile.profile(result == -1) ? receiver : result;
+            return resultProfile.profile(node, result == -1) ? receiver : result;
         }
     }
 
@@ -57,9 +60,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCopyBits2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected final Object doCopyTranslucent(final PointersObject receiver, final long factor,
-                        @Cached final ConditionProfile resultProfile) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile resultProfile) {
             final long result = getContext().bitblt.primitiveCopyBits(receiver, factor);
-            return resultProfile.profile(result == -1) ? receiver : result;
+            return resultProfile.profile(node, result == -1) ? receiver : result;
         }
     }
 
@@ -87,7 +91,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         private static void respecializeArrayToLongOrPrimFail(final ArrayObject array) {
             CompilerAsserts.neverPartOfCompilation();
-            final Object[] values = ArrayObjectToObjectArrayCopyNode.getUncached().execute(array);
+            final Object[] values = ArrayObjectToObjectArrayCopyNode.executeUncached(array);
             final long[] longs = new long[values.length];
             try {
                 for (int i = 0; i < values.length; i++) {

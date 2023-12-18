@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -21,6 +22,7 @@ public final class FrameStackPopNode extends AbstractNode {
 
     @Child private FrameStackReadNode readNode;
 
+    @NeverDefault
     public static FrameStackPopNode create() {
         return new FrameStackPopNode();
     }

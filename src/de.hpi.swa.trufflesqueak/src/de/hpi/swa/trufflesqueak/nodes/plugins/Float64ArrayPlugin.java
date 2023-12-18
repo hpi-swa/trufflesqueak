@@ -239,8 +239,8 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
             final long[] words = receiver.getLongStorage();
             final int length = words.length;
             double len = 0.0D;
-            for (int i = 0; i < length; i++) {
-                final double value = Double.longBitsToDouble(words[i]);
+            for (long word : words) {
+                final double value = Double.longBitsToDouble(word);
                 len += value * value;
             }
             if (len <= 0.0D) {

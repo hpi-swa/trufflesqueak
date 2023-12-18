@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
@@ -40,6 +41,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         assert getCallTargetStable().isValid() : "callTargetStable must be valid";
     }
 
+    @NeverDefault
     protected static final CachedDispatchNode create(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final ClassObject receiverClass, final Object lookupResult) {
         final SqueakImageContext image = SqueakImageContext.getSlow();
         if (lookupResult == null) {
@@ -53,8 +55,8 @@ public abstract class CachedDispatchNode extends AbstractNode {
             }
             return AbstractCachedDispatchMethodNode.create(frame, argumentCount, lookupMethod);
         } else {
-            final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
-            final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, image.runWithInSelector);
+            final ClassObject lookupResultClass = SqueakObjectClassNode.executeUncached(lookupResult);
+            final Object runWithInMethod = LookupMethodNode.executeUncached(lookupResultClass, image.runWithInSelector);
             if (runWithInMethod instanceof final CompiledCodeObject method) {
                 return AbstractCachedDispatchObjectAsMethodNode.create(frame, selector, argumentCount, lookupResult, method);
             } else {
@@ -65,7 +67,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
     }
 
     private static CachedDispatchNode createDNUNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final SqueakImageContext image, final ClassObject receiverClass) {
-        final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(receiverClass, image.doesNotUnderstand);
+        final Object dnuMethod = LookupMethodNode.executeUncached(receiverClass, image.doesNotUnderstand);
         if (dnuMethod instanceof final CompiledCodeObject method) {
             return AbstractCachedDispatchDoesNotUnderstandNode.create(frame, selector, argumentCount, method);
         } else {

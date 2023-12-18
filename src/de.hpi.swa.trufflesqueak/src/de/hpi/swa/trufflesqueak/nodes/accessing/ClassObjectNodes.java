@@ -6,9 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -19,10 +22,12 @@ import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 public final class ClassObjectNodes {
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     @ImportStatic(ClassObject.class)
     public abstract static class ClassObjectReadNode extends AbstractNode {
-        public abstract Object execute(ClassObject obj, long index);
+        public abstract Object execute(Node node, ClassObject obj, long index);
 
         @Specialization(guards = "isSuperclassIndex(index)")
         protected static final AbstractSqueakObject doClassSuperclass(final ClassObject obj, @SuppressWarnings("unused") final long index) {
@@ -55,11 +60,13 @@ public final class ClassObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     @ImportStatic(ClassObject.class)
     public abstract static class ClassObjectWriteNode extends AbstractNode {
 
-        public abstract void execute(ClassObject obj, long index, Object value);
+        public abstract void execute(Node node, ClassObject obj, long index, Object value);
 
         @Specialization(guards = "isSuperclassIndex(index)")
         protected static final void doClassSuperclass(final ClassObject obj, @SuppressWarnings("unused") final long index, final ClassObject value) {

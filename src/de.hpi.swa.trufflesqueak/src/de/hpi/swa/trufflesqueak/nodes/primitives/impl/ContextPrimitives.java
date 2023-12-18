@@ -11,6 +11,7 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -19,6 +20,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -47,7 +49,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"0 <= newStackPointer", "newStackPointer <= LARGE_FRAMESIZE"})
         protected static final ContextObject store(final ContextObject receiver, final long newStackPointer) {
-            /**
+            /*
              * Not need to "nil any newly accessible cells" as cells are always nil-initialized and
              * their values are cleared (overwritten with nil) on stack pop.
              */
@@ -155,7 +157,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         private void terminateBetween(final FrameMarker start, final ContextObject end) {
             assert start != null : "Unexpected `null` value";
             final ContextObject[] bottomContextOnTruffleStack = new ContextObject[1];
-            final ContextObject result = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
+            final ContextObject result = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<>() {
                 boolean foundMyself;
 
                 @Override
@@ -281,8 +283,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"index < receiver.getStackSize()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
+                        @Bind("this") final Node node,
                         @Cached final ContextObjectReadNode readNode) {
-            return readNode.execute(receiver, CONTEXT.RECEIVER + index);
+            return readNode.execute(node, receiver, CONTEXT.RECEIVER + index);
         }
     }
 
@@ -292,8 +295,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = "index < receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
+                        @Bind("this") final Node node,
                         @Cached final ContextObjectWriteNode writeNode) {
-            writeNode.execute(receiver, CONTEXT.RECEIVER + index, value);
+            writeNode.execute(node, receiver, CONTEXT.RECEIVER + index, value);
             return value;
         }
     }

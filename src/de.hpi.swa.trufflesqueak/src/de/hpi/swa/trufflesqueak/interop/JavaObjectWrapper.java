@@ -24,8 +24,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleOptions;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
@@ -162,15 +165,13 @@ public final class JavaObjectWrapper implements TruffleObject {
                 return true;
             }
             final String classSimpleName = method.getDeclaringClass().getSimpleName();
-            switch (classSimpleName) {
-                case "Class":
-                    if (methodName.contains("Annotation")) {
-                        return true;
-                    }
-                    return !ArrayUtils.containsEqual(new String[]{"getCanonicalName", "getName", "getSimpleName", "isInstance", "toString"}, methodName);
-                default:
-                    return false;
+            if ("Class".equals(classSimpleName)) {
+                if (methodName.contains("Annotation")) {
+                    return true;
+                }
+                return !ArrayUtils.containsEqual(new String[]{"getCanonicalName", "getName", "getSimpleName", "isInstance", "toString"}, methodName);
             }
+            return false;
         }
     };
     private static final ClassValue<InteropArray> CLASSES_TO_MEMBERS = new ClassValue<>() {
@@ -233,7 +234,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         } else if (object instanceof final Float o) {
             return (double) o;
         } else {
-            return CACHE.computeIfAbsent(object, o -> new JavaObjectWrapper(o));
+            return CACHE.computeIfAbsent(object, JavaObjectWrapper::new);
         }
     }
 
@@ -351,7 +352,6 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
     protected void writeMember(final String key, final Object value) {
         final Field field = lookupFields().get(key);
         if (field != null) {
@@ -591,9 +591,9 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     @ExportMessage(name = "isArrayElementModifiable")
     @TruffleBoundary
-    protected boolean isArrayElementReadable(final long index, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) {
+    protected boolean isArrayElementReadable(final long index, @Bind("$node") final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) {
         try {
-            return 0 <= index && index < sizeNode.execute(wrappedObject);
+            return 0 <= index && index < sizeNode.execute(node, wrappedObject);
         } catch (final UnsupportedSpecializationException | UnsupportedMessageException e) {
             return false;
         }
@@ -606,17 +606,19 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    protected long getArraySize(@Shared("sizeNode") @Cached final ArraySizeNode sizeNode) throws UnsupportedMessageException {
+    protected long getArraySize(@Bind("$node") final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) throws UnsupportedMessageException {
         try {
-            return sizeNode.execute(wrappedObject);
+            return sizeNode.execute(node, wrappedObject);
         } catch (final UnsupportedSpecializationException e) {
             throw UnsupportedMessageException.create();
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     protected abstract static class ArraySizeNode extends Node {
-        protected abstract int execute(Object object) throws UnsupportedSpecializationException, UnsupportedMessageException;
+        protected abstract int execute(Node node, Object object) throws UnsupportedSpecializationException, UnsupportedMessageException;
 
         @Specialization
         protected static final int doBoolean(final boolean[] object) {
@@ -670,9 +672,9 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected Object readArrayElement(final long index, @Cached final ReadArrayElementNode readNode) throws InvalidArrayIndexException, UnsupportedMessageException {
+    protected Object readArrayElement(final long index, @Bind("$node") final Node node, @Cached final ReadArrayElementNode readNode) throws InvalidArrayIndexException, UnsupportedMessageException {
         try {
-            return readNode.execute(wrappedObject, (int) index);
+            return readNode.execute(node, wrappedObject, (int) index);
         } catch (final ArrayIndexOutOfBoundsException e) {
             throw InvalidArrayIndexException.create(index);
         } catch (final UnsupportedSpecializationException e) {
@@ -680,9 +682,11 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     protected abstract static class ReadArrayElementNode extends Node {
-        protected abstract Object execute(Object object, int index) throws UnsupportedMessageException, InvalidArrayIndexException;
+        protected abstract Object execute(Node node, Object object, int index) throws UnsupportedMessageException, InvalidArrayIndexException;
 
         @Specialization
         protected static final boolean doBoolean(final boolean[] object, final int index) {
@@ -737,10 +741,10 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected void writeArrayElement(final long index, final Object value, @Cached final WriteArrayElementNode writeNode)
+    protected void writeArrayElement(final long index, final Object value, @Bind("$node") final Node node, @Cached final WriteArrayElementNode writeNode)
                     throws InvalidArrayIndexException, UnsupportedMessageException, UnsupportedTypeException {
         try {
-            writeNode.execute(wrappedObject, (int) index, value);
+            writeNode.execute(node, wrappedObject, (int) index, value);
         } catch (final ArrayIndexOutOfBoundsException e) {
             throw InvalidArrayIndexException.create(index);
         } catch (final UnsupportedSpecializationException e) {
@@ -748,9 +752,11 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     protected abstract static class WriteArrayElementNode extends Node {
-        protected abstract void execute(Object object, int index, Object value) throws UnsupportedMessageException, InvalidArrayIndexException, UnsupportedTypeException;
+        protected abstract void execute(Node node, Object object, int index, Object value) throws UnsupportedMessageException, InvalidArrayIndexException, UnsupportedTypeException;
 
         @Specialization
         protected static final void doBoolean(final boolean[] object, final int index, final boolean value) {

@@ -193,7 +193,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {
         try {
-            sendCannotReturnNode.executeSend(startContext.getTruffleFrame(), startContext, returnValue);
+            sendCannotReturnNode.executeSend(startContext.getTruffleFrame(), new Object[]{startContext, returnValue});
         } catch (final ProcessSwitch ps) {
             return ps.getNewContext();
         }
@@ -202,7 +202,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private ContextObject sendAboutToReturn(final ContextObject startContext, final Object returnValue, final ContextObject context) {
         try {
-            sendAboutToReturnNode.executeSend(startContext.getTruffleFrame(), startContext, returnValue, context);
+            sendAboutToReturnNode.executeSend(startContext.getTruffleFrame(), new Object[]{startContext, returnValue, context});
         } catch (final ProcessSwitch ps) {
             return ps.getNewContext();
         } catch (final NonVirtualReturn nvr) {

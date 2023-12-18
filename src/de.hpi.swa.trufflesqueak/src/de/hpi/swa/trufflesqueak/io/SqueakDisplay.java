@@ -6,16 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.Taskbar;
+import java.awt.*;
 import java.awt.Taskbar.Feature;
-import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -156,12 +148,12 @@ public final class SqueakDisplay {
 
         private void setSqueakDisplay(final PointersObject squeakDisplay) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            final NativeObject bitmap = readNode.executeNative(squeakDisplay, FORM.BITS);
+            final NativeObject bitmap = readNode.executeNative(null, squeakDisplay, FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            final int width = readNode.executeInt(squeakDisplay, FORM.WIDTH);
-            final int height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
+            final int width = readNode.executeInt(null, squeakDisplay, FORM.WIDTH);
+            final int height = readNode.executeInt(null, squeakDisplay, FORM.HEIGHT);
             assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
                 bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height, false);
@@ -171,7 +163,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
-        assert left < right && top < bottom;
+        assert left <= right && top <= bottom;
         canvas.paintImmediately(left, top, right, bottom);
     }
 
@@ -297,9 +289,7 @@ public final class SqueakDisplay {
             final Point hotSpot = new Point(Math.min(Math.max(offsetX, 1), width - 1), Math.min(Math.max(offsetY, 1), height - 1));
             cursor = Toolkit.getDefaultToolkit().createCustomCursor(bufferedImage, hotSpot, "TruffleSqueak Cursor");
         }
-        EventQueue.invokeLater(() -> {
-            frame.setCursor(cursor);
-        });
+        EventQueue.invokeLater(() -> frame.setCursor(cursor));
     }
 
     private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
@@ -344,8 +334,8 @@ public final class SqueakDisplay {
     public int recordModifiers(final InputEvent e) {
         final int shiftValue = e.isShiftDown() ? KEYBOARD.SHIFT : 0;
         final int ctrlValue = e.isControlDown() ? KEYBOARD.CTRL : 0;
-        final int optValue = e.isAltDown() || e.isAltGraphDown() ? KEYBOARD.ALT : 0;
-        final int cmdValue = e.isMetaDown() ? KEYBOARD.CMD : 0;
+        final int optValue = e.isAltGraphDown() ? KEYBOARD.ALT : 0;
+        final int cmdValue = e.isAltDown() || e.isMetaDown() ? KEYBOARD.CMD : 0;
         final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
         return modifiers;
@@ -365,9 +355,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setWindowTitle(final String title) {
-        EventQueue.invokeLater(() -> {
-            frame.setTitle(title);
-        });
+        EventQueue.invokeLater(() -> frame.setTitle(title));
     }
 
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {

@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -21,13 +22,15 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DenyReplace;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -44,6 +47,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
@@ -53,6 +57,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.nodes.plugins.MiscPrimitivePlugin.AbstractPrimCompareStringNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.ArgTypeConversionNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
@@ -83,14 +88,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
-            image.interrupt.setTimerSemaphore(semaphore);
             image.interrupt.setNextWakeupTick(msTime);
         }
 
         protected final void resetTimerSemaphore() {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, NilObject.SINGLETON);
-            image.interrupt.setTimerSemaphore(null);
             image.interrupt.setNextWakeupTick(0);
         }
     }
@@ -134,8 +137,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return false;
         }
 
-        protected final Object doCallout(final AbstractSqueakObject receiver, final Object... arguments) {
-            return doCallout(externalFunction, receiver, arguments);
+        protected final Object doCallout(final AbstractPointersObjectReadNode readExternalLibNode, final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        final ArgTypeConversionNode conversionNode, final WrapToSqueakNode wrapNode, final Node inlineTarget, final AbstractSqueakObject receiver,
+                        final Object... arguments) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, inlineTarget, externalFunction, receiver, arguments);
         }
     }
 
@@ -143,8 +148,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 120)
     protected abstract static class PrimCalloutToFFI1Node extends AbstractPrimCalloutToFFINode implements UnaryPrimitiveFallback {
         @Specialization
-        protected final Object doArg0(final AbstractSqueakObject receiver) {
-            return doCallout(receiver);
+        protected final Object doArg0(final AbstractSqueakObject receiver,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver);
         }
     }
 
@@ -152,8 +162,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 120)
     protected abstract static class PrimCalloutToFFI2Node extends AbstractPrimCalloutToFFINode implements BinaryPrimitiveFallback {
         @Specialization
-        protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1) {
-            return doCallout(receiver, arg1);
+        protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1);
         }
     }
 
@@ -161,8 +176,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 120)
     protected abstract static class PrimCalloutToFFI3Node extends AbstractPrimCalloutToFFINode implements TernaryPrimitiveFallback {
         @Specialization
-        protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2) {
-            return doCallout(receiver, arg1, arg2);
+        protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2);
         }
     }
 
@@ -170,8 +190,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 120)
     protected abstract static class PrimCalloutToFFI4Node extends AbstractPrimCalloutToFFINode implements QuaternaryPrimitiveFallback {
         @Specialization
-        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3) {
-            return doCallout(receiver, arg1, arg2, arg3);
+        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3);
         }
     }
 
@@ -179,8 +204,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 120)
     protected abstract static class PrimCalloutToFFI5Node extends AbstractPrimCalloutToFFINode implements QuinaryPrimitiveFallback {
         @Specialization
-        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4);
+        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3, arg4);
         }
     }
 
@@ -188,8 +218,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 120)
     protected abstract static class PrimCalloutToFFI6Node extends AbstractPrimCalloutToFFINode implements SenaryPrimitiveFallback {
         @Specialization
-        protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5);
+        protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3, arg4, arg5);
         }
     }
 
@@ -197,8 +232,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 120)
     protected abstract static class PrimCalloutToFFI7Node extends AbstractPrimCalloutToFFINode implements SeptenaryPrimitiveFallback {
         @Specialization
-        protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6);
+        protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3, arg4, arg5, arg6);
         }
 
     }
@@ -208,8 +248,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimCalloutToFFI8Node extends AbstractPrimCalloutToFFINode implements OctonaryPrimitiveFallback {
         @Specialization
         protected final Object doArg7(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                        final Object arg7,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
     }
 
@@ -218,8 +263,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimCalloutToFFI9Node extends AbstractPrimCalloutToFFINode implements NonaryPrimitiveFallback {
         @Specialization
         protected final Object doArg8(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                        final Object arg7, final Object arg8,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         }
     }
 
@@ -228,8 +278,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimCalloutToFFI10Node extends AbstractPrimCalloutToFFINode implements DecimaryPrimitiveFallback {
         @Specialization
         protected final Object doArg9(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                        final Object arg7, final Object arg8, final Object arg9,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         }
     }
 
@@ -238,8 +293,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimCalloutToFFI11Node extends AbstractPrimCalloutToFFINode implements UndecimaryPrimitiveFallback {
         @Specialization
         protected final Object doArg10(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final Object arg10) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
         }
     }
 
@@ -248,8 +308,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimCalloutToFFI12Node extends AbstractPrimCalloutToFFINode implements DuodecimaryPrimitiveFallback {
         @Specialization
         protected final Object doArg11(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectReadNode readExternalLibNode,
+                        @Cached final AbstractPointersObjectReadNode readArgumentTypeNode,
+                        @Cached final ArgTypeConversionNode conversionNode,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return doCallout(readExternalLibNode, readArgumentTypeNode, conversionNode, wrapNode, node, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
         }
     }
 
@@ -327,8 +392,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.isEmptyType()"})
         protected static final boolean doEmptyArray(final ArrayObject receiver, final Object thang,
-                        @Cached final ConditionProfile noElementsProfile) {
-            if (noElementsProfile.profile(receiver.getEmptyStorage() == 0)) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile noElementsProfile) {
+            if (noElementsProfile.profile(node, receiver.getEmptyStorage() == 0)) {
                 return BooleanObject.FALSE;
             } else {
                 return BooleanObject.wrap(thang == NilObject.SINGLETON);
@@ -406,20 +472,23 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final boolean doPointers(final PointersObject receiver, final Object thang,
+                        @Bind("this") final Node node,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
-            return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
         }
 
         @Specialization
         protected static final boolean doVariablePointers(final VariablePointersObject receiver, final Object thang,
+                        @Bind("this") final Node node,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
-            return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
         }
 
         @Specialization
         protected static final boolean doWeakPointers(final WeakVariablePointersObject receiver, final Object thang,
+                        @Bind("this") final Node node,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
-            return BooleanObject.wrap(receiver.pointsTo(identityNode, thang));
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
         }
     }
 
@@ -428,18 +497,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimInterruptSemaphoreNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization
-        protected final Object get(final Object receiver, final PointersObject semaphore) {
+        protected final Object set(final Object receiver, final PointersObject semaphore) {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
-            image.interrupt.setInterruptSemaphore(semaphore);
             return receiver;
         }
 
         @Specialization
-        protected final Object get(final Object receiver, final NilObject semaphore) {
+        protected final Object set(final Object receiver, final NilObject semaphore) {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
-            image.interrupt.setInterruptSemaphore(null);
             return receiver;
         }
     }
@@ -579,8 +646,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final Object doShallowCopy(final Object receiver,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectShallowCopyNode shallowCopyNode) {
-            return shallowCopyNode.execute(getContext(), receiver);
+            return shallowCopyNode.execute(node, getContext(), receiver);
         }
     }
 
@@ -639,8 +707,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimGetImmutabilityNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final boolean doGet(final Object receiver,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
-            return BooleanObject.wrap(classNode.executeLookup(receiver).isImmediateClassType());
+            return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
     }
 
@@ -649,9 +718,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimSetImmutabilityNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final boolean doGet(final Object receiver, @SuppressWarnings("unused") final boolean value,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
             // FIXME: implement immutability
-            return BooleanObject.wrap(classNode.executeLookup(receiver).isImmediateClassType());
+            return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
     }
 
@@ -713,13 +783,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "!isNativeObject(receiver)", "!isAbstractPointersObject(receiver)", "!isContextObject(receiver)",
-                        "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
+                        "receiverSize == sizeNode.execute(node, anotherObject)"}, limit = "1")
         protected static final AbstractSqueakObject doCopy(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash anotherObject,
-                        @Cached final SqueakObjectSizeNode sizeNode,
+                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
+                        @Bind("sizeNode.execute(node, receiver)") final int receiverSize,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final SqueakObjectAt0Node at0Node) {
-            for (int i = 0; i < sizeNode.execute(receiver); i++) {
-                atput0Node.execute(receiver, i, at0Node.execute(anotherObject, i));
+            for (int i = 0; i < receiverSize; i++) {
+                atput0Node.execute(node, receiver, i, at0Node.execute(node, anotherObject, i));
             }
             return receiver;
         }
@@ -747,9 +819,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"!classObject.isImmediateClassType()"})
         protected final ArrayObject allInstances(final ClassObject classObject,
-                        @Cached final ConditionProfile isNilClass) {
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile isNilClass) {
             final SqueakImageContext image = getContext();
-            if (isNilClass.profile(image.isNilClass(classObject))) {
+            if (isNilClass.profile(node, image.isNilClass(classObject))) {
                 return getContext().asArrayOfObjects(NilObject.SINGLETON);
             } else {
                 if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {

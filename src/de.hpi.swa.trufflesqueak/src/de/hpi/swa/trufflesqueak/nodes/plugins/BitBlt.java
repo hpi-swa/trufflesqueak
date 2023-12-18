@@ -24,7 +24,6 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
-import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
@@ -145,11 +144,11 @@ public final class BitBlt {
     private Object destBits;
     private int destBitsBaseOffset;
     private int destBitsIndexScale;
-    private long destDelta;
+    private int destDelta;
     private int destDepth;
     private PointersObject destForm;
     private int destHeight;
-    private long destIndex;
+    private int destIndex;
     private long destMask;
     private boolean destMSB;
     private int destPitch;
@@ -177,8 +176,8 @@ public final class BitBlt {
     private long[] gammaLookupTable;
     private AbstractSqueakObject halftoneForm;
     private int[] halftoneBits;
-    private long halftoneHeight;
-    private long hDir;
+    private int halftoneHeight;
+    private int hDir;
     private int height;
     @SuppressWarnings("unused") private boolean isWarping;
     private long mask1;
@@ -198,7 +197,7 @@ public final class BitBlt {
     private Object sourceBits;
     private int sourceBitsBaseOffset;
     private int sourceBitsIndexScale;
-    private long sourceDelta;
+    private int sourceDelta;
     private int sourceDepth;
     private PointersObject sourceForm;
     private int sourceHeight;
@@ -209,15 +208,15 @@ public final class BitBlt {
     private int sourceWidth;
     private int sourceX;
     private int sourceY;
-    private long srcBitShift;
+    private int srcBitShift;
     private int sx;
     private int sy;
     private long[] ungammaLookupTable;
     private int vDir;
-    private long warpAlignMask;
-    private long warpAlignShift;
+    private int warpAlignMask;
+    private int warpAlignShift;
     private final int[] warpBitShiftTable = new int[32];
-    private long warpSrcMask;
+    private int warpSrcMask;
     private int width;
 
     public BitBlt(final SqueakImageContext image) {
@@ -270,9 +269,9 @@ public final class BitBlt {
                 result = blendRB | blendAG << 8;
             }
         } else {
-            final long pixMask = MASK_TABLE[destDepth];
-            final long bitsPerColor = 5;
-            final long rgbMask = 0x1F;
+            final int pixMask = MASK_TABLE[destDepth];
+            final int bitsPerColor = 5;
+            final int rgbMask = 0x1F;
             long maskShifted = destMask;
             long destShifted = destinationWord;
             long sourceShifted = sourceWord;
@@ -519,7 +518,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#alphaSourceBlendBits8 */
     private void alphaSourceBlendBits8() {
-        final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
+        final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
 
         /* So we can pre-decrement */
         int deltaY = bbH + 1;
@@ -754,7 +753,7 @@ public final class BitBlt {
             return;
         }
         if (!lockSurfaces()) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         copyBitsLockedAndClipped(factor);
         unlockSurfaces();
@@ -785,7 +784,7 @@ public final class BitBlt {
     private void copyBitsLockedAndClipped(final long factorOrMinusOne) {
         copyBitsRule41Test();
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         if (tryCopyingBitsQuickly()) {
             return;
@@ -793,11 +792,11 @@ public final class BitBlt {
         if (combinationRule >= 30 && combinationRule <= 0x1F) {
             /* Check and fetch source alpha parameter for alpha blend */
             if (factorOrMinusOne == -1) {
-                PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             sourceAlpha = factorOrMinusOne;
             if (failed() || sourceAlpha < 0 || sourceAlpha > 0xFF) {
-                PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
         /* Choose and perform the actual copy loop. */
@@ -881,7 +880,7 @@ public final class BitBlt {
         assert -32 <= skew && skew <= 32; // Modified (image uses 31 instead of 32).
 
         /* Byte delta */
-        final long hInc = hDir * 4;
+        final int hInc = hDir * 4;
         final long unskew;
         final long skewMask;
         if (skew < 0) {
@@ -916,7 +915,7 @@ public final class BitBlt {
         }
     }
 
-    private void copyLoopCombinationRule3(final long initialHalftoneWord, final long hInc, final long notSkewMask, final long skewMask, final long unskew) {
+    private void copyLoopCombinationRule3(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final long unskew) {
         long halftoneWord = initialHalftoneWord;
         int y = dy;
         for (int i = 1; i <= bbH; i++) {
@@ -999,7 +998,7 @@ public final class BitBlt {
         }
     }
 
-    private void copyLoopGeneralCase(final long initialHalftoneWord, final long hInc, final long notSkewMask, final long skewMask, final long unskew) {
+    private void copyLoopGeneralCase(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final long unskew) {
         long halftoneWord = initialHalftoneWord;
         int y = dy;
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
@@ -1142,11 +1141,11 @@ public final class BitBlt {
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         assert mergeFnwith != null : "Unexpected `null` value";
         sourcePPW = div(32, sourceDepth);
-        final long sourcePixMask = MASK_TABLE[sourceDepth];
-        final long destPixMask = MASK_TABLE[destDepth];
-        final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
+        final int sourcePixMask = MASK_TABLE[sourceDepth];
+        final int destPixMask = MASK_TABLE[destDepth];
+        final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         sourceIndex = sy * sourcePitch + div(sx, sourcePPW) * 4;
-        final long scrStartBits = sourcePPW - (sx & sourcePPW - 1);
+        final int scrStartBits = sourcePPW - (sx & sourcePPW - 1);
         final int nSourceIncs;
         if (bbW < scrStartBits) {
             nSourceIncs = 0;
@@ -1155,7 +1154,7 @@ public final class BitBlt {
         }
         /* Note following two items were already calculated in destmask setup! */
         sourceDelta = sourcePitch - nSourceIncs * 4;
-        long startBits = destPPW - (dx & destPPW - 1);
+        int startBits = destPPW - (dx & destPPW - 1);
         final int endBits = (dx + bbW - 1 & destPPW - 1) + 1;
         if (bbW < startBits) {
             startBits = bbW;
@@ -1442,7 +1441,7 @@ public final class BitBlt {
             if (Integer.MIN_VALUE <= longValue && longValue <= Integer.MAX_VALUE) {
                 return (int) longValue;
             }
-            PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
+            throw PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         } else if (fieldOop instanceof final FloatObject o) {
             return floatToLong(o.getValue());
         } else if (fieldOop instanceof Double) {
@@ -1454,7 +1453,7 @@ public final class BitBlt {
 
     private static int floatToLong(final double floatValue) {
         if (!(-2.147483648e9 <= floatValue && floatValue <= 2.147483647e9)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         return (int) floatValue;
     }
@@ -1473,7 +1472,8 @@ public final class BitBlt {
             if ((int) longValue == longValue) {
                 return (int) longValue;
             } else {
-                PrimitiveFailed.andTransferToInterpreter(); // Fail because longValue is too big.
+                throw PrimitiveFailed.andTransferToInterpreter(); // Fail because longValue is too
+                                                                  // big.
             }
         }
         if (fieldOop == NilObject.SINGLETON) {
@@ -1616,7 +1616,7 @@ public final class BitBlt {
             destDepth = -destDepth;
         }
         final Object destBitsValue = fetchPointerofObject(FORM.BITS, destForm);
-        if (!isWordsOrBytes(destBitsValue)) {
+        if (!(destBitsValue instanceof NativeObject destBitsNative && (isWords(destBitsNative) || isBytes(destBitsNative)))) {
             if (destBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
@@ -1625,8 +1625,7 @@ public final class BitBlt {
         }
         destPPW = div(32, destDepth);
         destPitch = div(destWidth + destPPW - 1, destPPW) * 4;
-        final NativeObject destBitsNative = (NativeObject) destBitsValue;
-        final long destBitsSize;
+        final int destBitsSize;
         if (isWords(destBitsNative)) {
             destBits = destBitsNative.getIntStorage();
             destBitsSize = destBitsNative.getIntLength() * Integer.BYTES;
@@ -1743,7 +1742,7 @@ public final class BitBlt {
             sourceDepth = -sourceDepth;
         }
         final Object sourceBitsValue = fetchPointerofObject(FORM.BITS, sourceForm);
-        if (!isWordsOrBytes(sourceBitsValue)) {
+        if (!(sourceBitsValue instanceof NativeObject sourceBitsNative && (isWords(sourceBitsNative) || isBytes(sourceBitsNative)))) {
             if (sourceBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
@@ -1752,7 +1751,6 @@ public final class BitBlt {
         }
         sourcePPW = div(32, sourceDepth);
         sourcePitch = div(sourceWidth + sourcePPW - 1, sourcePPW) * 4;
-        final NativeObject sourceBitsNative = (NativeObject) sourceBitsValue;
         if (isWords(sourceBitsNative)) {
             final int[] ints = sourceBitsNative.getIntStorage();
             sourceBits = ints;
@@ -1799,10 +1797,9 @@ public final class BitBlt {
             oldStyle = true;
         } else {
             /* A new-style color map (fully qualified) */
-            if (!(isPointers(cmOop) && slotSizeOf((PointersObject) cmOop) >= 3)) {
+            if (!(cmOop instanceof PointersObject cmOopPointers && slotSizeOf(cmOopPointers) >= 3)) {
                 return false;
             }
-            final PointersObject cmOopPointers = (PointersObject) cmOop;
             cmShiftTable = loadColorMapShiftOrMaskFrom(fetchNativeofObjectOrNull(0, cmOopPointers));
             cmMaskTable = loadColorMapShiftOrMaskFrom(fetchNativeofObjectOrNull(1, cmOopPointers));
             final NativeObject oop = fetchNativeofObjectOrNull(2, cmOopPointers);
@@ -1856,7 +1853,7 @@ public final class BitBlt {
             return null;
         }
         if (!(isWords(mapOop) && slotSizeOfWords(mapOop) == 4)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         return mapOop.getIntStorage();
     }
@@ -1870,10 +1867,10 @@ public final class BitBlt {
             return true;
         }
         final NativeObject halftoneBitsValue;
-        if (isPointers(halftoneForm) && slotSizeOf((VariablePointersObject) halftoneForm) >= 4) {
+        if (halftoneForm instanceof VariablePointersObject hfvpo && slotSizeOf(hfvpo) >= 4) {
             /* Old-style 32xN monochrome halftone Forms */
-            halftoneBitsValue = fetchNativeofObjectOrNull(FORM.BITS, (VariablePointersObject) halftoneForm);
-            halftoneHeight = fetchIntegerofObject(FORM.HEIGHT, (VariablePointersObject) halftoneForm);
+            halftoneBitsValue = fetchNativeofObjectOrNull(FORM.BITS, hfvpo);
+            halftoneHeight = fetchIntegerofObject(FORM.HEIGHT, hfvpo);
             if (!isWords(halftoneBitsValue)) {
                 noHalftone = true;
             } else {
@@ -1881,10 +1878,10 @@ public final class BitBlt {
             }
         } else {
             /* New spec accepts, basically, a word array */
-            if (!isWords(halftoneForm)) {
+            if (!(halftoneForm instanceof NativeObject hfno && isWords(hfno))) {
                 return false;
             }
-            halftoneBitsValue = (NativeObject) halftoneForm;
+            halftoneBitsValue = hfno;
             halftoneBits = halftoneBitsValue.getIntStorage();
             halftoneHeight = halftoneBits.length;
         }
@@ -1912,7 +1909,7 @@ public final class BitBlt {
     /* Color map the given source pixel. */
 
     /* BitBltSimulation>>#mapPixel:flags: */
-    private long mapPixelflags(final long sourcePixel, final long mapperFlags) {
+    private long mapPixelflags(final long sourcePixel, final int mapperFlags) {
         long pv;
 
         pv = sourcePixel;
@@ -1988,7 +1985,7 @@ public final class BitBlt {
         }
         if (destDepth < 16) {
             /* loop through all packed pixels. */
-            final long pixMask = MASK_TABLE[destDepth] & cmMask;
+            final int pixMask = MASK_TABLE[destDepth] & cmMask;
             long shiftWord = destinationWord;
             for (int i = 1; i <= destPPW; i++) {
                 tallyMapAtput(shiftWord & pixMask);
@@ -2119,8 +2116,8 @@ public final class BitBlt {
     /* BitBltSimulation>>#partitionedMul:with:nBits:nPartitions: */
     private static long partitionedMulwithnBitsnPartitions(final long word1, final long word2, final int nBits, final int nParts) {
         /* partition mask starts at the right */
-        final long sMask = MASK_TABLE[nBits];
-        final long dMask = shl(sMask, nBits);
+        final int sMask = MASK_TABLE[nBits];
+        final int dMask = shl(sMask, nBits);
         /* optimized first step */
         long result = shr(((word1 & sMask) + 1) * ((word2 & sMask) + 1) - 1 & dMask, nBits);
         if (nParts == 1) {
@@ -2238,13 +2235,13 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickSourcePixels:flags:srcMask:destMask:srcShiftInc:dstShiftInc: */
-    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final long mapperFlags, final long srcMask, final long dstMask, final long srcShiftInc,
-                    final long dstShiftInc) {
+    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final int mapperFlags, final long srcMask, final long dstMask, final int srcShiftInc,
+                    final int dstShiftInc) {
         long destWord = 0;
         /* Hint: Keep in register */
-        long srcShift = srcBitShift;
+        int srcShift = srcBitShift;
         /* Hint: Keep in register */
-        long dstShift = dstBitShift;
+        int dstShift = dstBitShift;
         /* always > 0 so we can use do { } while(--nPix); */
         long nPix = nPixels;
         if (mapperFlags == (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
@@ -2292,7 +2289,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickWarpPixelAtX:y: */
-    private long pickWarpPixelAtXy(final long xx, final long yy) {
+    private int pickWarpPixelAtXy(final long xx, final long yy) {
         /*
          * note: it would be much faster if we could just avoid these stupid tests for being inside
          * sourceForm.
@@ -2306,7 +2303,7 @@ public final class BitBlt {
         /* Extract pixel from word */
         final long sourceWord = srcLongAt(srcIndex);
         srcBitShift = warpBitShiftTable[(int) (x & warpAlignMask)];
-        return shr(sourceWord, srcBitShift) & warpSrcMask;
+        return (int) shr(sourceWord, srcBitShift) & warpSrcMask;
     }
 
     /*
@@ -2386,7 +2383,7 @@ public final class BitBlt {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public long primitiveCopyBits(final PointersObject bbObj, final long factor) {
         if (!loadBitBltFromwarping(bbObj, false)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         try {
             copyBits(factor);
@@ -2394,8 +2391,7 @@ public final class BitBlt {
             showDisplayBits();
             assert !failed();
         } catch (final AssertionError e) {
-            PrimitiveFailed.andTransferToInterpreter();
-            image.printToStdErr(e.getMessage());
+            throw PrimitiveFailed.andTransferToInterpreterWithError(e);
         }
         if (combinationRule == 22 || combinationRule == 32) {
             return bitCount;
@@ -2417,7 +2413,7 @@ public final class BitBlt {
          * </pre>
          */
         if (!(loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         /**
          * Check moved to guard of specialization in {@link PrimDisplayStringNode}.
@@ -2439,7 +2435,7 @@ public final class BitBlt {
             endOfDestination = destPitch * destHeight;
         } else {
             if (!lockSurfaces()) {
-                PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
         final int left = destX;
@@ -2448,7 +2444,7 @@ public final class BitBlt {
             final int ascii = Byte.toUnsignedInt(sourceStringBytes[charIndex - 1]);
             final int glyphIndex = (int) glyphMap[ascii];
             if (glyphIndex < 0 || glyphIndex > maxGlyph) {
-                PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             sourceX = (int) xTable[glyphIndex];
             width = (int) (xTable[glyphIndex + 1] - sourceX);
@@ -2483,7 +2479,7 @@ public final class BitBlt {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public void primitiveDrawLoop(final PointersObject bbObj, final long xDelta, final long yDelta) {
         if (!loadBitBltFromwarping(bbObj, false)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         if (!failed()) {
             drawLoopXY(xDelta, yDelta);
@@ -2504,7 +2500,8 @@ public final class BitBlt {
         assert isPointers(bbObj) && slotSizeOf(bbObj) >= FORM.OFFSET : "Precondition not checked in guard";
 
         final NativeObject bitmap = fetchNativeofObjectOrNull(FORM.BITS, bbObj);
-        if (!isWordsOrBytes(bitmap)) {
+        final boolean isWords = isWords(bitmap);
+        if (!(isWords || isBytes(bitmap))) {
             throw PrimitiveFailed.andTransferToInterpreter();
         }
         width = fetchIntegerofObject(FORM.WIDTH, bbObj);
@@ -2523,19 +2520,19 @@ public final class BitBlt {
         /* how many words per row of pixels */
         final int stride = div(width + ppW - 1, ppW);
         final int bitsSize;
-        if (isWords(bitmap)) {
+        if (isWords) {
             bitsSize = bitmap.getIntLength() * Integer.SIZE;
         } else {
             bitsSize = bitmap.getByteLength();
         }
         if (bitsSize < stride * height * 4) {
             /* bytes per word */
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         /* load the word that contains our target */
         final long index = yVal * stride + div(xVal, ppW);
         final long word;
-        if (isWords(bitmap)) {
+        if (isWords) {
             word = Integer.toUnsignedLong(bitmap.getIntStorage()[(int) index]);
         } else {
             word = Integer.toUnsignedLong(VarHandleUtils.getInt(bitmap.getByteStorage(), (int) index));
@@ -2559,7 +2556,7 @@ public final class BitBlt {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public void primitiveWarpBits(final PointersObject bbObj, final int n, final AbstractSqueakObject sourceMap) {
         if (!loadWarpBltFrom(bbObj)) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         warpBits(n, sourceMap);
         assert !failed();
@@ -2811,7 +2808,7 @@ public final class BitBlt {
     /* BitBltSimulation>>#rgbComponentAlpha8 */
     private void rgbComponentAlpha8() {
         /* This particular method should be optimized in itself */
-        final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
+        final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         /* So we can pre-decrement */
         int deltaY = bbH + 1;
         int srcY = sy;
@@ -2914,7 +2911,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#rgbDiff:with: */
     private long rgbDiffwith(final long sourceWord, final long destinationWord) {
-        final long pixMask = MASK_TABLE[destDepth];
+        final int pixMask = MASK_TABLE[destDepth];
         final int bitsPerColor;
         final long rgbMask;
         if (destDepth == 16) {
@@ -2958,7 +2955,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbMap16To32: */
-    private static long rgbMap16To32(final long sourcePixel) {
+    private static int rgbMap16To32(final int sourcePixel) {
         return (sourcePixel & 0x1F) << 3 | (sourcePixel & 0x3E0) << 6 | (sourcePixel & 0x7C00) << 9;
     }
 
@@ -2968,7 +2965,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbMap32To32: */
-    private static long rgbMap32To32(final long sourcePixel) {
+    private static int rgbMap32To32(final int sourcePixel) {
         return sourcePixel;
     }
 
@@ -3249,7 +3246,7 @@ public final class BitBlt {
         if ((cmFlags & (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) != (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
             return destinationWord;
         }
-        final long pixMask = MASK_TABLE[destDepth];
+        final int pixMask = MASK_TABLE[destDepth];
         long destShifted = destinationWord;
         long maskShifted = destMask;
         for (int i = 1; i <= destPPW; i++) {
@@ -3364,7 +3361,7 @@ public final class BitBlt {
             return;
         }
         if (!lockSurfaces()) {
-            PrimitiveFailed.andTransferToInterpreter();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         destMaskAndPointerInit();
         warpLoop(smoothingCount, sourceMap);
@@ -3434,7 +3431,7 @@ public final class BitBlt {
             if (sourceMapOopValue == NilObject.SINGLETON) {
                 if (sourceDepth < 16) {
                     /* color map is required to smooth non-RGB dest */
-                    PrimitiveFailed.andTransferToInterpreter();
+                    throw PrimitiveFailed.andTransferToInterpreter();
                 }
                 sourceMap = null;
                 sourceMapIsWords = false;
@@ -3454,7 +3451,7 @@ public final class BitBlt {
                 }
                 if (sourceMapSize < shl(1, sourceDepth)) {
                     /* sourceMap must be long enough for sourceDepth */
-                    PrimitiveFailed.andTransferToInterpreter();
+                    throw PrimitiveFailed.andTransferToInterpreter();
                 }
             }
         } else {
@@ -3489,7 +3486,7 @@ public final class BitBlt {
             }
         }
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
+        final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         final int dstShiftInc;
         final int dstShiftLeft;
         if (destMSB) {
@@ -3586,7 +3583,7 @@ public final class BitBlt {
     /* BitBltSimulation>>#warpLoopSetup */
     private void warpLoopSetup() {
         /* warpSrcShift = log2(sourceDepth) */
-        long warpSrcShift = 0;
+        int warpSrcShift = 0;
         /* recycle temp */
         long words = sourceDepth;
         while (words != 1) {
@@ -3602,9 +3599,9 @@ public final class BitBlt {
         warpAlignMask = shl(1, warpAlignShift) - 1;
         for (int i = 0; i <= warpAlignMask; i++) {
             if (sourceMSB) {
-                warpBitShiftTable[i] = (int) (32 - shl(i + 1, warpSrcShift));
+                warpBitShiftTable[i] = 32 - shl(i + 1, warpSrcShift);
             } else {
-                warpBitShiftTable[i] = (int) shl(i, warpSrcShift);
+                warpBitShiftTable[i] = shl(i, warpSrcShift);
             }
         }
     }
@@ -3645,31 +3642,29 @@ public final class BitBlt {
             int x = sx;
             int y = sy;
             /* Pick and average n*n subpixels */
-            long a = 0;
-            long r = 0;
-            long g = 0;
-            long b = 0;
+            int a = 0;
+            int r = 0;
+            int g = 0;
+            int b = 0;
             /* actual number of pixels (not clipped and not transparent) */
-            long nPix = 0;
+            int nPix = 0;
             long j = n;
             do {
                 int xx = x;
                 int yy = y;
                 long k = n;
                 do {
-                    long rgb = pickWarpPixelAtXy(xx, yy);
+                    int rgb = pickWarpPixelAtXy(xx, yy);
                     if (!(combinationRule == 25 && rgb == 0)) {
                         /* If not clipped and not transparent, then tally rgb values */
                         nPix++;
                         if (sourceDepth < 16) {
                             /* Get RGBA values from sourcemap table */
-                            final int rawValue;
                             if (sourceMapIsWords) {
-                                rawValue = UnsafeUtils.getInt((int[]) sourceMap, rgb);
+                                rgb = UnsafeUtils.getInt((int[]) sourceMap, rgb);
                             } else {
-                                rawValue = VarHandleUtils.getInt((byte[]) sourceMap, (int) rgb);
+                                rgb = VarHandleUtils.getInt((byte[]) sourceMap, rgb);
                             }
-                            rgb = Integer.toUnsignedLong(rawValue);
                         } else {
                             /* Already in RGB format */
                             if (sourceDepth == 16) {
@@ -3729,7 +3724,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpPickSourcePixels:xDeltah:yDeltah:xDeltav:yDeltav:dstShiftInc:flags: */
-    private long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final int nPixels, final int xDeltah, final int yDeltah, final int dstShiftInc, final long mapperFlags) {
+    private long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final int nPixels, final int xDeltah, final int yDeltah, final int dstShiftInc, final int mapperFlags) {
         final int dstMask = MASK_TABLE[destDepth];
         long destWord = 0;
         long nPix = nPixels;
@@ -3801,14 +3796,6 @@ public final class BitBlt {
         return object.isIntType();
     }
 
-    private boolean isWords(final Object object) {
-        return SqueakGuards.isNativeObject(object) && isWords((NativeObject) object);
-    }
-
-    private boolean isWordsOrBytes(final Object object) {
-        return SqueakGuards.isNativeObject(object) && (isWords((NativeObject) object) || isBytes((NativeObject) object));
-    }
-
     private static int slotSizeOfWords(final NativeObject object) {
         return object.getIntLength();
     }
@@ -3825,12 +3812,12 @@ public final class BitBlt {
         return object != null;
     }
 
-    private static boolean isPointers(final Object object) {
-        return object instanceof PointersObject;
-    }
-
     private static boolean failed() {
         return false;
+    }
+
+    private static int div(final int a, final int b) {
+        return a / b;
     }
 
     private static int div(final long a, final long b) {
@@ -3842,6 +3829,10 @@ public final class BitBlt {
     }
 
     private static long shl(final long a, final long b) {
+        return a << b;
+    }
+
+    private static int shl(final int a, final int b) {
         return a << b;
     }
 
@@ -3884,15 +3875,11 @@ public final class BitBlt {
 
     private long srcLongAt(final long index) {
         /**
-         * Unfortunately, BitBlt tries to read past the end or before the start of
-         * {@link sourceBits} sometimes, so return `0` in these cases. An example is
-         * #testPivelValueAt (confirmed by SqueakJS's BitBltPlugin) or `PolygonMorph
-         * arrowPrototype`.
+         * BitBlt sometimes tries to read past the end or before the start of {@link sourceBits}
+         * sometimes. An example is #testPivelValueAt (confirmed by SqueakJS's BitBltPlugin) or
+         * `PolygonMorph arrowPrototype`.
          */
-        if (0 <= index && index < endOfSource) {
-            return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * sourceBitsIndexScale));
-        } else {
-            return 0L;
-        }
+        assert 0 <= index && index <= endOfSource;
+        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * sourceBitsIndexScale));
     }
 }

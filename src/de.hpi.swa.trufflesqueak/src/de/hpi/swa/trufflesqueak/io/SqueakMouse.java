@@ -53,10 +53,6 @@ public final class SqueakMouse extends MouseInputAdapter {
             case DOWN -> mapButton(e);
             case MOVE -> display.buttons & MOUSE.ALL;
             case UP -> 0;
-            default -> {
-                LogUtils.IO.warning("Unknown mouse event: " + e);
-                yield display.buttons & MOUSE.ALL;
-            }
         };
         display.buttons = buttons | display.recordModifiers(e);
         display.addEvent(EVENT_TYPE.MOUSE, e.getX(), e.getY(), display.buttons & MOUSE.ALL, display.buttons >> 3);

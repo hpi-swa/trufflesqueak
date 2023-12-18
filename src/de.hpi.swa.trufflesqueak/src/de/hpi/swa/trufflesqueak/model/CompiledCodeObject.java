@@ -21,6 +21,7 @@ import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NonIdempotent;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -325,8 +326,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return new AbstractBytecodeNode[AbstractSqueakBytecodeDecoder.trailerPosition(this)];
     }
 
-    public AbstractBytecodeNode bytecodeNodeAt(final VirtualFrame frame, final int pc) {
-        return getDecoder().decodeBytecode(frame, this, pc);
+    public AbstractBytecodeNode bytecodeNodeAt(final VirtualFrame frame, final AbstractBytecodeNode[] bytecodeNodes, final int pc) {
+        return getDecoder().decodeBytecode(frame, this, bytecodeNodes, pc);
     }
 
     public int findLineNumber(final int index) {
@@ -564,8 +565,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final Object penultimateLiteral = literals[literals.length - 2];
         if (penultimateLiteral instanceof final NativeObject o) {
             return o;
-        } else if (penultimateLiteral instanceof final VariablePointersObject o) {
-            final VariablePointersObject penultimateLiteralAsPointer = o;
+        } else if (penultimateLiteral instanceof final VariablePointersObject penultimateLiteralAsPointer) {
             assert penultimateLiteralAsPointer.size() >= ADDITIONAL_METHOD_STATE.SELECTOR;
             return (NativeObject) penultimateLiteralAsPointer.instVarAt0Slow(ADDITIONAL_METHOD_STATE.SELECTOR);
         } else {
@@ -574,7 +574,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     /** CompiledMethod>>#methodClassAssociation. */
-    private AbstractSqueakObject getMethodClassAssociation() {
+    private Object getMethodClassAssociation() {
         /**
          * From the CompiledMethod class description:
          *
@@ -584,27 +584,27 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          * may be nil (as would be the case for example of methods providing a pool of inst var
          * accessors).
          */
-        return (AbstractSqueakObject) literals[literals.length - 1];
+        return literals[literals.length - 1];
     }
 
-    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
-        final AbstractSqueakObject mca = getMethodClassAssociation();
-        return mca != NilObject.SINGLETON && readNode.execute((AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
+    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
+        final Object mca = getMethodClassAssociation();
+        return mca != NilObject.SINGLETON && readNode.execute(inlineTarget, (AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
     }
 
     public ClassObject getMethodClassSlow() {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-        if (hasMethodClass(readNode)) {
-            return getMethodClass(readNode);
+        if (hasMethodClass(readNode, null)) {
+            return getMethodClass(readNode, null);
         }
         return null;
     }
 
     /** CompiledMethod>>#methodClass. */
     @NonIdempotent
-    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
-        return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
+    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
+        return (ClassObject) readNode.execute(inlineTarget, (AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
     private long getHeader() {

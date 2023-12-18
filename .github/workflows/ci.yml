@@ -19,7 +19,7 @@ on:
 
 env:
   VERBOSE_GRAALVM_LAUNCHERS: true
-  MX_GATE_OPTS: '--strict-mode --omit-clean --no-warning-as-error'
+  MX_GATE_OPTS: '--strict-mode --omit-clean'
 
 jobs:
   style_and_build_config:
@@ -59,7 +59,7 @@ jobs:
       MX_ENV: "trufflesqueak-jar"
       
     name: jar ${{ matrix.os }} + JDK${{ matrix.java }}
-    timeout-minutes: 60
+    timeout-minutes: 45
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
@@ -135,7 +135,7 @@ jobs:
       MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: ${{ matrix.type }} ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
@@ -198,4 +198,5 @@ jobs:
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
         trufflesqueak --vm.ea --vm.esa --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=ExitVM --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+      timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-20.04' }}

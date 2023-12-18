@@ -36,7 +36,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
-    private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
+    private static final int SQUEAK_TIMEOUT_SECONDS = 60 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
     private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = 45 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
     private static final int PRIORITY_10_LIST_INDEX = 9;
@@ -63,7 +63,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         executor = Executors.newSingleThreadExecutor();
         final String imagePath = getPathToTestImage();
         try {
-            runWithTimeout(imagePath, value -> loadImageContext(value), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
+            runWithTimeout(imagePath, AbstractSqueakTestCase::loadImageContext, TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
             println("Test image loaded from " + imagePath + "...");
             patchImageForTesting();
         } catch (final InterruptedException e) {
@@ -99,7 +99,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static void patchImageForTesting() {
         image.interrupt.start();
         final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
-        final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
+        final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.executeUncached(lists, PRIORITY_10_LIST_INDEX);
         final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
         final Object lastLink = priority10List.instVarAt0Slow(LINKED_LIST.LAST_LINK);
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
@@ -176,7 +176,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             throw new IllegalStateException("The previous test case has not finished yet");
         }
         try {
-            return runWithTimeout(request, value -> extractFailuresAndErrorsFromTestResult(value), TIMEOUT_SECONDS);
+            return runWithTimeout(request, AbstractSqueakTestCaseWithImage::extractFailuresAndErrorsFromTestResult, TIMEOUT_SECONDS);
         } catch (final TimeoutException e) {
             return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
@@ -239,14 +239,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         return String.format("[(%s selector: #%s) shouldPass] on: Error do: [:e | false]", request.testCase, request.testSelector);
     }
 
-    protected static final class TestRequest {
-        protected final String testCase;
-        protected final String testSelector;
-
-        protected TestRequest(final String testCase, final String testSelector) {
-            this.testCase = testCase;
-            this.testSelector = testSelector;
-        }
+    protected record TestRequest(String testCase, String testSelector) {
     }
 
     protected static final class TestResult {

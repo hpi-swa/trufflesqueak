@@ -6,9 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -19,11 +22,13 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 public final class BlockClosureObjectNodes {
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     @ImportStatic(BLOCK_CLOSURE.class)
     public abstract static class BlockClosureObjectReadNode extends AbstractNode {
 
-        public abstract Object execute(BlockClosureObject closure, long index);
+        public abstract Object execute(Node node, BlockClosureObject closure, long index);
 
         @Specialization(guards = "index == OUTER_CONTEXT")
         protected static final AbstractSqueakObject doClosureOuterContext(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
@@ -61,11 +66,13 @@ public final class BlockClosureObjectNodes {
         }
     }
 
+    @GenerateInline
     @GenerateUncached
+    @GenerateCached(false)
     @ImportStatic(BLOCK_CLOSURE.class)
     public abstract static class BlockClosureObjectWriteNode extends AbstractNode {
 
-        public abstract void execute(BlockClosureObject closure, long index, Object value);
+        public abstract void execute(Node node, BlockClosureObject closure, long index, Object value);
 
         @Specialization(guards = "index == OUTER_CONTEXT")
         protected static final void doClosureOuterContext(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final ContextObject value) {

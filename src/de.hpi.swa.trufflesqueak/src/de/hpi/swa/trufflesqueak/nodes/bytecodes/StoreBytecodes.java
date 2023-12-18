@@ -36,7 +36,7 @@ public final class StoreBytecodes {
         @Override
         public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return getTypeName() + "IntoLit: " + SqueakObjectAt0Node.getUncached().execute(literalVariable, ASSOCIATION.KEY);
+            return getTypeName() + "IntoLit: " + SqueakObjectAt0Node.executeUncached(literalVariable, ASSOCIATION.KEY);
         }
     }
 

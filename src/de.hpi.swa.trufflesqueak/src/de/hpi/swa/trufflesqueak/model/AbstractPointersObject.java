@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -121,7 +122,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         final Object[] pointers = chunk.getPointers();
         final int instSize = instsize();
         for (int i = 0; i < instSize; i++) {
-            writeNode.execute(this, i, pointers[i]);
+            writeNode.execute(null, this, i, pointers[i]);
         }
         fillInVariablePart(pointers, instSize);
         assert size() == pointers.length;
@@ -288,29 +289,29 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     public final Object instVarAt0Slow(final long index) {
         CompilerAsserts.neverPartOfCompilation();
-        return AbstractPointersObjectReadNode.getUncached().execute(this, index);
+        return AbstractPointersObjectReadNode.executeUncached(this, index);
     }
 
     public final void instVarAtPut0Slow(final long index, final Object value) {
         CompilerAsserts.neverPartOfCompilation();
-        AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
+        AbstractPointersObjectWriteNode.executeUncached(this, index, value);
     }
 
-    protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
+    protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {
         final boolean pointTo = object0 == thang || object1 == thang || object2 == thang || objectExtension != null && ArrayUtils.contains(objectExtension, thang);
         if (pointTo) {
             return true;
         } else {
-            return primitiveLocationsPointTo(identityNode, thang);
+            return primitiveLocationsPointTo(identityNode, inlineTarget, thang);
         }
     }
 
     @TruffleBoundary
-    private boolean primitiveLocationsPointTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
+    private boolean primitiveLocationsPointTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {
         if (SqueakGuards.isUsedJavaPrimitive(thang)) {
             // TODO: This could be more efficient.
             for (final SlotLocation slotLocation : getLayout().getLocations()) {
-                if (slotLocation.isPrimitive() && identityNode.execute(slotLocation.read(this), thang)) {
+                if (slotLocation.isPrimitive() && identityNode.execute(inlineTarget, slotLocation.read(this), thang)) {
                     return true;
                 }
             }
@@ -375,7 +376,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         if (writeHeader(writer)) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             for (int i = 0; i < instsize(); i++) {
-                writer.writeObject(readNode.execute(this, i));
+                writer.writeObject(readNode.execute(null, this, i));
             }
             writeVariablePart(writer);
         }

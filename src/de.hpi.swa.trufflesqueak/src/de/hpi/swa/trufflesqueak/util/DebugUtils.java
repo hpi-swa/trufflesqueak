@@ -19,7 +19,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -90,8 +89,7 @@ public final class DebugUtils {
                     final Thread.State ts = info.getThreadState();
                     switch (ts) {
                         case BLOCKED -> sb.append("\t-  blocked on ").append(info.getLockInfo()).append("\r\n");
-                        case WAITING -> sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
-                        case TIMED_WAITING -> sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
+                        case WAITING, TIMED_WAITING -> sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
                         default -> {
                         }
                     }
@@ -183,13 +181,12 @@ public final class DebugUtils {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final StringBuilder b = new StringBuilder();
         printSqMaterializedStackTraceOn(b, context);
-        SqueakImageContext.getSlow().getOutput().println(b.toString());
+        SqueakImageContext.getSlow().getOutput().println(b);
     }
 
     private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
         if (semaphoreOrNil instanceof final PointersObject semaphore) {
-            b.append(label).append(Integer.toHexString(semaphore.hashCode())).append(" with ").append(((AbstractPointersObject) semaphore).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS)).append(
-                            " excess signals");
+            b.append(label).append(Integer.toHexString(semaphore.hashCode())).append(" with ").append(semaphore.instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS)).append(" excess signals");
             if (!printLinkedList(b, "", semaphore)) {
                 b.append(" and no processes\n");
             }

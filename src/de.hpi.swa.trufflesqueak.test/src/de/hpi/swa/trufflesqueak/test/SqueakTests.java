@@ -158,7 +158,7 @@ public final class SqueakTests {
         final Properties properties = loadProperties();
         return properties.stringPropertyNames().stream() //
                         .map(test -> parseTest(test, properties.getProperty(test))) //
-                        .sorted(Comparator.comparing((final SqueakTest t) -> t.type).thenComparing((final SqueakTest t) -> t.qualifiedName()));
+                        .sorted(Comparator.comparing((final SqueakTest t) -> t.type).thenComparing(SqueakTest::qualifiedName));
     }
     // Checkstyle: resume
 

@@ -7,8 +7,11 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -24,33 +27,31 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 
+@GenerateInline
+@GenerateCached(false)
 public abstract class WakeHighestPriorityNode extends AbstractNode {
 
-    public static WakeHighestPriorityNode create() {
-        return WakeHighestPriorityNodeGen.create();
-    }
-
-    public abstract void executeWake(VirtualFrame frame);
+    public abstract void executeWake(VirtualFrame frame, Node node);
 
     @Specialization
-    protected final void doWake(final VirtualFrame frame,
+    protected static final void doWake(final VirtualFrame frame, final Node node,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final ArrayObjectSizeNode arraySizeNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached final GetOrCreateContextNode contextNode,
                     @Cached final GetActiveProcessNode getActiveProcessNode) {
-        final SqueakImageContext image = getContext();
+        final SqueakImageContext image = getContext(node);
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
-        final ArrayObject schedLists = pointersReadNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
-        for (long p = arraySizeNode.execute(schedLists) - 1; p >= 0; p--) {
-            final PointersObject processList = (PointersObject) arrayReadNode.execute(schedLists, p);
-            while (!processList.isEmptyList(pointersReadNode)) {
-                final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
-                final Object newContext = pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+        final ArrayObject schedLists = pointersReadNode.executeArray(node, image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
+        for (long p = arraySizeNode.execute(node, schedLists) - 1; p >= 0; p--) {
+            final PointersObject processList = (PointersObject) arrayReadNode.execute(node, schedLists, p);
+            while (!processList.isEmptyList(pointersReadNode, node)) {
+                final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode, node);
+                final Object newContext = pointersReadNode.execute(node, newProcess, PROCESS.SUSPENDED_CONTEXT);
                 if (newContext instanceof final ContextObject newActiveContext) {
-                    contextNode.executeGet(frame).transferTo(image, newProcess, newActiveContext, pointersWriteNode, getActiveProcessNode);
+                    contextNode.executeGet(frame, node).transferTo(image, newProcess, newActiveContext, pointersWriteNode, getActiveProcessNode, node);
                     throw SqueakException.create("Should not be reached");
                 }
             }

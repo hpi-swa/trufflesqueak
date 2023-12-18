@@ -483,7 +483,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             for (int index = 0; index < readInts; index++) {
                 target.setInt(startIndex - 1 + index, VarHandleUtils.getInt(bytes, index));
             }
-            return Math.max(readInts, 0L); // `read` can be `-1`, Squeak expects zero.
+            return readInts;
         }
 
         @TruffleBoundary

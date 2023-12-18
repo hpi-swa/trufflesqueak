@@ -88,13 +88,13 @@ public final class SqueakImageWriter {
         final PointersObject activeProcess = image.getActiveProcessSlow();
         try {
             /* Mark thisContext as suspended during tracing and writing. */
-            AbstractPointersObjectWriteNode.getUncached().execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, thisContext);
+            AbstractPointersObjectWriteNode.executeUncached(activeProcess, PROCESS.SUSPENDED_CONTEXT, thisContext);
             traceObjects();
             writeImageHeader();
             writeBody();
         } finally {
             /* Unmark thisContext as suspended. */
-            AbstractPointersObjectWriteNode.getUncached().executeNil(activeProcess, PROCESS.SUSPENDED_CONTEXT);
+            AbstractPointersObjectWriteNode.executeUncached(activeProcess, PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
             closeStream();
             finalizeImageHeader();
         }
@@ -242,16 +242,17 @@ public final class SqueakImageWriter {
             return toTaggedSmallInteger((long) object);
         } else if (object instanceof Double) {
             return toTaggedSmallFloat((double) object);
-        } else if (object instanceof AbstractSqueakObject) {
-            final Long oop = oopMap.get(object);
+        } else if (object instanceof AbstractSqueakObjectWithClassAndHash aso) {
+            final Long oop = oopMap.get(aso);
             if (oop != null) {
                 return oop;
             } else {
-                image.printToStdErr("Unreserved object detected: " + object + ". Replacing with nil.");
+                image.printToStdErr("Unreserved object detected: " + aso + ". Replacing with nil.");
                 return nilOop;
             }
         } else {
             /* Nil out any foreign objects. */
+            assert !(object instanceof AbstractSqueakObject);
             return nilOop;
         }
     }
@@ -384,7 +385,7 @@ public final class SqueakImageWriter {
     }
 
     public void writeObjectIfTracedElseNil(final Object object) {
-        writeLong(toWord(oopMap.containsKey(object) ? object : NilObject.SINGLETON));
+        writeLong(toWord(object instanceof AbstractSqueakObjectWithClassAndHash aso && oopMap.containsKey(aso) ? object : NilObject.SINGLETON));
     }
 
     private static long toTaggedCharacter(final long value) {

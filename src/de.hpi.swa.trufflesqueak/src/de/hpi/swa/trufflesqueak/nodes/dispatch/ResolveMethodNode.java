@@ -7,7 +7,10 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
+import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -18,9 +21,11 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
+@GenerateInline
+@GenerateCached(false)
 public abstract class ResolveMethodNode extends AbstractNode {
 
-    protected abstract CompiledCodeObject execute(SqueakImageContext image, ClassObject receiverClass, Object lookupResult);
+    protected abstract CompiledCodeObject execute(Node node, SqueakImageContext image, ClassObject receiverClass, Object lookupResult);
 
     @Specialization
     @SuppressWarnings("unused")
@@ -39,15 +44,15 @@ public abstract class ResolveMethodNode extends AbstractNode {
     }
 
     @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
-    protected static final CompiledCodeObject doObjectAsMethod(final SqueakImageContext image, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject,
+    protected static final CompiledCodeObject doObjectAsMethod(final Node node, final SqueakImageContext image, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject,
                     @Cached final SqueakObjectClassNode classNode) {
-        final ClassObject targetObjectClass = classNode.executeLookup(targetObject);
+        final ClassObject targetObjectClass = classNode.executeLookup(node, targetObject);
         final Object runWithInMethod = lookupMethod(image, targetObjectClass, image.runWithInSelector);
         if (runWithInMethod instanceof final CompiledCodeObject method) {
             return method;
         } else {
             assert runWithInMethod == null : "runWithInMethod should not be another Object";
-            return doDoesNotUnderstand(image, targetObjectClass, runWithInMethod);
+            return doDoesNotUnderstand(image, targetObjectClass, null);
         }
     }
 
