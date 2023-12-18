@@ -16,7 +16,6 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
@@ -220,7 +219,7 @@ public class InterpreterProxy {
     }
 
     private Object objectAt0(Object object, long index) {
-        return SqueakObjectAt0Node.getUncached().execute(object, index);
+        return SqueakObjectAt0Node.executeUncached(object, index);
     }
 
     private NativeObjectStorage firstIndexableField(long oop) {
@@ -236,8 +235,7 @@ public class InterpreterProxy {
             primitiveFail();
             return -1;
         }
-        SqueakObjectNewNode objectNewNode = SqueakObjectNewNode.create();
-        AbstractSqueakObject newObject = objectNewNode.execute(context, (ClassObject) classObject, (int) size);
+        AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, (ClassObject) classObject);
         return oopFor(newObject);
     }
 
