@@ -8,10 +8,16 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -21,6 +27,7 @@ import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class InterpreterProxy {
@@ -175,12 +182,29 @@ public class InterpreterProxy {
     }
 
     private long objectToLong(Object object) {
-        if (!(object instanceof Long)) {
-            System.out.println("Object to long called with non-Long: " + object);
-            primitiveFail();
-            return 0;
+        if (object instanceof Long longObject) {
+            return longObject;
         }
-        return (Long) object;
+        System.out.println("Object to long called with non-Long: " + object);
+        primitiveFail();
+        return 0;
+    }
+
+    private double objectToDouble(Object object) {
+        if (object instanceof FloatObject floatObject) {
+            return floatObject.getValue();
+        }
+        System.out.println("Object to double called with non-FloatObject: " + object);
+        primitiveFail();
+        return 0;
+    }
+
+    private int nativeObjectCheck(long oop, Function<NativeObject, Boolean> check) {
+        Object object = objectRegistryGet(oop);
+        if (object instanceof NativeObject nativeObject) {
+            return check.apply(nativeObject) ? 1 : 0;
+        }
+        return 0;
     }
 
     private int byteSizeOf(long oop) {
@@ -193,6 +217,10 @@ public class InterpreterProxy {
 
     private int failed() {
         return 0; // TODO: when changing primitiveFail to continue executing, properly implement this
+    }
+
+    private Object objectAt0(Object object, long index) {
+        return SqueakObjectAt0Node.getUncached().execute(object, index);
     }
 
     private NativeObjectStorage firstIndexableField(long oop) {
@@ -214,11 +242,7 @@ public class InterpreterProxy {
     }
 
     private int isBytes(long oop) {
-        Object object = objectRegistryGet(oop);
-        if (!(object instanceof NativeObject)) {
-            return 0;
-        }
-        return ((NativeObject) object).isByteType() ? 1 : 0;
+       return nativeObjectCheck(oop, NativeObject::isByteType);
     }
 
     private int majorVersion() {
@@ -264,27 +288,54 @@ public class InterpreterProxy {
         return 1;
     }
 
-    private long fetchIntegerofObject(long fieldIndex, long objectPointer) {/* TODO */ System.out.println("Missing implementation for fetchIntegerofObject"); return 0;}
+    private long fetchIntegerofObject(long fieldIndex, long objectPointer) {
+        return objectToLong(objectAt0(objectRegistryGet(objectPointer), fieldIndex));
+    }
 
-    private long fetchLong32ofObject(long fieldIndex, long oop) {/* TODO */ System.out.println("Missing implementation for fetchLong32ofObject"); return 0;}
+    private long fetchLong32ofObject(long fieldIndex, long oop) {
+        return fetchIntegerofObject(fieldIndex, oop);
+    }
 
-    private long fetchPointerofObject(long index, long oop) {/* TODO */ System.out.println("Missing implementation for fetchPointerofObject"); return 0;}
+    private long fetchPointerofObject(long index, long oop) {
+        return oopFor(objectAt0(objectRegistryGet(oop), index));
+    }
 
-    private double floatValueOf(long oop) {/* TODO */ System.out.println("Missing implementation for floatValueOf"); return 0;}
+    private double floatValueOf(long oop) {
+        return objectToDouble(objectRegistryGet(oop));
+    }
 
-    private long integerObjectOf(long value) {/* TODO */ System.out.println("Missing implementation for integerObjectOf"); return 0;}
+    private long integerObjectOf(long value) {
+        return oopFor(value);
+    }
 
-    private long integerValueOf(long oop) {/* TODO */ System.out.println("Missing implementation for integerValueOf"); return 0;}
+    private long integerValueOf(long oop) {
+        return objectToLong(objectRegistryGet(oop));
+    }
 
     private NativeObjectStorage ioLoadFunctionFrom(String functionName, String moduleName) {/* TODO */ System.out.println("Missing implementation for ioLoadFunctionFrom"); return null;}
 
-    private long isArray(long oop) {/* TODO */ System.out.println("Missing implementation for isArray"); return 0;}
+    private long isArray(long oop) {
+        return objectRegistryGet(oop) instanceof ArrayObject ? 1 : 0;
+    }
 
-    private long isPointers(long oop) {/* TODO */ System.out.println("Missing implementation for isPointers"); return 0;}
+    private long isPointers(long oop) {
+        return objectRegistryGet(oop) instanceof AbstractPointersObject ? 1 : 0;
+    }
 
-    private long isPositiveMachineIntegerObject(long oop) {/* TODO */ System.out.println("Missing implementation for isPositiveMachineIntegerObject"); return 0;}
+    private long isPositiveMachineIntegerObject(long oop) {
+        Object object = objectRegistryGet(oop);
+        if (object instanceof Long integer) {
+            return integer >= 0 ? 1 : 0;
+        }
+        if (object instanceof LargeIntegerObject largeInteger) {
+            return largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong() ? 1 : 0;
+        }
+        return 0;
+    }
 
-    private long isWords(long oop) {/* TODO */ System.out.println("Missing implementation for isWords"); return 0;}
+    private long isWords(long oop) {
+        return nativeObjectCheck(oop, NativeObject::isLongType);
+    }
 
     private long isWordsOrBytes(long oop) {/* TODO */ System.out.println("Missing implementation for isWordsOrBytes"); return 0;}
 
@@ -304,17 +355,25 @@ public class InterpreterProxy {
 
     private long showDisplayBitsLeftTopRightBottom(long aForm, long l, long t, long r, long b) {/* TODO */ System.out.println("Missing implementation for showDisplayBitsLeftTopRightBottom"); return 0;}
 
-    private long signed32BitIntegerFor(long integerValue) {/* TODO */ System.out.println("Missing implementation for signed32BitIntegerFor"); return 0;}
+    private long signed32BitIntegerFor(long integerValue) {
+        return integerObjectOf(integerValue);
+    }
 
-    private long signed32BitValueOf(long oop) {/* TODO */ System.out.println("Missing implementation for signed32BitValueOf"); return 0;}
+    private long signed32BitValueOf(long oop) {
+        return integerValueOf(oop);
+    }
 
     private long slotSizeOf(long oop) {/* TODO */ System.out.println("Missing implementation for slotSizeOf"); return 0;}
 
-    private long stackIntegerValue(long offset) {/* TODO */ System.out.println("Missing implementation for stackIntegerValue"); return 0;}
+    private long stackIntegerValue(long offset) {
+        return objectToLong(getObjectOnStack(offset));
+    }
 
     private long stackObjectValue(long offset) {/* TODO */ System.out.println("Missing implementation for stackObjectValue"); return 0;}
 
-    private long stackValue(long offset) {/* TODO */ System.out.println("Missing implementation for stackValue"); return 0;}
+    private long stackValue(long offset) {
+        return oopFor(getObjectOnStack(offset));
+    }
 
     private long statNumGCs() {/* TODO */ System.out.println("Missing implementation for statNumGCs"); return 0;}
 
