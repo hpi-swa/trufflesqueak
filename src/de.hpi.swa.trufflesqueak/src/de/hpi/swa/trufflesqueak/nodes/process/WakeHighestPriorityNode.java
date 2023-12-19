@@ -53,6 +53,8 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
                 if (newContext instanceof final ContextObject newActiveContext) {
                     contextNode.executeGet(frame, node).transferTo(image, newProcess, getActiveProcessNode.execute(node), newActiveContext, pointersWriteNode, node);
                     throw SqueakException.create("Should not be reached");
+                } else {
+                    assert false : "evicted zombie process from run queue";
                 }
             }
         }

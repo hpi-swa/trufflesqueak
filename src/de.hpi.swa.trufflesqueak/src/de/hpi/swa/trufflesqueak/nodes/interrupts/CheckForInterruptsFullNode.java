@@ -37,6 +37,7 @@ public final class CheckForInterruptsFullNode extends Node {
         if (!istate.shouldTrigger()) {
             return;
         }
+        istate.resetTrigger();
         if (istate.interruptPending()) {
             LogUtils.INTERRUPTS.fine("User interrupt");
             istate.interruptPending = false; // reset interrupt flag

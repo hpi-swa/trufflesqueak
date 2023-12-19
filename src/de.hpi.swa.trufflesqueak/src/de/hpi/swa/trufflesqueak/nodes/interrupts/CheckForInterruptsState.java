@@ -40,7 +40,6 @@ public final class CheckForInterruptsState {
      * the interrupt handler mechanism, we can use a standard boolean here for better compilation.
      */
     private boolean shouldTrigger;
-    private boolean shouldTriggerNoTimer;
 
     private ScheduledFuture<?> interruptChecks;
 
@@ -64,7 +63,6 @@ public final class CheckForInterruptsState {
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
             if (!shouldTrigger) {
                 shouldTrigger = isActive && (nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
-                shouldTriggerNoTimer = isActive && (pendingFinalizationSignals() || hasSemaphoresToSignal());
             }
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
@@ -79,7 +77,6 @@ public final class CheckForInterruptsState {
     public void setInterruptPending() {
         interruptPending = true;
         shouldTrigger = isActive;
-        shouldTriggerNoTimer = isActive;
     }
 
     public void setNextWakeupTick(final long msTime) {
@@ -107,7 +104,7 @@ public final class CheckForInterruptsState {
 
     public void deactivate() {
         isActive = false;
-        resetTriggers();
+        resetTrigger();
     }
 
     protected boolean interruptPending() {
@@ -154,13 +151,8 @@ public final class CheckForInterruptsState {
         return shouldTrigger;
     }
 
-    public boolean shouldTriggerNoTimer() {
-        return shouldTriggerNoTimer;
-    }
-
-    private void resetTriggers() {
+    public void resetTrigger() {
         shouldTrigger = false;
-        shouldTriggerNoTimer = false;
     }
 
     /*

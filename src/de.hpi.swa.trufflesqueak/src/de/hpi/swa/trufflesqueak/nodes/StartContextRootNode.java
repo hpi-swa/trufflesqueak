@@ -40,7 +40,7 @@ public final class StartContextRootNode extends AbstractRootNode {
 
     public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code);
-        interruptHandlerNode = CheckForInterruptsQuickNode.create(code);
+        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
         executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
 
