@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -17,29 +16,27 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
-public final class CheckForInterruptsNode extends Node {
+public final class CheckForInterruptsFullNode extends Node {
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
     private final Object[] specialObjects;
     private final CheckForInterruptsState istate;
 
-    private CheckForInterruptsNode(final SqueakImageContext image) {
+    private CheckForInterruptsFullNode(final SqueakImageContext image) {
         specialObjects = image.specialObjectsArray.getObjectStorage();
         istate = image.interrupt;
         signalSemaporeNode = SignalSemaphoreNode.create();
     }
 
     @NeverDefault
-    public static CheckForInterruptsNode create() {
-        return new CheckForInterruptsNode(SqueakImageContext.getSlow());
+    public static CheckForInterruptsFullNode create() {
+        return new CheckForInterruptsFullNode(SqueakImageContext.getSlow());
     }
 
     public void execute(final VirtualFrame frame) {
         if (!istate.shouldTrigger()) {
             return;
         }
-        /* Exclude interrupts case from compilation. */
-        CompilerDirectives.transferToInterpreter();
         if (istate.interruptPending()) {
             LogUtils.INTERRUPTS.fine("User interrupt");
             istate.interruptPending = false; // reset interrupt flag

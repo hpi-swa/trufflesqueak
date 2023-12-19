@@ -29,7 +29,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -506,13 +505,13 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return arguments;
     }
 
-    public void transferTo(final SqueakImageContext image, final PointersObject newProcess, final ContextObject newActiveContext, final AbstractPointersObjectWriteNode writeNode,
-                    final GetActiveProcessNode getActiveProcessNode, final Node inlineTarget) {
+    public void transferTo(final SqueakImageContext image, final PointersObject newProcess, final PointersObject activeProcess, final ContextObject newActiveContext,
+                    final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget) {
         // Record a process to be awakened on the next interpreter cycle.
         final PointersObject scheduler = image.getScheduler();
-        assert newProcess != getActiveProcessNode.execute(inlineTarget) : "trying to switch to already active process";
+        assert newProcess != activeProcess : "trying to switch to already active process";
         // overwritten in next line.
-        final PointersObject oldProcess = getActiveProcessNode.execute(inlineTarget);
+        final PointersObject oldProcess = activeProcess;
         writeNode.execute(inlineTarget, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         writeNode.execute(inlineTarget, oldProcess, PROCESS.SUSPENDED_CONTEXT, this);
         writeNode.executeNil(inlineTarget, newProcess, PROCESS.LIST);

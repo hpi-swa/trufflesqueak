@@ -51,7 +51,7 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
                 final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode, node);
                 final Object newContext = pointersReadNode.execute(node, newProcess, PROCESS.SUSPENDED_CONTEXT);
                 if (newContext instanceof final ContextObject newActiveContext) {
-                    contextNode.executeGet(frame, node).transferTo(image, newProcess, newActiveContext, pointersWriteNode, getActiveProcessNode, node);
+                    contextNode.executeGet(frame, node).transferTo(image, newProcess, getActiveProcessNode.execute(node), newActiveContext, pointersWriteNode, node);
                     throw SqueakException.create("Should not be reached");
                 }
             }
