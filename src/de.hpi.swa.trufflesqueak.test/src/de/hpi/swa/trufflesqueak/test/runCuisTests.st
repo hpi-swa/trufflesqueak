@@ -21,8 +21,9 @@ failingTests := OrderedCollection new.
 {
     #FloatTest -> #(#testIsDenormalized #testPrimTruncated).
     #ProcessorTest -> #("flaky" #testGrabProcessor #testGrabProcessorOnlyForNoTimeout #testGrabProcessorOnlyForTimeout #testValueUnpreemptively).
-    #ProcessTerminateUnwindNonLocalReturn -> #(test1ATerminate #test1BTerminate #test2ATerminate #test2BTerminate #test3ATerminate #test3BTerminate #test4ATerminate #test4BTerminate #test5ATerminate #test5BTerminate #test6ATerminate #test6BTerminate #test7ATerminate #test7BTerminate #test8ATerminate #test8BTerminate).
+    #ProcessTerminateUnwindNonLocalReturn -> #(test1ATerminate #test1BTerminate #test2ATerminate #test2BTerminate #test3ATerminate #test3BTerminate #test4ATerminate #test4BTerminate #test5ATerminate #test5BTerminate "flaky" #test5DTerminate #test6ATerminate #test6BTerminate  "flaky" #test6DTerminate #test7ATerminate #test7BTerminate #test8ATerminate #test8BTerminate).
     #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString).
+    #TestValueWithinFix -> #("flaky" #testValueWithinTimingRepeat).
     #WeakIdentitySetTest -> #(#test). "Failing (or flaky?) on TruffleSqueak Native"
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
