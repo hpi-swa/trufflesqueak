@@ -217,9 +217,6 @@ public final class SqueakImageContext {
                             "Remove active context."
                             Processor activeProcess instVarNamed: #suspendedContext put: nil.
 
-                            "Modify StartUpList for headless execution."
-                            {EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea].
-
                             "Start up image (see SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:)."
                             Smalltalk
                                 clearExternalObjects;
@@ -231,15 +228,14 @@ public final class SqueakImageContext {
                             Utilities
                                 authorName: 'TruffleSqueak';
                                 setAuthorInitials: 'TruffleSqueak'.
-
-                            "Initialize fresh MorphicUIManager."
-                            Project current instVarNamed: #uiManager put: MorphicUIManager new.
                             """;
             try {
                 evaluate(prepareHeadlessImageScript);
             } catch (final Exception e) {
                 printToStdErr("startUpList failed:");
                 printToStdErr(e);
+            } finally {
+                interrupt.clear();
             }
         }
     }
