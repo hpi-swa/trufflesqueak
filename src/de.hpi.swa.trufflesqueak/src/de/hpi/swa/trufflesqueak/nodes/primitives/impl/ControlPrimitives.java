@@ -388,7 +388,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), receiver);
                 try {
-                    wakeHighestPriorityNode.executeWake(frame, node);
+                    throw wakeHighestPriorityNode.executeWake(frame, node);
                 } catch (final ProcessSwitch ps) {
                     /*
                      * Leave receiver on stack. It has not been removed from the stack yet, so it is
@@ -397,7 +397,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     getFrameStackPointerIncrementNode().execute(frame);
                     throw ps;
                 }
-                throw CompilerDirectives.shouldNotReachHere();
             }
         }
     }
@@ -441,13 +440,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
             try {
-                wakeHighestPriorityNode.executeWake(frame, node);
+                throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
                 /* Leave `nil` as result on stack. */
                 pushNode.execute(frame, NilObject.SINGLETON);
                 throw ps;
             }
-            throw CompilerDirectives.shouldNotReachHere();
         }
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
@@ -480,13 +478,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
             try {
-                wakeHighestPriorityNode.executeWake(frame, node);
+                throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
                 /* Leave `nil` as result on stack. */
                 pushNode.execute(frame, NilObject.SINGLETON);
                 throw ps;
             }
-            return NilObject.SINGLETON;
         }
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
@@ -939,7 +936,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             addLastLinkToListNode.execute(node, activeProcess, processList);
             try {
-                wakeHighestPriorityNode.executeWake(frame, node);
+                throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
                 /*
                  * Leave receiver on stack. It has not been removed from the stack yet, so it is
@@ -948,7 +945,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 getFrameStackPointerIncrementNode().execute(frame);
                 throw ps;
             }
-            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 
@@ -1061,13 +1057,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached(inline = false) final FrameStackPushNode pushNode) {
             addLastLinkToListNode.execute(node, effectiveProcess, mutex);
             try {
-                wakeHighestPriorityNode.executeWake(frame, node);
+                throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
                 /* Leave `false` as result on stack. */
                 pushNode.execute(frame, BooleanObject.FALSE);
                 throw ps;
             }
-            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 

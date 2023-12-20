@@ -13,6 +13,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -31,10 +32,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 @GenerateCached(false)
 public abstract class WakeHighestPriorityNode extends AbstractNode {
 
-    public abstract void executeWake(VirtualFrame frame, Node node);
+    public abstract ProcessSwitch executeWake(VirtualFrame frame, Node node);
 
     @Specialization
-    protected static final void doWake(final VirtualFrame frame, final Node node,
+    protected static final ProcessSwitch doWake(final VirtualFrame frame, final Node node,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final ArrayObjectSizeNode arraySizeNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
