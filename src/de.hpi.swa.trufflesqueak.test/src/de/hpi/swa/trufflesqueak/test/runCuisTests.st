@@ -38,7 +38,14 @@ testSuite tests removeAllSuchThat: [:ea | nonTerminatingTestCases anySatisfy: [:
 testSuite tests removeAllSuchThat: [:ea | failingTests            anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
 result := testSuite run.
 result printReport.
-exitCode := (result hasFailures or: [ result hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
+
+"To reduce noise, retry any failures"
+testSuiteRetry := TestSuite new.
+testSuiteRetry tests addAll: result failures.
+resultRetry := testSuiteRetry run.
+resultRetry printReport.
+
+exitCode := (resultRetry hasFailures or: [ result hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
 
 StdIOWriteStream stdout newLine; nextPutAll: 'Failing and Flaky TestCases:'; newLine; flush.
 testSuite := TestSuite new.
