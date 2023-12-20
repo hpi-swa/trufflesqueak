@@ -157,7 +157,6 @@ public final class SqueakImageContext {
     private ContextObject interopExceptionThrowingContextPrototype;
     public ContextObject lastSeenContext;
 
-    @CompilationFinal private ClassObject exceptionClass;
     @CompilationFinal private ClassObject fractionClass;
     private PointersObject parserSharedInstance;
     private AbstractSqueakObject requestorSharedInstanceOrNil;
@@ -549,14 +548,6 @@ public final class SqueakImageContext {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert debugSyntaxErrorSelector == null;
         debugSyntaxErrorSelector = nativeObject;
-    }
-
-    public ClassObject getExceptionClass() {
-        if (exceptionClass == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            exceptionClass = (ClassObject) evaluate("Exception");
-        }
-        return exceptionClass;
     }
 
     public ClassObject getByteSymbolClass() {
