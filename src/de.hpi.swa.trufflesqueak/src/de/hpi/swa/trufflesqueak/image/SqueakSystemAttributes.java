@@ -54,7 +54,7 @@ public final class SqueakSystemAttributes {
         final String separator = File.separator;
         vmPath = asByteString(System.getProperty("java.home") + separator + "bin" + separator + "java");
 
-        platformName = asByteString(OS.getSqueakPlatformName());
+        platformName = asByteString(OS.findSqueakOSName());
 
         String value;
         if (OS.isMacOS()) {
@@ -91,7 +91,7 @@ public final class SqueakSystemAttributes {
          */
         vmVersion = asByteString("Croquet " + SqueakLanguageConfig.IMPLEMENTATION_NAME + " " + SqueakLanguageConfig.VERSION + " VMMaker.fn.9999");
 
-        windowSystemName = asByteString("Aqua");
+        windowSystemName = asByteString(OS.findWindowSystemName());
 
         final String date = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US).format(new Date(MiscUtils.getStartTime()));
         vmBuildId = asByteString(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, date));
