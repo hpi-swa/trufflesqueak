@@ -217,6 +217,9 @@ public final class SqueakImageContext {
                             "Remove active context."
                             Processor activeProcess instVarNamed: #suspendedContext put: nil.
 
+                            "Avoid interactive windows and instead exit on errors."
+                            ToolSet default: CommandLineToolSet.
+
                             "Start up image (see SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:)."
                             Smalltalk
                                 clearExternalObjects;
