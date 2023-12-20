@@ -258,6 +258,19 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
+    public Object evaluateUninterruptably(final String sourceCode) {
+        final boolean wasActive = interrupt.isActive();
+        interrupt.deactivate();
+        try {
+            return evaluate(sourceCode);
+        } finally {
+            if (wasActive) {
+                interrupt.activate();
+            }
+        }
+    }
+
+    @TruffleBoundary
     public Object lookup(final String member) {
         return smalltalk.send(this, "at:ifAbsent:", asByteSymbol(member), NilObject.SINGLETON);
     }
@@ -292,7 +305,7 @@ public final class SqueakImageContext {
                 sourceCode = String.format("[ :%s | %s ]", String.join(" :", request.getArgumentNames()), source.getCharacters().toString());
             }
         }
-        return DoItRootNode.create(this, language, evaluate(sourceCode));
+        return DoItRootNode.create(this, language, evaluateUninterruptably(sourceCode));
     }
 
     private static boolean isFileInFormat(final Source source) {
@@ -358,8 +371,8 @@ public final class SqueakImageContext {
      */
     public ContextObject getInteropExceptionThrowingContext() {
         if (interopExceptionThrowingContextPrototype == null) {
-            assert evaluate("Interop") != NilObject.SINGLETON : "Interop class must be present";
-            final CompiledCodeObject onDoMethod = (CompiledCodeObject) evaluate("BlockClosure>>#on:do:");
+            assert evaluateUninterruptably("Interop") != NilObject.SINGLETON : "Interop class must be present";
+            final CompiledCodeObject onDoMethod = (CompiledCodeObject) evaluateUninterruptably("BlockClosure>>#on:do:");
             interopExceptionThrowingContextPrototype = ContextObject.create(this, onDoMethod.getSqueakContextSize());
             interopExceptionThrowingContextPrototype.setCodeObject(onDoMethod);
             interopExceptionThrowingContextPrototype.setReceiver(NilObject.SINGLETON);
@@ -367,12 +380,12 @@ public final class SqueakImageContext {
              * Need to catch all exceptions here. Otherwise, the contexts sender is used to find the
              * next handler context (see Context>>#nextHandlerContext).
              */
-            interopExceptionThrowingContextPrototype.atTempPut(0, evaluate("Exception"));
+            interopExceptionThrowingContextPrototype.atTempPut(0, evaluateUninterruptably("Exception"));
             /*
              * Throw Error and Halt as interop, ignore warnings, handle all other exceptions the
              * usual way via UndefinedObject>>#handleSignal:.
              */
-            interopExceptionThrowingContextPrototype.atTempPut(1, evaluate(
+            interopExceptionThrowingContextPrototype.atTempPut(1, evaluateUninterruptably(
                             "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] " +
                                             "ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
             interopExceptionThrowingContextPrototype.atTempPut(2, BooleanObject.TRUE);

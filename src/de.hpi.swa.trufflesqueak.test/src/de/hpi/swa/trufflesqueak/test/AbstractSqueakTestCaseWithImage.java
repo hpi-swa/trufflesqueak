@@ -184,6 +184,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             throw new RuntimeException("Test was interrupted");
         } catch (final ExecutionException e) {
             return TestResult.fromException("failed with an error", e.getCause());
+        } finally {
+            image.interrupt.clear();
         }
     }
 
@@ -195,7 +197,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             } finally {
                 testWithImageIsActive = false;
             }
-
         });
         try {
             return future.get(timeout, TimeUnit.SECONDS);

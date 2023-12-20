@@ -159,18 +159,22 @@ public final class CheckForInterruptsState {
      * TESTING
      */
 
-    public void reset() {
-        CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
-        isActive = true;
+    public void clear() {
         nextWakeupTick = 0;
-        if (interruptChecks != null) {
-            interruptChecks.cancel(true);
-        }
-        shutdown();
         interruptPending = false;
         pendingFinalizationSignals = false;
         clearWeakPointersQueue();
         semaphoresToSignal.clear();
+    }
+
+    public void reset() {
+        CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
+        isActive = true;
+        if (interruptChecks != null) {
+            interruptChecks.cancel(true);
+        }
+        shutdown();
+        clear();
     }
 
     private void clearWeakPointersQueue() {
