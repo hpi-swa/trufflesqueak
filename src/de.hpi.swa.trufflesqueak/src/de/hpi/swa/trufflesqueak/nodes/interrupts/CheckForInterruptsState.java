@@ -62,7 +62,7 @@ public final class CheckForInterruptsState {
         });
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
             if (!shouldTrigger) {
-                shouldTrigger = isActive && (nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
+                shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
             }
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
