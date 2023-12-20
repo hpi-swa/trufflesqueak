@@ -234,10 +234,8 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         protected static final String BOLD = "\033[1m";
         protected static final String RED = "\033[31;1m";
         protected static final String GREEN = "\033[32;1m";
-        protected static final String BLUE = "\033[34m";
+        protected static final String BLUE = "\033[34;1m";
         protected static final String YELLOW = "\033[33;1m";
         protected static final String RESET = "\033[0m";
-        protected static final String CLEAR = "\033[0K";
-        protected static final String CR = "\r";
     }
 }
