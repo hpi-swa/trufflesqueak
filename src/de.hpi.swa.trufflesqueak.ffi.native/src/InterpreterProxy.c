@@ -5,6 +5,8 @@
 #include "sqVirtualMachine.h"
 
 VirtualMachine* createInterpreterProxy(
+    // sorted alphabetically, identical to getExecutables in
+    // src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/nodes/plugins/ffi/InterpreterProxy.java
 	sqInt (*byteSizeOf)(sqInt oop),
 	sqInt (*classString)(void),
 	sqInt (*failed)(void),
@@ -37,8 +39,8 @@ VirtualMachine* createInterpreterProxy(
 	usqLong (*positive64BitValueOf)(sqInt oop),
 	sqInt (*primitiveFail)(void),
 	sqInt (*primitiveFailFor)(sqInt reasonCode),
-	sqInt (*showDisplayBitsLeftTopRightBottom)(sqInt aForm, sqInt l, sqInt t, sqInt r, sqInt b),
 	sqInt (*pushInteger)(sqInt integerValue),
+	sqInt (*showDisplayBitsLeftTopRightBottom)(sqInt aForm, sqInt l, sqInt t, sqInt r, sqInt b),
 	sqInt (*signed32BitIntegerFor)(sqInt integerValue),
 	int (*signed32BitValueOf)(sqInt oop),
 	sqInt (*slotSizeOf)(sqInt oop),
