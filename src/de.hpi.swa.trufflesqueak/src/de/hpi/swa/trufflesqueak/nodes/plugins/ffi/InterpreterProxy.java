@@ -28,7 +28,7 @@ import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class InterpreterProxy {
@@ -242,10 +242,10 @@ public class InterpreterProxy {
         return klass.isInstance(object) ? 1 : 0;
     }
 
-    private int nativeObjectCheck(long oop, Function<NativeObject, Boolean> check) {
+    private int nativeObjectCheck(long oop, Predicate<NativeObject> predicate) {
         Object object = objectRegistryGet(oop);
         if (object instanceof NativeObject nativeObject) {
-            return check.apply(nativeObject) ? 1 : 0;
+            return predicate.test(nativeObject) ? 1 : 0;
         }
         return 0;
     }
