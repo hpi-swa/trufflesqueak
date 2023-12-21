@@ -315,6 +315,7 @@ public class InterpreterProxy {
         return objectToLong(objectRegistryGet(oop));
     }
 
+    @SuppressWarnings("unused")
     private NativeObjectStorage ioLoadFunctionFrom(String functionName, String moduleName) {
         /* TODO */ System.out.println("Missing implementation for ioLoadFunctionFrom");
         return null;
@@ -347,6 +348,7 @@ public class InterpreterProxy {
         return nativeObjectCheck(oop, NativeObject::isLongType);
     }
 
+    @SuppressWarnings("unused")
     private long isWordsOrBytes(long oop) {
         /* TODO */ System.out.println("Missing implementation for isWordsOrBytes");
         return 0;
@@ -360,16 +362,19 @@ public class InterpreterProxy {
         return numReceiverAndArguments - 1;
     }
 
+    @SuppressWarnings("unused")
     private long methodReturnInteger(long integer) {
         /* TODO */ System.out.println("Missing implementation for methodReturnInteger");
         return 0;
     }
 
+    @SuppressWarnings("unused")
     private long methodReturnReceiver() {
         /* TODO */ System.out.println("Missing implementation for methodReturnReceiver");
         return 0;
     }
 
+    @SuppressWarnings("unused")
     private long methodReturnValue(long oop) {
         /* TODO */ System.out.println("Missing implementation for methodReturnValue");
         return 0;
@@ -394,16 +399,19 @@ public class InterpreterProxy {
         return 1;
     }
 
+    @SuppressWarnings("unused")
     private long positive32BitIntegerFor(long integerValue) {
         /* TODO */ System.out.println("Missing implementation for positive32BitIntegerFor");
         return 0;
     }
 
+    @SuppressWarnings("unused")
     private long positive32BitValueOf(long oop) {
         /* TODO */ System.out.println("Missing implementation for positive32BitValueOf");
         return 0;
     }
 
+    @SuppressWarnings("unused")
     private long positive64BitValueOf(long oop) {
         /* TODO */ System.out.println("Missing implementation for positive64BitValueOf");
         return 0;
@@ -415,6 +423,7 @@ public class InterpreterProxy {
         throw PrimitiveFailed.GENERIC_ERROR;
     }
 
+    @SuppressWarnings("unused")
     private long primitiveFailFor(long reasonCode) {
         /* TODO */ System.out.println("Missing implementation for primitiveFailFor");
         return 0;
@@ -430,6 +439,7 @@ public class InterpreterProxy {
         return 1;
     }
 
+    @SuppressWarnings("unused")
     private long showDisplayBitsLeftTopRightBottom(long aForm, long l, long t, long r, long b) {
         /* TODO */ System.out.println("Missing implementation for showDisplayBitsLeftTopRightBottom");
         return 0;
@@ -443,6 +453,7 @@ public class InterpreterProxy {
         return integerValueOf(oop);
     }
 
+    @SuppressWarnings("unused")
     private long slotSizeOf(long oop) {
         /* TODO */ System.out.println("Missing implementation for slotSizeOf");
         return 0;
@@ -452,6 +463,7 @@ public class InterpreterProxy {
         return objectToLong(getObjectOnStack(offset));
     }
 
+    @SuppressWarnings("unused")
     private long stackObjectValue(long offset) {
         /* TODO */ System.out.println("Missing implementation for stackObjectValue");
         return 0;
@@ -465,11 +477,13 @@ public class InterpreterProxy {
         return MiscUtils.getCollectionCount();
     }
 
+    @SuppressWarnings("unused")
     private long storeIntegerofObjectwithValue(long index, long oop, long integer) {
         /* TODO */ System.out.println("Missing implementation for storeIntegerofObjectwithValue");
         return 0;
     }
 
+    @SuppressWarnings("unused")
     private long storeLong32ofObjectwithValue(long fieldIndex, long oop, long anInteger) {
         /* TODO */ System.out.println("Missing implementation for storeLong32ofObjectwithValue");
         return 0;
