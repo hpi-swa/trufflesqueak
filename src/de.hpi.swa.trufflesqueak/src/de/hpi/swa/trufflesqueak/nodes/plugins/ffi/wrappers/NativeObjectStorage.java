@@ -11,7 +11,7 @@ public abstract class NativeObjectStorage implements PostPrimitiveCleanup, Truff
     protected long nativeAddress;
     private boolean isAllocated = false;
 
-    public static NativeObjectStorage from(NativeObject object) {
+    public static NativeObjectStorage from(final NativeObject object) {
         if (object.isByteType()) {
             return new ByteStorage(object.getByteStorage());
         } else if (object.isIntType()) {

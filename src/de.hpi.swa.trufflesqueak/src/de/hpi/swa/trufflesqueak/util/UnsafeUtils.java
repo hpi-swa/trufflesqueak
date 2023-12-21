@@ -90,22 +90,22 @@ public final class UnsafeUtils {
         return address;
     }
 
-    public static void copyNativeBytesBackAndFree(final long address, byte[] dest) {
+    public static void copyNativeBytesBackAndFree(final long address, final byte[] dest) {
         UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_BYTE_BASE_OFFSET, dest.length * Byte.BYTES);
         UNSAFE.freeMemory(address);
     }
 
-    public static void copyNativeShortsBackAndFree(final long address, short[] dest) {
+    public static void copyNativeShortsBackAndFree(final long address, final short[] dest) {
         UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_SHORT_BASE_OFFSET, (long) dest.length * Short.BYTES);
         UNSAFE.freeMemory(address);
     }
 
-    public static void copyNativeIntsBackAndFree(final long address, int[] dest) {
+    public static void copyNativeIntsBackAndFree(final long address, final int[] dest) {
         UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_INT_BASE_OFFSET, (long) dest.length * Integer.BYTES);
         UNSAFE.freeMemory(address);
     }
 
-    public static void copyNativeLongsBackAndFree(final long address, long[] dest) {
+    public static void copyNativeLongsBackAndFree(final long address, final long[] dest) {
         UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_LONG_BASE_OFFSET, (long) dest.length * Long.BYTES);
         UNSAFE.freeMemory(address);
     }

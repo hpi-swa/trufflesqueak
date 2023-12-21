@@ -5,7 +5,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public class ByteStorage extends NativeObjectStorage {
     byte[] storage;
 
-    public ByteStorage(byte[] storage) {
+    public ByteStorage(final byte[] storage) {
         this.storage = storage;
     }
 

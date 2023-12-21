@@ -16,14 +16,14 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
     final int numReceiverAndArguments;
     static Map<String, Object> loadedLibraries = new HashMap<>();
 
-    public PrimExternalCallNode(String moduleName, String functionName, int numReceiverAndArguments) {
+    public PrimExternalCallNode(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         this.moduleName = moduleName;
         this.functionName = functionName;
         this.numReceiverAndArguments = numReceiverAndArguments;
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
+    public Object execute(final VirtualFrame frame) {
         final Object uuidPlugin = loadedLibraries.computeIfAbsent(moduleName, (String s) -> NFIUtils.loadLibrary(getContext(), moduleName, "{ " +
                         // TODO, see below
                         // "initialiseModule():SINT64; " +
@@ -72,7 +72,7 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
     }
 
     @Override
-    public Object executeWithArguments(VirtualFrame frame, Object... receiverAndArguments) {
+    public Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
         // arguments are handled via manipulation of the stack pointer, see above
         return execute(frame);
     }

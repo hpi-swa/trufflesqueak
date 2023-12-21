@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 public class InterpreterProxy {
     private static InterpreterProxy INSTANCE = null;
+public final class InterpreterProxy {
     private final SqueakImageContext context;
     private MaterializedFrame frame;
     private int numReceiverAndArguments;
@@ -47,13 +48,13 @@ public class InterpreterProxy {
     // INSTANCE CREATION //
     ///////////////////////
 
-    private InterpreterProxy(SqueakImageContext context, MaterializedFrame frame, int numReceiverAndArguments)
+    private InterpreterProxy(final SqueakImageContext context, final MaterializedFrame frame, final int numReceiverAndArguments)
                     throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         this.context = context;
         this.frame = frame;
         this.numReceiverAndArguments = numReceiverAndArguments;
 
-        TruffleExecutable[] executables = getExecutables();
+        final TruffleExecutable[] executables = getExecutables();
         closures = new TruffleClosure[executables.length];
         for (int i = 0; i < executables.length; i++) {
             closures[i] = executables[i].createClosure(context);
@@ -120,7 +121,7 @@ public class InterpreterProxy {
         };
     }
 
-    public static InterpreterProxy instanceFor(SqueakImageContext context, MaterializedFrame frame, int numReceiverAndArguments)
+    public static InterpreterProxy instanceFor(final SqueakImageContext context, final MaterializedFrame frame, final int numReceiverAndArguments)
                     throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         if (INSTANCE == null) {
             INSTANCE = new InterpreterProxy(context, frame, numReceiverAndArguments);
@@ -151,17 +152,17 @@ public class InterpreterProxy {
     // OBJECT REGISTRY HELPERS //
     /////////////////////////////
 
-    private Object objectRegistryGet(long oop) {
+    private Object objectRegistryGet(final long oop) {
         return objectRegistry.get((int) oop);
     }
 
-    private int addObjectToRegistry(Object object) {
-        int oop = objectRegistry.size();
+    private int addObjectToRegistry(final Object object) {
+        final int oop = objectRegistry.size();
         objectRegistry.add(object);
         return oop;
     }
 
-    private int oopFor(Object object) {
+    private int oopFor(final Object object) {
         int oop = objectRegistry.indexOf(object);
         if (oop < 0) {
             oop = addObjectToRegistry(object);
@@ -177,26 +178,26 @@ public class InterpreterProxy {
         return FrameAccess.getStackPointer(frame);
     }
 
-    private void setStackPointer(int stackPointer) {
+    private void setStackPointer(final int stackPointer) {
         FrameAccess.setStackPointer(frame, stackPointer);
     }
 
-    private void pushObject(Object object) {
-        int stackPointer = getStackPointer();
+    private void pushObject(final Object object) {
+        final int stackPointer = getStackPointer();
         setStackPointer(stackPointer + 1);
         // push to the original stack pointer, as it always points to the slot where the next object
         // is pushed
         FrameAccess.setStackSlot(frame, stackPointer, object);
     }
 
-    private Object getObjectOnStack(long reverseStackIndex) {
+    private Object getObjectOnStack(final long reverseStackIndex) {
         if (reverseStackIndex < 0) {
             primitiveFail();
             return null;
         }
         // the stack pointer is the index of the object that is pushed onto the stack next,
         // so we subtract 1 to get the index of the object that was last pushed onto the stack
-        int stackIndex = getStackPointer() - 1 - (int) reverseStackIndex;
+        final int stackIndex = getStackPointer() - 1 - (int) reverseStackIndex;
         if (stackIndex < 0) {
             primitiveFail();
             return null;
@@ -208,7 +209,7 @@ public class InterpreterProxy {
     // CONVERSION HELPERS //
     ////////////////////////
 
-    private long objectToLong(Object object) {
+    private long objectToLong(final Object object) {
         if (object instanceof Long longObject) {
             return longObject;
         }
@@ -217,7 +218,7 @@ public class InterpreterProxy {
         return 0;
     }
 
-    private double objectToDouble(Object object) {
+    private double objectToDouble(final Object object) {
         if (object instanceof FloatObject floatObject) {
             return floatObject.getValue();
         }
@@ -230,7 +231,7 @@ public class InterpreterProxy {
     // ACCESSING HELPERS //
     ///////////////////////
 
-    private static Object objectAt0(Object object, long index) {
+    private static Object objectAt0(final Object object, final long index) {
         return SqueakObjectAt0Node.executeUncached(object, index);
     }
 
@@ -238,13 +239,13 @@ public class InterpreterProxy {
     // TYPE CHECK HELPERS //
     ////////////////////////
 
-    private int instanceOfCheck(long oop, Class<?> klass) {
-        Object object = objectRegistryGet(oop);
+    private int instanceOfCheck(final long oop, final Class<?> klass) {
+        final Object object = objectRegistryGet(oop);
         return klass.isInstance(object) ? 1 : 0;
     }
 
-    private int nativeObjectCheck(long oop, Predicate<NativeObject> predicate) {
-        Object object = objectRegistryGet(oop);
+    private int nativeObjectCheck(final long oop, final Predicate<NativeObject> predicate) {
+        final Object object = objectRegistryGet(oop);
         if (object instanceof NativeObject nativeObject) {
             return predicate.test(nativeObject) ? 1 : 0;
         }
@@ -255,7 +256,7 @@ public class InterpreterProxy {
     // INTERPRETER PROXY METHODS //
     ///////////////////////////////
 
-    private int byteSizeOf(long oop) {
+    private int byteSizeOf(final long oop) {
         if (objectRegistryGet(oop) instanceof NativeObject nativeObject) {
             return NativeObjectStorage.from(nativeObject).byteSizeOf();
         }
@@ -271,70 +272,71 @@ public class InterpreterProxy {
                   // this
     }
 
-    private long fetchIntegerofObject(long fieldIndex, long objectPointer) {
+    private long fetchIntegerofObject(final long fieldIndex, final long objectPointer) {
         return objectToLong(objectAt0(objectRegistryGet(objectPointer), fieldIndex));
     }
 
-    private long fetchLong32ofObject(long fieldIndex, long oop) {
+    private long fetchLong32ofObject(final long fieldIndex, final long oop) {
         return fetchIntegerofObject(fieldIndex, oop);
     }
 
-    private long fetchPointerofObject(long index, long oop) {
+    private long fetchPointerofObject(final long index, final long oop) {
         return oopFor(objectAt0(objectRegistryGet(oop), index));
     }
 
-    private NativeObjectStorage firstIndexableField(long oop) {
+    private NativeObjectStorage firstIndexableField(final long oop) {
         if (objectRegistryGet(oop) instanceof NativeObject nativeObject) {
-            NativeObjectStorage storage = NativeObjectStorage.from(nativeObject);
+            final NativeObjectStorage storage = NativeObjectStorage.from(nativeObject);
             postPrimitiveCleanups.add(storage);
             return storage;
         }
         return null;
     }
 
-    private double floatValueOf(long oop) {
+    private double floatValueOf(final long oop) {
         return objectToDouble(objectRegistryGet(oop));
     }
 
-    private int instantiateClassindexableSize(long classPointer, long size) {
-        Object object = objectRegistryGet(classPointer);
+    private int instantiateClassindexableSize(final long classPointer, final long size) {
+        final Object object = objectRegistryGet(classPointer);
         if (object instanceof ClassObject classObject) {
-            AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject, (int) size);
+            final AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject, (int) size);
             return oopFor(newObject);
         }
-        System.err.println("instantiateClassindexableSize called with non-ClassObject: " + object);
+        LogUtils.PRIMITIVES.severe(() -> "instantiateClassindexableSize called with non-ClassObject: " + object);
         primitiveFail();
         return 0;
     }
 
-    private long integerObjectOf(long value) {
+    private long integerObjectOf(final long value) {
         return oopFor(value);
     }
 
-    private long integerValueOf(long oop) {
+    private long integerValueOf(final long oop) {
         return objectToLong(objectRegistryGet(oop));
     }
 
     @SuppressWarnings("unused")
     private NativeObjectStorage ioLoadFunctionFrom(String functionName, String moduleName) {
         /* TODO */ System.out.println("Missing implementation for ioLoadFunctionFrom");
+    private NativeObjectStorage ioLoadFunctionFrom(final String functionName, final String moduleName) {
         return null;
     }
 
-    private long isArray(long oop) {
+    private long isArray(final long oop) {
         return instanceOfCheck(oop, ArrayObject.class);
     }
 
-    private int isBytes(long oop) {
+    private int isBytes(final long oop) {
         return nativeObjectCheck(oop, NativeObject::isByteType);
     }
 
-    private long isPointers(long oop) {
+    private long isPointers(final long oop) {
         return instanceOfCheck(oop, AbstractPointersObject.class);
     }
 
-    private long isPositiveMachineIntegerObject(long oop) {
-        Object object = objectRegistryGet(oop);
+    private long isPositiveMachineIntegerObject(final long oop) {
+        final Object object = objectRegistryGet(oop);
         if (object instanceof Long integer) {
             return integer >= 0 ? 1 : 0;
         }
@@ -344,13 +346,14 @@ public class InterpreterProxy {
         return 0;
     }
 
-    private long isWords(long oop) {
+    private long isWords(final long oop) {
         return nativeObjectCheck(oop, NativeObject::isLongType);
     }
 
     @SuppressWarnings("unused")
     private long isWordsOrBytes(long oop) {
         /* TODO */ System.out.println("Missing implementation for isWordsOrBytes");
+    private long isWordsOrBytes(final long oop) {
         return 0;
     }
 
@@ -365,6 +368,7 @@ public class InterpreterProxy {
     @SuppressWarnings("unused")
     private long methodReturnInteger(long integer) {
         /* TODO */ System.out.println("Missing implementation for methodReturnInteger");
+    private long methodReturnInteger(final long integer) {
         return 0;
     }
 
@@ -377,6 +381,7 @@ public class InterpreterProxy {
     @SuppressWarnings("unused")
     private long methodReturnValue(long oop) {
         /* TODO */ System.out.println("Missing implementation for methodReturnValue");
+    private long methodReturnValue(final long oop) {
         return 0;
     }
 
@@ -388,12 +393,12 @@ public class InterpreterProxy {
         return oopFor(NilObject.SINGLETON);
     }
 
-    private int pop(long nItems) {
+    private int pop(final long nItems) {
         setStackPointer(getStackPointer() - (int) nItems);
         return 1;
     }
 
-    private int popthenPush(long nItems, long oop) {
+    private int popthenPush(final long nItems, final long oop) {
         pop(nItems);
         push(oop);
         return 1;
@@ -402,18 +407,21 @@ public class InterpreterProxy {
     @SuppressWarnings("unused")
     private long positive32BitIntegerFor(long integerValue) {
         /* TODO */ System.out.println("Missing implementation for positive32BitIntegerFor");
+    private long positive32BitIntegerFor(final long integerValue) {
         return 0;
     }
 
     @SuppressWarnings("unused")
     private long positive32BitValueOf(long oop) {
         /* TODO */ System.out.println("Missing implementation for positive32BitValueOf");
+    private long positive32BitValueOf(final long oop) {
         return 0;
     }
 
     @SuppressWarnings("unused")
     private long positive64BitValueOf(long oop) {
         /* TODO */ System.out.println("Missing implementation for positive64BitValueOf");
+    private long positive64BitValueOf(final long oop) {
         return 0;
     }
 
@@ -426,15 +434,16 @@ public class InterpreterProxy {
     @SuppressWarnings("unused")
     private long primitiveFailFor(long reasonCode) {
         /* TODO */ System.out.println("Missing implementation for primitiveFailFor");
+    private long primitiveFailFor(final long reasonCode) {
         return 0;
     }
 
-    private int push(long oop) {
+    private int push(final long oop) {
         pushObject(objectRegistryGet(oop));
         return 1;
     }
 
-    private int pushInteger(long integerValue) {
+    private int pushInteger(final long integerValue) {
         pushObject(integerValue);
         return 1;
     }
@@ -442,34 +451,37 @@ public class InterpreterProxy {
     @SuppressWarnings("unused")
     private long showDisplayBitsLeftTopRightBottom(long aForm, long l, long t, long r, long b) {
         /* TODO */ System.out.println("Missing implementation for showDisplayBitsLeftTopRightBottom");
+    private long showDisplayBitsLeftTopRightBottom(final long aForm, final long l, final long t, final long r, final long b) {
         return 0;
     }
 
-    private long signed32BitIntegerFor(long integerValue) {
+    private long signed32BitIntegerFor(final long integerValue) {
         return integerObjectOf(integerValue);
     }
 
-    private long signed32BitValueOf(long oop) {
+    private long signed32BitValueOf(final long oop) {
         return integerValueOf(oop);
     }
 
     @SuppressWarnings("unused")
     private long slotSizeOf(long oop) {
         /* TODO */ System.out.println("Missing implementation for slotSizeOf");
+    private long slotSizeOf(final long oop) {
         return 0;
     }
 
-    private long stackIntegerValue(long offset) {
+    private long stackIntegerValue(final long offset) {
         return objectToLong(getObjectOnStack(offset));
     }
 
     @SuppressWarnings("unused")
     private long stackObjectValue(long offset) {
         /* TODO */ System.out.println("Missing implementation for stackObjectValue");
+    private long stackObjectValue(final long offset) {
         return 0;
     }
 
-    private long stackValue(long offset) {
+    private long stackValue(final long offset) {
         return oopFor(getObjectOnStack(offset));
     }
 
@@ -480,12 +492,14 @@ public class InterpreterProxy {
     @SuppressWarnings("unused")
     private long storeIntegerofObjectwithValue(long index, long oop, long integer) {
         /* TODO */ System.out.println("Missing implementation for storeIntegerofObjectwithValue");
+    private long storeIntegerofObjectwithValue(final long index, final long oop, final long integer) {
         return 0;
     }
 
     @SuppressWarnings("unused")
     private long storeLong32ofObjectwithValue(long fieldIndex, long oop, long anInteger) {
         /* TODO */ System.out.println("Missing implementation for storeLong32ofObjectwithValue");
+    private long storeLong32ofObjectwithValue(final long fieldIndex, final long oop, final long anInteger) {
         return 0;
     }
 }
