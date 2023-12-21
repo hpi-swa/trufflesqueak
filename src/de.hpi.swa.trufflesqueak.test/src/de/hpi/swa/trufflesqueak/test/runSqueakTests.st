@@ -5809,7 +5809,7 @@ result := TestSuite new addTests: flakyTests; run.
 FileStream stdout cr;
     nextPutAll: 'Test results:'; cr;
     nextPutAll: result asString; cr; flush.
-exitCode := result hasPassed ifTrue: [ 1 ] ifFalse: [ exitCode ].
+exitCode := result hasErrors ifTrue: [ 1 ] ifFalse: [ exitCode ].
 
 FileStream stdout cr; nextPutAll: 'Running failing tests...'; cr; flush.
 result := TestSuite new addTests: failingTests; run.
