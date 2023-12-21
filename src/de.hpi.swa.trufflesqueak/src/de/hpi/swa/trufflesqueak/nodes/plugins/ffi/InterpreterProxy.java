@@ -32,9 +32,8 @@ import java.util.Arrays;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class InterpreterProxy {
-    private static InterpreterProxy INSTANCE = null;
 public final class InterpreterProxy {
+    private static InterpreterProxy INSTANCE;
     private final SqueakImageContext context;
     private MaterializedFrame frame;
     private int numReceiverAndArguments;
@@ -43,7 +42,7 @@ public final class InterpreterProxy {
     // should not be local, as the references are needed to keep the native closures alive
     // since this class is a singleton, a private instance variable will suffice
     @SuppressWarnings("FieldCanBeLocal") private final TruffleClosure[] closures;
-    private static Object interpreterProxyPointer = null;
+    private static Object interpreterProxyPointer;
 
     ///////////////////////
     // INSTANCE CREATION //
@@ -140,7 +139,7 @@ public final class InterpreterProxy {
     // MISCELLANEOUS //
     ///////////////////
 
-    public Object getPointer() {
+    public static Object getPointer() {
         return interpreterProxyPointer;
     }
 
@@ -269,8 +268,8 @@ public final class InterpreterProxy {
     }
 
     private int failed() {
-        return 0; // TODO: when changing primitiveFail to continue executing, properly implement
-                  // this
+        // TODO: when changing primitiveFail to continue executing, properly implement this
+        return 0;
     }
 
     private long fetchIntegerofObject(final long fieldIndex, final long objectPointer) {

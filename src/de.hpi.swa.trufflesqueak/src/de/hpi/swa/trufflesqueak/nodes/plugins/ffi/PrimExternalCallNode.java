@@ -45,7 +45,7 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
             // TODO: Only call when the plugin actually defines the function
             // uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
 
-            uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxy.getPointer());
+            uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", InterpreterProxy.getPointer());
 
             final Object functionSymbol = NFIUtils.loadMember(getContext(), uuidPlugin, functionName, "():SINT64");
             final InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
