@@ -1,6 +1,5 @@
 | suite result exitCode |
 
-
 FileStream stdout nextPutAll: 'Preparing image for testing...'; cr; flush.
 
 ToolSet default: CommandLineToolSet.
@@ -9,12 +8,11 @@ Utilities
     authorName: 'TruffleSqueak';
     setAuthorInitials: 'TruffleSqueak'.
 
-
 SystemBrowser default: Browser.
 
 TestCase addSelectorSilently: #run: withMethod: (
     TestCase
-        compile: 'run: aResult FileStream stdout nextPut: $.; flush. aResult runCase: self'
+        compile: 'run: aResult FileStream stdout nextPut: self asString; cr; flush. aResult runCase: self'
         notifying: nil
         trailer: (CompiledMethodTrailer empty) ifFail: [ 1 halt ]) method.
 
@@ -5749,7 +5747,9 @@ FileStream stdout nextPutAll: 'Running tests...'; cr; flush.
 
 result := suite run.
 
-FileStream stdout cr; nextPutAll: result asString; flush.
+FileStream stdout cr;
+    nextPutAll: 'Test results:'; cr;
+    nextPutAll: result asString; cr; flush.
 
 exitCode := (result hasFailures or: [ result hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
 
