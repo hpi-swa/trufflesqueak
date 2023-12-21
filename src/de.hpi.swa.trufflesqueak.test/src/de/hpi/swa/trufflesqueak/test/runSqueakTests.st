@@ -2,7 +2,7 @@
 
 FileStream stdout nextPutAll: 'Preparing image for testing...'; cr; flush.
 
-ToolSet default: CommandLineToolSet.
+"ToolSet default: CommandLineToolSet."
 
 Utilities
     authorName: 'TruffleSqueak';
