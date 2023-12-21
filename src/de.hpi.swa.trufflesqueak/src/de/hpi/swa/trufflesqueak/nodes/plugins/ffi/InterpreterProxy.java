@@ -16,11 +16,11 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleClosure;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
@@ -220,7 +220,7 @@ public class InterpreterProxy {
     }
 
     private Object objectAt0(Object object, long index) {
-        return SqueakObjectAt0Node.getUncached().execute(object, index);
+        return SqueakObjectAt0Node.executeUncached(object, index);
     }
 
     private NativeObjectStorage firstIndexableField(long oop) {
@@ -236,8 +236,7 @@ public class InterpreterProxy {
             primitiveFail();
             return -1;
         }
-        SqueakObjectNewNode objectNewNode = SqueakObjectNewNode.create();
-        AbstractSqueakObject newObject = objectNewNode.execute(context, (ClassObject) classObject, (int) size);
+        AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, (ClassObject) classObject);
         return oopFor(newObject);
     }
 
@@ -375,7 +374,9 @@ public class InterpreterProxy {
         return oopFor(getObjectOnStack(offset));
     }
 
-    private long statNumGCs() {/* TODO */ System.out.println("Missing implementation for statNumGCs"); return 0;}
+    private long statNumGCs() {
+        return MiscUtils.getCollectionCount();
+    }
 
     private long storeIntegerofObjectwithValue(long index, long oop, long integer) {/* TODO */ System.out.println("Missing implementation for storeIntegerofObjectwithValue"); return 0;}
 

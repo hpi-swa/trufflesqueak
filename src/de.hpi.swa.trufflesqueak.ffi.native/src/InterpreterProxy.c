@@ -1,4 +1,7 @@
 #include <stdlib.h>
+
+#define VM_PROXY_MAJOR 1
+#define VM_PROXY_MINOR 17
 #include "sqVirtualMachine.h"
 
 VirtualMachine* createInterpreterProxy(
