@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
+import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.PostPrimitiveCleanup;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
@@ -381,8 +382,4 @@ public class InterpreterProxy {
     private long storeIntegerofObjectwithValue(long index, long oop, long integer) {/* TODO */ System.out.println("Missing implementation for storeIntegerofObjectwithValue"); return 0;}
 
     private long storeLong32ofObjectwithValue(long fieldIndex, long oop, long anInteger) {/* TODO */ System.out.println("Missing implementation for storeLong32ofObjectwithValue"); return 0;}
-
-    public interface PostPrimitiveCleanup {
-        void cleanup();
-    }
 }

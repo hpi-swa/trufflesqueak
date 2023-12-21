@@ -5,7 +5,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy.PostPrimitiveCleanup;
 
 @ExportLibrary(InteropLibrary.class)
 public abstract class NativeObjectStorage implements PostPrimitiveCleanup, TruffleObject {
