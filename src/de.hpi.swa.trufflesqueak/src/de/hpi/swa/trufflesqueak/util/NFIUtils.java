@@ -27,23 +27,27 @@ public class NFIUtils {
             this.executable = executable;
         }
 
-        public static<R> TruffleExecutable wrap(String nfiSignature, TruffleSupplier<R> supplier) {
+        public static <R> TruffleExecutable wrap(String nfiSignature, TruffleSupplier<R> supplier) {
             return new TruffleExecutable(nfiSignature, supplier);
         }
 
-        public static<T, R> TruffleExecutable wrap(String nfiSignature, TruffleFunction<T, R> function) {
+        public static <T, R> TruffleExecutable wrap(String nfiSignature, TruffleFunction<T, R> function) {
             return new TruffleExecutable(nfiSignature, function);
         }
-        public static<S, T, R> TruffleExecutable wrap(String nfiSignature, TruffleBiFunction<S, T, R> function) {
+
+        public static <S, T, R> TruffleExecutable wrap(String nfiSignature, TruffleBiFunction<S, T, R> function) {
             return new TruffleExecutable(nfiSignature, function);
         }
-        public static<S, T, U, R> TruffleExecutable wrap(String nfiSignature, TruffleTriFunction<S, T, U, R> function) {
+
+        public static <S, T, U, R> TruffleExecutable wrap(String nfiSignature, TruffleTriFunction<S, T, U, R> function) {
             return new TruffleExecutable(nfiSignature, function);
         }
-        public static<S, T, U, V, R> TruffleExecutable wrap(String nfiSignature, TruffleQuadFunction<S, T, U, V, R> function) {
+
+        public static <S, T, U, V, R> TruffleExecutable wrap(String nfiSignature, TruffleQuadFunction<S, T, U, V, R> function) {
             return new TruffleExecutable(nfiSignature, function);
         }
-        public static<S, T, U, V, W, R> TruffleExecutable wrap(String nfiSignature, TruffleQuintFunction<S, T, U, V, W, R> function) {
+
+        public static <S, T, U, V, W, R> TruffleExecutable wrap(String nfiSignature, TruffleQuintFunction<S, T, U, V, W, R> function) {
             return new TruffleExecutable(nfiSignature, function);
         }
 
@@ -157,17 +161,20 @@ public class NFIUtils {
         return executeNFI(context, signature);
     }
 
-    public static Object invokeSignatureMethod(SqueakImageContext context, String signature, String method, Object... args) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+    public static Object invokeSignatureMethod(SqueakImageContext context, String signature, String method, Object... args)
+                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         Object nfiSignature = createSignature(context, signature);
         InteropLibrary signatureInteropLibrary = getInteropLibrary(nfiSignature);
         return signatureInteropLibrary.invokeMember(nfiSignature, method, args);
     }
 
-    public static Object createClosure(SqueakImageContext context, Object executable, String signature) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+    public static Object createClosure(SqueakImageContext context, Object executable, String signature)
+                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         return invokeSignatureMethod(context, signature, "createClosure", executable);
     }
 
-    public static Object loadMember(SqueakImageContext context, Object library, String name, String signature) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+    public static Object loadMember(SqueakImageContext context, Object library, String name, String signature)
+                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         InteropLibrary interopLibrary = getInteropLibrary(library);
         Object symbol = interopLibrary.readMember(library, name);
         return invokeSignatureMethod(context, signature, "bind", symbol);

@@ -25,7 +25,6 @@ public abstract class NativeObjectStorage implements PostPrimitiveCleanup, Truff
         }
     }
 
-
     @ExportMessage
     public boolean isPointer() {
         return isAllocated;
@@ -38,7 +37,8 @@ public abstract class NativeObjectStorage implements PostPrimitiveCleanup, Truff
 
     @ExportMessage
     public void toNative() {
-        if (isAllocated) return;
+        if (isAllocated)
+            return;
         nativeAddress = allocate();
         isAllocated = true;
     }

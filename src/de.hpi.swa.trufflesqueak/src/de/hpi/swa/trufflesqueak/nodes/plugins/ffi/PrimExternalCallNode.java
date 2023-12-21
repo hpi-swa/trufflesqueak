@@ -24,26 +24,26 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        final Object uuidPlugin = loadedLibraries.computeIfAbsent(moduleName, (String s) ->
-                NFIUtils.loadLibrary(getContext(), moduleName, "{ " +
+        final Object uuidPlugin = loadedLibraries.computeIfAbsent(moduleName, (String s) -> NFIUtils.loadLibrary(getContext(), moduleName, "{ " +
                         // TODO, see below
-                        //"initialiseModule():SINT64; " +
+                        // "initialiseModule():SINT64; " +
                         "setInterpreter(POINTER):SINT64; " +
                         // Currently not called, since plugins are never unloaded
-                        //"shutdownModule():SINT64; " +
+                        // "shutdownModule():SINT64; " +
                         " }"));
         final InteropLibrary uuidPluginLibrary = NFIUtils.getInteropLibrary(uuidPlugin);
         InterpreterProxy interpreterProxy = null;
         try {
             interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame.materialize(), numReceiverAndArguments);
 
-            // A send (AbstractSendNode.executeVoid) will decrement the stack pointer by numReceiverAndArguments
+            // A send (AbstractSendNode.executeVoid) will decrement the stack pointer by
+            // numReceiverAndArguments
             // before transferring control. We need the stack pointer to point at the last argument,
             // since the C code expects that. Therefore, we undo the decrement operation here.
             FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) + numReceiverAndArguments);
 
             // TODO: Only call when the plugin actually defines the function
-            //uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
+            // uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
 
             uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxy.getPointer());
 
@@ -52,8 +52,10 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
             // return value is unused, the actual return value is pushed onto the stack (see below)
             functionInteropLibrary.execute(functionSymbol);
 
-            // The return value is pushed onto the stack by the plugin via the InterpreterProxy, but TruffleSqueak
-            // expects the return value to be returned by this function (AbstractSendNode.executeVoid).
+            // The return value is pushed onto the stack by the plugin via the InterpreterProxy, but
+            // TruffleSqueak
+            // expects the return value to be returned by this function
+            // (AbstractSendNode.executeVoid).
             // Pop the return value and return it.
             final Object returnValue = FrameAccess.getStackValue(frame, FrameAccess.getStackPointer(frame) - 1, FrameAccess.getNumArguments(frame));
             FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) - 1);
