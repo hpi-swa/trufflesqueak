@@ -18,8 +18,8 @@ public class IntStorage extends NativeObjectStorage {
     }
 
     @Override
-    protected void allocate() {
-        nativeAddress = UnsafeUtils.allocateNativeInts(storage);
+    protected long allocate() {
+        return UnsafeUtils.allocateNativeInts(storage);
     }
 
     @Override

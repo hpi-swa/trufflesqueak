@@ -39,11 +39,11 @@ public abstract class NativeObjectStorage implements PostPrimitiveCleanup, Truff
     @ExportMessage
     public void toNative() {
         if (isAllocated) return;
-        allocate();
+        nativeAddress = allocate();
         isAllocated = true;
     }
 
     public abstract int byteSizeOf();
 
-    protected abstract void allocate();
+    protected abstract long allocate();
 }

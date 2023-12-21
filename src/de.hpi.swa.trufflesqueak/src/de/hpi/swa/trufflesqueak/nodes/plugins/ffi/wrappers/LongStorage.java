@@ -18,8 +18,8 @@ public class LongStorage extends NativeObjectStorage {
     }
 
     @Override
-    protected void allocate() {
-        nativeAddress = UnsafeUtils.allocateNativeLongs(storage);
+    protected long allocate() {
+        return UnsafeUtils.allocateNativeLongs(storage);
     }
 
     @Override
