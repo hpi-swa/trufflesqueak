@@ -201,6 +201,11 @@ public final class PrimitiveNodeFactory {
         if (nodeFactory != null) {
             return createNode(nodeFactory, location, numReceiverAndArguments);
         } else {
+            // Missing implementation by SqueakFFIPrims
+            // FFIPlatformDescription class>>#currentPluginVersion
+            if (moduleName.equals("SqueakFFIPrims")) {
+                return null;
+            }
             return new PrimExternalCallNode(moduleName, functionName, numReceiverAndArguments);
         }
     }
