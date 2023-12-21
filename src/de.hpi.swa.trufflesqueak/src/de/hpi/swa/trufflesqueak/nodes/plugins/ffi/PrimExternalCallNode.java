@@ -24,14 +24,14 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        final Object uuidPlugin = loadedLibraries.computeIfAbsent(moduleName, (String s) -> NFIUtils.loadLibrary(getContext(), moduleName, "{ " +
+        final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> NFIUtils.loadLibrary(getContext(), moduleName, "{ " +
                         // TODO, see below
                         // "initialiseModule():SINT64; " +
                         "setInterpreter(POINTER):SINT64; " +
                         // Currently not called, since plugins are never unloaded
                         // "shutdownModule():SINT64; " +
                         " }"));
-        final InteropLibrary uuidPluginLibrary = NFIUtils.getInteropLibrary(uuidPlugin);
+        final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(moduleLibrary);
         InterpreterProxy interpreterProxy = null;
         try {
             interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame.materialize(), numReceiverAndArguments);
@@ -45,9 +45,9 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
             // TODO: Only call when the plugin actually defines the function
             // uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
 
-            uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", InterpreterProxy.getPointer());
+            moduleInteropLibrary.invokeMember(moduleLibrary, "setInterpreter", InterpreterProxy.getPointer());
 
-            final Object functionSymbol = NFIUtils.loadMember(getContext(), uuidPlugin, functionName, "():SINT64");
+            final Object functionSymbol = NFIUtils.loadMember(getContext(), moduleLibrary, functionName, "():SINT64");
             final InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
             // return value is unused, the actual return value is pushed onto the stack (see below)
             functionInteropLibrary.execute(functionSymbol);
