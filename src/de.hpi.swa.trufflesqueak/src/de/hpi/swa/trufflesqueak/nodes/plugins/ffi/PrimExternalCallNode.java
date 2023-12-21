@@ -10,13 +10,13 @@ import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NonExistentPrimitiveNode extends AbstractPrimitiveNode {
+public class PrimExternalCallNode extends AbstractPrimitiveNode {
     final String moduleName;
     final String functionName;
     final int numReceiverAndArguments;
     static Map<String, Object> loadedLibraries = new HashMap<>();
 
-    public NonExistentPrimitiveNode(String moduleName, String functionName, int numReceiverAndArguments) {
+    public PrimExternalCallNode(String moduleName, String functionName, int numReceiverAndArguments) {
         this.moduleName = moduleName;
         this.functionName = functionName;
         this.numReceiverAndArguments = numReceiverAndArguments;

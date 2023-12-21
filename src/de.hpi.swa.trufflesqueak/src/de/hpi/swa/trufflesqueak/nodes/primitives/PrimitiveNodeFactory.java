@@ -7,9 +7,6 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeFactory;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -42,8 +39,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Win32OSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ZipPlugin;
-import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy;
-import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.NonExistentPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.PrimExternalCallNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.network.SocketPlugin;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArrayStreamPrimitives;
@@ -53,15 +49,11 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
 import org.graalvm.collections.EconomicMap;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public final class PrimitiveNodeFactory {
@@ -209,7 +201,7 @@ public final class PrimitiveNodeFactory {
         if (nodeFactory != null) {
             return createNode(nodeFactory, location, numReceiverAndArguments);
         } else {
-            return new NonExistentPrimitiveNode(moduleName, functionName, numReceiverAndArguments);
+            return new PrimExternalCallNode(moduleName, functionName, numReceiverAndArguments);
         }
     }
 
