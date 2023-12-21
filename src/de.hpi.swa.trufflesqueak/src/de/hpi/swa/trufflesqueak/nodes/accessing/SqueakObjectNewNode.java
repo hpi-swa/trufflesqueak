@@ -53,6 +53,10 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return image.reportAllocation(executeAllocation(node, image, classObject, extraSize));
     }
 
+    public static final AbstractSqueakObjectWithClassAndHash executeUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        return SqueakObjectNewNodeGen.getUncached().execute(null, image, classObject, extraSize);
+    }
+
     protected abstract AbstractSqueakObjectWithClassAndHash executeAllocation(Node node, SqueakImageContext image, ClassObject classObject, int extraSize);
 
     @Specialization(guards = "classObject.isZeroSized()")

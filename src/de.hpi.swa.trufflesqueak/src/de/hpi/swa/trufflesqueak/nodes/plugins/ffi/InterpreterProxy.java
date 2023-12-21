@@ -299,7 +299,7 @@ public class InterpreterProxy {
     private int instantiateClassindexableSize(long classPointer, long size) {
         Object object = objectRegistryGet(classPointer);
         if (object instanceof ClassObject classObject) {
-            AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject);
+            AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject, (int) size);
             return oopFor(newObject);
         }
         System.err.println("instantiateClassindexableSize called with non-ClassObject: " + object);
