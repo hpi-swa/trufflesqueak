@@ -25,7 +25,10 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -33,6 +36,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
@@ -48,6 +52,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     // For now we are single-threaded, so the flag can be static.
     private static volatile boolean testWithImageIsActive;
     private static ExecutorService executor;
+    private static BlockClosureObject testClosure;
+    private static BlockClosureObject shouldPassClosure;
+    private static CompiledCodeObject closureValueValueMethod;
 
     @BeforeClass
     public static void setUp() {
@@ -112,6 +119,18 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
         println("Image ready for testing...");
+        String testClosureCode = """
+                        [:testClass :testSelector |
+                             [ | test |
+                             test := ((Smalltalk at: testClass asSymbol) selector: testSelector asSymbol).
+                             [ test setUp. test performTest ] ensure: [ test tearDown ].
+                             '%s' ]
+                                on: TestFailure, Error
+                                do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ] ]""";
+        testClosure = (BlockClosureObject) evaluate(String.format(testClosureCode, PASSED_VALUE));
+        shouldPassClosure = (BlockClosureObject) evaluate("""
+                        [:testClass :testSelector | [((Smalltalk at: testClass asSymbol) selector: testSelector asSymbol) shouldPass] on: Error do: [:e | false] ]""");
+        closureValueValueMethod = (CompiledCodeObject) LookupMethodByStringNode.executeUncached(testClosure.getSqueakClass(), "value:value:");
     }
 
     protected static final boolean runsOnMXGate() {
@@ -183,6 +202,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Test was interrupted");
         } catch (final ExecutionException e) {
+            e.printStackTrace();
             return TestResult.fromException("failed with an error", e.getCause());
         } finally {
             image.interrupt.clear();
@@ -212,7 +232,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static TestResult extractFailuresAndErrorsFromTestResult(final TestRequest request) {
-        final Object result = evaluate(testCommand(request));
+        final Object result = run(request);
         if (!(result instanceof final NativeObject n) || !n.isByteType()) {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
@@ -220,10 +240,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (PASSED_VALUE.equals(testResult)) {
             return TestResult.success();
         } else {
-            final boolean shouldPass = (boolean) evaluate(shouldPassCommand(request));
             // we cannot estimate or reliably clean up the state of the image after some unknown
             // exception was thrown
-            if (shouldPass) {
+            if (shouldPass(request)) {
                 return TestResult.failure(testResult);
             } else {
                 return TestResult.success(); // Expected failure in Squeak.
@@ -231,13 +250,23 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    private static String testCommand(final TestRequest request) {
-        return String.format("[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ]",
-                        request.testCase, request.testSelector, PASSED_VALUE);
+    private static Object run(final TestRequest request) {
+        return evaluateClosure(testClosure, request);
     }
 
-    private static String shouldPassCommand(final TestRequest request) {
-        return String.format("[(%s selector: #%s) shouldPass] on: Error do: [:e | false]", request.testCase, request.testSelector);
+    private static boolean shouldPass(final TestRequest request) {
+        return (boolean) evaluateClosure(shouldPassClosure, request);
+    }
+
+    private static Object evaluateClosure(final BlockClosureObject closure, final TestRequest request) {
+        context.enter();
+        try {
+            return DispatchUneagerlyNode.executeUncached(closureValueValueMethod,
+                            new Object[]{closure, image.asByteString(request.testCase), image.asByteString(request.testSelector)},
+                            NilObject.SINGLETON);
+        } finally {
+            context.leave();
+        }
     }
 
     protected record TestRequest(String testCase, String testSelector) {
