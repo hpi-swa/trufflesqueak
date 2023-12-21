@@ -208,11 +208,6 @@ public final class PrimitiveNodeFactory {
         if (nodeFactory != null) {
             return createNode(nodeFactory, location, numReceiverAndArguments);
         } else {
-            System.out.println("trying to execute " + moduleName + ":" + functionName);
-
-            if (functionName.equals("primitivePluginVersion")) {
-                return null;
-            }
             return new NonExistentPrimitiveNode(moduleName, functionName, numReceiverAndArguments);
         }
     }
@@ -233,33 +228,40 @@ public final class PrimitiveNodeFactory {
         public Object execute(VirtualFrame frame) {
             final Object uuidPlugin = loadedLibraries.computeIfAbsent(moduleName, (String s) ->
                     NFIUtils.loadLibrary(getContext(), moduleName, "{ " +
+                            // TODO, see below
                             //"initialiseModule():SINT64; " +
                             "setInterpreter(POINTER):SINT64; " +
+                            // Currently not called, since plugins are never unloaded
                             //"shutdownModule():SINT64; " +
                             " }"));
             final InteropLibrary uuidPluginLibrary = NFIUtils.getInteropLibrary(uuidPlugin);
             InterpreterProxy interpreterProxy = null;
             try {
-                Object functionSymbol = NFIUtils.loadMember(getContext(), uuidPlugin, functionName, "():SINT64");
-                InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
+                interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame.materialize(), numReceiverAndArguments);
+
                 // A send (AbstractSendNode.executeVoid) will decrement the stack pointer by numReceiverAndArguments
                 // before transferring control. We need the stack pointer to point at the last argument,
                 // since the C code expects that. Therefore, we undo the decrement operation here.
                 FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) + numReceiverAndArguments);
-                interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame.materialize(), numReceiverAndArguments);
 
+                // TODO: Only call when the plugin actually defines the function
                 //uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
+
                 uuidPluginLibrary.invokeMember(uuidPlugin, "setInterpreter", interpreterProxy.getPointer());
-                final Object result = functionInteropLibrary.execute(functionSymbol);
-                //uuidPluginLibrary.invokeMember(uuidPlugin, "shutdownModule");
-                // The return value is pushed onto the stack by the Plugin via the InterpreterProxy, but TruffleSqueak
+
+                final Object functionSymbol = NFIUtils.loadMember(getContext(), uuidPlugin, functionName, "():SINT64");
+                final InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
+                // return value is unused, the actual return value is pushed onto the stack (see below)
+                functionInteropLibrary.execute(functionSymbol);
+
+                // The return value is pushed onto the stack by the plugin via the InterpreterProxy, but TruffleSqueak
                 // expects the return value to be returned by this function (AbstractSendNode.executeVoid).
                 // Pop the return value and return it.
                 final Object returnValue = FrameAccess.getStackValue(frame, FrameAccess.getStackPointer(frame) - 1, FrameAccess.getNumArguments(frame));
                 FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) - 1);
                 return returnValue;
             } catch (Exception e) {
-                System.out.println("error");
+                // for debugging purposes
                 e.printStackTrace(System.err);
                 throw PrimitiveFailed.GENERIC_ERROR;
             } finally {
@@ -271,6 +273,7 @@ public final class PrimitiveNodeFactory {
 
         @Override
         public Object executeWithArguments(VirtualFrame frame, Object... receiverAndArguments) {
+            // arguments are handled via manipulation of the stack pointer, see above
             return execute(frame);
         }
     }
