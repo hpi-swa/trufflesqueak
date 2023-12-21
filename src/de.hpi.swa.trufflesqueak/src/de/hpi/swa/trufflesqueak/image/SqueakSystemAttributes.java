@@ -6,9 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
-import java.awt.DisplayMode;
-import java.awt.GraphicsEnvironment;
-import java.awt.HeadlessException;
+import java.awt.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,7 +27,7 @@ public final class SqueakSystemAttributes {
     private final SqueakImageContext image;
     private final NativeObject vmPath;
     @CompilationFinal private NativeObject imagePath;
-    @CompilationFinal(dimensions = 1) private NativeObject[] cmdArguments;
+    @CompilationFinal(dimensions = 1) public NativeObject[] cmdArguments;
     private final NativeObject platformName;
     private final NativeObject operatingSystemVersion;
     private final NativeObject platformProcessorType;

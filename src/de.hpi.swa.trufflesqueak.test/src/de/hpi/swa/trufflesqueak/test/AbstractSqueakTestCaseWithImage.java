@@ -24,6 +24,8 @@ import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 
+import com.oracle.truffle.api.CallTarget;
+
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -48,6 +50,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     // For now we are single-threaded, so the flag can be static.
     private static volatile boolean testWithImageIsActive;
     private static ExecutorService executor;
+    private static CallTarget doItCallTarget;
 
     @BeforeClass
     public static void setUp() {
@@ -111,6 +114,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
+        context.enter();
+        doItCallTarget = image.createDoItCallTarget("""
+                        [((Smalltalk at: (Smalltalk getSystemAttribute: 3) asSymbol) selector: ((Smalltalk getSystemAttribute: 4) asSymbol)) runCase. '%s']
+                            on: TestFailure, Error
+                            do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ]""".formatted(PASSED_VALUE));
+        image.systemAttributes.cmdArguments = new NativeObject[]{image.asByteString("--"), null, null};
         println("Image ready for testing...");
     }
 
@@ -158,6 +167,17 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         context.enter();
         try {
             return image.evaluate(expression);
+        } finally {
+            context.leave();
+        }
+    }
+
+    protected static Object evaluate(final TestRequest request) {
+        context.enter();
+        image.systemAttributes.cmdArguments[1] = image.asByteString(request.testCase);
+        image.systemAttributes.cmdArguments[2] = image.asByteString(request.testSelector);
+        try {
+            return doItCallTarget.call();
         } finally {
             context.leave();
         }
@@ -212,7 +232,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static TestResult extractFailuresAndErrorsFromTestResult(final TestRequest request) {
-        final Object result = evaluate(testCommand(request));
+        final Object result = evaluate(request);
         if (!(result instanceof final NativeObject n) || !n.isByteType()) {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
@@ -229,11 +249,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
                 return TestResult.success(); // Expected failure in Squeak.
             }
         }
-    }
-
-    private static String testCommand(final TestRequest request) {
-        return String.format("[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ]",
-                        request.testCase, request.testSelector, PASSED_VALUE);
     }
 
     private static String shouldPassCommand(final TestRequest request) {

@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -129,7 +130,7 @@ public final class SqueakImageContext {
     @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
     private final boolean isHeadless;
     public final SqueakContextOptions options;
-    private final SqueakSystemAttributes systemAttributes = new SqueakSystemAttributes(this);
+    public final SqueakSystemAttributes systemAttributes = new SqueakSystemAttributes(this);
 
     /* System */
     public NativeObject clipboardTextHeadless = asByteString("");
@@ -253,7 +254,12 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public Object evaluate(final String sourceCode) {
-        return getDoItContextNode(sourceCode, false).getCallTarget().call();
+        return createDoItCallTarget(sourceCode).call();
+    }
+
+    @TruffleBoundary
+    public CallTarget createDoItCallTarget(final String sourceCode) {
+        return getDoItContextNode(sourceCode, false).getCallTarget();
     }
 
     @TruffleBoundary
