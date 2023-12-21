@@ -230,7 +230,7 @@ public class InterpreterProxy {
     // ACCESSING HELPERS //
     ///////////////////////
 
-    private Object objectAt0(Object object, long index) {
+    private static Object objectAt0(Object object, long index) {
         return SqueakObjectAt0Node.executeUncached(object, index);
     }
 
