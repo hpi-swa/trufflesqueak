@@ -19,12 +19,16 @@ public class NFIUtils {
 
     @ExportLibrary(InteropLibrary.class)
     public static class TruffleExecutable implements TruffleObject {
-        public String nfiSignature;
-        ITruffleExecutable executable;
+        public final String nfiSignature;
+        final ITruffleExecutable executable;
 
         public TruffleExecutable(String nfiSignature, ITruffleExecutable executable) {
             this.nfiSignature = nfiSignature;
             this.executable = executable;
+        }
+
+        public static<R> TruffleExecutable wrap(String nfiSignature, TruffleSupplier<R> supplier) {
+            return new TruffleExecutable(nfiSignature, supplier);
         }
 
         public static<T, R> TruffleExecutable wrap(String nfiSignature, TruffleFunction<T, R> function) {
@@ -41,10 +45,6 @@ public class NFIUtils {
         }
         public static<S, T, U, V, W, R> TruffleExecutable wrap(String nfiSignature, TruffleQuintFunction<S, T, U, V, W, R> function) {
             return new TruffleExecutable(nfiSignature, function);
-        }
-
-        public static<R> TruffleExecutable wrap(String nfiSignature, TruffleSupplier<R> supplier) {
-            return new TruffleExecutable(nfiSignature, supplier);
         }
 
         @ExportMessage
@@ -76,6 +76,16 @@ public class NFIUtils {
 
     public interface ITruffleExecutable {
         Object execute(Object... arguments);
+    }
+
+    @FunctionalInterface
+    public interface TruffleSupplier<R> extends ITruffleExecutable {
+        R run();
+
+        default Object execute(Object... arguments) {
+            assert arguments.length == 0;
+            return run();
+        }
     }
 
     @FunctionalInterface
@@ -125,16 +135,6 @@ public class NFIUtils {
         default Object execute(Object... arguments) {
             assert arguments.length == 5;
             return run((S) arguments[0], (T) arguments[1], (U) arguments[2], (V) arguments[3], (W) arguments[4]);
-        }
-    }
-
-    @FunctionalInterface
-    public interface TruffleSupplier<R> extends ITruffleExecutable {
-        R run();
-
-        default Object execute(Object... arguments) {
-            assert arguments.length == 0;
-            return run();
         }
     }
 
