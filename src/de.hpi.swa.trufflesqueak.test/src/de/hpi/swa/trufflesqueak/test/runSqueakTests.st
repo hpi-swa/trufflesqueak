@@ -1,11 +1,37 @@
-| suite result |
-suite := TestSuite new.
+| suite result exitCode |
+
+
+FileStream stdout nextPutAll: 'Preparing image for testing...'; cr; flush.
+
+ToolSet default: CommandLineToolSet.
+
+Utilities
+    authorName: 'TruffleSqueak';
+    setAuthorInitials: 'TruffleSqueak'.
+
+
+SystemBrowser default: Browser.
 
 TestCase addSelectorSilently: #run: withMethod: (
     TestCase
         compile: 'run: aResult FileStream stdout nextPut: $.; flush. aResult runCase: self'
         notifying: nil
         trailer: (CompiledMethodTrailer empty) ifFail: [ 1 halt ]) method.
+
+TestCase addSelectorSilently: #failureLog withMethod: (
+    TestCase
+        compile: 'failureLog ^ FileStream stdout'
+        notifying: nil
+        trailer: (CompiledMethodTrailer empty) ifFail: [ 1 halt ]) method.
+
+TestCase addSelectorSilently: #isLogging withMethod: (
+    TestCase
+        compile: 'isLogging ^ true'
+        notifying: nil
+        trailer: (CompiledMethodTrailer empty) ifFail: [ 1 halt ]) method.
+			
+
+suite := TestSuite new.
 
 suite addTests: {
 AddPrefixNamePolicyTest selector: #testAddsPrefix.
@@ -5718,5 +5744,13 @@ YearTest selector: #testCurrent.
 YearTest selector: #testNew.
 YearTest selector: #testPreviousInLeapYear.
 YearTest selector: #testUnCategorizedMethods.}.
+
+FileStream stdout nextPutAll: 'Running tests...'; cr; flush.
+
 result := suite run.
+
 FileStream stdout cr; nextPutAll: result asString; flush.
+
+exitCode := (result hasFailures or: [ result hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
+
+Smalltalk quitPrimitive: exitCode
