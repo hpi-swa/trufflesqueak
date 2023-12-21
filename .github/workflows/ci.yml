@@ -95,7 +95,10 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh shallow-clone-graaljs
     - name: Run gate with Graal compiler and Graal.js
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test
+      run: | 
+        mx --disable-polyglot --dy /compiler,/graal-js build
+        export GRAALVM_HOME=$(mx --disable-polyglot --dy /compiler,/graal-js graalvm-home)
+        $GRAALVM_HOME/bin/trufflesqueak --vm.ea --vm.esa --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=ExitVM --engine.CompilationStatistics images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
       if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE != 'true' }}
     - name: Run gate with Graal.js and code coverage # do not use Graal compiler with JaCoCo code coverage
       run: mx --disable-polyglot --dy /graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
