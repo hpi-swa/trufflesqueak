@@ -115,7 +115,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         final ContextObject targetContext = (ContextObject) sender;
         final ContextObject context;
         if (targetContext.isPrimitiveContext()) {
-            context = (ContextObject) targetContext.getFrameSender(); // skip primitive contexts.
+            final Object targetContextSender = targetContext.getFrameSender();
+            if (targetContextSender == NilObject.SINGLETON) {
+                throw returnToTopLevel(activeContext, returnValue);
+            }
+            context = (ContextObject) targetContextSender; // skip primitive contexts.
         } else {
             context = targetContext;
         }
@@ -187,8 +191,13 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     private static TopLevelReturn returnToTopLevel(final ContextObject targetContext, final Object returnValue) {
-        assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe());
+        assert isDoItOrTestContext(targetContext);
         throw new TopLevelReturn(returnValue);
+    }
+
+    private static boolean isDoItOrTestContext(final ContextObject targetContext) {
+        final String methodName = targetContext.getCodeObject().toString();
+        return methodName.endsWith("#DoIt") || methodName.endsWith("#value:value:");
     }
 
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {

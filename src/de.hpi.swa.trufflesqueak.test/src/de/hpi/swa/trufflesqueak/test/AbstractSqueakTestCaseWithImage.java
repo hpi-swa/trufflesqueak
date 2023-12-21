@@ -24,20 +24,25 @@ import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int SQUEAK_TIMEOUT_SECONDS = 90 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
@@ -119,12 +124,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
         println("Image ready for testing...");
-        String testClosureCode = """
+        final String testClosureCode = """
                         [:testClass :testSelector |
-                             [ | test |
-                             test := ((Smalltalk at: testClass asSymbol) selector: testSelector asSymbol).
-                             [ test setUp. test performTest ] ensure: [ test tearDown ].
-                             '%s' ]
+                             [ ((Smalltalk at: testClass asSymbol) selector: testSelector asSymbol) runCase. '%s' ]
                                 on: TestFailure, Error
                                 do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ] ]""";
         testClosure = (BlockClosureObject) evaluate(String.format(testClosureCode, PASSED_VALUE));
@@ -251,22 +253,29 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static Object run(final TestRequest request) {
-        return evaluateClosure(testClosure, request);
+        return closureValueValue(testClosure, request);
     }
 
     private static boolean shouldPass(final TestRequest request) {
-        return (boolean) evaluateClosure(shouldPassClosure, request);
+        return (boolean) closureValueValue(shouldPassClosure, request);
     }
 
-    private static Object evaluateClosure(final BlockClosureObject closure, final TestRequest request) {
+    private static Object closureValueValue(final BlockClosureObject closure, final TestRequest request) {
         context.enter();
         try {
-            return DispatchUneagerlyNode.executeUncached(closureValueValueMethod,
-                            new Object[]{closure, image.asByteString(request.testCase), image.asByteString(request.testSelector)},
-                            NilObject.SINGLETON);
+            return getDispatchContextNode(closureValueValueMethod, closure, image.asByteString(request.testCase), image.asByteString(request.testSelector)).getCallTarget().call();
         } finally {
             context.leave();
         }
+    }
+
+    private static ExecuteTopLevelContextNode getDispatchContextNode(final CompiledCodeObject method, final Object... receiverAndArguments) {
+        final Object[] frameArguments = FrameAccess.newWith(NilObject.SINGLETON, null, receiverAndArguments);
+        final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(frameArguments, method.getFrameDescriptor());
+        final ContextObject doItContext = ContextObject.create(image, frame, method);
+        doItContext.setInstructionPointer(method.getInitialPC());
+        doItContext.setStackPointer(method.getNumTemps());
+        return ExecuteTopLevelContextNode.create(image, image.getLanguage(), doItContext, false);
     }
 
     protected record TestRequest(String testCase, String testSelector) {

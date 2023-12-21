@@ -218,7 +218,7 @@ public final class SqueakImageContext {
                             Processor activeProcess instVarNamed: #suspendedContext put: nil.
 
                             "Avoid interactive windows and instead exit on errors."
-                            ToolSet default: CommandLineToolSet.
+                            %s ifFalse: [ ToolSet default: CommandLineToolSet ].
 
                             "Start up image (see SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:)."
                             Smalltalk
@@ -231,7 +231,7 @@ public final class SqueakImageContext {
                             Utilities
                                 authorName: 'TruffleSqueak';
                                 setAuthorInitials: 'TruffleSqueak'.
-                            """;
+                            """.formatted(Boolean.toString(options.isTesting));
             try {
                 evaluate(prepareHeadlessImageScript);
             } catch (final Exception e) {
