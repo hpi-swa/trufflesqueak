@@ -12,7 +12,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -76,7 +75,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         final int bytecodeStart = 32;
         final Object[] expectedResults = getTestObjects(32);
         final List<Object> literalsList = new ArrayList<>(Collections.singletonList(68419598L));
-        literalsList.addAll(Arrays.asList(expectedResults));
+        literalsList.addAll(List.of(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject method = makeMethod(literalsList.toArray(), bytecodeStart + i, 124);
@@ -95,7 +94,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         final int bytecodeStart = 64;
         final Object[] expectedResults = getTestObjects(32);
         final List<Object> literalsList = new ArrayList<>(Collections.singletonList(68419598L));
-        literalsList.addAll(Arrays.asList(expectedResults));
+        literalsList.addAll(List.of(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 32; i++) {
             final CompiledCodeObject method = makeMethod(literalsList.toArray(), bytecodeStart + i, 124);
@@ -202,7 +201,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     public void testExtendedPushLiteralConstants() {
         final Object[] expectedResults = getTestObjects(64);
         final List<Object> literalsList = new ArrayList<>(Collections.singletonList(68419598L));
-        literalsList.addAll(Arrays.asList(expectedResults));
+        literalsList.addAll(List.of(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject method = makeMethod(literalsList.toArray(), 128, 128 + i, 124);
@@ -220,7 +219,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     public void testExtendedPushLiteralVariables() {
         final Object[] expectedResults = getTestObjects(64);
         final List<Object> literalsList = new ArrayList<>(Collections.singletonList(68419598L));
-        literalsList.addAll(Arrays.asList(expectedResults));
+        literalsList.addAll(List.of(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject method = makeMethod(literalsList.toArray(), 128, 192 + i, 124);
@@ -361,7 +360,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     public void testDoubleExtendedPushLiteralConstants() {
         final Object[] expectedResults = getTestObjects(255);
         final List<Object> literalsList = new ArrayList<>(Collections.singletonList(68419598L));
-        literalsList.addAll(Arrays.asList(expectedResults));
+        literalsList.addAll(List.of(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject method = makeMethod(literalsList.toArray(), 132, 96, i, 124);
@@ -379,7 +378,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     public void testDoubleExtendedPushLiteralVariables() {
         final Object[] expectedResults = getTestObjects(255);
         final List<Object> literalsList = new ArrayList<>(Collections.singletonList(68419598L));
-        literalsList.addAll(Arrays.asList(expectedResults));
+        literalsList.addAll(List.of(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject method = makeMethod(literalsList.toArray(), 132, 128, i, 124);
