@@ -22,8 +22,8 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AboutToReturnNodeFactory.AboutToReturnImplNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchClosureNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -55,7 +55,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
                         @Bind("this") final Node node,
                         @Cached("createTemporaryReadNode(frame, 0)") final FrameStackReadNode blockArgumentNode,
                         @SuppressWarnings("unused") @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode,
-                        @Cached("create(frame, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
+                        @Cached("create(frame, 1)") final FrameStackWriteNode completeTempWriteNode,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final DispatchClosureNode dispatchNode) {
             completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
