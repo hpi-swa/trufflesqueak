@@ -45,14 +45,14 @@ public final class CheckForInterruptsState {
 
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
-        if (image.options.disableInterruptHandler) {
+        if (image.options.disableInterruptHandler()) {
             image.printToStdOut("Interrupt handler disabled...");
         }
     }
 
     @TruffleBoundary
     public void start() {
-        if (image.options.disableInterruptHandler) {
+        if (image.options.disableInterruptHandler()) {
             return;
         }
         executor = Executors.newSingleThreadScheduledExecutor(r -> {

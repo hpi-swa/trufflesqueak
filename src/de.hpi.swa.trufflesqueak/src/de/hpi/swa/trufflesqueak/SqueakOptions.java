@@ -13,7 +13,6 @@ import org.graalvm.options.OptionStability;
 import org.graalvm.options.OptionValues;
 
 import com.oracle.truffle.api.Option;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
@@ -59,28 +58,19 @@ public final class SqueakOptions {
         return new SqueakOptionsOptionDescriptors();
     }
 
-    public static final class SqueakContextOptions {
-        public final String imagePath;
-        public final String[] imageArguments;
-        public final boolean printResourceSummary;
-        public final boolean isHeadless;
-        public final boolean isQuiet;
-        public final boolean disableInterruptHandler;
-        public final boolean disableStartup;
-        public final boolean isTesting;
-        public final boolean signalInputSemaphore;
-
-        public SqueakContextOptions(final Env env) {
-            final OptionValues options = env.getOptions();
-            imagePath = options.get(ImagePath).isEmpty() ? null : options.get(ImagePath);
-            imageArguments = options.get(ImageArguments).isEmpty() ? new String[0] : options.get(ImageArguments).split(",");
-            printResourceSummary = options.get(ResourceSummary);
-            isHeadless = options.get(Headless);
-            isQuiet = options.get(Quiet);
-            disableInterruptHandler = options.get(Interrupts);
-            disableStartup = options.get(Startup);
-            signalInputSemaphore = options.get(SignalInputSemaphore);
-            isTesting = options.get(Testing);
+    public record SqueakContextOptions(String imagePath, String[] imageArguments, boolean printResourceSummary, boolean isHeadless, boolean isQuiet, boolean disableInterruptHandler,
+                    boolean disableStartup, boolean isTesting, boolean signalInputSemaphore) {
+        public static SqueakContextOptions create(final OptionValues options) {
+            return new SqueakContextOptions(
+                            options.get(ImagePath).isEmpty() ? null : options.get(ImagePath),
+                            options.get(ImageArguments).isEmpty() ? new String[0] : options.get(ImageArguments).split(","),
+                            options.get(ResourceSummary),
+                            options.get(Headless),
+                            options.get(Quiet),
+                            options.get(Interrupts),
+                            options.get(Startup),
+                            options.get(Testing),
+                            options.get(SignalInputSemaphore));
         }
     }
 }

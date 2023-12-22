@@ -180,8 +180,8 @@ public final class SqueakImageContext {
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         patch(environment);
-        options = new SqueakContextOptions(env);
-        isHeadless = options.isHeadless;
+        options = SqueakContextOptions.create(env.getOptions());
+        isHeadless = options.isHeadless();
         interrupt = new CheckForInterruptsState(this);
         allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
@@ -189,7 +189,7 @@ public final class SqueakImageContext {
         if (truffleLanguageHome != null) {
             homePath = env.getInternalTruffleFile(truffleLanguageHome);
         } else { /* Fall back to image directory if language home is not set. */
-            homePath = env.getInternalTruffleFile(options.imagePath).getParent();
+            homePath = env.getInternalTruffleFile(options.imagePath()).getParent();
         }
         assert homePath.exists() : "Home directory does not exist: " + homePath;
         initializeMethodCache();
@@ -208,7 +208,7 @@ public final class SqueakImageContext {
         if (squeakImage == null) {
             // Load image.
             SqueakImageReader.load(this);
-            if (options.disableStartup) {
+            if (options.disableStartup()) {
                 printToStdOut("Skipping startup routine...");
                 return;
             }
@@ -669,7 +669,7 @@ public final class SqueakImageContext {
     public String getImagePath() {
         if (imagePath == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            setImagePath(SqueakImageLocator.findImage(options.imagePath));
+            setImagePath(SqueakImageLocator.findImage(options.imagePath()));
         }
         return imagePath;
     }
@@ -689,8 +689,8 @@ public final class SqueakImageContext {
     }
 
     public String[] getImageArguments() {
-        if (options.imageArguments.length > 0) {
-            return options.imageArguments;
+        if (options.imageArguments().length > 0) {
+            return options.imageArguments();
         } else {
             return env.getApplicationArguments();
         }
@@ -705,7 +705,7 @@ public final class SqueakImageContext {
     }
 
     public boolean interruptHandlerDisabled() {
-        return options.disableInterruptHandler;
+        return options.disableInterruptHandler();
     }
 
     public boolean isHeadless() {
@@ -720,11 +720,11 @@ public final class SqueakImageContext {
     }
 
     public boolean isTesting() {
-        return options.isTesting;
+        return options.isTesting();
     }
 
     public void finalizeContext() {
-        if (options.printResourceSummary) {
+        if (options.printResourceSummary()) {
             MiscUtils.printResourceSummary(this);
         }
     }
@@ -982,7 +982,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public void printToStdOut(final String string) {
-        if (!options.isQuiet) {
+        if (!options.isQuiet()) {
             getOutput().println("[trufflesqueak] " + string);
         }
     }
