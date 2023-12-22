@@ -199,11 +199,11 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                     default -> new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 3, b);
                 };
             }
-            case 0xF9 -> PushBytecodes.AbstractPushFullClosureNode.createExtended(code, index, 3, extA, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xF9 -> PushBytecodes.AbstractPushFullClosureNode.createExtended(code, index, 3 + extBytes, extA, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 0xFA -> PushBytecodes.PushClosureNode.createExtended(code, index, 3 + extBytes, extA, extB, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
-            case 0xFB -> PushBytecodes.PushRemoteTempNode.create(code, index, 3, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
-            case 0xFC -> new StoreBytecodes.StoreIntoRemoteTempNode(code, index, 3, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
-            case 0xFD -> new StoreBytecodes.PopIntoRemoteTempNode(code, index, 3, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xFB -> PushBytecodes.PushRemoteTempNode.create(code, index, 3 + extBytes, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xFC -> new StoreBytecodes.StoreIntoRemoteTempNode(code, index, 3 + extBytes, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xFD -> new StoreBytecodes.PopIntoRemoteTempNode(code, index, 3 + extBytes, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 0xFE, 0xFF -> new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 3, b);
             default -> throw SqueakException.create("Not a bytecode:", b);
         };
