@@ -1,4 +1,4 @@
-| passingTests flakyTests failingTests result exitCode |
+| passingTests flakyTests failingTests |
 
 FileStream stdout nextPutAll: 'Preparing image for testing...'; cr; flush.
 
@@ -5795,7 +5795,7 @@ failingTests := {
     SmallIntegerTest selector: #testPrintString.
 }.
 
-WorldState addDeferredUIMessage: [
+WorldState addDeferredUIMessage: [ | result exitCode |
     "Avoid showing progress bars."
     Project current instVarNamed: #uiManager put: DummyUIManager new.
     "ToolSet default: CommandLineToolSet."
@@ -5810,13 +5810,13 @@ WorldState addDeferredUIMessage: [
         result failures do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
         FileStream stdout flush.
         exitCode := 1.
-    ]
+    ].
     result hasErrors ifTrue: [
         FileStream stdout nextPutAll: 'Errors:'; cr; flush.
         result errors do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
         FileStream stdout flush.
         exitCode := 1.
-    ]
+    ].
     
     FileStream stdout cr; nextPutAll: 'Running flaky tests...'; cr; flush.
     result := TestSuite new addTests: flakyTests; run.
@@ -5828,7 +5828,7 @@ WorldState addDeferredUIMessage: [
         result errors do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
         FileStream stdout flush.
         exitCode := 1.
-    ]
+    ].
 
     FileStream stdout cr; nextPutAll: 'Running failing tests...'; cr; flush.
     result := TestSuite new addTests: failingTests; run.
@@ -5840,7 +5840,7 @@ WorldState addDeferredUIMessage: [
         result passed do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
         FileStream stdout flush.
         exitCode := 1.
-    ]
+    ].
 
     Smalltalk quitPrimitive: exitCode
 ]
