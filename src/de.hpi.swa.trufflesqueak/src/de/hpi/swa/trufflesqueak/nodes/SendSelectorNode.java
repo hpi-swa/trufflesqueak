@@ -13,6 +13,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -23,7 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyNode;
  * Performs a send to receiver with arguments. For use in other node. Selector must resolve to a
  * {@link CompiledCodeObject}, object-as-method is not allowed.
  */
-public abstract class SendSelectorNode extends Node {
+public abstract class SendSelectorNode extends AbstractNode {
     private final NativeObject selector;
 
     protected SendSelectorNode(final NativeObject selector) {
@@ -45,9 +46,18 @@ public abstract class SendSelectorNode extends Node {
                     @Cached final DispatchEagerlyNode dispatchNode) {
         final ClassObject rcvrClass = lookupClassNode.executeLookup(node, receiverAndArguments[0]);
         final CompiledCodeObject method = (CompiledCodeObject) lookupMethodNode.executeLookup(node, rcvrClass, selector);
-        final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
-        assert result != null : "Result of a message send should not be null";
-        return result;
+        final SqueakImageContext image = getContext();
+        final boolean wasActive = image.interrupt.isActive();
+        image.interrupt.deactivate(); // avoid interrupts while calling back into the image
+        try {
+            final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
+            assert result != null : "Result of a message send should not be null";
+            return result;
+        } finally {
+            if (wasActive) {
+                image.interrupt.activate();
+            }
+        }
     }
 
     @Override
