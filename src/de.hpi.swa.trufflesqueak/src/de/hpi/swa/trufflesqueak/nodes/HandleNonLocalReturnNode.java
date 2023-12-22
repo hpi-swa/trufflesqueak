@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.HandleNonLocalReturnNodeFactory.AboutToReturnNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.HandleNonLocalReturnNodeFactory.NormalReturnNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
@@ -47,21 +47,32 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
 
     @ImportStatic(FrameStackReadNode.class)
     public abstract static class AboutToReturnNode extends HandleNonLocalReturnNode {
-        @Specialization(guards = {"!hasModifiedSender(frame)"})
-        protected static final ControlFlowException doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
-                        @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode,
-                        @Cached final DispatchVirtualAboutToReturnNode dispatchVirtualAboutToReturnNode) {
-            dispatchVirtualAboutToReturnNode.execute(frame, completeTempReadNode.executeRead(frame) == NilObject.SINGLETON);
-            throw CompilerDirectives.shouldNotReachHere();
-        }
+        // @Specialization(guards = {"!hasModifiedSender(frame)"})
+        // protected static final ControlFlowException doAboutToReturnVirtualized(final VirtualFrame
+        // frame,
+        // @SuppressWarnings("unused") final NonLocalReturn nlr,
+        // @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode
+        // completeTempReadNode,
+        // @Cached final DispatchVirtualAboutToReturnNode dispatchVirtualAboutToReturnNode) {
+        // dispatchVirtualAboutToReturnNode.execute(frame, completeTempReadNode.executeRead(frame)
+        // ==
+        // NilObject.SINGLETON);
+        // throw CompilerDirectives.shouldNotReachHere();
+        // }
 
-        @Specialization(guards = {"hasModifiedSender(frame)"})
+        @Specialization// (guards = {"hasModifiedSender(frame)"})
         protected static final ControlFlowException doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
                         @Bind("this") final Node node,
                         @Cached final GetOrCreateContextNode getOrCreateContextNode,
                         @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
-            assert nlr.getTargetContextOrMarker() instanceof ContextObject;
-            sendAboutToReturnNode.executeSend(frame, new Object[]{getOrCreateContextNode.executeGet(frame, node), nlr.getReturnValue(), nlr.getTargetContextOrMarker()});
+            // assert nlr.getTargetContextOrMarker() instanceof ContextObject;
+            final ContextObject context;
+            if (nlr.getTargetContextOrMarker() instanceof final FrameMarker fm) {
+                context = fm.getMaterializedContext();
+            } else {
+                context = nlr.getTargetContext();
+            }
+            sendAboutToReturnNode.executeSend(frame, new Object[]{getOrCreateContextNode.executeGet(frame, node), nlr.getReturnValue(), context});
             throw CompilerDirectives.shouldNotReachHere();
         }
     }
