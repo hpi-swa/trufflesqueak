@@ -162,7 +162,7 @@ public final class SqueakDisplay {
     }
 
     @TruffleBoundary
-    public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
+    public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
         assert left <= right && top <= bottom;
         canvas.paintImmediately(left, top, right, bottom);
     }
