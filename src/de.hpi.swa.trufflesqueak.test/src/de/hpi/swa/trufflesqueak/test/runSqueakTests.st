@@ -5807,13 +5807,13 @@ WorldState addDeferredUIMessage: [ | result exitCode |
         nextPutAll: result asString; cr; flush.
     result hasFailures ifTrue: [
         FileStream stdout nextPutAll: 'Failures:'; cr; flush.
-        result failures do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
+        result failures do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ].
         FileStream stdout flush.
         exitCode := 1.
     ].
     result hasErrors ifTrue: [
         FileStream stdout nextPutAll: 'Errors:'; cr; flush.
-        result errors do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
+        result errors do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ].
         FileStream stdout flush.
         exitCode := 1.
     ].
@@ -5825,7 +5825,7 @@ WorldState addDeferredUIMessage: [ | result exitCode |
         nextPutAll: result asString; cr; flush.
     result hasErrors ifTrue: [
         FileStream stdout nextPutAll: 'Errors:'; cr; flush.
-        result errors do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
+        result errors do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ].
         FileStream stdout flush.
         exitCode := 1.
     ].
@@ -5835,9 +5835,9 @@ WorldState addDeferredUIMessage: [ | result exitCode |
     FileStream stdout cr;
         nextPutAll: 'Test results:'; cr;
         nextPutAll: result asString; cr; flush.
-    result hasErrors ifTrue: [
+    result hasPassed ifTrue: [
         FileStream stdout nextPutAll: 'Passing tests:'; cr; flush.
-        result passed do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
+        result passed do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ].
         FileStream stdout flush.
         exitCode := 1.
     ].
