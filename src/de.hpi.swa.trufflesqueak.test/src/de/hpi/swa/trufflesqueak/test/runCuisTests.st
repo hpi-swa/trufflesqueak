@@ -1,4 +1,4 @@
-| testSuite testCases nonTerminatingTestCases failingTests result exitCode |
+| testSuite nonTerminatingTestCases failingTests result exitCode |
 
 StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'; newLine; flush.
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
@@ -30,10 +30,7 @@ failingTests := OrderedCollection new.
     assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].
 
 StdIOWriteStream stdout newLine; nextPutAll: 'Passing TestCases:'; newLine; flush.
-testSuite := TestSuite new.
-testCases := (TestCase allSubclasses reject: [:testCase |testCase isAbstract])
-        sorted: [:a :b | a name <= b name].
-testCases do: [:testCase | testCase addToSuiteFromSelectors: testSuite].
+testSuite := TestCase buildSuite.
 testSuite tests removeAllSuchThat: [:ea | nonTerminatingTestCases anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
 testSuite tests removeAllSuchThat: [:ea | failingTests            anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
 result := testSuite run.
