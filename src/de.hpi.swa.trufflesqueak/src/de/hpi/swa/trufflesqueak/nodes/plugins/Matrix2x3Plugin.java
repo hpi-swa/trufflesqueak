@@ -75,10 +75,10 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         private double loadArgumentPointAt(final PointersObject point, final int index, final AbstractPointersObjectReadNode readNode, final InlinedBranchProfile errorProfile, final Node node) {
             if (isPoint(point)) {
                 final Object value = readNode.execute(node, point, index);
-                if (value instanceof Long) {
-                    return (long) value;
-                } else if (value instanceof Double) {
-                    return (double) value;
+                if (value instanceof final Long longValue) {
+                    return longValue;
+                } else if (value instanceof final Double doubleValue) {
+                    return doubleValue;
                 }
             }
             errorProfile.enter(node);

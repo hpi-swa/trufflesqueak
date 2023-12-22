@@ -440,9 +440,9 @@ public abstract class SlotLocation {
 
         @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
-            if (value instanceof Boolean) {
+            if (value instanceof final Boolean v) {
                 setMask(object, primitiveUsedMapProfile);
-                UnsafeUtils.putBoolAt(object, address, (boolean) value);
+                UnsafeUtils.putBoolAt(object, address, v);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -451,9 +451,9 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
-            if (value instanceof Boolean) {
+            if (value instanceof final Boolean v) {
                 setMask(object);
-                UnsafeUtils.putBoolAt(object, address, (boolean) value);
+                UnsafeUtils.putBoolAt(object, address, v);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
             }

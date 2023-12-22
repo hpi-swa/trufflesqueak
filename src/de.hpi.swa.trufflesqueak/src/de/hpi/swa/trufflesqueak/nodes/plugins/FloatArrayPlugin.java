@@ -70,7 +70,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doAt(final NativeObject receiver, final long index) {
-            return Float.intBitsToFloat(receiver.getInt((int) index - 1));
+            return Float.intBitsToFloat(receiver.getInt(index - 1));
         }
     }
 

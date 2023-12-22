@@ -279,15 +279,15 @@ public final class FrameAccess {
         if (slotIndex < numberOfSlots) {
             final FrameSlotKind frameSlotKind = frameDescriptor.getSlotKind(slotIndex);
             final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
-            if (value instanceof Boolean && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
+            if (value instanceof final Boolean b && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
                 frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Boolean);
-                frame.setBoolean(slotIndex, (boolean) value);
-            } else if (value instanceof Long && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
+                frame.setBoolean(slotIndex, b);
+            } else if (value instanceof final Long l && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
                 frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Long);
-                frame.setLong(slotIndex, (long) value);
-            } else if (value instanceof Double && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
+                frame.setLong(slotIndex, l);
+            } else if (value instanceof final Double d && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
                 frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
-                frame.setDouble(slotIndex, (double) value);
+                frame.setDouble(slotIndex, d);
             } else {
                 frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
                 frame.setObject(slotIndex, value);

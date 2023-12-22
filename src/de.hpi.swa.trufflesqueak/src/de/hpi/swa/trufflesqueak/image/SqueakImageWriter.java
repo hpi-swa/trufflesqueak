@@ -232,17 +232,17 @@ public final class SqueakImageWriter {
         assert object != null;
         if (object == NilObject.SINGLETON) {
             return nilOop;
-        } else if (object instanceof Boolean) {
-            return (boolean) object ? trueOop : falseOop;
-        } else if (object instanceof Character) {
-            return toTaggedCharacter((char) object);
+        } else if (object instanceof final Boolean b) {
+            return b ? trueOop : falseOop;
+        } else if (object instanceof final Character c) {
+            return toTaggedCharacter(c);
         } else if (object instanceof final CharacterObject o) {
             return toTaggedCharacter(o.getValue());
-        } else if (object instanceof Long) {
-            return toTaggedSmallInteger((long) object);
-        } else if (object instanceof Double) {
-            return toTaggedSmallFloat((double) object);
-        } else if (object instanceof AbstractSqueakObjectWithClassAndHash aso) {
+        } else if (object instanceof final Long l) {
+            return toTaggedSmallInteger(l);
+        } else if (object instanceof final Double d) {
+            return toTaggedSmallFloat(d);
+        } else if (object instanceof final AbstractSqueakObjectWithClassAndHash aso) {
             final Long oop = oopMap.get(aso);
             if (oop != null) {
                 return oop;
@@ -385,7 +385,7 @@ public final class SqueakImageWriter {
     }
 
     public void writeObjectIfTracedElseNil(final Object object) {
-        writeLong(toWord(object instanceof AbstractSqueakObjectWithClassAndHash aso && oopMap.containsKey(aso) ? object : NilObject.SINGLETON));
+        writeLong(toWord(object instanceof final AbstractSqueakObjectWithClassAndHash aso && oopMap.containsKey(aso) ? object : NilObject.SINGLETON));
     }
 
     private static long toTaggedCharacter(final long value) {

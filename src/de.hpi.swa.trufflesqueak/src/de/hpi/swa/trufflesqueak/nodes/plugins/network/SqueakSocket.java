@@ -129,8 +129,8 @@ public abstract class SqueakSocket {
     protected final String getOption(final String name) throws IOException {
         final SocketOption<?> option = socketOptionFromString(name);
         final Object value = asNetworkChannel().getOption(option);
-        if (value instanceof Boolean) {
-            return (boolean) value ? "1" : "0";
+        if (value instanceof final Boolean b) {
+            return b ? "1" : "0";
         }
         return String.valueOf(value);
     }

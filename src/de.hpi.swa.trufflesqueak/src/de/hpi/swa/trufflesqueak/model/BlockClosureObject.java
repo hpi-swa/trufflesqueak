@@ -279,11 +279,11 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
             if (receiver == fromPointer) {
                 receiver = to[i];
             }
-            if (block == fromPointer && to[i] instanceof CompiledCodeObject) {
-                block = (CompiledCodeObject) to[i];
+            if (block == fromPointer && to[i] instanceof final CompiledCodeObject b) {
+                block = b;
             }
-            if (outerContext == fromPointer && fromPointer != to[i] && to[i] instanceof ContextObject) {
-                setOuterContext((ContextObject) to[i]);
+            if (outerContext == fromPointer && fromPointer != to[i] && to[i] instanceof final ContextObject c) {
+                setOuterContext(c);
             }
             for (int j = 0; j < copiedValues.length; j++) {
                 final Object copiedValue = copiedValues[j];

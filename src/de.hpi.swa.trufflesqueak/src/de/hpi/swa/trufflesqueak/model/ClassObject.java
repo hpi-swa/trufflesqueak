@@ -240,8 +240,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean includesExternalFunctionBehavior(final SqueakImageContext i) {
         final Object externalFunctionClass = i.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
-        if (externalFunctionClass instanceof ClassObject) {
-            return includesBehavior((ClassObject) i.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
+        if (externalFunctionClass instanceof final ClassObject efc) {
+            return includesBehavior(efc);
         } else {
             return false;
         }
@@ -431,7 +431,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (methodDict == thang) {
             return true;
         }
-        if (thang instanceof Long && format == (long) thang) {
+        if (thang instanceof final Long l && format == l) {
             return true;
         }
         if (instanceVariables == thang) {

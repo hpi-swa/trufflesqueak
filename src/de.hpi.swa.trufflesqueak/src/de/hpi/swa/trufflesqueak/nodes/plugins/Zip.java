@@ -868,8 +868,8 @@ public final class Zip {
 
     private static int fetchIntegerofObject(final int index, final PointersObject arrayOop) {
         final Object value = fetchPointerofObject(index, arrayOop);
-        if (value instanceof Long) {
-            return MiscUtils.toIntExact((long) value);
+        if (value instanceof final Long l) {
+            return MiscUtils.toIntExact(l);
         } else {
             throw PrimitiveFailed.GENERIC_ERROR;
         }

@@ -90,11 +90,11 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
         @CompilerDirectives.TruffleBoundary
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final JavaObjectWrapper target) {
             final Object wrappedObject = target.unwrap();
-            if (wrappedObject instanceof RootNode rootNode) {
+            if (wrappedObject instanceof final RootNode rootNode) {
                 final List<DirectCallNode> callNodes = new ArrayList<>();
                 rootNode.accept(node -> {
-                    if (node instanceof DirectCallNode) {
-                        callNodes.add((DirectCallNode) node);
+                    if (node instanceof final DirectCallNode dcn) {
+                        callNodes.add(dcn);
                     }
                     return true;
                 });

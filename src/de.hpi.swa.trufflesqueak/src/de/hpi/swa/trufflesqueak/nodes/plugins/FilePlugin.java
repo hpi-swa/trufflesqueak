@@ -705,14 +705,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveHasFileAccess")
     protected abstract static class PrimHasFileAccessNode extends AbstractPrimitiveNode {
         @Specialization
-        @TruffleBoundary
         protected final boolean hasFileAccess(@SuppressWarnings("unused") final Object receiver) {
-            try {
-                getContext().env.getCurrentWorkingDirectory();
-                return BooleanObject.TRUE;
-            } catch (final SecurityException e) {
-                return BooleanObject.FALSE;
-            }
+            return BooleanObject.wrap(getContext().env.isFileIOAllowed());
         }
     }
 }

@@ -11,11 +11,13 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.DenyReplace;
 
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
@@ -38,11 +40,11 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
+    @DenyReplace
     @SqueakPrimitive(names = "primitiveHasSecureHashPrimitive")
-    protected abstract static class PrimHasSecureHashPrimitiveNode extends AbstractPrimitiveNode {
-        @Specialization
-        protected static final boolean doHas(@SuppressWarnings("unused") final Object receiver) {
+    public static final class PrimHasSecureHashPrimitiveNode extends AbstractSingletonPrimitiveNode {
+        @Override
+        public Object execute() {
             return BooleanObject.TRUE;
         }
     }
@@ -116,5 +118,10 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return DSAPrimsFactory.getFactories();
+    }
+
+    @Override
+    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
+        return List.of(PrimHasSecureHashPrimitiveNode.class);
     }
 }
