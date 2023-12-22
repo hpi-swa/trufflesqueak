@@ -1310,8 +1310,8 @@ public final class BitBlt {
                 dy1 = -1;
             }
         }
-        final long px = Math.abs(yDelta);
-        final long py = Math.abs(xDelta);
+        final int px = Math.abs(MiscUtils.toIntExact(yDelta));
+        final int py = Math.abs(MiscUtils.toIntExact(xDelta));
         /* init null rectangle */
         int affL = 9999;
         int affR = -9999;
@@ -1319,7 +1319,7 @@ public final class BitBlt {
         int affB = -9999;
         if (py > px) {
             /* more horizontal */
-            long p = py / 2;
+            int p = py / 2;
             for (int i = 1; i <= py; i++) {
                 destX += dx1;
                 if ((p -= px) < 0) {
@@ -1353,7 +1353,7 @@ public final class BitBlt {
             }
         } else {
             /* more vertical */
-            long p = px / 2;
+            int p = px / 2;
             for (int i = 1; i <= px; i++) {
                 destY += dy1;
                 if ((p -= py) < 0) {
