@@ -10,7 +10,7 @@ SystemBrowser default: Browser.
 
 TestCase addSelectorSilently: #run: withMethod: (
     TestCase
-        compile: 'run: aResult FileStream stdout nextPutAll: self asString; cr; flush. aResult runCase: self'
+        compile: 'run: aResult FileStream stdout nextPut: $.; flush. aResult runCase: self'
         notifying: nil
         trailer: (CompiledMethodTrailer empty) ifFail: [ 1 halt ]) method.
 
@@ -5805,21 +5805,42 @@ WorldState addDeferredUIMessage: [
     FileStream stdout cr;
         nextPutAll: 'Test results:'; cr;
         nextPutAll: result asString; cr; flush.
-    exitCode := (result hasFailures or: [ result hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
-
+    result hasFailures ifTrue: [
+        FileStream stdout nextPutAll: 'Failures:'; cr; flush.
+        result failures do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
+        FileStream stdout flush.
+        exitCode := 1.
+    ]
+    result hasErrors ifTrue: [
+        FileStream stdout nextPutAll: 'Errors:'; cr; flush.
+        result errors do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
+        FileStream stdout flush.
+        exitCode := 1.
+    ]
+    
     FileStream stdout cr; nextPutAll: 'Running flaky tests...'; cr; flush.
     result := TestSuite new addTests: flakyTests; run.
     FileStream stdout cr;
         nextPutAll: 'Test results:'; cr;
         nextPutAll: result asString; cr; flush.
-    exitCode := result hasErrors ifTrue: [ 1 ] ifFalse: [ exitCode ].
+    result hasErrors ifTrue: [
+        FileStream stdout nextPutAll: 'Errors:'; cr; flush.
+        result errors do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
+        FileStream stdout flush.
+        exitCode := 1.
+    ]
 
     FileStream stdout cr; nextPutAll: 'Running failing tests...'; cr; flush.
     result := TestSuite new addTests: failingTests; run.
     FileStream stdout cr;
         nextPutAll: 'Test results:'; cr;
         nextPutAll: result asString; cr; flush.
-    exitCode := result hasPassed ifTrue: [ 1 ] ifFalse: [ exitCode ].
+    result hasErrors ifTrue: [
+        FileStream stdout nextPutAll: 'Passing tests:'; cr; flush.
+        result passed do: [ :ea | FileStream stdout nextPutAll: ea asString; cr ]
+        FileStream stdout flush.
+        exitCode := 1.
+    ]
 
     Smalltalk quitPrimitive: exitCode
 ]
