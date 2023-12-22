@@ -84,7 +84,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             return interpretBytecode(frame, startPC);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
-            return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
+            throw getHandleNonLocalReturnNode().execute(frame, nlr);
         }
     }
 
