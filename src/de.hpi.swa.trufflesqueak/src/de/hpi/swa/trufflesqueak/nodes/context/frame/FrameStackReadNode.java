@@ -55,6 +55,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
         }
     }
 
+    @NeverDefault
     public static final FrameStackReadNode createTemporaryReadNode(final Frame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {

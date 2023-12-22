@@ -166,7 +166,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             }
             final ContextObject context = (ContextObject) contextOrNil;
             assert !context.isPrimitiveContext();
-            if (!context.hasClosure() && context.getCodeObject().isUnwindMarked()) {
+            if (context.getCodeObject().isUnwindMarked()) {
+                assert !context.hasClosure();
                 /* "context is marked; break out" */
                 return sendAboutToReturn(startContext, returnValue, context);
             }

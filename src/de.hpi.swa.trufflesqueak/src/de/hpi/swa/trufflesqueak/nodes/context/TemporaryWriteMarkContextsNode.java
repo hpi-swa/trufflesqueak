@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -24,6 +25,7 @@ public final class TemporaryWriteMarkContextsNode extends AbstractNode {
         this.writeNode = writeNode;
     }
 
+    @NeverDefault
     public static TemporaryWriteMarkContextsNode create(final VirtualFrame frame, final int tempIndex) {
         return new TemporaryWriteMarkContextsNode(FrameStackWriteNode.create(frame, tempIndex));
     }

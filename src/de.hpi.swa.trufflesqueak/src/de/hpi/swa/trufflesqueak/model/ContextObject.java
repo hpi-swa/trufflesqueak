@@ -403,7 +403,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean canBeReturnedTo() {
-        return getInstructionPointerForBytecodeLoop() >= 0 && getFrameSender() != NilObject.SINGLETON;
+        return !isDead() && getFrameSender() != NilObject.SINGLETON;
     }
 
     public ContextObject shallowCopy() {
