@@ -223,24 +223,16 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static String testCommand(final SqueakTest test) {
         return String.format("[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ]",
-                        test.className, test.selector, PASSED_VALUE);
+                        test.className(), test.selector(), PASSED_VALUE);
     }
 
     private static String shouldPassCommand(final SqueakTest test) {
-        return String.format("[(%s selector: #%s) shouldPass] on: Error do: [:e | false]", test.className, test.selector);
+        return String.format("[(%s selector: #%s) shouldPass] on: Error do: [:e | false]", test.className(), test.selector());
     }
 
-    protected static final class TestResult {
-        private static final TestResult SUCCESS = new TestResult(true, PASSED_VALUE, null);
-        protected final boolean passed;
-        protected final String message;
-        protected final Throwable reason;
+    protected record TestResult(boolean passed, String message, Throwable reason) {
 
-        private TestResult(final boolean passed, final String message, final Throwable reason) {
-            this.passed = passed;
-            this.message = message;
-            this.reason = reason;
-        }
+        private static final TestResult SUCCESS = new TestResult(true, PASSED_VALUE, null);
 
         protected static TestResult fromException(final String message, final Throwable reason) {
             return new TestResult(false, message, reason);
@@ -267,7 +259,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static final String getPathToInImageCode() {
-        Path currentDirectory = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+        final Path userDir = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+        Path currentDirectory = userDir;
         while (currentDirectory != null) {
             final File file = currentDirectory.resolve("src").resolve("image").resolve("src").toFile();
             if (file.isDirectory()) {
@@ -275,6 +268,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             }
             currentDirectory = currentDirectory.getParent();
         }
-        return null;
+        throw new IllegalStateException("Unable to find in image code in " + userDir + " and its parents");
     }
 }

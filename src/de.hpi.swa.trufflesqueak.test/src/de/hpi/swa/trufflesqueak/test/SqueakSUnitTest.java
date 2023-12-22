@@ -118,11 +118,11 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             throw e;
         }
         RuntimeException exceptionDuringReload = null;
-        if (!(result.passed && result.message.equals(PASSED_VALUE))) {
-            printlnErr("Closing current image context and reloading: " + result.message);
+        if (!(result.passed() && result.message().equals(PASSED_VALUE))) {
+            printlnErr("Closing current image context and reloading: " + result.message());
             try {
                 reloadImage();
-                if (test.type == TestType.PASSING) {
+                if (test.type() == TestType.PASSING) {
                     println("Retrying test that is expected to pass...");
                     result = runTestCase(test);
                 }
@@ -142,44 +142,44 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private void checkTermination() {
-        Assume.assumeFalse("skipped", stopRunningSuite || test.type == TestType.IGNORED || test.type == TestType.NOT_TERMINATING || test.type == TestType.BROKEN_IN_SQUEAK);
-        if (test.type == TestType.SLOWLY_FAILING || test.type == TestType.SLOWLY_PASSING) {
+        Assume.assumeFalse("skipped", stopRunningSuite || test.type() == TestType.IGNORED || test.type() == TestType.NOT_TERMINATING || test.type() == TestType.BROKEN_IN_SQUEAK);
+        if (test.type() == TestType.SLOWLY_FAILING || test.type() == TestType.SLOWLY_PASSING) {
             assumeNotOnMXGate();
         }
     }
 
     private void checkResult(final TestResult result) throws Throwable {
-        switch (test.type) {
+        switch (test.type()) {
             case PASSING, SLOWLY_PASSING, EXPECTED_FAILURE -> {
-                if (result.reason != null) {
-                    throw result.reason;
+                if (result.reason() != null) {
+                    throw result.reason();
                 }
-                assertTrue(result.message, result.passed);
+                assertTrue(result.message(), result.passed());
             }
             case PASSING_WITH_NFI -> checkPassingIf(image.supportsNFI(), result);
-            case FAILING, SLOWLY_FAILING, BROKEN_IN_SQUEAK -> assertFalse(result.message, result.passed);
+            case FAILING, SLOWLY_FAILING, BROKEN_IN_SQUEAK -> assertFalse(result.message(), result.passed());
             case FLAKY -> {
                 // no verdict possible
             }
             case NOT_TERMINATING -> fail("This test unexpectedly terminated");
             case IGNORED -> fail("This test should never have been run");
-            default -> throw new IllegalArgumentException(test.type.toString());
+            default -> throw new IllegalArgumentException(test.type().toString());
         }
     }
 
     private static void checkPassingIf(final boolean check, final TestResult result) throws Throwable {
         if (check) {
-            if (result.reason != null) {
-                throw result.reason;
+            if (result.reason() != null) {
+                throw result.reason();
             }
-            assertTrue(result.message, result.passed);
+            assertTrue(result.message(), result.passed());
         } else {
-            assertFalse(result.message, result.passed);
+            assertFalse(result.message(), result.passed());
         }
     }
 
     private static boolean inTruffleSqueakPackage(final SqueakTest test) {
-        final String className = test.className;
+        final String className = test.className();
         for (final String testCaseName : TRUFFLESQUEAK_TEST_CASE_NAMES) {
             if (testCaseName.equals(className)) {
                 println("\nLoading TruffleSqueak packages (required by " + test + "). This may take a while...");
@@ -217,7 +217,7 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private static Map<TestType, Long> countByType(final Collection<SqueakTest> tests) {
-        return tests.stream().collect(groupingBy(t -> t.type, counting()));
+        return tests.stream().collect(groupingBy(SqueakTest::type, counting()));
     }
 
     private static void print(final TestType type, final Map<TestType, Long> counts, final String color) {
