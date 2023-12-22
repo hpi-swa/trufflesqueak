@@ -33,6 +33,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.trufflesqueak.test.SqueakTests.SqueakTest;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
@@ -41,6 +42,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = 45 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
     private static final int PRIORITY_10_LIST_INDEX = 9;
     protected static final String PASSED_VALUE = "passed";
+    private static final String TEST_IMAGE_FILE_NAME = "test-64bit.image";
 
     protected static final String[] TRUFFLESQUEAK_TEST_CASE_NAMES = truffleSqueakTestCaseNames();
 
@@ -123,27 +125,15 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static String getPathToTestImage() {
-        final String imagePath64bit = getPathToTestImage("test-64bit.image");
-        if (imagePath64bit != null) {
-            return imagePath64bit;
-        }
-        final String imagePath32bit = getPathToTestImage("test-32bit.image");
-        if (imagePath32bit != null) {
-            return imagePath32bit;
-        }
-        throw SqueakException.create("Unable to locate test image.");
-    }
-
-    private static String getPathToTestImage(final String imageName) {
         Path currentDirectory = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (currentDirectory != null) {
-            final File file = currentDirectory.resolve("images").resolve(imageName).toFile();
+            final File file = currentDirectory.resolve("images").resolve(TEST_IMAGE_FILE_NAME).toFile();
             if (file.exists()) {
                 return file.getAbsolutePath();
             }
             currentDirectory = currentDirectory.getParent();
         }
-        return null;
+        throw SqueakException.create("Unable to locate test image.");
     }
 
     /**
@@ -171,12 +161,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         assertNotEquals(NilObject.SINGLETON, patchResult);
     }
 
-    protected static TestResult runTestCase(final TestRequest request) {
+    protected static TestResult runTestCase(final SqueakTest test) {
         if (testWithImageIsActive) {
             throw new IllegalStateException("The previous test case has not finished yet");
         }
         try {
-            return runWithTimeout(request, AbstractSqueakTestCaseWithImage::extractFailuresAndErrorsFromTestResult, TIMEOUT_SECONDS);
+            return runWithTimeout(test, AbstractSqueakTestCaseWithImage::extractFailuresAndErrorsFromTestResult, TIMEOUT_SECONDS);
         } catch (final TimeoutException e) {
             return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
@@ -211,16 +201,16 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    private static TestResult extractFailuresAndErrorsFromTestResult(final TestRequest request) {
-        final Object result = evaluate(testCommand(request));
-        if (!(result instanceof final NativeObject n) || !n.isByteType()) {
+    private static TestResult extractFailuresAndErrorsFromTestResult(final SqueakTest test) {
+        final Object result = evaluate(testCommand(test));
+        if (!(result instanceof final NativeObject no) || !no.isByteType()) {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
-        final String testResult = ((NativeObject) result).asStringUnsafe();
+        final String testResult = no.asStringUnsafe();
         if (PASSED_VALUE.equals(testResult)) {
             return TestResult.success();
         } else {
-            final boolean shouldPass = (boolean) evaluate(shouldPassCommand(request));
+            final boolean shouldPass = (boolean) evaluate(shouldPassCommand(test));
             // we cannot estimate or reliably clean up the state of the image after some unknown
             // exception was thrown
             if (shouldPass) {
@@ -231,16 +221,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    private static String testCommand(final TestRequest request) {
+    private static String testCommand(final SqueakTest test) {
         return String.format("[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | (String streamContents: [:s | e printVerboseOn: s]) withUnixLineEndings ]",
-                        request.testCase, request.testSelector, PASSED_VALUE);
+                        test.className, test.selector, PASSED_VALUE);
     }
 
-    private static String shouldPassCommand(final TestRequest request) {
-        return String.format("[(%s selector: #%s) shouldPass] on: Error do: [:e | false]", request.testCase, request.testSelector);
-    }
-
-    protected record TestRequest(String testCase, String testSelector) {
+    private static String shouldPassCommand(final SqueakTest test) {
+        return String.format("[(%s selector: #%s) shouldPass] on: Error do: [:e | false]", test.className, test.selector);
     }
 
     protected static final class TestResult {

@@ -109,9 +109,9 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             loadTruffleSqueakPackages();
         }
 
-        TestResult result = null;
+        TestResult result;
         try {
-            result = runTestCase(buildRequest());
+            result = runTestCase(test);
         } catch (final RuntimeException e) {
             e.printStackTrace();
             stopRunningSuite = true;
@@ -119,9 +119,13 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
         RuntimeException exceptionDuringReload = null;
         if (!(result.passed && result.message.equals(PASSED_VALUE))) {
+            printlnErr("Closing current image context and reloading: " + result.message);
             try {
-                printlnErr("Closing current image context and reloading: " + result.message);
                 reloadImage();
+                if (test.type == TestType.PASSING) {
+                    println("Retrying test that is expected to pass...");
+                    result = runTestCase(test);
+                }
             } catch (final RuntimeException e) {
                 exceptionDuringReload = e;
             }
@@ -142,10 +146,6 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         if (test.type == TestType.SLOWLY_FAILING || test.type == TestType.SLOWLY_PASSING) {
             assumeNotOnMXGate();
         }
-    }
-
-    private TestRequest buildRequest() {
-        return new TestRequest(test.className, test.selector);
     }
 
     private void checkResult(final TestResult result) throws Throwable {
