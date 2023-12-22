@@ -5821,5 +5821,5 @@ WorldState addDeferredUIMessage: [
         nextPutAll: result asString; cr; flush.
     exitCode := result hasPassed ifTrue: [ 1 ] ifFalse: [ exitCode ].
 
-    "Smalltalk quitPrimitive: exitCode"
+    Smalltalk quitPrimitive: exitCode
 ]
