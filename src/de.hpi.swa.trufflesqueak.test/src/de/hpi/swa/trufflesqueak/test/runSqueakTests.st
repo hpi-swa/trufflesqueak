@@ -2,8 +2,6 @@
 
 FileStream stdout nextPutAll: 'Preparing image for testing...'; cr; flush.
 
-"ToolSet default: CommandLineToolSet."
-
 Utilities
     authorName: 'TruffleSqueak';
     setAuthorInitials: 'TruffleSqueak'.
@@ -5797,25 +5795,31 @@ failingTests := {
     SmallIntegerTest selector: #testPrintString.
 }.
 
-FileStream stdout cr; nextPutAll: 'Running passing tests...'; cr; flush.
-result := TestSuite new addTests: passingTests; run.
-FileStream stdout cr;
-    nextPutAll: 'Test results:'; cr;
-    nextPutAll: result asString; cr; flush.
-exitCode := (result hasFailures or: [ result hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
+WorldState addDeferredUIMessage: [
+    "Avoid showing progress bars."
+    Project current instVarNamed: #uiManager put: DummyUIManager new.
+    "ToolSet default: CommandLineToolSet."
 
-FileStream stdout cr; nextPutAll: 'Running flaky tests...'; cr; flush.
-result := TestSuite new addTests: flakyTests; run.
-FileStream stdout cr;
-    nextPutAll: 'Test results:'; cr;
-    nextPutAll: result asString; cr; flush.
-exitCode := result hasErrors ifTrue: [ 1 ] ifFalse: [ exitCode ].
+    FileStream stdout cr; nextPutAll: 'Running passing tests...'; cr; flush.
+    result := TestSuite new addTests: passingTests; run.
+    FileStream stdout cr;
+        nextPutAll: 'Test results:'; cr;
+        nextPutAll: result asString; cr; flush.
+    exitCode := (result hasFailures or: [ result hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
 
-FileStream stdout cr; nextPutAll: 'Running failing tests...'; cr; flush.
-result := TestSuite new addTests: failingTests; run.
-FileStream stdout cr;
-    nextPutAll: 'Test results:'; cr;
-    nextPutAll: result asString; cr; flush.
-exitCode := result hasPassed ifTrue: [ 1 ] ifFalse: [ exitCode ].
+    FileStream stdout cr; nextPutAll: 'Running flaky tests...'; cr; flush.
+    result := TestSuite new addTests: flakyTests; run.
+    FileStream stdout cr;
+        nextPutAll: 'Test results:'; cr;
+        nextPutAll: result asString; cr; flush.
+    exitCode := result hasErrors ifTrue: [ 1 ] ifFalse: [ exitCode ].
 
-Smalltalk quitPrimitive: exitCode
+    FileStream stdout cr; nextPutAll: 'Running failing tests...'; cr; flush.
+    result := TestSuite new addTests: failingTests; run.
+    FileStream stdout cr;
+        nextPutAll: 'Test results:'; cr;
+        nextPutAll: result asString; cr; flush.
+    exitCode := result hasPassed ifTrue: [ 1 ] ifFalse: [ exitCode ].
+
+    "Smalltalk quitPrimitive: exitCode"
+]
