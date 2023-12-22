@@ -8,8 +8,6 @@ SmallInteger initMinValAndMaxVal. "resize SmallInteger range"
 nonTerminatingTestCases := OrderedCollection new.
 {
     #JpegTest -> #(#test16bpp61 #test16bpp63 #test16bppLE #test16bppLE61 #test16bppLE62 #test16bppLE63 #test32bpp #test32bpp63 #test32bppLE63 #testBA32bpp #testBA32bpp63 "all previous tests pass on TruffleSqueak in JVM mode, the rest is not yet supported" #test16bpp #test16bpp62 #testBA16bpp #testBA16bpp61 #testBA16bpp62 #testBA16bpp63 #testBA16bppLE #testBA16bppLE61 #testBA16bppLE62 #testBA16bppLE63 #testGray #testGray61 #testGray62 #testGray63 #testGrayBA #testGrayBA61 #testGrayBA62 #testGrayBA63).
-    #ProcessTest -> #(#testTerminateInEnsure #testValueEnsured).
-    #TestValueWithinFix -> #(#testValueWithinNonLocalReturnFixReal #testValueWithinNonLocalReturnFixSimply).
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
     assoc value do: [:sel | nonTerminatingTestCases add: (testCase selector: sel) ]].
@@ -23,7 +21,6 @@ failingTests := OrderedCollection new.
     #ProcessorTest -> #("flaky" #testGrabProcessor #testGrabProcessorOnlyForNoTimeout #testGrabProcessorOnlyForTimeout #testValueUnpreemptively).
     #ProcessTerminateUnwindNonLocalReturn -> #(test1ATerminate #test1BTerminate #test2ATerminate #test2BTerminate #test3ATerminate #test3BTerminate #test4ATerminate #test4BTerminate #test5ATerminate #test5BTerminate "flaky" #test5DTerminate #test6ATerminate #test6BTerminate  "flaky" #test6DTerminate #test7ATerminate #test7BTerminate #test8ATerminate #test8BTerminate).
     #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString).
-    #TestValueWithinFix -> #("flaky" #testValueWithinTimingRepeat).
     #WeakIdentitySetTest -> #(#test). "Failing (or flaky?) on TruffleSqueak Native"
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
