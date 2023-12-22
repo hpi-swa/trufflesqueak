@@ -234,15 +234,15 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
         private static final TestResult SUCCESS = new TestResult(true, PASSED_VALUE, null);
 
-        protected static TestResult fromException(final String message, final Throwable reason) {
+        private static TestResult fromException(final String message, final Throwable reason) {
             return new TestResult(false, message, reason);
         }
 
-        protected static TestResult failure(final String message) {
+        private static TestResult failure(final String message) {
             return new TestResult(false, message, null);
         }
 
-        protected static TestResult success() {
+        private static TestResult success() {
             return SUCCESS;
         }
     }

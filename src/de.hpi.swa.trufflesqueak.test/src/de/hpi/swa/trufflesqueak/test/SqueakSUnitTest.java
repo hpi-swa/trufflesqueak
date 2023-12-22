@@ -64,7 +64,7 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static final String TEST_CLASS_PROPERTY = "squeakTests";
 
-    protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
+    private static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
 
     @Parameter public SqueakTest test;
 
@@ -231,11 +231,11 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     protected static final class AnsiCodes {
-        protected static final String BOLD = "\033[1m";
-        protected static final String RED = "\033[31;1m";
-        protected static final String GREEN = "\033[32;1m";
-        protected static final String BLUE = "\033[34;1m";
-        protected static final String YELLOW = "\033[33;1m";
-        protected static final String RESET = "\033[0m";
+        private static final String BOLD = "\033[1m";
+        private static final String RED = "\033[31;1m";
+        private static final String GREEN = "\033[32;1m";
+        private static final String BLUE = "\033[34;1m";
+        private static final String YELLOW = "\033[33;1m";
+        private static final String RESET = "\033[0m";
     }
 }
