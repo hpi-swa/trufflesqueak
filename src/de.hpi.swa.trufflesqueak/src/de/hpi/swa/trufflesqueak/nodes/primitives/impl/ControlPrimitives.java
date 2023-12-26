@@ -455,11 +455,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final Object myListOrNil = readNode.execute(node, receiver, PROCESS.LIST);
-            if (myListOrNil == NilObject.SINGLETON) {
+            if (!(myListOrNil instanceof final PointersObject myList)) {
                 CompilerDirectives.transferToInterpreter();
+                assert myListOrNil == NilObject.SINGLETON;
                 throw PrimitiveFailed.BAD_RECEIVER;
             }
-            final PointersObject myList = (PointersObject) myListOrNil;
             removeProcessNode.executeRemove(receiver, myList, readNode, writeNode, node);
             writeNode.execute(node, receiver, PROCESS.LIST, NilObject.SINGLETON);
             return myList;
