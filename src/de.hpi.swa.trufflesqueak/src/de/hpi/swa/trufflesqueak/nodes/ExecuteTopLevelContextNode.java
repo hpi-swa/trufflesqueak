@@ -109,15 +109,15 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @TruffleBoundary
     private static ContextObject returnTo(final ContextObject activeContext, final AbstractSqueakObject sender, final Object returnValue) {
-        if (sender == NilObject.SINGLETON) {
+        if (!(sender instanceof final ContextObject senderContext)) {
+            assert sender == NilObject.SINGLETON;
             throw returnToTopLevel(activeContext, returnValue);
         }
-        final ContextObject targetContext = (ContextObject) sender;
         final ContextObject context;
-        if (targetContext.isPrimitiveContext()) {
-            context = (ContextObject) targetContext.getFrameSender(); // skip primitive contexts.
+        if (senderContext.isPrimitiveContext()) {
+            context = (ContextObject) senderContext.getFrameSender(); // skip primitive contexts.
         } else {
-            context = targetContext;
+            context = senderContext;
         }
         context.push(returnValue);
         return context;
@@ -125,10 +125,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @TruffleBoundary
     private ContextObject commonNLReturn(final AbstractSqueakObject sender, final ContextObject targetContext, final Object returnValue) {
-        if (sender == NilObject.SINGLETON) {
+        if (!(sender instanceof final ContextObject senderContext)) {
+            assert sender == NilObject.SINGLETON;
             throw returnToTopLevel(targetContext, returnValue);
         }
-        ContextObject context = (ContextObject) sender;
+        ContextObject context = senderContext;
         while (context != targetContext) {
             final AbstractSqueakObject currentSender = context.getSender();
             if (currentSender instanceof final ContextObject o) {
@@ -160,11 +161,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
          */
         AbstractSqueakObject contextOrNil = startContext;
         while (contextOrNil != targetContext) {
-            if (contextOrNil == NilObject.SINGLETON) {
+            if (!(contextOrNil instanceof final ContextObject context)) {
                 /* "error: sender's instruction pointer or context is nil; cannot return" */
+                assert contextOrNil == NilObject.SINGLETON;
                 return sendCannotReturn(startContext, returnValue);
             }
-            final ContextObject context = (ContextObject) contextOrNil;
             assert !context.isPrimitiveContext();
             if (context.getCodeObject().isUnwindMarked()) {
                 assert !context.hasClosure();
