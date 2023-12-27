@@ -98,7 +98,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 activeContext = ps.getNewContext();
                 LogUtils.SCHEDULING.log(Level.FINE, "Process Switch: {0}", activeContext);
             } catch (final NonLocalReturn nlr) {
-                activeContext = commonNLReturn(sender, nlr.getTargetContext(), nlr.getReturnValue());
+                activeContext = commonNLReturn(sender, nlr);
                 LogUtils.SCHEDULING.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
             } catch (final NonVirtualReturn nvr) {
                 activeContext = commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
@@ -124,12 +124,29 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @TruffleBoundary
-    private ContextObject commonNLReturn(final AbstractSqueakObject sender, final ContextObject targetContext, final Object returnValue) {
+    private ContextObject commonNLReturn(final AbstractSqueakObject sender, final NonLocalReturn nlr) {
+        final ContextObject targetContext = nlr.getTargetContext();
+        final Object returnValue = nlr.getReturnValue();
         if (!(sender instanceof final ContextObject senderContext)) {
             assert sender == NilObject.SINGLETON;
             throw returnToTopLevel(targetContext, returnValue);
         }
         ContextObject context = senderContext;
+        while (context != targetContext) {
+            if (context.getCodeObject().isUnwindMarked()) {
+                try {
+                    // TODO: make this better
+                    AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
+                } catch (NonVirtualReturn nvr) {
+                    return commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                }
+            }
+            final AbstractSqueakObject currentSender = context.getSender();
+            if (currentSender instanceof final ContextObject o) {
+                context = o;
+            }
+        }
+        context = senderContext;
         while (context != targetContext) {
             final AbstractSqueakObject currentSender = context.getSender();
             if (currentSender instanceof final ContextObject o) {
