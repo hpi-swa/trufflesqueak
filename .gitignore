@@ -27,6 +27,7 @@ build.xml
 /mx.trufflesqueak/.pydevproject
 /mx.trufflesqueak/env
 /mx.trufflesqueak/eclipse-launches
+/mx.trufflesqueak/mvn-settings.xml
 /mxbuild
 /TRUFFLESQUEAK*.dist
 /coverage

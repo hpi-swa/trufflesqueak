@@ -268,6 +268,7 @@ suite = {
                 "tag": ["default", "public"],
             },
             "noMavenJavadoc": True,
+            "license": ["MIT"],
         },
 
         "TRUFFLESQUEAK_HOME": {
@@ -304,6 +305,7 @@ suite = {
                 "tag": ["default", "public"],
             },
             "noMavenJavadoc": True,
+            "license": ["MIT"],
         },
 
         "TRUFFLESQUEAK_SHARED": {
@@ -326,6 +328,7 @@ suite = {
                 "tag": ["default", "public"],
             },
             "noMavenJavadoc": True,
+            "license": ["MIT"],
         },
 
         "TRUFFLESQUEAK_TCK": {
