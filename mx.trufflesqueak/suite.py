@@ -271,15 +271,30 @@ suite = {
             "license": ["MIT"],
         },
 
+        "SMALLTALK" : {
+            "type": "pom",
+            "runtimeDependencies": [
+                "TRUFFLESQUEAK",
+                "TRUFFLE-ENTERPRISE",
+            ],
+            "description": "TruffleSqueak virtual machine for Oracle GraalVM",
+            "maven": {
+                "groupId": "de.hpi.swa.trufflesqueak",
+                "artifactId" : "smalltalk",
+                "tag": ["default", "public"],
+            },
+            "license": ["MIT"],
+        },
+
         "SMALLTALK_COMMUNITY" : {
             "type": "pom",
             "runtimeDependencies": [
                 "TRUFFLESQUEAK",
                 "truffle:TRUFFLE_RUNTIME",
             ],
-            "description": "TruffleSqueak virtual machine",
+            "description": "TruffleSqueak virtual machine for GraalVM CE",
             "maven": {
-                "groupId": "org.graalvm.polyglot",
+                "groupId": "de.hpi.swa.trufflesqueak",
                 "artifactId" : "smalltalk-community",
                 "tag": ["default", "public"],
             },
