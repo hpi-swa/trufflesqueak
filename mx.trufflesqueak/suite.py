@@ -271,6 +271,21 @@ suite = {
             "license": ["MIT"],
         },
 
+        "SMALLTALK_COMMUNITY" : {
+            "type": "pom",
+            "runtimeDependencies": [
+                "TRUFFLESQUEAK",
+                "truffle:TRUFFLE_RUNTIME",
+            ],
+            "description": "TruffleSqueak virtual machine",
+            "maven": {
+                "groupId": "org.graalvm.polyglot",
+                "artifactId" : "smalltalk-community",
+                "tag": ["default", "public"],
+            },
+            "license": ["MIT"],
+        },
+
         "TRUFFLESQUEAK_HOME": {
             "native": True,
             "platformDependent": True,
