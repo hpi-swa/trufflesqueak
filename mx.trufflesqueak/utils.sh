@@ -78,7 +78,7 @@ build-standalone() {
   echo "[${standalone_home}/bin added to \$PATH]"
 }
 
-deploy-asset() {
+check-deploy() {
   local git_tag=$(git tag --points-at HEAD)
   if [[ -z "${git_tag}" ]]; then
     echo "Skipping deployment step (commit not tagged)"
@@ -87,6 +87,15 @@ deploy-asset() {
     echo "Skipping deployment step (tag ${git_tag} does not start with a digit)"
     exit 0
   fi
+}
+
+conditional-deploy() {
+  check-deploy
+  eval "$@"
+}
+
+deploy-asset() {
+  check-deploy
   local filename=$1
   if [[ "${filename}" == *.tar ]]; then
     echo "Compressing tarball..."
@@ -96,6 +105,7 @@ deploy-asset() {
   # zip files are always compressed because mx_trufflesqueak.py forces localCompress
 
   local auth="Authorization: token $2"
+  local git_tag=$(git tag --points-at HEAD)
   local release_id
 
   tag_result=$(curl -L --retry 3 --retry-connrefused --retry-delay 2 -sH "${auth}" \
