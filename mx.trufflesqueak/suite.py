@@ -88,12 +88,12 @@ suite = {
             },
             "moduleName": "org.bouncycastle.util",
         },
-        "CHECKSTYLE_10.7.0" : {
-            "urls" : [
+        "CHECKSTYLE_10.7.0": {
+            "urls": [
                 "https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.7.0/checkstyle-10.7.0-all.jar"
             ],
             "sha1": "acd1c78c07e894647e8dcbd72c4fa9a136e20d6d",
-            "licence" : "LGPLv21",
+            "licence": "LGPLv21",
         },
         "TRUFFLE-ENTERPRISE": {
             "digest": "sha512:2948bd1779fe1c2b0b70de76220582d54bb59a2d9048c4a09d5148a7358014ae6484a373a1076f5dad7f861723981407ea48e247a6ef7d4659eef28ee9c86354",
@@ -141,7 +141,7 @@ suite = {
                 "jdk.management",
                 "jdk.unsupported",
             ],
-            "requiresConcealed" : {
+            "requiresConcealed": {
                 "java.base": ["jdk.internal.module"],
             },
             "checkstyleVersion": "10.7.0",
@@ -271,7 +271,7 @@ suite = {
             "license": ["MIT"],
         },
 
-        "SMALLTALK" : {
+        "SMALLTALK": {
             "type": "pom",
             "runtimeDependencies": [
                 "TRUFFLESQUEAK",
@@ -280,13 +280,13 @@ suite = {
             "description": "TruffleSqueak virtual machine for Oracle GraalVM",
             "maven": {
                 "groupId": "de.hpi.swa.trufflesqueak",
-                "artifactId" : "smalltalk",
+                "artifactId": "smalltalk",
                 "tag": ["default", "public"],
             },
             "license": ["MIT"],
         },
 
-        "SMALLTALK_COMMUNITY" : {
+        "SMALLTALK_COMMUNITY": {
             "type": "pom",
             "runtimeDependencies": [
                 "TRUFFLESQUEAK",
@@ -295,7 +295,7 @@ suite = {
             "description": "TruffleSqueak virtual machine for GraalVM CE",
             "maven": {
                 "groupId": "de.hpi.swa.trufflesqueak",
-                "artifactId" : "smalltalk-community",
+                "artifactId": "smalltalk-community",
                 "tag": ["default", "public"],
             },
             "license": ["MIT"],
@@ -376,7 +376,7 @@ suite = {
                 "sdk:POLYGLOT_TCK",
             ],
             "testDistribution": True,
-            "maven" : False,
+            "maven": False,
         },
 
         "TRUFFLESQUEAK_TEST": {
@@ -396,7 +396,7 @@ suite = {
             "exclude": ["mx:JUNIT", "mx:HAMCREST"],
             "distDependencies": ["TRUFFLESQUEAK"],
             "testDistribution": True,
-            "maven" : False,
+            "maven": False,
         },
     },
 }
