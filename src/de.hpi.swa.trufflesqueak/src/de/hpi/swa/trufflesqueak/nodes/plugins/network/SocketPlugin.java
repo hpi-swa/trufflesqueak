@@ -42,8 +42,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimit
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     private static final boolean HAS_SOCKET_ACCESS;
@@ -191,7 +191,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimResolverHostNameResultNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"targetString.isByteType()", "targetString.getByteLength() >= LOCAL_HOST_NAME.length"})
         protected static final Object doResult(@SuppressWarnings("unused") final Object receiver, final NativeObject targetString) {
-            ArrayUtils.arraycopy(LOCAL_HOST_NAME, 0, targetString.getByteStorage(), 0, LOCAL_HOST_NAME.length);
+            UnsafeUtils.copyBytes(LOCAL_HOST_NAME, 0, targetString.getByteStorage(), 0, LOCAL_HOST_NAME.length);
             return receiver;
         }
     }
