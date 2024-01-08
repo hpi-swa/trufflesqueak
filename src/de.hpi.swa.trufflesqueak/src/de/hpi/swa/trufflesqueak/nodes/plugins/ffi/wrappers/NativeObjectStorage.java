@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 @ExportLibrary(InteropLibrary.class)
 public abstract class NativeObjectStorage implements PostPrimitiveCleanup, TruffleObject {
     protected long nativeAddress;
-    private boolean isAllocated = false;
+    private boolean isAllocated;
 
     public static NativeObjectStorage from(final NativeObject object) {
         if (object.isByteType()) {
