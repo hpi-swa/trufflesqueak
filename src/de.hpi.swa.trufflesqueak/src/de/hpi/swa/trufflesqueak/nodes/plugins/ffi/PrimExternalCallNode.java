@@ -14,7 +14,7 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
     final String moduleName;
     final String functionName;
     final int numReceiverAndArguments;
-    static Map<String, Object> loadedLibraries = new HashMap<>();
+    final static Map<String, Object> loadedLibraries = new HashMap<>();
 
     public PrimExternalCallNode(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         this.moduleName = moduleName;
