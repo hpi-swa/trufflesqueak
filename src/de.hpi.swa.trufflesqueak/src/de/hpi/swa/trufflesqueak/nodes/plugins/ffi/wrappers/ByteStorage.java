@@ -2,8 +2,8 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers;
 
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-public class ByteStorage extends NativeObjectStorage {
-    byte[] storage;
+public final class ByteStorage extends NativeObjectStorage {
+    final byte[] storage;
 
     public ByteStorage(final byte[] storage) {
         this.storage = storage;
