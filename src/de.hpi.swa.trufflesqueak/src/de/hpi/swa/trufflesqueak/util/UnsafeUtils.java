@@ -21,47 +21,45 @@ public final class UnsafeUtils {
     }
 
     private static boolean checkLongsOffset(final long[] array, final long offset) {
-        final long index = fromLongsOffset(offset);
-        return 0 <= index && index < array.length;
+        return inBounds(fromLongsOffset(offset), array.length);
     }
 
     private static boolean checkObjectsOffset(final Object[] array, final long offset) {
-        final long index = fromObjectsOffset(offset);
-        return 0 <= index && index < array.length;
+        return inBounds(fromObjectsOffset(offset), array.length);
     }
 
     public static void copyBytes(final byte[] src, final long srcPos, final byte[] dest, final long destPos, final long length) {
-        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        assert inBounds(srcPos, length, src.length) && inBounds(destPos, length, dest.length);
         UNSAFE.copyMemory(src, Unsafe.ARRAY_BYTE_BASE_OFFSET + srcPos * Unsafe.ARRAY_BYTE_INDEX_SCALE,
                         dest, Unsafe.ARRAY_BYTE_BASE_OFFSET + destPos * Unsafe.ARRAY_BYTE_INDEX_SCALE, Byte.BYTES * length);
     }
 
     public static void copyChars(final char[] src, final long srcPos, final char[] dest, final long destPos, final long length) {
-        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        assert inBounds(srcPos, length, src.length) && inBounds(destPos, length, dest.length);
         UNSAFE.copyMemory(src, Unsafe.ARRAY_CHAR_BASE_OFFSET + srcPos * Unsafe.ARRAY_CHAR_INDEX_SCALE,
                         dest, Unsafe.ARRAY_CHAR_BASE_OFFSET + destPos * Unsafe.ARRAY_CHAR_INDEX_SCALE, Character.BYTES * length);
     }
 
     public static void copyDoubles(final double[] src, final long srcPos, final double[] dest, final long destPos, final long length) {
-        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        assert inBounds(srcPos, length, src.length) && inBounds(destPos, length, dest.length);
         UNSAFE.copyMemory(src, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + srcPos * Unsafe.ARRAY_DOUBLE_INDEX_SCALE,
                         dest, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + destPos * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, Double.BYTES * length);
     }
 
     public static void copyInts(final int[] src, final long srcPos, final int[] dest, final long destPos, final long length) {
-        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        assert inBounds(srcPos, length, src.length) && inBounds(destPos, length, dest.length);
         UNSAFE.copyMemory(src, Unsafe.ARRAY_INT_BASE_OFFSET + srcPos * Unsafe.ARRAY_INT_INDEX_SCALE,
                         dest, Unsafe.ARRAY_INT_BASE_OFFSET + destPos * Unsafe.ARRAY_INT_INDEX_SCALE, Integer.BYTES * length);
     }
 
     public static void copyLongs(final long[] src, final long srcPos, final long[] dest, final long destPos, final long length) {
-        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        assert inBounds(srcPos, length, src.length) && inBounds(destPos, length, dest.length);
         UNSAFE.copyMemory(src, Unsafe.ARRAY_LONG_BASE_OFFSET + srcPos * Unsafe.ARRAY_LONG_INDEX_SCALE,
                         dest, Unsafe.ARRAY_LONG_BASE_OFFSET + destPos * Unsafe.ARRAY_LONG_INDEX_SCALE, Long.BYTES * length);
     }
 
     public static void copyShorts(final short[] src, final long srcPos, final short[] dest, final long destPos, final long length) {
-        assert 0 <= srcPos && srcPos + length <= src.length && 0 <= destPos && destPos + length <= dest.length;
+        assert inBounds(srcPos, length, src.length) && inBounds(destPos, length, dest.length);
         UNSAFE.copyMemory(src, Unsafe.ARRAY_SHORT_BASE_OFFSET + srcPos * Unsafe.ARRAY_SHORT_INDEX_SCALE,
                         dest, Unsafe.ARRAY_SHORT_BASE_OFFSET + destPos * Unsafe.ARRAY_SHORT_INDEX_SCALE, Short.BYTES * length);
     }
@@ -89,7 +87,7 @@ public final class UnsafeUtils {
     }
 
     public static boolean getBoolFromLongs(final long[] array, final long index) {
-        assert 0 <= index && index < array.length;
+        assert inBounds(index, array.length);
         return UNSAFE.getBoolean(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
     }
 
@@ -99,12 +97,12 @@ public final class UnsafeUtils {
     }
 
     public static byte getByte(final byte[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         return UNSAFE.getByte(storage, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static char getChar(final char[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         return UNSAFE.getChar(storage, Unsafe.ARRAY_CHAR_BASE_OFFSET + index * Unsafe.ARRAY_CHAR_INDEX_SCALE);
     }
 
@@ -118,7 +116,7 @@ public final class UnsafeUtils {
     }
 
     public static double getDouble(final double[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         return UNSAFE.getDouble(storage, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
     }
 
@@ -132,7 +130,7 @@ public final class UnsafeUtils {
     }
 
     public static int getInt(final int[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         return UNSAFE.getInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE);
     }
 
@@ -141,7 +139,7 @@ public final class UnsafeUtils {
     }
 
     public static long getLong(final long[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         return UNSAFE.getLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
     }
 
@@ -155,7 +153,7 @@ public final class UnsafeUtils {
     }
 
     public static Object getObject(final Object[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         return UNSAFE.getObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE);
     }
 
@@ -178,9 +176,16 @@ public final class UnsafeUtils {
     }
 
     public static short getShort(final short[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
-
+        assert inBounds(index, storage.length);
         return UNSAFE.getShort(storage, Unsafe.ARRAY_SHORT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
+    }
+
+    private static boolean inBounds(final long index, final long totalLength) {
+        return 0 <= index && index < totalLength;
+    }
+
+    private static boolean inBounds(final long start, final long length, final long totalLength) {
+        return 0 <= start && start + length <= totalLength;
     }
 
     private static Unsafe initUnsafe() {
@@ -209,12 +214,12 @@ public final class UnsafeUtils {
     }
 
     public static void putByte(final byte[] storage, final long index, final byte value) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         UNSAFE.putByte(storage, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putChar(final char[] storage, final long index, final char value) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         UNSAFE.putChar(storage, Unsafe.ARRAY_CHAR_BASE_OFFSET + index * Unsafe.ARRAY_CHAR_INDEX_SCALE, value);
     }
 
@@ -228,7 +233,7 @@ public final class UnsafeUtils {
     }
 
     public static void putDouble(final double[] storage, final long index, final double value) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         UNSAFE.putDouble(storage, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
     }
 
@@ -242,7 +247,7 @@ public final class UnsafeUtils {
     }
 
     public static void putInt(final int[] storage, final long index, final int value) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         UNSAFE.putInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
     }
 
@@ -251,7 +256,7 @@ public final class UnsafeUtils {
     }
 
     public static void putLong(final long[] storage, final long index, final long value) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         UNSAFE.putLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
     }
 
@@ -265,7 +270,7 @@ public final class UnsafeUtils {
     }
 
     public static void putObject(final Object[] storage, final long index, final Object value) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         UNSAFE.putObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE, value);
     }
 
@@ -284,7 +289,7 @@ public final class UnsafeUtils {
     }
 
     public static void putShort(final short[] storage, final long index, final short value) {
-        assert 0 <= index && index < storage.length;
+        assert inBounds(index, storage.length);
         UNSAFE.putShort(storage, Unsafe.ARRAY_SHORT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE, value);
     }
 
