@@ -127,9 +127,8 @@ public final class InterpreterProxy {
             INSTANCE = new InterpreterProxy(context, frame, numReceiverAndArguments);
             return INSTANCE;
         }
-        if (INSTANCE.context != context) {
-            throw new RuntimeException("InterpreterProxy does not support multiple SqueakImageContexts");
-        }
+        assert INSTANCE.context == context : "received new SqueakImageContext";
+
         INSTANCE.frame = frame;
         INSTANCE.numReceiverAndArguments = numReceiverAndArguments;
         return INSTANCE;
