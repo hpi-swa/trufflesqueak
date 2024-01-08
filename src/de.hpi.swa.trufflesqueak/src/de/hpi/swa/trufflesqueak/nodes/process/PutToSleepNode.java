@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
@@ -26,6 +27,13 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 @GenerateInline
 @GenerateCached(false)
 public abstract class PutToSleepNode extends AbstractNode {
+
+    public static final void executeUncached(final SqueakImageContext image, final PointersObject process) {
+        final long priority = (Long) process.instVarAt0Slow(PROCESS.PRIORITY);
+        final ArrayObject processLists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject processList = (PointersObject) processLists.getObject(priority - 1);
+        AddLastLinkToListNode.executeUncached(process, processList);
+    }
 
     public abstract void executePutToSleep(Node node, PointersObject process);
 

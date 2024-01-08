@@ -16,7 +16,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +53,7 @@ import de.hpi.swa.trufflesqueak.util.OS;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
-    private static final List<AttributeDescriptor<? extends Comparable<?>>> ENTRY_ATTRIBUTES = Arrays.asList(
+    private static final List<AttributeDescriptor<? extends Comparable<?>>> ENTRY_ATTRIBUTES = List.of(
                     TruffleFile.LAST_MODIFIED_TIME, TruffleFile.CREATION_TIME, TruffleFile.IS_DIRECTORY, TruffleFile.SIZE);
     private static final EnumSet<StandardOpenOption> OPTIONS_DEFAULT = EnumSet.of(StandardOpenOption.READ);
     private static final EnumSet<StandardOpenOption> OPTIONS_WRITEABLE = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
@@ -706,14 +705,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveHasFileAccess")
     protected abstract static class PrimHasFileAccessNode extends AbstractPrimitiveNode {
         @Specialization
-        @TruffleBoundary
         protected final boolean hasFileAccess(@SuppressWarnings("unused") final Object receiver) {
-            try {
-                getContext().env.getCurrentWorkingDirectory();
-                return BooleanObject.TRUE;
-            } catch (final SecurityException e) {
-                return BooleanObject.FALSE;
-            }
+            return BooleanObject.wrap(getContext().env.isFileIOAllowed());
         }
     }
 }

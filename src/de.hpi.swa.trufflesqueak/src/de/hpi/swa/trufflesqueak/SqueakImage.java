@@ -79,7 +79,7 @@ public final class SqueakImage implements TruffleObject {
 
     @ExportMessage
     public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
-        return image.evaluate("Smalltalk globals keys collect: [:ea | ea asString]");
+        return image.evaluateUninterruptably("Smalltalk globals keys collect: [:ea | ea asString]");
     }
 
     @ExportMessage

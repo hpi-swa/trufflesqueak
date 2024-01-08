@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
@@ -15,13 +16,14 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
-public abstract class CheckForInterruptsQuickNode extends Node {
+public abstract class CheckForInterruptsQuickNode extends AbstractNode {
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
-    public static CheckForInterruptsQuickNode create(final CompiledCodeObject code) {
+    public static final CheckForInterruptsQuickNode createForSend(final CompiledCodeObject code) {
         final SqueakImageContext image = code.getSqueakClass().getImage();
         /*
          * Only check for interrupts if method is relatively large. Avoid check if primitive method
@@ -34,12 +36,12 @@ public abstract class CheckForInterruptsQuickNode extends Node {
                         code.isCompiledBlock() || code.hasOuterMethod()) {
             return NoCheckForInterruptsNode.SINGLETON;
         } else {
-            return new CheckForInterruptsQuickImplNode(image);
+            return CheckForInterruptsQuickImplNode.SINGLETON;
         }
     }
 
-    public static CheckForInterruptsQuickNode create() {
-        return new CheckForInterruptsQuickImplNode(SqueakImageContext.getSlow());
+    public static final CheckForInterruptsQuickNode createForLoop() {
+        return CheckForInterruptsQuickImplNode.SINGLETON;
     }
 
     public abstract void execute(VirtualFrame frame);
@@ -69,34 +71,43 @@ public abstract class CheckForInterruptsQuickNode extends Node {
         }
     }
 
-    private static final class CheckForInterruptsQuickImplNode extends CheckForInterruptsQuickNode {
-        private final Object[] specialObjects;
-        private final CheckForInterruptsState istate;
+    @DenyReplace
+    public static final class CheckForInterruptsQuickImplNode extends CheckForInterruptsQuickNode {
+        private static final CheckForInterruptsQuickImplNode SINGLETON = new CheckForInterruptsQuickImplNode();
 
-        @Child private SignalSemaphoreNode signalSemaporeNode = SignalSemaphoreNode.create();
+        private CheckForInterruptsQuickImplNode() {
+        }
 
-        protected CheckForInterruptsQuickImplNode(final SqueakImageContext image) {
-            specialObjects = image.specialObjectsArray.getObjectStorage();
-            istate = image.interrupt;
+        @NeverDefault
+        public static CheckForInterruptsQuickImplNode create() {
+            return SINGLETON;
         }
 
         @Override
         public void execute(final VirtualFrame frame) {
-            if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot() || !istate.shouldTriggerNoTimer()) {
+            final SqueakImageContext image = getContext();
+            final CheckForInterruptsState istate = image.interrupt;
+            if (!istate.shouldTrigger()) {
                 return;
             }
             /* Exclude interrupts case from compilation. */
             CompilerDirectives.transferToInterpreter();
+            istate.resetTrigger();
+            final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
             if (istate.interruptPending()) {
                 LogUtils.INTERRUPTS.fine("User interrupt");
                 istate.interruptPending = false; // reset interrupt flag
-                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
             }
-            // Timer interrupts skipped
+            if (istate.nextWakeUpTickTrigger()) {
+                LogUtils.INTERRUPTS.fine("Timer interrupt");
+                istate.nextWakeupTick = 0; // reset timer interrupt
+                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            }
             if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
                 LogUtils.INTERRUPTS.fine("Finalization interrupt");
                 istate.setPendingFinalizations(false);
-                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
             }
             if (istate.hasSemaphoresToSignal()) {
                 LogUtils.INTERRUPTS.fine("Semaphore interrupt");
@@ -105,10 +116,25 @@ public abstract class CheckForInterruptsQuickNode extends Node {
                     final Object[] semaphores = externalObjects.getObjectStorage();
                     Integer semaIndex;
                     while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                        signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
+                        SignalSemaphoreNode.executeUncached(frame, image, semaphores[semaIndex - 1]);
                     }
                 }
             }
+        }
+
+        @Override
+        public boolean isAdoptable() {
+            return false;
+        }
+
+        @Override
+        public Node copy() {
+            return SINGLETON;
+        }
+
+        @Override
+        public Node deepCopy() {
+            return copy();
         }
     }
 }

@@ -64,7 +64,7 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static final String TEST_CLASS_PROPERTY = "squeakTests";
 
-    protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
+    private static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
 
     @Parameter public SqueakTest test;
 
@@ -109,19 +109,23 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             loadTruffleSqueakPackages();
         }
 
-        TestResult result = null;
+        TestResult result;
         try {
-            result = runTestCase(buildRequest());
+            result = runTestCase(test);
         } catch (final RuntimeException e) {
             e.printStackTrace();
             stopRunningSuite = true;
             throw e;
         }
         RuntimeException exceptionDuringReload = null;
-        if (!(result.passed && result.message.equals(PASSED_VALUE))) {
+        if (!(result.passed() && result.message().equals(PASSED_VALUE))) {
+            printlnErr("Closing current image context and reloading: " + result.message());
             try {
-                printlnErr("Closing current image context and reloading: " + result.message);
                 reloadImage();
+                if (test.type() == TestType.PASSING) {
+                    println("Retrying test that is expected to pass...");
+                    result = runTestCase(test);
+                }
             } catch (final RuntimeException e) {
                 exceptionDuringReload = e;
             }
@@ -138,48 +142,44 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private void checkTermination() {
-        Assume.assumeFalse("skipped", stopRunningSuite || test.type == TestType.IGNORED || test.type == TestType.NOT_TERMINATING || test.type == TestType.BROKEN_IN_SQUEAK);
-        if (test.type == TestType.SLOWLY_FAILING || test.type == TestType.SLOWLY_PASSING) {
+        Assume.assumeFalse("skipped", stopRunningSuite || test.type() == TestType.IGNORED || test.type() == TestType.NOT_TERMINATING || test.type() == TestType.BROKEN_IN_SQUEAK);
+        if (test.type() == TestType.SLOWLY_FAILING || test.type() == TestType.SLOWLY_PASSING) {
             assumeNotOnMXGate();
         }
     }
 
-    private TestRequest buildRequest() {
-        return new TestRequest(test.className, test.selector);
-    }
-
     private void checkResult(final TestResult result) throws Throwable {
-        switch (test.type) {
+        switch (test.type()) {
             case PASSING, SLOWLY_PASSING, EXPECTED_FAILURE -> {
-                if (result.reason != null) {
-                    throw result.reason;
+                if (result.reason() != null) {
+                    throw result.reason();
                 }
-                assertTrue(result.message, result.passed);
+                assertTrue(result.message(), result.passed());
             }
             case PASSING_WITH_NFI -> checkPassingIf(image.supportsNFI(), result);
-            case FAILING, SLOWLY_FAILING, BROKEN_IN_SQUEAK -> assertFalse(result.message, result.passed);
+            case FAILING, SLOWLY_FAILING, BROKEN_IN_SQUEAK -> assertFalse(result.message(), result.passed());
             case FLAKY -> {
                 // no verdict possible
             }
             case NOT_TERMINATING -> fail("This test unexpectedly terminated");
             case IGNORED -> fail("This test should never have been run");
-            default -> throw new IllegalArgumentException(test.type.toString());
+            default -> throw new IllegalArgumentException(test.type().toString());
         }
     }
 
     private static void checkPassingIf(final boolean check, final TestResult result) throws Throwable {
         if (check) {
-            if (result.reason != null) {
-                throw result.reason;
+            if (result.reason() != null) {
+                throw result.reason();
             }
-            assertTrue(result.message, result.passed);
+            assertTrue(result.message(), result.passed());
         } else {
-            assertFalse(result.message, result.passed);
+            assertFalse(result.message(), result.passed());
         }
     }
 
     private static boolean inTruffleSqueakPackage(final SqueakTest test) {
-        final String className = test.className;
+        final String className = test.className();
         for (final String testCaseName : TRUFFLESQUEAK_TEST_CASE_NAMES) {
             if (testCaseName.equals(className)) {
                 println("\nLoading TruffleSqueak packages (required by " + test + "). This may take a while...");
@@ -217,7 +217,7 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private static Map<TestType, Long> countByType(final Collection<SqueakTest> tests) {
-        return tests.stream().collect(groupingBy(t -> t.type, counting()));
+        return tests.stream().collect(groupingBy(SqueakTest::type, counting()));
     }
 
     private static void print(final TestType type, final Map<TestType, Long> counts, final String color) {
@@ -231,13 +231,11 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     protected static final class AnsiCodes {
-        protected static final String BOLD = "\033[1m";
-        protected static final String RED = "\033[31;1m";
-        protected static final String GREEN = "\033[32;1m";
-        protected static final String BLUE = "\033[34m";
-        protected static final String YELLOW = "\033[33;1m";
-        protected static final String RESET = "\033[0m";
-        protected static final String CLEAR = "\033[0K";
-        protected static final String CR = "\r";
+        private static final String BOLD = "\033[1m";
+        private static final String RED = "\033[31;1m";
+        private static final String GREEN = "\033[32;1m";
+        private static final String BLUE = "\033[34;1m";
+        private static final String YELLOW = "\033[33;1m";
+        private static final String RESET = "\033[0m";
     }
 }

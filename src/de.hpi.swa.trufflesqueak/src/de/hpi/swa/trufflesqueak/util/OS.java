@@ -14,7 +14,6 @@ public enum OS {
     Windows;
 
     private static final OS THE_OS = findOS();
-    private static final String SQUEAK_PLATFORM_NAME = findSqueakOSName();
 
     private static OS findOS() {
         final String name = System.getProperty("os.name");
@@ -38,8 +37,12 @@ public enum OS {
         };
     }
 
-    public static String getSqueakPlatformName() {
-        return SQUEAK_PLATFORM_NAME;
+    public static String findWindowSystemName() {
+        return switch (THE_OS) {
+            case macOS -> "Aqua";
+            case Windows -> "Windows";
+            case Linux -> "X11";
+        };
     }
 
     public static boolean isLinux() {

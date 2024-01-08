@@ -7214,9 +7214,9 @@ public final class B2D {
     }
 
     private static int toInt(final Object value) {
-        if (value instanceof Long longValue) {
+        if (value instanceof final Long longValue) {
             return longValue.intValue();
-        } else if (value instanceof Double doubleValue) {
+        } else if (value instanceof final Double doubleValue) {
             return doubleValue.intValue();
         } else if (value instanceof final FloatObject floatValue) {
             return (int) floatValue.getValue();

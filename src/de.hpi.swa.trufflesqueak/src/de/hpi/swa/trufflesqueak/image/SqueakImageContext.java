@@ -157,7 +157,6 @@ public final class SqueakImageContext {
     private ContextObject interopExceptionThrowingContextPrototype;
     public ContextObject lastSeenContext;
 
-    @CompilationFinal private ClassObject exceptionClass;
     @CompilationFinal private ClassObject fractionClass;
     private PointersObject parserSharedInstance;
     private AbstractSqueakObject requestorSharedInstanceOrNil;
@@ -181,8 +180,8 @@ public final class SqueakImageContext {
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         patch(environment);
-        options = new SqueakContextOptions(env);
-        isHeadless = options.isHeadless;
+        options = SqueakContextOptions.create(env.getOptions());
+        isHeadless = options.isHeadless();
         interrupt = new CheckForInterruptsState(this);
         allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
@@ -190,7 +189,7 @@ public final class SqueakImageContext {
         if (truffleLanguageHome != null) {
             homePath = env.getInternalTruffleFile(truffleLanguageHome);
         } else { /* Fall back to image directory if language home is not set. */
-            homePath = env.getInternalTruffleFile(options.imagePath).getParent();
+            homePath = env.getInternalTruffleFile(options.imagePath()).getParent();
         }
         assert homePath.exists() : "Home directory does not exist: " + homePath;
         initializeMethodCache();
@@ -209,7 +208,7 @@ public final class SqueakImageContext {
         if (squeakImage == null) {
             // Load image.
             SqueakImageReader.load(this);
-            if (options.disableStartup) {
+            if (options.disableStartup()) {
                 printToStdOut("Skipping startup routine...");
                 return;
             }
@@ -218,8 +217,8 @@ public final class SqueakImageContext {
                             "Remove active context."
                             Processor activeProcess instVarNamed: #suspendedContext put: nil.
 
-                            "Modify StartUpList for headless execution."
-                            {EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea].
+                            "Avoid interactive windows and instead exit on errors."
+                            %s ifFalse: [ ToolSet default: CommandLineToolSet ].
 
                             "Start up image (see SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:)."
                             Smalltalk
@@ -232,15 +231,14 @@ public final class SqueakImageContext {
                             Utilities
                                 authorName: 'TruffleSqueak';
                                 setAuthorInitials: 'TruffleSqueak'.
-
-                            "Initialize fresh MorphicUIManager."
-                            Project current instVarNamed: #uiManager put: MorphicUIManager new.
-                            """;
+                            """.formatted(Boolean.toString(options.isTesting()));
             try {
                 evaluate(prepareHeadlessImageScript);
             } catch (final Exception e) {
                 printToStdErr("startUpList failed:");
                 printToStdErr(e);
+            } finally {
+                interrupt.clear();
             }
         }
     }
@@ -256,6 +254,19 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public Object evaluate(final String sourceCode) {
         return getDoItContextNode(sourceCode, false).getCallTarget().call();
+    }
+
+    @TruffleBoundary
+    public Object evaluateUninterruptably(final String sourceCode) {
+        final boolean wasActive = interrupt.isActive();
+        interrupt.deactivate();
+        try {
+            return evaluate(sourceCode);
+        } finally {
+            if (wasActive) {
+                interrupt.activate();
+            }
+        }
     }
 
     @TruffleBoundary
@@ -293,7 +304,7 @@ public final class SqueakImageContext {
                 sourceCode = String.format("[ :%s | %s ]", String.join(" :", request.getArgumentNames()), source.getCharacters().toString());
             }
         }
-        return DoItRootNode.create(this, language, evaluate(sourceCode));
+        return DoItRootNode.create(this, language, evaluateUninterruptably(sourceCode));
     }
 
     private static boolean isFileInFormat(final Source source) {
@@ -359,8 +370,8 @@ public final class SqueakImageContext {
      */
     public ContextObject getInteropExceptionThrowingContext() {
         if (interopExceptionThrowingContextPrototype == null) {
-            assert evaluate("Interop") != NilObject.SINGLETON : "Interop class must be present";
-            final CompiledCodeObject onDoMethod = (CompiledCodeObject) evaluate("BlockClosure>>#on:do:");
+            assert evaluateUninterruptably("Interop") != NilObject.SINGLETON : "Interop class must be present";
+            final CompiledCodeObject onDoMethod = (CompiledCodeObject) evaluateUninterruptably("BlockClosure>>#on:do:");
             interopExceptionThrowingContextPrototype = ContextObject.create(this, onDoMethod.getSqueakContextSize());
             interopExceptionThrowingContextPrototype.setCodeObject(onDoMethod);
             interopExceptionThrowingContextPrototype.setReceiver(NilObject.SINGLETON);
@@ -368,12 +379,12 @@ public final class SqueakImageContext {
              * Need to catch all exceptions here. Otherwise, the contexts sender is used to find the
              * next handler context (see Context>>#nextHandlerContext).
              */
-            interopExceptionThrowingContextPrototype.atTempPut(0, evaluate("Exception"));
+            interopExceptionThrowingContextPrototype.atTempPut(0, evaluateUninterruptably("Exception"));
             /*
              * Throw Error and Halt as interop, ignore warnings, handle all other exceptions the
              * usual way via UndefinedObject>>#handleSignal:.
              */
-            interopExceptionThrowingContextPrototype.atTempPut(1, evaluate(
+            interopExceptionThrowingContextPrototype.atTempPut(1, evaluateUninterruptably(
                             "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] " +
                                             "ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
             interopExceptionThrowingContextPrototype.atTempPut(2, BooleanObject.TRUE);
@@ -551,14 +562,6 @@ public final class SqueakImageContext {
         debugSyntaxErrorSelector = nativeObject;
     }
 
-    public ClassObject getExceptionClass() {
-        if (exceptionClass == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            exceptionClass = (ClassObject) evaluate("Exception");
-        }
-        return exceptionClass;
-    }
-
     public ClassObject getByteSymbolClass() {
         return byteSymbolClass;
     }
@@ -666,7 +669,7 @@ public final class SqueakImageContext {
     public String getImagePath() {
         if (imagePath == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            setImagePath(SqueakImageLocator.findImage(options.imagePath));
+            setImagePath(SqueakImageLocator.findImage(options.imagePath()));
         }
         return imagePath;
     }
@@ -686,8 +689,8 @@ public final class SqueakImageContext {
     }
 
     public String[] getImageArguments() {
-        if (options.imageArguments.length > 0) {
-            return options.imageArguments;
+        if (options.imageArguments().length > 0) {
+            return options.imageArguments();
         } else {
             return env.getApplicationArguments();
         }
@@ -702,7 +705,7 @@ public final class SqueakImageContext {
     }
 
     public boolean interruptHandlerDisabled() {
-        return options.disableInterruptHandler;
+        return options.disableInterruptHandler();
     }
 
     public boolean isHeadless() {
@@ -717,11 +720,11 @@ public final class SqueakImageContext {
     }
 
     public boolean isTesting() {
-        return options.isTesting;
+        return options.isTesting();
     }
 
     public void finalizeContext() {
-        if (options.printResourceSummary) {
+        if (options.printResourceSummary()) {
             MiscUtils.printResourceSummary(this);
         }
     }
@@ -979,7 +982,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public void printToStdOut(final String string) {
-        if (!options.isQuiet) {
+        if (!options.isQuiet()) {
             getOutput().println("[trufflesqueak] " + string);
         }
     }

@@ -115,28 +115,24 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public String getClassName() {
         if (image.isMetaClass(getSqueakClass())) {
             final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.SIZE];
-            if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] != NilObject.SINGLETON) {
-                return ((ClassObject) classInstance).getClassNameUnsafe() + " class";
+            if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] instanceof final NativeObject metaClassName) {
+                return metaClassName.asStringUnsafe() + " class";
             } else {
                 return "Unknown metaclass";
             }
         } else if (isAClassTrait()) {
             final ClassObject traitInstance = (ClassObject) pointers[CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE];
-            if (traitInstance.pointers[CLASS.NAME] != NilObject.SINGLETON) {
-                return traitInstance.getClassNameUnsafe() + " classTrait";
+            if (traitInstance.pointers[CLASS.NAME] instanceof final NativeObject traitClassName) {
+                return traitClassName.asStringUnsafe() + " classTrait";
             } else {
                 return "Unknown classTrait";
             }
-        } else if (size() >= 10 && pointers[CLASS.NAME] != NilObject.SINGLETON) {
+        } else if (size() >= CLASS.NAME && pointers[CLASS.NAME] instanceof final NativeObject className) {
             // this also works for traits, since TRAIT.NAME == CLASS.NAME
-            return getClassNameUnsafe();
+            return className.asStringUnsafe();
         } else {
             return "Unknown behavior";
         }
-    }
-
-    public String getClassNameUnsafe() {
-        return ((NativeObject) pointers[CLASS.NAME]).asStringUnsafe();
     }
 
     public ArrayObject getSubclasses() {
@@ -244,8 +240,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean includesExternalFunctionBehavior(final SqueakImageContext i) {
         final Object externalFunctionClass = i.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
-        if (externalFunctionClass instanceof ClassObject) {
-            return includesBehavior((ClassObject) i.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
+        if (externalFunctionClass instanceof final ClassObject efc) {
+            return includesBehavior(efc);
         } else {
             return false;
         }
@@ -435,7 +431,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (methodDict == thang) {
             return true;
         }
-        if (thang instanceof Long && format == (long) thang) {
+        if (thang instanceof final Long l && format == l) {
             return true;
         }
         if (instanceVariables == thang) {

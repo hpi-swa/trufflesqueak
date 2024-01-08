@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -66,6 +65,6 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return Arrays.asList(PrimCanWriteImageNode.class, PrimGetUntrustedUserDirectoryNode.class);
+        return List.of(PrimCanWriteImageNode.class, PrimGetUntrustedUserDirectoryNode.class);
     }
 }

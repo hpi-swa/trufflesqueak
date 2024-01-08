@@ -36,8 +36,8 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
     protected final Object doHandle(final VirtualFrame frame, final NonLocalReturn nlr,
                     @Bind("this") final Node node,
                     @Cached final InlinedConditionProfile hasModifiedSenderProfile) {
+        aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
         if (hasModifiedSenderProfile.profile(node, FrameAccess.hasModifiedSender(frame))) {
-            aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
             // Sender might have changed.
             final ContextObject newSender = FrameAccess.getSenderContext(frame);
             final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
@@ -45,7 +45,6 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
             // TODO: `target == newSender` may could use special handling?
             throw new NonVirtualReturn(nlr.getReturnValue(), target, newSender);
         } else {
-            aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
             FrameAccess.terminate(frame);
             throw nlr;
         }

@@ -7,7 +7,6 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -120,6 +119,6 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return Arrays.asList(PrimScreenScaleFactorNode.class, PrimHighResClockNode.class, PrimMultipleBytecodeSetsActive0Node.class, PrimUtcWithOffset1Node.class);
+        return List.of(PrimScreenScaleFactorNode.class, PrimHighResClockNode.class, PrimMultipleBytecodeSetsActive0Node.class, PrimUtcWithOffset1Node.class);
     }
 }

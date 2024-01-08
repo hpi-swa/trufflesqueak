@@ -383,10 +383,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         } else {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex < bytes.length;
-            if (obj instanceof Integer) {
-                bytes[realIndex] = (byte) (int) obj;
-            } else if (obj instanceof Long) {
-                bytes[realIndex] = (byte) (long) obj;
+            if (obj instanceof final Integer i) {
+                bytes[realIndex] = i.byteValue();
+            } else if (obj instanceof final Long l) {
+                bytes[realIndex] = l.byteValue();
             } else {
                 bytes[realIndex] = (byte) obj;
             }

@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -715,6 +714,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return Arrays.asList(PrimSpecialObjectsArrayNode.class, PrimSomeObjectNode.class);
+        return List.of(PrimSpecialObjectsArrayNode.class, PrimSomeObjectNode.class);
     }
 }

@@ -145,17 +145,8 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary
     public void setBytes(final SqueakImageContext image, final LargeIntegerObject src, final int srcPos, final int destPos, final int length) {
-        final byte[] bytes;
         final byte[] srcBytes = toBigEndianBytes(src.integer);
-        final byte[] bigIntegerBytes = toBigEndianBytes(integer);
-        final int offset = bigIntegerBytes[0] != 0 ? 0 : 1;
-        final int bigIntegerBytesActualLength = bigIntegerBytes.length - offset;
-        if (bigIntegerBytesActualLength < destPos + length) {
-            bytes = new byte[size()];
-            System.arraycopy(bigIntegerBytes, offset, bytes, 0, bigIntegerBytesActualLength);
-        } else {
-            bytes = bigIntegerBytes;
-        }
+        final byte[] bytes = getBigIntegerBytes(destPos, length);
         System.arraycopy(srcBytes, srcBytes.length - length - srcPos, bytes, bytes.length - length - destPos, length);
         integer = new BigInteger(isPositive(image) ? 1 : -1, bytes);
         bitLength = integer.bitLength();
@@ -163,22 +154,27 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary
     public void setBytes(final SqueakImageContext image, final byte[] srcBytes, final int srcPos, final int destPos, final int length) {
+        final byte[] bytes = getBigIntegerBytes(destPos, length);
         // destination bytes are big-endian, source bytes are not
-        final byte[] bytes;
+        for (int i = 0; i < length; i++) {
+            bytes[bytes.length - 1 - (destPos + i)] = srcBytes[srcPos + i];
+        }
+        integer = new BigInteger(isPositive(image) ? 1 : -1, bytes);
+        bitLength = integer.bitLength();
+    }
+
+    private byte[] getBigIntegerBytes(final int destPos, final int length) {
         final byte[] bigIntegerBytes = toBigEndianBytes(integer);
         final int offset = bigIntegerBytes[0] != 0 ? 0 : 1;
         final int bigIntegerBytesActualLength = bigIntegerBytes.length - offset;
+        final byte[] bytes;
         if (bigIntegerBytesActualLength < destPos + length) {
             bytes = new byte[size()];
             System.arraycopy(bigIntegerBytes, offset, bytes, 0, bigIntegerBytesActualLength);
         } else {
             bytes = bigIntegerBytes;
         }
-        for (int i = 0; i < length; i++) {
-            bytes[bytes.length - 1 - (destPos + i)] = srcBytes[srcPos + i];
-        }
-        integer = new BigInteger(isPositive(image) ? 1 : -1, bytes);
-        bitLength = integer.bitLength();
+        return bytes;
     }
 
     @Override

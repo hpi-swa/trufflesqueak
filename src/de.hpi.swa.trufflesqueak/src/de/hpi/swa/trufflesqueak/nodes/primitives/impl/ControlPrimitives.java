@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -82,7 +81,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendHead
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSyntaxErrorNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNodeFactory.DispatchSendSelectorNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsFullNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
@@ -388,7 +387,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), receiver);
                 try {
-                    wakeHighestPriorityNode.executeWake(frame, node);
+                    throw wakeHighestPriorityNode.executeWake(frame, node);
                 } catch (final ProcessSwitch ps) {
                     /*
                      * Leave receiver on stack. It has not been removed from the stack yet, so it is
@@ -397,7 +396,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     getFrameStackPointerIncrementNode().execute(frame);
                     throw ps;
                 }
-                throw CompilerDirectives.shouldNotReachHere();
             }
         }
     }
@@ -441,13 +439,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
             try {
-                wakeHighestPriorityNode.executeWake(frame, node);
+                throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
                 /* Leave `nil` as result on stack. */
                 pushNode.execute(frame, NilObject.SINGLETON);
                 throw ps;
             }
-            throw CompilerDirectives.shouldNotReachHere();
         }
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
@@ -458,11 +455,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final Object myListOrNil = readNode.execute(node, receiver, PROCESS.LIST);
-            if (myListOrNil == NilObject.SINGLETON) {
+            if (!(myListOrNil instanceof final PointersObject myList)) {
                 CompilerDirectives.transferToInterpreter();
+                assert myListOrNil == NilObject.SINGLETON;
                 throw PrimitiveFailed.BAD_RECEIVER;
             }
-            final PointersObject myList = (PointersObject) myListOrNil;
             removeProcessNode.executeRemove(receiver, myList, readNode, writeNode, node);
             writeNode.execute(node, receiver, PROCESS.LIST, NilObject.SINGLETON);
             return myList;
@@ -480,13 +477,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
             try {
-                wakeHighestPriorityNode.executeWake(frame, node);
+                throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
                 /* Leave `nil` as result on stack. */
                 pushNode.execute(frame, NilObject.SINGLETON);
                 throw ps;
             }
-            return NilObject.SINGLETON;
         }
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
@@ -939,7 +935,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             addLastLinkToListNode.execute(node, activeProcess, processList);
             try {
-                wakeHighestPriorityNode.executeWake(frame, node);
+                throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
                 /*
                  * Leave receiver on stack. It has not been removed from the stack yet, so it is
@@ -948,7 +944,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 getFrameStackPointerIncrementNode().execute(frame);
                 throw ps;
             }
-            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 
@@ -1061,13 +1056,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached(inline = false) final FrameStackPushNode pushNode) {
             addLastLinkToListNode.execute(node, effectiveProcess, mutex);
             try {
-                wakeHighestPriorityNode.executeWake(frame, node);
+                throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
                 /* Leave `false` as result on stack. */
                 pushNode.execute(frame, BooleanObject.FALSE);
                 throw ps;
             }
-            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 
@@ -1246,7 +1240,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveStackIncrementNode implements BinaryPrimitiveFallback {
         @Specialization
         protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
-                        @Cached final CheckForInterruptsNode interruptNode) {
+                        @Cached final CheckForInterruptsFullNode interruptNode) {
             MiscUtils.sleep(timeMicroseconds / 1000);
             /*
              * Perform interrupt check (even if interrupt handler is not active), otherwise
@@ -1396,7 +1390,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return Arrays.asList(
+        return List.of(
                         PrimQuickReturnTrueNode.class,
                         PrimQuickReturnFalseNode.class,
                         PrimQuickReturnNilNode.class,

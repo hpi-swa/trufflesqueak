@@ -38,7 +38,7 @@ public abstract class DoItRootNode extends RootNode {
     protected final Object doIt(final VirtualFrame frame,
                     @Bind("this") final Node node,
                     @Cached final WrapToSqueakNode wrapNode) {
-        if (!(maybeClosure instanceof BlockClosureObject closure)) {
+        if (!(maybeClosure instanceof final BlockClosureObject closure)) {
             return NilObject.SINGLETON;
 
         }

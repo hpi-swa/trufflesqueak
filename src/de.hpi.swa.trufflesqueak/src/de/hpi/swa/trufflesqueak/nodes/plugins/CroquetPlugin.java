@@ -42,6 +42,7 @@ public final class CroquetPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doMD5(@SuppressWarnings("unused") final Object receiver, final NativeObject buffer, final NativeObject hash) {
             final int[] in = buffer.getIntStorage();
             final int[] hashInts = hash.getIntStorage();
+
             int a = hashInts[0];
             int b = hashInts[1];
             int c = hashInts[2];

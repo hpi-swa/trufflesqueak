@@ -40,20 +40,19 @@ public final class CheckForInterruptsState {
      * the interrupt handler mechanism, we can use a standard boolean here for better compilation.
      */
     private boolean shouldTrigger;
-    private boolean shouldTriggerNoTimer;
 
     private ScheduledFuture<?> interruptChecks;
 
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
-        if (image.options.disableInterruptHandler) {
+        if (image.options.disableInterruptHandler()) {
             image.printToStdOut("Interrupt handler disabled...");
         }
     }
 
     @TruffleBoundary
     public void start() {
-        if (image.options.disableInterruptHandler) {
+        if (image.options.disableInterruptHandler()) {
             return;
         }
         executor = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -63,8 +62,7 @@ public final class CheckForInterruptsState {
         });
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
             if (!shouldTrigger) {
-                shouldTrigger = isActive && (nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
-                shouldTriggerNoTimer = isActive && (pendingFinalizationSignals() || hasSemaphoresToSignal());
+                shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal());
             }
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
@@ -79,7 +77,6 @@ public final class CheckForInterruptsState {
     public void setInterruptPending() {
         interruptPending = true;
         shouldTrigger = isActive;
-        shouldTriggerNoTimer = isActive;
     }
 
     public void setNextWakeupTick(final long msTime) {
@@ -107,7 +104,7 @@ public final class CheckForInterruptsState {
 
     public void deactivate() {
         isActive = false;
-        resetTriggers();
+        resetTrigger();
     }
 
     protected boolean interruptPending() {
@@ -154,31 +151,30 @@ public final class CheckForInterruptsState {
         return shouldTrigger;
     }
 
-    public boolean shouldTriggerNoTimer() {
-        return shouldTriggerNoTimer;
-    }
-
-    private void resetTriggers() {
+    public void resetTrigger() {
         shouldTrigger = false;
-        shouldTriggerNoTimer = false;
     }
 
     /*
      * TESTING
      */
 
-    public void reset() {
-        CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
-        isActive = true;
+    public void clear() {
         nextWakeupTick = 0;
-        if (interruptChecks != null) {
-            interruptChecks.cancel(true);
-        }
-        shutdown();
         interruptPending = false;
         pendingFinalizationSignals = false;
         clearWeakPointersQueue();
         semaphoresToSignal.clear();
+    }
+
+    public void reset() {
+        CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
+        isActive = true;
+        if (interruptChecks != null) {
+            interruptChecks.cancel(true);
+        }
+        shutdown();
+        clear();
     }
 
     private void clearWeakPointersQueue() {

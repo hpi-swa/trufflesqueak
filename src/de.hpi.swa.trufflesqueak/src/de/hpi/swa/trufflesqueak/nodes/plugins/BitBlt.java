@@ -1310,8 +1310,8 @@ public final class BitBlt {
                 dy1 = -1;
             }
         }
-        final long px = Math.abs(yDelta);
-        final long py = Math.abs(xDelta);
+        final int px = Math.abs(MiscUtils.toIntExact(yDelta));
+        final int py = Math.abs(MiscUtils.toIntExact(xDelta));
         /* init null rectangle */
         int affL = 9999;
         int affR = -9999;
@@ -1319,7 +1319,7 @@ public final class BitBlt {
         int affB = -9999;
         if (py > px) {
             /* more horizontal */
-            long p = py / 2;
+            int p = py / 2;
             for (int i = 1; i <= py; i++) {
                 destX += dx1;
                 if ((p -= px) < 0) {
@@ -1353,7 +1353,7 @@ public final class BitBlt {
             }
         } else {
             /* more vertical */
-            long p = px / 2;
+            int p = px / 2;
             for (int i = 1; i <= px; i++) {
                 destY += dy1;
                 if ((p -= py) < 0) {
@@ -1436,16 +1436,16 @@ public final class BitBlt {
     /* BitBltSimulation>>#fetchIntOrFloat:ofObject: */
     private static int fetchIntOrFloatofObject(final int fieldIndex, final PointersObject objectPointer) {
         final Object fieldOop = fetchPointerofObject(fieldIndex, objectPointer);
-        if (fieldOop instanceof Long) {
-            final long longValue = (long) fieldOop;
-            if (Integer.MIN_VALUE <= longValue && longValue <= Integer.MAX_VALUE) {
-                return (int) longValue;
+        if (fieldOop instanceof final Long longValue) {
+            final int intValue = longValue.intValue();
+            if (intValue == longValue) {
+                return intValue;
             }
             throw PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         } else if (fieldOop instanceof final FloatObject o) {
             return floatToLong(o.getValue());
-        } else if (fieldOop instanceof Double) {
-            return floatToLong((double) fieldOop);
+        } else if (fieldOop instanceof final Double d) {
+            return floatToLong(d);
         }
         /* Fail if the value is not an int or float (e.g. Fraction). */
         throw PrimitiveFailed.andTransferToInterpreter();
@@ -1467,10 +1467,10 @@ public final class BitBlt {
     /* BitBltSimulation>>#fetchIntOrFloat:ofObject:ifNil: */
     private static int fetchIntOrFloatofObjectifNil(final int fieldIndex, final PointersObject objectPointer, final long defaultValue) {
         final Object fieldOop = fetchPointerofObject(fieldIndex, objectPointer);
-        if (fieldOop instanceof Long) {
-            final long longValue = (long) fieldOop;
-            if ((int) longValue == longValue) {
-                return (int) longValue;
+        if (fieldOop instanceof final Long longValue) {
+            final int intValue = longValue.intValue();
+            if (intValue == longValue) {
+                return intValue;
             } else {
                 throw PrimitiveFailed.andTransferToInterpreter(); // Fail because longValue is too
                                                                   // big.
@@ -1478,8 +1478,8 @@ public final class BitBlt {
         }
         if (fieldOop == NilObject.SINGLETON) {
             return (int) defaultValue;
-        } else if (fieldOop instanceof Double) {
-            return floatToLong((double) fieldOop);
+        } else if (fieldOop instanceof final Double d) {
+            return floatToLong(d);
         } else if (fieldOop instanceof final FloatObject o) {
             return floatToLong(o.getValue());
         }
@@ -1616,7 +1616,7 @@ public final class BitBlt {
             destDepth = -destDepth;
         }
         final Object destBitsValue = fetchPointerofObject(FORM.BITS, destForm);
-        if (!(destBitsValue instanceof NativeObject destBitsNative && (isWords(destBitsNative) || isBytes(destBitsNative)))) {
+        if (!(destBitsValue instanceof final NativeObject destBitsNative && (isWords(destBitsNative) || isBytes(destBitsNative)))) {
             if (destBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
@@ -1742,7 +1742,7 @@ public final class BitBlt {
             sourceDepth = -sourceDepth;
         }
         final Object sourceBitsValue = fetchPointerofObject(FORM.BITS, sourceForm);
-        if (!(sourceBitsValue instanceof NativeObject sourceBitsNative && (isWords(sourceBitsNative) || isBytes(sourceBitsNative)))) {
+        if (!(sourceBitsValue instanceof final NativeObject sourceBitsNative && (isWords(sourceBitsNative) || isBytes(sourceBitsNative)))) {
             if (sourceBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
@@ -1797,7 +1797,7 @@ public final class BitBlt {
             oldStyle = true;
         } else {
             /* A new-style color map (fully qualified) */
-            if (!(cmOop instanceof PointersObject cmOopPointers && slotSizeOf(cmOopPointers) >= 3)) {
+            if (!(cmOop instanceof final PointersObject cmOopPointers && slotSizeOf(cmOopPointers) >= 3)) {
                 return false;
             }
             cmShiftTable = loadColorMapShiftOrMaskFrom(fetchNativeofObjectOrNull(0, cmOopPointers));
@@ -1867,7 +1867,7 @@ public final class BitBlt {
             return true;
         }
         final NativeObject halftoneBitsValue;
-        if (halftoneForm instanceof VariablePointersObject hfvpo && slotSizeOf(hfvpo) >= 4) {
+        if (halftoneForm instanceof final VariablePointersObject hfvpo && slotSizeOf(hfvpo) >= 4) {
             /* Old-style 32xN monochrome halftone Forms */
             halftoneBitsValue = fetchNativeofObjectOrNull(FORM.BITS, hfvpo);
             halftoneHeight = fetchIntegerofObject(FORM.HEIGHT, hfvpo);
@@ -1878,7 +1878,7 @@ public final class BitBlt {
             }
         } else {
             /* New spec accepts, basically, a word array */
-            if (!(halftoneForm instanceof NativeObject hfno && isWords(hfno))) {
+            if (!(halftoneForm instanceof final NativeObject hfno && isWords(hfno))) {
                 return false;
             }
             halftoneBitsValue = hfno;
@@ -3759,8 +3759,8 @@ public final class BitBlt {
 
     private static int fetchIntegerofObject(final int index, final AbstractPointersObject object) {
         final Object value = fetchPointerofObject(index, object);
-        if (value instanceof Long) {
-            return MiscUtils.toIntExact((long) value);
+        if (value instanceof final Long l) {
+            return MiscUtils.toIntExact(l);
         } else {
             throw PrimitiveFailed.andTransferToInterpreter();
         }

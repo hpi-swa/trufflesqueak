@@ -19,7 +19,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
-import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsQuickNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives.AbstractClosurePrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -152,7 +152,7 @@ public final class JumpBytecodes {
     }
 
     protected static final class UnconditionalJumpWithCheckNode extends AbstractUnconditionalJumpNode {
-        @Child private CheckForInterruptsNode interruptHandlerNode = CheckForInterruptsNode.create();
+        @Child private CheckForInterruptsQuickNode interruptHandlerNode = CheckForInterruptsQuickNode.createForLoop();
 
         protected UnconditionalJumpWithCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes, offset);

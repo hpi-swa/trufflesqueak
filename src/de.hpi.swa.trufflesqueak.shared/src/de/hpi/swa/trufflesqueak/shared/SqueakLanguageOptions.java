@@ -34,9 +34,6 @@ public final class SqueakLanguageOptions {
     public static final String RESOURCE_SUMMARY_HELP = "Print resource summary on context exit";
     public static final String SIGNAL_INPUT_SEMAPHORE = "signal-input-semaphore";
     public static final String SIGNAL_INPUT_SEMAPHORE_HELP = "Signal the input semaphore";
-    public static final String STACK_DEPTH_PROTECTION = "stack-depth-protection";
-    public static final String STACK_DEPTH_PROTECTION_FLAG = "--" + STACK_DEPTH_PROTECTION;
-    public static final String STACK_DEPTH_PROTECTION_HELP = "Enable stack depth protection";
     public static final String STARTUP = "disable-startup";
     public static final String STARTUP_HELP = "Disable image startup routine in headless mode";
     public static final String TESTING = "testing";

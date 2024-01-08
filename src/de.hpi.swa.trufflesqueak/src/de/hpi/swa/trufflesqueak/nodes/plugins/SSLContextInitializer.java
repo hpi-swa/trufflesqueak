@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
-import static java.util.Arrays.asList;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -135,8 +133,8 @@ public final class SSLContextInitializer {
         final TrustManagerFactory systemFactory = prepareSystemTrustMangerFactory();
 
         final List<TrustManager> trustManagers = new ArrayList<>(
-                        asList(customFactory.getTrustManagers()));
-        trustManagers.addAll(asList(systemFactory.getTrustManagers()));
+                        List.of(customFactory.getTrustManagers()));
+        trustManagers.addAll(List.of(systemFactory.getTrustManagers()));
         return new TrustManager[]{new CompositeTrustManager(trustManagers)};
     }
 
@@ -233,7 +231,7 @@ public final class SSLContextInitializer {
         public X509Certificate[] getAcceptedIssuers() {
             final List<X509Certificate> certificates = new ArrayList<>();
             for (final X509TrustManager manager : managers) {
-                certificates.addAll(asList(manager.getAcceptedIssuers()));
+                certificates.addAll(List.of(manager.getAcceptedIssuers()));
             }
             return certificates.toArray(new X509Certificate[0]);
         }

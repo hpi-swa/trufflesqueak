@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class SqueakTests {
 
-    protected static final Pattern TEST_CASE = Pattern.compile("(\\w+)>>(\\w+)");
+    private static final Pattern TEST_CASE = Pattern.compile("(\\w+)>>(\\w+)");
     private static final Pattern TEST_CASE_LINE = Pattern.compile("^" + TEST_CASE.pattern());
     private static final String FILENAME = "tests.properties";
     private static final String TEST_TYPE_PREFIX_LINUX = "LINUX_";
@@ -57,19 +57,8 @@ public final class SqueakTests {
         }
     }
 
-    protected static final class SqueakTest {
-
-        protected final TestType type;
-        protected final String className;
-        protected final String selector;
-
-        protected SqueakTest(final TestType type, final String className, final String selector) {
-            this.type = type;
-            this.className = className;
-            this.selector = selector;
-        }
-
-        protected String qualifiedName() {
+    protected record SqueakTest(TestType type, String className, String selector) {
+        private String qualifiedName() {
             return className + ">>#" + selector;
         }
 
@@ -78,7 +67,7 @@ public final class SqueakTests {
             return (type == null ? "" : type.getMessage() + ": ") + className + ">>" + selector;
         }
 
-        protected boolean nameEquals(final SqueakTest test) {
+        private boolean nameEquals(final SqueakTest test) {
             return className.equals(test.className) && selector.equals(test.selector);
         }
     }
@@ -86,8 +75,8 @@ public final class SqueakTests {
     private SqueakTests() {
     }
 
-    protected static Stream<SqueakTest> getTestsToRun(final String filterExpression) {
-        final List<SqueakTest> tests = allTests().filter(getTestFilter(filterExpression)).collect(toList());
+    public static Stream<SqueakTest> getTestsToRun(final String filterExpression) {
+        final List<SqueakTest> tests = allTests().filter(getTestFilter(filterExpression)).toList();
         if (tests.isEmpty()) {
             throw new IllegalArgumentException("No test cases found for filter expression '" + filterExpression + "'");
         }
@@ -111,7 +100,11 @@ public final class SqueakTests {
     }
 
     private static List<String> rawTestNames() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(SqueakTests.class.getResourceAsStream(FILENAME)))) {
+        final InputStream testMapResource = SqueakTests.class.getResourceAsStream(FILENAME);
+        if (testMapResource == null) {
+            throw new IllegalStateException("Unable to find " + FILENAME);
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(testMapResource))) {
             return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).collect(toList());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -133,12 +126,12 @@ public final class SqueakTests {
             printError("Image reported duplicate tests");
             return false;
         }
-        mapTestNameSet.removeAll(imageTestNameList);
+        imageTestNameList.forEach(mapTestNameSet::remove);
         if (!mapTestNameSet.isEmpty()) {
             printError("Additional tests in test.properties:\n" + String.join("\n", mapTestNameSet));
             return false;
         }
-        imageTestNameSet.removeAll(mapTestNameList);
+        mapTestNameList.forEach(imageTestNameSet::remove);
         if (!imageTestNameSet.isEmpty()) {
             printError("Additional tests in image:\n" + String.join("\n", imageTestNameSet));
             return false;
@@ -147,14 +140,14 @@ public final class SqueakTests {
     }
 
     // Checkstyle: stop
-    protected static void printError(final String value) {
+    private static void printError(final String value) {
         System.err.println(value);
         System.err.flush();
     }
     // Checkstyle: resume
 
     // Checkstyle: stop
-    protected static Stream<SqueakTest> allTests() {
+    public static Stream<SqueakTest> allTests() {
         final Properties properties = loadProperties();
         return properties.stringPropertyNames().stream() //
                         .map(test -> parseTest(test, properties.getProperty(test))) //

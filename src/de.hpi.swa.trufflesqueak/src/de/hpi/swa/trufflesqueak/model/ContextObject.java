@@ -19,17 +19,12 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -404,7 +399,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean canBeReturnedTo() {
-        return getInstructionPointerForBytecodeLoop() >= 0 && getFrameSender() != NilObject.SINGLETON;
+        return !isDead() && getFrameSender() != NilObject.SINGLETON;
     }
 
     public ContextObject shallowCopy() {
@@ -504,25 +499,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             arguments[1 + i] = atTemp(i);
         }
         return arguments;
-    }
-
-    public void transferTo(final SqueakImageContext image, final PointersObject newProcess, final ContextObject newActiveContext, final AbstractPointersObjectWriteNode writeNode,
-                    final GetActiveProcessNode getActiveProcessNode, final Node inlineTarget) {
-        // Record a process to be awakened on the next interpreter cycle.
-        final PointersObject scheduler = image.getScheduler();
-        assert newProcess != getActiveProcessNode.execute(inlineTarget) : "trying to switch to already active process";
-        // overwritten in next line.
-        final PointersObject oldProcess = getActiveProcessNode.execute(inlineTarget);
-        writeNode.execute(inlineTarget, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        writeNode.execute(inlineTarget, oldProcess, PROCESS.SUSPENDED_CONTEXT, this);
-        writeNode.executeNil(inlineTarget, newProcess, PROCESS.LIST);
-        writeNode.executeNil(inlineTarget, newProcess, PROCESS.SUSPENDED_CONTEXT);
-        if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
-            throw ProcessSwitch.create(newActiveContext);
-        } else {
-            // Avoid further PE if newActiveContext is not a PE constant.
-            throw ProcessSwitch.createWithBoundary(newActiveContext);
-        }
     }
 
     /**
