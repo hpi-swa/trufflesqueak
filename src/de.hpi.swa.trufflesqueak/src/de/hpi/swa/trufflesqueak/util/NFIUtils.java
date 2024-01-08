@@ -15,7 +15,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 
 import java.io.File;
 
-public class NFIUtils {
+public final class NFIUtils {
 
     @ExportLibrary(InteropLibrary.class)
     public static class TruffleExecutable implements TruffleObject {
