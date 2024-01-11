@@ -1,20 +1,23 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
+
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class PrimExternalCallNode extends AbstractPrimitiveNode {
-    final String moduleName;
-    final String functionName;
-    final int numReceiverAndArguments;
-    final static Map<String, Object> loadedLibraries = new HashMap<>();
+public final class PrimExternalCallNode extends AbstractPrimitiveNode {
+    private final String moduleName;
+    private final String functionName;
+    private final int numReceiverAndArguments;
+    private static final Map<String, Object> loadedLibraries = new HashMap<>();
 
     public PrimExternalCallNode(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         this.moduleName = moduleName;
@@ -24,6 +27,17 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
+        return doExternalCall(frame.materialize());
+    }
+
+    @Override
+    public Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
+        // arguments are handled via manipulation of the stack pointer, see above
+        return execute(frame);
+    }
+
+    @TruffleBoundary
+    private Object doExternalCall(final MaterializedFrame frame) {
         final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> NFIUtils.loadLibrary(getContext(), moduleName, "{ " +
                         // TODO, see below
                         // "initialiseModule():SINT64; " +
@@ -34,7 +48,7 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
         final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(moduleLibrary);
         InterpreterProxy interpreterProxy = null;
         try {
-            interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame.materialize(), numReceiverAndArguments);
+            interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame, numReceiverAndArguments);
 
             // A send (AbstractSendNode.executeVoid) will decrement the stack pointer by
             // numReceiverAndArguments
@@ -69,11 +83,5 @@ public class PrimExternalCallNode extends AbstractPrimitiveNode {
                 interpreterProxy.postPrimitiveCleanups();
             }
         }
-    }
-
-    @Override
-    public Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
-        // arguments are handled via manipulation of the stack pointer, see above
-        return execute(frame);
     }
 }
