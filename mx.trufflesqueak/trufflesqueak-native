@@ -1,4 +1,4 @@
-COMPONENTS=TruffleSqueak,suite:tools,GraalVM compiler,SubstrateVM,Truffle Macro
+COMPONENTS=TruffleSqueak,suite:tools,GraalVM compiler,SubstrateVM,Truffle Macro,Truffle SVM Macro
 INSTALLABLES=TruffleSqueak
 DYNAMIC_IMPORTS=/compiler,/substratevm,/tools
 NATIVE_IMAGES=lib:smalltalkvm

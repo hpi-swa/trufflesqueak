@@ -146,15 +146,28 @@ def _enable_local_compression():
 _enable_local_compression()
 
 
-def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
+def _patch_svm_support_native_image():
 
-    def patched_native_image(self, build_args, output_file, allow_server=False, nonZeroIsFatal=True, out=None, err=None):
+    native_image_original = mx_sdk_vm_impl.SvmSupport.native_image
+
+    def patched_native_image(self, build_args, output_file, out=None, err=None, find_bad_strings=False):
+        if 'smalltalkvm' not in output_file:
+            return native_image_original(self, build_args, output_file, out, err, find_bad_strings)
+        is_oracle_graalvm = False
+        extra_graalvm_home = os.getenv('EXTRA_GRAALVM_HOME')
+        if extra_graalvm_home:
+            native_image_bin = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
+            is_oracle_graalvm = '-community' not in extra_graalvm_home
+        else:
+            stage1 = mx_sdk_vm_impl.get_stage1_graalvm_distribution()
+            native_image_project_name = mx_sdk_vm_impl.GraalVmLauncher.launcher_project_name(mx_sdk.LauncherConfig(mx.exe_suffix('native-image'), [], "", []), stage1=True)
+            native_image_bin = os.path.join(stage1.output, stage1.find_single_source_location('dependency:' + native_image_project_name))
         build_args.remove('--macro:smalltalkvm-library')
-        assert 'smalltalkvm' in output_file
-        native_image_path = os.path.join(extra_graalvm_home, 'bin', mx.cmd_suffix('native-image'))
-        dist_names = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER', 'TRUFFLE_NFI_LIBFFI', 'TRUFFLE-ENTERPRISE', 'SDK-NATIVEBRIDGE'] + mx_truffle.resolve_truffle_dist_names(use_optimized_runtime=True, use_enterprise=True)
-        selected_gc = 'G1' if mx.is_linux() else 'serial'
-        build_command = [native_image_path] + build_args + mx.get_runtime_jvm_args(names=dist_names) + [
+        dist_names = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER', 'TRUFFLE_NFI_LIBFFI', 'SDK-NATIVEBRIDGE'] \
+            + (['TRUFFLE-ENTERPRISE'] if is_oracle_graalvm else []) \
+            + mx_truffle.resolve_truffle_dist_names(use_optimized_runtime=True, use_enterprise=True)
+        selected_gc = 'G1' if is_oracle_graalvm and mx.is_linux() else 'serial'
+        build_command = [native_image_bin] + build_args + mx.get_runtime_jvm_args(names=dist_names) + [
             '-o', os.path.splitext(output_file)[0],
             '--shared',
             '--gc=' + selected_gc,
@@ -166,9 +179,7 @@ def _use_different_graalvm_home_for_native_image(extra_graalvm_home):
     mx_sdk_vm_impl.SvmSupport.native_image = patched_native_image
 
 
-extra_graalvm_home = os.getenv('EXTRA_GRAALVM_HOME')
-if extra_graalvm_home:
-    _use_different_graalvm_home_for_native_image(extra_graalvm_home)
+_patch_svm_support_native_image()
 
 
 mx_sdk_vm.register_vm_config('trufflesqueak-jar', ['sdk', 'sdkc', 'sdkni', 'ins', 'cov', 'dap', 'lsp', 'sdkl', 'pro', 'insight', 'insightheap', 'tfl', 'tfla', 'tflc', 'truffle-json', 'nfi', 'nfi-libffi', 'st'],
