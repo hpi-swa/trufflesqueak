@@ -40,19 +40,6 @@ if _COMPILER:
     VM_ARGS_TESTING.append('-Dpolyglot.engine.CompilationFailureAction=Diagnose')
 
 
-def _get_runtime_jvm_args(jdk):
-    dists = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER']
-
-    is_graalvm = mx_truffle._is_graalvm(jdk or mx.get_jdk())
-
-    if not is_graalvm:
-        dists.append('TRUFFLE_NFI')
-        if mx.suite('graal-js', fatalIfMissing=False):
-            dists.append('GRAALJS')
-
-    return mx.get_runtime_jvm_args(dists, jdk=jdk)
-
-
 def _trufflesqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
     supports_coverage = '--jacocout' in sys.argv
