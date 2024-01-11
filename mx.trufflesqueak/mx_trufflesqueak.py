@@ -95,7 +95,6 @@ def _unittest_config_participant(config):
 
 mx_unittest.add_config_participant(_unittest_config_participant)
 
-mx_truffle.should_add_tck_participant(False)
 
 def _add_tck_tests(tasks, supports_coverage):
     with mx_gate.Task('TruffleSqueak TCK tests', tasks, tags=['test']) as t:

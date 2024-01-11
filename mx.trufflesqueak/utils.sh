@@ -226,8 +226,7 @@ set-env() {
 }
 
 set-up-dependencies() {
-  local java_version=$1
-  local kind=$2
+  local kind=$1
 
   if [[ "${kind}" == "native" ]]; then
     case "$(uname -s)" in
@@ -244,7 +243,7 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
-  set-up-labsjdk "labsjdk-ce-${java_version:4}"
+  set-up-labsjdk
   download-trufflesqueak-test-image
   if [[ "${kind}" != "jar" ]]; then
     set-env "STANDALONE_TARGET" "$(filename-standalone "${kind}")"
@@ -252,7 +251,7 @@ set-up-dependencies() {
 }
 
 set-up-labsjdk() {
-  local jdk_id=$1
+  local jdk_id="labsjdk-ce-latest"
   local target_dir="${RUNNER_TEMP}/jdk"
   local dl_dir="${RUNNER_TEMP}/jdk-dl"
   local mx_suffix="" && [[ "${OS_NAME}" == "windows" ]] && mx_suffix=".cmd"
