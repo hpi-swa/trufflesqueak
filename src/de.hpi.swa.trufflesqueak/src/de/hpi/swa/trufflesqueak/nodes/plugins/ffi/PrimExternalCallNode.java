@@ -3,11 +3,8 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -34,8 +31,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
         this.numReceiverAndArguments = numReceiverAndArguments;
     }
 
-    public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments)
-                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+    public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) throws UnsupportedMessageException {
         final SqueakImageContext context = SqueakImageContext.getSlow();
         final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> NFIUtils.loadLibrary(context, moduleName, "{ " +
                         // TODO, see below

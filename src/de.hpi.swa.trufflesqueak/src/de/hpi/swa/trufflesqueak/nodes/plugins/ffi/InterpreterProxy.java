@@ -64,6 +64,7 @@ public final class InterpreterProxy {
             final String truffleExecutablesSignatures = Arrays.stream(closures).map(obj -> obj.executable.nfiSignature).collect(Collectors.joining(","));
             final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
                             "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }");
+            assert interpreterProxy != null : "InterpreterProxy module not found!";
 
             final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
             interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
