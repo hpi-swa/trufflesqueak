@@ -1,5 +1,8 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import java.io.File;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -10,10 +13,9 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
+
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-
-import java.io.File;
 
 public final class NFIUtils {
 
@@ -57,6 +59,7 @@ public final class NFIUtils {
         }
 
         @ExportMessage
+        @TruffleBoundary
         Object execute(final Object... arguments) {
             return executable.execute(arguments);
         }
