@@ -222,7 +222,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
                 '--vm.Xms512M',
                 '--vm.Xss16M',
                 '--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak',
-            ] + (['--vm.Xdock:name=TruffleSqueak'] if mx.is_darwin() else []),
+            ],
         )
     ],
     stability='experimental',
