@@ -198,6 +198,30 @@
     ]
   },
   {
+    "name": "java.awt.event.MouseWheelEvent",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.awt.Component",
+          "int",
+          "long",
+          "int",
+          "int",
+          "int",
+          "int",
+          "int",
+          "int",
+          "boolean",
+          "int",
+          "int",
+          "int",
+          "double"
+        ]
+      }
+    ]
+  },
+  {
     "name": "java.awt.geom.AffineTransform",
     "fields": [
       { "name": "m00" },
