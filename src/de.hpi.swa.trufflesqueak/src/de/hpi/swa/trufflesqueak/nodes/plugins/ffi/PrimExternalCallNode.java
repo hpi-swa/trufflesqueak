@@ -39,6 +39,18 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
         final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
             final Object library = NFIUtils.loadLibrary(context, moduleName, "");
             try {
+                // TODO: also call shutdownModule():SINT64 at some point
+                final Object initialiseModuleSymbol = NFIUtils.loadMember(context, library, "initialiseModule", "():SINT64");
+                final InteropLibrary initialiseModuleInteropLibrary = NFIUtils.getInteropLibrary(initialiseModuleSymbol);
+                initialiseModuleInteropLibrary.execute(initialiseModuleSymbol);
+            } catch (UnknownIdentifierException e) {
+                // module has no initializer, ignore
+            } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+                // should not happen
+                assert false : e.getMessage();
+                return null;
+            }
+            try {
                 NFIUtils.loadMember(context, library, "setInterpreter", "(POINTER):SINT64");
             } catch (UnknownIdentifierException e) {
                 // module has no setInterpreter, cannot be loaded
