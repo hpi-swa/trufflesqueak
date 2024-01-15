@@ -171,15 +171,27 @@ public final class NFIUtils {
     }
 
     public static Object createClosure(final SqueakImageContext context, final Object executable, final String signature)
-                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
-        return invokeSignatureMethod(context, signature, "createClosure", executable);
+                    throws UnsupportedTypeException {
+        try {
+            return invokeSignatureMethod(context, signature, "createClosure", executable);
+        } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException e) {
+            // should not happen
+            assert false : e.getMessage();
+            return null;
+        }
     }
 
     public static Object loadMember(final SqueakImageContext context, final Object library, final String name, final String signature)
-                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+                    throws UnknownIdentifierException {
         final InteropLibrary interopLibrary = getInteropLibrary(library);
-        final Object symbol = interopLibrary.readMember(library, name);
-        return invokeSignatureMethod(context, signature, "bind", symbol);
+        try {
+            final Object symbol = interopLibrary.readMember(library, name);
+            return invokeSignatureMethod(context, signature, "bind", symbol);
+        } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+            // should not happen
+            assert false : e.getMessage();
+            return null;
+        }
     }
 
     public static InteropLibrary getInteropLibrary(final Object loadedLibrary) {

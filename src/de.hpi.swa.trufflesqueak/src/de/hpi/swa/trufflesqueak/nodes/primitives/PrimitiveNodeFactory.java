@@ -7,10 +7,6 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeFactory;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -205,17 +201,7 @@ public final class PrimitiveNodeFactory {
         if (nodeFactory != null) {
             return createNode(nodeFactory, location, numReceiverAndArguments);
         } else {
-            // Missing implementation by SqueakFFIPrims
-            // FFIPlatformDescription class>>#currentPluginVersion
-            if (moduleName.equals("SqueakFFIPrims")) {
-                return null;
-            }
-            try {
-                return PrimExternalCallNode.load(moduleName, functionName, numReceiverAndArguments);
-            } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
-                assert false : e.getMessage();
-                return null;
-            }
+            return PrimExternalCallNode.load(moduleName, functionName, numReceiverAndArguments);
         }
     }
 

@@ -34,25 +34,31 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
         this.numReceiverAndArguments = numReceiverAndArguments;
     }
 
-    public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments)
-                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+    public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
-        final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> NFIUtils.loadLibrary(context, moduleName, "{ " +
-                        // TODO, see below
-                        // "initialiseModule():SINT64; " +
-                        "setInterpreter(POINTER):SINT64; " +
-                        // Currently not called, since plugins are never unloaded
-                        // "shutdownModule():SINT64; " +
-                        " }"));
+        final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
+            final Object library = NFIUtils.loadLibrary(context, moduleName, "");
+            try {
+                NFIUtils.loadMember(context, library, "setInterpreter", "(POINTER):SINT64");
+            } catch (UnknownIdentifierException e) {
+                // module has no setInterpreter, cannot be loaded
+                return null;
+            }
+            return library;
+        });
         if (moduleLibrary == null) {
+            // module not found
             return null;
         }
         final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(moduleLibrary);
-
-        final Object functionSymbol = NFIUtils.loadMember(context, moduleLibrary, functionName, "():SINT64");
-        final InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
-
-        return new PrimExternalCallNode(moduleLibrary, moduleInteropLibrary, functionSymbol, functionInteropLibrary, numReceiverAndArguments);
+        try {
+            final Object functionSymbol = NFIUtils.loadMember(context, moduleLibrary, functionName, "():SINT64");
+            final InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
+            return new PrimExternalCallNode(moduleLibrary, moduleInteropLibrary, functionSymbol, functionInteropLibrary, numReceiverAndArguments);
+        } catch (UnknownIdentifierException e) {
+            // function not found
+            return null;
+        }
     }
 
     @Override
