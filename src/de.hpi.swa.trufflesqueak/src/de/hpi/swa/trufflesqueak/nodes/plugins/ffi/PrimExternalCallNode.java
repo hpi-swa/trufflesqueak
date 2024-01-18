@@ -103,9 +103,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             // since the C code expects that. Therefore, we undo the decrement operation here.
             FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) + numReceiverAndArguments);
 
-            // TODO: Only call when the plugin actually defines the function
-            // uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
-
+            // TODO: can we only call this once?
             moduleInteropLibrary.invokeMember(moduleLibrary, "setInterpreter", InterpreterProxy.getPointer());
 
             // return value is unused, the actual return value is pushed onto the stack (see below)
