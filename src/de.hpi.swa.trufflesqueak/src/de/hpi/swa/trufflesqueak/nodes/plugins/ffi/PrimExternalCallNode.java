@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
@@ -37,7 +38,19 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
         final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
-            final Object library = NFIUtils.loadLibrary(context, moduleName, "");
+            final Object library;
+            try {
+                library = NFIUtils.loadLibrary(context, moduleName, "{ setInterpreter(POINTER):SINT64; }");
+            } catch (AbstractTruffleException e) {
+                if (e.getMessage().equals("Unknown identifier: setInterpreter")) {
+                    // module has no setInterpreter, cannot be loaded
+                    return null;
+                }
+                throw e;
+            }
+            if (library == null) {
+                return null;
+            }
             try {
                 // TODO: also call shutdownModule():SINT64 at some point
                 final Object initialiseModuleSymbol = NFIUtils.loadMember(context, library, "initialiseModule", "():SINT64");
@@ -48,12 +61,6 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
                 // should not happen
                 assert false : e.getMessage();
-                return null;
-            }
-            try {
-                NFIUtils.loadMember(context, library, "setInterpreter", "(POINTER):SINT64");
-            } catch (UnknownIdentifierException e) {
-                // module has no setInterpreter, cannot be loaded
                 return null;
             }
             return library;
