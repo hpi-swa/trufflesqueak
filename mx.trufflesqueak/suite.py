@@ -96,20 +96,20 @@ suite = {
             "licence": "LGPLv21",
         },
         "TRUFFLE-ENTERPRISE": {
-            "digest": "sha512:2948bd1779fe1c2b0b70de76220582d54bb59a2d9048c4a09d5148a7358014ae6484a373a1076f5dad7f861723981407ea48e247a6ef7d4659eef28ee9c86354",
+            "digest": "sha512:b883d3ead84778617f9b09edaa43634183f07cdc6ae0666cb2f4edabc52fca913138c4a7a8f9ada1adbd4a9bbe7d16fb4a1b3ceac13446f4e0c47f3d1a20469f",
             "maven": {
                 "groupId": "org.graalvm.truffle",
                 "artifactId": "truffle-enterprise",
-                "version": "23.1.0",
+                "version": "23.1.2",
             },
             "useModulePath": True,
         },
         "SDK-NATIVEBRIDGE": {
-            "digest": "sha512:bc28336e23d5abc4bc7704093b0e1546ac1aa972dfabe24e94dad19b4b0a36df62c6322dc33a0dadeb2a741a8fa1cb116d4248e09362f0c16924ff25672bc61d",
+            "digest": "sha512:5c2187fa912ab9cc1bb872e08acd3cae5332e2920502b1d7cbe6bc1e70431960e8ed28d153cddd0a3f7d99f618f229d9ac78969d2c94ee1a9a79c003f5c9cc46",
             "maven": {
                 "groupId": "org.graalvm.sdk",
                 "artifactId": "nativebridge",
-                "version": "23.1.0",
+                "version": "23.1.2",
             },
             "useModulePath": True,
         },
