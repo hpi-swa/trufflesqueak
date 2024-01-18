@@ -163,31 +163,35 @@ public final class NFIUtils {
         return executeNFI(context, signature);
     }
 
-    public static Object invokeSignatureMethod(final SqueakImageContext context, final String signature, final String method, final Object... args) throws UnsupportedMessageException {
+    public static Object invokeSignatureMethod(final SqueakImageContext context, final String signature, final String method, final Object... args)
+                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
         final Object nfiSignature = createSignature(context, signature);
         final InteropLibrary signatureInteropLibrary = getInteropLibrary(nfiSignature);
+        return signatureInteropLibrary.invokeMember(nfiSignature, method, args);
+    }
+
+    public static Object createClosure(final SqueakImageContext context, final Object executable, final String signature)
+                    throws UnsupportedTypeException {
         try {
-            return signatureInteropLibrary.invokeMember(nfiSignature, method, args);
-        } catch (ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+            return invokeSignatureMethod(context, signature, "createClosure", executable);
+        } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException e) {
+            // should not happen
             assert false : e.getMessage();
             return null;
         }
     }
 
-    public static Object createClosure(final SqueakImageContext context, final Object executable, final String signature) throws UnsupportedMessageException {
-        return invokeSignatureMethod(context, signature, "createClosure", executable);
-    }
-
-    public static Object loadMember(final SqueakImageContext context, final Object library, final String name, final String signature) throws UnsupportedMessageException {
+    public static Object loadMember(final SqueakImageContext context, final Object library, final String name, final String signature)
+                    throws UnknownIdentifierException {
         final InteropLibrary interopLibrary = getInteropLibrary(library);
-        final Object symbol;
         try {
-            symbol = interopLibrary.readMember(library, name);
-        } catch (UnknownIdentifierException e) {
+            final Object symbol = interopLibrary.readMember(library, name);
+            return invokeSignatureMethod(context, signature, "bind", symbol);
+        } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+            // should not happen
             assert false : e.getMessage();
             return null;
         }
-        return invokeSignatureMethod(context, signature, "bind", symbol);
     }
 
     public static InteropLibrary getInteropLibrary(final Object loadedLibrary) {

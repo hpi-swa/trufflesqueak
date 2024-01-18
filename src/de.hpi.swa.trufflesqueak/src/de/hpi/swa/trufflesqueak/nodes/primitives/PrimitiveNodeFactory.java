@@ -7,7 +7,6 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeFactory;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -201,16 +200,8 @@ public final class PrimitiveNodeFactory {
         final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName, EconomicMap.emptyMap()).get(numReceiverAndArguments);
         if (nodeFactory != null) {
             return createNode(nodeFactory, location, numReceiverAndArguments);
-        }
-        // Missing implementation by SqueakFFIPrims
-        // FFIPlatformDescription class>>#currentPluginVersion
-        if (moduleName.equals("SqueakFFIPrims")) {
-            return null;
-        }
-        try {
+        } else {
             return PrimExternalCallNode.load(moduleName, functionName, numReceiverAndArguments);
-        } catch (UnsupportedMessageException e) {
-            return null;
         }
     }
 

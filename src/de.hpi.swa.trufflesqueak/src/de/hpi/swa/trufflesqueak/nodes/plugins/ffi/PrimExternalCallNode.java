@@ -1,10 +1,14 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -31,24 +35,49 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
         this.numReceiverAndArguments = numReceiverAndArguments;
     }
 
-    public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) throws UnsupportedMessageException {
+    public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
-        final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> NFIUtils.loadLibrary(context, moduleName, "{ " +
-                        // TODO, see below
-                        // "initialiseModule():SINT64; " +
-                        "setInterpreter(POINTER):SINT64; " +
-                        // Currently not called, since plugins are never unloaded
-                        // "shutdownModule():SINT64; " +
-                        " }"));
+        final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
+            final Object library;
+            try {
+                library = NFIUtils.loadLibrary(context, moduleName, "{ setInterpreter(POINTER):SINT64; }");
+            } catch (AbstractTruffleException e) {
+                if (e.getMessage().equals("Unknown identifier: setInterpreter")) {
+                    // module has no setInterpreter, cannot be loaded
+                    return null;
+                }
+                throw e;
+            }
+            if (library == null) {
+                return null;
+            }
+            try {
+                // TODO: also call shutdownModule():SINT64 at some point
+                final Object initialiseModuleSymbol = NFIUtils.loadMember(context, library, "initialiseModule", "():SINT64");
+                final InteropLibrary initialiseModuleInteropLibrary = NFIUtils.getInteropLibrary(initialiseModuleSymbol);
+                initialiseModuleInteropLibrary.execute(initialiseModuleSymbol);
+            } catch (UnknownIdentifierException e) {
+                // module has no initializer, ignore
+            } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+                // should not happen
+                assert false : e.getMessage();
+                return null;
+            }
+            return library;
+        });
         if (moduleLibrary == null) {
+            // module not found
             return null;
         }
         final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(moduleLibrary);
-
-        final Object functionSymbol = NFIUtils.loadMember(context, moduleLibrary, functionName, "():SINT64");
-        final InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
-
-        return new PrimExternalCallNode(moduleLibrary, moduleInteropLibrary, functionSymbol, functionInteropLibrary, numReceiverAndArguments);
+        try {
+            final Object functionSymbol = NFIUtils.loadMember(context, moduleLibrary, functionName, "():SINT64");
+            final InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
+            return new PrimExternalCallNode(moduleLibrary, moduleInteropLibrary, functionSymbol, functionInteropLibrary, numReceiverAndArguments);
+        } catch (UnknownIdentifierException e) {
+            // function not found
+            return null;
+        }
     }
 
     @Override
@@ -74,9 +103,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             // since the C code expects that. Therefore, we undo the decrement operation here.
             FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) + numReceiverAndArguments);
 
-            // TODO: Only call when the plugin actually defines the function
-            // uuidPluginLibrary.invokeMember(uuidPlugin, "initialiseModule");
-
+            // TODO: can we only call this once?
             moduleInteropLibrary.invokeMember(moduleLibrary, "setInterpreter", InterpreterProxy.getPointer());
 
             // return value is unused, the actual return value is pushed onto the stack (see below)
