@@ -14,7 +14,7 @@ suite = {
     "mxversion": "7.0.3",
     "versionConflictResolution": "latest",
 
-    "version": "23.1.0",
+    "version": "24.0.0",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-6.0-5053.zip",
         "cuis_test_image_tag": "21.3.0",
