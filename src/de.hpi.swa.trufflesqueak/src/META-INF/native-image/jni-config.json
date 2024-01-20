@@ -95,7 +95,11 @@
       { "name": "getLabel", "parameterTypes": [ ] }
     ]
   },
-  { "name": "java.awt.Point", "fields": [{ "name": "x" }, { "name": "y" }] },
+  {
+    "name": "java.awt.Point",
+    "fields": [{ "name": "x" }, { "name": "y" }],
+    "methods": [{ "name": "<init>", "parameterTypes": ["int", "int"] }]
+  },
   {
     "name": "java.awt.Rectangle",
     "fields": [{ "name": "height" }, { "name": "width" }, { "name": "x" }, { "name": "y" }],
@@ -189,6 +193,30 @@
           "int",
           "boolean",
           "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.awt.event.MouseWheelEvent",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.awt.Component",
+          "int",
+          "long",
+          "int",
+          "int",
+          "int",
+          "int",
+          "int",
+          "int",
+          "boolean",
+          "int",
+          "int",
+          "int",
+          "double"
         ]
       }
     ]

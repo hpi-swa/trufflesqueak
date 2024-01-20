@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2017-2023 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2023 Oracle and/or its affiliates
+ * Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021-2024 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -106,7 +106,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         object1 = anotherObject.object1;
         object2 = anotherObject.object2;
         if (anotherObject.primitiveExtension != null) {
-            ArrayUtils.arraycopy(anotherObject.primitiveExtension, 0, primitiveExtension, 0, anotherObject.primitiveExtension.length);
+            UnsafeUtils.copyLongs(anotherObject.primitiveExtension, 0, primitiveExtension, 0, anotherObject.primitiveExtension.length);
         }
         if (anotherObject.objectExtension != null) {
             ArrayUtils.arraycopy(anotherObject.objectExtension, 0, objectExtension, 0, anotherObject.objectExtension.length);

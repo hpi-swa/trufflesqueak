@@ -53,7 +53,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2022]
-        java: [21]
+        java: [22]
     env:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' }}"
       MX_ENV: "trufflesqueak-jar"
@@ -72,7 +72,7 @@ jobs:
         python-version: '3.8'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ matrix.java }} jar
+      run: mx.trufflesqueak/utils.sh set-up-dependencies jar
     - name: Build GraalVM with TruffleSqueak
       run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
       if: ${{ runner.os != 'Windows' }}
@@ -89,6 +89,13 @@ jobs:
         echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
         echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
       if: ${{ runner.os == 'Windows' }}
+    - name: Publish TruffleSqueak packages to GitHub Packages
+      shell: bash
+      run: |
+        sed "s/{USERNAME}/${GITHUB_ACTOR}/g; s/{TOKEN}/${{ secrets.GITHUB_TOKEN }}/g" mx.trufflesqueak/mvn-settings.xml.template > mx.trufflesqueak/mvn-settings.xml
+        mx.trufflesqueak/utils.sh conditional-deploy \
+          mx --env trufflesqueak-jar maven-deploy --settings mx.trufflesqueak/mvn-settings.xml --version-string ${{ github.ref_name }} --validate full --licenses MIT --suppress-javadoc github https://maven.pkg.github.com/hpi-swa/trufflesqueak
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
     - name: Run SystemReporter on TruffleSqueak
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Clone Graal.js repository
@@ -133,7 +140,7 @@ jobs:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-11]
         type: [native, jvm]
     env:
-      JAVA_VERSION: "21"
+      JAVA_VERSION: "22"
       MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: ${{ matrix.type }} ${{ matrix.os }}
@@ -142,26 +149,27 @@ jobs:
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v3
-    - name: Set up Oracle GraalVM
-      uses: graalvm/setup-graalvm@v1
-      with:
-        java-version: ${{ env.JAVA_VERSION }}
-        distribution: 'graalvm'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ matrix.type == 'native' }}
-    - name: Enable Oracle GraalVM
-      shell: bash
-      run: |
-        echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
-        cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
-      if: ${{ matrix.type == 'native' }}
+    # Oracle GraalVM for JDK 22 not released yet
+    # - name: Set up Oracle GraalVM
+    #   uses: graalvm/setup-graalvm@v1
+    #   with:
+    #     java-version: ${{ env.JAVA_VERSION }}
+    #     distribution: 'graalvm'
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    #   if: ${{ matrix.type == 'native' }}
+    # - name: Enable Oracle GraalVM
+    #   shell: bash
+    #   run: |
+    #     echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
+    #     cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
+    #   if: ${{ matrix.type == 'native' }}
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies java${{ env.JAVA_VERSION }} ${{ matrix.type }}
+      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
     - name: Build TruffleSqueak standalone
       run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
       if: ${{ runner.os != 'Windows' }}

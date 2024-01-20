@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2017-2023 Software Architecture Group, Hasso Plattner Institute
-# Copyright (c) 2021-2023 Oracle and/or its affiliates
+# Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
+# Copyright (c) 2021-2024 Oracle and/or its affiliates
 #
 # Licensed under the MIT License.
 #
@@ -78,7 +78,7 @@ build-standalone() {
   echo "[${standalone_home}/bin added to \$PATH]"
 }
 
-deploy-asset() {
+check-deploy() {
   local git_tag=$(git tag --points-at HEAD)
   if [[ -z "${git_tag}" ]]; then
     echo "Skipping deployment step (commit not tagged)"
@@ -87,6 +87,15 @@ deploy-asset() {
     echo "Skipping deployment step (tag ${git_tag} does not start with a digit)"
     exit 0
   fi
+}
+
+conditional-deploy() {
+  check-deploy
+  eval "$@"
+}
+
+deploy-asset() {
+  check-deploy
   local filename=$1
   if [[ "${filename}" == *.tar ]]; then
     echo "Compressing tarball..."
@@ -96,6 +105,7 @@ deploy-asset() {
   # zip files are always compressed because mx_trufflesqueak.py forces localCompress
 
   local auth="Authorization: token $2"
+  local git_tag=$(git tag --points-at HEAD)
   local release_id
 
   tag_result=$(curl -L --retry 3 --retry-connrefused --retry-delay 2 -sH "${auth}" \
@@ -216,8 +226,7 @@ set-env() {
 }
 
 set-up-dependencies() {
-  local java_version=$1
-  local kind=$2
+  local kind=$1
 
   if [[ "${kind}" == "native" ]]; then
     case "$(uname -s)" in
@@ -234,7 +243,7 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
-  set-up-labsjdk "labsjdk-ce-${java_version:4}"
+  set-up-labsjdk
   download-trufflesqueak-test-image
   if [[ "${kind}" != "jar" ]]; then
     set-env "STANDALONE_TARGET" "$(filename-standalone "${kind}")"
@@ -242,7 +251,7 @@ set-up-dependencies() {
 }
 
 set-up-labsjdk() {
-  local jdk_id=$1
+  local jdk_id="labsjdk-ce-latest"
   local target_dir="${RUNNER_TEMP}/jdk"
   local dl_dir="${RUNNER_TEMP}/jdk-dl"
   local mx_suffix="" && [[ "${OS_NAME}" == "windows" ]] && mx_suffix=".cmd"
