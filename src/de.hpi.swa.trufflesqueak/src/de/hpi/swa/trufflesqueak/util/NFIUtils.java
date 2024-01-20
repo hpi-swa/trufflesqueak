@@ -99,6 +99,7 @@ public final class NFIUtils {
     public interface TruffleFunction<T, R> extends ITruffleExecutable {
         R run(T argument);
 
+        @SuppressWarnings("unchecked")
         default Object execute(Object... arguments) {
             assert arguments.length == 1;
             return run((T) arguments[0]);
@@ -109,6 +110,7 @@ public final class NFIUtils {
     public interface TruffleBiFunction<S, T, R> extends ITruffleExecutable {
         R run(S argument1, T argument2);
 
+        @SuppressWarnings("unchecked")
         default Object execute(Object... arguments) {
             assert arguments.length == 2;
             return run((S) arguments[0], (T) arguments[1]);
@@ -119,6 +121,7 @@ public final class NFIUtils {
     public interface TruffleTriFunction<S, T, U, R> extends ITruffleExecutable {
         R run(S argument1, T argument2, U argument3);
 
+        @SuppressWarnings("unchecked")
         default Object execute(Object... arguments) {
             assert arguments.length == 3;
             return run((S) arguments[0], (T) arguments[1], (U) arguments[2]);
@@ -129,6 +132,7 @@ public final class NFIUtils {
     public interface TruffleQuadFunction<S, T, U, V, R> extends ITruffleExecutable {
         R run(S argument1, T argument2, U argument3, V argument4);
 
+        @SuppressWarnings("unchecked")
         default Object execute(Object... arguments) {
             assert arguments.length == 4;
             return run((S) arguments[0], (T) arguments[1], (U) arguments[2], (V) arguments[3]);
@@ -139,6 +143,7 @@ public final class NFIUtils {
     public interface TruffleQuintFunction<S, T, U, V, W, R> extends ITruffleExecutable {
         R run(S argument1, T argument2, U argument3, V argument4, W argument5);
 
+        @SuppressWarnings("unchecked")
         default Object execute(Object... arguments) {
             assert arguments.length == 5;
             return run((S) arguments[0], (T) arguments[1], (U) arguments[2], (V) arguments[3], (W) arguments[4]);
