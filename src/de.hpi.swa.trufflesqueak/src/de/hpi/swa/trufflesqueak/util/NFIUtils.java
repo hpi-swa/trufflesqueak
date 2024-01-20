@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.interop.ArityException;
@@ -175,9 +176,7 @@ public final class NFIUtils {
         try {
             return invokeSignatureMethod(context, signature, "createClosure", executable);
         } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException e) {
-            // should not happen
-            assert false : e.getMessage();
-            return null;
+            throw CompilerDirectives.shouldNotReachHere(e);
         }
     }
 
@@ -188,9 +187,7 @@ public final class NFIUtils {
             final Object symbol = interopLibrary.readMember(library, name);
             return invokeSignatureMethod(context, signature, "bind", symbol);
         } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
-            // should not happen
-            assert false : e.getMessage();
-            return null;
+            throw CompilerDirectives.shouldNotReachHere(e);
         }
     }
 

@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -59,9 +60,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             } catch (UnknownIdentifierException e) {
                 // module has no initializer, ignore
             } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
-                // should not happen
-                assert false : e.getMessage();
-                return null;
+                throw CompilerDirectives.shouldNotReachHere(e);
             }
             return library;
         });
