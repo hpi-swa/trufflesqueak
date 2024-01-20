@@ -63,7 +63,7 @@ public final class NFIUtils {
             return executable.execute(arguments);
         }
 
-        public TruffleClosure createClosure(final SqueakImageContext context) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+        public TruffleClosure createClosure(final SqueakImageContext context) throws UnsupportedTypeException {
             return new TruffleClosure(context, this);
         }
     }
@@ -75,7 +75,7 @@ public final class NFIUtils {
         final Object closure;
 
         public TruffleClosure(final SqueakImageContext context, final TruffleExecutable executable)
-                        throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+                        throws UnsupportedTypeException {
             this.executable = executable;
             this.closure = createClosure(context, executable, executable.nfiSignature);
         }
