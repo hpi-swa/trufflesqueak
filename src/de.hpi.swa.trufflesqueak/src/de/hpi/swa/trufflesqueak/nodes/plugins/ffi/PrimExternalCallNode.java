@@ -114,8 +114,8 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             final Object returnValue = FrameAccess.getStackValue(frame, FrameAccess.getStackPointer(frame) - 1, FrameAccess.getNumArguments(frame));
             FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) - 1);
             return returnValue;
-        } catch (Exception e) {
-            // for debugging purposes
+        } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
+            // for debugging purposes TODO: remove me
             e.printStackTrace(System.err);
             throw PrimitiveFailed.GENERIC_ERROR;
         } finally {
