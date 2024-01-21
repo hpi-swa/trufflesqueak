@@ -7,7 +7,6 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -17,6 +16,7 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
@@ -38,12 +38,17 @@ public final class InterpreterProxy {
     private final SqueakImageContext context;
     private MaterializedFrame frame;
     private int numReceiverAndArguments;
-    private final ArrayList<Object> objectRegistry = new ArrayList<>();
     private final ArrayList<PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
     // should not be local, as the references are needed to keep the native closures alive
     // since this class is a singleton, a private instance variable will suffice
     @SuppressWarnings("FieldCanBeLocal") private final TruffleClosure[] closures;
     private final Object interpreterProxyPointer;
+
+    ///////////////////////////
+    // INTERPRETER VARIABLES //
+    ///////////////////////////
+    private final ArrayList<Object> objectRegistry = new ArrayList<>();
+    private long primFailCode = 0;
 
     ///////////////////////
     // INSTANCE CREATION //
@@ -430,15 +435,12 @@ public final class InterpreterProxy {
     }
 
     private long primitiveFail() {
-        // TODO: continue executing C code
-        // TODO: adjust failed accordingly
-        throw PrimitiveFailed.GENERIC_ERROR;
+        return primitiveFailFor(ERROR_TABLE.GENERIC_ERROR.ordinal());
     }
 
     private long primitiveFailFor(final long reasonCode) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for primitiveFailFor");
-        return returnVoid();
+        LogUtils.PRIMITIVES.info(() -> "Primitive failed with code: " + reasonCode);
+        return primFailCode = reasonCode;
     }
 
     private long push(final long oop) {
