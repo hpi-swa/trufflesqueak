@@ -43,7 +43,7 @@ public final class InterpreterProxy {
     // should not be local, as the references are needed to keep the native closures alive
     // since this class is a singleton, a private instance variable will suffice
     @SuppressWarnings("FieldCanBeLocal") private final TruffleClosure[] closures;
-    private static Object interpreterProxyPointer;
+    private final Object interpreterProxyPointer;
 
     ///////////////////////
     // INSTANCE CREATION //
@@ -61,16 +61,14 @@ public final class InterpreterProxy {
             closures[i] = executables[i].createClosure(context);
         }
 
-        if (interpreterProxyPointer == null) {
-            final String truffleExecutablesSignatures = Arrays.stream(closures).map(obj -> obj.executable.nfiSignature).collect(Collectors.joining(","));
-            final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
-                            "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }");
-            assert interpreterProxy != null : "InterpreterProxy module not found!";
+        final String truffleExecutablesSignatures = Arrays.stream(closures).map(obj -> obj.executable.nfiSignature).collect(Collectors.joining(","));
+        final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
+                        "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }");
+        assert interpreterProxy != null : "InterpreterProxy module not found!";
 
-            final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
-            interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
-                            interpreterProxy, "createInterpreterProxy", (Object[]) closures);
-        }
+        final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
+        interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
+                        interpreterProxy, "createInterpreterProxy", (Object[]) closures);
     }
 
     private TruffleExecutable[] getExecutables() {
@@ -141,7 +139,7 @@ public final class InterpreterProxy {
     ///////////////////
 
     public static Object getPointer() {
-        return interpreterProxyPointer;
+        return INSTANCE.interpreterProxyPointer;
     }
 
     public void postPrimitiveCleanups() {
