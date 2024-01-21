@@ -205,6 +205,16 @@ public final class InterpreterProxy {
         return FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
     }
 
+    private long returnVoid() {
+        // For functions that do not have a defined return value
+        return 0L;
+    }
+
+    private long returnNull() {
+        // For functions that should return null (=0)
+        return 0L;
+    }
+
     ////////////////////////
     // CONVERSION HELPERS //
     ////////////////////////
@@ -239,37 +249,38 @@ public final class InterpreterProxy {
     // TYPE CHECK HELPERS //
     ////////////////////////
 
-    private int instanceOfCheck(final long oop, final Class<?> klass) {
+    private long instanceOfCheck(final long oop, final Class<?> klass) {
         final Object object = objectRegistryGet(oop);
         return klass.isInstance(object) ? 1 : 0;
     }
 
-    private int nativeObjectCheck(final long oop, final Predicate<NativeObject> predicate) {
+    private long nativeObjectCheck(final long oop, final Predicate<NativeObject> predicate) {
         final Object object = objectRegistryGet(oop);
         if (object instanceof NativeObject nativeObject) {
             return predicate.test(nativeObject) ? 1 : 0;
         }
-        return 0;
+        return returnVoid();
     }
 
     ///////////////////////////////
     // INTERPRETER PROXY METHODS //
     ///////////////////////////////
 
-    private int byteSizeOf(final long oop) {
+    private long byteSizeOf(final long oop) {
         if (objectRegistryGet(oop) instanceof NativeObject nativeObject) {
             return NativeObjectStorage.from(nativeObject).byteSizeOf();
         }
-        return 0;
+        // type is not supported
+        return 0L;
     }
 
-    private int classString() {
+    private long classString() {
         return oopFor(context.byteStringClass);
     }
 
-    private int failed() {
+    private long failed() {
         // TODO: when changing primitiveFail to continue executing, properly implement this
-        return 0;
+        return returnNull();
     }
 
     private long fetchIntegerofObject(final long fieldIndex, final long objectPointer) {
@@ -297,7 +308,7 @@ public final class InterpreterProxy {
         return objectToDouble(objectRegistryGet(oop));
     }
 
-    private int instantiateClassindexableSize(final long classPointer, final long size) {
+    private long instantiateClassindexableSize(final long classPointer, final long size) {
         final Object object = objectRegistryGet(classPointer);
         if (object instanceof ClassObject classObject) {
             final AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject, (int) size);
@@ -305,7 +316,7 @@ public final class InterpreterProxy {
         }
         LogUtils.PRIMITIVES.severe(() -> "instantiateClassindexableSize called with non-ClassObject: " + object);
         primitiveFail();
-        return 0;
+        return returnVoid();
     }
 
     private long integerObjectOf(final long value) {
@@ -326,7 +337,7 @@ public final class InterpreterProxy {
         return instanceOfCheck(oop, ArrayObject.class);
     }
 
-    private int isBytes(final long oop) {
+    private long isBytes(final long oop) {
         return nativeObjectCheck(oop, NativeObject::isByteType);
     }
 
@@ -342,117 +353,108 @@ public final class InterpreterProxy {
         if (object instanceof LargeIntegerObject largeInteger) {
             return largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong() ? 1 : 0;
         }
-        return 0;
+        return returnVoid();
     }
 
     private long isWords(final long oop) {
         return nativeObjectCheck(oop, NativeObject::isLongType);
     }
 
-    @SuppressWarnings("unused")
     private long isWordsOrBytes(final long oop) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for isWordsOrBytes");
-        return 0;
+        return returnVoid();
     }
 
-    private int majorVersion() {
-        return 1;
+    private long majorVersion() {
+        return 1L;
     }
 
-    private int methodArgumentCount() {
+    private long methodArgumentCount() {
         return numReceiverAndArguments - 1;
     }
 
-    @SuppressWarnings("unused")
     private long methodReturnInteger(final long integer) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for methodReturnInteger");
-        return 0;
+        return returnVoid();
     }
 
-    @SuppressWarnings("unused")
     private long methodReturnReceiver() {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for methodReturnReceiver");
-        return 0;
+        return returnVoid();
     }
 
-    @SuppressWarnings("unused")
     private long methodReturnValue(final long oop) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for methodReturnValue");
-        return 0;
+        return returnVoid();
     }
 
-    private int minorVersion() {
+    private long minorVersion() {
         return 17;
     }
 
-    private int nilObject() {
+    private long nilObject() {
         return oopFor(NilObject.SINGLETON);
     }
 
-    private int pop(final long nItems) {
+    private long pop(final long nItems) {
         setStackPointer(getStackPointer() - (int) nItems);
-        return 1;
+        return returnNull();
     }
 
-    private int popthenPush(final long nItems, final long oop) {
+    private long popthenPush(final long nItems, final long oop) {
         pop(nItems);
         push(oop);
-        return 1;
+        return returnVoid();
     }
 
-    @SuppressWarnings("unused")
     private long positive32BitIntegerFor(final long integerValue) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for positive32BitIntegerFor");
-        return 0;
+        return returnVoid();
     }
 
-    @SuppressWarnings("unused")
     private long positive32BitValueOf(final long oop) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for positive32BitValueOf");
-        return 0;
+        return returnVoid();
     }
 
-    @SuppressWarnings("unused")
     private long positive64BitValueOf(final long oop) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for positive64BitValueOf");
-        return 0;
+        return returnVoid();
     }
 
-    private int primitiveFail() {
+    private long primitiveFail() {
         // TODO: continue executing C code
         // TODO: adjust failed accordingly
         throw PrimitiveFailed.GENERIC_ERROR;
     }
 
-    @SuppressWarnings("unused")
     private long primitiveFailFor(final long reasonCode) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for primitiveFailFor");
-        return 0;
+        return returnVoid();
     }
 
-    private int push(final long oop) {
+    private long push(final long oop) {
         pushObject(objectRegistryGet(oop));
-        return 1;
+        return returnVoid();
     }
 
-    private int pushInteger(final long integerValue) {
+    private long pushInteger(final long integerValue) {
         pushObject(integerValue);
-        return 1;
+        return returnNull();
     }
 
-    @SuppressWarnings("unused")
     private long showDisplayBitsLeftTopRightBottom(final long aForm, final long l, final long t, final long r, final long b) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for showDisplayBitsLeftTopRightBottom");
-        return 0;
+        return returnVoid();
     }
 
     private long signed32BitIntegerFor(final long integerValue) {
@@ -463,22 +465,20 @@ public final class InterpreterProxy {
         return integerValueOf(oop);
     }
 
-    @SuppressWarnings("unused")
     private long slotSizeOf(final long oop) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for slotSizeOf");
-        return 0;
+        return returnVoid();
     }
 
     private long stackIntegerValue(final long offset) {
         return objectToLong(getObjectOnStack(offset));
     }
 
-    @SuppressWarnings("unused")
     private long stackObjectValue(final long offset) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for stackObjectValue");
-        return 0;
+        return returnVoid();
     }
 
     private long stackValue(final long offset) {
@@ -489,17 +489,15 @@ public final class InterpreterProxy {
         return MiscUtils.getCollectionCount();
     }
 
-    @SuppressWarnings("unused")
     private long storeIntegerofObjectwithValue(final long index, final long oop, final long integer) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for storeIntegerofObjectwithValue");
-        return 0;
+        return returnVoid();
     }
 
-    @SuppressWarnings("unused")
     private long storeLong32ofObjectwithValue(final long fieldIndex, final long oop, final long anInteger) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for storeLong32ofObjectwithValue");
-        return 0;
+        return returnVoid();
     }
 }
