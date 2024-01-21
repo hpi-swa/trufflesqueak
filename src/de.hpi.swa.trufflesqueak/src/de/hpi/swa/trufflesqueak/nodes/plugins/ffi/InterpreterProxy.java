@@ -316,7 +316,6 @@ public final class InterpreterProxy {
         return objectToLong(objectRegistryGet(oop));
     }
 
-    @SuppressWarnings("unused")
     private NativeObjectStorage ioLoadFunctionFrom(final String functionName, final String moduleName) {
         /* TODO */
         LogUtils.PRIMITIVES.severe(() -> "Missing implementation for ioLoadFunctionFrom");
