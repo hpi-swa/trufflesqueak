@@ -230,7 +230,7 @@ public final class InterpreterProxy {
         }
         LogUtils.PRIMITIVES.severe(() -> "Object to long called with non-Long: " + object);
         primitiveFail();
-        return 0;
+        return returnNull();
     }
 
     private double objectToDouble(final Object object) {
@@ -239,7 +239,7 @@ public final class InterpreterProxy {
         }
         LogUtils.PRIMITIVES.severe(() -> "Object to long called with non-FloatObject: " + object);
         primitiveFail();
-        return 0;
+        return returnNull();
     }
 
     ///////////////////////
@@ -276,7 +276,8 @@ public final class InterpreterProxy {
         if (objectRegistryGet(oop) instanceof NativeObject nativeObject) {
             return NativeObjectStorage.from(nativeObject).byteSizeOf();
         }
-        // type is not supported
+        // type is not supported (yet)
+        primitiveFail();
         return 0L;
     }
 
