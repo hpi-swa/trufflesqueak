@@ -48,7 +48,7 @@ public final class InterpreterProxy {
     // INTERPRETER VARIABLES //
     ///////////////////////////
     private final ArrayList<Object> objectRegistry = new ArrayList<>();
-    private long primFailCode = 0;
+    private long primFailCode;
 
     ///////////////////////
     // INSTANCE CREATION //
@@ -287,8 +287,7 @@ public final class InterpreterProxy {
 
     @SuppressWarnings("unused")
     private long failed() {
-        // TODO: when changing primitiveFail to continue executing, properly implement this
-        return returnNull();
+        return primFailCode;
     }
 
     @SuppressWarnings("unused")
