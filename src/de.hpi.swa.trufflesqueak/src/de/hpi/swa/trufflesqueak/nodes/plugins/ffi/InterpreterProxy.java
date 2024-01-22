@@ -369,10 +369,10 @@ public final class InterpreterProxy {
     private long isPositiveMachineIntegerObject(final long oop) {
         final Object object = objectRegistryGet(oop);
         if (object instanceof Long integer) {
-            return integer >= 0 ? 1 : 0;
+            return integer >= 0L ? 1L : 0L;
         }
         if (object instanceof LargeIntegerObject largeInteger) {
-            return largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong() ? 1 : 0;
+            return largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong() ? 1L : 0L;
         }
         return returnVoid();
     }
