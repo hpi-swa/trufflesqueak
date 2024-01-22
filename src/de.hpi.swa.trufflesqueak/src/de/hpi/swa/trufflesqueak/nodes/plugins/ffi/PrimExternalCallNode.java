@@ -34,6 +34,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
         this.functionSymbol = functionSymbol;
         this.functionInteropLibrary = functionInteropLibrary;
         this.numReceiverAndArguments = numReceiverAndArguments;
+        setInterpreter();
     }
 
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
@@ -79,6 +80,15 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
         }
     }
 
+    private void setInterpreter() {
+        try {
+            InterpreterProxy.instanceFor(getContext(), null, 0);
+            moduleInteropLibrary.invokeMember(moduleLibrary, "setInterpreter", InterpreterProxy.getPointer());
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+            throw CompilerDirectives.shouldNotReachHere(e);
+        }
+    }
+
     @Override
     public Object execute(final VirtualFrame frame) {
         return doExternalCall(frame.materialize());
@@ -101,9 +111,6 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             // before transferring control. We need the stack pointer to point at the last argument,
             // since the C code expects that. Therefore, we undo the decrement operation here.
             FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) + numReceiverAndArguments);
-
-            // TODO: can we only call this once?
-            moduleInteropLibrary.invokeMember(moduleLibrary, "setInterpreter", InterpreterProxy.getPointer());
 
             // return value is unused, the actual return value is pushed onto the stack (see below)
             functionInteropLibrary.execute(functionSymbol);
