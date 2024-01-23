@@ -210,12 +210,12 @@ public final class InterpreterProxy {
         return FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
     }
 
-    private long returnVoid() {
+    private static long returnVoid() {
         // For functions that do not have a defined return value
         return 0L;
     }
 
-    private long returnNull() {
+    private static long returnNull() {
         // For functions that should return null (=0)
         return 0L;
     }
