@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021-2024 Oracle and/or its affiliates
+ *
+ * Licensed under the MIT License.
+ */
 #define SIZEOF_VOID_P 8
 
 //////////// from here on: copied from

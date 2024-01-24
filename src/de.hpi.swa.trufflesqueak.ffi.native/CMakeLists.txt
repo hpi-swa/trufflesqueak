@@ -1,3 +1,10 @@
+#
+# Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
+# Copyright (c) 2021-2024 Oracle and/or its affiliates
+#
+# Licensed under the MIT License.
+#
+
 cmake_minimum_required(VERSION 3.22)
 project(de.hpi.swa.trufflesqueak.ffi.native)
 
