@@ -7,7 +7,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -64,7 +63,6 @@ public final class NFIUtils {
         }
 
         @ExportMessage
-        @TruffleBoundary
         Object execute(final Object... arguments) {
             return executable.execute(arguments);
         }

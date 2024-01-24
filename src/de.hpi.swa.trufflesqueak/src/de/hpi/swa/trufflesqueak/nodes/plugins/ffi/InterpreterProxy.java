@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -172,7 +171,6 @@ public final class InterpreterProxy {
         return oop;
     }
 
-    @TruffleBoundary
     private int oopFor(final Object object) {
         int oop = objectRegistry.indexOf(object);
         if (oop < 0) {
