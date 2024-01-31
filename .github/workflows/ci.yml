@@ -28,9 +28,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.8'
     - name: Set up dependencies
@@ -63,11 +63,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.8'
     - name: Set up dependencies
@@ -126,10 +126,10 @@ jobs:
       run: "[[ -d graal_dumps ]] && zip -r graal_dumps.zip graal_dumps || true"
     - name: Upload Graal compiler dumps
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: graal_dumps
-        path: graal_dumps.zip
+        name: graal_dumps-${{ matrix.runs-on }}
+        path: graal_dumps-${{ matrix.runs-on }}.zip
         if-no-files-found: ignore
         retention-days: 5
 
@@ -148,7 +148,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     # Oracle GraalVM for JDK 22 not released yet
     # - name: Set up Oracle GraalVM
     #   uses: graalvm/setup-graalvm@v1
@@ -164,7 +164,7 @@ jobs:
     #     cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
     #   if: ${{ matrix.type == 'native' }}
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.8'
     - name: Set up dependencies
@@ -194,7 +194,7 @@ jobs:
     - name: Run SystemReporter on TruffleSqueak standalone
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Upload TruffleSqueak standalone
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
         path: ${{ env.STANDALONE_TARGET }}
