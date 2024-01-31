@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, windows-2022]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, macos-14, windows-2022]
         java: [22]
     env:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' }}"
@@ -137,7 +137,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-11]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-11, macos-14]
         type: [native, jvm]
     env:
       JAVA_VERSION: "22"
