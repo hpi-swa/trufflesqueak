@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.PolyglotPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SecurityPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SoundCodecPrims;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims;
+import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakSSL;
 import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
@@ -110,7 +111,7 @@ public final class PrimitiveNodeFactory {
                         new SocketPlugin(),
                         new SoundCodecPrims(),
                         new SqueakFFIPrims(),
-                        // new SqueakSSL(),
+                        new SqueakSSL(),
                         new UUIDPlugin(),
                         new ZipPlugin(),
                         OS.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
@@ -191,6 +192,12 @@ public final class PrimitiveNodeFactory {
         }
         final String moduleName = values[NAMED_PRIMITIVE_MODULE_NAME_INDEX] instanceof final NativeObject m ? m.asStringUnsafe() : NULL_MODULE_NAME;
         final String functionName = ((NativeObject) values[NAMED_PRIMITIVE_FUNCTION_NAME_INDEX]).asStringUnsafe();
+
+        final PrimExternalCallNode externalCallNode = PrimExternalCallNode.load(moduleName, functionName, numReceiverAndArguments);
+        if ( externalCallNode != null) {
+            return externalCallNode;
+        }
+
         if (numReceiverAndArguments == 1) { // Check for singleton plugin primitive
             final AbstractPrimitiveNode primitiveNode = SINGLETON_PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName);
             if (primitiveNode != null) {
@@ -200,9 +207,8 @@ public final class PrimitiveNodeFactory {
         final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName, EconomicMap.emptyMap()).get(numReceiverAndArguments);
         if (nodeFactory != null) {
             return createNode(nodeFactory, location, numReceiverAndArguments);
-        } else {
-            return PrimExternalCallNode.load(moduleName, functionName, numReceiverAndArguments);
         }
+        return null;
     }
 
     private static boolean isLoadInstVar(final int primitiveIndex) {
