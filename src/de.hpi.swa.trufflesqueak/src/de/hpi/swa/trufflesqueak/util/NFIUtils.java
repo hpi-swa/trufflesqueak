@@ -161,9 +161,15 @@ public final class NFIUtils {
 
     public static Object loadLibrary(final SqueakImageContext context, final String moduleName, final String boundSymbols) {
         final String libName = System.mapLibraryName(moduleName);
-        final TruffleFile libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName);
+        TruffleFile libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName);
         if (!libPath.exists()) {
-            return null;
+            // to preserve compatibility with plugins from opensmalltalk, also check without 'lib' prefix
+            if (libName.startsWith("lib")) {
+                libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName.replace("lib", ""));
+                if (!libPath.exists()) {
+                    return null;
+                }
+            }
         }
         final String nfiCode = "load \"" + libPath.getAbsoluteFile().getPath() + "\" " + boundSymbols;
         return executeNFI(context, nfiCode);
