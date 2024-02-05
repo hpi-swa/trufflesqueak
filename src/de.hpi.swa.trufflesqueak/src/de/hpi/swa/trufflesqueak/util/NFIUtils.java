@@ -86,7 +86,7 @@ public final class NFIUtils {
     }
 
     public interface ITruffleExecutable {
-        Object execute(final Object... arguments);
+        Object execute(Object... arguments);
     }
 
     @FunctionalInterface
