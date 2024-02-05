@@ -292,7 +292,7 @@ public final class InterpreterProxy {
     }
 
     @SuppressWarnings("unused")
-    private long failed() {
+    public long failed() {
         return primFailCode;
     }
 

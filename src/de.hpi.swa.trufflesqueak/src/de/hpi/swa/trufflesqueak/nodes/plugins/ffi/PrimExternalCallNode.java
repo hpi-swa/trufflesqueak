@@ -126,6 +126,10 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             // (AbstractSendNode.executeVoid). Pop the return value and return it.
             final Object returnValue = FrameAccess.getStackValue(frame, FrameAccess.getStackPointer(frame) - 1, FrameAccess.getNumArguments(frame));
             FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) - 1);
+            long failReason = interpreterProxy.failed();
+            if (failReason != 0) {
+                throw PrimitiveFailed.andTransferToInterpreter((int) failReason);
+            }
             return returnValue;
         } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
             // for debugging purposes TODO: remove me
