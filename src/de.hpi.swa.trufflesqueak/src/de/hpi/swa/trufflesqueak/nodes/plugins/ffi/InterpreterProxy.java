@@ -172,11 +172,12 @@ public final class InterpreterProxy {
     }
 
     private int oopFor(final Object object) {
-        int oop = objectRegistry.indexOf(object);
-        if (oop < 0) {
-            oop = addObjectToRegistry(object);
+        for (int oop = 0; oop < objectRegistry.size(); oop++) {
+            if (objectRegistry.get(oop) == object) {
+                return oop;
+            }
         }
-        return oop;
+        return addObjectToRegistry(object);
     }
 
     ///////////////////
