@@ -194,7 +194,7 @@ public final class PrimitiveNodeFactory {
         final String functionName = ((NativeObject) values[NAMED_PRIMITIVE_FUNCTION_NAME_INDEX]).asStringUnsafe();
 
         final PrimExternalCallNode externalCallNode = PrimExternalCallNode.load(moduleName, functionName, numReceiverAndArguments);
-        if ( externalCallNode != null) {
+        if (externalCallNode != null) {
             return externalCallNode;
         }
 
