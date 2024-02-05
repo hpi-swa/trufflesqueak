@@ -172,6 +172,8 @@ public final class NFIUtils {
                 if (!libPath.exists()) {
                     return null;
                 }
+            } else {
+                return null;
             }
         }
         final String nfiCode = "load \"" + libPath.getAbsoluteFile().getPath() + "\" " + boundSymbols;
