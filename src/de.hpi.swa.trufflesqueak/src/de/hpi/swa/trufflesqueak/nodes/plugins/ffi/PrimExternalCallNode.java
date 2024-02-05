@@ -46,6 +46,10 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
         final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
+            if (loadedLibraries.containsKey(moduleName)) {
+                // if moduleName was associated with null
+                return null;
+            }
             final Object library;
             try {
                 library = NFIUtils.loadLibrary(context, moduleName, "{ setInterpreter(POINTER):SINT64; }");
@@ -71,6 +75,8 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             }
             return library;
         });
+        // computeIfAbsent would not put null value
+        loadedLibraries.putIfAbsent(moduleName, moduleLibrary);
         if (moduleLibrary == null) {
             // module not found
             return null;
