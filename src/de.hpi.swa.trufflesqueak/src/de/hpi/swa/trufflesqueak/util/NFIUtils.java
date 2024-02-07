@@ -165,14 +165,13 @@ public final class NFIUtils {
         final String libName = System.mapLibraryName(moduleName);
         TruffleFile libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName);
         if (!libPath.exists()) {
-            // to preserve compatibility with plugins from opensmalltalk, also check without 'lib'
-            // prefix
-            if (libName.startsWith("lib")) {
-                libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName.replace("lib", ""));
-                if (!libPath.exists()) {
-                    return null;
-                }
-            } else {
+            // to preserve compatibility with plugins from opensmalltalk
+            // also check without 'lib' prefix
+            if (!libName.startsWith("lib")) {
+                return null;
+            }
+            libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName.substring(3));
+            if (!libPath.exists()) {
                 return null;
             }
         }
