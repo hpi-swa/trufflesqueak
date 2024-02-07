@@ -138,9 +138,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             }
             return returnValue;
         } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
-            // for debugging purposes TODO: remove me
-            e.printStackTrace(System.err);
-            throw PrimitiveFailed.GENERIC_ERROR;
+            throw CompilerDirectives.shouldNotReachHere(e);
         } finally {
             if (interpreterProxy != null) {
                 interpreterProxy.postPrimitiveCleanups();
