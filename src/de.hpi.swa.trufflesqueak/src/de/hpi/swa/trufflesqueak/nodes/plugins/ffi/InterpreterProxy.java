@@ -162,6 +162,10 @@ public final class InterpreterProxy {
         return failed() == 0;
     }
 
+    private Object global(final String name) {
+        return context.lookup(name);
+    }
+
     /////////////////////////////
     // OBJECT REGISTRY HELPERS //
     /////////////////////////////
@@ -323,8 +327,118 @@ public final class InterpreterProxy {
     }
 
     @SuppressWarnings("unused")
+    private long classAlien() {
+        return oopFor(global("Alien"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classArray() {
+        return oopFor(context.arrayClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classBitmap() {
+        return oopFor(context.bitmapClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classByteArray() {
+        return oopFor(context.byteArrayClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classCharacter() {
+        return oopFor(context.characterClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classDoubleByteArray() {
+        return oopFor(global("DoubleByteArray"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classDoubleWordArray() {
+        return oopFor(global("DoubleWordArray"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classExternalAddress() {
+        return oopFor(global("ExternalAddress"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classExternalData() {
+        return oopFor(global("ExternalData"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classExternalFunction() {
+        return oopFor(global("ExternalFunction"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classExternalLibrary() {
+        return oopFor(global("ExternalLibrary"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classExternalStructure() {
+        return oopFor(global("ExternalStructure"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classFloat() {
+        return oopFor(context.floatClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classFloat32Array() {
+        return oopFor(global("FloatArray"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classFloat64Array() {
+        return oopFor(global("Float64Array"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classLargeNegativeInteger() {
+        return oopFor(context.largeNegativeIntegerClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classLargePositiveIntegerClass() {
+        return oopFor(context.largePositiveIntegerClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classPoint() {
+        return oopFor(context.pointClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classSemaphore() {
+        return oopFor(context.semaphoreClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classSmallInteger() {
+        return oopFor(context.smallIntegerClass);
+    }
+
+    @SuppressWarnings("unused")
     private long classString() {
         return oopFor(context.byteStringClass);
+    }
+
+    @SuppressWarnings("unused")
+    private long classUnsafeAlien() {
+        return oopFor(global("UnsafeAlien"));
+    }
+
+    @SuppressWarnings("unused")
+    private long classWordArray() {
+        return oopFor(global("WordArray"));
     }
 
     @SuppressWarnings("unused")
