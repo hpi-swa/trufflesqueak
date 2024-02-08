@@ -251,6 +251,10 @@ public final class InterpreterProxy {
         return returnNull();
     }
 
+    private static Object integerToObject(final long integer) {
+        return integer; // encoded as Long in TruffleSqueak
+    }
+
     ///////////////////////
     // ACCESSING HELPERS //
     ///////////////////////
@@ -344,7 +348,7 @@ public final class InterpreterProxy {
 
     @SuppressWarnings("unused")
     private long integerObjectOf(final long value) {
-        return oopFor(value);
+        return oopFor(integerToObject(value));
     }
 
     @SuppressWarnings("unused")
@@ -491,8 +495,8 @@ public final class InterpreterProxy {
     }
 
     @SuppressWarnings("unused")
-    private long pushInteger(final long integerValue) {
-        pushObject(integerValue);
+    private long pushInteger(final long integer) {
+        pushObject(integerToObject(integer));
         return returnNull();
     }
 
