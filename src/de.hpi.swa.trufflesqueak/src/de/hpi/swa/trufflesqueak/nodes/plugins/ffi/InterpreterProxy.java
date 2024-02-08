@@ -317,6 +317,16 @@ public final class InterpreterProxy {
     ///////////////////////////////
 
     @SuppressWarnings("unused")
+    private long booleanValueOf(final long oop) {
+        Object object = objectRegistryGet(oop);
+        if (object instanceof Boolean bool) {
+            return returnBoolean(bool);
+        }
+        primitiveFail();
+        return returnNull();
+    }
+
+    @SuppressWarnings("unused")
     private long byteSizeOf(final long oop) {
         if (objectRegistryGet(oop) instanceof NativeObject nativeObject) {
             return NativeObjectStorage.from(nativeObject).byteSizeOf();
