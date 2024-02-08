@@ -590,6 +590,11 @@ public final class InterpreterProxy {
     }
 
     @SuppressWarnings("unused")
+    private long stringForCString(final String string) {
+        return oopFor(stringForCString(string));
+    }
+
+    @SuppressWarnings("unused")
     private long storeIntegerofObjectwithValue(final long index, final long oop, final long integer) {
         /* TODO */
         LogUtils.PRIMITIVES.warning("Missing implementation for storeIntegerofObjectwithValue");
