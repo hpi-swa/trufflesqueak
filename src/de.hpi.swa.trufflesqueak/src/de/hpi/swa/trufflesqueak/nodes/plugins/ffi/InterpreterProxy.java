@@ -215,6 +215,10 @@ public final class InterpreterProxy {
         return FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
     }
 
+    private static long returnBoolean(final boolean bool) {
+        return bool ? 1L : 0L;
+    }
+
     private static long returnVoid() {
         // For functions that do not have a defined return value
         return 0L;
@@ -261,13 +265,13 @@ public final class InterpreterProxy {
 
     private long instanceOfCheck(final long oop, final Class<?> klass) {
         final Object object = objectRegistryGet(oop);
-        return klass.isInstance(object) ? 1 : 0;
+        return returnBoolean(klass.isInstance(object));
     }
 
     private long nativeObjectCheck(final long oop, final Predicate<NativeObject> predicate) {
         final Object object = objectRegistryGet(oop);
         if (object instanceof NativeObject nativeObject) {
-            return predicate.test(nativeObject) ? 1 : 0;
+            return returnBoolean(predicate.test(nativeObject));
         }
         return returnVoid();
     }
@@ -374,12 +378,12 @@ public final class InterpreterProxy {
     private long isPositiveMachineIntegerObject(final long oop) {
         final Object object = objectRegistryGet(oop);
         if (object instanceof Long integer) {
-            return integer >= 0L ? 1L : 0L;
+            return returnBoolean(integer >= 0L);
         }
         if (object instanceof LargeIntegerObject largeInteger) {
-            return largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong() ? 1L : 0L;
+            return returnBoolean(largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong());
         }
-        return returnVoid();
+        return returnBoolean(false);
     }
 
     @SuppressWarnings("unused")
