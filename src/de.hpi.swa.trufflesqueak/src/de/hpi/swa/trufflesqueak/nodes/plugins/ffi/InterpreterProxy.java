@@ -157,6 +157,10 @@ public final class InterpreterProxy {
         postPrimitiveCleanups.clear();
     }
 
+    private boolean hasSucceeded() {
+        return failed() == 0;
+    }
+
     /////////////////////////////
     // OBJECT REGISTRY HELPERS //
     /////////////////////////////
