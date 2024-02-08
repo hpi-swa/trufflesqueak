@@ -233,7 +233,7 @@ public final class InterpreterProxy {
     // CONVERSION HELPERS //
     ////////////////////////
 
-    private long objectToLong(final Object object) {
+    private long objectToInteger(final Object object) {
         if (object instanceof Long longObject) {
             return longObject;
         }
@@ -242,7 +242,7 @@ public final class InterpreterProxy {
         return returnNull();
     }
 
-    private double objectToDouble(final Object object) {
+    private double objectToFloat(final Object object) {
         if (object instanceof FloatObject floatObject) {
             return floatObject.getValue();
         }
@@ -302,7 +302,7 @@ public final class InterpreterProxy {
 
     @SuppressWarnings("unused")
     private long fetchIntegerofObject(final long fieldIndex, final long objectPointer) {
-        return objectToLong(objectAt0(objectRegistryGet(objectPointer), fieldIndex));
+        return objectToInteger(objectAt0(objectRegistryGet(objectPointer), fieldIndex));
     }
 
     @SuppressWarnings("unused")
@@ -327,7 +327,7 @@ public final class InterpreterProxy {
 
     @SuppressWarnings("unused")
     private double floatValueOf(final long oop) {
-        return objectToDouble(objectRegistryGet(oop));
+        return objectToFloat(objectRegistryGet(oop));
     }
 
     @SuppressWarnings("unused")
@@ -349,7 +349,7 @@ public final class InterpreterProxy {
 
     @SuppressWarnings("unused")
     private long integerValueOf(final long oop) {
-        return objectToLong(objectRegistryGet(oop));
+        return objectToInteger(objectRegistryGet(oop));
     }
 
     @SuppressWarnings("unused")
@@ -522,7 +522,7 @@ public final class InterpreterProxy {
 
     @SuppressWarnings("unused")
     private long stackIntegerValue(final long offset) {
-        return objectToLong(getObjectOnStack(offset));
+        return objectToInteger(getObjectOnStack(offset));
     }
 
     @SuppressWarnings("unused")
