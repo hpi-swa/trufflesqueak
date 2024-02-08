@@ -401,6 +401,11 @@ public final class InterpreterProxy {
     }
 
     @SuppressWarnings("unused")
+    private long isIntegerObject(final long oop) {
+        return returnBoolean(objectRegistryGet(oop) instanceof Long);
+    }
+
+    @SuppressWarnings("unused")
     private long isPointers(final long oop) {
         return instanceOfCheck(oop, AbstractPointersObject.class);
     }
