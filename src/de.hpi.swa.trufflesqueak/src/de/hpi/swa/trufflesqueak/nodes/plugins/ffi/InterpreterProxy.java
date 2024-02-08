@@ -219,6 +219,13 @@ public final class InterpreterProxy {
         return FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
     }
 
+    private long methodReturnObject(Object object) {
+        assert hasSucceeded();
+        pop(numReceiverAndArguments);
+        pushObject(object);
+        return 0;
+    }
+
     private static long returnBoolean(final boolean bool) {
         return bool ? 1L : 0L;
     }
@@ -257,6 +264,22 @@ public final class InterpreterProxy {
 
     private static Object integerToObject(final long integer) {
         return integer; // encoded as Long in TruffleSqueak
+    }
+
+    private static Object boolToObject(final boolean bool) {
+        return BooleanObject.wrap(bool);
+    }
+
+    private static Object boolToObject(final long bool) {
+        return boolToObject(bool != 0);
+    }
+
+    private Object floatToObject(final double value) {
+        return new FloatObject(context, value);
+    }
+
+    private Object stringToObject(final String string) {
+        return context.asByteString(string);
     }
 
     ///////////////////////
@@ -417,24 +440,35 @@ public final class InterpreterProxy {
     }
 
     @SuppressWarnings("unused")
+    private long methodReturnBool(final long bool) {
+        return methodReturnObject(boolToObject(bool));
+    }
+
+    @SuppressWarnings("unused")
+    private long methodReturnFloat(final double value) {
+        return methodReturnObject(floatToObject(value));
+    }
+
+    @SuppressWarnings("unused")
     private long methodReturnInteger(final long integer) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for methodReturnInteger");
-        return returnVoid();
+        return methodReturnObject(integerToObject(integer));
     }
 
     @SuppressWarnings("unused")
     private long methodReturnReceiver() {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for methodReturnReceiver");
-        return returnVoid();
+        assert hasSucceeded();
+        pop(numReceiverAndArguments - 1); // leave the receiver on the stack
+        return 0;
+    }
+
+    @SuppressWarnings("unused")
+    private long methodReturnString(final String string) {
+        return methodReturnObject(stringToObject(string));
     }
 
     @SuppressWarnings("unused")
     private long methodReturnValue(final long oop) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for methodReturnValue");
-        return returnVoid();
+        return methodReturnObject(objectRegistryGet(oop));
     }
 
     @SuppressWarnings("unused")
