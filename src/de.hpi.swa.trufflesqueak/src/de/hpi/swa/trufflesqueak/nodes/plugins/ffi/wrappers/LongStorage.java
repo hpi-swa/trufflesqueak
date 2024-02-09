@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 final class LongStorage extends NativeObjectStorage {
     private final long[] storage;
 
-    public LongStorage(final long[] storage) {
+    LongStorage(final long[] storage) {
         this.storage = storage;
     }
 

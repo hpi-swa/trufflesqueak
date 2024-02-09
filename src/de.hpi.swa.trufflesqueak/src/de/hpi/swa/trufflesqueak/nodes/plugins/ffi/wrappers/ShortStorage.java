@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 final class ShortStorage extends NativeObjectStorage {
     private final short[] storage;
 
-    public ShortStorage(final short[] storage) {
+    ShortStorage(final short[] storage) {
         this.storage = storage;
     }
 

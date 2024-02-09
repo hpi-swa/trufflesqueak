@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 final class IntStorage extends NativeObjectStorage {
     private final int[] storage;
 
-    public IntStorage(final int[] storage) {
+    IntStorage(final int[] storage) {
         this.storage = storage;
     }
 
