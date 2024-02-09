@@ -158,6 +158,7 @@ public final class InterpreterProxy {
                         TruffleExecutable.wrap("(SINT64):SINT64", this::stackObjectValue),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
                         TruffleExecutable.wrap("():SINT64", this::statNumGCs),
+                        TruffleExecutable.wrap("(STRING):UINT64", this::stringForCString),
                         TruffleExecutable.wrap("(SINT64,SINT64,SINT64):SINT64", this::storeIntegerofObjectwithValue),
                         TruffleExecutable.wrap("(SINT64,SINT64,UINT64):UINT64", this::storeLong32ofObjectwithValue),
                         TruffleExecutable.wrap("():SINT64", this::trueObject),
@@ -670,6 +671,10 @@ public final class InterpreterProxy {
 
     private long statNumGCs() {
         return MiscUtils.getCollectionCount();
+    }
+
+    private long stringForCString(final String string) {
+        return oopFor(stringToObject(string));
     }
 
     private long storeIntegerofObjectwithValue(final long index, final long oop, final long integer) {

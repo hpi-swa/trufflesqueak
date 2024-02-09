@@ -82,6 +82,7 @@ VirtualMachine* createInterpreterProxy(
 	sqInt (*stackObjectValue)(sqInt offset),
 	sqInt (*stackValue)(sqInt offset),
 	sqInt (*statNumGCs)(void),
+	sqInt (*stringForCString)(char* nullTerminatedCString),
 	sqInt (*storeIntegerofObjectwithValue)(sqInt index, sqInt oop, sqInt integer),
 	usqInt (*storeLong32ofObjectwithValue)(sqInt fieldIndex, sqInt oop, usqInt anInteger),
 	sqInt (*trueObject)(void)
@@ -157,6 +158,7 @@ VirtualMachine* createInterpreterProxy(
 	interpreterProxy->stackObjectValue = stackObjectValue;
 	interpreterProxy->stackValue = stackValue;
 	interpreterProxy->statNumGCs = statNumGCs;
+	interpreterProxy->stringForCString = stringForCString;
 	interpreterProxy->storeIntegerofObjectwithValue = storeIntegerofObjectwithValue;
 	interpreterProxy->storeLong32ofObjectwithValue = storeLong32ofObjectwithValue;
 	interpreterProxy->trueObject = trueObject;
