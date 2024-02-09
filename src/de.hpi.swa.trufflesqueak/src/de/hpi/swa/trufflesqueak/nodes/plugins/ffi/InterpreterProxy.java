@@ -113,6 +113,7 @@ public final class InterpreterProxy {
                         TruffleExecutable.wrap("():SINT64", this::classUnsafeAlien),
                         TruffleExecutable.wrap("():SINT64", this::classWordArray),
                         TruffleExecutable.wrap("():SINT64", this::failed),
+                        TruffleExecutable.wrap("():SINT64", this::falseObject),
                         TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchIntegerofObject),
                         TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchLong32ofObject),
                         TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchPointerofObject),
@@ -157,6 +158,7 @@ public final class InterpreterProxy {
                         TruffleExecutable.wrap("():SINT64", this::statNumGCs),
                         TruffleExecutable.wrap("(SINT64,SINT64,SINT64):SINT64", this::storeIntegerofObjectwithValue),
                         TruffleExecutable.wrap("(SINT64,SINT64,UINT64):UINT64", this::storeLong32ofObjectwithValue),
+                        TruffleExecutable.wrap("():SINT64", this::trueObject),
         };
     }
 
@@ -583,8 +585,16 @@ public final class InterpreterProxy {
         return 17;
     }
 
+    private long falseObject() {
+        return oopFor(BooleanObject.FALSE);
+    }
+
     private long nilObject() {
         return oopFor(NilObject.SINGLETON);
+    }
+
+    private long trueObject() {
+        return oopFor(BooleanObject.TRUE);
     }
 
     private long pop(final long nItems) {

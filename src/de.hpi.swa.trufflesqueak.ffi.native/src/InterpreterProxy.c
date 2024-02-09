@@ -39,6 +39,7 @@ VirtualMachine* createInterpreterProxy(
 	sqInt (*classUnsafeAlien)(void),
 	sqInt (*classWordArray)(void),
 	sqInt (*failed)(void),
+	sqInt (*falseObject)(void),
 	sqInt (*fetchIntegerofObject)(sqInt fieldIndex, sqInt objectPointer),
 	sqInt (*fetchLong32ofObject)(sqInt fieldIndex, sqInt oop),
 	sqInt (*fetchPointerofObject)(sqInt index, sqInt oop),
@@ -82,7 +83,8 @@ VirtualMachine* createInterpreterProxy(
 	sqInt (*stackValue)(sqInt offset),
 	sqInt (*statNumGCs)(void),
 	sqInt (*storeIntegerofObjectwithValue)(sqInt index, sqInt oop, sqInt integer),
-	usqInt (*storeLong32ofObjectwithValue)(sqInt fieldIndex, sqInt oop, usqInt anInteger)
+	usqInt (*storeLong32ofObjectwithValue)(sqInt fieldIndex, sqInt oop, usqInt anInteger),
+	sqInt (*trueObject)(void)
 ) {
 	VirtualMachine* interpreterProxy = (VirtualMachine*)calloc(1, sizeof(VirtualMachine));
 
@@ -112,6 +114,7 @@ VirtualMachine* createInterpreterProxy(
 	interpreterProxy->classUnsafeAlien = classUnsafeAlien;
 	interpreterProxy->classWordArray = classWordArray;
 	interpreterProxy->failed = failed;
+	interpreterProxy->falseObject = falseObject;
 	interpreterProxy->fetchIntegerofObject = fetchIntegerofObject;
 	interpreterProxy->fetchLong32ofObject = fetchLong32ofObject;
 	interpreterProxy->fetchPointerofObject = fetchPointerofObject;
@@ -156,6 +159,7 @@ VirtualMachine* createInterpreterProxy(
 	interpreterProxy->statNumGCs = statNumGCs;
 	interpreterProxy->storeIntegerofObjectwithValue = storeIntegerofObjectwithValue;
 	interpreterProxy->storeLong32ofObjectwithValue = storeLong32ofObjectwithValue;
+	interpreterProxy->trueObject = trueObject;
 
 	return interpreterProxy;
 }
