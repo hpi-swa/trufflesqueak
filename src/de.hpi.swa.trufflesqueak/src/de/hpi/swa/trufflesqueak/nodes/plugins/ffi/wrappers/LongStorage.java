@@ -8,8 +8,8 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers;
 
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
-public final class LongStorage extends NativeObjectStorage {
-    final long[] storage;
+final class LongStorage extends NativeObjectStorage {
+    private final long[] storage;
 
     public LongStorage(final long[] storage) {
         this.storage = storage;
