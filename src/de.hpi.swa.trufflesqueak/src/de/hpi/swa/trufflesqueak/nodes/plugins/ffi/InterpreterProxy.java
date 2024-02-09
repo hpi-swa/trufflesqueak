@@ -277,7 +277,7 @@ public final class InterpreterProxy {
     ////////////////////////
 
     private long objectToInteger(final Object object) {
-        if (object instanceof Long longObject) {
+        if (object instanceof final Long longObject) {
             return longObject;
         }
         LogUtils.PRIMITIVES.severe(() -> "Object to long called with non-Long: " + object);
@@ -286,7 +286,7 @@ public final class InterpreterProxy {
     }
 
     private double objectToFloat(final Object object) {
-        if (object instanceof FloatObject floatObject) {
+        if (object instanceof final FloatObject floatObject) {
             return floatObject.getValue();
         }
         LogUtils.PRIMITIVES.severe(() -> "Object to long called with non-FloatObject: " + object);
@@ -333,7 +333,7 @@ public final class InterpreterProxy {
 
     private long nativeObjectCheck(final long oop, final Predicate<NativeObject> predicate) {
         final Object object = objectRegistryGet(oop);
-        if (object instanceof NativeObject nativeObject) {
+        if (object instanceof final NativeObject nativeObject) {
             return returnBoolean(predicate.test(nativeObject));
         }
         return returnVoid();
@@ -345,7 +345,7 @@ public final class InterpreterProxy {
 
     private long booleanValueOf(final long oop) {
         final Object object = objectRegistryGet(oop);
-        if (object instanceof Boolean bool) {
+        if (object instanceof final Boolean bool) {
             return returnBoolean(bool);
         }
         primitiveFail();
@@ -353,7 +353,7 @@ public final class InterpreterProxy {
     }
 
     private long byteSizeOf(final long oop) {
-        if (objectRegistryGet(oop) instanceof NativeObject nativeObject) {
+        if (objectRegistryGet(oop) instanceof final NativeObject nativeObject) {
             return NativeObjectStorage.from(nativeObject).byteSizeOf();
         }
         // type is not supported (yet)
@@ -474,7 +474,7 @@ public final class InterpreterProxy {
     }
 
     private NativeObjectStorage firstIndexableField(final long oop) {
-        if (objectRegistryGet(oop) instanceof NativeObject nativeObject) {
+        if (objectRegistryGet(oop) instanceof final NativeObject nativeObject) {
             final NativeObjectStorage storage = NativeObjectStorage.from(nativeObject);
             postPrimitiveCleanups.add(storage);
             return storage;
@@ -488,7 +488,7 @@ public final class InterpreterProxy {
 
     private long instantiateClassindexableSize(final long classPointer, final long size) {
         final Object object = objectRegistryGet(classPointer);
-        if (object instanceof ClassObject classObject) {
+        if (object instanceof final ClassObject classObject) {
             final AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject, (int) size);
             return oopFor(newObject);
         }
@@ -529,10 +529,10 @@ public final class InterpreterProxy {
 
     private long isPositiveMachineIntegerObject(final long oop) {
         final Object object = objectRegistryGet(oop);
-        if (object instanceof Long integer) {
+        if (object instanceof final Long integer) {
             return returnBoolean(integer >= 0L);
         }
-        if (object instanceof LargeIntegerObject largeInteger) {
+        if (object instanceof final LargeIntegerObject largeInteger) {
             return returnBoolean(largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong());
         }
         return returnBoolean(false);
