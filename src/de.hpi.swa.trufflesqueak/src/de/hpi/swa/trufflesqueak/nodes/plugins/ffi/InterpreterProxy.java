@@ -455,6 +455,10 @@ public final class InterpreterProxy {
         return primFailCode;
     }
 
+    private long falseObject() {
+        return oopFor(BooleanObject.FALSE);
+    }
+
     private long fetchIntegerofObject(final long fieldIndex, final long objectPointer) {
         return objectToInteger(objectAt0(objectRegistryGet(objectPointer), fieldIndex));
     }
@@ -578,16 +582,8 @@ public final class InterpreterProxy {
         return 17;
     }
 
-    private long falseObject() {
-        return oopFor(BooleanObject.FALSE);
-    }
-
     private long nilObject() {
         return oopFor(NilObject.SINGLETON);
-    }
-
-    private long trueObject() {
-        return oopFor(BooleanObject.TRUE);
     }
 
     private long pop(final long nItems) {
@@ -686,5 +682,9 @@ public final class InterpreterProxy {
         /* TODO */
         LogUtils.PRIMITIVES.warning(() -> "Missing implementation for storeLong32ofObjectwithValue: %s, %s, %s".formatted(fieldIndex, oop, anInteger));
         return returnVoid();
+    }
+
+    private long trueObject() {
+        return oopFor(BooleanObject.TRUE);
     }
 }
