@@ -95,6 +95,30 @@ suite = {
             "sha1": "acd1c78c07e894647e8dcbd72c4fa9a136e20d6d",
             "licence": "LGPLv21",
         },
+        "OSVM_PLUGINS": {
+            "baseurl": "https://github.com/hpi-swa/trufflesqueak/releases/download/23.1.0/osvm-plugins-202312181441",
+            "os_arch": {
+                "linux": {
+                    "amd64": {
+                        "urls": ["{baseurl}-linux-amd64.zip"],
+                        "digest": "sha512:5e94f289e5e1c71772b3033fda31e637cdcbea17321f2a4448a6755dff6db2db210086cffc993320249bcb6a1df395c17a2a06aedc9636159623336ca92e8008",
+                    },
+                    "aarch64": {
+                        "urls" : ["{baseurl}-linux-aarch64.zip"],
+                        "digest" : "sha512:b4801b2a442ca383c6d5718c5a085b1446e66010e73587f166ff2726d393ecc47d7a195bba9d586e7f6c40d587e9a89c874a39adb3f65e9633a12703b40268e9",
+                    },
+                },
+                "windows": {
+                    "amd64": {
+                        "urls": ["{baseurl}-windows-amd64.zip"],
+                        "digest": "sha512:10ec2b4b783bb83a814866ea237a424138802a99ee63b3cfbe2d2b2c6607e94ea000922f58f8a159108f66c0509764bc48b62885337d2a198534337eb2ed6f8e",
+                    },
+                },
+                "<others>": {
+                    "<others>": {"optional": True}
+                },
+            },
+        },
         "TRUFFLE-ENTERPRISE": {
             "digest": "sha512:b883d3ead84778617f9b09edaa43634183f07cdc6ae0666cb2f4edabc52fca913138c4a7a8f9ada1adbd4a9bbe7d16fb4a1b3ceac13446f4e0c47f3d1a20469f",
             "maven": {
@@ -167,24 +191,17 @@ suite = {
         },
         "de.hpi.swa.trufflesqueak.ffi.native": {
             "subDir": "src",
-            "native": "shared_lib",
-            "deliverable": "SqueakFFIPrims",
+            "class": "CMakeNinjaProject",
+            "vpath": True,
+            "ninja_targets": ["all"],
             "os_arch": {
-                "windows": {
-                    "<others>": {
-                        "cflags": []
-                    }
-                },
-                "linux": {
-                    "<others>": {
-                        "cflags": ["-g", "-Wall", "-Werror", "-D_GNU_SOURCE"],
-                        "ldlibs": ["-ldl"],
-                    },
-                },
                 "<others>": {
                     "<others>": {
-                        "cflags": ["-g", "-Wall", "-Werror"],
-                        "ldlibs": ["-ldl"],
+                        "cmakeConfig": {},
+                        "results": [
+                            "<lib:SqueakFFIPrims>",
+                            "<lib:InterpreterProxy>",
+                        ],
                     },
                 },
             },
@@ -308,7 +325,14 @@ suite = {
             "layout": {
                 "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
                 "README_TRUFFLESQUEAK.md": "file:README.md",
-                "lib/": "dependency:de.hpi.swa.trufflesqueak.ffi.native",
+                "lib/": [
+                    "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                    {
+                        "source_type": "extracted-dependency",
+                        "dependency": "OSVM_PLUGINS",
+                        "path": "*",
+                    },
+                ],
             },
             "maven": False,
         },

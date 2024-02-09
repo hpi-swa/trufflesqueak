@@ -6,14 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.graalvm.collections.EconomicMap;
-
 import com.oracle.truffle.api.dsl.NodeFactory;
-
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -47,6 +40,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Win32OSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ZipPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.PrimExternalCallNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.network.SocketPlugin;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArrayStreamPrimitives;
@@ -57,6 +51,11 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
 import de.hpi.swa.trufflesqueak.util.OS;
+import org.graalvm.collections.EconomicMap;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class PrimitiveNodeFactory {
     public static final int PRIMITIVE_SIMULATION_GUARD_INDEX = 19;
@@ -193,6 +192,12 @@ public final class PrimitiveNodeFactory {
         }
         final String moduleName = values[NAMED_PRIMITIVE_MODULE_NAME_INDEX] instanceof final NativeObject m ? m.asStringUnsafe() : NULL_MODULE_NAME;
         final String functionName = ((NativeObject) values[NAMED_PRIMITIVE_FUNCTION_NAME_INDEX]).asStringUnsafe();
+
+        final PrimExternalCallNode externalCallNode = PrimExternalCallNode.load(moduleName, functionName, numReceiverAndArguments);
+        if (externalCallNode != null) {
+            return externalCallNode;
+        }
+
         if (numReceiverAndArguments == 1) { // Check for singleton plugin primitive
             final AbstractPrimitiveNode primitiveNode = SINGLETON_PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName);
             if (primitiveNode != null) {
@@ -202,9 +207,8 @@ public final class PrimitiveNodeFactory {
         final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName, EconomicMap.emptyMap()).get(numReceiverAndArguments);
         if (nodeFactory != null) {
             return createNode(nodeFactory, location, numReceiverAndArguments);
-        } else {
-            return null;
         }
+        return null;
     }
 
     private static boolean isLoadInstVar(final int primitiveIndex) {

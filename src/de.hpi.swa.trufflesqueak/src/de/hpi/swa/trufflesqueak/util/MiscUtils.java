@@ -72,6 +72,16 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static long getCollectionCount() {
+        long totalGCCount = 0;
+        for (final GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            final long count = gcBean.getCollectionCount();
+            totalGCCount += Math.max(count, 0);
+        }
+        return totalGCCount;
+    }
+
+    @TruffleBoundary
     public static long getCollectionCount(final String[] names) {
         final GarbageCollectorMXBean mxBean = getGarbageCollectorMXBean(names);
         return mxBean != null ? mxBean.getCollectionCount() : 1L; // avoid division by zero

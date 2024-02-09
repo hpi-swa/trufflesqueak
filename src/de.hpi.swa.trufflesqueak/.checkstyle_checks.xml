@@ -188,6 +188,7 @@
     </module>
     <module name="FinalParameters"/>
     <module name="EqualsHashCode"/>
+    <module name="SuppressWarnings"/>
   </module>
   <module name="LineLength">
     <property name="max" value="250"/>
