@@ -567,7 +567,7 @@ public final class InterpreterProxy {
     private long methodReturnReceiver() {
         assert hasSucceeded();
         pop(numReceiverAndArguments - 1); // leave the receiver on the stack
-        return 0;
+        return 0L;
     }
 
     private long methodReturnString(final String string) {
@@ -579,7 +579,7 @@ public final class InterpreterProxy {
     }
 
     private long minorVersion() {
-        return 17;
+        return 17L;
     }
 
     private long nilObject() {
@@ -613,7 +613,7 @@ public final class InterpreterProxy {
         if (primFailCode == 0) {
             primitiveFailFor(1L);
         }
-        return returnNull();
+        return 0L;
     }
 
     private long primitiveFailFor(final long reasonCode) {
