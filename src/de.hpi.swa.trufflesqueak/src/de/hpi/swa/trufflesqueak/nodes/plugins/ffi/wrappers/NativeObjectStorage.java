@@ -14,7 +14,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 
 @ExportLibrary(InteropLibrary.class)
-public abstract class NativeObjectStorage implements PostPrimitiveCleanup, TruffleObject {
+public abstract class NativeObjectStorage implements TruffleObject {
     protected long nativeAddress;
     private boolean isAllocated;
 
@@ -54,4 +54,6 @@ public abstract class NativeObjectStorage implements PostPrimitiveCleanup, Truff
     public abstract int byteSizeOf();
 
     protected abstract long allocate();
+
+    public abstract void cleanup();
 }

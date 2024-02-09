@@ -37,7 +37,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
-import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.PostPrimitiveCleanup;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -49,7 +48,7 @@ public final class InterpreterProxy {
     private final SqueakImageContext context;
     private MaterializedFrame frame;
     private int numReceiverAndArguments;
-    private final ArrayList<PostPrimitiveCleanup> postPrimitiveCleanups = new ArrayList<>();
+    private final ArrayList<NativeObjectStorage> postPrimitiveCleanups = new ArrayList<>();
     // should not be local, as the references are needed to keep the native closures alive
     // since this class is a singleton, a private instance variable will suffice
     @SuppressWarnings("FieldCanBeLocal") private final TruffleClosure[] closures;
@@ -226,7 +225,7 @@ public final class InterpreterProxy {
     }
 
     public void postPrimitiveCleanups() {
-        postPrimitiveCleanups.forEach(PostPrimitiveCleanup::cleanup);
+        postPrimitiveCleanups.forEach(NativeObjectStorage::cleanup);
         postPrimitiveCleanups.clear();
     }
 
