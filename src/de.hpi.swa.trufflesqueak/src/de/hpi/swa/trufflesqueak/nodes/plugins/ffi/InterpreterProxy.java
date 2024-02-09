@@ -252,7 +252,7 @@ public final class InterpreterProxy {
         return FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
     }
 
-    private long methodReturnObject(Object object) {
+    private long methodReturnObject(final Object object) {
         assert hasSucceeded();
         pop(numReceiverAndArguments);
         pushObject(object);
@@ -345,7 +345,7 @@ public final class InterpreterProxy {
     ///////////////////////////////
 
     private long booleanValueOf(final long oop) {
-        Object object = objectRegistryGet(oop);
+        final Object object = objectRegistryGet(oop);
         if (object instanceof Boolean bool) {
             return returnBoolean(bool);
         }
@@ -594,7 +594,7 @@ public final class InterpreterProxy {
 
     private long popthenPush(final long nItems, final long oop) {
         pop(nItems);
-        push(oop);
+        pushObject(objectRegistryGet(oop));
         return returnVoid();
     }
 
@@ -623,11 +623,6 @@ public final class InterpreterProxy {
     private long primitiveFailFor(final long reasonCode) {
         LogUtils.PRIMITIVES.info(() -> "Primitive failed with code: " + reasonCode);
         return primFailCode = reasonCode;
-    }
-
-    private long push(final long oop) {
-        pushObject(objectRegistryGet(oop));
-        return returnVoid();
     }
 
     private long pushInteger(final long integer) {
@@ -671,10 +666,6 @@ public final class InterpreterProxy {
 
     private long statNumGCs() {
         return MiscUtils.getCollectionCount();
-    }
-
-    private long stringForCString(final String string) {
-        return oopFor(stringForCString(string));
     }
 
     private long storeIntegerofObjectwithValue(final long index, final long oop, final long integer) {
