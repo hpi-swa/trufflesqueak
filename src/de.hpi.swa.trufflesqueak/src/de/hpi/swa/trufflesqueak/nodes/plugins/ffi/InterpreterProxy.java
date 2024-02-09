@@ -6,11 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
@@ -18,7 +13,6 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -31,7 +25,6 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
@@ -42,6 +35,11 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleClosure;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public final class InterpreterProxy {
     private final SqueakImageContext context;
@@ -618,7 +616,10 @@ public final class InterpreterProxy {
     }
 
     private long primitiveFail() {
-        return primitiveFailFor(ERROR_TABLE.GENERIC_ERROR.ordinal());
+        if (primFailCode == 0) {
+            primitiveFailFor(1L);
+        }
+        return returnNull();
     }
 
     private long primitiveFailFor(final long reasonCode) {
