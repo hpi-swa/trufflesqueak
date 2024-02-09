@@ -19,6 +19,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -28,6 +29,7 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
@@ -640,9 +642,14 @@ public final class InterpreterProxy {
         return returnNull();
     }
 
-    private long showDisplayBitsLeftTopRightBottom(final long aForm, final long l, final long t, final long r, final long b) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for showDisplayBitsLeftTopRightBottom");
+    private long showDisplayBitsLeftTopRightBottom(final long aFormOop, final long l, final long t, final long r, final long b) {
+        final Object aFormObject = objectRegistryGet(aFormOop);
+        if (aFormObject instanceof final PointersObject aForm) {
+            final SqueakDisplay display = context.getDisplay();
+            if (aForm.isDisplay(context) && !display.getDeferUpdates()) {
+                display.showDisplayRect((int) l, (int) t, (int) r, (int) b);
+            }
+        }
         return returnVoid();
     }
 
