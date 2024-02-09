@@ -11,7 +11,6 @@ import java.lang.ref.ReferenceQueue;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -169,7 +168,6 @@ public final class SqueakImageContext {
 
     /* Plugins */
     @CompilationFinal private InterpreterProxy interpreterProxy;
-    public final Map<String, Object> loadedLibraries = new HashMap<>();
     public final B2D b2d = new B2D(this);
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = new String[0];
@@ -626,11 +624,15 @@ public final class SqueakImageContext {
         return env.getInternalLanguages().containsKey("nfi");
     }
 
-    public InterpreterProxy getInterpreterProxy(final MaterializedFrame frame, final int numReceiverAndArguments) {
+    public InterpreterProxy getOrCreateInterpreterProxy() {
         if (interpreterProxy == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             interpreterProxy = new InterpreterProxy(this);
         }
+        return interpreterProxy;
+    }
+
+    public InterpreterProxy getInterpreterProxy(final MaterializedFrame frame, final int numReceiverAndArguments) {
         return interpreterProxy.instanceFor(frame, numReceiverAndArguments);
     }
 

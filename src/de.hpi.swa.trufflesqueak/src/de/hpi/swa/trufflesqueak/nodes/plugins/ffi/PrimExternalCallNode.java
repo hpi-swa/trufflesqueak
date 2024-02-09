@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
@@ -24,77 +23,28 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 
 public final class PrimExternalCallNode extends AbstractPrimitiveNode {
-    private final Object moduleLibrary;
-    private final InteropLibrary moduleInteropLibrary;
     private final Object functionSymbol;
     private final InteropLibrary functionInteropLibrary;
     private final int numReceiverAndArguments;
 
-    public PrimExternalCallNode(final Object moduleLibrary, final InteropLibrary moduleInteropLibrary, final Object functionSymbol, final InteropLibrary functionInteropLibrary,
-                    final int numReceiverAndArguments) {
-        this.moduleLibrary = moduleLibrary;
-        this.moduleInteropLibrary = moduleInteropLibrary;
+    public PrimExternalCallNode(final Object functionSymbol, final InteropLibrary functionInteropLibrary, final int numReceiverAndArguments) {
         this.functionSymbol = functionSymbol;
         this.functionInteropLibrary = functionInteropLibrary;
         this.numReceiverAndArguments = numReceiverAndArguments;
-        setInterpreter();
     }
 
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
-        final Object moduleLibrary = context.loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
-            if (context.loadedLibraries.containsKey(moduleName)) {
-                // if moduleName was associated with null
-                return null;
-            }
-            final Object library;
-            try {
-                library = NFIUtils.loadLibrary(context, moduleName, "{ setInterpreter(POINTER):SINT64; }");
-            } catch (AbstractTruffleException e) {
-                if (e.getMessage().equals("Unknown identifier: setInterpreter")) {
-                    // module has no setInterpreter, cannot be loaded
-                    return null;
-                }
-                throw e;
-            }
-            if (library == null) {
-                return null;
-            }
-            try {
-                // TODO: also call shutdownModule():SINT64 at some point
-                final Object initialiseModuleSymbol = NFIUtils.loadMember(context, library, "initialiseModule", "():SINT64");
-                final InteropLibrary initialiseModuleInteropLibrary = NFIUtils.getInteropLibrary(initialiseModuleSymbol);
-                initialiseModuleInteropLibrary.execute(initialiseModuleSymbol);
-            } catch (UnknownIdentifierException e) {
-                // module has no initializer, ignore
-            } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
-                throw CompilerDirectives.shouldNotReachHere(e);
-            }
-            return library;
-        });
-        // computeIfAbsent would not put null value
-        context.loadedLibraries.putIfAbsent(moduleName, moduleLibrary);
+        final Object moduleLibrary = context.getOrCreateInterpreterProxy().lookupModuleLibrary(moduleName);
         if (moduleLibrary == null) {
-            // module not found
-            return null;
+            return null; // module not found
         }
-        final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(moduleLibrary);
         try {
             final Object functionSymbol = NFIUtils.loadMember(context, moduleLibrary, functionName, "():SINT64");
             final InteropLibrary functionInteropLibrary = NFIUtils.getInteropLibrary(functionSymbol);
-            return new PrimExternalCallNode(moduleLibrary, moduleInteropLibrary, functionSymbol, functionInteropLibrary, numReceiverAndArguments);
+            return new PrimExternalCallNode(functionSymbol, functionInteropLibrary, numReceiverAndArguments);
         } catch (UnknownIdentifierException e) {
-            // function not found
-            return null;
-        }
-    }
-
-    private void setInterpreter() {
-        try {
-            final InterpreterProxy interpreterProxy = getContext().getInterpreterProxy(null, 0);
-            moduleInteropLibrary.invokeMember(moduleLibrary, "setInterpreter", interpreterProxy.getPointer());
-        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
-            throw CompilerDirectives.shouldNotReachHere(e);
+            return null; // function not found
         }
     }
 
