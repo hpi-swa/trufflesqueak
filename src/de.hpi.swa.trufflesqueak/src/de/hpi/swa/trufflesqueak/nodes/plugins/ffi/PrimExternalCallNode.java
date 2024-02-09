@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
@@ -35,7 +36,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
 
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
-        final Object moduleLibrary = context.getOrCreateInterpreterProxy().lookupModuleLibrary(moduleName);
+        final Object moduleLibrary = lookupModuleLibrary(context, moduleName);
         if (moduleLibrary == null) {
             return null; // module not found
         }
@@ -46,6 +47,48 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
         } catch (UnknownIdentifierException e) {
             return null; // function not found
         }
+    }
+
+    private static Object lookupModuleLibrary(final SqueakImageContext context, final String moduleName) {
+        final Object moduleLibrary = context.loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
+            if (context.loadedLibraries.containsKey(moduleName)) {
+                // if moduleName was associated with null
+                return null;
+            }
+            final Object library;
+            try {
+                library = NFIUtils.loadLibrary(context, moduleName, "{ setInterpreter(POINTER):SINT64; }");
+            } catch (AbstractTruffleException e) {
+                if (e.getMessage().equals("Unknown identifier: setInterpreter")) {
+                    // module has no setInterpreter, cannot be loaded
+                    return null;
+                }
+                throw e;
+            }
+            if (library == null) {
+                return null;
+            }
+            try {
+                // TODO: also call shutdownModule():SINT64 at some point
+                final Object initialiseModuleSymbol = NFIUtils.loadMember(context, library, "initialiseModule", "():SINT64");
+                final InteropLibrary initialiseModuleInteropLibrary = NFIUtils.getInteropLibrary(initialiseModuleSymbol);
+                initialiseModuleInteropLibrary.execute(initialiseModuleSymbol);
+            } catch (UnknownIdentifierException e) {
+                // module has no initializer, ignore
+            } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+                throw CompilerDirectives.shouldNotReachHere(e);
+            }
+            try {
+                final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(library);
+                moduleInteropLibrary.invokeMember(library, "setInterpreter", context.getInterpreterProxy(null, 0).getPointer());
+            } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+                throw CompilerDirectives.shouldNotReachHere(e);
+            }
+            return library;
+        });
+        // computeIfAbsent would not put null value
+        context.loadedLibraries.putIfAbsent(moduleName, moduleLibrary);
+        return moduleLibrary;
     }
 
     @Override

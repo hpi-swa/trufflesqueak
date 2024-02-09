@@ -8,13 +8,10 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -53,7 +50,6 @@ public final class InterpreterProxy {
     // since this class is a singleton, a private instance variable will suffice
     @SuppressWarnings("FieldCanBeLocal") private final TruffleClosure[] closures;
     private final Object interpreterProxyPointer;
-    private final Map<String, Object> loadedLibraries = new HashMap<>();
 
     ///////////////////////////
     // INTERPRETER VARIABLES //
@@ -175,53 +171,11 @@ public final class InterpreterProxy {
         return this;
     }
 
-    public Object lookupModuleLibrary(final String moduleName) {
-        final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
-            if (loadedLibraries.containsKey(moduleName)) {
-                // if moduleName was associated with null
-                return null;
-            }
-            final Object library;
-            try {
-                library = NFIUtils.loadLibrary(context, moduleName, "{ setInterpreter(POINTER):SINT64; }");
-            } catch (AbstractTruffleException e) {
-                if (e.getMessage().equals("Unknown identifier: setInterpreter")) {
-                    // module has no setInterpreter, cannot be loaded
-                    return null;
-                }
-                throw e;
-            }
-            if (library == null) {
-                return null;
-            }
-            try {
-                // TODO: also call shutdownModule():SINT64 at some point
-                final Object initialiseModuleSymbol = NFIUtils.loadMember(context, library, "initialiseModule", "():SINT64");
-                final InteropLibrary initialiseModuleInteropLibrary = NFIUtils.getInteropLibrary(initialiseModuleSymbol);
-                initialiseModuleInteropLibrary.execute(initialiseModuleSymbol);
-            } catch (UnknownIdentifierException e) {
-                // module has no initializer, ignore
-            } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
-                throw CompilerDirectives.shouldNotReachHere(e);
-            }
-            try {
-                final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(library);
-                moduleInteropLibrary.invokeMember(library, "setInterpreter", getPointer());
-            } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
-                throw CompilerDirectives.shouldNotReachHere(e);
-            }
-            return library;
-        });
-        // computeIfAbsent would not put null value
-        loadedLibraries.putIfAbsent(moduleName, moduleLibrary);
-        return moduleLibrary;
-    }
-
     ///////////////////
     // MISCELLANEOUS //
     ///////////////////
 
-    private Object getPointer() {
+    public Object getPointer() {
         return interpreterProxyPointer;
     }
 
