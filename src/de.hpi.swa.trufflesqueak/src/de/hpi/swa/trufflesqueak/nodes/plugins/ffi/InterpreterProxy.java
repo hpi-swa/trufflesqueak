@@ -464,7 +464,7 @@ public final class InterpreterProxy {
     }
 
     private long fetchLong32ofObject(final long fieldIndex, final long oop) {
-        return fetchIntegerofObject(fieldIndex, oop);
+        return (int) fetchIntegerofObject(fieldIndex, oop);
     }
 
     private long fetchPointerofObject(final long index, final long oop) {
@@ -598,21 +598,15 @@ public final class InterpreterProxy {
     }
 
     private long positive32BitIntegerFor(final long integerValue) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for positive32BitIntegerFor: " + integerValue);
-        return returnVoid();
+        return integerObjectOf(integerValue & Integer.MAX_VALUE);
     }
 
     private long positive32BitValueOf(final long oop) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for positive32BitValueOf: " + oop);
-        return returnVoid();
+        return integerValueOf(oop) & Integer.MAX_VALUE;
     }
 
     private long positive64BitValueOf(final long oop) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for positive64BitValueOf: " + oop);
-        return returnVoid();
+        return Math.abs(integerValueOf(oop));
     }
 
     private long primitiveFail() {
@@ -649,11 +643,11 @@ public final class InterpreterProxy {
     }
 
     private long signed32BitIntegerFor(final long integerValue) {
-        return integerObjectOf(integerValue);
+        return integerObjectOf((int) integerValue);
     }
 
     private long signed32BitValueOf(final long oop) {
-        return integerValueOf(oop);
+        return (int) integerValueOf(oop);
     }
 
     private long slotSizeOf(final long oop) {
