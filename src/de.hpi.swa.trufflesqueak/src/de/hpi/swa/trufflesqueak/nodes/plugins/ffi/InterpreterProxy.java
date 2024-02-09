@@ -148,6 +148,7 @@ public final class InterpreterProxy {
                         TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popthenPush),
                         TruffleExecutable.wrap("(UINT64):SINT64", this::positive32BitIntegerFor),
                         TruffleExecutable.wrap("(SINT64):UINT64", this::positive32BitValueOf),
+                        TruffleExecutable.wrap("(SINT64):UINT64", this::positive64BitIntegerFor),
                         TruffleExecutable.wrap("(SINT64):UINT64", this::positive64BitValueOf),
                         TruffleExecutable.wrap("():SINT64", this::primitiveFail),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::primitiveFailFor),
@@ -649,6 +650,10 @@ public final class InterpreterProxy {
 
     private long positive32BitValueOf(final long oop) {
         return integerValueOf(oop) & Integer.MAX_VALUE;
+    }
+
+    private long positive64BitIntegerFor(final long integerValue) {
+        return integerObjectOf(Math.abs(integerValue));
     }
 
     private long positive64BitValueOf(final long oop) {

@@ -70,6 +70,7 @@ VirtualMachine* createInterpreterProxy(
 	sqInt (*popthenPush)(sqInt nItems, sqInt oop),
 	sqInt (*positive32BitIntegerFor)(unsigned int integerValue),
 	usqInt (*positive32BitValueOf)(sqInt oop),
+	sqInt (*positive64BitIntegerFor)(usqLong integerValue),
 	usqLong (*positive64BitValueOf)(sqInt oop),
 	sqInt (*primitiveFail)(void),
 	sqInt (*primitiveFailFor)(sqInt reasonCode),
@@ -147,6 +148,7 @@ VirtualMachine* createInterpreterProxy(
 	interpreterProxy->popthenPush = popthenPush;
 	interpreterProxy->positive32BitIntegerFor = positive32BitIntegerFor;
 	interpreterProxy->positive32BitValueOf = positive32BitValueOf;
+	interpreterProxy->positive64BitIntegerFor = positive64BitIntegerFor;
 	interpreterProxy->positive64BitValueOf = positive64BitValueOf;
 	interpreterProxy->primitiveFail = primitiveFail;
 	interpreterProxy->primitiveFailFor = primitiveFailFor;
