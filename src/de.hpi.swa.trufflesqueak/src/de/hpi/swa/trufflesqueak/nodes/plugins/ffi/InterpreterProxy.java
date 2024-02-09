@@ -149,6 +149,7 @@ public final class InterpreterProxy {
                         TruffleExecutable.wrap("(SINT64):UINT64", this::positive64BitValueOf),
                         TruffleExecutable.wrap("():SINT64", this::primitiveFail),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::primitiveFailFor),
+                        TruffleExecutable.wrap("(SINT64):SINT64", this::push),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::pushInteger),
                         TruffleExecutable.wrap("(SINT64,SINT64,SINT64,SINT64,SINT64):SINT64", this::showDisplayBitsLeftTopRightBottom),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::signed32BitIntegerFor),
@@ -594,7 +595,7 @@ public final class InterpreterProxy {
 
     private long popthenPush(final long nItems, final long oop) {
         pop(nItems);
-        pushObject(objectRegistryGet(oop));
+        push(oop);
         return returnVoid();
     }
 
@@ -623,6 +624,11 @@ public final class InterpreterProxy {
     private long primitiveFailFor(final long reasonCode) {
         LogUtils.PRIMITIVES.info(() -> "Primitive failed with code: " + reasonCode);
         return primFailCode = reasonCode;
+    }
+
+    private long push(final long oop) {
+        pushObject(objectRegistryGet(oop));
+        return returnVoid();
     }
 
     private long pushInteger(final long integer) {
