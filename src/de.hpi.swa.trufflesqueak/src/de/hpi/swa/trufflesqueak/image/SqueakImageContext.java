@@ -11,6 +11,7 @@ import java.lang.ref.ReferenceQueue;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -19,6 +20,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
@@ -64,6 +66,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReader;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Zip;
+import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -165,6 +168,8 @@ public final class SqueakImageContext {
     @CompilationFinal private ClassObject wideStringClass;
 
     /* Plugins */
+    @CompilationFinal private InterpreterProxy interpreterProxy;
+    public final Map<String, Object> loadedLibraries = new HashMap<>();
     public final B2D b2d = new B2D(this);
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = new String[0];
@@ -619,6 +624,14 @@ public final class SqueakImageContext {
     public boolean supportsNFI() {
         CompilerAsserts.neverPartOfCompilation();
         return env.getInternalLanguages().containsKey("nfi");
+    }
+
+    public InterpreterProxy getInterpreterProxy(final MaterializedFrame frame, final int numReceiverAndArguments) {
+        if (interpreterProxy == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            interpreterProxy = new InterpreterProxy(this);
+        }
+        return interpreterProxy.instanceFor(frame, numReceiverAndArguments);
     }
 
     public PointersObject getScheduler() {

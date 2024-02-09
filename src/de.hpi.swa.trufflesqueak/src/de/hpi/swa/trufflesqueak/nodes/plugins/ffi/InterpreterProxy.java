@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -43,7 +44,6 @@ import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleClosure;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
 
 public final class InterpreterProxy {
-    private static InterpreterProxy INSTANCE;
     private final SqueakImageContext context;
     private MaterializedFrame frame;
     private int numReceiverAndArguments;
@@ -63,26 +63,26 @@ public final class InterpreterProxy {
     // INSTANCE CREATION //
     ///////////////////////
 
-    private InterpreterProxy(final SqueakImageContext context, final MaterializedFrame frame, final int numReceiverAndArguments)
-                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
+    public InterpreterProxy(final SqueakImageContext context) {
         this.context = context;
-        this.frame = frame;
-        this.numReceiverAndArguments = numReceiverAndArguments;
+        try {
+            final TruffleExecutable[] executables = getExecutables();
+            closures = new TruffleClosure[executables.length];
+            for (int i = 0; i < executables.length; i++) {
+                closures[i] = executables[i].createClosure(context);
+            }
 
-        final TruffleExecutable[] executables = getExecutables();
-        closures = new TruffleClosure[executables.length];
-        for (int i = 0; i < executables.length; i++) {
-            closures[i] = executables[i].createClosure(context);
+            final String truffleExecutablesSignatures = Arrays.stream(closures).map(obj -> obj.executable.nfiSignature).collect(Collectors.joining(","));
+            final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
+                            "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }");
+            assert interpreterProxy != null : "InterpreterProxy module not found!";
+
+            final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
+            interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
+                            interpreterProxy, "createInterpreterProxy", (Object[]) closures);
+        } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
+            throw CompilerDirectives.shouldNotReachHere(e);
         }
-
-        final String truffleExecutablesSignatures = Arrays.stream(closures).map(obj -> obj.executable.nfiSignature).collect(Collectors.joining(","));
-        final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
-                        "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }");
-        assert interpreterProxy != null : "InterpreterProxy module not found!";
-
-        final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
-        interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
-                        interpreterProxy, "createInterpreterProxy", (Object[]) closures);
     }
 
     private TruffleExecutable[] getExecutables() {
@@ -164,25 +164,18 @@ public final class InterpreterProxy {
         };
     }
 
-    public static InterpreterProxy instanceFor(final SqueakImageContext context, final MaterializedFrame frame, final int numReceiverAndArguments)
-                    throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException, ArityException {
-        if (INSTANCE == null) {
-            INSTANCE = new InterpreterProxy(context, frame, numReceiverAndArguments);
-            return INSTANCE;
-        }
-        assert INSTANCE.context == context : "received new SqueakImageContext";
-
-        INSTANCE.frame = frame;
-        INSTANCE.numReceiverAndArguments = numReceiverAndArguments;
-        return INSTANCE;
+    public InterpreterProxy instanceFor(final MaterializedFrame frame, final int numReceiverAndArguments) {
+        this.frame = frame;
+        this.numReceiverAndArguments = numReceiverAndArguments;
+        return this;
     }
 
     ///////////////////
     // MISCELLANEOUS //
     ///////////////////
 
-    public static Object getPointer() {
-        return INSTANCE.interpreterProxyPointer;
+    public Object getPointer() {
+        return interpreterProxyPointer;
     }
 
     public void postPrimitiveCleanups() {

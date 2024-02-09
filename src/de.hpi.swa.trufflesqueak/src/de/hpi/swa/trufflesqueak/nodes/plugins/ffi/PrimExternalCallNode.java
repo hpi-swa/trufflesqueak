@@ -6,9 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
@@ -32,7 +29,6 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
     private final Object functionSymbol;
     private final InteropLibrary functionInteropLibrary;
     private final int numReceiverAndArguments;
-    private static final Map<String, Object> loadedLibraries = new HashMap<>();
 
     public PrimExternalCallNode(final Object moduleLibrary, final InteropLibrary moduleInteropLibrary, final Object functionSymbol, final InteropLibrary functionInteropLibrary,
                     final int numReceiverAndArguments) {
@@ -46,8 +42,8 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
 
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
-        final Object moduleLibrary = loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
-            if (loadedLibraries.containsKey(moduleName)) {
+        final Object moduleLibrary = context.loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
+            if (context.loadedLibraries.containsKey(moduleName)) {
                 // if moduleName was associated with null
                 return null;
             }
@@ -77,7 +73,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
             return library;
         });
         // computeIfAbsent would not put null value
-        loadedLibraries.putIfAbsent(moduleName, moduleLibrary);
+        context.loadedLibraries.putIfAbsent(moduleName, moduleLibrary);
         if (moduleLibrary == null) {
             // module not found
             return null;
@@ -95,8 +91,8 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
 
     private void setInterpreter() {
         try {
-            InterpreterProxy.instanceFor(getContext(), null, 0);
-            moduleInteropLibrary.invokeMember(moduleLibrary, "setInterpreter", InterpreterProxy.getPointer());
+            final InterpreterProxy interpreterProxy = getContext().getInterpreterProxy(null, 0);
+            moduleInteropLibrary.invokeMember(moduleLibrary, "setInterpreter", interpreterProxy.getPointer());
         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
             throw CompilerDirectives.shouldNotReachHere(e);
         }
@@ -117,7 +113,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
     private Object doExternalCall(final MaterializedFrame frame) {
         InterpreterProxy interpreterProxy = null;
         try {
-            interpreterProxy = InterpreterProxy.instanceFor(getContext(), frame, numReceiverAndArguments);
+            interpreterProxy = getContext().getInterpreterProxy(frame, numReceiverAndArguments);
 
             // A send (AbstractSendNode.executeVoid) will decrement the stack pointer by
             // numReceiverAndArguments
@@ -138,7 +134,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
                 throw PrimitiveFailed.andTransferToInterpreter((int) failReason);
             }
             return returnValue;
-        } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             throw CompilerDirectives.shouldNotReachHere(e);
         } finally {
             if (interpreterProxy != null) {
