@@ -166,9 +166,9 @@ public final class InterpreterProxy {
         };
     }
 
-    public InterpreterProxy instanceFor(final MaterializedFrame frame, final int numReceiverAndArguments) {
-        this.frame = frame;
-        this.numReceiverAndArguments = numReceiverAndArguments;
+    public InterpreterProxy instanceFor(final MaterializedFrame currentFrame, final int currentNumReceiverAndArguments) {
+        this.frame = currentFrame;
+        this.numReceiverAndArguments = currentNumReceiverAndArguments;
         return this;
     }
 
