@@ -13,8 +13,31 @@
 VirtualMachine* createInterpreterProxy(
     // sorted alphabetically, identical to getExecutables in
     // src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/nodes/plugins/ffi/InterpreterProxy.java
+	sqInt (*booleanValueOf)(sqInt oop),
 	sqInt (*byteSizeOf)(sqInt oop),
+	sqInt (*classAlien)(void),
+	sqInt (*classArray)(void),
+	sqInt (*classBitmap)(void),
+	sqInt (*classByteArray)(void),
+	sqInt (*classCharacter)(void),
+	sqInt (*classDoubleByteArray)(void),
+	sqInt (*classDoubleWordArray)(void),
+	sqInt (*classExternalAddress)(void),
+	sqInt (*classExternalData)(void),
+	sqInt (*classExternalFunction)(void),
+	sqInt (*classExternalLibrary)(void),
+	sqInt (*classExternalStructure)(void),
+	sqInt (*classFloat)(void),
+	sqInt (*classFloat32Array)(void),
+	sqInt (*classFloat64Array)(void),
+	sqInt (*classLargeNegativeInteger)(void),
+	sqInt (*classLargePositiveInteger)(void),
+	sqInt (*classPoint)(void),
+	sqInt (*classSemaphore)(void),
+	sqInt (*classSmallInteger)(void),
 	sqInt (*classString)(void),
+	sqInt (*classUnsafeAlien)(void),
+	sqInt (*classWordArray)(void),
 	sqInt (*failed)(void),
 	sqInt (*fetchIntegerofObject)(sqInt fieldIndex, sqInt objectPointer),
 	sqInt (*fetchLong32ofObject)(sqInt fieldIndex, sqInt oop),
@@ -27,14 +50,18 @@ VirtualMachine* createInterpreterProxy(
 	void *(*ioLoadFunctionFrom)(char *functionName, char *moduleName),
 	sqInt (*isArray)(sqInt oop),
 	sqInt (*isBytes)(sqInt oop),
+	sqInt (*isIntegerObject)(sqInt oop),
 	sqInt (*isPointers)(sqInt oop),
 	sqInt (*isPositiveMachineIntegerObject)(sqInt oop),
 	sqInt (*isWords)(sqInt oop),
 	sqInt (*isWordsOrBytes)(sqInt oop),
 	sqInt (*majorVersion)(void),
 	sqInt (*methodArgumentCount)(void),
-	sqInt (*methodReturnInteger)(sqInt integer),
+	sqInt (*methodReturnBool)(sqInt value),
+	sqInt (*methodReturnFloat)(double value),
+	sqInt (*methodReturnInteger)(sqInt value),
 	sqInt (*methodReturnReceiver)(void),
+	sqInt (*methodReturnString)(char *value),
 	sqInt (*methodReturnValue)(sqInt oop),
 	sqInt (*minorVersion)(void),
 	sqInt (*nilObject)(void),
@@ -59,8 +86,31 @@ VirtualMachine* createInterpreterProxy(
 ) {
 	VirtualMachine* interpreterProxy = (VirtualMachine*)calloc(1, sizeof(VirtualMachine));
 
+	interpreterProxy->booleanValueOf = booleanValueOf;
 	interpreterProxy->byteSizeOf = byteSizeOf;
+	interpreterProxy->classAlien = classAlien;
+	interpreterProxy->classArray = classArray;
+	interpreterProxy->classBitmap = classBitmap;
+	interpreterProxy->classByteArray = classByteArray;
+	interpreterProxy->classCharacter = classCharacter;
+	interpreterProxy->classDoubleByteArray = classDoubleByteArray;
+	interpreterProxy->classDoubleWordArray = classDoubleWordArray;
+	interpreterProxy->classExternalAddress = classExternalAddress;
+	interpreterProxy->classExternalData = classExternalData;
+	interpreterProxy->classExternalFunction = classExternalFunction;
+	interpreterProxy->classExternalLibrary = classExternalLibrary;
+	interpreterProxy->classExternalStructure = classExternalStructure;
+	interpreterProxy->classFloat = classFloat;
+	interpreterProxy->classFloat32Array = classFloat32Array;
+	interpreterProxy->classFloat64Array = classFloat64Array;
+	interpreterProxy->classLargeNegativeInteger = classLargeNegativeInteger;
+	interpreterProxy->classLargePositiveInteger = classLargePositiveInteger;
+	interpreterProxy->classPoint = classPoint;
+	interpreterProxy->classSemaphore = classSemaphore;
+	interpreterProxy->classSmallInteger = classSmallInteger;
 	interpreterProxy->classString = classString;
+	interpreterProxy->classUnsafeAlien = classUnsafeAlien;
+	interpreterProxy->classWordArray = classWordArray;
 	interpreterProxy->failed = failed;
 	interpreterProxy->fetchIntegerofObject = fetchIntegerofObject;
 	interpreterProxy->fetchLong32ofObject = fetchLong32ofObject;
@@ -73,14 +123,18 @@ VirtualMachine* createInterpreterProxy(
 	interpreterProxy->ioLoadFunctionFrom = ioLoadFunctionFrom;
 	interpreterProxy->isArray = isArray;
 	interpreterProxy->isBytes = isBytes;
+	interpreterProxy->isIntegerObject = isIntegerObject;
 	interpreterProxy->isPointers = isPointers;
 	interpreterProxy->isPositiveMachineIntegerObject = isPositiveMachineIntegerObject;
 	interpreterProxy->isWords = isWords;
 	interpreterProxy->isWordsOrBytes = isWordsOrBytes;
 	interpreterProxy->majorVersion = majorVersion;
 	interpreterProxy->methodArgumentCount = methodArgumentCount;
+	interpreterProxy->methodReturnBool = methodReturnBool;
+	interpreterProxy->methodReturnFloat = methodReturnFloat;
 	interpreterProxy->methodReturnInteger = methodReturnInteger;
 	interpreterProxy->methodReturnReceiver = methodReturnReceiver;
+	interpreterProxy->methodReturnString = methodReturnString;
 	interpreterProxy->methodReturnValue = methodReturnValue;
 	interpreterProxy->minorVersion = minorVersion;
 	interpreterProxy->nilObject = nilObject;
