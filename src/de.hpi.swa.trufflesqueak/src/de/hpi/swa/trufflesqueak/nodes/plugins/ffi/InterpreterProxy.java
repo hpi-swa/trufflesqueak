@@ -508,7 +508,7 @@ public final class InterpreterProxy {
 
     private NativeObjectStorage ioLoadFunctionFrom(final String functionName, final String moduleName) {
         /* TODO */
-        LogUtils.PRIMITIVES.severe(() -> "Missing implementation for ioLoadFunctionFrom");
+        LogUtils.PRIMITIVES.severe(() -> "Missing implementation for ioLoadFunctionFrom: %s>>%s".formatted(functionName, moduleName));
         return null;
     }
 
@@ -544,9 +544,7 @@ public final class InterpreterProxy {
     }
 
     private long isWordsOrBytes(final long oop) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for isWordsOrBytes");
-        return returnVoid();
+        return nativeObjectCheck(oop, no -> no.isIntType() || no.isByteType());
     }
 
     private long majorVersion() {
@@ -612,19 +610,19 @@ public final class InterpreterProxy {
 
     private long positive32BitIntegerFor(final long integerValue) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for positive32BitIntegerFor");
+        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for positive32BitIntegerFor: " + integerValue);
         return returnVoid();
     }
 
     private long positive32BitValueOf(final long oop) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for positive32BitValueOf");
+        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for positive32BitValueOf: " + oop);
         return returnVoid();
     }
 
     private long positive64BitValueOf(final long oop) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for positive64BitValueOf");
+        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for positive64BitValueOf: " + oop);
         return returnVoid();
     }
 
@@ -663,7 +661,7 @@ public final class InterpreterProxy {
 
     private long slotSizeOf(final long oop) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for slotSizeOf");
+        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for slotSizeOf: " + oop);
         return returnVoid();
     }
 
@@ -673,7 +671,7 @@ public final class InterpreterProxy {
 
     private long stackObjectValue(final long offset) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for stackObjectValue");
+        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for stackObjectValue: " + offset);
         return returnVoid();
     }
 
@@ -687,13 +685,13 @@ public final class InterpreterProxy {
 
     private long storeIntegerofObjectwithValue(final long index, final long oop, final long integer) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for storeIntegerofObjectwithValue");
+        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for storeIntegerofObjectwithValue: %s, %s, %s".formatted(index, oop, integer));
         return returnVoid();
     }
 
     private long storeLong32ofObjectwithValue(final long fieldIndex, final long oop, final long anInteger) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning("Missing implementation for storeLong32ofObjectwithValue");
+        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for storeLong32ofObjectwithValue: %s, %s, %s".formatted(fieldIndex, oop, anInteger));
         return returnVoid();
     }
 }
