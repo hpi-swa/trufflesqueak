@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2024 Oracle and/or its affiliates
+ * Copyright (c) 2023-2024 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2023-2024 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
 package de.hpi.swa.trufflesqueak.util;
+
+import java.io.File;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -18,9 +20,8 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 
-import java.io.File;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 
 public final class NFIUtils {
 

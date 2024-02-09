@@ -1,10 +1,13 @@
 /*
- * Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2024 Oracle and/or its affiliates
+ * Copyright (c) 2023-2024 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2023-2024 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -16,14 +19,12 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public final class PrimExternalCallNode extends AbstractPrimitiveNode {
     private final Object moduleLibrary;

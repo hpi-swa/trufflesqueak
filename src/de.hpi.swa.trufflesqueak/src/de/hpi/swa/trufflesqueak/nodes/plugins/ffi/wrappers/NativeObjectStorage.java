@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2024 Oracle and/or its affiliates
+ * Copyright (c) 2023-2024 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2023-2024 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -10,6 +10,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 
 @ExportLibrary(InteropLibrary.class)

@@ -1,10 +1,15 @@
 /*
- * Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2024 Oracle and/or its affiliates
+ * Copyright (c) 2023-2024 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2023-2024 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
@@ -12,6 +17,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -33,11 +39,6 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleClosure;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public final class InterpreterProxy {
     private static InterpreterProxy INSTANCE;
