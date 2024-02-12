@@ -1,0 +1,50 @@
+diff --git a/sdk/src/org.graalvm.launcher.native/src/launcher.cc b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
+index 3eeab1c5a7c..6eda994382c 100644
+--- a/sdk/src/org.graalvm.launcher.native/src/launcher.cc
++++ b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
+@@ -263,7 +263,7 @@ static void *load_jli_lib(std::string exeDir) {
+ 
+ /* load the language library (either native library or libjvm) and return a
+  * pointer to the JNI_CreateJavaVM function */
+-static CreateJVM load_vm_lib(std::string liblangPath) {
++static CreateJVM load_vm_lib(bool jvmMode, std::string liblangPath) {
+     if (debug) {
+         std::cout << "Loading library " << liblangPath << std::endl;
+     }
+@@ -277,6 +277,14 @@ static CreateJVM load_vm_lib(std::string liblangPath) {
+             std::cerr << "Error while loading " << liblangPath << ":" << std::endl << errorString << std::endl;
+         }
+ #else
++        if (!jvmMode) {
++            std::string exeDir = exe_directory();
++            std::stringstream languageLibPath;
++            languageLibPath << exeDir << DIR_SEP_STR << ".." << DIR_SEP_STR << "lib";
++            if (SetDllDirectory(languageLibPath.str().c_str()) == 0) {
++                std::cerr << "Error adding dll search path: " << languageLibPath.str() << std::endl;
++            }
++        }
+         HMODULE jvmHandle = LoadLibraryA(liblangPath.c_str());
+         if (jvmHandle != NULL) {
+             return (CreateJVM) GetProcAddress(jvmHandle, "JNI_CreateJavaVM");
+@@ -697,7 +705,7 @@ static int jvm_main_thread(int argc, char *argv[], std::string exeDir, bool jvmM
+ 
+     /* load VM library - after parsing arguments s.t. NMT
+      * tracking variable is already set */
+-    CreateJVM createVM = load_vm_lib(libPath);
++    CreateJVM createVM = load_vm_lib(jvmMode, libPath);
+     if (!createVM) {
+         std::cerr << "Could not load JVM." << std::endl;
+         return -1;
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
+index e7efa981ffc..ab20d32f2e9 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
+@@ -175,7 +175,7 @@ public final class NodeUtil {
+             current = current.getParent();
+         } while (current != null);
+ 
+-        if (!(prev instanceof ExecutableNode)) {
++        if (prev.isAdoptable() && !(prev instanceof ExecutableNode)) {
+             failNotAdopted(node, prev);
+         }
+         return true;
