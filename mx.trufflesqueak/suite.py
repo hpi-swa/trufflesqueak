@@ -180,6 +180,7 @@ suite = {
             "dependencies": [
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
+                "sdk:MAVEN_DOWNLOADER",
             ],
             "requires": [
                 "java.desktop",
@@ -352,6 +353,7 @@ suite = {
             "distDependencies": [
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
+                "sdk:MAVEN_DOWNLOADER",
             ],
             "maven": {
                 "groupId": "de.hpi.swa.trufflesqueak",

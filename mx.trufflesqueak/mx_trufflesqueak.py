@@ -214,14 +214,13 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     library_configs=[
         mx_sdk.LanguageLibraryConfig(
             language=LANGUAGE_ID,
-            jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
+            launchers=['bin/<exe:trufflesqueak>', 'bin/<exe:trufflesqueak-polyglot-get>'],
+            jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER', 'sdk:MAVEN_DOWNLOADER'],
             main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
             build_args=[
                 '-H:+DumpThreadStacksOnSignal',
                 '-H:+DetectUserDirectoriesInImageHeap',
             ],
-            destination='lib/<lib:%svm>' % LANGUAGE_ID,
-            launchers=['bin/<exe:trufflesqueak>'],
             default_vm_args=[
                 '--vm.Xms512M',
                 '--vm.Xss16M',

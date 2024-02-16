@@ -1,6 +1,6 @@
 COMPONENTS=TruffleSqueak,suite:tools,GraalVM compiler,SubstrateVM,LibGraal
 DEFAULT_DYNAMIC_IMPORTS=/compiler,/substratevm,/tools,/vm
 INSTALLABLES=TruffleSqueak
-NATIVE_IMAGES=lib:jvmcicompiler
+NATIVE_IMAGES=lib:jvmcicompiler,trufflesqueak-polyglot-get
 BUILD_TARGETS=GRAALVM,GRAALVM_STANDALONES
 GRAALVM_SKIP_ARCHIVE=true

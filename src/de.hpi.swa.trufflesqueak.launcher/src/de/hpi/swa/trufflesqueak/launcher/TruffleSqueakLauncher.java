@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
+import org.graalvm.maven.downloader.Main;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -31,6 +32,8 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private static final String ENGINE_MODE_OPTION = "engine.Mode";
     private static final String ENGINE_MODE_LATENCY = "latency";
+
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     private boolean headless;
     private boolean printImagePath;
@@ -47,6 +50,15 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected List<String> preprocessArguments(final List<String> arguments, final Map<String, String> polyglotOptions) {
+        final String launcherName = System.getProperty("org.graalvm.launcher.executablename", "trufflesqueak");
+        if (launcherName.endsWith("trufflesqueak-polyglot-get") || launcherName.endsWith("trufflesqueak-polyglot-get.exe")) {
+            if (isAOT()) {
+                throw abort("trufflesqueak-polyglot-get is not available in a native standalone. Please try again with a JVM standalone of TruffleSqueak.");
+            } else {
+                polyglotGet(arguments);
+            }
+        }
+
         final List<String> unrecognized = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
             final String arg = arguments.get(i);
@@ -165,7 +177,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected String[] getDefaultLanguages() {
-        return new String[0]; // Allow all languages (same effect of `--polyglot`)
+        return EMPTY_STRING_ARRAY; // Allow all languages (same effect of `--polyglot`)
     }
 
     @Override
@@ -197,5 +209,35 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         try (Engine engine = Engine.create()) {
             return engine.getImplementationName();
         }
+    }
+
+    /* Maven Downloader support */
+
+    private static void polyglotGet(final List<String> arguments) {
+        final String smalltalkHome = getPropertyOrFail("org.graalvm.language.smalltalk.home");
+        final String outputDir = smalltalkHome + File.separator + "modules";
+        final List<String> args = new ArrayList<>();
+        args.add("-o");
+        args.add(outputDir);
+        args.add("-v");
+        args.add(getPropertyOrFail("org.graalvm.version"));
+        if (arguments.size() == 1 && !arguments.get(0).startsWith("-")) {
+            args.add("-a");
+        }
+        args.addAll(arguments);
+        try {
+            Main.main(args.toArray(EMPTY_STRING_ARRAY));
+        } catch (Exception e) {
+            throw new Error(e);
+        }
+        System.exit(0);
+    }
+
+    private static String getPropertyOrFail(final String property) {
+        final String value = System.getProperty(property);
+        if (value == null) {
+            throw new UnsupportedOperationException("Expected system property '" + property + "' to be set");
+        }
+        return value;
     }
 }

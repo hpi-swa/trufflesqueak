@@ -41,7 +41,7 @@ jobs:
         tar -xzf ${eclipse_tar_path} -C ${RUNNER_TEMP}
         echo "ECLIPSE_EXE=${RUNNER_TEMP}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
         # Set up mx, oracle/graal, and LabsJDK21
-        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk labsjdk-ce-21 ~/"
+        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk 21"
         # Set up style dependencies
         sudo apt update && sudo apt install python3-pip python-setuptools
         jq -r '.pip | to_entries[] | .key+.value' ../graal/common.json | xargs sudo pip install
@@ -54,6 +54,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, macos-14, windows-2022]
         java: [22]
+        jdk_identifier: [latest]
     env:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' }}"
       MX_ENV: "trufflesqueak-jar"
@@ -72,7 +73,7 @@ jobs:
         python-version: '3.12.0'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies jar
+      run: mx.trufflesqueak/utils.sh set-up-dependencies jar ${{ matrix.jdk_identifier }}
     - name: Build GraalVM with TruffleSqueak
       run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
       if: ${{ runner.os != 'Windows' }}
@@ -141,6 +142,7 @@ jobs:
         type: [native, jvm]
     env:
       JAVA_VERSION: "22"
+      JDK_IDENTIFIER: "latest"
       MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
     name: ${{ matrix.type }} ${{ matrix.os }}
@@ -169,7 +171,7 @@ jobs:
         python-version: '3.12.0'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
+      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} ${{ env.JDK_IDENTIFIER }}
     - name: Build TruffleSqueak standalone
       run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
       if: ${{ runner.os != 'Windows' }}
@@ -193,6 +195,11 @@ jobs:
       if: ${{ runner.os == 'Windows' }}
     - name: Run SystemReporter on TruffleSqueak standalone
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
+    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
+      run: |
+        trufflesqueak-polyglot-get -v 23.1.0 -a js
+        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
+      if: ${{ matrix.type == 'jvm' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@v4
       with:
