@@ -164,6 +164,11 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     @Override
+    protected String[] getDefaultLanguages() {
+        return new String[0]; // Allow all languages (same effect of `--polyglot`)
+    }
+
+    @Override
     protected void printHelp(final OptionCategory maxCategory) {
         println("Usage: trufflesqueak [options] <image file> [image arguments]\n");
         println("Basic options:");
