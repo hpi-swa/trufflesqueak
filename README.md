@@ -13,6 +13,15 @@ A [Squeak/Smalltalk][squeak] VM and Polyglot Programming Environment for the [Gr
     ```bash
     bin/trufflesqueak [<option>...] [<imageName> [<argument>...]]
     ```
+3. (Optional) Install additional languages (only available in a JVM standalone):
+
+    ```bash
+    # Evaluate the following from within TruffleSqueak
+    Polyglot installLanguage
+
+    # or run the following on the command line
+    bin/trufflesqueak-polyglot-get js # or ruby, python, java, llvm, wasm
+    ```
 
 
 ## Demos
