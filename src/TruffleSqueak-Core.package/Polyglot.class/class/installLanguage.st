@@ -10,4 +10,8 @@ installLanguage
 	version := UIManager default
 		request: 'Select a version:'
 		initialAnswer: ((Java type: 'java.lang.System') getProperty: 'org.graalvm.version' and: 'unknown').
-	self installLanguage: languageId version: version path: modulesPath fullName
+	'Installing language and its dependencies...' displayProgressFrom: 0 to: 1 during: [ :bar |
+		bar value: 0.
+		self installLanguage: languageId version: version path: modulesPath fullName
+	].
+	self inform: 'Success! Please restart TruffleSqueak for the language to become available. You can also install more languages now.'
