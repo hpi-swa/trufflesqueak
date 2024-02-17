@@ -1,6 +1,8 @@
 helpers
 installLanguage
-	| languageId version |
+	| modulesPath languageId version |
+	modulesPath := (FSLocator vmDirectory resolve: '../modules').
+	modulesPath isDirectory ifFalse: [ self error: 'Unable to find modules/ directory.' ].
 	languageId := UIManager default 
 		chooseFrom: #('JavaScript' 'Ruby' 'Python' 'Java' 'LLVM' 'Wasm')
 		values: #('js' 'ruby' 'python' 'java' 'llvm' 'wasm')
@@ -8,4 +10,4 @@ installLanguage
 	version := UIManager default
 		request: 'Select a version:'
 		initialAnswer: ((Java type: 'java.lang.System') getProperty: 'org.graalvm.version' and: 'unknown').
-	self installLanguage: languageId version: version
+	self installLanguage: languageId version: version path: modulesPath fullName
