@@ -236,7 +236,8 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "de.hpi.swa.trufflesqueak",
-                "mx:JUNIT"
+                "mx:JUNIT",
+                "sdk:MAVEN_DOWNLOADER",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
@@ -420,7 +421,10 @@ suite = {
                 "de.hpi.swa.trufflesqueak.test",
             ],
             "exclude": ["mx:JUNIT", "mx:HAMCREST"],
-            "distDependencies": ["TRUFFLESQUEAK"],
+            "distDependencies": [
+                "TRUFFLESQUEAK",
+                "sdk:MAVEN_DOWNLOADER",
+            ],
             "testDistribution": True,
             "maven": False,
         },
