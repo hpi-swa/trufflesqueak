@@ -2,6 +2,7 @@
 	"class" : {
 		 },
 	"instance" : {
+		"testInstallLanguage" : "fn 2/17/2024 14:50",
 		"testLanguageInfo" : "fn 2/11/2021 10:54",
 		"testPolyglotBindings" : "fn 11/28/2019 14:53",
 		"testPolyglotEval" : "fn 6/27/2021 12:15" } }
