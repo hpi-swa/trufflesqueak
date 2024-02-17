@@ -8,10 +8,16 @@ addModelItemsToWindowMenu: aMenu
 			selector: #languageInfo:
 			argument: ea ].
 	aMenu addLine.
+	
+	aMenu
+			add: 'install another language...'
+			target: Polyglot
+			selector: #installLanguage.
+		aMenu addLine.
 
 	Smalltalk at: #PolyglotEditor ifPresent: [ :unused |
 		aMenu
-			add: 'open in Polyglot Editor'
+			add: 'open in Polyglot Editor...'
 			target: self
 			selector: #openInPolyglotEditor.
 		aMenu addLine ].
