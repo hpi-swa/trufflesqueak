@@ -151,20 +151,19 @@ jobs:
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v4
-    # Oracle GraalVM for JDK 22 not released yet
-    # - name: Set up Oracle GraalVM
-    #   uses: graalvm/setup-graalvm@v1
-    #   with:
-    #     java-version: ${{ env.JAVA_VERSION }}
-    #     distribution: 'graalvm'
-    #     github-token: ${{ secrets.GITHUB_TOKEN }}
-    #   if: ${{ matrix.type == 'native' }}
-    # - name: Enable Oracle GraalVM
-    #   shell: bash
-    #   run: |
-    #     echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
-    #     cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
-    #   if: ${{ matrix.type == 'native' }}
+    - name: Set up Oracle GraalVM
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ matrix.type == 'native' }}
+    - name: Enable Oracle GraalVM
+      shell: bash
+      run: |
+        echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
+        cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
+      if: ${{ matrix.type == 'native' }}
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -197,7 +196,7 @@ jobs:
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
-        trufflesqueak-polyglot-get -v 23.1.0 -a js
+        trufflesqueak-polyglot-get -v 24.0.0 -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' }}
     - name: Upload TruffleSqueak standalone

@@ -46,7 +46,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "release/graal-vm/24.0",
+            "version": "vm-24.0.0",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
@@ -120,20 +120,20 @@ suite = {
             },
         },
         "TRUFFLE-ENTERPRISE": {
-            "digest": "sha512:b883d3ead84778617f9b09edaa43634183f07cdc6ae0666cb2f4edabc52fca913138c4a7a8f9ada1adbd4a9bbe7d16fb4a1b3ceac13446f4e0c47f3d1a20469f",
+            "digest": "sha512:718973b01213647ac091376e9fb32d739f09c0f46a20f916505c10899a2f877414018b18e1b42706a49fa9672b0ee289b9b88b2b56ac8d4db727230eeeb75849",
             "maven": {
                 "groupId": "org.graalvm.truffle",
                 "artifactId": "truffle-enterprise",
-                "version": "23.1.2",
+                "version": "24.0.0",
             },
             "useModulePath": True,
         },
         "SDK-NATIVEBRIDGE": {
-            "digest": "sha512:5c2187fa912ab9cc1bb872e08acd3cae5332e2920502b1d7cbe6bc1e70431960e8ed28d153cddd0a3f7d99f618f229d9ac78969d2c94ee1a9a79c003f5c9cc46",
+            "digest": "sha512:08719b2a6946f8db237fdf35badc7aae6942bc510f883bbc91818f3166f85b0a595656e644e7b1c2ad614f1d0f397a9e06e693ea057695ff1c29ea9b79d1ff75",
             "maven": {
                 "groupId": "org.graalvm.sdk",
                 "artifactId": "nativebridge",
-                "version": "23.1.2",
+                "version": "24.0.0",
             },
             "useModulePath": True,
         },
