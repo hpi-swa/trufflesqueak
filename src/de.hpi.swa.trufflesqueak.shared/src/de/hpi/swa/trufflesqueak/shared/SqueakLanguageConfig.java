@@ -17,7 +17,7 @@ public final class SqueakLanguageConfig {
     public static final String WEBSITE = "https://github.com/hpi-swa/trufflesqueak";
 
     public static final String[][] SUPPORTED_IMAGES = {
-                    {"TruffleSqueak image (23.1.0) (recommended)", "https://github.com/hpi-swa/trufflesqueak/releases/download/23.1.0/TruffleSqueakImage-23.1.0.zip"},
+                    {"TruffleSqueak image (24.0.0) (recommended)", "https://github.com/hpi-swa/trufflesqueak/releases/download/24.0.0/TruffleSqueakImage-24.0.0.zip"},
                     {"Squeak/Smalltalk (6.0-22104)", "https://files.squeak.org/6.0/Squeak6.0-22104-64bit/Squeak6.0-22104-64bit.zip"},
                     {"TruffleSqueak test image (6.0-22104)", "https://github.com/hpi-swa/trufflesqueak/releases/download/22.3.0/TruffleSqueakTestImage-6.0-22104-64bit.zip"},
                     {"Cuis-Smalltalk test image (6.0-5053)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.3.0/CuisTestImage-6.0-5053.zip"}};
