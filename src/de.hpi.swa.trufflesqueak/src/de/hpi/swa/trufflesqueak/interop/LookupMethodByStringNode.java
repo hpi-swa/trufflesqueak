@@ -56,7 +56,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected static final Object doUncached(final Node node, final ClassObject classObject, final String selector,
-                    /**
+                    /*
                      * An AbstractPointersObjectReadNode is sufficient for accessing `values`
                      * instance variable here.
                      */

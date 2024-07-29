@@ -156,9 +156,9 @@ public final class JPEGReader {
         return true;
     }
 
-    /** JPEGReaderPlugin>>#colorConvertGrayscaleMCU inlined. */
+    /* JPEGReaderPlugin>>#colorConvertGrayscaleMCU inlined. */
 
-    /** JPEGReaderPlugin>>#colorConvertMCU inlined. */
+    /* JPEGReaderPlugin>>#colorConvertMCU inlined. */
 
     /* JPEGReaderPlugin>>#crColorComponentFrom: */
     private boolean crColorComponentFrom(final Object oop) {
