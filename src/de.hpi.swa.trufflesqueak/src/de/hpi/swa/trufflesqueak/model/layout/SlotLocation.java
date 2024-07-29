@@ -12,8 +12,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.IntValueProfile;
@@ -151,7 +149,6 @@ public abstract class SlotLocation {
         return -1;
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public abstract static class AbstractSlotLocationAccessorNode extends Node {
         public static final AbstractSlotLocationAccessorNode create(final SlotLocation location, final boolean isReading) {
             if (location.isPrimitive()) {

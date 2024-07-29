@@ -17,8 +17,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -174,7 +172,6 @@ public class AbstractPointersObjectNodes {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
-    @NodeInfo(cost = NodeCost.NONE)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class VariablePointersObjectReadNode extends Node {
 
@@ -221,7 +218,6 @@ public class AbstractPointersObjectNodes {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
-    @NodeInfo(cost = NodeCost.NONE)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class VariablePointersObjectWriteNode extends Node {
 
@@ -268,7 +264,6 @@ public class AbstractPointersObjectNodes {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
-    @NodeInfo(cost = NodeCost.NONE)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class WeakVariablePointersObjectReadNode extends Node {
 
@@ -318,7 +313,6 @@ public class AbstractPointersObjectNodes {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
-    @NodeInfo(cost = NodeCost.NONE)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class WeakVariablePointersObjectWriteNode extends Node {
 

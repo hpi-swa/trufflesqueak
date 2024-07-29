@@ -11,8 +11,6 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -26,7 +24,6 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 @GenerateInline
 @GenerateUncached
 @GenerateCached(false)
-@NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectClassNode extends AbstractNode {
 
     public static SqueakObjectClassNode getUncached() {

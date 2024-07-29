@@ -13,8 +13,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -234,7 +232,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushActiveContextNode extends AbstractPushNode {
         @Child private GetOrCreateContextNode getContextNode = GetOrCreateContextNode.create();
 
@@ -254,7 +251,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     private abstract static class PushConstantNode extends AbstractPushNode {
         private PushConstantNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -351,7 +347,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralConstantNode extends AbstractPushNode {
         private final Object literal;
 
@@ -372,7 +367,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public abstract static class PushLiteralVariableNode extends AbstractInstrumentableBytecodeNode {
         private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
         protected final Object literal;
@@ -506,7 +500,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushReceiverNode extends AbstractPushNode {
 
         protected PushReceiverNode(final CompiledCodeObject code, final int index) {
@@ -529,7 +522,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public abstract static class PushReceiverVariableNode extends AbstractInstrumentableBytecodeNode {
         private final int variableIndex;
 
@@ -557,7 +549,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public abstract static class PushRemoteTempNode extends AbstractInstrumentableBytecodeNode {
         protected final int indexInArray;
         protected final int indexOfArray;
@@ -589,7 +580,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushTemporaryLocationNode extends AbstractInstrumentableBytecodeNode {
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child private FrameStackReadNode tempNode;
@@ -616,7 +606,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushSmallIntegerNode extends AbstractPushNode {
         private final long value;
 
@@ -637,7 +626,6 @@ public final class PushBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushCharacterNode extends AbstractPushNode {
         private final Object value;
 

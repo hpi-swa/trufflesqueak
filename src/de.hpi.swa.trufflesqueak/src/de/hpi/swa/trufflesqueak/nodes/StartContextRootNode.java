@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -27,7 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsQuickNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-@NodeInfo(language = SqueakLanguageConfig.ID, cost = NodeCost.NONE)
+@NodeInfo(language = SqueakLanguageConfig.ID)
 public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;

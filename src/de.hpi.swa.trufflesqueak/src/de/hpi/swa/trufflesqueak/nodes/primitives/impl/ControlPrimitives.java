@@ -36,8 +36,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
@@ -618,7 +616,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 110)
     protected abstract static class PrimIdentical2Node extends AbstractPrimitiveNode {
         @Specialization
@@ -630,7 +627,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 110)
     protected abstract static class PrimIdentical3Node extends AbstractPrimitiveNode {
         @Specialization
@@ -644,7 +640,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     /*
      * primitiveClass (see Object>>class and Context>>objectClass:).
      */
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 111)
     protected abstract static class PrimClass1Node extends AbstractPrimitiveNode {
@@ -656,7 +651,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 111)
     protected abstract static class PrimClass2Node extends AbstractPrimitiveNode {
@@ -707,7 +701,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 115)
     protected abstract static class PrimChangeClassNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
@@ -900,11 +893,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 160)
     protected abstract static class PrimAdoptInstanceNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-
         @Specialization
         protected static final ClassObject doPrimAdoptInstance(final ClassObject receiver, final AbstractSqueakObjectWithClassAndHash argument,
                         @Bind("this") final Node node,
@@ -948,7 +939,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 169)
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
         @Specialization
@@ -1261,7 +1251,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 231)
     protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode {
         @Specialization
@@ -1284,7 +1273,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 256)
     protected abstract static class PrimQuickReturnSelfNode extends AbstractPrimitiveNode {
         @Specialization
@@ -1294,7 +1282,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @DenyReplace
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 257)
     public static final class PrimQuickReturnTrueNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -1304,7 +1291,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @DenyReplace
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 258)
     public static final class PrimQuickReturnFalseNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -1314,7 +1300,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @DenyReplace
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 259)
     public static final class PrimQuickReturnNilNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -1324,7 +1309,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @DenyReplace
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 260)
     public static final class PrimQuickReturnMinusOneNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -1334,7 +1318,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @DenyReplace
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 261)
     public static final class PrimQuickReturnZeroNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -1344,7 +1327,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @DenyReplace
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 262)
     public static final class PrimQuickReturnOneNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -1354,7 +1336,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @DenyReplace
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 263)
     public static final class PrimQuickReturnTwoNode extends AbstractSingletonPrimitiveNode {
         @Override
@@ -1363,7 +1344,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public abstract static class PrimLoadInstVarNode extends AbstractPrimitiveNode {
         private final long variableIndex;
 

@@ -19,8 +19,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -179,7 +177,6 @@ public final class CreateFrameArgumentNodes {
 
     @GenerateInline
     @GenerateCached(false)
-    @NodeInfo(cost = NodeCost.NONE)
     protected abstract static class GetOrCreateContextOrMarkerNode extends AbstractNode {
 
         protected abstract Object execute(VirtualFrame frame, Node node, CompiledCodeObject code);

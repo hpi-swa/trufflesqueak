@@ -23,8 +23,6 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -339,7 +337,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 122)
     protected abstract static class PrimNoopNode extends AbstractPrimitiveNode {
 
@@ -639,7 +636,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 148)
     public abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode {
@@ -798,7 +794,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @DenyReplace
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 176)
     public static final class PrimMaxIdentityHashNode extends AbstractSingletonPrimitiveNode {
         @Override
