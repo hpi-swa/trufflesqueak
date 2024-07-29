@@ -33,6 +33,7 @@ OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
 [[ "${OS_NAME}" == msys* || "${OS_NAME}" == cygwin* || "${OS_NAME}" == mingw* ]] && OS_NAME="windows"
 OS_ARCH="amd64"
 [[ "${OS_NAME}" == "linux" ]] && [[ "$(dpkg --print-architecture)" == "arm64" ]] && OS_ARCH="aarch64"
+[[ "${OS_NAME}" == "darwin" ]] && [[ "$(uname -m)" == "arm64" ]] && OS_ARCH="aarch64"
 JAVA_HOME_SUFFIX="" && [[ "${OS_NAME}" == "darwin" ]] && JAVA_HOME_SUFFIX="/Contents/Home"
 readonly OS_NAME OS_ARCH JAVA_HOME_SUFFIX
 
@@ -301,7 +302,7 @@ shallow-clone-graalvm-project() {
 shallow-clone-graal() {
   shallow-clone-graalvm-project https://github.com/oracle/graal.git "${GRAAL_VERSION}"
   echo "[graal repo (${GRAAL_VERSION}) cloned successfully]"
-  $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/graalvm-24.0.0.patch")
+  $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/graalvm-24.0.2.patch")
   echo "[graal repo patched successfully]"
 }
 

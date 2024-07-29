@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-11, macos-14, windows-2022]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-12, macos-14, windows-2022]
         java: [22]
         jdk_identifier: [latest]
     env:
@@ -95,8 +95,9 @@ jobs:
       run: |
         sed "s/{USERNAME}/${GITHUB_ACTOR}/g; s/{TOKEN}/${{ secrets.GITHUB_TOKEN }}/g" mx.trufflesqueak/mvn-settings.xml.template > mx.trufflesqueak/mvn-settings.xml
         mx.trufflesqueak/utils.sh conditional-deploy \
+          mx --env trufflesqueak-jar build --dependencies SMALLTALK,SMALLTALK_COMMUNITY && \
           mx --env trufflesqueak-jar maven-deploy --settings mx.trufflesqueak/mvn-settings.xml --version-string ${{ github.ref_name }} --validate full --licenses MIT --suppress-javadoc github https://maven.pkg.github.com/hpi-swa/trufflesqueak
-      if: ${{ matrix.os == 'ubuntu-20.04' }}
+      if: ${{ matrix.os == 'ubuntu-20.04' && github.ref_type == 'tag' }}
     - name: Run SystemReporter on TruffleSqueak
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Clone Graal.js repository
@@ -138,7 +139,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-11, macos-14]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-12, macos-14]
         type: [native, jvm]
     env:
       JAVA_VERSION: "22"
@@ -154,7 +155,7 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@v1
       with:
-        java-version: ${{ env.JAVA_VERSION }}
+        java-version: '${{ env.JAVA_VERSION }}.0.2'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'native' }}
@@ -174,6 +175,10 @@ jobs:
     - name: Build TruffleSqueak standalone
       run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
       if: ${{ runner.os != 'Windows' }}
+    # Workaround for https://github.com/actions/runner-images/issues/10001:
+    - name: Upgrade LLVM
+      run: choco upgrade llvm
+      if: ${{ runner.os == 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
       run: |

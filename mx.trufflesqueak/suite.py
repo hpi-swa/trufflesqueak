@@ -14,7 +14,7 @@ suite = {
     "mxversion": "7.0.3",
     "versionConflictResolution": "latest",
 
-    "version": "24.0.0",
+    "version": "24.0.2",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-6.0-5053.zip",
         "cuis_test_image_tag": "21.3.0",
@@ -22,7 +22,7 @@ suite = {
         "test_image_tag": "22.3.0",
     },
 
-    "release": True,
+    "release": False,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
 
@@ -46,7 +46,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "vm-24.0.0",
+            "version": "vm-24.0.2",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
@@ -120,20 +120,20 @@ suite = {
             },
         },
         "TRUFFLE-ENTERPRISE": {
-            "digest": "sha512:718973b01213647ac091376e9fb32d739f09c0f46a20f916505c10899a2f877414018b18e1b42706a49fa9672b0ee289b9b88b2b56ac8d4db727230eeeb75849",
+            "digest": "sha512:7be8671001f12fbed907092086c85923b67ab13f36ed420634d8d1477a4086649934b2f260915c9d2f7310acbe85b637fe854d5073f0db9a006184faec9b96bc",
             "maven": {
                 "groupId": "org.graalvm.truffle",
                 "artifactId": "truffle-enterprise",
-                "version": "24.0.0",
+                "version": "24.0.2",
             },
             "useModulePath": True,
         },
         "SDK-NATIVEBRIDGE": {
-            "digest": "sha512:08719b2a6946f8db237fdf35badc7aae6942bc510f883bbc91818f3166f85b0a595656e644e7b1c2ad614f1d0f397a9e06e693ea057695ff1c29ea9b79d1ff75",
+            "digest": "sha512:8dbcd334eaaa9ddb057a60e90db54302cd94f44b22134fb426d8356cf71b94afc961593dc69ce332935bbb9244b9d4259dedf17abd1ce149e9ab77398cd5d650",
             "maven": {
                 "groupId": "org.graalvm.sdk",
                 "artifactId": "nativebridge",
-                "version": "24.0.0",
+                "version": "24.0.2",
             },
             "useModulePath": True,
         },
