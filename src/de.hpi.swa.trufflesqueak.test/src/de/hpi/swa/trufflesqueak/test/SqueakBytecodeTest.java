@@ -15,9 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -41,8 +39,6 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @SuppressWarnings("static-method")
 public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
-    @Rule public ExpectedException exceptions = ExpectedException.none();
-
     @Test
     public void testPushReceiverVariables() {
         final Object[] expectedResults = getTestObjects(16);

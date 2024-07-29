@@ -51,15 +51,11 @@ public final class InterpreterProxy {
     @SuppressWarnings("FieldCanBeLocal") private final TruffleClosure[] closures;
     private final Object interpreterProxyPointer;
 
-    ///////////////////////////
-    // INTERPRETER VARIABLES //
-    ///////////////////////////
+    /* INTERPRETER VARIABLES */
     private final ArrayList<Object> objectRegistry = new ArrayList<>();
     private long primFailCode;
 
-    ///////////////////////
-    // INSTANCE CREATION //
-    ///////////////////////
+    /* INSTANCE CREATION */
 
     public InterpreterProxy(final SqueakImageContext context) {
         this.context = context;
@@ -171,9 +167,7 @@ public final class InterpreterProxy {
         return this;
     }
 
-    ///////////////////
-    // MISCELLANEOUS //
-    ///////////////////
+    /* MISCELLANEOUS */
 
     public Object getPointer() {
         return interpreterProxyPointer;
@@ -192,9 +186,7 @@ public final class InterpreterProxy {
         return context.lookup(name);
     }
 
-    /////////////////////////////
-    // OBJECT REGISTRY HELPERS //
-    /////////////////////////////
+    /* OBJECT REGISTRY HELPERS */
 
     private Object objectRegistryGet(final long oop) {
         return objectRegistry.get((int) oop);
@@ -215,9 +207,7 @@ public final class InterpreterProxy {
         return addObjectToRegistry(object);
     }
 
-    ///////////////////
-    // STACK HELPERS //
-    ///////////////////
+    /* STACK HELPERS */
 
     private int getStackPointer() {
         return FrameAccess.getStackPointer(frame);
@@ -271,9 +261,7 @@ public final class InterpreterProxy {
         return 0L;
     }
 
-    ////////////////////////
-    // CONVERSION HELPERS //
-    ////////////////////////
+    /* CONVERSION HELPERS */
 
     private long objectToInteger(final Object object) {
         if (object instanceof final Long longObject) {
@@ -313,17 +301,13 @@ public final class InterpreterProxy {
         return context.asByteString(string);
     }
 
-    ///////////////////////
-    // ACCESSING HELPERS //
-    ///////////////////////
+    /* ACCESSING HELPERS */
 
     private static Object objectAt0(final Object object, final long index) {
         return SqueakObjectAt0Node.executeUncached(object, index);
     }
 
-    ////////////////////////
-    // TYPE CHECK HELPERS //
-    ////////////////////////
+    /* TYPE CHECK HELPERS */
 
     private long instanceOfCheck(final long oop, final Class<?> klass) {
         final Object object = objectRegistryGet(oop);
@@ -338,9 +322,7 @@ public final class InterpreterProxy {
         return returnVoid();
     }
 
-    ///////////////////////////////
-    // INTERPRETER PROXY METHODS //
-    ///////////////////////////////
+    /* INTERPRETER PROXY METHODS */
 
     private long booleanValueOf(final long oop) {
         final Object object = objectRegistryGet(oop);

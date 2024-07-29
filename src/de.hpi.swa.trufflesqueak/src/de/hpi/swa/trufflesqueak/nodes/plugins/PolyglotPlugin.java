@@ -112,7 +112,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimIsPolyglotEvalAllowedNode extends AbstractPrimitiveNode {
         @Specialization
         protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.wrap(getContext().env.isPolyglotEvalAllowed());
+            return BooleanObject.wrap(getContext().env.isPolyglotEvalAllowed(null));
         }
     }
 
