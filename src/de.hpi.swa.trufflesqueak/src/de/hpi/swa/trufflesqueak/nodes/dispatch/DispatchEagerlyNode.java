@@ -50,7 +50,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()", "failureCounter.getAssumption()"}, rewriteOn = PrimitiveFailed.class)
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached("method") final CompiledCodeObject cachedMethod,
-                    @Cached("getOrCreateIndexedOrNamed(cachedMethod, PROVIDED_ON_EXECUTE)") final AbstractPrimitiveNode primitiveNode,
+                    @Cached("getOrCreateIndexedOrNamed(cachedMethod)") final AbstractPrimitiveNode primitiveNode,
                     @Cached("create(primitiveNode)") final PrimitiveFailedCounter failureCounter) {
         try {
             return primitiveNode.executeWithArguments(frame, receiverAndArguments);

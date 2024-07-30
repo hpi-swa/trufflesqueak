@@ -30,11 +30,6 @@ public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNo
         return execute();
     }
 
-    @Override
-    public final Object execute(final VirtualFrame frame) {
-        return execute();
-    }
-
     protected abstract Object execute();
 
     @Override

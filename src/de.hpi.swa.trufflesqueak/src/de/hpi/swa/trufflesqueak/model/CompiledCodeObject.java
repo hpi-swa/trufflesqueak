@@ -42,7 +42,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -217,7 +217,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
         final RootNode rootNode;
         if (hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) {
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this, ArgumentsLocation.IN_FRAME_ARGUMENTS);
+            final DispatchPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this, ArgumentsLocation.IN_FRAME_ARGUMENTS);
             assert primitiveNode != null;
             rootNode = new ExecuteNonFailingPrimitiveRootNode(language, this, primitiveNode);
         } else {

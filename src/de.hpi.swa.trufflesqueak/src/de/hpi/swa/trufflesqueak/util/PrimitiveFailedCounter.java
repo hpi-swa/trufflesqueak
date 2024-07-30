@@ -9,8 +9,7 @@ package de.hpi.swa.trufflesqueak.util;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
-
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import com.oracle.truffle.api.nodes.Node;
 
 /*
  * Counts how often a primitive has failed in a certain time window and indicates whether this
@@ -28,12 +27,12 @@ public final class PrimitiveFailedCounter {
     private long lastCheckMillis = System.currentTimeMillis();
     private int count;
 
-    public PrimitiveFailedCounter(final AbstractPrimitiveNode primitiveNode) {
-        assumption = Truffle.getRuntime().createAssumption(primitiveNode.getClass().getSimpleName());
+    public PrimitiveFailedCounter(final Node originNode) {
+        assumption = Truffle.getRuntime().createAssumption(originNode.getClass().getSimpleName());
     }
 
-    public static PrimitiveFailedCounter create(final AbstractPrimitiveNode primitiveNode) {
-        return primitiveNode != null ? new PrimitiveFailedCounter(primitiveNode) : null;
+    public static PrimitiveFailedCounter create(final Node originNode) {
+        return originNode != null ? new PrimitiveFailedCounter(originNode) : null;
     }
 
     public boolean shouldRewriteToCall() {

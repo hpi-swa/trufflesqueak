@@ -42,6 +42,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
@@ -315,12 +316,14 @@ public final class SendBytecodes {
                 return SendSpecialSelectorQuickPointYNodeGen.create(code, index, selectorIndex);
             }
             if (primitiveIndex > 0) {
-                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexed(primitiveIndex, 1 + numArguments, ArgumentsLocation.ON_STACK_REVERSED);
+                final int numReceiverAndArguments = 1 + numArguments;
+                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexed(primitiveIndex, numReceiverAndArguments);
                 assert primitiveNode != null;
+                final DispatchPrimitiveNode dispatchPrimitiveNode = DispatchPrimitiveNode.create(primitiveNode, ArgumentsLocation.ON_STACK_REVERSED, numReceiverAndArguments);
                 if (numArguments == 0) {
-                    return new SendSpecialSelectorQuick0ArgumentsNode(code, index, selectorIndex, primitiveNode);
+                    return new SendSpecialSelectorQuick0ArgumentsNode(code, index, selectorIndex, dispatchPrimitiveNode);
                 } else {
-                    return new SendSpecialSelectorQuick1OrMoreArgumentsNode(code, index, selectorIndex, primitiveNode);
+                    return new SendSpecialSelectorQuick1OrMoreArgumentsNode(code, index, selectorIndex, dispatchPrimitiveNode);
                 }
             } else {
                 return new SelfSendNode(code, index, 1, specialSelector, numArguments);
@@ -370,9 +373,9 @@ public final class SendBytecodes {
     }
 
     private abstract static class SendSpecialSelectorQuickNode extends AbstractSendSpecialSelectorQuickNode {
-        @Child protected AbstractPrimitiveNode primitiveNode;
+        @Child protected DispatchPrimitiveNode primitiveNode;
 
-        private SendSpecialSelectorQuickNode(final CompiledCodeObject code, final int index, final int selectorIndex, final AbstractPrimitiveNode primitiveNode) {
+        private SendSpecialSelectorQuickNode(final CompiledCodeObject code, final int index, final int selectorIndex, final DispatchPrimitiveNode primitiveNode) {
             super(code, index, selectorIndex);
             this.primitiveNode = primitiveNode;
         }
@@ -390,7 +393,7 @@ public final class SendBytecodes {
     }
 
     private static final class SendSpecialSelectorQuick0ArgumentsNode extends SendSpecialSelectorQuickNode {
-        private SendSpecialSelectorQuick0ArgumentsNode(final CompiledCodeObject code, final int index, final int selectorIndex, final AbstractPrimitiveNode primitiveNode) {
+        private SendSpecialSelectorQuick0ArgumentsNode(final CompiledCodeObject code, final int index, final int selectorIndex, final DispatchPrimitiveNode primitiveNode) {
             super(code, index, selectorIndex, primitiveNode);
         }
 
@@ -408,7 +411,7 @@ public final class SendBytecodes {
     private static final class SendSpecialSelectorQuick1OrMoreArgumentsNode extends SendSpecialSelectorQuickNode {
         @CompilationFinal private int stackPointer;
 
-        private SendSpecialSelectorQuick1OrMoreArgumentsNode(final CompiledCodeObject code, final int index, final int selectorIndex, final AbstractPrimitiveNode primitiveNode) {
+        private SendSpecialSelectorQuick1OrMoreArgumentsNode(final CompiledCodeObject code, final int index, final int selectorIndex, final DispatchPrimitiveNode primitiveNode) {
             super(code, index, selectorIndex, primitiveNode);
         }
 
@@ -429,7 +432,7 @@ public final class SendBytecodes {
         @CompilationFinal private ClassObject cachedReceiverClass;
         @CompilationFinal private Assumption cachedCallTargetStableAssumption;
 
-        @Child protected AbstractPrimitiveNode primitiveNode;
+        @Child protected DispatchPrimitiveNode primitiveNode;
         @Child private FrameStackReadNode peekAtReceiverNode;
         @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
 
@@ -460,7 +463,7 @@ public final class SendBytecodes {
                 final Object lookupResult = actualClass.lookupInMethodDictSlow(findSelector());
                 if (lookupResult instanceof final CompiledCodeObject primitiveMethod && primitiveMethod.hasPrimitive()) {
                     assert primitiveMethod.getNumArgs() == findNumArguments();
-                    final AbstractPrimitiveNode node = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(primitiveMethod, ArgumentsLocation.ON_STACK_REVERSED);
+                    final DispatchPrimitiveNode node = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(primitiveMethod, ArgumentsLocation.ON_STACK_REVERSED);
                     if (node == null) {
                         return true; // primitive not found / supported
                     }

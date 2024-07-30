@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForDNUNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForOAMNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -48,7 +48,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
             return createDNUNode(frame, selector, argumentCount, image, receiverClass);
         } else if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
             if (lookupMethod.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(lookupMethod, ArgumentsLocation.ON_STACK);
+                final DispatchPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(lookupMethod, ArgumentsLocation.ON_STACK);
                 if (primitiveNode != null) {
                     return new CachedDispatchPrimitiveNode(argumentCount, lookupMethod, primitiveNode);
                 }
@@ -94,9 +94,9 @@ public abstract class CachedDispatchNode extends AbstractNode {
         private final int argumentCount;
         private final PrimitiveFailedCounter failureCounter;
 
-        @Child private AbstractPrimitiveNode primitiveNode;
+        @Child private DispatchPrimitiveNode primitiveNode;
 
-        private CachedDispatchPrimitiveNode(final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
+        private CachedDispatchPrimitiveNode(final int argumentCount, final CompiledCodeObject method, final DispatchPrimitiveNode primitiveNode) {
             super(method);
             this.argumentCount = argumentCount;
             this.primitiveNode = primitiveNode;

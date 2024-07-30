@@ -92,14 +92,9 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
     }
 
     @Override
-    public Object execute(final VirtualFrame frame) {
-        return doExternalCall(frame.materialize());
-    }
-
-    @Override
     public Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
         // arguments are handled via manipulation of the stack pointer, see below
-        return execute(frame);
+        return doExternalCall(frame.materialize());
     }
 
     @TruffleBoundary

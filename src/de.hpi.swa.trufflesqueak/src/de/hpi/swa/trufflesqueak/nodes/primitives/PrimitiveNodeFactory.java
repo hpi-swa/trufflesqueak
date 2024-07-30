@@ -6,12 +6,18 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.graalvm.collections.EconomicMap;
+
 import com.oracle.truffle.api.dsl.NodeFactory;
+
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.B2DPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BMPReadWriterPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BitBltPlugin;
@@ -51,11 +57,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
 import de.hpi.swa.trufflesqueak.util.OS;
-import org.graalvm.collections.EconomicMap;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public final class PrimitiveNodeFactory {
     public static final int PRIMITIVE_SIMULATION_GUARD_INDEX = 19;
@@ -123,7 +124,6 @@ public final class PrimitiveNodeFactory {
     }
 
     public enum ArgumentsLocation {
-        PROVIDED_ON_EXECUTE,
         IN_FRAME_ARGUMENTS,
         ON_STACK,
         ON_STACK_REVERSED,
@@ -143,14 +143,14 @@ public final class PrimitiveNodeFactory {
         // checking SINGLETON_PLUGIN_MAP is probably not worth the effort.
     }
 
-    public static AbstractPrimitiveNode getOrCreateIndexedOrNamed(final CompiledCodeObject method, final ArgumentsLocation location) {
+    public static AbstractPrimitiveNode getOrCreateIndexedOrNamed(final CompiledCodeObject method) {
         assert method.hasPrimitive();
         final int primitiveIndex = method.primitiveIndex();
         final int numReceiverAndArguments = 1 + method.getNumArgs();
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
-            return getOrCreateNamed(method, numReceiverAndArguments, location);
+            return getOrCreateNamed(method, numReceiverAndArguments);
         } else {
-            final AbstractPrimitiveNode primitiveNode = getOrCreateIndexed(primitiveIndex, numReceiverAndArguments, location);
+            final AbstractPrimitiveNode primitiveNode = getOrCreateIndexed(primitiveIndex, numReceiverAndArguments);
             if (primitiveNode != null && primitiveNode.acceptsMethod(method)) {
                 return primitiveNode;
             } else {
@@ -159,11 +159,21 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    public static AbstractPrimitiveNode getOrCreateIndexed(final int primitiveIndex, final int numReceiverAndArguments, final ArgumentsLocation location) {
+    public static DispatchPrimitiveNode getOrCreateIndexedOrNamed(final CompiledCodeObject method, final ArgumentsLocation location) {
+        final AbstractPrimitiveNode primitiveNode = getOrCreateIndexedOrNamed(method);
+        if (primitiveNode != null) {
+            final int numReceiverAndArguments = 1 + method.getNumArgs();
+            return DispatchPrimitiveNode.create(primitiveNode, location, numReceiverAndArguments);
+        } else {
+            return null;
+        }
+    }
+
+    public static AbstractPrimitiveNode getOrCreateIndexed(final int primitiveIndex, final int numReceiverAndArguments) {
         assert primitiveIndex <= MAX_PRIMITIVE_INDEX;
         if (isLoadInstVar(primitiveIndex)) {
             assert numReceiverAndArguments == 1;
-            return ControlPrimitives.PrimLoadInstVarNode.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX, createArguments(location, numReceiverAndArguments));
+            return ControlPrimitives.PrimLoadInstVarNode.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX);
         } else {
             if (numReceiverAndArguments == 1) { // Check for singleton primitive
                 final AbstractPrimitiveNode primitiveNode = SINGLETON_PRIMITIVE_TABLE.get(primitiveIndex);
@@ -177,14 +187,14 @@ public final class PrimitiveNodeFactory {
             }
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = map.get(numReceiverAndArguments);
             if (nodeFactory != null) {
-                return createNode(nodeFactory, location, numReceiverAndArguments);
+                return createNode(nodeFactory, numReceiverAndArguments);
             } else {
                 return null;
             }
         }
     }
 
-    public static AbstractPrimitiveNode getOrCreateNamed(final CompiledCodeObject method, final int numReceiverAndArguments, final ArgumentsLocation location) {
+    public static AbstractPrimitiveNode getOrCreateNamed(final CompiledCodeObject method, final int numReceiverAndArguments) {
         assert method.primitiveIndex() == PRIMITIVE_EXTERNAL_CALL_INDEX;
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
         if (values[NAMED_PRIMITIVE_FUNCTION_NAME_INDEX] == NilObject.SINGLETON) {
@@ -206,7 +216,7 @@ public final class PrimitiveNodeFactory {
         }
         final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName, EconomicMap.emptyMap()).get(numReceiverAndArguments);
         if (nodeFactory != null) {
-            return createNode(nodeFactory, location, numReceiverAndArguments);
+            return createNode(nodeFactory, numReceiverAndArguments);
         }
         return null;
     }
@@ -215,22 +225,9 @@ public final class PrimitiveNodeFactory {
         return PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX;
     }
 
-    private static AbstractPrimitiveNode createNode(final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory, final ArgumentsLocation location, final int numReceiverAndArguments) {
+    private static AbstractPrimitiveNode createNode(final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory, final int numReceiverAndArguments) {
         assert numReceiverAndArguments == nodeFactory.getExecutionSignature().size();
-        return nodeFactory.createNode((Object) createArguments(location, numReceiverAndArguments));
-    }
-
-    private static AbstractArgumentNode[] createArguments(final ArgumentsLocation location, final int numReceiverAndArguments) {
-        if (location == ArgumentsLocation.PROVIDED_ON_EXECUTE) {
-            return null;
-        }
-        final AbstractArgumentNode[] argumentNodes = new AbstractArgumentNode[numReceiverAndArguments];
-        final boolean useStack = location == ArgumentsLocation.ON_STACK || location == ArgumentsLocation.ON_STACK_REVERSED;
-        final int offset = location == ArgumentsLocation.ON_STACK_REVERSED ? numReceiverAndArguments : 0;
-        for (int i = 0; i < numReceiverAndArguments; i++) {
-            argumentNodes[i] = AbstractArgumentNode.create(i - offset, useStack);
-        }
-        return argumentNodes;
+        return nodeFactory.createNode();
     }
 
     private static void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {

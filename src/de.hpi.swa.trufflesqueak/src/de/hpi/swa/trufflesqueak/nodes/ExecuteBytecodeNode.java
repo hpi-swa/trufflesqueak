@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.AbstractUnconditio
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -41,7 +41,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     private final int initialPC;
     private SourceSection section;
 
-    @Child private AbstractPrimitiveNode primitiveNode;
+    @Child private DispatchPrimitiveNode primitiveNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
