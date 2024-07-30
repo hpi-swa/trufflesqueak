@@ -15,15 +15,15 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 @NodeInfo(language = SqueakLanguageConfig.ID, cost = NodeCost.NONE)
 public final class ExecuteNonFailingPrimitiveRootNode extends AbstractRootNode {
 
-    @Child private AbstractPrimitiveNode primitiveNode;
+    @Child private DispatchPrimitiveNode primitiveNode;
 
-    public ExecuteNonFailingPrimitiveRootNode(final SqueakLanguage language, final CompiledCodeObject code, final AbstractPrimitiveNode primitiveNode) {
+    public ExecuteNonFailingPrimitiveRootNode(final SqueakLanguage language, final CompiledCodeObject code, final DispatchPrimitiveNode primitiveNode) {
         super(language, code);
         this.primitiveNode = primitiveNode;
     }

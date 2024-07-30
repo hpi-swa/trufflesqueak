@@ -72,7 +72,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPointerIncrementNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyNode;
@@ -93,7 +92,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPri
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimLoadInstVarNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.process.AddLastLinkToListNode;
@@ -744,7 +742,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractPrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode {
         protected static final AbstractPrimitiveNode createPrimitiveNode(final long primitiveIndex, final int arraySize) {
-            return PrimitiveNodeFactory.getOrCreateIndexed((int) primitiveIndex, 1 + arraySize, ArgumentsLocation.PROVIDED_ON_EXECUTE);
+            return PrimitiveNodeFactory.getOrCreateIndexed((int) primitiveIndex, 1 + arraySize);
         }
 
         protected static final Object primitiveWithArgs(final VirtualFrame frame, final Object receiver, final ArrayObject argumentArray,
@@ -1231,7 +1229,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final AbstractPrimitiveNode createPrimitiveNode(final CompiledCodeObject method) {
-            return PrimitiveNodeFactory.getOrCreateNamed(method, 1 + method.getNumArgs(), ArgumentsLocation.PROVIDED_ON_EXECUTE);
+            return PrimitiveNodeFactory.getOrCreateNamed(method, 1 + method.getNumArgs());
         }
     }
 
@@ -1371,8 +1369,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             this.variableIndex = variableIndex;
         }
 
-        public static PrimLoadInstVarNode create(final long variableIndex, final AbstractArgumentNode[] arguments) {
-            return PrimLoadInstVarNodeGen.create(variableIndex, arguments);
+        public static PrimLoadInstVarNode create(final long variableIndex) {
+            return PrimLoadInstVarNodeGen.create(variableIndex);
         }
 
         @Specialization
