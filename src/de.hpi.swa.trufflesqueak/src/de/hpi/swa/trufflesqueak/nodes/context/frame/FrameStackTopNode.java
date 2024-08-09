@@ -7,7 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -22,7 +22,7 @@ public final class FrameStackTopNode extends AbstractNode {
         return new FrameStackTopNode();
     }
 
-    public Object execute(final Frame frame) {
+    public Object execute(final VirtualFrame frame) {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final int stackPointer = FrameAccess.getStackPointer(frame) - 1;

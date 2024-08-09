@@ -13,8 +13,8 @@ import org.graalvm.collections.EconomicMap;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -24,7 +24,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class FrameStackWriteNode extends AbstractNode {
     @NeverDefault
-    public static FrameStackWriteNode create(final Frame frame, final int index) {
+    public static FrameStackWriteNode create(final VirtualFrame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
             return FrameArgumentWriteNode.getOrCreate(index);
@@ -39,7 +39,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
     }
 
-    public abstract void executeWrite(Frame frame, Object value);
+    public abstract void executeWrite(VirtualFrame frame, Object value);
 
     public abstract static class FrameSlotWriteNode extends FrameStackWriteNode {
         private final int slotIndex;
@@ -49,7 +49,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
 
         @Specialization(guards = "isBooleanOrIllegal(frame)")
-        protected final void writeBool(final Frame frame, final boolean value) {
+        protected final void writeBool(final VirtualFrame frame, final boolean value) {
             /* Initialize type on first write. No-op if kind is already Boolean. */
             frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Boolean);
 
@@ -57,7 +57,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
 
         @Specialization(guards = "isLongOrIllegal(frame)")
-        protected final void writeLong(final Frame frame, final long value) {
+        protected final void writeLong(final VirtualFrame frame, final long value) {
             /* Initialize type on first write. No-op if kind is already Long. */
             frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Long);
 
@@ -65,7 +65,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
 
         @Specialization(guards = "isDoubleOrIllegal(frame)")
-        protected final void writeDouble(final Frame frame, final double value) {
+        protected final void writeDouble(final VirtualFrame frame, final double value) {
             /* Initialize type on first write. No-op if kind is already Double. */
             frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Double);
 
@@ -73,24 +73,24 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
 
         @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
-        protected final void writeObject(final Frame frame, final Object value) {
+        protected final void writeObject(final VirtualFrame frame, final Object value) {
             /* Initialize type on first write. No-op if kind is already Object. */
             frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Object);
 
             frame.setObject(slotIndex, value);
         }
 
-        protected final boolean isBooleanOrIllegal(final Frame frame) {
+        protected final boolean isBooleanOrIllegal(final VirtualFrame frame) {
             final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(slotIndex);
             return kind == FrameSlotKind.Boolean || kind == FrameSlotKind.Illegal;
         }
 
-        protected final boolean isLongOrIllegal(final Frame frame) {
+        protected final boolean isLongOrIllegal(final VirtualFrame frame) {
             final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(slotIndex);
             return kind == FrameSlotKind.Long || kind == FrameSlotKind.Illegal;
         }
 
-        protected final boolean isDoubleOrIllegal(final Frame frame) {
+        protected final boolean isDoubleOrIllegal(final VirtualFrame frame) {
             final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(slotIndex);
             return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
         }
@@ -117,7 +117,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
 
         @Override
-        public void executeWrite(final Frame frame, final Object value) {
+        public void executeWrite(final VirtualFrame frame, final Object value) {
             frame.getArguments()[index] = value;
         }
 
@@ -140,12 +140,12 @@ public abstract class FrameStackWriteNode extends AbstractNode {
     private static class FrameAuxiliarySlotWriteNode extends FrameStackWriteNode {
         private final int auxiliarySlotIndex;
 
-        FrameAuxiliarySlotWriteNode(final Frame frame, final int slotIndex) {
+        FrameAuxiliarySlotWriteNode(final VirtualFrame frame, final int slotIndex) {
             auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
         }
 
         @Override
-        public void executeWrite(final Frame frame, final Object value) {
+        public void executeWrite(final VirtualFrame frame, final Object value) {
             frame.setAuxiliarySlot(auxiliarySlotIndex, value);
         }
     }
