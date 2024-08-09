@@ -118,6 +118,9 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  */
                 CompilerDirectives.transferToInterpreter();
                 value = frame.getValue(slotIndex);
+                if (!clearSlotAfterRead) {
+                    frame.setObject(slotIndex, value);
+                }
             } else {
                 value = frame.getObject(slotIndex);
             }
