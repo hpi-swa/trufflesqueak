@@ -39,6 +39,13 @@ suite = {
         "write": "git@github.com:hpi-swa/trufflesqueak.git",
     },
 
+    "licenses": {
+        "GFTC": {
+          "name": "GraalVM Free Terms and Conditions (GFTC) including License for Early Adopter Versions",
+          "url": "https://www.oracle.com/downloads/licenses/graal-free-license.html"
+        },
+    },
+
     # ==========================================================================
     #  DEPENDENCIES
     # ==========================================================================
@@ -302,7 +309,7 @@ suite = {
                 "artifactId": "smalltalk",
                 "tag": ["default", "public"],
             },
-            "license": ["MIT"],
+            "license": ["MIT", "GFTC"],
         },
 
         "SMALLTALK_COMMUNITY": {
