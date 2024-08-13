@@ -63,7 +63,7 @@ public final class SqueakMessageInterceptor extends TruffleInstrument {
                             }
 
                             @TruffleBoundary
-                            private void printToStdOut(final EventContext context) {
+                            private static void printToStdOut(final EventContext context) {
                                 // Checkstyle: stop
                                 System.out.println("Entering " + context.getInstrumentedSourceSection().getSource().getName() + "...");
                                 // Checkstyle: resume

@@ -16,6 +16,7 @@ import com.oracle.truffle.api.Option;
 
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @Option.Group(SqueakLanguageConfig.ID)
 public final class SqueakOptions {
@@ -63,7 +64,7 @@ public final class SqueakOptions {
         public static SqueakContextOptions create(final OptionValues options) {
             return new SqueakContextOptions(
                             options.get(ImagePath).isEmpty() ? null : options.get(ImagePath),
-                            options.get(ImageArguments).isEmpty() ? new String[0] : options.get(ImageArguments).split(","),
+                            options.get(ImageArguments).isEmpty() ? ArrayUtils.EMPTY_STRINGS_ARRAY : options.get(ImageArguments).split(","),
                             options.get(ResourceSummary),
                             options.get(Headless),
                             options.get(Quiet),

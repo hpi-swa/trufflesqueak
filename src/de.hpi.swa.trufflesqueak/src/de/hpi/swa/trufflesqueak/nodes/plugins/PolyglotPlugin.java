@@ -2257,9 +2257,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @TruffleBoundary
     private static String findLanguageByMimeType(final TruffleLanguage.Env env, final String mimeType) {
         final Map<String, LanguageInfo> languages = env.getPublicLanguages();
-        for (final String registeredMimeType : languages.keySet()) {
-            if (mimeType.equals(registeredMimeType)) {
-                return languages.get(registeredMimeType).getId();
+        for (final Map.Entry<String, LanguageInfo> entry : languages.entrySet()) {
+            if (mimeType.equals(entry.getKey())) {
+                return entry.getValue().getId();
             }
         }
         return null;

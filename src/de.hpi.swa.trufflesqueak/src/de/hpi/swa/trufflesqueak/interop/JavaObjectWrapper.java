@@ -89,7 +89,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                         ReflectionUtils.openModuleByClass(currentClass, JavaObjectWrapper.class);
                         try {
                             field.setAccessible(true);
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             e.printStackTrace();
                             continue;
                         }
@@ -123,7 +123,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                         try {
                             ReflectionUtils.openModuleByClass(currentClass, JavaObjectWrapper.class);
                             method.setAccessible(true);
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             e.printStackTrace();
                             continue;
                         }
@@ -299,7 +299,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (field != null) {
             try {
                 return wrap(field.get(wrappedObject));
-            } catch (final Exception e) {
+            } catch (final IllegalAccessException | IllegalArgumentException e) {
                 throw UnknownIdentifierException.create(member);
             }
         } else {
@@ -357,7 +357,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (field != null) {
             try {
                 field.set(wrappedObject, value instanceof final JavaObjectWrapper o ? o.wrappedObject : value);
-            } catch (final Exception e) {
+            } catch (final IllegalAccessException | IllegalArgumentException e) {
                 throw new UnsupportedOperationException(e);
             }
         } else {

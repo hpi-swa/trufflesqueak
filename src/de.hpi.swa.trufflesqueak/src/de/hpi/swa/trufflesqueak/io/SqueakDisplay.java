@@ -46,11 +46,12 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
-    @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
+    @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = {0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
 
     public final SqueakImageContext image;
 
@@ -441,7 +442,7 @@ public final class SqueakDisplay {
                         }
                     }
                 }
-                image.dropPluginFileList = new String[0];
+                image.dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
                 addDragEvent(DRAG.DROP, dtde.getLocation());
                 dtde.rejectDrop();
 

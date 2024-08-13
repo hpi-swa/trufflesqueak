@@ -172,7 +172,7 @@ public final class SqueakImageContext {
     public final Map<String, Object> loadedLibraries = new HashMap<>();
     public final B2D b2d = new B2D(this);
     public final BitBlt bitblt = new BitBlt(this);
-    public String[] dropPluginFileList = new String[0];
+    public String[] dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
     public final JPEGReader jpegReader = new JPEGReader();
     public final Zip zip = new Zip();
 
