@@ -412,11 +412,11 @@ public final class B2D {
      * /* BalloonEnginePlugin>>#adjustWideBezierLeft:width:offset:endX:
      */
     private void adjustWideBezierLeftwidthoffsetendX(final int bezier, final int lineWidth, final int lineOffset, final int endX) {
-        bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierUpdateDataOf(bezier, GB_UPDATE_X) - lineOffset * 256);
+        bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierUpdateDataOf(bezier, GB_UPDATE_X) - (lineOffset << 8));
         final int lastX = wideBezierUpdateDataOf(bezier, GB_UPDATE_X);
-        wideBezierUpdateDataOf(bezier, GB_UPDATE_X, lastX + (lineWidth - lineOffset) * 256);
+        wideBezierUpdateDataOf(bezier, GB_UPDATE_X, lastX + ((lineWidth - lineOffset) << 8));
         final int lastY = wideBezierUpdateDataOf(bezier, GB_UPDATE_Y);
-        wideBezierUpdateDataOf(bezier, GB_UPDATE_Y, lastY + lineWidth * 256);
+        wideBezierUpdateDataOf(bezier, GB_UPDATE_Y, lastY + (lineWidth << 8));
         bezierFinalXOfput(bezier, endX - lineOffset);
     }
 
@@ -426,12 +426,12 @@ public final class B2D {
      * /* BalloonEnginePlugin>>#adjustWideBezierRight:width:offset:endX:
      */
     private void adjustWideBezierRightwidthoffsetendX(final int bezier, final int lineWidth, final int lineOffset, final int endX) {
-        bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierUpdateDataOf(bezier, GB_UPDATE_X) + lineOffset * 256);
+        bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierUpdateDataOf(bezier, GB_UPDATE_X) + (lineOffset << 8));
         final int lastX = wideBezierUpdateDataOf(bezier, GB_UPDATE_X);
-        wideBezierUpdateDataOf(bezier, GB_UPDATE_X, lastX - (lineWidth - lineOffset) * 256);
+        wideBezierUpdateDataOf(bezier, GB_UPDATE_X, lastX - ((lineWidth - lineOffset) << 8));
         /* Set lineWidth pixels down */
         final int lastY = wideBezierUpdateDataOf(bezier, GB_UPDATE_Y);
-        wideBezierUpdateDataOf(bezier, GB_UPDATE_Y, lastY + lineWidth * 256);
+        wideBezierUpdateDataOf(bezier, GB_UPDATE_Y, lastY + (lineWidth << 8));
         bezierFinalXOfput(bezier, endX - lineOffset + lineWidth);
     }
 
@@ -6058,8 +6058,8 @@ public final class B2D {
         /* Store the values */
         fwDy += fwDDy / 2;
         edgeNumLinesOfput(bezier, deltaY);
-        bezierUpdateDataOf(bezier, GB_UPDATE_X, startX * 256);
-        bezierUpdateDataOf(bezier, GB_UPDATE_Y, startY * 256);
+        bezierUpdateDataOf(bezier, GB_UPDATE_X, startX << 8);
+        bezierUpdateDataOf(bezier, GB_UPDATE_Y, startY << 8);
         bezierUpdateDataOf(bezier, GB_UPDATE_DX, fwDx);
         bezierUpdateDataOf(bezier, GB_UPDATE_DY, fwDy);
         bezierUpdateDataOf(bezier, GB_UPDATE_DDX, fwDDx);
@@ -6186,7 +6186,7 @@ public final class B2D {
             adjustWideBezierRightwidthoffsetendX(bezier, lineWidth, lineOffset, endX);
         }
         if (nLines == 0) {
-            bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierFinalXOf(bezier) * 256);
+            bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierFinalXOf(bezier) << 8);
         }
         edgeNumLinesOfput(bezier, nLines + lineWidth);
         /* turned on at lineOffset */
@@ -6291,7 +6291,7 @@ public final class B2D {
          * thus stepping down. Note: The test for fwDy should not be necessary in theory but is a
          * good insurance in practice.
          */
-        minY = yValue * 256;
+        minY = yValue << 8;
         while (minY > lastY && fwDy >= 0) {
             lastX += fwDx + 32768 >> 16;
             lastY += fwDy + 32768 >> 16;
@@ -6317,7 +6317,7 @@ public final class B2D {
          * thus stepping down. Note: The test for fwDy should not be necessary in theory but is a
          * good insurance in practice.
          */
-        final int minY = yValue * 256;
+        final int minY = yValue << 8;
         while (minY > lastY && fwDy >= 0) {
             lastX += fwDx + 32768 >> 16;
             lastY += fwDy + 32768 >> 16;
@@ -6394,7 +6394,7 @@ public final class B2D {
             stepToNextBezierForwardat(bezier, yValue);
         } else {
             /* Adjust the last x value to the final x recorded previously */
-            bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierFinalXOf(bezier) * 256);
+            bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierFinalXOf(bezier) << 8);
         }
         stepToNextBezierForwardatWide(bezier, yValue);
         computeFinalWideBezierValueswidth(bezier, lineWidth);
@@ -6870,10 +6870,10 @@ public final class B2D {
         }
         point1SetX(0);
         point1SetY(0);
-        point2SetX(w * 256);
+        point2SetX(w << 8);
         point2SetY(0);
         point3SetX(0);
-        point3SetY(w * 256);
+        point3SetY(w << 8);
         transformPoints(3);
         int deltaX = point2GetX() - point1GetX();
         int deltaY = point2GetY() - point1GetY();

@@ -285,7 +285,7 @@ public final class BitBlt {
                         final long blend = div((shr(sourcePixVal, shift) & rgbMask) * sourceAlpha + (shr(destPixVal, shift) & rgbMask) * unAlpha + 0xFE, 0xFF) & rgbMask;
                         pixBlend = pixBlend | shl(blend, shift);
                     }
-                    result = result & ~shl(pixMask, (j - 1) * 16) | shl(pixBlend, (j - 1) * 16);
+                    result = result & ~shl(pixMask, (j - 1) << 4) | shl(pixBlend, (j - 1) << 4);
                 }
                 maskShifted = shr(maskShifted, destDepth);
                 sourceShifted = shr(sourceShifted, destDepth);
@@ -369,16 +369,16 @@ public final class BitBlt {
         int deltaY = bbH + 1;
         int srcY = sy;
         int dstY = dy;
-        int srcShift = (dx & 1) * 16;
+        int srcShift = (dx & 1) << 4;
         if (destMSB) {
             srcShift = 16 - srcShift;
         }
         /* This is the outer loop */
         mask1 = shl(0xFFFF, 16 - srcShift);
         while (--deltaY > 0) {
-            long srcIndex = srcY * sourcePitch + sx * 4;
-            long dstIndex = dstY * destPitch + dx / 2 * 4;
-            final int ditherBase = (dstY & 3) * 4;
+            long srcIndex = srcY * sourcePitch + (sx << 2);
+            long dstIndex = dstY * destPitch + (dx / 2 << 2);
+            final int ditherBase = (dstY & 3) << 2;
             /* For pre-increment */
             int ditherIndex = (sx & 3) - 1;
             /* So we can pre-decrement */
@@ -466,8 +466,8 @@ public final class BitBlt {
         /* This is the outer loop */
         int dstY = dy;
         while (--deltaY > 0) {
-            long srcIndex = srcY * sourcePitch + sx * 4;
-            long dstIndex = dstY * destPitch + dx * 4;
+            long srcIndex = srcY * sourcePitch + (sx << 2);
+            long dstIndex = dstY * destPitch + (dx << 2);
             /* So we can pre-decrement */
             /* This is the inner loop */
             int deltaX = bbW + 1;
@@ -524,7 +524,7 @@ public final class BitBlt {
         int deltaY = bbH + 1;
         int srcY = sy;
         int dstY = dy;
-        mask1 = (dx & 3) * 8;
+        mask1 = (dx & 3) << 3;
         if (destMSB) {
             mask1 = 24 - mask1;
         }
@@ -540,8 +540,8 @@ public final class BitBlt {
         }
         while (--deltaY > 0) {
             adjust = adjust ^ 522133279;
-            long srcIndex = srcY * sourcePitch + sx * 4;
-            long dstIndex = dstY * destPitch + dx / 4 * 4;
+            long srcIndex = srcY * sourcePitch + (sx << 2);
+            long dstIndex = dstY * destPitch + (dx / 4 << 2);
             /* So we can pre-decrement */
             int deltaX = bbW + 1;
             long srcShift = mask1;
@@ -678,7 +678,7 @@ public final class BitBlt {
                     }
                 }
             }
-            destIndex = dy * destPitch + div(dx, destPPW) * 4;
+            destIndex = dy * destPitch + (div(dx, destPPW) << 2);
             destDelta = destPitch * vDir - 4 * (nWords * hDir);
         }
     }
@@ -880,7 +880,7 @@ public final class BitBlt {
         assert -32 <= skew && skew <= 32; // Modified (image uses 31 instead of 32).
 
         /* Byte delta */
-        final int hInc = hDir * 4;
+        final int hInc = hDir << 2;
         final long unskew;
         final long skewMask;
         if (skew < 0) {
@@ -1144,7 +1144,7 @@ public final class BitBlt {
         final int sourcePixMask = MASK_TABLE[sourceDepth];
         final int destPixMask = MASK_TABLE[destDepth];
         final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
-        sourceIndex = sy * sourcePitch + div(sx, sourcePPW) * 4;
+        sourceIndex = sy * sourcePitch + (div(sx, sourcePPW) << 2);
         final int scrStartBits = sourcePPW - (sx & sourcePPW - 1);
         final int nSourceIncs;
         if (bbW < scrStartBits) {
@@ -1153,7 +1153,7 @@ public final class BitBlt {
             nSourceIncs = div(bbW - scrStartBits, sourcePPW) + 1;
         }
         /* Note following two items were already calculated in destmask setup! */
-        sourceDelta = sourcePitch - nSourceIncs * 4;
+        sourceDelta = sourcePitch - (nSourceIncs << 2);
         int startBits = destPPW - (dx & destPPW - 1);
         final int endBits = (dx + bbW - 1 & destPPW - 1) + 1;
         if (bbW < startBits) {
@@ -1266,7 +1266,7 @@ public final class BitBlt {
         /* calculate byte addr and delta, based on first word of data */
         /* Note pitch is bytes and nWords is longs, not bytes */
         hDir = vDir = 1;
-        destIndex = dy * destPitch + div(dx, destPPW) * 4;
+        destIndex = dy * destPitch + (div(dx, destPPW) << 2);
         /* byte addr delta */
         destDelta = destPitch * vDir - 4 * (nWords * hDir);
     }
@@ -1624,7 +1624,7 @@ public final class BitBlt {
             }
         }
         destPPW = div(32, destDepth);
-        destPitch = div(destWidth + destPPW - 1, destPPW) * 4;
+        destPitch = div(destWidth + destPPW - 1, destPPW) << 2;
         final int destBitsSize;
         if (isWords(destBitsNative)) {
             destBits = destBitsNative.getIntStorage();
@@ -1750,7 +1750,7 @@ public final class BitBlt {
             }
         }
         sourcePPW = div(32, sourceDepth);
-        sourcePitch = div(sourceWidth + sourcePPW - 1, sourcePPW) * 4;
+        sourcePitch = div(sourceWidth + sourcePPW - 1, sourcePPW) << 2;
         if (isWords(sourceBitsNative)) {
             final int[] ints = sourceBitsNative.getIntStorage();
             sourceBits = ints;
@@ -2299,7 +2299,7 @@ public final class BitBlt {
         if (xx < 0 || yy < 0 || x >= sourceWidth || y >= sourceHeight) {
             return 0;
         }
-        final long srcIndex = y * sourcePitch + shr(x, warpAlignShift) * 4;
+        final long srcIndex = y * sourcePitch + (shr(x, warpAlignShift) << 2);
         /* Extract pixel from word */
         final long sourceWord = srcLongAt(srcIndex);
         srcBitShift = warpBitShiftTable[(int) (x & warpAlignMask)];
@@ -2369,7 +2369,7 @@ public final class BitBlt {
         for (int i = 2; i <= destPPW / 2; i++) {
             lowMask = shl(lowMask, destDepth);
             highMask = shr(highMask, destDepth);
-            shift -= destDepth * 2;
+            shift -= destDepth << 1;
             result = result | shl(destWord & lowMask, shift) | shr(destWord & highMask, shift);
         }
         return result;
@@ -2596,16 +2596,16 @@ public final class BitBlt {
         int deltaY = bbH + 1;
         int srcY = sy;
         int dstY = dy;
-        int srcShift = (dx & 1) * 16;
+        int srcShift = (dx & 1) << 4;
         if (destMSB) {
             srcShift = 16 - srcShift;
         }
         /* This is the outer loop */
         mask1 = shl(0xFFFF, 16 - srcShift);
         while (--deltaY > 0) {
-            long srcIndex = srcY * sourcePitch + sx * 4;
-            long dstIndex = dstY * destPitch + dx / 2 * 4;
-            final int ditherBase = (dstY & 3) * 4;
+            long srcIndex = srcY * sourcePitch + (sx << 2);
+            long dstIndex = dstY * destPitch + (dx / 2 << 2);
+            final int ditherBase = (dstY & 3) << 2;
             /* For pre-increment */
             int ditherIndex = (sx & 3) - 1;
             /* So we can pre-decrement */
@@ -2682,8 +2682,8 @@ public final class BitBlt {
         /* This is the outer loop */
         int dstY = dy;
         while (--deltaY > 0) {
-            long srcIndex = srcY * sourcePitch + sx * 4;
-            long dstIndex = dstY * destPitch + dx * 4;
+            long srcIndex = srcY * sourcePitch + (sx << 2);
+            long dstIndex = dstY * destPitch + (dx << 2);
             /* So we can pre-decrement */
             /* This is the inner loop */
             long deltaX = bbW + 1;
@@ -2813,7 +2813,7 @@ public final class BitBlt {
         int deltaY = bbH + 1;
         int srcY = sy;
         int dstY = dy;
-        mask1 = (dx & 3) * 8;
+        mask1 = (dx & 3) << 3;
         if (destMSB) {
             mask1 = 24 - mask1;
         }
@@ -2829,8 +2829,8 @@ public final class BitBlt {
         }
         while (--deltaY != 0) {
             adjust = adjust ^ 522133279;
-            long srcIndex = srcY * sourcePitch + sx * 4;
-            long dstIndex = dstY * destPitch + dx / 4 * 4;
+            long srcIndex = srcY * sourcePitch + (sx << 2);
+            long dstIndex = dstY * destPitch + (dx / 4 << 2);
             /* So we can pre-decrement */
             int deltaX = bbW + 1;
             long srcShift = mask1;
@@ -3163,19 +3163,19 @@ public final class BitBlt {
         if (deltaBits <= 0) {
             /* Mask for extracting a color part of the source */
             final long mask = shl(1, targetBits) - 1;
-            masks[RED_INDEX] = (int) shl(mask, srcBits * 2 - deltaBits);
+            masks[RED_INDEX] = (int) shl(mask, (srcBits << 1) - deltaBits);
             masks[GREEN_INDEX] = (int) shl(mask, srcBits - deltaBits);
             masks[BLUE_INDEX] = (int) shl(mask, -deltaBits);
             // masks[ALPHA_INDEX] = 0; // Always zero anyway.
         } else {
             /* Mask for extracting a color part of the source */
             final long mask = shl(1, srcBits) - 1;
-            masks[RED_INDEX] = (int) shl(mask, srcBits * 2);
+            masks[RED_INDEX] = (int) shl(mask, srcBits << 1);
             masks[GREEN_INDEX] = (int) shl(mask, srcBits);
             masks[BLUE_INDEX] = (int) mask;
         }
         shifts[RED_INDEX] = deltaBits * 3;
-        shifts[GREEN_INDEX] = deltaBits * 2;
+        shifts[GREEN_INDEX] = deltaBits << 1;
         shifts[BLUE_INDEX] = deltaBits;
         // shifts[ALPHA_INDEX] = 0; // Always zero anyway.
         cmShiftTable = shifts;
@@ -3215,7 +3215,7 @@ public final class BitBlt {
             skew = skew < 0 ? skew + 32 : skew - 32;
         }
         /* calculate increments from end of 1 line to start of next */
-        sourceIndex = sy * sourcePitch + sx / sourcePPW * 4;
+        sourceIndex = sy * sourcePitch + (sx / sourcePPW << 2);
         sourceDelta = sourcePitch * vDir - 4 * (nWords * hDir);
         if (preload) {
             /* Compensate for extra source word fetched */

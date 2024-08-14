@@ -186,11 +186,11 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     // We have two or more equal words, ending at j
                     if (eqBytes) {
                         // Actually words of equal bytes
-                        i = encodeInt((j - k + 1) * 4 + 1, ba, i);
+                        i = encodeInt(((j - k + 1) << 2) + 1, ba, i);
                         ba.setByte(i - 1, lowByte);
                         i++;
                     } else {
-                        i = encodeInt((j - k + 1) * 4 + 2, ba, i);
+                        i = encodeInt(((j - k + 1) << 2) + 2, ba, i);
                         i = encodeBytesOf(word, ba, i);
                     }
                     k = j + 1;
@@ -198,7 +198,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     // Check for word of 4 == bytes
                     if (eqBytes) {
                         // Note 1 word of 4 == bytes
-                        i = encodeInt(1 * 4 + 1, ba, i);
+                        i = encodeInt((1 << 2) + 1, ba, i);
                         ba.setByte(i - 1, lowByte);
                         i++;
                         k++;
@@ -212,7 +212,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                             j++;
                         }
                         // We have one or more unmatching words, ending at j-1
-                        i = encodeInt((j - k) * 4 + 3, ba, i);
+                        i = encodeInt(((j - k) << 2) + 3, ba, i);
                         for (int m = k; m < j; m++) {
                             i = encodeBytesOf(bm.getInt(m), ba, i);
                         }
@@ -284,7 +284,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 int anInt = ba.getByteUnsigned(i++);
                 if (anInt > 223) {
                     if (anInt <= 254) {
-                        anInt = (anInt - 224) * 256 + ba.getByteUnsigned(i++);
+                        anInt = ((anInt - 224) << 8) + ba.getByteUnsigned(i++);
                     } else {
                         anInt = ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++);
                     }
