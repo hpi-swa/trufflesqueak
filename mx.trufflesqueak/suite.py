@@ -134,6 +134,7 @@ suite = {
                 "version": "24.0.2",
             },
             "useModulePath": True,
+            "licence": "GFTC",
         },
         "SDK-NATIVEBRIDGE": {
             "digest": "sha512:8dbcd334eaaa9ddb057a60e90db54302cd94f44b22134fb426d8356cf71b94afc961593dc69ce332935bbb9244b9d4259dedf17abd1ce149e9ab77398cd5d650",
@@ -297,11 +298,21 @@ suite = {
             "license": ["MIT"],
         },
 
+        "TRUFFLE_ENTERPRISE_PLACEHOLDER": {
+            "maven": {
+                "groupId": "org.graalvm.truffle",
+                "artifactId": "truffle-enterprise",
+            },
+            "testDistribution": True, # ensure it does not get 'maven-deploy'ed
+            "noMavenJavadoc": True,
+            "license": ["GFTC"],
+        },
+
         "SMALLTALK": {
             "type": "pom",
             "runtimeDependencies": [
                 "TRUFFLESQUEAK",
-                "TRUFFLE-ENTERPRISE",
+                "TRUFFLE_ENTERPRISE_PLACEHOLDER",
             ],
             "description": "TruffleSqueak virtual machine for Oracle GraalVM",
             "maven": {
