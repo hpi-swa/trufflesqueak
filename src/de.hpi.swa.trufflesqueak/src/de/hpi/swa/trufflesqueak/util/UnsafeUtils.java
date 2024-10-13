@@ -58,6 +58,10 @@ public final class UnsafeUtils {
                         dest, Unsafe.ARRAY_LONG_BASE_OFFSET + destPos * Unsafe.ARRAY_LONG_INDEX_SCALE, Long.BYTES * length);
     }
 
+    public static void copyMemory(long address, byte[] bytes, long numBytes) {
+        UNSAFE.copyMemory(null, address, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, numBytes);
+    }
+
     public static void copyShorts(final short[] src, final long srcPos, final short[] dest, final long destPos, final long length) {
         assert inBounds(srcPos, length, src.length) && inBounds(destPos, length, dest.length);
         UNSAFE.copyMemory(src, Unsafe.ARRAY_SHORT_BASE_OFFSET + srcPos * Unsafe.ARRAY_SHORT_INDEX_SCALE,
@@ -186,6 +190,10 @@ public final class UnsafeUtils {
         return UNSAFE.getInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE);
     }
 
+    public static int getInt(final long address) {
+        return UNSAFE.getInt(address);
+    }
+
     public static int getIntAt(final Object object, final long address) {
         return UNSAFE.getInt(object, address);
     }
@@ -193,6 +201,10 @@ public final class UnsafeUtils {
     public static long getLong(final long[] storage, final long index) {
         assert inBounds(index, storage.length);
         return UNSAFE.getLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
+    }
+
+    public static long getLong(final long address) {
+        return UNSAFE.getLong(address);
     }
 
     public static long getLongAt(final AbstractPointersObject object, final long address) {
@@ -230,6 +242,10 @@ public final class UnsafeUtils {
     public static short getShort(final short[] storage, final long index) {
         assert inBounds(index, storage.length);
         return UNSAFE.getShort(storage, Unsafe.ARRAY_SHORT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
+    }
+
+    public static short getShort(final long address) {
+        return UNSAFE.getShort(address);
     }
 
     private static boolean inBounds(final long index, final long totalLength) {
