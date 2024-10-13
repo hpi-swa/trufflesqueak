@@ -162,9 +162,9 @@ public final class SqueakImageChunk {
         final int classIndex = getClassIndex();
         final int majorIndex = SqueakImageConstants.majorClassIndexOf(classIndex);
         final int minorIndex = SqueakImageConstants.minorClassIndexOf(classIndex);
-        final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.getWord(majorIndex));
+        final SqueakImageChunk classTablePage = reader.chunkMap.get(reader.hiddenRootsChunk.getWord(majorIndex));
         assert !classTablePage.isNil() : "Class page does not exist";
-        final SqueakImageChunk classChunk = reader.getChunk(classTablePage.getWord(minorIndex));
+        final SqueakImageChunk classChunk = reader.chunkMap.get(classTablePage.getWord(minorIndex));
         assert classChunk != null : "Unable to find class chunk.";
         return classChunk;
     }
@@ -197,7 +197,7 @@ public final class SqueakImageChunk {
     private Object decodePointer(final long ptr) {
         switch ((int) (ptr & 7)) {
             case SqueakImageConstants.OBJECT_TAG:
-                final SqueakImageChunk chunk = reader.getChunk(ptr);
+                final SqueakImageChunk chunk = reader.chunkMap.get(ptr);
                 if (chunk == null) {
                     logBogusPointer(ptr);
                     return ptr >>> SqueakImageConstants.NUM_TAG_BITS;

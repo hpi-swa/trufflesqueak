@@ -9,8 +9,8 @@ package de.hpi.swa.trufflesqueak.image;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -29,16 +29,17 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakImageReader {
     private static final byte[] EMPTY_BYTES = new byte[0];
 
-    protected SqueakImageChunk hiddenRootsChunk;
+    public SqueakImageChunk hiddenRootsChunk;
 
-    private final HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>(750000);
-    protected final SqueakImageContext image;
+    public final AddressToChunkMap chunkMap = new AddressToChunkMap();
+    public final SqueakImageContext image;
     private final byte[] byteArrayBuffer = new byte[Long.BYTES];
 
     private long oldBaseAddress;
@@ -176,7 +177,7 @@ public final class SqueakImageReader {
         while (position < segmentEnd) {
             while (position < segmentEnd - SqueakImageConstants.IMAGE_BRIDGE_SIZE) {
                 final SqueakImageChunk chunk = readObject(stream);
-                putChunk(chunk);
+                chunkMap.put(chunk.getPosition() + currentAddressSwizzle, chunk);
             }
             assert hiddenRootsChunk != null : "hiddenRootsChunk must be known from now on.";
             final long bridge = nextLong(stream);
@@ -193,10 +194,6 @@ public final class SqueakImageReader {
             currentAddressSwizzle += bridgeSpan * SqueakImageConstants.WORD_SIZE;
         }
         assert dataSize == position;
-    }
-
-    private void putChunk(final SqueakImageChunk chunk) {
-        chunktable.put(chunk.getPosition() + currentAddressSwizzle, chunk);
     }
 
     private SqueakImageChunk readObject(final BufferedInputStream stream) throws IOException {
@@ -254,7 +251,7 @@ public final class SqueakImageReader {
     }
 
     private SqueakImageChunk specialObjectChunk(final SqueakImageChunk specialObjectsChunk, final int idx) {
-        return getChunk(specialObjectsChunk.getWord(idx));
+        return chunkMap.get(specialObjectsChunk.getWord(idx));
     }
 
     private void setPrebuiltObject(final SqueakImageChunk specialObjectsChunk, final int idx, final Object object) {
@@ -262,7 +259,7 @@ public final class SqueakImageReader {
     }
 
     private void initPrebuiltConstant() {
-        final SqueakImageChunk specialChunk = getChunk(specialObjectsPointer);
+        final SqueakImageChunk specialChunk = chunkMap.get(specialObjectsPointer);
         specialChunk.setObject(image.specialObjectsArray);
 
         // first we find the Metaclass, we need it to correctly instantiate
@@ -328,19 +325,19 @@ public final class SqueakImageReader {
         /** Find all metaclasses and instantiate their singleton instances as class objects. */
         int highestKnownClassIndex = -1;
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
-            final SqueakImageChunk classTablePage = getChunk(hiddenRootsChunk.getWord(p));
+            final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
             if (classTablePage.isNil()) {
                 break; /* End of classTable reached (pages are consecutive). */
             }
             for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
-                final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
+                final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
                 if (classChunk.getSqueakClass() == image.metaClass) {
                     /* Derive classIndex from current position in class table. */
                     highestKnownClassIndex = p << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT | i;
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
-                    final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
+                    final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
                     final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
                     metaClassObject.setInstancesAreClasses();
                     classInstance.asClassObject(metaClassObject);
@@ -351,7 +348,7 @@ public final class SqueakImageReader {
         image.classTableIndex = highestKnownClassIndex;
 
         /** Fill in metaClass. */
-        final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
+        final SqueakImageChunk specialObjectsChunk = chunkMap.get(specialObjectsPointer);
         final SqueakImageChunk sqArray = specialObjectsChunk.getClassChunk();
         final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
         final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
@@ -367,17 +364,17 @@ public final class SqueakImageReader {
         inst.add(classDescriptionClass);
 
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
-            final SqueakImageChunk classTablePage = getChunk(hiddenRootsChunk.getWord(p));
+            final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
             if (classTablePage.isNil()) {
                 break; /* End of classTable reached (pages are consecutive). */
             }
             for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
-                final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
+                final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
                 if (classChunk.getSqueakClass() == image.metaClass) {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
-                    final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
+                    final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
                     final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
                     final ClassObject classObject = classInstance.asClassObject(metaClassObject);
                     classObject.fillin(classInstance);
@@ -397,7 +394,10 @@ public final class SqueakImageReader {
     }
 
     private void fillInObjects() {
-        for (final SqueakImageChunk chunk : chunktable.values()) {
+        for (final SqueakImageChunk chunk : chunkMap.getChunks()) {
+            if (chunk == null) {
+                continue;
+            }
             final Object chunkObject = chunk.asObject();
             if (chunkObject instanceof final AbstractSqueakObjectWithClassAndHash obj) {
                 // FIXME:
@@ -413,7 +413,10 @@ public final class SqueakImageReader {
     }
 
     private void fillInContextObjects() {
-        for (final SqueakImageChunk chunk : chunktable.values()) {
+        for (final SqueakImageChunk chunk : chunkMap.getChunks()) {
+            if (chunk == null) {
+                continue;
+            }
             final Object chunkObject = chunk.asObject();
             if (chunkObject instanceof final ContextObject contextObject) {
                 assert !contextObject.hasTruffleFrame();
@@ -432,13 +435,9 @@ public final class SqueakImageReader {
     private ClassObject lookupClassInCompactClassList(final int compactIndex) {
         final int majorIndex = SqueakImageConstants.majorClassIndexOf(compactIndex);
         final int minorIndex = SqueakImageConstants.minorClassIndexOf(compactIndex);
-        final ArrayObject classTablePage = (ArrayObject) getChunk(hiddenRootsChunk.getWord(majorIndex)).asObject();
+        final ArrayObject classTablePage = (ArrayObject) chunkMap.get(hiddenRootsChunk.getWord(majorIndex)).asObject();
         final Object result = ArrayObjectReadNode.executeUncached(classTablePage, minorIndex);
         return result instanceof final ClassObject c ? c : null;
-    }
-
-    protected SqueakImageChunk getChunk(final long ptr) {
-        return chunktable.get(ptr);
     }
 
     /* Calculate odd bits (see Behavior>>instSpec). */
@@ -454,6 +453,66 @@ public final class SqueakImageReader {
             return format & 1; /* 1 word padding */
         } else {
             return 0;
+        }
+    }
+
+    public static class AddressToChunkMap {
+        private static final int INITIAL_CAPACITY = 1_000_000;
+        private static final float THRESHOLD_PERCENTAGE = 0.75f;
+        private static final float RESIZE_FACTOR = 1.5f;
+        private static final int COLLISION_OFFSET = 31;
+
+        private int capacity = INITIAL_CAPACITY;
+        private int threshold = (int) (capacity * THRESHOLD_PERCENTAGE);
+        private long[] addresses = new long[capacity];
+        private SqueakImageChunk[] chunks = new SqueakImageChunk[capacity];
+        private int size;
+
+        public void put(final long address, final SqueakImageChunk chunk) {
+            if (size > threshold) {
+                resize();
+            }
+            int slot = (int) (address % capacity);
+            while (true) {
+                if (chunks[slot] == null) {
+                    addresses[slot] = address;
+                    chunks[slot] = chunk;
+                    size++;
+                    return;
+                }
+                slot = (slot + COLLISION_OFFSET) % capacity;
+            }
+        }
+
+        public SqueakImageChunk get(final long address) {
+            int slot = (int) (address % capacity);
+            while (true) {
+                if (addresses[slot] == address) {
+                    return chunks[slot];
+                }
+                slot = (slot + COLLISION_OFFSET) % capacity;
+            }
+        }
+
+        private SqueakImageChunk[] getChunks() {
+            return chunks;
+        }
+
+        private void resize() {
+            capacity = (int) (capacity * RESIZE_FACTOR);
+            threshold = (int) (capacity * THRESHOLD_PERCENTAGE);
+            LogUtils.READER.log(Level.FINE, "Resizing chunk map to {0}", capacity);
+            final long[] oldAddresses = addresses;
+            final SqueakImageChunk[] oldChunks = chunks;
+            addresses = new long[capacity];
+            chunks = new SqueakImageChunk[capacity];
+            size = 0;
+            for (int i = 0; i < oldChunks.length; i++) {
+                final SqueakImageChunk chunk = oldChunks[i];
+                if (chunk != null) {
+                    put(oldAddresses[i], chunk);
+                }
+            }
         }
     }
 }
