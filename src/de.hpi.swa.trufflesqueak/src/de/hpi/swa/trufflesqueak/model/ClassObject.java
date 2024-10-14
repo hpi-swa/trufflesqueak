@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -257,13 +255,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             if (needsSqueakHash() && chunk.getHash() != 0) {
                 setSqueakHash(chunk.getHash());
             }
-            final Object[] chunkPointers = chunk.getPointers();
-            superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
-            methodDict = (VariablePointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
-            format = (long) chunkPointers[CLASS_DESCRIPTION.FORMAT];
-            instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
-            organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
-            pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
+            superclass = (ClassObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.SUPERCLASS));
+            methodDict = (VariablePointersObject) chunk.getPointer(CLASS_DESCRIPTION.METHOD_DICT);
+            format = (long) chunk.getPointer(CLASS_DESCRIPTION.FORMAT);
+            instanceVariables = (ArrayObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.INSTANCE_VARIABLES));
+            organization = (PointersObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.ORGANIZATION));
+            pointers = chunk.getPointers(CLASS_DESCRIPTION.SIZE);
         }
     }
 
@@ -373,7 +370,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return pointers;
     }
 
-    private void setOtherPointers(final Object[] pointers) {
+    public void setOtherPointers(final Object[] pointers) {
         this.pointers = pointers;
     }
 

@@ -34,7 +34,6 @@ public final class SqueakImageChunk {
 
     private Object object;
     private ClassObject squeakClass;
-    private Object[] pointers;
 
     public SqueakImageChunk(final SqueakImageReader reader, final long header, final int position, final byte[] bytes) {
         this.reader = reader;
@@ -45,12 +44,6 @@ public final class SqueakImageChunk {
             assert SqueakImageReader.isHiddenObject(getClassIndex());
             object = NilObject.SINGLETON;
         }
-    }
-
-    public static SqueakImageChunk createDummyChunk(final SqueakImageContext image, final Object[] pointers) {
-        final SqueakImageChunk chunk = new SqueakImageChunk(new SqueakImageReader(image), 0, 0, new byte[0]);
-        chunk.pointers = pointers;
-        return chunk;
     }
 
     public ClassObject asClassObject(final ClassObject metaClassObject) {
@@ -173,25 +166,21 @@ public final class SqueakImageChunk {
         squeakClass = baseSqueakObject;
     }
 
-    public Object[] getPointers() {
-        if (pointers == null) {
-            final int length = getWordSize();
-            pointers = new Object[length];
-            for (int i = 0; i < length; i++) {
-                pointers[i] = decodePointer(getWord(i));
-            }
-        }
-        return pointers;
+    public Object getPointer(final int index) {
+        return decodePointer(getWord(index));
     }
 
-    public Object[] getPointers(final int end) {
-        if (pointers == null) {
-            pointers = new Object[end];
-            for (int i = 0; i < end; i++) {
-                pointers[i] = decodePointer(getWord(i));
-            }
+    public Object[] getPointers(final int start) {
+        return getPointers(start, getWordSize());
+    }
+
+    public Object[] getPointers(final int start, final int end) {
+        final int numObjects = end - start;
+        final Object[] result = new Object[numObjects];
+        for (int i = 0; i < numObjects; i++) {
+            result[i] = getPointer(start + i);
         }
-        return pointers;
+        return result;
     }
 
     private Object decodePointer(final long ptr) {

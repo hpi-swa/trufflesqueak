@@ -316,7 +316,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final long header = chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS;
         numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
         assert literals == null;
-        literals = chunk.getPointers(1 + numLiterals);
+        literals = chunk.getPointers(0, 1 + numLiterals);
         decodeHeader();
         assert bytes == null;
         bytes = Arrays.copyOfRange(chunk.getBytes(), literals.length * SqueakImageConstants.WORD_SIZE, chunk.getBytes().length);

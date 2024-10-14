@@ -77,14 +77,13 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        final Object[] pointers = chunk.getPointers();
-        final int valuesLength = pointers.length;
+        final int valuesLength = chunk.getWordSize();
         storage = valuesLength;
         if (valuesLength > 0) {
             // Use a fresh write node because uncached node is too generic.
             final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.create();
             for (int i = 0; i < valuesLength; i++) {
-                writeNode.execute(writeNode, this, i, pointers[i]);
+                writeNode.execute(writeNode, this, i, chunk.getPointer(i));
             }
         }
     }

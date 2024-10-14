@@ -15,7 +15,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -24,6 +23,7 @@ import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @SuppressWarnings("static-method")
 public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
@@ -181,13 +181,8 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
 
     private static ClassObject createFreshTestClass() {
         final ClassObject dummyClass = new ClassObject(image);
-        final SqueakImageChunk dummyChunk = SqueakImageChunk.createDummyChunk(image, new Object[]{
-                        image.nilClass.getSuperclass(), null,
-                        // Format:
-                        65542L /* `Morph format` */ | 24 /* + 24 slot = 30 slots in total. */,
-                        null, null
-        });
-        dummyClass.fillin(dummyChunk);
+        dummyClass.setFormat(65542L /* `Morph format` */ | 24 /* + 24 slot = 30 slots in total. */);
+        dummyClass.setOtherPointers(ArrayUtils.EMPTY_ARRAY);
         return dummyClass;
     }
 

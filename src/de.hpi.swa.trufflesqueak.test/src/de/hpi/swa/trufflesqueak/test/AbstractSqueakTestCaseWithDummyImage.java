@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.test;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -34,30 +33,30 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         dummySpecialSelectors.setSqueakClass(image.arrayClass);
 
         image.setByteSymbolClass(new ClassObject(image));
-        setupMeta(image.metaClass, new Object[]{
-                        null, null, 0L, null, null, null, asByteSymbol("Metaclass"), null, null, null, null});
-        setupMeta(image.getByteSymbolClass(), new Object[]{
-                        null, null, 0L, null, null, null, asByteSymbol("ByteSymbol"), null, null, null, null});
-        setupMeta(image.compiledMethodClass, new Object[]{null, null, 1572864L, null, null, null, asByteSymbol("CompiledMethod"), null, null, null, null});
-        setupMeta(image.nilClass, new Object[]{
-                        null, null, 0L, null, null, null, asByteSymbol("UndefinedObject"), null, null, null, null});
-        setupMeta(image.arrayClass, new Object[]{
-                        null, null, 0L, null, null, null, asByteSymbol("Array"), null, null, null, null});
+        setupMeta(image.metaClass, null, 0L, new Object[]{null, asByteSymbol("Metaclass"), null, null, null, null});
+        setupMeta(image.getByteSymbolClass(), null, 0L, new Object[]{null, asByteSymbol("ByteSymbol"), null, null, null, null});
+        setupMeta(image.compiledMethodClass, null, 1572864L, new Object[]{null, asByteSymbol("CompiledMethod"), null, null, null, null});
+        setupMeta(image.nilClass, null, 0L, new Object[]{null, asByteSymbol("UndefinedObject"), null, null, null, null});
+        setupMeta(image.arrayClass, null, 0L, new Object[]{null, asByteSymbol("Array"), null, null, null, null});
 
-        final ClassObject bindingClass = setupMeta(new ClassObject(image), new Object[]{
-                        null, null, 1L, null, null, null, asByteSymbol("Binding"), null, null, null, null});
-        final ClassObject classBindingClass = setupMeta(new ClassObject(image), new Object[]{
-                        bindingClass, null, 2L, null, null, null, asByteSymbol("ClassBinding"), null, null, null, null});
-        nilClassBinding = new PointersObject(image, classBindingClass, null);
-        nilClassBinding.fillin(SqueakImageChunk.createDummyChunk(image, new Object[]{asByteSymbol("UndefinedObject"), image.nilClass}));
+        final ClassObject bindingClass = setupMeta(new ClassObject(image), null, 1L, new Object[]{null, asByteSymbol("Binding"), null, null, null, null});
+        final ClassObject classBindingClass = setupMeta(new ClassObject(image), bindingClass, 2L, new Object[]{null, asByteSymbol("ClassBinding"), null, null, null, null});
+        nilClassBinding = new PointersObject(image, classBindingClass, classBindingClass.getLayout());
+        nilClassBinding.instVarAtPut0Slow(0, asByteSymbol("UndefinedObject"));
+        nilClassBinding.instVarAtPut0Slow(1, image.nilClass);
 
         image.setHiddenRoots(ArrayObject.createEmptyStrategy(image, image.arrayClass, 0));
         context.enter();
     }
 
-    private static ClassObject setupMeta(final ClassObject aClass, final Object[] pointers) {
-        final SqueakImageChunk fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
-        aClass.fillin(fakeChunk);
+    private static ClassObject setupMeta(final ClassObject aClass, final ClassObject superclass, final long format, final Object[] otherPointers) {
+        aClass.setSuperclass(superclass);
+        aClass.setMethodDict(null);
+        aClass.setFormat(format);
+        aClass.setInstanceVariables(null);
+        aClass.setOrganization(null);
+        aClass.setOtherPointers(otherPointers);
+
         final ClassObject aClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
         aClassClass.setInstancesAreClasses();
         aClass.setSqueakClass(aClassClass);

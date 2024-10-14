@@ -31,6 +31,10 @@ public final class NilObject extends AbstractSqueakObject {
         return object == null ? SINGLETON : object;
     }
 
+    public static Object nilToNull(final Object object) {
+        return object == SINGLETON ? null : object;
+    }
+
     @Override
     public long getOrCreateSqueakHash() {
         return SQUEAK_HASH;

@@ -14,6 +14,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
@@ -39,13 +40,12 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
     }
 
     @Override
-    protected void fillInVariablePart(final Object[] pointers, final int instSize) {
-        super.fillInVariablePart(pointers, instSize);
-        for (int i = 0; i < variablePart.length; i++) {
-            final Object value = variablePart[i];
-            if (value instanceof final AbstractSqueakObject o) {
-                variablePart[i] = new WeakRef(o, weakPointersQueue);
-            }
+    protected void fillInVariablePart(final SqueakImageChunk chunk, final int instSize) {
+        final int numVariableSlots = chunk.getWordSize() - instSize;
+        variablePart = new Object[numVariableSlots];
+        for (int i = 0; i < numVariableSlots; i++) {
+            final Object value = chunk.getPointer(instSize + i);
+            variablePart[i] = value instanceof final AbstractSqueakObject o ? new WeakRef(o, weakPointersQueue) : value;
         }
     }
 

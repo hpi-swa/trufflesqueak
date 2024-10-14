@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
@@ -58,9 +59,9 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     @Override
-    protected void fillInVariablePart(final Object[] pointers, final int instSize) {
+    protected void fillInVariablePart(final SqueakImageChunk chunk, final int instSize) {
         // No variable part to fill in
-        assert pointers.length == instSize : "Unexpected number of pointers found for " + this;
+        assert chunk.getWordSize() == instSize : "Unexpected number of pointers found for " + this;
     }
 
     public void become(final PointersObject other) {

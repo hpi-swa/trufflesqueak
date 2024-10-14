@@ -6,10 +6,9 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
@@ -34,8 +33,8 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
     }
 
     @Override
-    protected void fillInVariablePart(final Object[] pointers, final int instSize) {
-        variablePart = Arrays.copyOfRange(pointers, instSize, pointers.length);
+    protected void fillInVariablePart(final SqueakImageChunk chunk, final int instSize) {
+        variablePart = chunk.getPointers(instSize);
     }
 
     public final void become(final AbstractVariablePointersObject other) {

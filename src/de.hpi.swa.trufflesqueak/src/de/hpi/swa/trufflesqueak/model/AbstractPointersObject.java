@@ -119,16 +119,15 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         primitiveExtension = layout.getFreshPrimitiveExtension();
         objectExtension = layout.getFreshObjectExtension();
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
-        final Object[] pointers = chunk.getPointers();
         final int instSize = instsize();
         for (int i = 0; i < instSize; i++) {
-            writeNode.execute(null, this, i, pointers[i]);
+            writeNode.execute(null, this, i, chunk.getPointer(i));
         }
-        fillInVariablePart(pointers, instSize);
-        assert size() == pointers.length;
+        fillInVariablePart(chunk, instSize);
+        assert size() == chunk.getWordSize();
     }
 
-    protected abstract void fillInVariablePart(Object[] pointers, int instSize);
+    protected abstract void fillInVariablePart(SqueakImageChunk chunk, int instSize);
 
     public final ObjectLayout getLayout() {
         if (layout == null) {

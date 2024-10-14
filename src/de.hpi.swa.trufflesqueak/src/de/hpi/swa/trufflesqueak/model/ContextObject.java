@@ -111,13 +111,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void fillinContext(final SqueakImageChunk chunk) {
-        final Object[] pointers = chunk.getPointers();
-        size = pointers.length;
+        size = chunk.getWordSize();
         assert size > CONTEXT.TEMP_FRAME_START;
-        final CompiledCodeObject method = (CompiledCodeObject) pointers[CONTEXT.METHOD];
-        final AbstractSqueakObject sender = (AbstractSqueakObject) pointers[CONTEXT.SENDER_OR_NIL];
+        final CompiledCodeObject method = (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
+        final AbstractSqueakObject sender = (AbstractSqueakObject) chunk.getPointer(CONTEXT.SENDER_OR_NIL);
         assert sender != null : "sender should not be null";
-        final Object closureOrNil = pointers[CONTEXT.CLOSURE_OR_NIL];
+        final Object closureOrNil = chunk.getPointer(CONTEXT.CLOSURE_OR_NIL);
         final BlockClosureObject closure;
         final int numArgs;
         final CompiledCodeObject methodOrBlock;
@@ -136,22 +135,22 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             }
         }
         final int endArguments = CONTEXT.TEMP_FRAME_START + numArgs;
-        final Object[] arguments = Arrays.copyOfRange(pointers, CONTEXT.RECEIVER, endArguments);
+        final Object[] arguments = chunk.getPointers(CONTEXT.RECEIVER, endArguments);
         final Object[] frameArguments = FrameAccess.newWith(sender, closure, arguments);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, methodOrBlock.getFrameDescriptor());
         FrameAccess.initializeMarker(truffleFrame);
         FrameAccess.setContext(truffleFrame, this);
-        final Object pc = pointers[CONTEXT.INSTRUCTION_POINTER];
+        final Object pc = chunk.getPointer(CONTEXT.INSTRUCTION_POINTER);
         if (pc == NilObject.SINGLETON) {
             removeInstructionPointer();
         } else {
             setInstructionPointer(MiscUtils.toIntExact((long) pc));
         }
-        final int stackPointer = MiscUtils.toIntExact((long) pointers[CONTEXT.STACKPOINTER]);
+        final int stackPointer = MiscUtils.toIntExact((long) chunk.getPointer(CONTEXT.STACKPOINTER));
         setStackPointer(stackPointer);
         for (int i = 0; i < stackPointer; i++) {
-            atTempPut(i, pointers[CONTEXT.TEMP_FRAME_START + i]);
+            atTempPut(i, chunk.getPointer(CONTEXT.TEMP_FRAME_START + i));
         }
     }
 

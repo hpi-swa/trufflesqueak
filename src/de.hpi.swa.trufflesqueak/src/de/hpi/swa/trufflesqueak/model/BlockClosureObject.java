@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -72,18 +70,18 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object[] pointers = chunk.getPointers();
-        assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
-        outerContext = (ContextObject) pointers[BLOCK_CLOSURE.OUTER_CONTEXT];
-        if (pointers[BLOCK_CLOSURE.START_PC_OR_METHOD] instanceof final CompiledCodeObject code) {
+        assert chunk.getWordSize() >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
+        outerContext = (ContextObject) chunk.getPointer(BLOCK_CLOSURE.OUTER_CONTEXT);
+        final Object startPCOrMethod = chunk.getPointer(BLOCK_CLOSURE.START_PC_OR_METHOD);
+        if (startPCOrMethod instanceof final CompiledCodeObject code) {
             block = code;
-            receiver = pointers[BLOCK_CLOSURE.FULL_RECEIVER];
-            copiedValues = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE, pointers.length);
+            receiver = chunk.getPointer(BLOCK_CLOSURE.FULL_RECEIVER);
+            copiedValues = chunk.getPointers(BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE);
         } else {
-            startPC = (long) pointers[BLOCK_CLOSURE.START_PC_OR_METHOD];
-            copiedValues = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
+            startPC = (long) startPCOrMethod;
+            copiedValues = chunk.getPointers(BLOCK_CLOSURE.FIRST_COPIED_VALUE);
         }
-        numArgs = (long) pointers[BLOCK_CLOSURE.ARGUMENT_COUNT];
+        numArgs = (long) chunk.getPointer(BLOCK_CLOSURE.ARGUMENT_COUNT);
     }
 
     public AbstractSqueakObject getOuterContext() {
