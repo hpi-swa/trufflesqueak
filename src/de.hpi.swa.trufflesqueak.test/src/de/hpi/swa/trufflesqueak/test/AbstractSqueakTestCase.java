@@ -40,11 +40,11 @@ public abstract class AbstractSqueakTestCase {
     protected static SqueakImageContext image;
     protected static PointersObject nilClassBinding;
 
-    protected static final CompiledCodeObject makeMethod(final byte[] bytes, final Object[] literals) {
-        return new CompiledCodeObject(image, bytes, literals, image.compiledMethodClass);
+    protected static final CompiledCodeObject makeMethod(final byte[] bytes, final long header, final Object[] literals) {
+        return new CompiledCodeObject(image, bytes, header, literals, image.compiledMethodClass);
     }
 
-    protected static final CompiledCodeObject makeMethod(final Object[] literals, final int... intbytes) {
+    protected static final CompiledCodeObject makeMethod(final long header, final Object[] literals, final int... intbytes) {
         final byte[] bytes = new byte[intbytes.length + 1];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
@@ -53,7 +53,7 @@ public abstract class AbstractSqueakTestCase {
         final Object[] allLiterals = Arrays.copyOf(literals, literals.length + 2);
         allLiterals[allLiterals.length - 2] = image.asByteString("DoIt"); // compiledInSelector
         allLiterals[allLiterals.length - 1] = nilClassBinding; // methodClassAssociation
-        return makeMethod(bytes, allLiterals);
+        return makeMethod(bytes, header, allLiterals);
     }
 
     protected static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
@@ -61,7 +61,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     private static CompiledCodeObject makeMethod(final int... intbytes) {
-        return makeMethod(new Object[]{makeHeader(0, 5, 14, false, true)}, intbytes);
+        return makeMethod(makeHeader(0, 5, 14, false, true), new Object[0], intbytes);
     }
 
     protected static final Object runMethod(final CompiledCodeObject code, final Object receiver, final Object... arguments) {
@@ -106,15 +106,15 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static final Object runBinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
-        return runPrim(new Object[]{17104899L}, primCode, rcvr, arguments);
+        return runPrim(17104899L, new Object[0], primCode, rcvr, arguments);
     }
 
     protected static final Object runQuinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
-        return runPrim(new Object[]{68222979L}, primCode, rcvr, arguments);
+        return runPrim(68222979L, new Object[0], primCode, rcvr, arguments);
     }
 
-    protected static final Object runPrim(final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
-        final CompiledCodeObject method = makeMethod(literals, 139, primCode & 0xFF, (primCode & 0xFF00) >> 8);
+    protected static final Object runPrim(final long header, final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
+        final CompiledCodeObject method = makeMethod(header, literals, 139, primCode & 0xFF, (primCode & 0xFF00) >> 8);
         return runMethod(method, rcvr, arguments);
     }
 
