@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-12, macos-14, windows-2022]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-13, macos-14, windows-2022]
         java: [22]
         jdk_identifier: [latest]
     env:
@@ -139,7 +139,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-12, macos-14]
+        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
       JAVA_VERSION: "22"
