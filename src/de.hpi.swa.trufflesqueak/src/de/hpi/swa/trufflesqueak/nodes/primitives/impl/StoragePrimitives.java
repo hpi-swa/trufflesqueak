@@ -163,19 +163,20 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 68)
     protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = "to0(index) < receiver.getLiterals().length")
-        protected static final Object literalAt(final CompiledCodeObject receiver, final long index) {
-            // Use getLiterals() instead of getLiteral(i), the latter skips the header.
-            return receiver.getLiterals()[(int) index - 1];
+        @Specialization(guards = "index0 < receiver.getNumHeaderAndLiterals()")
+        protected static final Object literalAt(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index,
+                        @Bind("to0(index)") final long index0) {
+            return index0 == 0 ? receiver.getHeader() : receiver.getLiteral(index0 - 1);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 69)
     protected abstract static class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization(guards = "to0(index) < receiver.getLiterals().length")
-        protected static final Object setLiteral(final CompiledCodeObject receiver, final long index, final Object value) {
-            receiver.setLiteral(index - 1, value);
+        @Specialization(guards = "index0 < receiver.getNumHeaderAndLiterals()")
+        protected static final Object literalAtPut(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index, final Object value,
+                        @Bind("to0(index)") final long index0) {
+            receiver.setLiteral(index0, value);
             return value;
         }
     }

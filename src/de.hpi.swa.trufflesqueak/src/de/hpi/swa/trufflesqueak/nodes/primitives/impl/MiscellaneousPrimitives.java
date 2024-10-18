@@ -128,8 +128,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         public final boolean acceptsMethod(final CompiledCodeObject method) {
             CompilerAsserts.neverPartOfCompilation();
             if (method.getNumLiterals() > 0) {
-                final Object literal1 = method.getLiterals()[1];
-                if (literal1 instanceof final PointersObject l1 && l1.getSqueakClass().includesExternalFunctionBehavior(getContext())) {
+                final Object firstLiteral = method.getLiteral(0);
+                if (firstLiteral instanceof final PointersObject l1 && l1.getSqueakClass().includesExternalFunctionBehavior(getContext())) {
                     externalFunction = l1;
                     return true;
                 }
@@ -381,8 +381,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected static final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
-            return BooleanObject.wrap(ArrayUtils.contains(receiver.getLiterals(), thang));
+        protected static final boolean doCode(final CompiledCodeObject receiver, final Object thang) {
+            return BooleanObject.wrap(receiver.pointsTo(thang));
         }
 
         @Specialization
