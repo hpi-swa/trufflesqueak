@@ -50,9 +50,10 @@ public abstract class AbstractSqueakTestCase {
             bytes[i] = (byte) intbytes[i];
         }
         bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
-        final Object[] allLiterals = Arrays.copyOf(literals, literals.length + 2);
-        allLiterals[allLiterals.length - 2] = image.asByteString("DoIt"); // compiledInSelector
-        allLiterals[allLiterals.length - 1] = nilClassBinding; // methodClassAssociation
+        int numLiterals = (int) header & 0x7FFF;
+        final Object[] allLiterals = Arrays.copyOf(literals, numLiterals);
+        allLiterals[numLiterals - 2] = image.asByteString("DoIt"); // compiledInSelector
+        allLiterals[numLiterals - 1] = nilClassBinding; // methodClassAssociation
         return makeMethod(bytes, header, allLiterals);
     }
 
