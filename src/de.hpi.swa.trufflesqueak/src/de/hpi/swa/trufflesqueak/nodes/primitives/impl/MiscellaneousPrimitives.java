@@ -803,7 +803,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public static final class PrimMaxIdentityHashNode extends AbstractSingletonPrimitiveNode {
         @Override
         public Object execute() {
-            return (long) AbstractSqueakObjectWithClassAndHash.SQUEAK_HASH_MASK;
+            return (long) SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
         }
     }
 

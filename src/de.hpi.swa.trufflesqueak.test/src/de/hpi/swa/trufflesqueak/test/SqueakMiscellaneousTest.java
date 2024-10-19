@@ -125,8 +125,8 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
 
     @Test
     public void testSourceAllBytecodes() {
-        final long header = 17235971L;
         final Object[] literals = {image.asByteString("someSelector"), image.asByteString("someOtherSelector"), 63, nilClassBinding};
+        final long header = makeHeader(0, 0, literals.length, false, true);
         final CompiledCodeObject code = makeMethod(header, literals,
                         139, 31, 0,
                         31, 32, 67, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,

@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
-
 public final class SqueakImageConstants {
 
     /** General. */
@@ -22,6 +20,7 @@ public final class SqueakImageConstants {
     /** Object Header. */
     public static final long OVERFLOW_SLOTS = 255;
     public static final long SLOTS_MASK = 0xFFL << 56;
+    public static final int IDENTITY_HASH_HALF_WORD_MASK = (1 << 22) - 1;
 
     /** Object Header Tag Bits. */
     public static final int NUM_TAG_BITS = 3;
@@ -99,33 +98,28 @@ public final class SqueakImageConstants {
      * </pre>
      */
     public static final class ObjectHeader {
-        private static final int NUM_SLOTS_SIZE = 1 << 8;
-        public static final int HASH_AND_CLASS_INDEX_SIZE = 1 << 22;
-        private static final int FORMAT_SIZE = 1 << 5;
-        private static final int PINNED_BIT_SHIFT = 30;
-
-        public static int getClassIndex(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 0, HASH_AND_CLASS_INDEX_SIZE);
+        public static int getClassIndex(final long header) {
+            return (int) header & CLASS_INDEX_MASK;
         }
 
-        public static int getFormat(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 24, FORMAT_SIZE);
+        public static int getFormat(final long header) {
+            return (int) (header >> 24) & 0x1f;
         }
 
-        public static int getHash(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 32, HASH_AND_CLASS_INDEX_SIZE);
+        public static int getHash(final long header) {
+            return (int) (header >> 32) & IDENTITY_HASH_HALF_WORD_MASK;
         }
 
-        public static int getNumSlots(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 56, NUM_SLOTS_SIZE);
+        public static int getNumSlots(final long header) {
+            return (int) (header >> 56) & 255;
         }
 
-        public static boolean isPinned(final long headerWord) {
-            return (headerWord >> PINNED_BIT_SHIFT & 1) == 1;
+        public static boolean isPinned(final long header) {
+            return (header >> 30 & 1) == 1;
         }
 
         public static long getHeader(final long numSlots, final long identityHash, final long format, final long classIndex) {
-            assert numSlots < NUM_SLOTS_SIZE && identityHash < HASH_AND_CLASS_INDEX_SIZE && format < FORMAT_SIZE && classIndex < HASH_AND_CLASS_INDEX_SIZE;
+            assert numSlots < 0x100 && identityHash < 0x400000 && format < 0x20 && classIndex < 0x400000;
             return numSlots << 56 | identityHash << 32 | format << 24 | classIndex;
         }
 

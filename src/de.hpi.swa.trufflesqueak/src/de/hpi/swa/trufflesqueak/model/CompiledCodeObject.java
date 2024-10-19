@@ -48,7 +48,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsL
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -681,28 +680,24 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      * </pre>
      */
     private static final class CompiledCodeHeaderDecoder {
-        private static final int NUM_LITERALS_SIZE = 1 << 15;
-        private static final int NUM_TEMPS_TEMPS_SIZE = 1 << 6;
-        private static final int NUM_ARGUMENTS_SIZE = 1 << 4;
-
-        private static int getNumLiterals(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 0, NUM_LITERALS_SIZE);
+        private static int getNumLiterals(final long header) {
+            return (int) (header & 0x7FFF);
         }
 
-        private static boolean getHasPrimitive(final long headerWord) {
-            return (headerWord & 1 << 16) != 0;
+        private static boolean getHasPrimitive(final long header) {
+            return (header & 0x10000) != 0;
         }
 
-        private static boolean getNeedsLargeFrame(final long headerWord) {
-            return (headerWord & 1 << 17) != 0;
+        private static boolean getNeedsLargeFrame(final long header) {
+            return (header & 0x20000) != 0;
         }
 
-        private static int getNumTemps(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 18, NUM_TEMPS_TEMPS_SIZE);
+        private static int getNumTemps(final long header) {
+            return (int) (header >> 18) & 0x3F;
         }
 
-        private static int getNumArguments(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 24, NUM_ARGUMENTS_SIZE);
+        private static int getNumArguments(final long header) {
+            return (int) (header >> 24) & 0x0F;
         }
 
         private static boolean getSignFlag(final long headerWord) {

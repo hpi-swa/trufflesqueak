@@ -53,10 +53,6 @@ public final class MiscUtils {
     private MiscUtils() {
     }
 
-    public static int bitSplit(final long value, final int offset, final int size) {
-        return (int) (value >> offset & size - 1);
-    }
-
     public static long clamp(final long value, final long min, final long max) {
         return Math.max(min, Math.min(value, max));
     }
