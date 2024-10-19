@@ -1,6 +1,6 @@
 testing
 testVMIntrospection
-	| testObject metaObject squeahHashAndBits |
+	| testObject metaObject squeakHashAndBits |
 	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
 
 	testObject := SmalltalkImage vmObject.
@@ -13,13 +13,13 @@ testVMIntrospection
 	"Allocate Object[]"
 	self assert: 10 equals: (testObject getOtherPointers getClass new: 10) size.
 	"Test inst vars"
-	self assert: (testObject allInstVarNames includesAllOf: #('squeakClass' 'squeahHashAndBits' 'superclass' 'methodDict')).
+	self assert: (testObject allInstVarNames includesAllOf: #('squeakClass' 'squeakHashAndBits' 'superclass' 'methodDict')).
 	self deny: (testObject allInstVarNames includesAnyOf: #('clone' 'become' 'finalize' 'object0')).
 	"Read and write inst vars"
-	squeahHashAndBits := testObject squeahHashAndBits.
-	self assert: (testObject squeahHashAndBits: (Java asInteger: 42)) = 42.
-	self assert: testObject squeahHashAndBits = 42.
-	testObject squeahHashAndBits: (Java asInteger: squeahHashAndBits).
+	squeakHashAndBits := testObject squeakHashAndBits.
+	self assert: (testObject squeakHashAndBits: (Java asInteger: 42)) = 42.
+	self assert: testObject squeakHashAndBits = 42.
+	testObject squeakHashAndBits: (Java asInteger: squeakHashAndBits).
 	
 	"Meta Object API"
 	self assert: (Interop hasMetaObject: testObject).
