@@ -179,13 +179,9 @@ _enable_local_compression()
 def _patch_svm_support_native_image():
     native_image_original = mx_sdk_vm_impl.SvmSupport.native_image
 
-    def patched_native_image(
-        self, build_args, output_file, out=None, err=None, find_bad_strings=False
-    ):
+    def patched_native_image(self, build_args, output_file, out=None, err=None):
         if "smalltalkvm" not in output_file:
-            return native_image_original(
-                self, build_args, output_file, out, err, find_bad_strings
-            )
+            return native_image_original(self, build_args, output_file, out, err)
         is_oracle_graalvm = False
         extra_graalvm_home = os.getenv("EXTRA_GRAALVM_HOME")
         if extra_graalvm_home:
