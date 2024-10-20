@@ -14,6 +14,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.UnadoptableNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -79,17 +80,12 @@ public abstract class AboutToReturnNode extends AbstractNode {
     }
 
     @DenyReplace
-    private static final class AboutToReturnNoopNode extends AboutToReturnNode {
+    private static final class AboutToReturnNoopNode extends AboutToReturnNode implements UnadoptableNode {
         private static final AboutToReturnNoopNode SINGLETON = new AboutToReturnNoopNode();
 
         @Override
         public void executeAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
             // Nothing to do.
-        }
-
-        @Override
-        public boolean isAdoptable() {
-            return false;
         }
 
         @Override

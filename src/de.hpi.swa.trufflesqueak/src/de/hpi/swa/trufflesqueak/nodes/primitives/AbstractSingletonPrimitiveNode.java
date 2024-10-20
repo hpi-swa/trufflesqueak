@@ -11,8 +11,9 @@ import java.lang.reflect.InvocationTargetException;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.UnadoptableNode;
 
-public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNode {
+public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNode implements UnadoptableNode {
     private AbstractSingletonPrimitiveNode instance;
 
     public static AbstractSingletonPrimitiveNode getInstance(final Class<? extends AbstractSingletonPrimitiveNode> primitiveClass) {
@@ -31,11 +32,6 @@ public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNo
     }
 
     protected abstract Object execute();
-
-    @Override
-    public final boolean isAdoptable() {
-        return false;
-    }
 
     @Override
     public final Node copy() {
