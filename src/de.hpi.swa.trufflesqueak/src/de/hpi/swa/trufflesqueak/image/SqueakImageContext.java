@@ -928,8 +928,8 @@ public final class SqueakImageContext {
 
     public static double fromFraction(final PointersObject fraction, final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
         assert SqueakGuards.isFraction(fraction, inlineTarget);
-        long numerator = readNode.executeLong(inlineTarget, fraction, ObjectLayouts.FRACTION.NUMERATOR);
-        double denominator = readNode.executeLong(inlineTarget, fraction, ObjectLayouts.FRACTION.DENOMINATOR);
+        final long numerator = readNode.executeLong(inlineTarget, fraction, ObjectLayouts.FRACTION.NUMERATOR);
+        final double denominator = readNode.executeLong(inlineTarget, fraction, ObjectLayouts.FRACTION.DENOMINATOR);
         return numerator / denominator;
     }
 

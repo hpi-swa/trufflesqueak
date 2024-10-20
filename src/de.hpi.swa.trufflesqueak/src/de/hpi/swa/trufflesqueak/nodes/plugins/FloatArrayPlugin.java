@@ -9,15 +9,20 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.util.Arrays;
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
@@ -92,6 +97,13 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doFloat(final NativeObject receiver, final long index, final long value) {
             return doDouble(receiver, index, value);
+        }
+
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()", "isFraction(value, node)"})
+        protected static final double doFraction(final NativeObject receiver, final long index, final PointersObject value,
+                        @Bind("this") final Node node,
+                        @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
+            return doDouble(receiver, index, getContext(node).fromFraction(value, readNode, node));
         }
     }
 
