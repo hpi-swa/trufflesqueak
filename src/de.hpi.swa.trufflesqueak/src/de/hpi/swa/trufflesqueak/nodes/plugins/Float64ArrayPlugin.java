@@ -22,11 +22,11 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
@@ -80,7 +80,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAtPut")
-    public abstract static class PrimFloat64ArrayAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    public abstract static class PrimFloat64ArrayAtPutNode extends AbstractPrimitiveNode {
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
         protected static final double doDouble(final NativeObject receiver, final long index, final double value) {
@@ -103,6 +103,18 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
             return doDouble(receiver, index, getContext(node).fromFraction(value, readNode, node));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isFallback(node, receiver, index, value)")
+        protected static final Object doFail(final NativeObject receiver, final long index, final Object value,
+                        @Bind("this") final Node node) {
+            throw PrimitiveFailed.GENERIC_ERROR;
+        }
+
+        protected static final boolean isFallback(final Node node, final NativeObject receiver, final long index, final Object value) {
+            return !(receiver.isIntType() && index <= receiver.getIntLength() && (value instanceof Double || value instanceof FloatObject || value instanceof Long ||
+                            (value instanceof PointersObject pointersObject && SqueakGuards.isFraction(pointersObject, node))));
         }
     }
 
