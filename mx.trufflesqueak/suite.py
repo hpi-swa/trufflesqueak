@@ -86,13 +86,6 @@ suite = {
             },
             "moduleName": "org.bouncycastle.util",
         },
-        "CHECKSTYLE_10.7.0": {
-            "urls": [
-                "https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.7.0/checkstyle-10.7.0-all.jar"
-            ],
-            "sha1": "acd1c78c07e894647e8dcbd72c4fa9a136e20d6d",
-            "licence": "LGPLv21",
-        },
         "OSVM_PLUGINS": {
             "baseurl": "https://github.com/hpi-swa/trufflesqueak/releases/download/23.1.0/osvm-plugins-202312181441",
             "os_arch": {
