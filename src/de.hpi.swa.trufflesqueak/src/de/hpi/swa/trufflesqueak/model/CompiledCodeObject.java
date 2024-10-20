@@ -199,8 +199,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return executionData.source;
     }
 
+    // used by CompiledMethod>>callTarget
     public RootCallTarget getCallTargetOrNull() {
-        return getExecutionData().callTarget;
+        if (hasExecutionData()) {
+            return executionData.callTarget;
+        } else {
+            return null;
+        }
     }
 
     public RootCallTarget getCallTarget() {
