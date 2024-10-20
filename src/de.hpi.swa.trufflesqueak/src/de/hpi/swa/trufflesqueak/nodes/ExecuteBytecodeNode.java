@@ -76,7 +76,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 } catch (final PrimitiveFailed e) {
                     /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
                     getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                    LogUtils.PRIMITIVES.finer(() -> primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
+                    LogUtils.PRIMITIVES.finer(() -> primitiveNode.getPrimitiveNodeClassSimpleName() + " failed (arguments: " +
                                     ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
                     /* continue with fallback code. */
                 }

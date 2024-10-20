@@ -45,4 +45,8 @@ public final class DispatchPrimitiveNode extends AbstractNode {
         }
         return primitiveNode.executeWithArguments(frame, arguments);
     }
+
+    public String getPrimitiveNodeClassSimpleName() {
+        return primitiveNode.getClass().getSimpleName();
+    }
 }
