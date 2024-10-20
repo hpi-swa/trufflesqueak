@@ -57,9 +57,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
     private static final long NEGATIVE_METHOD_HEADER_MASK = -1L << 60;
 
-    // frame info
-    @CompilationFinal private FrameDescriptor frameDescriptor;
-
     // header info and data
     /*
      * TODO: literals and bytes can change (and probably more?) and should not be @CompilationFinal.
@@ -70,22 +67,35 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal(dimensions = 1) private Object[] literals;
     @CompilationFinal(dimensions = 1) private byte[] bytes;
 
-    /*
-     * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
-     * CompiledBlocks their outer method in their last literal. For traditional BlockClosures, we
-     * need to do something similar, but with CompiledMethods only (CompiledBlocks are not used
-     * then). The next two fields are used to store "shadowBlocks", which are light copies of the
-     * outer method with a new call target, and the outer method to be used for closure activations.
+    @CompilationFinal private ExecutionData executionData;
+
+    /**
+     * Additional metadata that is only needed when the CompiledCodeObject is actually executed.
+     * Moving these fields into CompiledCodeObject would unnecessarily bloat the size of every
+     * instance that is not actually executed.
      */
-    private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
-    @CompilationFinal private CompiledCodeObject outerMethod;
+    static final class ExecutionData {
+        // frame info
+        @CompilationFinal private FrameDescriptor frameDescriptor;
 
-    private Source source;
+        /*
+         * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
+         * CompiledBlocks their outer method in their last literal. For traditional BlockClosures,
+         * we need to do something similar, but with CompiledMethods only (CompiledBlocks are not
+         * used then). The next two fields are used to store "shadowBlocks", which are light copies
+         * of the outer method with a new call target, and the outer method to be used for closure
+         * activations.
+         */
+        private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
+        @CompilationFinal private CompiledCodeObject outerMethod;
 
-    @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private CyclicAssumption callTargetStable;
-    @CompilationFinal private Assumption doesNotNeedSender;
-    @CompilationFinal private RootCallTarget resumptionCallTarget;
+        private Source source;
+
+        @CompilationFinal private RootCallTarget callTarget;
+        @CompilationFinal private CyclicAssumption callTargetStable;
+        @CompilationFinal private Assumption doesNotNeedSender;
+        @CompilationFinal private RootCallTarget resumptionCallTarget;
+    }
 
     @TruffleBoundary
     public CompiledCodeObject(final long header, final ClassObject classObject) {
@@ -101,21 +111,23 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
-        frameDescriptor = original.frameDescriptor;
+        if (original.hasExecutionData()) {
+            getExecutionData().frameDescriptor = original.executionData.frameDescriptor;
+        }
         setLiteralsAndBytes(original.header, original.literals.clone(), original.bytes.clone());
     }
 
     private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
         super(outerCode);
-        outerCode.shadowBlocks.put(startPC, this);
+        outerCode.getExecutionData().shadowBlocks.put(startPC, this);
 
         // Find outer method
         CompiledCodeObject currentOuterCode = outerCode;
-        while (currentOuterCode.outerMethod != null) {
-            currentOuterCode = currentOuterCode.outerMethod;
+        while (currentOuterCode.getExecutionData().outerMethod != null) {
+            currentOuterCode = currentOuterCode.executionData.outerMethod;
         }
         assert currentOuterCode.isCompiledMethod();
-        outerMethod = currentOuterCode;
+        getExecutionData().outerMethod = currentOuterCode;
 
         // header info and data
         header = outerCode.header;
@@ -132,12 +144,24 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return new CompiledCodeObject(size, image, classObject);
     }
 
+    private boolean hasExecutionData() {
+        return executionData != null;
+    }
+
+    private ExecutionData getExecutionData() {
+        if (!hasExecutionData()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            executionData = new ExecutionData();
+        }
+        return executionData;
+    }
+
     public CompiledCodeObject getOrCreateShadowBlock(final int startPC) {
         CompilerAsserts.neverPartOfCompilation();
-        if (shadowBlocks == null) {
-            shadowBlocks = EconomicMap.create();
+        if (getExecutionData().shadowBlocks == null) {
+            executionData.shadowBlocks = EconomicMap.create();
         }
-        final CompiledCodeObject copy = shadowBlocks.get(startPC);
+        final CompiledCodeObject copy = executionData.shadowBlocks.get(startPC);
         if (copy == null) {
             return new CompiledCodeObject(this, startPC);
         } else {
@@ -146,12 +170,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public boolean hasOuterMethod() {
-        return outerMethod != null;
-    }
-
-    public CompiledCodeObject getOuterMethod() {
-        assert hasOuterMethod();
-        return outerMethod;
+        return hasExecutionData() && executionData.outerMethod != null;
     }
 
     private void setLiteralsAndBytes(final long header, final Object[] literals, final byte[] bytes) {
@@ -164,7 +183,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public Source getSource() {
         CompilerAsserts.neverPartOfCompilation();
-        if (source == null) {
+        if (getExecutionData().source == null) {
             String name = null;
             String contents;
             try {
@@ -176,28 +195,28 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                 }
                 contents = SOURCE_UNAVAILABLE_CONTENTS;
             }
-            source = Source.newBuilder(SqueakLanguageConfig.ID, contents, name).mimeType("text/plain").build();
+            executionData.source = Source.newBuilder(SqueakLanguageConfig.ID, contents, name).mimeType("text/plain").build();
         }
-        return source;
+        return executionData.source;
     }
 
     public RootCallTarget getCallTargetOrNull() {
-        return callTarget;
+        return getExecutionData().callTarget;
     }
 
     public RootCallTarget getCallTarget() {
-        if (callTarget == null) {
+        if (getExecutionData().callTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             initializeCallTargetUnsafe();
         }
-        return callTarget;
+        return executionData.callTarget;
     }
 
     private void invalidateCallTarget() {
-        if (callTarget != null) {
+        if (!hasExecutionData() || executionData.callTarget != null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callTargetStable().invalidate();
-            callTarget = null;
+            executionData.callTarget = null;
         }
     }
 
@@ -218,7 +237,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         } else {
             rootNode = new StartContextRootNode(language, this);
         }
-        callTarget = rootNode.getCallTarget();
+        getExecutionData().callTarget = rootNode.getCallTarget();
     }
 
     public void flushCache() {
@@ -227,11 +246,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private CyclicAssumption callTargetStable() {
-        if (callTargetStable == null) {
+        if (getExecutionData().callTargetStable == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
+            executionData.callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
         }
-        return callTargetStable;
+        return executionData.callTargetStable;
     }
 
     public Assumption getCallTargetStable() {
@@ -239,20 +258,20 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public Assumption getDoesNotNeedSenderAssumption() {
-        if (doesNotNeedSender == null) {
+        if (getExecutionData().doesNotNeedSender == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
+            executionData.doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
         }
-        return doesNotNeedSender;
+        return executionData.doesNotNeedSender;
     }
 
     @TruffleBoundary
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
-        if (resumptionCallTarget == null) {
+        if (getExecutionData().resumptionCallTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            resumptionCallTarget = ResumeContextRootNode.create(SqueakImageContext.getSlow().getLanguage(), context).getCallTarget();
+            executionData.resumptionCallTarget = ResumeContextRootNode.create(SqueakImageContext.getSlow().getLanguage(), context).getCallTarget();
         } else {
-            final ResumeContextRootNode resumeNode = (ResumeContextRootNode) resumptionCallTarget.getRootNode();
+            final ResumeContextRootNode resumeNode = (ResumeContextRootNode) executionData.resumptionCallTarget.getRootNode();
             if (resumeNode.getActiveContext() != context) {
                 /**
                  * This is a trick: we set the activeContext of the {@link ResumeContextRootNode} to
@@ -261,17 +280,17 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                 resumeNode.setActiveContext(context);
             }
         }
-        return resumptionCallTarget;
+        return executionData.resumptionCallTarget;
     }
 
     public FrameDescriptor getFrameDescriptor() {
-        if (frameDescriptor == null) {
+        if (getExecutionData().frameDescriptor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             /* Never let synthetic compiled block escape, use outer method instead. */
-            final CompiledCodeObject exposedMethod = outerMethod != null ? outerMethod : this;
-            frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod);
+            final CompiledCodeObject exposedMethod = executionData.outerMethod != null ? executionData.outerMethod : this;
+            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod);
         }
-        return frameDescriptor;
+        return executionData.frameDescriptor;
     }
 
     @Idempotent
@@ -340,15 +359,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final long header2 = other.header;
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;
-        final EconomicMap<Integer, CompiledCodeObject> shadowBlocks2 = other.shadowBlocks;
-        final CompiledCodeObject outerMethod2 = other.outerMethod;
+        final EconomicMap<Integer, CompiledCodeObject> shadowBlocks2 = other.hasExecutionData() ? other.executionData.shadowBlocks : null;
+        final CompiledCodeObject outerMethod2 = other.hasExecutionData() ? other.executionData.outerMethod : null;
         other.setLiteralsAndBytes(header, literals, bytes);
-        other.shadowBlocks = shadowBlocks;
-        other.outerMethod = outerMethod;
+        if (hasExecutionData() && (executionData.shadowBlocks != null || executionData.outerMethod != null)) {
+            other.getExecutionData().shadowBlocks = executionData.shadowBlocks;
+            other.executionData.outerMethod = executionData.outerMethod;
+        }
         other.callTargetStable().invalidate();
         setLiteralsAndBytes(header2, literals2, bytes2);
-        shadowBlocks = shadowBlocks2;
-        outerMethod = outerMethod2;
+        if (shadowBlocks2 != null || outerMethod2 != null) {
+            getExecutionData().shadowBlocks = shadowBlocks2;
+            executionData.outerMethod = outerMethod2;
+        }
         callTargetStable().invalidate();
     }
 
@@ -480,6 +503,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             for (int j = 0; j < getLiterals().length; j++) {
@@ -490,13 +514,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                     setLiteral(1 + j, toPointer);
                 }
             }
-            if (fromPointer == outerMethod && to[i] instanceof final CompiledCodeObject o) {
-                outerMethod = o;
+            if (hasExecutionData() && fromPointer == executionData.outerMethod && to[i] instanceof final CompiledCodeObject o) {
+                executionData.outerMethod = o;
             }
         }
         // Migrate all shadow blocks
-        if (shadowBlocks != null) {
-            for (final CompiledCodeObject shadowBlock : shadowBlocks.getValues()) {
+        if (hasExecutionData() && executionData.shadowBlocks != null) {
+            for (final CompiledCodeObject shadowBlock : executionData.shadowBlocks.getValues()) {
                 shadowBlock.pointersBecomeOneWay(from, to);
             }
         }
