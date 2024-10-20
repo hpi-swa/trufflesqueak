@@ -109,10 +109,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsPolyglotEvalAllowed")
-    protected abstract static class PrimIsPolyglotEvalAllowedNode extends AbstractPrimitiveNode {
-        @Specialization
-        protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.wrap(getContext().env.isPolyglotEvalAllowed());
+    protected abstract static class PrimIsPolyglotEvalAllowedNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @TruffleBoundary
+        @Specialization(guards = "languageId.isByteType()")
+        protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
+            final TruffleLanguage.Env env = getContext().env;
+            return BooleanObject.wrap(env.isPolyglotEvalAllowed(env.getPublicLanguages().get(languageId.asStringUnsafe())));
         }
     }
 
@@ -125,7 +127,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         final String[] argumentNames, final Object[] argumentValues) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String sourceText = sourceObject.asStringUnsafe();
-            final TruffleLanguage.Env env = SqueakImageContext.get(node).env;
+            final TruffleLanguage.Env env = getContext(node).env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
