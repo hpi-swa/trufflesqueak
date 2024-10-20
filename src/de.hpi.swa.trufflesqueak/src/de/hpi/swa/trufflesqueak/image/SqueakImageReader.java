@@ -6,8 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -31,7 +35,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
     private static final byte[] EMPTY_BYTES = new byte[0];
@@ -40,14 +44,9 @@ public final class SqueakImageReader {
 
     public final AddressToChunkMap chunkMap = new AddressToChunkMap();
     public final SqueakImageContext image;
-    private final byte[] byteArrayBuffer = new byte[Long.BYTES];
 
-    private long oldBaseAddress;
+    private int headerSize;
     private long specialObjectsPointer;
-    private long firstSegmentSize;
-    private int position;
-    private long currentAddressSwizzle;
-    private long dataSize;
 
     private SqueakImageChunk freePageList;
 
@@ -72,9 +71,11 @@ public final class SqueakImageReader {
         if (!truffleFile.isRegularFile()) {
             throw SqueakException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
         }
-        try (BufferedInputStream inputStream = new BufferedInputStream(truffleFile.newInputStream())) {
-            readHeader(inputStream);
-            readBody(inputStream);
+        try (var channel = FileChannel.open(Path.of(image.getImagePath()), StandardOpenOption.READ)) {
+            final MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            readImage(buffer);
+            UnsafeUtils.invokeCleaner(buffer);
         } catch (final IOException e) {
             throw SqueakException.create("Failed to read Smalltalk image:", e.getMessage());
         }
@@ -84,128 +85,86 @@ public final class SqueakImageReader {
         return image.getSqueakImage();
     }
 
-    private static void readBytes(final BufferedInputStream stream, final byte[] bytes, final int length) throws IOException {
-        final int readBytes = stream.read(bytes, 0, length);
-        assert readBytes == length : "Failed to read bytes";
+    private static void skip(final MappedByteBuffer buffer, final int numBytes) {
+        buffer.position(buffer.position() + numBytes);
     }
 
-    private long nextWord(final BufferedInputStream stream) throws IOException {
-        return nextLong(stream);
-    }
-
-    private short nextShort(final BufferedInputStream stream) throws IOException {
-        readBytes(stream, byteArrayBuffer, Short.BYTES);
-        position += Short.BYTES;
-        return VarHandleUtils.getShort(byteArrayBuffer, 0);
-    }
-
-    private int nextInt(final BufferedInputStream stream) throws IOException {
-        readBytes(stream, byteArrayBuffer, Integer.BYTES);
-        position += Integer.BYTES;
-        return VarHandleUtils.getInt(byteArrayBuffer, 0);
-    }
-
-    private long nextLong(final BufferedInputStream stream) throws IOException {
-        readBytes(stream, byteArrayBuffer, Long.BYTES);
-        position += Long.BYTES;
-        return VarHandleUtils.getLong(byteArrayBuffer, 0);
-    }
-
-    private byte[] nextObjectData(final BufferedInputStream stream, final int size, final int format) throws IOException {
-        if (size == 0) {
-            skipBytes(stream, SqueakImageConstants.WORD_SIZE); // skip trailing alignment word
-            return EMPTY_BYTES;
-        }
-        final int paddedObjectSize = size * SqueakImageConstants.WORD_SIZE;
-        final int padding = calculateObjectPadding(format);
-        final int objectDataSize = paddedObjectSize - padding;
-        final byte[] bytes = new byte[objectDataSize];
-        readBytes(stream, bytes, objectDataSize);
-        final long skipped = stream.skip(padding);
-        assert skipped == padding : "Failed to skip padding bytes";
-        position += paddedObjectSize;
-        return bytes;
-    }
-
-    private void skipBytes(final BufferedInputStream stream, final int count) throws IOException {
-        long pending = count;
-        while (pending > 0) {
-            final long skipped = stream.skip(pending);
-            assert skipped > 0 : "Nothing skipped, reached EOF?";
-            pending -= skipped;
-        }
-        position += count;
-    }
-
-    private void readHeader(final BufferedInputStream stream) throws IOException {
-        image.imageFormat = nextInt(stream);
+    private void readImage(final MappedByteBuffer buffer) {
+        // Read header
+        image.imageFormat = buffer.getInt();
         if (!ArrayUtils.contains(SqueakImageConstants.SUPPORTED_IMAGE_FORMATS, image.imageFormat)) {
             throw SqueakException.create(MiscUtils.format("Image format %s not supported. Please supply a compatible 64bit Spur image (%s).", image.imageFormat,
                             Arrays.toString(SqueakImageConstants.SUPPORTED_IMAGE_FORMATS)));
         }
 
         // Base header start
-        final int headerSize = nextInt(stream);
-        dataSize = nextWord(stream);
-        oldBaseAddress = nextWord(stream);
-        specialObjectsPointer = nextWord(stream);
-        nextWord(stream); // 1 word last used hash
-        final long snapshotScreenSize = nextWord(stream);
-        final long headerFlags = nextWord(stream);
-        nextInt(stream); // extraVMMemory
+        headerSize = buffer.getInt();
+        final long dataSize = buffer.getLong();
+        final long oldBaseAddress = buffer.getLong();
+        specialObjectsPointer = buffer.getLong();
+        // 1 word last used hash
+        buffer.getLong();
+        final long snapshotScreenSize = buffer.getLong();
+        final long headerFlags = buffer.getLong();
+        // extraVMMemory
+        buffer.getInt();
 
         // Spur header start
-        nextShort(stream); // numStackPages
-        nextShort(stream); // cogCodeSize
-        assert position == 64 : "Wrong position";
-        nextInt(stream); // edenBytes
-        final short maxExternalSemaphoreTableSize = nextShort(stream);
-        nextShort(stream); // unused, realign to word boundary
-        assert position == 72 : "Wrong position";
-        firstSegmentSize = nextWord(stream);
-        nextWord(stream); // freeOldSpace
+        // numStackPages
+        buffer.getShort();
+        // cogCodeSize
+        buffer.getShort();
+        assert buffer.position() == 64 : "Wrong position";
+        // edenBytes
+        buffer.getInt();
+        final short maxExternalSemaphoreTableSize = buffer.getShort();
+        // unused, realign to word boundary
+        buffer.getShort();
+        assert buffer.position() == 72 : "Wrong position";
+        final long firstSegmentSize = buffer.getLong();
+        // freeOldSpace
+        buffer.getLong();
 
         image.flags.initialize(oldBaseAddress, headerFlags, snapshotScreenSize, maxExternalSemaphoreTableSize);
 
-        skipBytes(stream, headerSize - position); // skip to body
-    }
+        skip(buffer, headerSize - buffer.position());
+        assert buffer.position() == headerSize;
 
-    private void readBody(final BufferedInputStream stream) throws IOException {
-        position = 0;
-        long segmentEnd = firstSegmentSize;
-        currentAddressSwizzle = oldBaseAddress;
-        while (position < segmentEnd) {
-            while (position < segmentEnd - SqueakImageConstants.IMAGE_BRIDGE_SIZE) {
-                final SqueakImageChunk chunk = readObject(stream);
+        // Read body
+        long segmentEnd = headerSize + firstSegmentSize;
+        long currentAddressSwizzle = oldBaseAddress;
+        while (buffer.position() < segmentEnd) {
+            while (buffer.position() < segmentEnd - SqueakImageConstants.IMAGE_BRIDGE_SIZE) {
+                final SqueakImageChunk chunk = readObject(buffer);
                 chunkMap.put(chunk.getPosition() + currentAddressSwizzle, chunk);
             }
             assert hiddenRootsChunk != null : "hiddenRootsChunk must be known from now on.";
-            final long bridge = nextLong(stream);
+            final long bridge = buffer.getLong();
             long bridgeSpan = 0;
             if ((bridge & SqueakImageConstants.SLOTS_MASK) != 0) {
                 bridgeSpan = bridge & ~SqueakImageConstants.SLOTS_MASK;
             }
-            final long nextSegmentSize = nextLong(stream);
-            assert bridgeSpan >= 0 && nextSegmentSize >= 0 && position == segmentEnd;
+            final long nextSegmentSize = buffer.getLong();
+            assert bridgeSpan >= 0 && nextSegmentSize >= 0 && buffer.position() == segmentEnd;
             if (nextSegmentSize == 0) {
                 break;
             }
             segmentEnd += nextSegmentSize;
             currentAddressSwizzle += bridgeSpan * SqueakImageConstants.WORD_SIZE;
         }
-        assert dataSize == position;
+        assert buffer.position() == headerSize + dataSize;
     }
 
-    private SqueakImageChunk readObject(final BufferedInputStream stream) throws IOException {
-        int pos = position;
+    private SqueakImageChunk readObject(final MappedByteBuffer buffer) {
+        int pos = buffer.position() - headerSize;
         assert pos % SqueakImageConstants.WORD_SIZE == 0 : "every object must be 64-bit aligned: " + pos % SqueakImageConstants.WORD_SIZE;
-        long headerWord = nextLong(stream);
+        long headerWord = buffer.getLong();
         int numSlots = SqueakImageConstants.ObjectHeader.getNumSlots(headerWord);
         if (numSlots == SqueakImageConstants.OVERFLOW_SLOTS) {
             numSlots = (int) (headerWord & ~SqueakImageConstants.SLOTS_MASK);
             assert numSlots >= SqueakImageConstants.OVERFLOW_SLOTS;
-            pos = position;
-            headerWord = nextLong(stream);
+            pos = buffer.position() - headerSize;
+            headerWord = buffer.getLong();
             assert SqueakImageConstants.ObjectHeader.getNumSlots(headerWord) == SqueakImageConstants.OVERFLOW_SLOTS : "Objects with long header must have 255 in slot count";
         }
         final int size = numSlots;
@@ -215,10 +174,10 @@ public final class SqueakImageReader {
         if (ignoreObjectData(headerWord, classIndex, size)) {
             /* Skip some hidden objects for performance reasons. */
             objectData = null;
-            skipBytes(stream, size * SqueakImageConstants.WORD_SIZE);
+            skip(buffer, size * SqueakImageConstants.WORD_SIZE);
         } else {
             final int format = SqueakImageConstants.ObjectHeader.getFormat(headerWord);
-            objectData = nextObjectData(stream, size, format);
+            objectData = nextObjectData(buffer, size, format);
         }
         final SqueakImageChunk chunk = new SqueakImageChunk(this, headerWord, pos, objectData);
         if (hiddenRootsChunk == null && isHiddenObject(classIndex)) {
@@ -232,6 +191,20 @@ public final class SqueakImageReader {
             }
         }
         return chunk;
+    }
+
+    private static byte[] nextObjectData(final MappedByteBuffer buffer, final int size, final int format) {
+        if (size == 0) {
+            skip(buffer, SqueakImageConstants.WORD_SIZE); // skip trailing alignment word
+            return EMPTY_BYTES;
+        }
+        final int paddedObjectSize = size * SqueakImageConstants.WORD_SIZE;
+        final int padding = calculateObjectPadding(format);
+        final int objectDataSize = paddedObjectSize - padding;
+        final byte[] bytes = new byte[objectDataSize];
+        buffer.get(bytes);
+        skip(buffer, padding);
+        return bytes;
     }
 
     protected static boolean ignoreObjectData(final long headerWord, final int classIndex, final int size) {

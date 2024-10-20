@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.util;
 
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 
 import com.oracle.truffle.api.CompilerDirectives;
 
@@ -453,5 +454,9 @@ public final class UnsafeUtils {
         final short[] shorts = new short[numBytes / Short.BYTES];
         UNSAFE.copyMemory(longs, Unsafe.ARRAY_LONG_BASE_OFFSET, shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, numBytes);
         return shorts;
+    }
+
+    public static void invokeCleaner(final ByteBuffer directBuffer) {
+        UNSAFE.invokeCleaner(directBuffer);
     }
 }
