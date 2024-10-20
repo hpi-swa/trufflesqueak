@@ -15,8 +15,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
@@ -79,7 +77,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAt2Node extends AbstractBasicAtOrAtPutNode implements BinaryPrimitiveFallback {
         @Specialization
@@ -94,7 +91,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAt3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitiveFallback {
         @Specialization
@@ -109,7 +105,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPut3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitiveFallback {
         @Specialization
@@ -124,7 +119,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPut4Node extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitiveFallback {
         @Specialization
@@ -139,7 +133,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
@@ -152,7 +145,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization

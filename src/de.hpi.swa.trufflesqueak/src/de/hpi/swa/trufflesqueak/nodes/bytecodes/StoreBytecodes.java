@@ -9,8 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -40,7 +38,6 @@ public final class StoreBytecodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     private abstract static class AbstractStoreIntoNode extends AbstractInstrumentableBytecodeNode {
         @Child protected SqueakObjectAtPutAndMarkContextsNode storeNode;
 

@@ -11,8 +11,6 @@ import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -31,7 +29,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 
 @GenerateInline
 @GenerateCached(false)
-@NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectInstSizeNode extends AbstractNode {
 
     public abstract int execute(Node node, Object obj);

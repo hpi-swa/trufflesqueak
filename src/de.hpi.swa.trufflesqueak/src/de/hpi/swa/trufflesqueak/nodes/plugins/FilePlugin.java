@@ -29,8 +29,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -187,7 +185,6 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveDirectoryDelimitor")
     protected abstract static class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode {
 

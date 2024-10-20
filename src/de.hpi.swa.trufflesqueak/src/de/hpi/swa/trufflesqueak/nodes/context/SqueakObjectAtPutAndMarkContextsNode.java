@@ -10,8 +10,6 @@ import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -22,7 +20,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
  * This node should only be used for stores into associations, receivers, and remote temps as it
  * also marks {@link ContextObject}s as escaped when stored.
  */
-@NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode {
     private final long index;
 

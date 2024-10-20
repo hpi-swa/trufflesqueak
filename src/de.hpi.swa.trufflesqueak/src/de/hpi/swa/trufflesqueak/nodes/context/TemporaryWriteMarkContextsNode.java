@@ -8,15 +8,12 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 
-@NodeInfo(cost = NodeCost.NONE)
 public final class TemporaryWriteMarkContextsNode extends AbstractNode {
     private final BranchProfile isContextObjectProfile = BranchProfile.create();
     @Child private FrameStackWriteNode writeNode;

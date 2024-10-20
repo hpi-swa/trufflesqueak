@@ -21,8 +21,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -277,7 +275,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
@@ -289,7 +286,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {

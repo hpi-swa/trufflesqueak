@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -18,7 +17,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
-@NodeInfo(language = SqueakLanguageConfig.ID, cost = NodeCost.NONE)
+@NodeInfo(language = SqueakLanguageConfig.ID)
 public final class ExecuteNonFailingPrimitiveRootNode extends AbstractRootNode {
 
     @Child private DispatchPrimitiveNode primitiveNode;

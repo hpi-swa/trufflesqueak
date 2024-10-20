@@ -26,8 +26,6 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -312,7 +310,6 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdErrHandle")
     protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode {
         @Specialization
@@ -322,7 +319,6 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdInHandle")
     protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode {
         @Specialization
@@ -332,7 +328,6 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdOutHandle")
     protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode {
         @Specialization

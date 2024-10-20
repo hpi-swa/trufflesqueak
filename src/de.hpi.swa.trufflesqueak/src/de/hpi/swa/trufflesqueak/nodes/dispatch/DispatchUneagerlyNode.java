@@ -15,8 +15,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -26,7 +24,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @GenerateInline
 @GenerateUncached
 @GenerateCached(false)
-@NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchUneagerlyNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 3;
 

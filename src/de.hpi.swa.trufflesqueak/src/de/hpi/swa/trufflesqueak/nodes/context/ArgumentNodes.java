@@ -8,8 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
@@ -28,7 +26,6 @@ public final class ArgumentNodes {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     public static final class ArgumentOnStackNode extends AbstractArgumentNode {
         private final int argumentIndex;
 
