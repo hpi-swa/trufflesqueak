@@ -1238,14 +1238,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
                         @Bind("this") final Node node,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(node, lhs - rhs.getValue());
         }
 
         @Specialization(guards = "isFraction(rhs, node)")
         protected static final Object doFraction(final double lhs, final PointersObject rhs,
                         @Bind("this") final Node node,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode,
+                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
             return boxNode.execute(node, lhs - SqueakImageContext.fromFraction(rhs, readNode, node));
         }
