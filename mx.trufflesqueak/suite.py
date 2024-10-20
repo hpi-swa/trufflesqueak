@@ -6,14 +6,12 @@
 #
 
 suite = {
-
     # ==========================================================================
     #  METADATA
     # ==========================================================================
     "name": "trufflesqueak",
     "mxversion": "7.33.1",
     "versionConflictResolution": "latest",
-
     "version": "24.1.0",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-6.0-5053.zip",
@@ -21,46 +19,39 @@ suite = {
         "test_image": "TruffleSqueakTestImage-6.0-22104-64bit.zip",
         "test_image_tag": "22.3.0",
     },
-
     "release": False,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
-
     "developer": {
         "name": "Fabio Niephaus and contributors",
         "email": "code+trufflesqueak@fniephaus.com",
         "organization": "Software Architecture Group, HPI, Potsdam, Germany",
         "organizationUrl": "https://www.hpi.uni-potsdam.de/swa/",
     },
-
     "scm": {
         "url": "https://github.com/hpi-swa/trufflesqueak/",
         "read": "https://github.com/hpi-swa/trufflesqueak.git",
         "write": "git@github.com:hpi-swa/trufflesqueak.git",
     },
-
     "licenses": {
         "GFTC": {
-          "name": "GraalVM Free Terms and Conditions (GFTC) including License for Early Adopter Versions",
-          "url": "https://www.oracle.com/downloads/licenses/graal-free-license.html"
+            "name": "GraalVM Free Terms and Conditions (GFTC) including License for Early Adopter Versions",
+            "url": "https://www.oracle.com/downloads/licenses/graal-free-license.html",
         },
     },
-
     # ==========================================================================
     #  DEPENDENCIES
     # ==========================================================================
     "imports": {
-        "suites": [{
-            "name": "truffle",
-            "subdir": True,
-            "version": "vm-24.1.1",
-            "urls": [{
-                "url": "https://github.com/oracle/graal",
-                "kind": "git"
-            }],
-        }],
+        "suites": [
+            {
+                "name": "truffle",
+                "subdir": True,
+                "version": "vm-24.1.1",
+                "urls": [{"url": "https://github.com/oracle/graal", "kind": "git"}],
+            }
+        ],
     },
-
     # ==========================================================================
     #  LIBRARIES
     # ==========================================================================
@@ -69,9 +60,9 @@ suite = {
             "digest": "sha512:dbc5b525d805823b53dbaded11547155a14f795212ce6fe1e93d6da431081ea9480718ea2fc17dc7906f8489aadb68e781afd1e771d26f9f8a09b21552bb165c",
             "sourceDigest": "sha512:4ce8b88e26af98c3cb8a3691ace366e960e36a8225d14685447b4aa9838b92334bdb63f8ba4baf651d28c8e063e21d0cbca8f2fcf8eecd003362ae62b6c87dbd",
             "maven": {
-              "groupId": "org.bouncycastle",
-              "artifactId": "bcprov-jdk18on",
-              "version": "1.76",
+                "groupId": "org.bouncycastle",
+                "artifactId": "bcprov-jdk18on",
+                "version": "1.76",
             },
             "moduleName": "org.bouncycastle.provider",
         },
@@ -111,8 +102,8 @@ suite = {
                         "digest": "sha512:5e94f289e5e1c71772b3033fda31e637cdcbea17321f2a4448a6755dff6db2db210086cffc993320249bcb6a1df395c17a2a06aedc9636159623336ca92e8008",
                     },
                     "aarch64": {
-                        "urls" : ["{baseurl}-linux-aarch64.zip"],
-                        "digest" : "sha512:b4801b2a442ca383c6d5718c5a085b1446e66010e73587f166ff2726d393ecc47d7a195bba9d586e7f6c40d587e9a89c874a39adb3f65e9633a12703b40268e9",
+                        "urls": ["{baseurl}-linux-aarch64.zip"],
+                        "digest": "sha512:b4801b2a442ca383c6d5718c5a085b1446e66010e73587f166ff2726d393ecc47d7a195bba9d586e7f6c40d587e9a89c874a39adb3f65e9633a12703b40268e9",
                     },
                 },
                 "windows": {
@@ -121,9 +112,7 @@ suite = {
                         "digest": "sha512:10ec2b4b783bb83a814866ea237a424138802a99ee63b3cfbe2d2b2c6607e94ea000922f58f8a159108f66c0509764bc48b62885337d2a198534337eb2ed6f8e",
                     },
                 },
-                "<others>": {
-                    "<others>": {"optional": True}
-                },
+                "<others>": {"<others>": {"optional": True}},
             },
         },
         "TRUFFLE-ENTERPRISE": {
@@ -146,7 +135,6 @@ suite = {
             "useModulePath": True,
         },
     },
-
     # ==========================================================================
     #  PROJECTS
     # ==========================================================================
@@ -229,11 +217,7 @@ suite = {
         "de.hpi.swa.trufflesqueak.tck": {
             "subDir": "src",
             "sourceDirs": ["src"],
-            "dependencies": [
-                "TRUFFLESQUEAK_SHARED",
-                "sdk:POLYGLOT_TCK",
-                "mx:JUNIT"
-            ],
+            "dependencies": ["TRUFFLESQUEAK_SHARED", "sdk:POLYGLOT_TCK", "mx:JUNIT"],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "javaCompliance": "17+",
             "workingSets": "TruffleSqueak",
@@ -254,7 +238,6 @@ suite = {
             "testProject": True,
         },
     },
-
     # ==========================================================================
     #  DISTRIBUTIONS
     # ==========================================================================
@@ -265,10 +248,10 @@ suite = {
                 "name": "de.hpi.swa.trufflesqueak",
                 "exports": [
                     "de.hpi.swa.trufflesqueak to org.graalvm.truffle",
-                    "de.hpi.swa.trufflesqueak*", # allow reflection
+                    "de.hpi.swa.trufflesqueak*",  # allow reflection
                 ],
                 "requires": [
-                    "jdk.unsupported", # sun.misc.Unsafe
+                    "jdk.unsupported",  # sun.misc.Unsafe
                 ],
             },
             "useModulePath": True,
@@ -297,17 +280,15 @@ suite = {
             "noMavenJavadoc": True,
             "license": ["MIT"],
         },
-
         "TRUFFLE_ENTERPRISE_PLACEHOLDER": {
             "maven": {
                 "groupId": "org.graalvm.truffle",
                 "artifactId": "truffle-enterprise",
             },
-            "testDistribution": True, # ensure it does not get 'maven-deploy'ed
+            "testDistribution": True,  # ensure it does not get 'maven-deploy'ed
             "noMavenJavadoc": True,
             "license": ["GFTC"],
         },
-
         "SMALLTALK": {
             "type": "pom",
             "runtimeDependencies": [
@@ -322,7 +303,6 @@ suite = {
             },
             "license": ["MIT", "GFTC"],
         },
-
         "SMALLTALK_COMMUNITY": {
             "type": "pom",
             "runtimeDependencies": [
@@ -337,7 +317,6 @@ suite = {
             },
             "license": ["MIT"],
         },
-
         "TRUFFLESQUEAK_HOME": {
             "native": True,
             "platformDependent": True,
@@ -356,7 +335,6 @@ suite = {
             },
             "maven": False,
         },
-
         "TRUFFLESQUEAK_LAUNCHER": {
             "description": "TruffleSqueak launcher",
             "moduleInfo": {
@@ -382,7 +360,6 @@ suite = {
             "noMavenJavadoc": True,
             "license": ["MIT"],
         },
-
         "TRUFFLESQUEAK_SHARED": {
             "description": "TruffleSqueak shared distribution",
             "moduleInfo": {
@@ -405,7 +382,6 @@ suite = {
             "noMavenJavadoc": True,
             "license": ["MIT"],
         },
-
         "TRUFFLESQUEAK_TCK": {
             "description": "TruffleSqueak TCK-based interoperability tests",
             "dependencies": [
@@ -423,7 +399,6 @@ suite = {
             "testDistribution": True,
             "maven": False,
         },
-
         "TRUFFLESQUEAK_TEST": {
             "description": "TruffleSqueak JUnit and SUnit tests",
             "moduleInfo": {
