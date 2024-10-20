@@ -1,7 +1,7 @@
 testing
 testVMIntrospection
 	| testObject metaObject squeakHashAndBits |
-	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
+	(Polyglot isPolyglotEvalAllowed: Polyglot languageIdSmalltalk) ifFalse: [ ^self ].
 
 	testObject := SmalltalkImage vmObject.
 	"Every Java object understands hashCode"

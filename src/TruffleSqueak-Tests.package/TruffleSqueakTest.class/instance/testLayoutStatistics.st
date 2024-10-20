@@ -1,4 +1,4 @@
 testing
 testLayoutStatistics
-	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
+	(Polyglot isPolyglotEvalAllowed: Polyglot languageIdSmalltalk) ifFalse: [ ^self ].
 	[ TruffleSqueakUtilities layoutStatistics ] on: Error do: [ :e | self fail: e ]

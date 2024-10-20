@@ -1,7 +1,7 @@
 testing
 testPolyglotEval
 	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
-	self assert: Polyglot primitiveIsPolyglotEvalAllowed.
+	self assert: (Polyglot primitiveIsPolyglotEvalAllowed: Polyglot languageIdJS).
 	self assert: 7 equals: (Polyglot eval: Polyglot languageIdJS string: '1 + 2 * 3').
 	self assert: (42 min: 21) equals: (Polyglot eval: Polyglot languageIdJS string: 'Math.min(42, 21)').
 

@@ -1,4 +1,4 @@
 primitives
-primitiveIsPolyglotEvalAllowed
+primitiveIsPolyglotEvalAllowed: aLanguageID
 	<primitive: 'primitiveIsPolyglotEvalAllowed' module: 'PolyglotPlugin'>
 	^ false

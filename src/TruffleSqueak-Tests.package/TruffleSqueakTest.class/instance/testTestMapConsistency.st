@@ -1,7 +1,7 @@
 testing
 testTestMapConsistency
 	| testNames booleanResult |
-	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
+	(Polyglot isPolyglotEvalAllowed: Polyglot languageIdSmalltalk) ifFalse: [ ^self ].
 
 	testNames := TestCase buildSuite tests collect: [:test |
 		test class asString, '>>', test selector].
