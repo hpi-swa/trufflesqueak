@@ -44,21 +44,21 @@ public abstract class AbstractSqueakTestCase {
         return new CompiledCodeObject(image, bytes, header, literals, image.compiledMethodClass);
     }
 
-    protected static final CompiledCodeObject makeMethod(final long header, final Object[] literals, final int... intbytes) {
+    protected static final CompiledCodeObject makeMethod(final int header, final Object[] literals, final int... intbytes) {
         final byte[] bytes = new byte[intbytes.length + 1];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
         }
         bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
-        final int numLiterals = (int) header & 0x7FFF;
+        final int numLiterals = header & 0x7FFF;
         final Object[] allLiterals = Arrays.copyOf(literals, numLiterals);
         allLiterals[numLiterals - 2] = image.asByteString("DoIt"); // compiledInSelector
         allLiterals[numLiterals - 1] = nilClassBinding; // methodClassAssociation
         return makeMethod(bytes, header, allLiterals);
     }
 
-    protected static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
-        return CompiledCodeObject.makeHeader(true, numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
+    protected static final int makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
+        return CompiledCodeObject.CompiledCodeHeaderUtils.makeHeader(true, numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
     }
 
     private static CompiledCodeObject makeMethod(final int... intbytes) {
@@ -107,14 +107,14 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static final Object runBinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
-        return runPrim(17104899L, new Object[0], primCode, rcvr, arguments);
+        return runPrim(17104899, new Object[0], primCode, rcvr, arguments);
     }
 
     protected static final Object runQuinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
-        return runPrim(68222979L, new Object[0], primCode, rcvr, arguments);
+        return runPrim(68222979, new Object[0], primCode, rcvr, arguments);
     }
 
-    protected static final Object runPrim(final long header, final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
+    protected static final Object runPrim(final int header, final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
         final CompiledCodeObject method = makeMethod(header, literals, 139, primCode & 0xFF, (primCode & 0xFF00) >> 8);
         return runMethod(method, rcvr, arguments);
     }

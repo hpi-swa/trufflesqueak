@@ -54,7 +54,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testPopAndPushTemporaryLocations() {
         // header with numTemp=8
-        final long header = 2097154L;
+        final int header = 2097154;
         final Object[] literals = {NilObject.SINGLETON, NilObject.SINGLETON};
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 8; i++) {
@@ -73,7 +73,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testPushLiteralConstants() {
         final int numTestObjects = 32;
-        final long header = makeHeader(0, 0, numTestObjects + 2, false, false);
+        final int header = makeHeader(0, 0, numTestObjects + 2, false, false);
         final int bytecodeStart = 32;
         final Object[] expectedResults = getTestObjects(numTestObjects);
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
@@ -92,7 +92,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testPushLiteralVariables() {
         final int numTestObjects = 32;
-        final long header = makeHeader(0, 0, numTestObjects + 2, false, false);
+        final int header = makeHeader(0, 0, numTestObjects + 2, false, false);
         final int bytecodeStart = 64;
         final Object[] expectedResults = getTestObjects(numTestObjects);
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
@@ -180,7 +180,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testExtendedPushTemporaryVariables() {
         final int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 1; // one stack slot required for code
-        final long header = makeHeader(0, maxNumTemps, 2, false, true);
+        final int header = makeHeader(0, maxNumTemps, 2, false, true);
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumTemps; i++) {
             // push true, popIntoTemp i, pushTemp i, returnTop
@@ -198,7 +198,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testExtendedPushLiteralConstants() {
         final int numTestObjects = 64;
-        final long header = makeHeader(0, numTestObjects, numTestObjects + 2, false, true);
+        final int header = makeHeader(0, numTestObjects, numTestObjects + 2, false, true);
         final Object[] expectedResults = getTestObjects(numTestObjects);
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < numTestObjects; i++) {
@@ -216,7 +216,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testExtendedPushLiteralVariables() {
         final int numTestObjects = 64;
-        final long header = makeHeader(0, numTestObjects, numTestObjects + 2, false, true);
+        final int header = makeHeader(0, numTestObjects, numTestObjects + 2, false, true);
         final Object[] expectedResults = getTestObjects(numTestObjects);
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < numTestObjects; i++) {
@@ -247,7 +247,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testExtendedStoreIntoTemporaryVariables() {
         final int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 2; // two stack slots required for code
-        final long header = makeHeader(0, maxNumTemps, 2, false, true);
+        final int header = makeHeader(0, maxNumTemps, 2, false, true);
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumTemps; i++) {
             // push true, push 1, storeIntoTemp i, pop, pushTemp i, returnTop
@@ -265,7 +265,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     public void testExtendedStoreIntoAssociation() {
         final int numTestObjects = 64;
         final ArrayObject testObject = image.asArrayOfObjects(createDummyLiterals(numTestObjects));
-        final long header = makeHeader(0, 0, numTestObjects + 2, false, true);
+        final int header = makeHeader(0, 0, numTestObjects + 2, false, true);
         final List<Object> literalsList = new ArrayList<>(numTestObjects);
         for (int i = 0; i < numTestObjects; i++) {
             literalsList.add(testObject);
@@ -302,7 +302,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testExtendedPopIntoTemporaryVariables() {
         final int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 2; // two stack slots required for code
-        final long header = makeHeader(0, maxNumTemps, 2, false, true);
+        final int header = makeHeader(0, maxNumTemps, 2, false, true);
         final Object[] literals = {NilObject.SINGLETON, NilObject.SINGLETON};
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumTemps; i++) {
@@ -321,7 +321,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     public void testExtendedPopIntoLiteralVariables() {
         final int maxNumLiterals = 64; // number of accepted bytecodes
         final ArrayObject testObject = image.asArrayOfObjects(createDummyLiterals(maxNumLiterals));
-        final long header = makeHeader(0, 0, maxNumLiterals + 2, false, true);
+        final int header = makeHeader(0, 0, maxNumLiterals + 2, false, true);
         final List<Object> literalsList = new ArrayList<>(maxNumLiterals);
         for (int i = 0; i < maxNumLiterals; i++) {
             literalsList.add(testObject);
@@ -358,7 +358,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testDoubleExtendedPushLiteralConstants() {
         final int numTestObjects = 255;
-        final long header = makeHeader(0, 0, numTestObjects + 2, false, true);
+        final int header = makeHeader(0, 0, numTestObjects + 2, false, true);
         final Object[] expectedResults = getTestObjects(numTestObjects);
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < numTestObjects; i++) {
@@ -376,7 +376,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testDoubleExtendedPushLiteralVariables() {
         final int numTestObjects = 255;
-        final long header = makeHeader(0, 0, numTestObjects + 2, false, true);
+        final int header = makeHeader(0, 0, numTestObjects + 2, false, true);
         final Object[] expectedResults = getTestObjects(numTestObjects);
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < numTestObjects; i++) {
@@ -420,7 +420,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     @Test
     public void testDoubleExtendedStoreIntoAssociation() {
         final int numberOfAssociations = 255;
-        final long header = makeHeader(0, 0, numberOfAssociations + 2, false, true);
+        final int header = makeHeader(0, 0, numberOfAssociations + 2, false, true);
         final ArrayObject testObject = image.asArrayOfObjects(createDummyLiterals(numberOfAssociations));
         final List<Object> literalsList = new ArrayList<>(numberOfAssociations);
         for (int i = 0; i < numberOfAssociations; i++) {
@@ -505,7 +505,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
 
     @Test
     public void testPushRemoteTemp() {
-        final long header = 2097154L; // header with numTemp=8
+        final int header = 2097154; // header with numTemp=8
         final Object[] literals = {NilObject.SINGLETON, NilObject.SINGLETON};
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // push true, pushNewArray (size 1 and pop), popIntoTemp 2, pushRemoteTemp
@@ -522,7 +522,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
 
     @Test
     public void testStoreRemoteTemp() {
-        final long header = 2097154L; // header with numTemp=8
+        final int header = 2097154; // header with numTemp=8
         final Object[] literals = {NilObject.SINGLETON, NilObject.SINGLETON};
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // pushNewArray (size 2), popIntoTemp 3, push true, push false,
@@ -544,7 +544,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
 
     @Test
     public void testStoreAndPopRemoteTemp() {
-        final long header = 2097154L; // header with numTemp=8
+        final int header = 2097154; // header with numTemp=8
         final Object[] literals = {NilObject.SINGLETON, NilObject.SINGLETON};
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // pushNewArray (size 2), popIntoTemp 3, push true, push false,
@@ -569,7 +569,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         // ^ [ :arg1 :arg2 | arg1 + arg2 ]
         final Object[] literals = {NilObject.SINGLETON, NilObject.SINGLETON};
         final long rcvr = 1L;
-        final CompiledCodeObject method = makeMethod(2L, literals, 0x8F, 0x02, 0x00, 0x04, 0x10, 0x11, 0xB0, 0x7D, 0x7C);
+        final CompiledCodeObject method = makeMethod(2, literals, 0x8F, 0x02, 0x00, 0x04, 0x10, 0x11, 0xB0, 0x7D, 0x7C);
         final VirtualFrame frame = createTestFrame(method);
         final Object result = createContext(method, rcvr).execute(frame);
         assertTrue(result instanceof BlockClosureObject);
