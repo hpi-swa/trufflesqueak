@@ -542,11 +542,7 @@ public final class SendBytecodes {
                 replaceWithSend(frame);
                 return;
             }
-            try {
-                popArgumentAndPush(frame, readNode.execute(node, (AbstractPointersObject) receiver, getPointInstVarIndex()));
-            } catch (final PrimitiveFailed pf) {
-                replaceWithSend(frame);
-            }
+            popArgumentAndPush(frame, readNode.execute(node, (AbstractPointersObject) receiver, getPointInstVarIndex()));
         }
 
         private ClassObject getPointClass() {
