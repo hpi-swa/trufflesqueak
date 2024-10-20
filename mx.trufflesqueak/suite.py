@@ -441,7 +441,9 @@ suite = {
             "exclude": ["mx:JUNIT", "mx:HAMCREST"],
             "distDependencies": [
                 "TRUFFLESQUEAK",
+                "TRUFFLESQUEAK_SHARED",
                 "sdk:MAVEN_DOWNLOADER",
+                "truffle:TRUFFLE_API",
             ],
             "testDistribution": True,
             "maven": False,
