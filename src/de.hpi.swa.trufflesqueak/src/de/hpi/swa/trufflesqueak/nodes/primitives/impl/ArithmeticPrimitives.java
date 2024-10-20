@@ -27,6 +27,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -1246,7 +1247,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final AsFloatObjectIfNessaryNode boxNode,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
-            return boxNode.execute(node, lhs - getContext(node).fromFraction(rhs, readNode, node));
+            return boxNode.execute(node, lhs - SqueakImageContext.fromFraction(rhs, readNode, node));
         }
     }
 

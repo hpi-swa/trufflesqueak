@@ -17,6 +17,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -103,7 +104,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final double doFraction(final NativeObject receiver, final long index, final PointersObject value,
                         @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
-            return doDouble(receiver, index, getContext(node).fromFraction(value, readNode, node));
+            return doDouble(receiver, index, SqueakImageContext.fromFraction(value, readNode, node));
         }
 
         @SuppressWarnings("unused")
