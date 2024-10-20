@@ -69,9 +69,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal private long header;
     @CompilationFinal(dimensions = 1) private Object[] literals;
     @CompilationFinal(dimensions = 1) private byte[] bytes;
-    @CompilationFinal private int numArgs;
-    @CompilationFinal private int numLiterals;
-    @CompilationFinal private int numTemps;
 
     /*
      * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
@@ -98,7 +95,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public CompiledCodeObject(final SqueakImageContext image, final byte[] bytes, final long header, final Object[] literals, final ClassObject classObject) {
         super(image, classObject);
         this.header = header;
-        decodeHeader();
         this.literals = literals;
         this.bytes = bytes;
     }
@@ -125,9 +121,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         header = outerCode.header;
         literals = outerCode.literals;
         bytes = outerCode.bytes;
-        numArgs = outerCode.numArgs;
-        numLiterals = outerCode.numLiterals;
-        numTemps = outerCode.numTemps;
     }
 
     private CompiledCodeObject(final int size, final SqueakImageContext image, final ClassObject classObject) {
@@ -164,7 +157,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private void setLiteralsAndBytes(final long header, final Object[] literals, final byte[] bytes) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.header = header;
-        decodeHeader();
         this.literals = literals;
         this.bytes = bytes;
         renewCallTarget();
@@ -284,15 +276,23 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Idempotent
     public int getNumArgs() {
-        return numArgs;
+        return CompiledCodeHeaderDecoder.getNumArguments(header);
     }
 
     public int getNumTemps() {
-        return numTemps;
+        return CompiledCodeHeaderDecoder.getNumTemps(header);
     }
 
     public int getNumLiterals() {
-        return numLiterals;
+        return CompiledCodeHeaderDecoder.getNumLiterals(header);
+    }
+
+    public int getNumHeaderAndLiterals() {
+        return 1 + getNumLiterals();
+    }
+
+    public int getBytecodeOffset() {
+        return getNumHeaderAndLiterals() * SqueakImageConstants.WORD_SIZE;
     }
 
     public int getSqueakContextSize() {
@@ -317,10 +317,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // header is a tagged small integer
         header = chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS;
-        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
         assert literals == null;
         literals = chunk.getPointers(1, getNumHeaderAndLiterals());
-        decodeHeader();
         assert bytes == null;
         bytes = Arrays.copyOfRange(chunk.getBytes(), getBytecodeOffset(), chunk.getBytes().length);
     }
@@ -335,13 +333,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public int findLineNumber(final int index) {
         return getDecoder().findLineNumber(this, index);
-    }
-
-    private void decodeHeader() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
-        numTemps = CompiledCodeHeaderDecoder.getNumTemps(header);
-        numArgs = CompiledCodeHeaderDecoder.getNumArguments(header);
     }
 
     public void become(final CompiledCodeObject other) {
@@ -359,14 +350,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         shadowBlocks = shadowBlocks2;
         outerMethod = outerMethod2;
         callTargetStable().invalidate();
-    }
-
-    public int getNumHeaderAndLiterals() {
-        return 1 + numLiterals;
-    }
-
-    public int getBytecodeOffset() {
-        return getNumHeaderAndLiterals() * SqueakImageConstants.WORD_SIZE;
     }
 
     public long at0(final long index) {
@@ -410,10 +393,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (index == 0) {
             assert obj instanceof Long;
-            final int oldNumLiterals = numLiterals;
+            final int oldNumLiterals = getNumLiterals();
             header = (long) obj;
-            decodeHeader();
-            assert numLiterals == oldNumLiterals;
+            assert getNumLiterals() == oldNumLiterals;
         } else {
             literals[index - 1] = obj;
         }
@@ -577,7 +559,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          * through suitable modifications to the compiler and class builder.
          */
         CompilerAsserts.neverPartOfCompilation("Do not use getCompiledInSelector() in compiled code");
-        final Object penultimateLiteral = literals[numLiterals - 2];
+        final Object penultimateLiteral = literals[getNumLiterals() - 2];
         if (penultimateLiteral instanceof final NativeObject o) {
             return o;
         } else if (penultimateLiteral instanceof final VariablePointersObject penultimateLiteralAsPointer) {
@@ -599,7 +581,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          * may be nil (as would be the case for example of methods providing a pool of inst var
          * accessors).
          */
-        return literals[numLiterals - 1];
+        return literals[getNumLiterals() - 1];
     }
 
     public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
@@ -627,11 +609,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public void setHeader(final long header) {
-        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
-        literals = ArrayUtils.withAll(numLiterals, NilObject.SINGLETON);
         // keep negative method headers in SmallInteger range
         this.header = header | (header < 0 ? NEGATIVE_METHOD_HEADER_MASK : 0);
-        decodeHeader();
+        literals = ArrayUtils.withAll(getNumLiterals(), NilObject.SINGLETON);
     }
 
     public boolean hasStoreIntoTemp1AfterCallPrimitive() {
@@ -662,7 +642,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public CompiledCodeObject getMethodUnsafe() {
         assert !isCompiledMethod();
-        return (CompiledCodeObject) literals[numLiterals - 1];
+        return (CompiledCodeObject) literals[getNumLiterals() - 1];
     }
 
     /**
