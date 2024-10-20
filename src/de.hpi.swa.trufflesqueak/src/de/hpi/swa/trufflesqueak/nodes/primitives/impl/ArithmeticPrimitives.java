@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -1238,6 +1239,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(node, lhs - rhs.getValue());
+        }
+
+        @Specialization(guards = "isFraction(rhs, node)")
+        protected static final Object doFraction(final double lhs, final PointersObject rhs,
+                        @Bind("this") final Node node,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode,
+                        @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
+            return boxNode.execute(node, lhs - getContext(node).fromFraction(rhs, readNode, node));
         }
     }
 

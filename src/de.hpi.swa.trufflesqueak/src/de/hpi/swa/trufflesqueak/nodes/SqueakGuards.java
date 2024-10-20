@@ -6,8 +6,11 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Idempotent;
+import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -108,6 +111,11 @@ public final class SqueakGuards {
 
     public static boolean isForeignObject(final Object object) {
         return !(isAbstractSqueakObject(object) || isUsedJavaPrimitive(object));
+    }
+
+    public static boolean isFraction(final PointersObject object, final Node node) {
+        CompilerAsserts.compilationConstant(node);
+        return object.getSqueakClass() == SqueakImageContext.get(node).getFractionClass();
     }
 
     public static boolean isFrameMarker(final Object object) {

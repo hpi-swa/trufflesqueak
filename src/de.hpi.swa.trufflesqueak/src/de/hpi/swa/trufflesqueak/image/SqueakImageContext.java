@@ -48,6 +48,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FRACTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MESSAGE;
@@ -58,6 +59,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.DoItRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
@@ -887,7 +889,7 @@ public final class SqueakImageContext {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
-    public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget) {
+    public ClassObject getFractionClass() {
         if (fractionClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final Object fractionLookup = lookup("Fraction");
@@ -897,6 +899,10 @@ public final class SqueakImageContext {
                 throw SqueakException.create("Unable to find Fraction class");
             }
         }
+        return fractionClass;
+    }
+
+    public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget) {
         final long actualNumerator;
         final long actualDenominator;
         if (denominator < 0) { // "keep sign in numerator"
@@ -914,10 +920,17 @@ public final class SqueakImageContext {
         }
         final long gcd = Math.abs(m);
         // Instantiate reduced fraction
-        final PointersObject fraction = new PointersObject(this, fractionClass, fractionClass.getLayout());
+        final PointersObject fraction = new PointersObject(this, getFractionClass(), fractionClass.getLayout());
         writeNode.execute(inlineTarget, fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
         writeNode.execute(inlineTarget, fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
         return fraction;
+    }
+
+    public static double fromFraction(final PointersObject fraction, final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
+        assert SqueakGuards.isFraction(fraction, inlineTarget);
+        long numerator = readNode.executeLong(inlineTarget, fraction, ObjectLayouts.FRACTION.NUMERATOR);
+        double denominator = readNode.executeLong(inlineTarget, fraction, ObjectLayouts.FRACTION.DENOMINATOR);
+        return numerator / denominator;
     }
 
     public NativeObject asByteArray(final byte[] bytes) {
