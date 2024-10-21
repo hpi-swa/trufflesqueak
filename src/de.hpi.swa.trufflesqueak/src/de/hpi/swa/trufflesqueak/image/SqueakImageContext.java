@@ -8,8 +8,6 @@ package de.hpi.swa.trufflesqueak.image;
 
 import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -692,16 +690,6 @@ public final class SqueakImageContext {
 
     public void setImagePath(final String path) {
         imagePath = path;
-    }
-
-    @TruffleBoundary
-    public String getImageDirectory() {
-        final Path parent = Paths.get(getImagePath()).getParent();
-        if (parent != null) {
-            return parent.toString();
-        } else {
-            throw SqueakException.create("Could not determine image directory.");
-        }
     }
 
     public String[] getImageArguments() {

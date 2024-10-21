@@ -64,7 +64,7 @@ public final class SqueakImageReader {
         System.gc(); // Clean up after image loading
     }
 
-    private Object run() {
+    private void run() {
         SqueakImageContext.initializeBeforeLoadingImage();
         final long start = MiscUtils.currentTimeMillis();
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
@@ -82,7 +82,7 @@ public final class SqueakImageReader {
         initObjects();
         image.printToStdOut("Image loaded in", MiscUtils.currentTimeMillis() - start + "ms.");
         image.setHiddenRoots((ArrayObject) hiddenRootsChunk.asObject());
-        return image.getSqueakImage();
+        image.getSqueakImage();
     }
 
     private static void skip(final MappedByteBuffer buffer, final int numBytes) {
@@ -295,7 +295,7 @@ public final class SqueakImageReader {
      * Fill in classes and ensure instances of Behavior and its subclasses use {@link ClassObject}.
      */
     private void fillInClassObjects() {
-        /** Find all metaclasses and instantiate their singleton instances as class objects. */
+        /* Find all metaclasses and instantiate their singleton instances as class objects. */
         int highestKnownClassIndex = -1;
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
@@ -320,14 +320,14 @@ public final class SqueakImageReader {
         assert highestKnownClassIndex > 0 : "Failed to find highestKnownClassIndex";
         image.classTableIndex = highestKnownClassIndex;
 
-        /** Fill in metaClass. */
+        /* Fill in metaClass. */
         final SqueakImageChunk specialObjectsChunk = chunkMap.get(specialObjectsPointer);
         final SqueakImageChunk sqArray = specialObjectsChunk.getClassChunk();
         final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
         final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
         image.metaClass.fillin(sqMetaclass);
 
-        /**
+        /*
          * Walk over all classes again and ensure instances of all subclasses of ClassDescriptions
          * are {@link ClassObject}s.
          */
@@ -361,7 +361,7 @@ public final class SqueakImageReader {
         assert image.metaClass.instancesAreClasses();
         image.setByteSymbolClass(((NativeObject) image.metaClass.getOtherPointers()[CLASS.NAME]).getSqueakClass());
 
-        /** Finally, ensure instances of Behavior are {@link ClassObject}s. */
+        /* Finally, ensure instances of Behavior are {@link ClassObject}s. */
         final ClassObject behaviorClass = classDescriptionClass.getSuperclassOrNull();
         behaviorClass.setInstancesAreClasses();
     }
