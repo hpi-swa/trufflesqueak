@@ -1,5 +1,6 @@
 {
 	"class" : {
+		"asBigInteger:" : "fn 10/22/2024 09:46",
 		"asBoolean:" : "fn 3/5/2021 14:39",
 		"asDate:" : "fn 12/12/2019 20:42",
 		"asDouble:" : "fn 3/5/2021 14:41",
@@ -11,6 +12,7 @@
 		"asTime:" : "fn 12/12/2019 20:42",
 		"asTimeZone:" : "fn 12/12/2019 23:09",
 		"execute:with:" : "fn 6/26/2021 14:33",
+		"fitsInBigInteger:" : "fn 10/22/2024 11:54",
 		"fitsInDouble:" : "fn 3/5/2021 14:41",
 		"fitsInLong:" : "fn 3/5/2021 14:40",
 		"getArraySize:" : "fn 3/5/2021 14:35",
@@ -35,6 +37,7 @@
 		"getMembers:" : "fn 1/24/2020 14:50",
 		"getMembers:includeInternal:" : "fn 6/26/2021 14:35",
 		"getMetaObject:" : "fn 3/5/2021 14:48",
+		"getMetaParents:" : "fn 10/22/2024 12:38",
 		"getMetaQualifiedName:" : "fn 3/5/2021 14:49",
 		"getMetaSimpleName:" : "fn 3/5/2021 14:49",
 		"getScopeParent:" : "fn 3/9/2021 14:58",
@@ -56,6 +59,7 @@
 		"hasMemberWriteSideEffects:member:" : "fn 3/5/2021 14:26",
 		"hasMembers:" : "fn 3/5/2021 14:33",
 		"hasMetaObject:" : "fn 3/5/2021 14:43",
+		"hasMetaParents:" : "fn 10/22/2024 12:46",
 		"hasScopeParent:" : "fn 3/9/2021 14:57",
 		"hasSourceLocation:" : "fn 3/5/2021 14:43",
 		"hostIdentityHashCode:" : "fn 2/11/2021 12:04",
@@ -108,6 +112,7 @@
 		"memberToSelector:for:" : "fn 3/9/2021 12:49",
 		"memberToSelector:for:arguments:" : "fn 8/19/2021 14:49",
 		"readArrayElement:index:" : "fn 3/5/2021 14:52",
+		"readBuffer:byteOffset:destination:destinationOffset:length:" : "fn 10/22/2024 09:20",
 		"readBufferByte:index:" : "fn 6/26/2021 14:35",
 		"readBufferDouble:index:" : "fn 6/26/2021 14:35",
 		"readBufferFloat:index:" : "fn 6/26/2021 14:35",

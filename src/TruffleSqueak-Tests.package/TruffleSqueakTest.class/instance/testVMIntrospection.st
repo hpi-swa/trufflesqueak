@@ -1,6 +1,6 @@
 testing
 testVMIntrospection
-	| testObject metaObject squeakHashAndBits |
+	| testObject metaObject metaObjectParents squeakHashAndBits |
 	(Polyglot isPolyglotEvalAllowed: Polyglot languageIdSmalltalk) ifFalse: [ ^self ].
 
 	testObject := SmalltalkImage vmObject.
@@ -23,7 +23,10 @@ testVMIntrospection
 	
 	"Meta Object API"
 	self assert: (Interop hasMetaObject: testObject).
-	metaObject := Interop getMetaObject: testObject..
+	metaObject := Interop getMetaObject: testObject.
 	self assert: (Interop isMetaObject: metaObject).
-	self assert: 'ClassObject' equals: (Interop getMetaSimpleName: metaObject) asString.	
+	self assert: 'ClassObject' equals: (Interop getMetaSimpleName: metaObject) asString.
+	metaObjectParents := Interop getMetaParents: metaObject.
+	self assert: 1 equals: metaObjectParents size.
+	self assert: 'AbstractSqueakObjectWithClassAndHash' equals: (Interop getMetaSimpleName: (metaObjectParents at: 1)) asString.
 	self assert: (Interop isMetaInstance: metaObject instance: testObject).	

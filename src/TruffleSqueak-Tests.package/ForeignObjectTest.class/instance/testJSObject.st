@@ -16,6 +16,8 @@ testJSObject
 	self should: [ Interop asLong: jsObject ] raise: Error.
 	self deny: (Interop fitsInDouble: jsObject).
 	self should: [ Interop asDouble: jsObject ] raise: Error.
+	self deny: (Interop fitsInBigInteger: jsObject).
+	self should: [ Interop asBigInteger: jsObject ] raise: Error.
 	self deny: (Interop hasArrayElements: jsObject).
 	
 	self assert: 1 equals: (Interop getMemberSize: jsObject).

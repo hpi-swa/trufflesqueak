@@ -12,6 +12,10 @@ testMetadataAPIs
 	"All boxed objects provide their class as meta object"
 	self assert: (Interop hasMetaObject: Smalltalk).
 	self assert: Smalltalk class equals: (Interop getMetaObject: Smalltalk).
+	self assert: {ProtoObject} equals: (Interop getMetaParents: Object).
+	self assert: {ClassDescription} equals: (Interop getMetaParents: Class).
+	self assert: {ClassDescription class} equals: (Interop getMetaParents: Class class).
+	self assert: Smalltalk class equals: (Interop getMetaObject: Smalltalk).
 	self assert: Smalltalk class asString equals: (Interop getMetaQualifiedName: (Interop getMetaObject: Smalltalk)) asString.
 	self assert: Smalltalk class asString equals: (Interop getMetaSimpleName: (Interop getMetaObject: Smalltalk)) asString.
 	self assert: ((Interop toDisplayString: Smalltalk) asString includesSubstring: Smalltalk asString)

@@ -1,0 +1,3 @@
+*TruffleSqueak-Core-number
+interopAsBigInteger
+	self subclassResponsibility

@@ -4,4 +4,5 @@ asSmalltalk
 	(Interop isString: self) ifTrue: [ ^ Interop asString: self ].
 	(Interop fitsInLong: self) ifTrue: [ ^ Interop asLong: self ].
 	(Interop fitsInDouble: self) ifTrue: [ ^ Interop asDouble: self ].
+	(Interop fitsInBigInteger: self) ifTrue: [ ^ Interop asBigInteger: self ].
 	self error: 'Unable to convert to Smalltalk object'

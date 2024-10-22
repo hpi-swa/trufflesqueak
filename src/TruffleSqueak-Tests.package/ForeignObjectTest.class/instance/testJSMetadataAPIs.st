@@ -17,6 +17,7 @@ testJSMetadataAPIs
 	self assert: 'Object' equals: (Interop getMetaQualifiedName: (Interop getMetaObject: jsObject)) asString.
 	self assert: 'Object' equals: (Interop getMetaSimpleName: (Interop getMetaObject: jsObject)) asString.
 	self assert: jsCode equals: (Interop toDisplayString: jsObject) asString.
+	"GraalJS does not support meta parents yet"
 	
 	self assert: (jsObject isKindOf: (Interop getMetaObject: jsObject)).
 	self assert: (jsObject respondsTo: #a).

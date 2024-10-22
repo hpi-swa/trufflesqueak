@@ -2,8 +2,10 @@
 	"class" : {
 		 },
 	"instance" : {
+		"interopGetMetaParents" : "fn 10/22/2024 12:07",
 		"interopGetMetaQualifiedName" : "fn 3/9/2021 12:39",
 		"interopGetMetaSimpleName" : "fn 3/9/2021 12:38",
+		"interopHasMetaParents" : "fn 10/22/2024 12:07",
 		"interopInstantiate:" : "fn 3/9/2021 12:39",
 		"interopIsInstantiable" : "fn 3/9/2021 12:39",
 		"interopIsMetaInstance:" : "fn 3/9/2021 12:38",

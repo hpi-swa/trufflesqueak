@@ -1,6 +1,6 @@
 testing
 testJavaBuffers
-	| buffer |
+	| buffer byteArray |
 	buffer := (Java type: 'java.nio.ByteBuffer') allocate: 32.
 	self assert: (Interop hasBufferElements: buffer).
 	self assert: 32 equals: (Interop getBufferSize: buffer).
@@ -18,3 +18,7 @@ testJavaBuffers
 	self assert: 2.0999999046325684 equals: (Interop readBufferFloat: buffer index: 4).
 	self assert: 4.32198 equals: (Interop writeBufferDouble: buffer index: 5 value: 4.32198).
 	self assert: 4.32198 equals: (Interop readBufferDouble: buffer index: 5).
+
+	byteArray := ByteArray new: 17.
+	Interop readBuffer: buffer byteOffset: 0 destination: byteArray destinationOffset: 1 length: byteArray size - 1.
+	self assert: #[0 42 0 32 0 102 68 221 7 32 181 73 17 64 0 0 0] equals: byteArray

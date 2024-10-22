@@ -1,7 +1,8 @@
 {
 	"class" : {
 		"addToHostClassPath:" : "fn 6/26/2021 14:36",
-		"asHostObject:" : "fn 3/5/2021 14:50",
+		"asBigInteger:" : "fn 10/22/2024 11:57",
+		"asHostObject:" : "fn 10/22/2024 10:07",
 		"asInteger:" : "fn 8/20/2022 11:11",
 		"asString:" : "fn 3/9/2021 13:59",
 		"asTriState:" : "fn 3/4/2021 11:55",
