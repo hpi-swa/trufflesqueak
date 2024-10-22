@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,7 @@ import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -65,6 +67,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -533,6 +536,33 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
                 return lib.asDouble(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFitsInBigInteger")
+    protected abstract static class PrimFitsInBigIntegerNode extends AbstractPrimitiveNode {
+
+        @Specialization
+        protected static final boolean doFitsInBigInteger(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.fitsInBigInteger(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsBigInteger")
+    protected abstract static class PrimAsBigIntegerNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+
+        @TruffleBoundary
+        @Specialization(guards = {"lib.fitsInBigInteger(object)"}, limit = "2")
+        protected final Object doAsDouble(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary("object") final InteropLibrary lib) {
+            try {
+                return new LargeIntegerObject(getContext(), lib.asBigInteger(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1214,6 +1244,21 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadBuffer")
+    protected abstract static class PrimReadBufferNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+        @Specialization(guards = {"lib.hasBufferElements(object)", "destination.isByteType()"})
+        protected static final Object doReadBuffer(final Object receiver, final Object object, final long byteOffset, final NativeObject destination, final long destinationOffset, final long length,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                lib.readBuffer(object, byteOffset, destination.getByteStorage(), MiscUtils.toIntExact(destinationOffset), MiscUtils.toIntExact(length));
+                return receiver;
+            } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWriteBufferByte")
     protected abstract static class PrimWriteBufferByteNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @Specialization(guards = "lib.hasBufferElements(object)")
@@ -1651,6 +1696,29 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
                 return lib.getMetaSimpleName(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasMetaParents")
+    protected abstract static class PrimHasMetaParentsNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.isMetaObject(object)")
+        protected static final boolean hasMetaParents(@SuppressWarnings("unused") final Object receiver, final Object object, @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return lib.hasMetaParents(object);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetMetaParents")
+    protected abstract static class PrimGetMetaParentsNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = "lib.isMetaObject(object)")
+        protected static final Object getMetaParents(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getMetaParents(object);
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -2169,6 +2237,15 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final int toJavaInteger(@SuppressWarnings("unused") final Object receiver, final long value) {
             return MiscUtils.toIntExact(value);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveToJavaBigInteger")
+    protected abstract static class PrimToJavaBigIntegerNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization
+        protected static final BigInteger toJavaInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject value) {
+            return value.getBigInteger();
         }
     }
 
