@@ -330,9 +330,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 11)
     protected abstract static class PrimFloorModNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
+        /** Profiled version of {@link Math#floorMod(long, long)}. */
         @Specialization(guards = "rhs != 0")
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.floorMod(lhs, rhs);
+        protected static final long doLong(final long lhs, final long rhs,
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile profile) {
+            final long r = lhs % rhs;
+            // if the signs are different and modulo not zero, adjust result
+            if (profile.profile(node, (lhs ^ rhs) < 0 && r != 0)) {
+                return r + rhs;
+            } else {
+                return r;
+            }
         }
 
         @Specialization(guards = "!rhs.isZero()")
@@ -344,9 +353,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 12)
     protected abstract static class PrimFloorDivideNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
+        /** Profiled version of {@link Math#floorDiv(long, long)}. */
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.floorDiv(lhs, rhs);
+        protected static final long doLong(final long lhs, final long rhs,
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile profile) {
+            final long q = lhs / rhs;
+            // if the signs are different and modulo not zero, round down
+            if (profile.profile(node, (lhs ^ rhs) < 0 && (q * rhs != lhs))) {
+                return q - 1;
+            } else {
+                return q;
+            }
         }
 
         @SuppressWarnings("unused")
@@ -1020,10 +1038,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 51)
     protected abstract static class PrimFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
-        protected static final long doFloat(final FloatObject receiver) {
+        protected static final long doFloat(final FloatObject receiver,
+                        @Bind("this") final Node node,
+                        @Cached final InlinedConditionProfile isNegativeProfile) {
             assert receiver.isFinite();
-            final double value = receiver.getValue();
-            return (long) ExactMath.truncate(value);
+            return truncate(node, isNegativeProfile, receiver.getValue());
         }
 
         @Specialization(guards = {"!inSafeIntegerRange(receiver.getValue())", "receiver.isFinite()"})
@@ -1463,8 +1482,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "inSafeIntegerRange(receiver)")
         protected static final long doDouble(final double receiver,
                         @Bind("this") final Node node,
-                        @Cached final InlinedConditionProfile positiveProfile) {
-            return (long) (positiveProfile.profile(node, receiver >= 0) ? Math.floor(receiver) : Math.ceil(receiver));
+                        @Cached final InlinedConditionProfile isNegativeProfile) {
+            return truncate(node, isNegativeProfile, receiver);
         }
 
         @Specialization(guards = "!inSafeIntegerRange(receiver)")
@@ -1616,6 +1635,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 throw RespecializeException.transferToInterpreterInvalidateAndThrow();
             }
+        }
+
+        /** Profiled version of {@link ExactMath#truncate(double)}. */
+        protected static final long truncate(final Node node, final InlinedConditionProfile profile, final double value) {
+            return (long) (profile.profile(node, value < 0.0) ? Math.ceil(value) : Math.floor(value));
         }
 
         @TruffleBoundary
