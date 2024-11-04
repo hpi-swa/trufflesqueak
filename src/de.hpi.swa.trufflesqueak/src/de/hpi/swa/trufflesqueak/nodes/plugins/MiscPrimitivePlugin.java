@@ -416,7 +416,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     private abstract static class AbstractPrimStringHashNode extends AbstractPrimitiveNode {
         protected static final long calculateHash(final long initialHash, final byte[] bytes) {
-            long hash = initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
+            // Using int here is sufficient and slightly more efficient
+            int hash = (int) initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
             final int length = bytes.length;
             for (int i = 0; i < length; i++) {
                 hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
