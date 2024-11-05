@@ -500,33 +500,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 18)
-    protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        // TODO: Object/Object specialization sufficient
+    protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode {
         @Specialization
-        protected final PointersObject doLong(final long xPos, final Object yPos,
+        protected final PointersObject doPoint(final Object xPos, final Object yPos,
                         @Bind("this") final Node node,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, node, xPos, yPos);
-        }
-
-        @Specialization
-        protected final PointersObject doDouble(final double xPos, final Object yPos,
-                        @Bind("this") final Node node,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, node, xPos, yPos);
-        }
-
-        @Specialization
-        protected final PointersObject doLargeInteger(final LargeIntegerObject xPos, final Object yPos,
-                        @Bind("this") final Node node,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, node, xPos, yPos);
-        }
-
-        @Specialization
-        protected final PointersObject doFloatObject(final FloatObject xPos, final Object yPos,
-                        @Bind("this") final Node node,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+                        @Cached final AbstractPointersObjectWriteNode writeNode) {
             return getContext().asPoint(writeNode, node, xPos, yPos);
         }
     }
