@@ -151,7 +151,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs > rhs);
         }
 
-        @Specialization(guards = "isExactDouble(lhs)")
+        @Specialization(guards = "!isExactDouble(lhs)")
         protected static final boolean doLongDoubleNotExact(final long lhs, final double rhs) {
             return BooleanObject.wrap(compareNotExact(lhs, rhs) > 0);
         }
@@ -175,7 +175,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs <= rhs);
         }
 
-        @Specialization(guards = "isExactDouble(lhs)")
+        @Specialization(guards = "!isExactDouble(lhs)")
         protected static final boolean doLongDoubleNotExact(final long lhs, final double rhs) {
             return BooleanObject.wrap(compareNotExact(lhs, rhs) <= 0);
         }
@@ -199,7 +199,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs >= rhs);
         }
 
-        @Specialization(guards = "isExactDouble(lhs)")
+        @Specialization(guards = "!isExactDouble(lhs)")
         protected static final boolean doLongDoubleNotExact(final long lhs, final double rhs) {
             return BooleanObject.wrap(compareNotExact(lhs, rhs) >= 0);
         }
@@ -868,7 +868,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() < rhs);
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @Specialization(guards = "!isExactDouble(rhs)")
         protected static final boolean doDoubleLongNotExact(final FloatObject lhs, final long rhs) {
             return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) < 0);
         }
@@ -892,7 +892,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() > rhs);
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @Specialization(guards = "!isExactDouble(rhs)")
         protected static final boolean doDoubleLongNotExact(final FloatObject lhs, final long rhs) {
             return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) > 0);
         }
@@ -916,7 +916,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() <= rhs);
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @Specialization(guards = "!isExactDouble(rhs)")
         protected static final boolean doDoubleLongNotExact(final FloatObject lhs, final long rhs) {
             return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) <= 0);
         }
@@ -940,7 +940,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() >= rhs);
         }
 
-        @Specialization(guards = "isExactDouble(rhs)")
+        @Specialization(guards = "!isExactDouble(rhs)")
         protected static final boolean doDoubleLongNotExact(final FloatObject lhs, final long rhs) {
             return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) >= 0);
         }
