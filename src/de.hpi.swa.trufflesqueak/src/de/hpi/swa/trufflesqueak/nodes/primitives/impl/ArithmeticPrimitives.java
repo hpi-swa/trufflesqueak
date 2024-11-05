@@ -729,14 +729,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "index == 1")
         protected static final long doHigh(final Object receiver, @SuppressWarnings("unused") final long index,
                         @Bind("this") final Node node,
-                        @Shared("toDoubleNode") @Cached final ToDoubleNode toDoubleNode) {
+                        @Shared("toDoubleNode") @Cached final PrimFloatAtReceiverToDoubleNode toDoubleNode) {
             return Integer.toUnsignedLong((int) (Double.doubleToRawLongBits(toDoubleNode.execute(node, receiver)) >> 32));
         }
 
         @Specialization(guards = "index == 2")
         protected static final long doLow(final Object receiver, @SuppressWarnings("unused") final long index,
                         @Bind("this") final Node node,
-                        @Shared("toDoubleNode") @Cached final ToDoubleNode toDoubleNode) {
+                        @Shared("toDoubleNode") @Cached final PrimFloatAtReceiverToDoubleNode toDoubleNode) {
             return Integer.toUnsignedLong((int) Double.doubleToRawLongBits(toDoubleNode.execute(node, receiver)));
         }
 
@@ -1667,7 +1667,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateInline
     @GenerateCached(false)
-    protected abstract static class ToDoubleNode extends AbstractNode {
+    protected abstract static class PrimFloatAtReceiverToDoubleNode extends AbstractNode {
         protected abstract double execute(Node inliningTarget, Object value);
 
         @Specialization
