@@ -101,10 +101,6 @@ public final class SqueakGuards {
         return object instanceof EmptyObject;
     }
 
-    public static boolean isExactDouble(final long value) {
-        return (long) (double) value == value;
-    }
-
     public static boolean isFloatObject(final Object object) {
         return object instanceof FloatObject;
     }
