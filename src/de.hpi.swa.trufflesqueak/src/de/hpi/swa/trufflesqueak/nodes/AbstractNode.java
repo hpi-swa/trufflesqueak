@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
@@ -49,7 +50,13 @@ public abstract class AbstractNode extends Node {
         return getContext().isPointClass(object.getSqueakClass());
     }
 
+    @Idempotent
+    protected final boolean isPrimitiveDoMixedArithmetic() {
+        return getContext().flags.isPrimitiveDoMixedArithmetic();
+    }
+
     protected final boolean isSemaphore(final PointersObject object) {
         return getContext().isSemaphoreClass(object.getSqueakClass());
     }
+
 }

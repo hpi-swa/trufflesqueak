@@ -1013,7 +1013,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 71 -> 13L;
                 // do mixed arithmetic; if false binary arithmetic primitives will fail unless
                 // receiver and argument are of the same type
-                case 75 -> BooleanObject.TRUE;
+                case 75 -> image.flags.isPrimitiveDoMixedArithmetic();
                 default -> NilObject.SINGLETON;
             };
         }
