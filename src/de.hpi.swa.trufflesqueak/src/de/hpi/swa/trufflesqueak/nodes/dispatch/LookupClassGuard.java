@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -24,12 +25,12 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 public abstract class LookupClassGuard {
     protected abstract boolean check(Object receiver);
 
-    protected final ClassObject getSqueakClass(final SqueakImageContext image) {
-        CompilerAsserts.partialEvaluationConstant(image);
-        return getSqueakClassInternal(image);
+    protected final ClassObject getSqueakClass(final Node node) {
+        CompilerAsserts.partialEvaluationConstant(node);
+        return getSqueakClassInternal(node);
     }
 
-    protected abstract ClassObject getSqueakClassInternal(SqueakImageContext image);
+    protected abstract ClassObject getSqueakClassInternal(Node node);
 
     protected Assumption getIsValidAssumption() {
         return Assumption.ALWAYS_VALID;
@@ -71,8 +72,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.nilClass;
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).nilClass;
         }
     }
 
@@ -85,8 +86,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.trueClass;
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).trueClass;
         }
     }
 
@@ -99,8 +100,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.falseClass;
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).falseClass;
         }
     }
 
@@ -113,8 +114,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.smallIntegerClass;
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).smallIntegerClass;
         }
     }
 
@@ -127,8 +128,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.characterClass;
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).characterClass;
         }
     }
 
@@ -141,8 +142,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.smallFloatClass;
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).smallFloatClass;
         }
     }
 
@@ -155,8 +156,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.methodContextClass;
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).methodContextClass;
         }
     }
 
@@ -169,8 +170,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.floatClass;
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).floatClass;
         }
     }
 
@@ -197,7 +198,7 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+        protected ClassObject getSqueakClassInternal(final Node node) {
             return expectedLayout.getSqueakClass();
         }
     }
@@ -215,7 +216,7 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+        protected ClassObject getSqueakClassInternal(final Node node) {
             return expectedClass;
         }
     }
@@ -229,8 +230,8 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.getForeignObjectClass();
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).getForeignObjectClass();
         }
     }
 }
