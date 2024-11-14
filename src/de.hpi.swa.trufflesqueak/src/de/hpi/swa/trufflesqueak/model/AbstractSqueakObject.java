@@ -70,8 +70,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             return performInteropSendNode.execute(node, receiver, message, arguments);
         } catch (final ProcessSwitch ps) {
             CompilerDirectives.transferToInterpreter();
-            image.printToStdErr(ps);
-            throw new IllegalArgumentException();
+            if (image.options.isHeadless()) {
+                image.printToStdErr(ps);
+                throw new IllegalArgumentException();
+            } else {
+                throw ps; // open debugger in interactive mode
+            }
         } finally {
             if (wasActive) {
                 image.interrupt.activate();
