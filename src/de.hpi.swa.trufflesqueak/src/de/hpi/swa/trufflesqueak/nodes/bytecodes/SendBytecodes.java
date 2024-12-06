@@ -286,10 +286,16 @@ public final class SendBytecodes {
                  */
                 final int receiverStackIndex = FrameAccess.getStackPointer(frame) - 2;
                 final Object receiver = FrameAccess.getStackValue(frame, receiverStackIndex, FrameAccess.getNumArguments(frame));
-                if (receiver instanceof Long) { // TODO: can this be expanded to Double and others?
+                if (receiver instanceof Long) {
                     final CompiledCodeObject method = (CompiledCodeObject) image.smallIntegerClass.lookupInMethodDictSlow(specialSelector);
                     assert method.hasPrimitive() && method.getNumArgs() == numArguments;
                     primitiveIndex = method.primitiveIndex();
+                } else if (receiver instanceof Double) {
+                    final CompiledCodeObject method = (CompiledCodeObject) image.smallFloatClass.lookupInMethodDictSlow(specialSelector);
+                    assert method.hasPrimitive() && method.getNumArgs() == numArguments;
+                    primitiveIndex = method.primitiveIndex();
+                } else {
+                    // TODO: can this be expanded to Characters and others?
                 }
             } else if (selectorIndex == 16 || selectorIndex == 17) { // #at:, #at:put:
                 return new SendSpecialSelectorQuickWithClassCheck1OrMoreArgumentsNode(code, index, selectorIndex);
