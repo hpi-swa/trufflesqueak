@@ -14,7 +14,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 public abstract class AbstractPrimitiveFactoryHolder {
     public abstract List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories();
 
-    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
+    public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
         return Collections.emptyList();
     }
 }

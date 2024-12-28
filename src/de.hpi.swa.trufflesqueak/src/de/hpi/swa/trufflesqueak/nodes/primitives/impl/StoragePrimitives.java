@@ -698,7 +698,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @Override
-    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return List.of(PrimSpecialObjectsArrayNode.class, PrimSomeObjectNode.class);
+    public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
+        return List.of(new PrimSpecialObjectsArrayNode(), new PrimSomeObjectNode());
     }
 }

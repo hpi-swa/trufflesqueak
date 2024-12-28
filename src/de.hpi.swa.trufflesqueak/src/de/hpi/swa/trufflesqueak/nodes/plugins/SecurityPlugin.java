@@ -64,7 +64,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @Override
-    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return List.of(PrimCanWriteImageNode.class, PrimGetUntrustedUserDirectoryNode.class);
+    public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
+        return List.of(new PrimCanWriteImageNode(), new PrimGetUntrustedUserDirectoryNode());
     }
 }

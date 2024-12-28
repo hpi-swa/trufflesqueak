@@ -6,25 +6,11 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import java.lang.reflect.InvocationTargetException;
-
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnadoptableNode;
 
 public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNode implements UnadoptableNode {
-    private AbstractSingletonPrimitiveNode instance;
-
-    public static AbstractSingletonPrimitiveNode getInstance(final Class<? extends AbstractSingletonPrimitiveNode> primitiveClass) {
-        try {
-            final AbstractSingletonPrimitiveNode node = primitiveClass.getDeclaredConstructor().newInstance();
-            node.setInstance(node);
-            return node;
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-            throw CompilerDirectives.shouldNotReachHere(e);
-        }
-    }
 
     @Override
     public final Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
@@ -35,16 +21,11 @@ public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNo
 
     @Override
     public final Node copy() {
-        return instance;
+        return this;
     }
 
     @Override
     public final Node deepCopy() {
-        return instance;
-    }
-
-    private void setInstance(final AbstractSingletonPrimitiveNode node) {
-        assert instance == null;
-        instance = node;
+        return this;
     }
 }

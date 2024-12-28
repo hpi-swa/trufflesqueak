@@ -118,7 +118,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @Override
-    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return List.of(PrimScreenScaleFactorNode.class, PrimHighResClockNode.class, PrimMultipleBytecodeSetsActive0Node.class, PrimUtcWithOffset1Node.class);
+    public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
+        return List.of(new PrimScreenScaleFactorNode(), new PrimHighResClockNode(), new PrimMultipleBytecodeSetsActive0Node(), new PrimUtcWithOffset1Node());
     }
 }

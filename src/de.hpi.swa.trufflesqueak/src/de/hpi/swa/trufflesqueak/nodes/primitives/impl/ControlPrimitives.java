@@ -1369,17 +1369,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @Override
-    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
+    public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
         return List.of(
-                        PrimQuickReturnTrueNode.class,
-                        PrimQuickReturnFalseNode.class,
-                        PrimQuickReturnNilNode.class,
-                        PrimQuickReturnMinusOneNode.class,
-                        PrimQuickReturnZeroNode.class,
-                        PrimQuickReturnOneNode.class,
-                        PrimQuickReturnTwoNode.class,
-                        PrimBytesLeftNode.class,
-                        PrimFullGCNode.class,
-                        PrimIncrementalGCNode.class);
+                        new PrimQuickReturnTrueNode(),
+                        new PrimQuickReturnFalseNode(),
+                        new PrimQuickReturnNilNode(),
+                        new PrimQuickReturnMinusOneNode(),
+                        new PrimQuickReturnZeroNode(),
+                        new PrimQuickReturnOneNode(),
+                        new PrimQuickReturnTwoNode(),
+                        new PrimBytesLeftNode(),
+                        new PrimFullGCNode(),
+                        new PrimIncrementalGCNode());
     }
 }

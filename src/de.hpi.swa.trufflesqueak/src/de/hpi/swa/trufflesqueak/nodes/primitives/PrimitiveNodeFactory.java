@@ -239,12 +239,11 @@ public final class PrimitiveNodeFactory {
                     addEntryToPrimitiveTable(index, nodeFactory);
                 }
             }
-            for (final Class<? extends AbstractSingletonPrimitiveNode> primitiveClass : primitiveFactory.getSingletonPrimitives()) {
-                final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
+            for (final AbstractSingletonPrimitiveNode singletonPrimitiveNode : primitiveFactory.getSingletonPrimitives()) {
+                final SqueakPrimitive primitive = singletonPrimitiveNode.getClass().getAnnotation(SqueakPrimitive.class);
                 for (final int index : primitive.indices()) {
                     assert !SINGLETON_PRIMITIVE_TABLE.containsKey(index) && !PRIMITIVE_TABLE.containsKey(index);
-                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.newInstance(primitiveClass);
-                    SINGLETON_PRIMITIVE_TABLE.put(index, singleton);
+                    SINGLETON_PRIMITIVE_TABLE.put(index, singletonPrimitiveNode);
                 }
             }
         }
@@ -272,12 +271,11 @@ public final class PrimitiveNodeFactory {
             PLUGIN_MAP.put(pluginName, functionNameToNodeFactory);
 
             final EconomicMap<String, AbstractPrimitiveNode> functionNameToSingletonNode = EconomicMap.create(plugin.getSingletonPrimitives().size());
-            for (final Class<? extends AbstractSingletonPrimitiveNode> primitiveClass : plugin.getSingletonPrimitives()) {
-                final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
+            for (final AbstractSingletonPrimitiveNode singletonPrimitiveNode : plugin.getSingletonPrimitives()) {
+                final SqueakPrimitive primitive = singletonPrimitiveNode.getClass().getAnnotation(SqueakPrimitive.class);
                 for (final String name : primitive.names()) {
-                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.newInstance(primitiveClass);
                     assert !functionNameToSingletonNode.containsKey(name);
-                    functionNameToSingletonNode.put(name, singleton);
+                    functionNameToSingletonNode.put(name, singletonPrimitiveNode);
                 }
             }
             SINGLETON_PLUGIN_MAP.put(pluginName, functionNameToSingletonNode);

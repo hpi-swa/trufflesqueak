@@ -121,7 +121,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     }
 
     @Override
-    public List<Class<? extends AbstractSingletonPrimitiveNode>> getSingletonPrimitives() {
-        return List.of(PrimHasSecureHashPrimitiveNode.class);
+    public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
+        return List.of(new PrimHasSecureHashPrimitiveNode());
     }
 }
