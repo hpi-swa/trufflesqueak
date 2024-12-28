@@ -243,7 +243,7 @@ public final class PrimitiveNodeFactory {
                 final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                 for (final int index : primitive.indices()) {
                     assert !SINGLETON_PRIMITIVE_TABLE.containsKey(index) && !PRIMITIVE_TABLE.containsKey(index);
-                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.getInstance(primitiveClass);
+                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.newInstance(primitiveClass);
                     SINGLETON_PRIMITIVE_TABLE.put(index, singleton);
                 }
             }
@@ -275,7 +275,7 @@ public final class PrimitiveNodeFactory {
             for (final Class<? extends AbstractSingletonPrimitiveNode> primitiveClass : plugin.getSingletonPrimitives()) {
                 final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                 for (final String name : primitive.names()) {
-                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.getInstance(primitiveClass);
+                    final AbstractSingletonPrimitiveNode singleton = AbstractSingletonPrimitiveNode.newInstance(primitiveClass);
                     assert !functionNameToSingletonNode.containsKey(name);
                     functionNameToSingletonNode.put(name, singleton);
                 }
