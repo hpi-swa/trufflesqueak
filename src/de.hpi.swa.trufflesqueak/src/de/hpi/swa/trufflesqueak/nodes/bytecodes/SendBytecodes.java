@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialSelectorQuickPointXNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialSelectorQuickPointYNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
@@ -286,16 +287,13 @@ public final class SendBytecodes {
                  */
                 final int receiverStackIndex = FrameAccess.getStackPointer(frame) - 2;
                 final Object receiver = FrameAccess.getStackValue(frame, receiverStackIndex, FrameAccess.getNumArguments(frame));
-                if (receiver instanceof Long) {
-                    final CompiledCodeObject method = (CompiledCodeObject) image.smallIntegerClass.lookupInMethodDictSlow(specialSelector);
-                    assert method.hasPrimitive() && method.getNumArgs() == numArguments;
-                    primitiveIndex = method.primitiveIndex();
-                } else if (receiver instanceof Double) {
-                    final CompiledCodeObject method = (CompiledCodeObject) image.smallFloatClass.lookupInMethodDictSlow(specialSelector);
-                    assert method.hasPrimitive() && method.getNumArgs() == numArguments;
-                    primitiveIndex = method.primitiveIndex();
-                } else {
+                if (receiver instanceof Long || receiver instanceof Double) {
                     // TODO: can this be expanded to Characters and others?
+                    final Object lookupResult = SqueakObjectClassNode.executeUncached(receiver).lookupInMethodDictSlow(specialSelector);
+                    if (lookupResult instanceof CompiledCodeObject method && method.hasPrimitive()) {
+                        assert method.getNumArgs() == numArguments;
+                        primitiveIndex = method.primitiveIndex();
+                    }
                 }
             } else if (selectorIndex == 16 || selectorIndex == 17) { // #at:, #at:put:
                 return new SendSpecialSelectorQuickWithClassCheck1OrMoreArgumentsNode(code, index, selectorIndex);
