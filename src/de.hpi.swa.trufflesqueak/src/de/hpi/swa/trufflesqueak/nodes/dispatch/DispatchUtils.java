@@ -80,7 +80,6 @@ public final class DispatchUtils {
 
     @TruffleBoundary
     public static void handlePrimitiveFailedIndirect(final Node node, final AbstractPrimitiveNode primitiveNode, final CompiledCodeObject method, final PrimitiveFailed primitiveFailed) {
-        logPrimitiveFailed(primitiveNode);
         if (method.hasStoreIntoTemp1AfterCallPrimitive()) {
             SqueakImageContext.get(node).setPrimitiveErrorCode(primitiveFailed);
         }
