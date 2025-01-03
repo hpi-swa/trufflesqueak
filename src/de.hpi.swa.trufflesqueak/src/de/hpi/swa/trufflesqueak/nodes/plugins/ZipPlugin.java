@@ -17,15 +17,15 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDeflateBlock")
-    protected abstract static class PrimDeflateBlockNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimDeflateBlockNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = {"receiver.size() >= 15"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final boolean doDeflateBlock(final PointersObject receiver, final long lastIndex, final long chainLength, final long goodMatch) {
@@ -35,7 +35,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDeflateUpdateHashTable")
-    protected abstract static class PrimDeflateUpdateHashTableNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimDeflateUpdateHashTableNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"table.isIntType()"})
         protected static final Object doDeflateUpdateHashTable(final Object receiver, final NativeObject table, final long delta) {
             Zip.primitiveDeflateUpdateHashTable(table, (int) delta);
@@ -45,7 +45,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInflateDecompressBlock")
-    protected abstract static class PrimInflateDecompressBlockNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimInflateDecompressBlockNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"hasValidArguments(receiver, llTable, dTable)"})
         protected final PointersObject doInflateDecompressBlock(final PointersObject receiver, final NativeObject llTable, final NativeObject dTable) {
             getContext().zip.primitiveInflateDecompressBlock(receiver, llTable, dTable);
@@ -59,7 +59,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveUpdateAdler32")
-    protected abstract static class PrimUpdateAdler32Node extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimUpdateAdler32Node extends AbstractPrimitiveNode implements Primitive4WithFallback {
         @Specialization(guards = {"stopIndex >= startIndex", "startIndex > 0", "collection.isByteType()", "stopIndex <= collection.getByteLength()"})
         protected static final long doUpdateAdler32(@SuppressWarnings("unused") final Object receiver, final long adler32, final long startIndex, final long stopIndex,
                         final NativeObject collection) {
@@ -69,7 +69,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveUpdateGZipCrc32")
-    protected abstract static class PrimUpdateGZipCrc32Node extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimUpdateGZipCrc32Node extends AbstractPrimitiveNode implements Primitive4WithFallback {
         @Specialization(guards = {"stopIndex >= startIndex", "startIndex > 0", "collection.isByteType()", "stopIndex <= collection.getByteLength()"})
         protected static final long doUpdateGZipCrc32(@SuppressWarnings("unused") final Object receiver, final long crc, final long startIndex, final long stopIndex,
                         final NativeObject collection) {
@@ -79,7 +79,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveZipSendBlock")
-    protected abstract static class PrimZipSendBlockNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimZipSendBlockNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
         @Specialization(guards = {"hasValidArguments(receiver, litStream, distStream, litTree, distTree)"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doZipSendBlock(final PointersObject receiver, final PointersObject litStream, final PointersObject distStream, final PointersObject litTree,

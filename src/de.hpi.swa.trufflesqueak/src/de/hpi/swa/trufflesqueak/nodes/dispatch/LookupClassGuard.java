@@ -23,9 +23,9 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
 public abstract class LookupClassGuard {
-    protected abstract boolean check(Object receiver);
+    public abstract boolean check(Object receiver);
 
-    protected final ClassObject getSqueakClass(final Node node) {
+    public final ClassObject getSqueakClass(final Node node) {
         CompilerAsserts.partialEvaluationConstant(node);
         return getSqueakClassInternal(node);
     }
@@ -67,7 +67,7 @@ public abstract class LookupClassGuard {
         private static final NilGuard SINGLETON = new NilGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver == NilObject.SINGLETON;
         }
 
@@ -81,7 +81,7 @@ public abstract class LookupClassGuard {
         private static final TrueGuard SINGLETON = new TrueGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver == Boolean.TRUE;
         }
 
@@ -95,7 +95,7 @@ public abstract class LookupClassGuard {
         private static final FalseGuard SINGLETON = new FalseGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver == Boolean.FALSE;
         }
 
@@ -109,7 +109,7 @@ public abstract class LookupClassGuard {
         private static final SmallIntegerGuard SINGLETON = new SmallIntegerGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver instanceof Long;
         }
 
@@ -123,7 +123,7 @@ public abstract class LookupClassGuard {
         private static final CharacterGuard SINGLETON = new CharacterGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver instanceof Character || receiver instanceof CharacterObject;
         }
 
@@ -137,7 +137,7 @@ public abstract class LookupClassGuard {
         private static final DoubleGuard SINGLETON = new DoubleGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver instanceof Double;
         }
 
@@ -151,7 +151,7 @@ public abstract class LookupClassGuard {
         private static final ContextObjectGuard SINGLETON = new ContextObjectGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver instanceof ContextObject;
         }
 
@@ -165,7 +165,7 @@ public abstract class LookupClassGuard {
         private static final ForeignObjectGuard SINGLETON = new ForeignObjectGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver instanceof FloatObject;
         }
 
@@ -188,7 +188,7 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver instanceof final AbstractPointersObject o && o.getLayout() == expectedLayout;
         }
 
@@ -211,7 +211,7 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return receiver instanceof final AbstractSqueakObjectWithClassAndHash o && o.getSqueakClass() == expectedClass;
         }
 
@@ -225,7 +225,7 @@ public abstract class LookupClassGuard {
         private static final ForeignObjectGuard SINGLETON = new ForeignObjectGuard();
 
         @Override
-        protected boolean check(final Object receiver) {
+        public boolean check(final Object receiver) {
             return !SqueakGuards.isAbstractSqueakObject(receiver) && !SqueakGuards.isUsedJavaPrimitive(receiver);
         }
 

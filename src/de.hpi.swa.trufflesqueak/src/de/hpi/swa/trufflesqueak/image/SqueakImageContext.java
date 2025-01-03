@@ -19,6 +19,7 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
@@ -30,6 +31,7 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
@@ -71,6 +73,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -116,6 +119,7 @@ public final class SqueakImageContext {
     public final ClassObject nilClass = new ClassObject(this);
 
     public final CompiledCodeObject dummyMethod = new CompiledCodeObject(this, null, CompiledCodeHeaderUtils.makeHeader(true, 1, 0, 0, false, true), ArrayUtils.EMPTY_ARRAY, compiledMethodClass);
+    public final VirtualFrame externalSenderFrame = FrameAccess.newDummyFrame();
 
     /* Method Cache */
     private static final int METHOD_CACHE_SIZE = 2 << 12;
@@ -123,6 +127,9 @@ public final class SqueakImageContext {
     private static final int METHOD_CACHE_REPROBES = 4;
     private int methodCacheRandomish;
     @CompilationFinal(dimensions = 1) private final MethodCacheEntry[] methodCache = new MethodCacheEntry[METHOD_CACHE_SIZE];
+
+    /* Interpreter state */
+    private int primitiveErrorCode = -1;
 
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
@@ -733,6 +740,18 @@ public final class SqueakImageContext {
         }
     }
 
+    public long getPrimitiveErrorCode() {
+        assert primitiveErrorCode >= 0;
+        final long result = primitiveErrorCode;
+        primitiveErrorCode = -1;
+        return result;
+    }
+
+    public void setPrimitiveErrorCode(final PrimitiveFailed primitiveFailed) {
+        assert primitiveErrorCode == -1 : "Previous primitive error code was not consumed";
+        primitiveErrorCode = primitiveFailed.getReasonCode();
+    }
+
     @TruffleBoundary
     public Object getScope() {
         ensureLoaded();
@@ -777,6 +796,14 @@ public final class SqueakImageContext {
             probe = probe + selectorHash & METHOD_CACHE_MASK;
         }
         return methodCache[firstProbe].reuseFor(classObject, selector);
+    }
+
+    public Object lookup(final ClassObject receiverClass, final NativeObject selector) {
+        final MethodCacheEntry cachedEntry = findMethodCacheEntry(receiverClass, selector);
+        if (cachedEntry.getResult() == null) {
+            cachedEntry.setResult(receiverClass.lookupInMethodDictSlow(selector));
+        }
+        return cachedEntry.getResult();
     }
 
     /* Clear all cache entries (prim 89). */

@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -27,17 +28,21 @@ import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.library.ReflectionLibrary;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUtils;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @SuppressWarnings("static-method")
@@ -89,29 +94,26 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     protected abstract static class PerformInteropSendNode extends AbstractNode {
         protected abstract Object execute(Node node, AbstractSqueakObject receiver, Message message, Object[] arguments) throws Exception;
 
-        @SuppressWarnings("unused")
         @ExplodeLoop
-        @Specialization(guards = {"message == cachedMessage", "classNode.executeLookup(node, receiver) == cachedClass", "cachedMethod != null"}, limit = "8", //
-                        assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()", "cachedMethod.getCallTargetStable()"})
-        protected static final Object doSendCached(final Node node, final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
-                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
+        @Specialization(guards = {"message == cachedMessage", "guard.check(receiver)"}, limit = "8", assumptions = "dispatchNode.getAssumptions()")
+        protected static final Object doSendCached(final Node node, final AbstractSqueakObject receiver, @SuppressWarnings("unused") final Message message, final Object[] rawArguments,
                         @Cached("message") final Message cachedMessage,
-                        @Cached("classNode.executeLookup(node, receiver)") final ClassObject cachedClass,
-                        @Cached("lookupMethod(cachedClass, cachedMessage)") final CompiledCodeObject cachedMethod,
-                        @Cached(value = "create(cachedMethod.getCallTarget())", inline = false) final DirectCallNode callNode,
-                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) {
+                        @SuppressWarnings("unused") @Cached("lookupMethod(receiver, cachedMessage)") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                        @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
             final int numArgs = cachedMessage.getParameterCount() - 1;
-            assert numArgs == arguments.length;
-            final Object[] frameArguments = FrameAccess.newWith(NilObject.SINGLETON, null, cachedMessage.getParameterCount());
-            frameArguments[FrameAccess.getReceiverStartIndex()] = receiver;
-            for (int i = 0; i < cachedMessage.getParameterCount() - 1; i++) {
-                frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(node, arguments[i]);
+            assert numArgs == rawArguments.length;
+            final Object[] arguments = new Object[numArgs];
+            for (int i = 0; i < numArgs; i++) {
+                arguments[i] = wrapNode.executeWrap(node, rawArguments[i]);
             }
-            return callNode.call(frameArguments);
+            return dispatchNode.execute(SqueakImageContext.get(node).externalSenderFrame, receiver, arguments);
         }
 
-        protected static final CompiledCodeObject lookupMethod(final ClassObject clazz, final Message message) {
-            return clazz.lookupMethodInMethodDictSlow(SqueakImageContext.get(null).toInteropSelector(message));
+        protected static final CompiledCodeObject lookupMethod(final AbstractSqueakObject receiver, final Message message) {
+            final ClassObject receiverClass = SqueakObjectClassNode.executeUncached(receiver);
+            return receiverClass.lookupMethodInMethodDictSlow(SqueakImageContext.get(null).toInteropSelector(message));
         }
 
         // TODO: Add Specialization for non-InteropLibrary messages to avoid slowing down other
@@ -120,22 +122,34 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         @TruffleBoundary
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doSendCached")
-        protected static final Object doSendGeneric(final Node node, final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
+        protected static final Object doSendGeneric(final Node node, final AbstractSqueakObject receiver, final Message message, final Object[] rawArguments,
                         @Cached final LookupMethodNode lookupNode,
-                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
-                        @Cached final DispatchUneagerlyNode dispatchNode,
-                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws Exception {
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                        @Cached final IndirectCallNode callNode) throws Exception {
             final SqueakImageContext image = SqueakImageContext.get(node);
             if (message.getLibraryClass() == InteropLibrary.class) {
                 final NativeObject selector = image.toInteropSelector(message);
-                final Object methodObject = lookupNode.executeLookup(node, classNode.executeLookup(node, receiver), selector);
+                final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+                final Object methodObject = lookupNode.executeLookup(node, receiverClass, selector);
                 if (methodObject instanceof final CompiledCodeObject method) {
-                    final Object[] receiverAndArguments = new Object[message.getParameterCount()];
-                    receiverAndArguments[0] = receiver;
+                    assert 1 + method.getNumArgs() == message.getParameterCount();
+                    final Object[] arguments = new Object[method.getNumArgs()];
                     for (int i = 0; i < arguments.length; i++) {
-                        receiverAndArguments[1 + i] = wrapNode.executeWrap(node, arguments[i]);
+                        arguments[i] = wrapNode.executeWrap(node, rawArguments[i]);
                     }
-                    return dispatchNode.executeDispatch(node, method, receiverAndArguments, NilObject.SINGLETON);
+                    if (method.hasPrimitive()) {
+                        final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                        if (primitiveNode != null) {
+                            final VirtualFrame frame = null; // FIXME?
+                            try {
+                                return primitiveNode.executeWithArguments(frame, receiver, arguments);
+                            } catch (final PrimitiveFailed pf) {
+                                DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                            }
+                        }
+                    }
+                    return callNode.call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, receiver, arguments));
                 } else {
                     image.printToStdErr(selector, "method:", methodObject);
                 }
@@ -148,7 +162,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final LibraryFactory<?> lib = message.getFactory();
             final Method genericDispatchMethod = lib.getClass().getDeclaredMethod("genericDispatch", Library.class, Object.class, Message.class, Object[].class, int.class);
             genericDispatchMethod.setAccessible(true);
-            return genericDispatchMethod.invoke(lib, lib.getUncached(DEFAULT), receiver, message, arguments, 0);
+            return genericDispatchMethod.invoke(lib, lib.getUncached(DEFAULT), receiver, message, rawArguments, 0);
         }
     }
 }

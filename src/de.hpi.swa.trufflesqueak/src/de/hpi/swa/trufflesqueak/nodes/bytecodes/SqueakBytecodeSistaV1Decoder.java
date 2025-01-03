@@ -81,11 +81,11 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F //
                 -> SendBytecodes.AbstractSendSpecialSelectorQuickNode.create(frame, code, index, b - 96);
             case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F //
-                -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 0);
+                -> SendBytecodes.SelfSendNode.create(frame, code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 0);
             case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F //
-                -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
+                -> SendBytecodes.SelfSendNode.create(frame, code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
             case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF //
-                -> SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
+                -> SendBytecodes.SelfSendNode.create(frame, code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
             case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> JumpBytecodes.createUnconditionalShortJump(code, bytecodeNodes, index, b);
             case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> JumpBytecodes.ConditionalJumpOnTrueNode.createShort(code, index, b);
             case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> JumpBytecodes.ConditionalJumpOnFalseNode.createShort(code, index, b);
@@ -93,7 +93,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7 -> new StoreBytecodes.PopIntoTemporaryLocationNode(code, index, 1, b & 7);
             case 0xD8 -> new MiscellaneousBytecodes.PopNode(code, index);
             // FIXME: Unconditional trap
-            case 0xD9 -> SendBytecodes.SelfSendNode.create(code, index, 1, code.getSqueakClass().getImage().getSpecialSelector(SPECIAL_OBJECT.SELECTOR_SISTA_TRAP), 1);
+            case 0xD9 -> SendBytecodes.SelfSendNode.create(frame, code, index, 1, code.getSqueakClass().getImage().getSpecialSelector(SPECIAL_OBJECT.SELECTOR_SISTA_TRAP), 1);
             case 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF -> new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
             case 0xE0 -> decodeBytecode(frame, code, bytecodeNodes, index, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB, numExtB);
             case 0xE1 -> {
@@ -113,7 +113,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 final int literalIndex = (byte1 >> 3) + (extA << 5);
                 final int numArgs = (byte1 & 7) + (extB << 3);
                 final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
-                yield SendBytecodes.SelfSendNode.create(code, index, 2 + extBytes, selector, numArgs);
+                yield SendBytecodes.SelfSendNode.create(frame, code, index, 2 + extBytes, selector, numArgs);
             }
             case 0xEB -> {
                 boolean isDirected = false;
@@ -126,9 +126,9 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 final int literalIndex = (byte1 >> 3) + (extA << 5);
                 final int numArgs = (byte1 & 7) + (extBValue << 3);
                 if (isDirected) {
-                    yield new SendBytecodes.DirectedSuperSendNode(code, index, 2 + extBytes, literalIndex, numArgs);
+                    yield new SendBytecodes.DirectedSuperSendNode(frame, code, index, 2 + extBytes, literalIndex, numArgs);
                 } else {
-                    yield new SendBytecodes.SuperSendNode(code, index, 2 + extBytes, literalIndex, numArgs);
+                    yield new SendBytecodes.SuperSendNode(frame, code, index, 2 + extBytes, literalIndex, numArgs);
                 }
             }
             case 0xEC -> new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);

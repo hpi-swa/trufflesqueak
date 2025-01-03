@@ -26,7 +26,7 @@ public abstract class InheritsFromNode extends AbstractNode {
     public abstract boolean execute(Node node, Object object, ClassObject classObject);
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "CACHE_SIZE", guards = {"object == cachedObject", "classObject == cachedClass"}, assumptions = {"cachedClass.getClassHierarchyStable()"})
+    @Specialization(limit = "CACHE_SIZE", guards = {"object == cachedObject", "classObject == cachedClass"}, assumptions = {"cachedClass.getClassHierarchyAndMethodDictStable()"})
     protected static final boolean doCached(final Object object, final ClassObject classObject,
                     @Cached("object") final Object cachedObject,
                     @Cached("classObject") final ClassObject cachedClass,

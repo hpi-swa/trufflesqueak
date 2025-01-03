@@ -38,10 +38,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecial
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchLookupResultNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -68,7 +66,7 @@ public final class SendBytecodes {
         public final void executeVoid(final VirtualFrame frame) {
             Object result;
             try {
-                decrementStackPointerByNumReceiverAndArguments(frame);
+                decrementStackPointer(frame);
                 result = dispatchSend(frame);
             } catch (final NonLocalReturn nlr) {
                 if (nlrProfile.profile(nlr.getTargetContextOrMarker() == FrameAccess.getMarker(frame) || nlr.getTargetContextOrMarker() == FrameAccess.getContext(frame))) {
@@ -87,13 +85,17 @@ public final class SendBytecodes {
             getPushNode().execute(frame, result);
         }
 
-        private void decrementStackPointerByNumReceiverAndArguments(final VirtualFrame frame) {
+        private void decrementStackPointer(final VirtualFrame frame) {
             if (stackPointer == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointer = FrameAccess.getStackPointer(frame) - (1 + argumentCount);
+                stackPointer = FrameAccess.getStackPointer(frame) - numPop();
                 assert stackPointer >= 0 : "Bad stack pointer";
             }
             FrameAccess.setStackPointer(frame, stackPointer);
+        }
+
+        protected int numPop() {
+            return 1 + argumentCount;
         }
 
         protected abstract Object dispatchSend(VirtualFrame frame);
@@ -129,55 +131,39 @@ public final class SendBytecodes {
     public static final class SelfSendNode extends AbstractSendNode {
         public static final int INLINE_CACHE_SIZE = 6;
 
-        @Child private FrameStackReadNode peekAtReceiverNode;
-        @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
-        @Child private LookupSelectorNode lookupSelectorNode;
-        @Child private DispatchLookupResultNode dispatchNode;
+        @Child private DispatchSelectorNode dispatchNode;
 
-        private SelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
+        private SelfSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
-            lookupSelectorNode = LookupSelectorNode.create(selector);
-            dispatchNode = DispatchLookupResultNode.create(selector, numArgs);
+            dispatchNode = DispatchSelectorNode.create(frame, selector, numArgs);
         }
 
-        public static SelfSendNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
-            return new SelfSendNode(code, index, numBytecodes, selector, numArgs);
+        public static SelfSendNode create(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
+            return new SelfSendNode(frame, code, index, numBytecodes, selector, numArgs);
         }
 
         @Override
         protected Object dispatchSend(final VirtualFrame frame) {
-            final Object receiver = peekAtReceiver(frame);
-            final ClassObject receiverClass = lookupClassNode.execute(receiver);
-            final Object lookupResult = lookupSelectorNode.execute(receiverClass);
-            return dispatchNode.execute(frame, receiver, receiverClass, lookupResult);
+            return dispatchNode.execute(frame);
         }
 
         @Override
         public NativeObject getSelector() {
             return dispatchNode.getSelector();
         }
-
-        private Object peekAtReceiver(final VirtualFrame frame) {
-            if (peekAtReceiverNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int stackPointer = FrameAccess.getStackPointer(frame);
-                peekAtReceiverNode = insert(FrameStackReadNode.create(frame, stackPointer, false));
-            }
-            return peekAtReceiverNode.executeRead(frame);
-        }
     }
 
     public static final class SuperSendNode extends AbstractSendNode {
-        @Child private DispatchSuperSendNode dispatchNode;
+        @Child private DispatchSelectorNode dispatchNode;
 
-        public SuperSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
-            this(code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
+        public SuperSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
+            this(frame, code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
         }
 
-        public SuperSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
+        public SuperSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
             final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
-            dispatchNode = DispatchSuperSendNode.create(code, selector, numArgs);
+            dispatchNode = DispatchSelectorNode.createSuper(frame, code, selector, numArgs);
         }
 
         @Override
@@ -198,59 +184,29 @@ public final class SendBytecodes {
     }
 
     public static final class DirectedSuperSendNode extends AbstractSendNode {
+        @Child private DispatchSelectorNode dispatchNode;
 
-        @CompilationFinal private int stackPointer = -1;
-
-        @Child private FrameStackReadNode peekAtReceiverNode;
-        @Child private FrameStackReadNode readDirectedClassNode;
-        @Child private LookupSelectorNode lookupSelectorNode;
-        @Child private DispatchLookupResultNode dispatchNode;
-
-        public DirectedSuperSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int selectorLiteralIndex, final int numArgs) {
+        public DirectedSuperSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final int selectorLiteralIndex, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
             assert 0 <= selectorLiteralIndex && selectorLiteralIndex < 65535 : "selectorLiteralIndex out of range";
             assert 0 <= numArgs && numArgs <= 31 : "numArgs out of range";
             final NativeObject selector = (NativeObject) code.getLiteral(selectorLiteralIndex);
-            lookupSelectorNode = LookupSelectorNode.create(selector);
-            dispatchNode = DispatchLookupResultNode.create(selector, numArgs);
+            dispatchNode = DispatchSelectorNode.createDirectedSuper(frame, selector, numArgs);
         }
 
         @Override
         protected Object dispatchSend(final VirtualFrame frame) {
-            final ClassObject superclass = popDirectedClass(frame).getSuperclassOrNull();
-            assert superclass != null;
-            final Object lookupResult = lookupSelectorNode.execute(superclass);
-            final Object receiver = peekAtReceiver(frame);
-            return dispatchNode.execute(frame, receiver, superclass, lookupResult);
+            return dispatchNode.execute(frame);
+        }
+
+        @Override
+        protected int numPop() {
+            return 1 + 1 + argumentCount; // pop directed class, receiver, args
         }
 
         @Override
         public NativeObject getSelector() {
             return dispatchNode.getSelector();
-        }
-
-        private Object peekAtReceiver(final VirtualFrame frame) {
-            if (peekAtReceiverNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int sp = FrameAccess.getStackPointer(frame);
-                peekAtReceiverNode = insert(FrameStackReadNode.create(frame, sp, false));
-            }
-            return peekAtReceiverNode.executeRead(frame);
-        }
-
-        private ClassObject popDirectedClass(final VirtualFrame frame) {
-            if (readDirectedClassNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                /* Decrement sp to pop directed class. */
-                stackPointer = FrameAccess.getStackPointer(frame) - 1;
-                /*
-                 * Read and clear directed class. Add receiver and argumentCount (sp already
-                 * decremented in AbstractSendNode).
-                 */
-                readDirectedClassNode = insert(FrameStackReadNode.create(frame, stackPointer + 1 + argumentCount, true));
-            }
-            FrameAccess.setStackPointer(frame, stackPointer);
-            return (ClassObject) readDirectedClassNode.executeRead(frame);
         }
 
         @Override
@@ -330,7 +286,7 @@ public final class SendBytecodes {
                     return new SendSpecialSelectorQuick1OrMoreArgumentsNode(code, index, selectorIndex, dispatchPrimitiveNode);
                 }
             } else {
-                return new SelfSendNode(code, index, 1, specialSelector, numArguments);
+                return new SelfSendNode(frame, code, index, 1, specialSelector, numArguments);
             }
         }
 
@@ -343,7 +299,7 @@ public final class SendBytecodes {
             final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
             final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
             final CompiledCodeObject code = FrameAccess.getCodeObject(frame);
-            replace(new SelfSendNode(code, index - code.getInitialPC(), 1, specialSelector, numArguments)).executeVoid(frame);
+            replace(new SelfSendNode(frame, code, index - code.getInitialPC(), 1, specialSelector, numArguments)).executeVoid(frame);
         }
 
         protected final int findNewStackPointer(final VirtualFrame frame) {

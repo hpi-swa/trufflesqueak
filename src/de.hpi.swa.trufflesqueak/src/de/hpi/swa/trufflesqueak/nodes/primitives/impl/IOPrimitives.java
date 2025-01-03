@@ -59,12 +59,13 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWrit
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -74,7 +75,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 91)
-    protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final boolean doTest(@SuppressWarnings("unused") final Object receiver, final long depth) {
@@ -91,7 +92,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 93)
-    protected abstract static class PrimInputSemaphoreNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimInputSemaphoreNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final Object doSet(final Object receiver, final long semaIndex) {
@@ -105,7 +106,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 94)
-    protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray) {
@@ -125,7 +126,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 97)
-    protected abstract static class PrimSnapshotNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimSnapshotNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         public final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
@@ -148,7 +149,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 98)
-    protected abstract static class PrimStoreImageSegmentNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimStoreImageSegmentNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "segmentWordArray.isIntType()")
@@ -163,7 +164,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 99)
-    protected abstract static class PrimLoadImageSegmentNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimLoadImageSegmentNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "segmentWordArray.isIntType()")
@@ -178,7 +179,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 101)
-    protected abstract static class PrimBeCursor1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimBeCursor1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected final PointersObject doCursor(final PointersObject receiver,
                         @Bind("this") final Node node,
@@ -198,7 +199,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 101)
-    protected abstract static class PrimBeCursor2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimBeCursor2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject,
                         @Bind("this") final Node node,
@@ -231,7 +232,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 102)
-    protected abstract static class PrimBeDisplayNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimBeDisplayNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization(guards = {"receiver.size() >= 4"})
         protected final boolean doDisplay(final PointersObject receiver) {
@@ -248,7 +249,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 103)
-    protected abstract static class PrimScanCharactersNode extends AbstractPrimitiveNode implements SeptenaryPrimitiveFallback {
+    protected abstract static class PrimScanCharactersNode extends AbstractPrimitiveNode implements Primitive6WithFallback {
         private static final long END_OF_RUN = 257 - 1;
         private static final long CROSSED_X = 258 - 1;
 
@@ -312,7 +313,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 105)
-    protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
         @Specialization
         protected static final NativeObject doNative(final NativeObject rcvr, final long start, final long stop, final Object repl, final long replStart,
                         @Bind("this") final Node node,
@@ -813,7 +814,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 106)
-    public abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode {
+    public abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object doScreenSize(@SuppressWarnings("unused") final Object receiver,
                         @Bind("this") final Node node,
@@ -838,7 +839,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 126)
-    protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final Object doDefer(final Object receiver, final boolean flag,
@@ -854,7 +855,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 127)
-    protected abstract static class PrimShowDisplayRectNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimShowDisplayRectNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
 
         @Specialization
         protected final PointersObject doShow(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
@@ -868,7 +869,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 133)
-    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected static final Object set(final Object receiver, @SuppressWarnings("unused") final long keycode) {
@@ -879,7 +880,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 140)
-    protected abstract static class PrimBeepNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimBeepNode extends AbstractPrimitiveNode implements Primitive0 {
 
         @Specialization
         protected final Object doBeep(final Object receiver) {

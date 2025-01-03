@@ -28,9 +28,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
@@ -144,7 +144,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveComposeMatrix")
-    protected abstract static class PrimComposeMatrixNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimComposeMatrixNode extends AbstractMatrix2x3PrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "aTransformation.isIntType()", "result.isIntType()"})
         protected final Object doCompose(final NativeObject receiver, final NativeObject aTransformation, final NativeObject result) {
             final float[] m1 = loadMatrixAsFloat(receiver);
@@ -162,7 +162,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvertPoint")
-    protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject point,
                         @Bind("this") final Node node,
@@ -179,7 +179,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvertRectInto")
-    protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
                         @Bind("this") final Node node,
@@ -229,7 +229,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsIdentity")
-    protected abstract static class PrimIsIdentityNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimIsIdentityNode extends AbstractMatrix2x3PrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "receiver.isIntType()")
         protected final Object doIdentity(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
@@ -239,7 +239,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsPureTranslation")
-    protected abstract static class PrimIsPureTranslationNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimIsPureTranslationNode extends AbstractMatrix2x3PrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "receiver.isIntType()")
         protected final Object doPure(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
@@ -249,7 +249,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTransformPoint")
-    protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject point,
                         @Bind("this") final Node node,
@@ -265,7 +265,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTransformRectInto")
-    protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
                         @Bind("this") final Node node,

@@ -24,6 +24,7 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -52,10 +53,12 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -159,7 +162,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 68)
-    protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "index0 < receiver.getNumHeaderAndLiterals()")
         protected static final Object literalAt(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index,
                         @Bind("to0(index)") final long index0) {
@@ -169,7 +172,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 69)
-    protected abstract static class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "index0 < receiver.getNumHeaderAndLiterals()")
         protected static final Object literalAtPut(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index, final Object value,
                         @Bind("to0(index)") final long index0) {
@@ -180,7 +183,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 70)
-    public abstract static class PrimNewNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    public abstract static class PrimNewNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         public static final int NEW_CACHE_SIZE = 6;
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
@@ -213,7 +216,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 71)
-    protected abstract static class PrimNewWithArgNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimNewWithArgNode extends AbstractPrimitiveNode implements Primitive1 {
         public static final int NEW_CACHE_SIZE = 6;
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
@@ -257,7 +260,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 72)
-    protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray) {
@@ -279,7 +282,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 73)
-    protected abstract static class PrimInstVarAt2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimInstVarAt2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, receiver))", limit = "1")
         protected static final Object doAt(final Object receiver, final long index,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
@@ -292,7 +295,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 73)
     /* Context>>#object:instVarAt: */
-    protected abstract static class PrimInstVarAt3Node extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimInstVarAt3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, target))", limit = "1")
         protected static final Object doAt(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
@@ -304,7 +307,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 74)
-    protected abstract static class PrimInstVarAtPut3Node extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimInstVarAtPut3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, receiver))", limit = "1")
         protected static final Object doAtPut(final Object receiver, final long index, final Object value,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
@@ -318,7 +321,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 74)
     /* Context>>#object:instVarAt:put: */
-    protected abstract static class PrimInstVarAtPut4Node extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimInstVarAtPut4Node extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, target))", limit = "1")
         protected static final Object doAtPut(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
@@ -331,7 +334,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 75)
-    protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final long doNil(@SuppressWarnings("unused") final NilObject object) {
             return NilObject.SQUEAK_HASH;
@@ -359,7 +362,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 79)
-    protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "receiver.isCompiledMethodClassType()")
         protected final CompiledCodeObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
             final SqueakImageContext image = getContext();
@@ -373,7 +376,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 128)
-    protected abstract static class PrimArrayBecomeNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimArrayBecomeNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"sizeNode.execute(node, receiver) == sizeNode.execute(node, other)"})
         protected final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other,
                         @Bind("this") final Node node,
@@ -427,25 +430,25 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @DenyReplace
     @SqueakPrimitive(indices = 129)
-    public static final class PrimSpecialObjectsArrayNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimSpecialObjectsArrayNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return getContext().specialObjectsArray;
         }
     }
 
     @DenyReplace
     @SqueakPrimitive(indices = 138)
-    public static final class PrimSomeObjectNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimSomeObjectNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return NilObject.SINGLETON;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 139)
-    protected abstract static class PrimNextObjectNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimNextObjectNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver) {
@@ -469,7 +472,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @ImportStatic(Integer.class)
     @SqueakPrimitive(indices = 170)
-    protected abstract static class PrimCharacterValue1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimCharacterValue1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = {"0 <= receiver", "receiver <= MAX_VALUE"}, rewriteOn = RespecializeException.class)
         protected static final char doLongExact(final long receiver) throws RespecializeException {
             return CharacterObject.valueExactOf(receiver);
@@ -486,7 +489,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @ImportStatic(Integer.class)
     @SqueakPrimitive(indices = 170)
-    protected abstract static class PrimCharacterValue2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimCharacterValue2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"0 <= target", "target <= MAX_VALUE"}, rewriteOn = RespecializeException.class)
         protected static final char doClassLongExact(@SuppressWarnings("unused") final Object receiver, final long target) throws RespecializeException {
             return CharacterObject.valueExactOf(target);
@@ -502,7 +505,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 171)
-    protected abstract static class PrimImmediateAsIntegerNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimImmediateAsIntegerNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected static final long doChar(final char receiver) {
@@ -522,7 +525,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 173)
-    protected abstract static class PrimSlotAt2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSlotAt2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, receiver))", limit = "1")
         protected static final Object doSlotAt(final Object receiver, final long index,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
@@ -534,7 +537,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 173)
-    protected abstract static class PrimSlotAt3Node extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimSlotAt3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, target))", limit = "1")
         protected static final Object doSlotAt(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
@@ -546,7 +549,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 174)
-    protected abstract static class PrimSlotAtPut3Node extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimSlotAtPut3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, receiver))", limit = "1")
         protected static final Object doSlotAtPut(final Object receiver, final long index, final Object value,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
@@ -559,7 +562,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 174)
-    protected abstract static class PrimSlotAtPut4Node extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimSlotAtPut4Node extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, target))", limit = "1")
         protected static final Object doSlotAtPut(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
@@ -572,7 +575,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 175)
-    protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         /* Cache one class hash (helps String>>#hash). */
         @SuppressWarnings("unused")
@@ -592,7 +595,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 178)
-    protected abstract static class PrimAllObjectsNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimAllObjectsNode extends AbstractPrimitiveNode implements Primitive0 {
 
         @Specialization
         protected final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver) {
@@ -615,7 +618,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 181)
-    protected abstract static class PrimSizeInBytesOfInstance1Node extends AbstractPrimSizeInBytesOfInstance1Node implements UnaryPrimitiveFallback {
+    protected abstract static class PrimSizeInBytesOfInstance1Node extends AbstractPrimSizeInBytesOfInstance1Node implements Primitive0WithFallback {
         @Specialization
         protected static final long doBasicSize(final ClassObject receiver) {
             return postProcessSize(receiver.getBasicInstanceSize());
@@ -624,7 +627,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 181)
-    protected abstract static class PrimSizeInBytesOfInstance2Node extends AbstractPrimSizeInBytesOfInstance1Node implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSizeInBytesOfInstance2Node extends AbstractPrimSizeInBytesOfInstance1Node implements Primitive1WithFallback {
         @Specialization(guards = "receiver.getInstanceSpecification() == 9")
         protected static final long doSize64bit(final ClassObject receiver, final long numElements) {
             return postProcessSize(receiver.getBasicInstanceSize() + numElements * 2);
@@ -648,7 +651,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 248)
-    protected abstract static class PrimArrayBecomeOneWayNoCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimArrayBecomeOneWayNoCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray) {
@@ -670,7 +673,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 249)
-    protected abstract static class PrimArrayBecomeOneWayCopyHashArgNode extends AbstractArrayBecomeOneWayPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimArrayBecomeOneWayCopyHashArgNode extends AbstractArrayBecomeOneWayPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,

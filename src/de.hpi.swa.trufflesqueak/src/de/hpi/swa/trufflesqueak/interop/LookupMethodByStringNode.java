@@ -40,8 +40,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass",
-                    "selector.equals(cachedSelector)"}, assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()"})
+    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass", "selector.equals(cachedSelector)"}, assumptions = {"cachedClass.getClassHierarchyAndMethodDictStable()"})
     protected static final Object doCached(final Node node, final ClassObject classObject, final String selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final String cachedSelector,

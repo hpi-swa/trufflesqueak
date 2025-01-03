@@ -32,10 +32,12 @@ public final class MiscellaneousBytecodes {
 
     public static final class CallPrimitiveNode extends AbstractBytecodeNode {
         public static final int NUM_BYTECODES = 3;
+        @Child private FrameStackPushNode pushNode;
 
         public CallPrimitiveNode(final CompiledCodeObject method, final int index, final int primitiveIndex) {
             super(method, index, NUM_BYTECODES);
             assert method.hasPrimitive() && method.primitiveIndex() == primitiveIndex;
+            pushNode = method.hasStoreIntoTemp1AfterCallPrimitive() ? FrameStackPushNode.create() : null;
         }
 
         public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final byte byte1, final byte byte2) {
@@ -44,7 +46,10 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            // no-op, primitives handled specially.
+            // primitives handled specially
+            if (pushNode != null) {
+                pushNode.execute(frame, getContext().getPrimitiveErrorCode());
+            }
         }
 
         @Override
@@ -56,12 +61,13 @@ public final class MiscellaneousBytecodes {
 
     public static final class DoubleExtendedDoAnythingNode {
 
-        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param1, final byte param2) {
+        public static AbstractInstrumentableBytecodeNode create(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final byte param1,
+                        final byte param2) {
             final int second = Byte.toUnsignedInt(param1);
             final int third = Byte.toUnsignedInt(param2);
             return switch (second >> 5) {
-                case 0 -> SelfSendNode.create(code, index, numBytecodes, (NativeObject) code.getLiteral(third), second & 31);
-                case 1 -> new SuperSendNode(code, index, numBytecodes, third, second & 31);
+                case 0 -> SelfSendNode.create(frame, code, index, numBytecodes, (NativeObject) code.getLiteral(third), second & 31);
+                case 1 -> new SuperSendNode(frame, code, index, numBytecodes, third, second & 31);
                 case 2 -> PushReceiverVariableNode.create(code, index, numBytecodes, third);
                 case 3 -> new PushLiteralConstantNode(code, index, numBytecodes, third);
                 case 4 -> PushLiteralVariableNode.create(code, index, numBytecodes, third);

@@ -22,7 +22,6 @@ import com.oracle.truffle.api.dsl.NonIdempotent;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -34,7 +33,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ADDITIONAL_METHOD_STATE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.ExecuteNonFailingPrimitiveRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
@@ -42,9 +40,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
-import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -95,6 +92,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         @CompilationFinal private Assumption doesNotNeedSender;
         @CompilationFinal private RootCallTarget resumptionCallTarget;
     }
+
+    private AbstractPrimitiveNode primitiveNode;
 
     @TruffleBoundary
     public CompiledCodeObject(final long header, final ClassObject classObject) {
@@ -199,6 +198,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return executionData.source;
     }
 
+    public AbstractPrimitiveNode getPrimitiveNode() {
+        if (primitiveNode == null) {
+            primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
+        }
+        return primitiveNode;
+    }
+
     // used by CompiledMethod>>callTarget
     public RootCallTarget getCallTargetOrNull() {
         if (hasExecutionData()) {
@@ -233,15 +239,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private void initializeCallTargetUnsafe() {
         CompilerAsserts.neverPartOfCompilation();
         final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
-        final RootNode rootNode;
-        if (hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) {
-            final DispatchPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this, ArgumentsLocation.IN_FRAME_ARGUMENTS);
-            assert primitiveNode != null;
-            rootNode = new ExecuteNonFailingPrimitiveRootNode(language, this, primitiveNode);
-        } else {
-            rootNode = new StartContextRootNode(language, this);
-        }
-        getExecutionData().callTarget = rootNode.getCallTarget();
+        assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
+        getExecutionData().callTarget = new StartContextRootNode(language, this).getCallTarget();
     }
 
     public void flushCache() {

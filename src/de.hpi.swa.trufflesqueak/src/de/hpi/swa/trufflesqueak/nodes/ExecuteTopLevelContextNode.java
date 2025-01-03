@@ -28,6 +28,8 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -40,16 +42,16 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private ContextObject initialContext;
 
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
-    @Child private SendSelectorNode sendCannotReturnNode;
-    @Child private SendSelectorNode sendAboutToReturnNode;
+    @Child private Dispatch1Node sendCannotReturnNode;
+    @Child private Dispatch2Node sendAboutToReturnNode;
 
     private ExecuteTopLevelContextNode(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
         super(language, TOP_LEVEL_FRAME_DESCRIPTOR);
         this.image = image;
         initialContext = context;
         this.isImageResuming = isImageResuming;
-        sendCannotReturnNode = SendSelectorNode.create(image.cannotReturn);
-        sendAboutToReturnNode = SendSelectorNode.create(image.aboutToReturnSelector);
+        sendCannotReturnNode = Dispatch1Node.create(image.cannotReturn);
+        sendAboutToReturnNode = Dispatch2Node.create(image.aboutToReturnSelector);
     }
 
     public static ExecuteTopLevelContextNode create(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
@@ -212,7 +214,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {
         try {
-            sendCannotReturnNode.executeSend(startContext.getTruffleFrame(), new Object[]{startContext, returnValue});
+            sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
         } catch (final ProcessSwitch ps) {
             return ps.getNewContext();
         }
@@ -221,7 +223,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private ContextObject sendAboutToReturn(final ContextObject startContext, final Object returnValue, final ContextObject context) {
         try {
-            sendAboutToReturnNode.executeSend(startContext.getTruffleFrame(), new Object[]{startContext, returnValue, context});
+            sendAboutToReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue, context);
         } catch (final ProcessSwitch ps) {
             return ps.getNewContext();
         } catch (final NonVirtualReturn nvr) {
