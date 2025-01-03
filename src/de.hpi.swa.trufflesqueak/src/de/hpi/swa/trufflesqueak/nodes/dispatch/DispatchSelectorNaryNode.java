@@ -127,6 +127,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doDirect")
+        @SuppressWarnings("truffle-static-method")
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
