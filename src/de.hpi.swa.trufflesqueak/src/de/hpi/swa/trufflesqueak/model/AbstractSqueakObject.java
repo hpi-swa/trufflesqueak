@@ -126,7 +126,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Cached final LookupMethodNode lookupNode,
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
-                        @Cached final IndirectCallNode callNode) throws Exception {
+                        @Cached(inline = false) final IndirectCallNode callNode) throws Exception {
             final SqueakImageContext image = SqueakImageContext.get(node);
             if (message.getLibraryClass() == InteropLibrary.class) {
                 final NativeObject selector = image.toInteropSelector(message);
