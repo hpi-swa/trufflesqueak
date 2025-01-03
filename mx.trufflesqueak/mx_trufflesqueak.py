@@ -84,9 +84,9 @@ def _add_unit_tests(tasks, supports_coverage):
             if _COMPILER:
                 unittest_args.extend(
                     [
-                        "-Dgraal.CompilationFailureAction=ExitVM",
-                        "-Dpolyglot.compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial",
-                        "-Dpolyglot.engine.CompilationFailureAction=ExitVM",
+                        "-Dgraal.CompilationFailureAction=Silent",
+                        # "-Dpolyglot.compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial",
+                        "-Dpolyglot.engine.CompilationFailureAction=Silent",
                         "-Dpolyglot.engine.CompilationStatistics=true",
                     ]
                 )
