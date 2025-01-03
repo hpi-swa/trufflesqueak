@@ -36,16 +36,15 @@ public abstract class LookupSelectorNode extends AbstractNode {
     public abstract Object execute(ClassObject receiverClass);
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "INLINE_CACHE_SIZE", guards = {"receiverClass == cachedClass"}, //
-                    assumptions = {"cachedClass.getClassHierarchyStable()", "methodDictStableAssumptions"})
+    @Specialization(limit = "INLINE_CACHE_SIZE", guards = {"receiverClass == cachedClass"}, assumptions = {"assumptions"})
     protected static final Object doCached(final ClassObject receiverClass,
                     @Cached("receiverClass") final ClassObject cachedClass,
                     @Cached("receiverClass.lookupInMethodDictSlow(selector)") final Object cachedLookupResult,
-                    @Cached(value = "createMethodDictStableAssumptions(receiverClass, cachedLookupResult)", dimensions = 1) final Assumption[] methodDictStableAssumptions) {
+                    @Cached(value = "createAssumptions(receiverClass, cachedLookupResult)", dimensions = 1) final Assumption[] assumptions) {
         return cachedLookupResult;
     }
 
-    protected static final Assumption[] createMethodDictStableAssumptions(final ClassObject receiverClass, final Object lookupResult) {
+    protected static final Assumption[] createAssumptions(final ClassObject receiverClass, final Object lookupResult) {
         final ClassObject methodClass;
         if (lookupResult instanceof final CompiledCodeObject method) {
             assert method.isCompiledMethod();
@@ -57,7 +56,7 @@ public abstract class LookupSelectorNode extends AbstractNode {
         final ArrayList<Assumption> list = new ArrayList<>();
         ClassObject currentClass = receiverClass;
         while (currentClass != null) {
-            list.add(currentClass.getMethodDictStable());
+            list.add(currentClass.getClassHierarchyAndMethodDictStable());
             if (currentClass == methodClass) {
                 break;
             } else {

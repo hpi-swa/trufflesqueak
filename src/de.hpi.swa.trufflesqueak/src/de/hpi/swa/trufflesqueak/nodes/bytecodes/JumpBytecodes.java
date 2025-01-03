@@ -16,6 +16,7 @@ import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
@@ -51,7 +52,8 @@ public final class JumpBytecodes {
             } else {
                 CompilerDirectives.transferToInterpreter();
                 FrameAccess.setInstructionPointer(frame, FrameAccess.getCodeObject(frame).getInitialPC() + getSuccessorIndex());
-                getContext().mustBeBooleanSelector.executeAsSymbolSlow(frame, result);
+                final SqueakImageContext image = getContext();
+                image.mustBeBooleanSelector.executeAsSymbolSlow(image, frame, result);
                 throw SqueakException.create("Should not be reached");
             }
         }

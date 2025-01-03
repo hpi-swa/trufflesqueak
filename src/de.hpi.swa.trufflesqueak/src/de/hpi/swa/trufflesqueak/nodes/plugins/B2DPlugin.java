@@ -22,13 +22,13 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.OctonaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -43,7 +43,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddActiveEdgeEntry")
-    protected abstract static class PrimAddActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimAddActiveEdgeEntryNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject edgeEntry) {
@@ -54,7 +54,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddBezier")
-    protected abstract static class PrimAddBezierNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimAddBezierNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
 
         @Specialization(guards = {"isPoint(start)", "isPoint(stop)", "isPoint(via)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject stop, final PointersObject via, final long leftFillIndex,
@@ -66,7 +66,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddBezierShape")
-    protected abstract static class PrimAddBezierShapeNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimAddBezierShapeNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
 
         @Specialization
         protected final PointersObject doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
@@ -78,7 +78,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddBitmapFill")
-    protected abstract static class PrimAddBitmapFillNode extends AbstractPrimitiveNode implements OctonaryPrimitiveFallback {
+    protected abstract static class PrimAddBitmapFillNode extends AbstractPrimitiveNode implements Primitive7WithFallback {
 
         @Specialization(guards = {"xIndex > 0", "isPoint(origin)", "isPoint(direction)", "isPoint(normal)"})
         protected final long doAdd(final PointersObject receiver, final PointersObject form, final AbstractSqueakObject cmap, final boolean tileFlag, final PointersObject origin,
@@ -89,7 +89,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddCompressedShape")
-    protected abstract static class PrimAddCompressedShapeNode extends AbstractPrimitiveNode implements OctonaryPrimitiveFallback {
+    protected abstract static class PrimAddCompressedShapeNode extends AbstractPrimitiveNode implements Primitive7WithFallback {
 
         @Specialization
         protected final PointersObject doAdd(final PointersObject receiver, final NativeObject points, final long nSegments, final NativeObject leftFills, final NativeObject rightFills,
@@ -101,7 +101,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddGradientFill")
-    protected abstract static class PrimAddGradientFillNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimAddGradientFillNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
 
         @Specialization(guards = {"isBitmap(colorRamp)", "isPoint(origin)", "isPoint(direction)", "isPoint(normal)"})
         protected final long doAdd(final PointersObject receiver, final NativeObject colorRamp, final PointersObject origin, final PointersObject direction,
@@ -113,7 +113,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddLine")
-    protected abstract static class PrimAddLineNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimAddLineNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
 
         @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long leftFill, final long rightFill) {
@@ -124,7 +124,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddOval")
-    protected abstract static class PrimAddOvalNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimAddOvalNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
 
         @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
@@ -136,7 +136,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddPolygon")
-    protected abstract static class PrimAddPolygonNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimAddPolygonNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
 
         @Specialization
         protected final PointersObject doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth, final long lineFill) {
@@ -147,7 +147,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddRect")
-    protected abstract static class PrimAddRectNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimAddRectNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
 
         @Specialization(guards = {"isPoint(start)", "isPoint(end)"})
         protected final PointersObject doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
@@ -159,7 +159,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveChangedActiveEdgeEntry")
-    protected abstract static class PrimChangedActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimChangedActiveEdgeEntryNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final PointersObject doChange(final PointersObject receiver, final PointersObject edgeEntry) {
@@ -170,7 +170,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCopyBuffer")
-    protected abstract static class PrimCopyBufferNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimCopyBufferNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization(guards = {"oldBuffer.isIntType()", "newBuffer.isIntType()"})
         protected final PointersObject doCopy(final PointersObject receiver, final NativeObject oldBuffer, final NativeObject newBuffer) {
@@ -181,7 +181,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDisplaySpanBuffer")
-    protected abstract static class PrimDisplaySpanBufferNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimDisplaySpanBufferNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final PointersObject doDisplay(final PointersObject receiver) {
@@ -192,7 +192,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDoProfileStats")
-    protected abstract static class PrimDoProfileStatsNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimDoProfileStatsNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final boolean doProfile(@SuppressWarnings("unused") final Object receiver, final boolean aBoolean) {
@@ -202,7 +202,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFinishedProcessing")
-    protected abstract static class PrimFinishedProcessingNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimFinishedProcessingNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final boolean doCopy(final PointersObject receiver) {
@@ -212,7 +212,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetAALevel")
-    protected abstract static class PrimGetAALevelNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetAALevelNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final long doGet(final PointersObject receiver) {
@@ -222,7 +222,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetBezierStats")
-    protected abstract static class PrimGetBezierStatsNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimGetBezierStatsNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 4"})
         protected final PointersObject doGet(final PointersObject receiver, final NativeObject statsArray) {
@@ -233,7 +233,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetClipRect")
-    protected abstract static class PrimGetClipRectNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimGetClipRectNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"rect.size() >= 2"})
         protected final PointersObject doGet(final PointersObject receiver, final PointersObject rect,
@@ -246,7 +246,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetCounts")
-    protected abstract static class PrimGetCountsNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimGetCountsNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 9"})
         protected final PointersObject doGet(final PointersObject receiver, final NativeObject statsArray) {
@@ -257,7 +257,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetDepth")
-    protected abstract static class PrimGetDepthNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetDepthNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final long doGet(final PointersObject receiver) {
@@ -267,7 +267,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetFailureReason")
-    protected abstract static class PrimGetFailureReasonNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetFailureReasonNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final long doGet(final PointersObject receiver) {
@@ -277,7 +277,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetOffset")
-    protected abstract static class PrimGetOffsetNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetOffsetNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final PointersObject doGet(final PointersObject receiver,
@@ -289,7 +289,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetTimes")
-    protected abstract static class PrimGetTimesNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimGetTimesNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 9"})
         protected final PointersObject doGet(final PointersObject receiver, final NativeObject statsArray) {
@@ -300,7 +300,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInitializeBuffer")
-    protected abstract static class PrimInitializeBufferNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimInitializeBufferNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"buffer.isIntType()", "hasMinimalSize(buffer)"})
         protected final Object doInit(final Object receiver, final NativeObject buffer) {
@@ -315,7 +315,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInitializeProcessing")
-    protected abstract static class PrimInitializeProcessingNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimInitializeProcessingNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final PointersObject doCopy(final PointersObject receiver) {
@@ -326,7 +326,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMergeFillFrom")
-    protected abstract static class PrimMergeFillFromNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimMergeFillFromNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization(guards = {"isBitmap(fillBitmap)"})
         protected final PointersObject doCopy(final PointersObject receiver, final NativeObject fillBitmap, final PointersObject fill) {
@@ -337,7 +337,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveNeedsFlush")
-    protected abstract static class PrimNeedsFlushNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimNeedsFlushNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         protected final boolean doNeed(final PointersObject receiver) {
@@ -347,7 +347,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveNeedsFlushPut")
-    protected abstract static class PrimNeedsFlushPutNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimNeedsFlushPutNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final PointersObject doNeed(final PointersObject receiver, final boolean aBoolean) {
@@ -358,7 +358,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveNextActiveEdgeEntry")
-    protected abstract static class PrimNextActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimNextActiveEdgeEntryNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final boolean doNext(final PointersObject receiver, final PointersObject edgeEntry) {
@@ -368,7 +368,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveNextFillEntry")
-    protected abstract static class PrimNextFillEntryNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimNextFillEntryNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final boolean doNext(final PointersObject receiver, final PointersObject fillEntry) {
@@ -378,7 +378,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveNextGlobalEdgeEntry")
-    protected abstract static class PrimNextGlobalEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimNextGlobalEdgeEntryNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final boolean doNext(final PointersObject receiver, final PointersObject edgeEntry) {
@@ -388,7 +388,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRegisterExternalEdge")
-    protected abstract static class PrimRegisterExternalEdgeNode extends AbstractPrimitiveNode implements SeptenaryPrimitiveFallback {
+    protected abstract static class PrimRegisterExternalEdgeNode extends AbstractPrimitiveNode implements Primitive6WithFallback {
 
         @Specialization
         protected final PointersObject doRegister(final PointersObject receiver, final long index, final long initialX, final long initialY, final long initialZ, final long leftFillIndex,
@@ -401,7 +401,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRegisterExternalFill")
-    protected abstract static class PrimRegisterExternalFillNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimRegisterExternalFillNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final long doRegister(final PointersObject receiver, final long index) {
@@ -411,7 +411,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRenderImage")
-    protected abstract static class PrimRenderImageNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimRenderImageNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization
         protected final long doRender(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
@@ -421,7 +421,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRenderScanline")
-    protected abstract static class PrimRenderScanlineNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimRenderScanlineNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization
         protected final long doRender(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
@@ -431,7 +431,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetAALevel")
-    protected abstract static class PrimSetAALevelNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetAALevelNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final PointersObject doSet(final PointersObject receiver, final long level) {
@@ -442,7 +442,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetBitBltPlugin")
-    protected abstract static class PrimSetBitBltPluginNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetBitBltPluginNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"pluginName.isByteType()"})
         protected static final ClassObject doSet(final ClassObject receiver, final NativeObject pluginName) {
@@ -452,7 +452,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetClipRect")
-    protected abstract static class PrimSetClipRectNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetClipRectNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"rect.size() >= 2"})
         protected final PointersObject doSet(final PointersObject receiver, final PointersObject rect) {
@@ -463,7 +463,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetColorTransform")
-    protected abstract static class PrimSetColorTransformNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetColorTransformNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final PointersObject doSet(final PointersObject receiver, final AbstractSqueakObject transform) {
@@ -474,7 +474,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetDepth")
-    protected abstract static class PrimSetDepthNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetDepthNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final PointersObject doSet(final PointersObject receiver, final long depth) {
@@ -485,7 +485,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetEdgeTransform")
-    protected abstract static class PrimSetEdgeTransformNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetEdgeTransformNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected final PointersObject doSet(final PointersObject receiver, final AbstractSqueakObject transform) {
@@ -496,7 +496,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetOffset")
-    protected abstract static class PrimSetOffsetNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetOffsetNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"isPoint(point)"})
         protected final PointersObject doSet(final PointersObject receiver, final PointersObject point) {

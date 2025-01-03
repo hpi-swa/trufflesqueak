@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.graalvm.collections.EconomicMap;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -143,6 +144,7 @@ public final class PrimitiveNodeFactory {
         // checking SINGLETON_PLUGIN_MAP is probably not worth the effort.
     }
 
+    @TruffleBoundary
     public static AbstractPrimitiveNode getOrCreateIndexedOrNamed(final CompiledCodeObject method) {
         assert method.hasPrimitive();
         final int primitiveIndex = method.primitiveIndex();
@@ -208,6 +210,7 @@ public final class PrimitiveNodeFactory {
             return externalCallNode;
         }
 
+        // TODO: expand to more args?
         if (numReceiverAndArguments == 1) { // Check for singleton plugin primitive
             final AbstractPrimitiveNode primitiveNode = SINGLETON_PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName);
             if (primitiveNode != null) {

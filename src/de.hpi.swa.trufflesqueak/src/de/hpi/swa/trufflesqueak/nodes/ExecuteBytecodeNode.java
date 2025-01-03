@@ -19,7 +19,6 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
@@ -27,12 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.AbstractUnconditio
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.DispatchPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory.ArgumentsLocation;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
     private static final int LOCAL_RETURN_PC = -2;
@@ -41,8 +35,6 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     private final int initialPC;
     private SourceSection section;
 
-    @Child private DispatchPrimitiveNode primitiveNode;
-    @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @CompilationFinal private Object osrMetadata;
@@ -51,36 +43,12 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         this.code = code;
         initialPC = code.getInitialPC();
         bytecodeNodes = code.asBytecodeNodesEmpty();
-        if (code.hasPrimitive()) {
-            primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(code, ArgumentsLocation.IN_FRAME_ARGUMENTS);
-            if (primitiveNode == null) {
-                final int primitiveIndex = code.primitiveIndex();
-                if (primitiveIndex == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {
-                    LogUtils.PRIMITIVES.fine(() -> "Named primitive not found for " + code);
-                } else if (primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_SIMULATION_GUARD_INDEX &&
-                                primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ENSURE_MARKER_INDEX &&
-                                primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX) {
-                    LogUtils.PRIMITIVES.fine(() -> "Primitive #" + code.primitiveIndex() + " not found for " + code);
-                }
-            }
-        }
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final int startPC) {
         CompilerAsserts.partialEvaluationConstant(startPC);
         try {
-            if (primitiveNode != null && startPC == initialPC) {
-                try {
-                    return primitiveNode.execute(frame);
-                } catch (final PrimitiveFailed e) {
-                    /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
-                    getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                    LogUtils.PRIMITIVES.finer(() -> primitiveNode.getPrimitiveNodeClassSimpleName() + " failed (arguments: " +
-                                    ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
-                    /* continue with fallback code. */
-                }
-            }
             return interpretBytecode(frame, startPC);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
@@ -179,14 +147,6 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             notifyInserted(bytecodeNodes[pcZeroBased]);
         }
         return bytecodeNodes[pcZeroBased];
-    }
-
-    private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
-        if (handlePrimitiveFailedNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            handlePrimitiveFailedNode = insert(HandlePrimitiveFailedNode.create(code));
-        }
-        return handlePrimitiveFailedNode;
     }
 
     private HandleNonLocalReturnNode getHandleNonLocalReturnNode() {

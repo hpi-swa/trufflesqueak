@@ -11,7 +11,7 @@ import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -20,11 +20,12 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchDirect0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
 
 @SuppressWarnings("static-method")
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "delegate")
@@ -51,22 +52,28 @@ public final class SqueakLanguageView implements TruffleObject {
     }
 
     @ExportMessage
-    protected Object getMetaObject(@Bind("$node") final Node node, @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+    protected Object getMetaObject(@Bind("$node") final Node node, @Cached final SqueakObjectClassNode classNode) {
         return classNode.executeLookup(node, delegate);
     }
 
     @ExportMessage
-    protected Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects,
-                    @Bind("$node") final Node node,
-                    @Cached final LookupMethodByStringNode lookupNode,
-                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
-                    @Cached final DispatchUneagerlyNode dispatchNode) {
-        final ClassObject classObject = classNode.executeLookup(node, delegate);
-        final Object methodObject = lookupNode.executeLookup(node, classObject, "asString");
-        if (methodObject instanceof final CompiledCodeObject m) {
-            return dispatchNode.executeDispatch(node, m, new Object[]{delegate}, NilObject.SINGLETON);
-        } else {
-            return "Unsupported";
+    protected abstract static class ToDisplayString {
+        @SuppressWarnings("unused")
+        @Specialization(guards = "guard.check(view.delegate)", assumptions = "dispatchNode.getAssumptions()", limit = "1")
+        protected static final Object toDisplayString(final SqueakLanguageView view, final boolean allowSideEffects,
+                        @Cached(value = "create(view.delegate)", allowUncached = true) final LookupClassGuard guard,
+                        @Bind("$node") final Node node,
+                        @Cached(value = "create(guard)", allowUncached = true) final DispatchDirect0Node dispatchNode) {
+            return dispatchNode.execute(SqueakImageContext.get(node).externalSenderFrame, view.delegate);
+        }
+
+        protected static final DispatchDirect0Node create(final LookupClassGuard guard) {
+            final Object lookupResult = LookupMethodByStringNode.executeUncached(guard.getSqueakClass(null), "asString");
+            if (lookupResult instanceof CompiledCodeObject method) {
+                return DispatchDirect0Node.create(method, guard);
+            } else {
+                throw SqueakException.create("Failed to lookup asString");
+            }
         }
     }
 

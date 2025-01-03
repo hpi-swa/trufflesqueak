@@ -20,10 +20,23 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive10;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive11;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 
-public final class PrimExternalCallNode extends AbstractPrimitiveNode {
+public final class PrimExternalCallNode extends AbstractPrimitiveNode
+                implements Primitive0, Primitive1, Primitive2, Primitive3, Primitive4, Primitive5, Primitive6, Primitive7, Primitive8, Primitive9, Primitive10, Primitive11 {
     private final Object functionSymbol;
     private final InteropLibrary functionInteropLibrary;
     private final int numReceiverAndArguments;
@@ -92,7 +105,71 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode {
     }
 
     @Override
-    public Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
+    public Object execute(final VirtualFrame frame, final Object receiver) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                    final Object arg7) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                    final Object arg7, final Object arg8) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                    final Object arg7, final Object arg8, final Object arg9) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                    final Object arg7, final Object arg8, final Object arg9, final Object arg10) {
+        return execute(frame);
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                    final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11) {
+        return execute(frame);
+    }
+
+    private Object execute(final VirtualFrame frame) {
         // arguments are handled via manipulation of the stack pointer, see below
         return doExternalCall(frame.materialize());
     }

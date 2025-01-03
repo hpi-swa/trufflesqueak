@@ -30,7 +30,9 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -43,7 +45,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "debugPrint")
-    protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         protected final Object printArgs(final Object receiver, final Object value) {
             final SqueakImageContext image = getContext();
@@ -58,7 +60,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetTruffleRuntime")
-    protected abstract static class PrimGetTruffleRuntimeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetTruffleRuntimeNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver) {
             return JavaObjectWrapper.wrap(Truffle.getRuntime());
@@ -67,7 +69,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetVMObject")
-    protected abstract static class PrimGetVMObjectNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetVMObjectNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final Object target) {
             return JavaObjectWrapper.wrap(target);
@@ -76,7 +78,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveVMObjectToHostObject")
-    protected abstract static class PrimVMObjectToHostObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimVMObjectToHostObjectNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final JavaObjectWrapper target) {
             return getContext().env.asGuestValue(target.unwrap());
@@ -85,7 +87,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetDirectCallNodes")
-    protected abstract static class PrimGetDirectCallNodesNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimGetDirectCallNodesNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         @CompilerDirectives.TruffleBoundary
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final JavaObjectWrapper target) {
@@ -108,7 +110,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @ImportStatic(FORM.class)
     @SqueakPrimitive(names = "primitiveFormToBufferedImage")
-    protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "form.instsize() > OFFSET")
         protected final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
                         @Bind("this") final Node node,

@@ -6,19 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnadoptableNode;
 
 public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNode implements UnadoptableNode {
-
-    @Override
-    public final Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
-        return execute();
-    }
-
-    protected abstract Object execute();
-
     @Override
     public final Node copy() {
         return this;

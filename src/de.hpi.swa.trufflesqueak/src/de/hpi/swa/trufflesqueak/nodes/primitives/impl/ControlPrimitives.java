@@ -35,6 +35,7 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -60,35 +61,56 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.InheritsFromNode;
-import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayWithFirstNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPointerIncrementNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendHeadlessErrorNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSelectorNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSyntaxErrorNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNodeFactory.DispatchSendSelectorNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.CreateFrameArgumentsForIndirectCall0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchDirect0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.CreateFrameArgumentsForIndirectCall1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.DispatchDirect1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.CreateFrameArgumentsForIndirectCall2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.DispatchDirect2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.CreateFrameArgumentsForIndirectCall3Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.Dispatch3Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.DispatchDirect3Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.CreateFrameArgumentsForIndirectCall4Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.Dispatch4Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.DispatchDirect4Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.CreateFrameArgumentsForIndirectCall5Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.Dispatch5Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.CreateFrameArgumentsForIndirectCallNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectedSuperNaryNode.DirectedSuperDispatchNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUtils;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.GetOrCreateContextOrMarkerNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.ResolveMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsFullNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimLoadInstVarNodeGen;
@@ -98,6 +120,7 @@ import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -117,52 +140,22 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
         protected static final int CACHE_LIMIT = 2;
-
-        protected final DispatchSendNode createDispatchSendNode(final NativeObject selector) {
-            final SqueakImageContext image = getContext();
-            if (image.isHeadless()) {
-                if (selector.isDebugErrorSelector(image)) {
-                    return new DispatchSendHeadlessErrorNode();
-                } else if (selector.isDebugSyntaxErrorSelector(image)) {
-                    return new DispatchSendSyntaxErrorNode();
-                }
-            }
-            return DispatchSendSelectorNodeGen.create();
-        }
     }
 
     /* primitiveFail (#19) handled specially. */
 
     // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
-    private abstract static class AbstractPrimPerformNode extends AbstractPerformPrimitiveNode {
-        protected static final Object dispatchCached(final VirtualFrame frame, final NativeObject selector, final Object[] receiverAndArguments, final SqueakObjectClassNode lookupClassNode,
-                        final LookupMethodNode lookupMethodNode, final DispatchSendNode dispatchNode, final Node inlineTarget) {
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(inlineTarget, receiverAndArguments[0]);
-            final Object lookupResult = lookupMethodNode.executeLookup(inlineTarget, rcvrClass, selector);
-            return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, receiverAndArguments);
-        }
-
-        protected static final Object dispatchUncached(final VirtualFrame frame, final NativeObject selector, final Object[] receiverAndArguments, final SqueakObjectClassNode lookupClassNode,
-                        final LookupMethodNode lookupMethodNode, final DispatchSendSelectorNode dispatchNode, final Node inlineTarget) {
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(inlineTarget, receiverAndArguments[0]);
-            final Object lookupResult = lookupMethodNode.executeLookup(inlineTarget, rcvrClass, selector);
-            return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, receiverAndArguments);
-        }
-    }
-
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform1Node extends AbstractPrimPerformNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimPerform0Node extends AbstractPerformPrimitiveNode implements Primitive1WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
         protected static final Object perform0Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
-            return dispatchCached(frame, cachedSelector, new Object[]{receiver}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached("create(cachedSelector)") final Dispatch0Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver);
         }
 
         @SuppressWarnings("unused")
@@ -170,25 +163,37 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform0Cached")
         protected static final Object perform0(final VirtualFrame frame, final Object receiver, final NativeObject selector,
                         @Bind("this") final Node node,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode) {
-            return dispatchUncached(frame, selector, new Object[]{receiver}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final ResolveMethodNode methodNode,
+                        @Cached final CreateFrameArgumentsForIndirectCall0Node argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return ((Primitive0) primitiveNode).execute(frame, receiver);
+                    } catch (PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
+            return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, receiverClass, lookupResult, method, selector));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform2Node extends AbstractPrimPerformNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimPerform1Node extends AbstractPerformPrimitiveNode implements Primitive2WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
         protected static final Object perform1Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
-            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached("create(cachedSelector)") final Dispatch1Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, object1);
         }
 
         @SuppressWarnings("unused")
@@ -196,26 +201,37 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform1Cached")
         protected static final Object perform1(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1,
                         @Bind("this") final Node node,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode) {
-            return dispatchUncached(frame, selector, new Object[]{receiver, object1}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final ResolveMethodNode methodNode,
+                        @Cached final CreateFrameArgumentsForIndirectCall1Node argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return ((Primitive1) primitiveNode).execute(frame, receiver, object1);
+                    } catch (PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
+            return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, object1, receiverClass, lookupResult, method, selector));
         }
-
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform3Node extends AbstractPrimPerformNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimPerform2Node extends AbstractPerformPrimitiveNode implements Primitive3WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
         protected static final Object perform2Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
-            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached("create(cachedSelector)") final Dispatch2Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, object1, object2);
         }
 
         @SuppressWarnings("unused")
@@ -223,25 +239,37 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform2Cached")
         protected static final Object perform2(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         @Bind("this") final Node node,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode) {
-            return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final ResolveMethodNode methodNode,
+                        @Cached final CreateFrameArgumentsForIndirectCall2Node argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return ((Primitive2) primitiveNode).execute(frame, receiver, object1, object2);
+                    } catch (PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
+            return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, object1, object2, receiverClass, lookupResult, method, selector));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform4Node extends AbstractPrimPerformNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimPerform3Node extends AbstractPerformPrimitiveNode implements Primitive4WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
         protected static final Object perform3Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
-            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached("create(cachedSelector)") final Dispatch3Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, object1, object2, object3);
         }
 
         @SuppressWarnings("unused")
@@ -249,26 +277,38 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform3Cached")
         protected static final Object perform3(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         @Bind("this") final Node node,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode) {
-            return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final ResolveMethodNode methodNode,
+                        @Cached final CreateFrameArgumentsForIndirectCall3Node argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return ((Primitive3) primitiveNode).execute(frame, receiver, object1, object2, object3);
+                    } catch (PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
+            return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, object1, object2, object3, receiverClass, lookupResult, method, selector));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform5Node extends AbstractPrimPerformNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimPerform4Node extends AbstractPerformPrimitiveNode implements Primitive5WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
         protected static final Object perform4Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
-            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3, object4}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached("create(cachedSelector)") final Dispatch4Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, object1, object2, object3, object4);
         }
 
         @SuppressWarnings("unused")
@@ -277,26 +317,38 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform4(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4,
                         @Bind("this") final Node node,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode) {
-            return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3, object4}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final ResolveMethodNode methodNode,
+                        @Cached final CreateFrameArgumentsForIndirectCall4Node argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return ((Primitive4) primitiveNode).execute(frame, receiver, object1, object2, object3, object4);
+                    } catch (PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
+            return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, object1, object2, object3, object4, receiverClass, lookupResult, method, selector));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform6Node extends AbstractPrimPerformNode implements SeptenaryPrimitiveFallback {
+    protected abstract static class PrimPerform5Node extends AbstractPerformPrimitiveNode implements Primitive6WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
         protected static final Object perform5Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4, final Object object5,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
-            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3, object4, object5}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached("create(cachedSelector)") final Dispatch5Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, object1, object2, object3, object4, object5);
         }
 
         @SuppressWarnings("unused")
@@ -305,46 +357,69 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform5(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4, final Object object5,
                         @Bind("this") final Node node,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode) {
-            return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3, object4, object5}, lookupClassNode, lookupMethodNode, dispatchNode, node);
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final ResolveMethodNode methodNode,
+                        @Cached final CreateFrameArgumentsForIndirectCall5Node argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return ((Primitive5) primitiveNode).execute(frame, receiver, object1, object2, object3, object4, object5);
+                    } catch (PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
+            return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, object1, object2, object3, object4, object5, receiverClass, lookupResult, method, selector));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 84)
-    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
                         @Bind("this") final Node node,
-                        @Cached("selector") final NativeObject cachedSelector,
-                        @Exclusive @Cached final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(node, receiver);
-            final Object lookupResult = lookupMethodNode.executeLookup(node, rcvrClass, cachedSelector);
-            return dispatchNode.executeSend(frame, cachedSelector, lookupResult, rcvrClass, getObjectArrayNode.execute(node, receiver, arguments));
+                        @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached("create(cachedSelector)") final DispatchNaryNode dispatchNode) {
+            return dispatchNode.execute(frame, receiver, getObjectArrayNode.execute(node, arguments));
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performCached")
-        protected static final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments,
+        protected static final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject argumentsArray,
                         @Bind("this") final Node node,
-                        @Exclusive @Cached final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode,
-                        @Exclusive @Cached final SqueakObjectClassNode lookupClassNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode) {
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(node, receiver);
-            final Object lookupResult = lookupMethodNode.executeLookup(node, rcvrClass, selector);
-            return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, getObjectArrayNode.execute(node, receiver, arguments));
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final ResolveMethodNode methodNode,
+                        @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return primitiveNode.executeWithArguments(frame, receiver, arguments);
+                    } catch (PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
+            return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, arguments, receiverClass, lookupResult, method, selector));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 85)
-    protected abstract static class PrimSignalNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimSignalNode extends AbstractPrimitiveStackIncrementNode implements Primitive0WithFallback {
         @Specialization(guards = "isSemaphore(receiver)")
         protected final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Bind("this") final Node node,
@@ -365,7 +440,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 86)
-    protected abstract static class PrimWaitNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimWaitNode extends AbstractPrimitiveStackIncrementNode implements Primitive0WithFallback {
         @Specialization
         @SuppressWarnings("truffle-static-method")
         protected final PointersObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
@@ -398,7 +473,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 87)
-    protected abstract static class PrimResumeNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimResumeNode extends AbstractPrimitiveStackIncrementNode implements Primitive0WithFallback {
 
         @Specialization
         @SuppressWarnings("truffle-static-method")
@@ -426,7 +501,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 88)
-    protected abstract static class PrimSuspendNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimSuspendNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
         protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
@@ -464,7 +539,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 578)
-    protected abstract static class PrimSuspendBackingUpV2Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimSuspendBackingUpV2Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
         protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
@@ -521,8 +596,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 89)
-    protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode {
-
+    protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final Object doFlush(final Object receiver) {
             getContext().flushMethodCache();
@@ -531,24 +605,23 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractPrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode {
-        protected static final Object performCached(final VirtualFrame frame, final Object receiver, final ArrayObject arguments, final ClassObject superClass, final NativeObject cachedSelector,
-                        final InheritsFromNode inheritsFromNode, final LookupMethodNode lookupMethodNode, final DispatchSendNode dispatchNode,
-                        final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode, final Node inlineTarget) {
-            if (inheritsFromNode.execute(inlineTarget, receiver, superClass)) {
-                final Object lookupResult = lookupMethodNode.executeLookup(inlineTarget, superClass, cachedSelector);
-                return dispatchNode.executeSend(frame, cachedSelector, lookupResult, superClass, getObjectArrayNode.execute(inlineTarget, receiver, arguments));
+        protected static final Object performCached(final VirtualFrame frame, final Object receiver, final ArrayObject arguments, final ClassObject lookupClass,
+                        final InheritsFromNode inheritsFromNode, final DirectedSuperDispatchNaryNode dispatchNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode, final Node node) {
+            if (inheritsFromNode.execute(node, receiver, lookupClass)) {
+                return dispatchNode.execute(frame, lookupClass, receiver, getObjectArrayNode.execute(node, arguments));
             } else {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_RECEIVER;
             }
         }
 
-        protected static final Object performGeneric(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
-                        final InheritsFromNode inheritsFromNode, final LookupMethodNode lookupMethodNode, final DispatchSendSelectorNode dispatchNode,
-                        final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode, final Node inlineTarget) {
-            if (inheritsFromNode.execute(inlineTarget, receiver, superClass)) {
-                final Object lookupResult = lookupMethodNode.executeLookup(inlineTarget, superClass, selector);
-                return dispatchNode.executeSend(frame, selector, lookupResult, superClass, getObjectArrayNode.execute(inlineTarget, receiver, arguments));
+        protected static final Object performGeneric(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject lookupClass,
+                        final InheritsFromNode inheritsFromNode, final ResolveMethodNode methodNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode, final IndirectCallNode callNode, final Node node) {
+            if (inheritsFromNode.execute(node, receiver, lookupClass)) {
+                final Object lookupResult = getContext(node).lookup(lookupClass, selector);
+                final CompiledCodeObject method = methodNode.execute(node, getContext(node), lookupClass, lookupResult);
+                return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, getObjectArrayNode.execute(node, arguments), lookupClass, lookupResult, method, selector));
             } else {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_RECEIVER;
@@ -559,63 +632,64 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 100)
     /* Object>>#perform:withArguments:inSuperclass: */
-    protected abstract static class PrimPerformWithArgumentsInSuperclass4Node extends AbstractPrimPerformWithArgumentsInSuperclassNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimPerformWithArgumentsInSuperclass4Node extends AbstractPrimPerformWithArgumentsInSuperclassNode implements Primitive3WithFallback {
         @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
-                        final ClassObject superClass,
+                        final ClassObject lookupClass,
                         @Bind("this") final Node node,
-                        @Cached("selector") final NativeObject cachedSelector,
+                        @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode,
-                        @Exclusive @Cached final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode) {
-            return performCached(frame, receiver, arguments, superClass, cachedSelector, inheritsFromNode, lookupMethodNode, dispatchNode, getObjectArrayNode, node);
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached("create(cachedSelector)") final DirectedSuperDispatchNaryNode dispatchNode) {
+            return performCached(frame, receiver, arguments, lookupClass, inheritsFromNode, dispatchNode, getObjectArrayNode, node);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performCached")
-        protected static final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
+        protected static final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject lookupClass,
                         @Bind("this") final Node node,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode,
-                        @Exclusive @Cached final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode) {
-            return performGeneric(frame, receiver, selector, arguments, superClass, inheritsFromNode, lookupMethodNode, dispatchNode, getObjectArrayNode, node);
+                        @Cached final ResolveMethodNode methodNode,
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            return performGeneric(frame, receiver, selector, arguments, lookupClass, inheritsFromNode, methodNode, getObjectArrayNode, argumentsNode, callNode, node);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 100)
     /* Context>>#object:perform:withArguments:inClass: */
-    protected abstract static class PrimPerformWithArgumentsInSuperclass5Node extends AbstractPrimPerformWithArgumentsInSuperclassNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimPerformWithArgumentsInSuperclass5Node extends AbstractPrimPerformWithArgumentsInSuperclassNode implements Primitive4WithFallback {
         @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
         protected static final Object performContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target,
-                        @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
+                        @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
+                        final ClassObject lookupClass,
                         @Bind("this") final Node node,
-                        @Cached("selector") final NativeObject cachedSelector,
+                        @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode,
-                        @Exclusive @Cached final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode) {
-            return performCached(frame, target, arguments, superClass, cachedSelector, inheritsFromNode, lookupMethodNode, dispatchNode, getObjectArrayNode, node);
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached("create(cachedSelector)") final DirectedSuperDispatchNaryNode dispatchNode) {
+            return performCached(frame, target, arguments, lookupClass, inheritsFromNode, dispatchNode, getObjectArrayNode, node);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performContextCached")
         protected static final Object performContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target, final NativeObject selector,
-                        final ArrayObject arguments, final ClassObject superClass,
+                        final ArrayObject arguments, final ClassObject lookupClass,
                         @Bind("this") final Node node,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
-                        @Exclusive @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached final DispatchSendSelectorNode dispatchNode,
-                        @Exclusive @Cached final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode) {
-            return performGeneric(frame, target, selector, arguments, superClass, inheritsFromNode, lookupMethodNode, dispatchNode, getObjectArrayNode, node);
+                        @Cached final ResolveMethodNode methodNode,
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
+            return performGeneric(frame, target, selector, arguments, lookupClass, inheritsFromNode, methodNode, getObjectArrayNode, argumentsNode, callNode, node);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 110)
-    protected abstract static class PrimIdentical2Node extends AbstractPrimitiveNode {
+    protected abstract static class PrimIdentical2Node extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         protected static final boolean doObject(final Object a, final Object b,
                         @Bind("this") final Node node,
@@ -626,7 +700,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 110)
-    protected abstract static class PrimIdentical3Node extends AbstractPrimitiveNode {
+    protected abstract static class PrimIdentical3Node extends AbstractPrimitiveNode implements Primitive2 {
         @Specialization
         public static final boolean doObject(@SuppressWarnings("unused") final Object context, final Object a, final Object b,
                         @Bind("this") final Node node,
@@ -640,7 +714,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
      */
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 111)
-    protected abstract static class PrimClass1Node extends AbstractPrimitiveNode {
+    protected abstract static class PrimClass1Node extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final ClassObject doClass(final Object receiver,
                         @Bind("this") final Node node,
@@ -651,7 +725,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 111)
-    protected abstract static class PrimClass2Node extends AbstractPrimitiveNode {
+    protected abstract static class PrimClass2Node extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         protected static final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @Bind("this") final Node node,
@@ -662,16 +736,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @DenyReplace
     @SqueakPrimitive(indices = 112)
-    public static final class PrimBytesLeftNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimBytesLeftNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return MiscUtils.runtimeFreeMemory();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 113)
-    protected abstract static class PrimQuit1Node extends AbstractPrimitiveNode {
+    protected abstract static class PrimQuit1Node extends AbstractPrimitiveNode implements Primitive0 {
         @SuppressWarnings("unused")
         @Specialization
         protected final Object doQuit(final Object receiver) {
@@ -681,7 +755,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 113)
-    protected abstract static class PrimQuit2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimQuit2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doQuit(@SuppressWarnings("unused") final Object receiver, final long exitStatus) {
             throw new SqueakQuit(this, (int) exitStatus);
@@ -690,7 +764,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 114)
-    public abstract static class PrimExitToDebuggerNode extends AbstractPrimitiveNode {
+    public abstract static class PrimExitToDebuggerNode extends AbstractPrimitiveNode implements Primitive0 {
         public static final String SELECTOR_NAME = "exitToDebugger";
 
         @Specialization
@@ -701,7 +775,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 115)
-    protected abstract static class PrimChangeClassNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimChangeClassNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected static final AbstractSqueakObject doPrimChangeClass(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash argument,
@@ -715,7 +789,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 116)
-    protected abstract static class PrimFlushCacheByMethodNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimFlushCacheByMethodNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "receiver.hasMethodClass(readNode, node)", limit = "1")
         protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
                         @Bind("this") final Node node,
@@ -726,7 +800,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * TODO: maybe the method's callTarget could be invalidated to remove it from any PIC
              * and to avoid invalidating the entire methodDict assumption.
              */
-            receiver.getMethodClass(readNode, node).invalidateMethodDictStableAssumption();
+            receiver.getMethodClass(readNode, node).invalidateClassHierarchyAndMethodDictStableAssumption();
             return receiver;
         }
     }
@@ -739,8 +813,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final Object primitiveWithArgs(final VirtualFrame frame, final Object receiver, final ArrayObject argumentArray,
-                        final AbstractPrimitiveNode primitiveNode, final ArrayObjectToObjectArrayWithFirstNode toObjectArrayNode, final Node inlineTarget) {
-            return primitiveNode.executeWithArguments(frame, toObjectArrayNode.execute(inlineTarget, receiver, argumentArray));
+                        final AbstractPrimitiveNode primitiveNode, final ArrayObjectToObjectArrayCopyNode toObjectArrayNode, final Node inlineTarget) {
+            return primitiveNode.executeWithArguments(frame, receiver, toObjectArrayNode.execute(inlineTarget, argumentArray));
         }
 
         protected final Object primitiveWithArgsSlow(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
@@ -751,15 +825,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
-                final Object[] receiverAndArguments = ArrayObjectToObjectArrayWithFirstNode.executeUncached(receiver, argumentArray);
-                return primitiveNode.executeWithArguments(frame, receiverAndArguments);
+                final Object[] arguments = ArrayObjectToObjectArrayCopyNode.executeUncached(argumentArray);
+                return primitiveNode.executeWithArguments(frame, receiver, arguments);
             }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 118)
-    protected abstract static class PrimDoPrimitiveWithArgs3Node extends AbstractPrimDoPrimitiveWithArgsNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimDoPrimitiveWithArgs3Node extends AbstractPrimDoPrimitiveWithArgsNode implements Primitive2WithFallback {
         @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize"}, limit = "2")
         protected static final Object doPrimitiveWithArgsCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
                         @Bind("this") final Node node,
@@ -767,7 +841,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(node, argumentArray)") final int cachedArraySize,
                         @Cached("createPrimitiveNode(cachedPrimitiveIndex, cachedArraySize)") final AbstractPrimitiveNode primitiveNode,
-                        @Cached final ArrayObjectToObjectArrayWithFirstNode toObjectArrayNode) {
+                        @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
             return primitiveWithArgs(frame, receiver, argumentArray, primitiveNode, toObjectArrayNode, node);
         }
 
@@ -780,7 +854,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 118)
-    protected abstract static class PrimDoPrimitiveWithArgs4Node extends AbstractPrimDoPrimitiveWithArgsNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimDoPrimitiveWithArgs4Node extends AbstractPrimDoPrimitiveWithArgsNode implements Primitive3WithFallback {
         @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize"}, limit = "2")
         protected static final Object doPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
                         @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
@@ -789,7 +863,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(node, argumentArray)") final int cachedArraySize,
                         @Cached("createPrimitiveNode(cachedPrimitiveIndex, cachedArraySize)") final AbstractPrimitiveNode primitiveNode,
-                        @Cached final ArrayObjectToObjectArrayWithFirstNode toObjectArrayNode) {
+                        @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
             return primitiveWithArgs(frame, receiver, argumentArray, primitiveNode, toObjectArrayNode, node);
         }
 
@@ -803,8 +877,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 119)
-    protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode {
-
+    protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected final NativeObject doFlush(final NativeObject receiver) {
             getContext().flushMethodCacheForSelector(receiver);
@@ -814,7 +887,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @DenyReplace
     @SqueakPrimitive(indices = 130)
-    public static final class PrimFullGCNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimFullGCNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         private static final MBeanServer SERVER = TruffleOptions.AOT ? null : ManagementFactory.getPlatformMBeanServer();
         private static final String OPERATION_NAME = "gcRun";
         private static final Object[] PARAMS = {null};
@@ -834,7 +907,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             if (TruffleOptions.AOT) {
                 /* System.gc() triggers full GC by default in SVM (see https://git.io/JvY7g). */
                 MiscUtils.systemGC();
@@ -882,9 +955,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @DenyReplace
     @SqueakPrimitive(indices = 131)
-    public static final class PrimIncrementalGCNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimIncrementalGCNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             /* Cannot force incremental GC in Java, suggesting a normal GC instead. */
             MiscUtils.systemGC();
             return MiscUtils.runtimeFreeMemory();
@@ -893,7 +966,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 160)
-    protected abstract static class PrimAdoptInstanceNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimAdoptInstanceNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
         protected static final ClassObject doPrimAdoptInstance(final ClassObject receiver, final AbstractSqueakObjectWithClassAndHash argument,
@@ -906,7 +979,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 167)
-    protected abstract static class PrimYieldNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimYieldNode extends AbstractPrimitiveStackIncrementNode implements Primitive0WithFallback {
         @Specialization
         @SuppressWarnings("truffle-static-method")
         protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
@@ -938,9 +1011,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-
     @SqueakPrimitive(indices = 169)
-    protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         public static final boolean doObject(final Object a, final Object b,
                         @Bind("this") final Node node,
@@ -951,7 +1023,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 185)
-    protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final PointersObject doExit(final VirtualFrame frame, final PointersObject mutex,
                         @Bind("this") final Node node,
@@ -997,7 +1069,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 186)
-    protected abstract static class PrimEnterCriticalSection1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimEnterCriticalSection1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex,
                         @Bind("this") final Node node,
@@ -1010,7 +1082,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 186)
-    protected abstract static class PrimEnterCriticalSection2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimEnterCriticalSection2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex, final PointersObject effectiveProcess,
                         @Bind("this") final Node node,
@@ -1058,7 +1130,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(MUTEX.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 187)
-    protected abstract static class PrimTestAndSetOwnershipOfCriticalSectionNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimTestAndSetOwnershipOfCriticalSectionNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doTestAndSet(final PointersObject rcvrMutex,
                         @Bind("this") final Node node,
@@ -1094,101 +1166,173 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    protected abstract static class AbstractPrimExecuteMethodArgsArrayNode extends AbstractPrimitiveNode {
-        protected static final Object doExecuteMethod(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject methodObject,
-                        final ArrayObjectSizeNode sizeNode, final ArrayObjectReadNode readNode, final DispatchEagerlyNode dispatchNode, final Node inlineTarget) {
-            final int numArgs = sizeNode.execute(inlineTarget, argArray);
-            final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
-            dispatchRcvrAndArgs[0] = receiver;
-            for (int i = 0; i < numArgs; i++) {
-                dispatchRcvrAndArgs[1 + i] = readNode.execute(inlineTarget, argArray, i);
-            }
-            return dispatchNode.executeDispatch(frame, methodObject, dispatchRcvrAndArgs);
-        }
-    }
-
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
-    protected abstract static class PrimExecuteMethodArgsArray3Node extends AbstractPrimExecuteMethodArgsArrayNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimExecuteMethodArgsArray3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         /** Deprecated since Kernel-eem.1204. Kept for backward compatibility. */
-        @Specialization
-        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject methodObject,
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        protected static final Object doCached(final VirtualFrame frame, final Object receiver, final ArrayObject argArray,
+                        @SuppressWarnings("unused") final CompiledCodeObject method,
+                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Bind("this") final Node node,
-                        @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final ArrayObjectReadNode readNode,
-                        @Cached final DispatchEagerlyNode dispatchNode) {
-            return doExecuteMethod(frame, receiver, argArray, methodObject, sizeNode, readNode, dispatchNode, node);
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
+                        @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
+            final Object[] arguments = arrayNode.execute(node, argArray);
+            return dispatchNode.execute(frame, receiver, arguments);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doCached")
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
+                        @Cached final GetOrCreateContextOrMarkerNode senderNode,
+                        @Cached final IndirectCallNode callNode) {
+            final Object[] arguments = arrayNode.execute(node, argArray);
+            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arguments));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
-    protected abstract static class PrimExecuteMethodArgsArray4Node extends AbstractPrimExecuteMethodArgsArrayNode implements QuaternaryPrimitiveFallback {
-        @Specialization
-        protected static final Object doExecute(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
-                        final CompiledCodeObject methodObject,
+    protected abstract static class PrimExecuteMethodArgsArray4Node extends AbstractPrimitiveNode implements Primitive3WithFallback {
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
+                        @SuppressWarnings("unused") final CompiledCodeObject method,
+                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Bind("this") final Node node,
-                        @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final ArrayObjectReadNode readNode,
-                        @Cached final DispatchEagerlyNode dispatchNode) {
-            return doExecuteMethod(frame, receiver, argArray, methodObject, sizeNode, readNode, dispatchNode, node);
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
+                        @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
+            final Object[] arguments = arrayNode.execute(node, argArray);
+            return dispatchNode.execute(frame, receiver, arguments);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doCached")
+        protected static final Object doExecute(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
+                        final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
+                        @Cached final GetOrCreateContextOrMarkerNode senderNode,
+                        @Cached final IndirectCallNode callNode) {
+            final Object[] arguments = arrayNode.execute(node, argArray);
+            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arguments));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization
-        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final CompiledCodeObject methodObject,
-                        @Cached final DispatchEagerlyNode dispatchNode) {
-            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver});
+    protected abstract static class PrimExecuteMethod2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        protected static final Object doCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final CompiledCodeObject method,
+                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                        @Cached("create(cachedMethod, guard)") final DispatchDirect0Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doCached")
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Cached final GetOrCreateContextOrMarkerNode senderNode,
+                        @Cached final IndirectCallNode callNode) {
+            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod3Node extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization
-        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final CompiledCodeObject methodObject,
-                        @Cached final DispatchEagerlyNode dispatchNode) {
-            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver, arg1});
+    protected abstract static class PrimExecuteMethod3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, @SuppressWarnings("unused") final CompiledCodeObject method,
+                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                        @Cached("create(cachedMethod, guard)") final DispatchDirect1Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doCached")
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Cached final GetOrCreateContextOrMarkerNode senderNode,
+                        @Cached final IndirectCallNode callNode) {
+            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod4Node extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
-        @Specialization
-        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final CompiledCodeObject methodObject,
-                        @Cached final DispatchEagerlyNode dispatchNode) {
-            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver, arg1, arg2});
+    protected abstract static class PrimExecuteMethod4Node extends AbstractPrimitiveNode implements Primitive3WithFallback {
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, @SuppressWarnings("unused") final CompiledCodeObject method,
+                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                        @Cached("create(cachedMethod, guard)") final DispatchDirect2Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1, arg2);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doCached")
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Cached final GetOrCreateContextOrMarkerNode senderNode,
+                        @Cached final IndirectCallNode callNode) {
+            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1, arg2));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod5Node extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
-        @Specialization
-        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final CompiledCodeObject methodObject,
-                        @Cached final DispatchEagerlyNode dispatchNode) {
-            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver, arg1, arg2, arg3});
+    protected abstract static class PrimExecuteMethod5Node extends AbstractPrimitiveNode implements Primitive4WithFallback {
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+                        @SuppressWarnings("unused") final CompiledCodeObject method,
+                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                        @Cached("create(cachedMethod, guard)") final DispatchDirect3Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1, arg2, arg3);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doCached")
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Cached final GetOrCreateContextOrMarkerNode senderNode,
+                        @Cached final IndirectCallNode callNode) {
+            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1, arg2, arg3));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod6Node extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
-        @Specialization
+    protected abstract static class PrimExecuteMethod6Node extends AbstractPrimitiveNode implements Primitive5WithFallback {
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        @SuppressWarnings("unused") final CompiledCodeObject method,
+                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                        @Cached("create(cachedMethod, guard)") final DispatchDirect4Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
-                        final CompiledCodeObject methodObject,
-                        @Cached final DispatchEagerlyNode dispatchNode) {
-            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver, arg1, arg2, arg3, arg4});
+                        final CompiledCodeObject method,
+                        @Bind("this") final Node node,
+                        @Cached final GetOrCreateContextOrMarkerNode senderNode,
+                        @Cached final IndirectCallNode callNode) {
+            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1, arg2, arg3, arg4));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 218)
-    protected abstract static class PrimDoNamedPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimDoNamedPrimitiveWithArgsNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
 
         @Specialization(guards = {"methodObject == cachedMethodObject", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize",
                         "cachedArraySize == cachedMethodObject.getNumArgs()"}, limit = "2")
@@ -1199,8 +1343,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(node, argumentArray)") final int cachedArraySize,
                         @Cached("createPrimitiveNode(methodObject)") final AbstractPrimitiveNode primitiveNode,
-                        @Cached final ArrayObjectToObjectArrayWithFirstNode toObjectArrayNode) {
-            return primitiveNode.executeWithArguments(frame, toObjectArrayNode.execute(node, target, argumentArray));
+                        @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
+            return primitiveNode.executeWithArguments(frame, target, toObjectArrayNode.execute(node, argumentArray));
         }
 
         @ReportPolymorphism.Megamorphic
@@ -1215,8 +1359,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
-                final Object[] receiverAndArguments = ArrayObjectToObjectArrayWithFirstNode.executeUncached(target, argumentArray);
-                return primitiveNode.executeWithArguments(frame, receiverAndArguments);
+                final Object[] arguments = ArrayObjectToObjectArrayCopyNode.executeUncached(argumentArray);
+                return primitiveNode.executeWithArguments(frame, target, arguments);
             }
         }
 
@@ -1227,7 +1371,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 230)
-    protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveStackIncrementNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveStackIncrementNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final CheckForInterruptsFullNode interruptNode) {
@@ -1252,7 +1396,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 231)
-    protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object doForceUpdate(final Object receiver) {
             return receiver; // Do nothing.
@@ -1261,7 +1405,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 233)
-    protected abstract static class PrimSetFullScreenNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSetFullScreenNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doFullScreen(final Object receiver, final boolean enable) {
             final SqueakImageContext image = getContext();
@@ -1274,77 +1418,77 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 256)
-    protected abstract static class PrimQuickReturnSelfNode extends AbstractPrimitiveNode {
-        @Specialization
-        protected static final Object returnValue(final Object receiver) {
+    protected static class PrimQuickReturnSelfNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return receiver;
         }
     }
 
     @DenyReplace
     @SqueakPrimitive(indices = 257)
-    public static final class PrimQuickReturnTrueNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimQuickReturnTrueNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return BooleanObject.TRUE;
         }
     }
 
     @DenyReplace
     @SqueakPrimitive(indices = 258)
-    public static final class PrimQuickReturnFalseNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimQuickReturnFalseNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return BooleanObject.FALSE;
         }
     }
 
     @DenyReplace
     @SqueakPrimitive(indices = 259)
-    public static final class PrimQuickReturnNilNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimQuickReturnNilNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return NilObject.SINGLETON;
         }
     }
 
     @DenyReplace
     @SqueakPrimitive(indices = 260)
-    public static final class PrimQuickReturnMinusOneNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimQuickReturnMinusOneNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return -1L;
         }
     }
 
     @DenyReplace
     @SqueakPrimitive(indices = 261)
-    public static final class PrimQuickReturnZeroNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimQuickReturnZeroNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return 0L;
         }
     }
 
     @DenyReplace
     @SqueakPrimitive(indices = 262)
-    public static final class PrimQuickReturnOneNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimQuickReturnOneNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return 1L;
         }
     }
 
     @DenyReplace
     @SqueakPrimitive(indices = 263)
-    public static final class PrimQuickReturnTwoNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimQuickReturnTwoNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return 2L;
         }
     }
 
-    public abstract static class PrimLoadInstVarNode extends AbstractPrimitiveNode {
+    public abstract static class PrimLoadInstVarNode extends AbstractPrimitiveNode implements Primitive0 {
         private final long variableIndex;
 
         protected PrimLoadInstVarNode(final long variableIndex) {
@@ -1371,6 +1515,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @Override
     public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
         return List.of(
+                        new PrimQuickReturnSelfNode(),
                         new PrimQuickReturnTrueNode(),
                         new PrimQuickReturnFalseNode(),
                         new PrimQuickReturnNilNode(),

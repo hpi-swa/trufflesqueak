@@ -21,9 +21,9 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
@@ -35,7 +35,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWindowClose")
-    protected abstract static class PrimHostWindowCloseNode extends AbstractHostWindowPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimHostWindowCloseNode extends AbstractHostWindowPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "id == DEFAULT_HOST_WINDOW_ID")
         protected final Object doClose(final Object receiver, @SuppressWarnings("unused") final long id) {
             final SqueakImageContext image = getContext();
@@ -48,7 +48,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHostWindowPosition")
-    protected abstract static class PrimHostWindowPositionNode extends AbstractHostWindowPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimHostWindowPositionNode extends AbstractHostWindowPrimitiveNode implements Primitive1WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"id == DEFAULT_HOST_WINDOW_ID"})
         protected final Object doSize(final Object receiver, final long id,
@@ -60,7 +60,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHostWindowSizeSet")
-    protected abstract static class PrimHostWindowSizeSetNode extends AbstractHostWindowPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimHostWindowSizeSetNode extends AbstractHostWindowPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = "id == DEFAULT_HOST_WINDOW_ID")
         protected final Object doSize(final Object receiver, @SuppressWarnings("unused") final long id, final long width, final long height) {
             final SqueakImageContext image = getContext();
@@ -73,7 +73,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHostWindowTitle")
-    protected abstract static class PrimHostWindowTitleNode extends AbstractHostWindowPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimHostWindowTitleNode extends AbstractHostWindowPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization(guards = {"id == DEFAULT_HOST_WINDOW_ID", "title.isByteType()"})
         protected final Object doTitle(final Object receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {

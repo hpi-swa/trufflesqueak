@@ -32,13 +32,14 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.OctonaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -62,7 +63,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHasSocketAccess")
-    protected abstract static class PrimHasSocketAccessNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimHasSocketAccessNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static boolean hasSocketAccess(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.wrap(HAS_SOCKET_ACCESS);
@@ -71,7 +72,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverStatus")
-    protected abstract static class PrimResolverStatusNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimResolverStatusNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static long doWork(@SuppressWarnings("unused") final Object receiver) {
             return Resolver.Status.Ready.id();
@@ -80,7 +81,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInitializeNetwork")
-    protected abstract static class PrimInitializeNetworkNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimInitializeNetworkNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static Object doWork(final Object receiver) {
             return receiver;
@@ -99,7 +100,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverStartNameLookup")
-    protected abstract static class PrimResolverStartNameLookupNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimResolverStartNameLookupNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         /**
          * Look up the given host name in the Domain Name Server to find its address. This call is
          * asynchronous. To get the results, wait for it to complete or time out and then use
@@ -119,7 +120,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverStartAddressLookup")
-    protected abstract static class PrimResolverStartAddressLookupNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimResolverStartAddressLookupNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         /**
          * Look up the given host address in the Domain Name Server to find its name. This call is
@@ -140,7 +141,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverNameLookupResult")
-    protected abstract static class PrimResolverNameLookupResultNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimResolverNameLookupResultNode extends AbstractPrimitiveNode implements Primitive0 {
 
         /**
          * Return the host address found by the last host name lookup. Returns nil if the last
@@ -158,7 +159,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverAddressLookupResult")
-    protected abstract static class PrimResolverAddressLookupResultNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimResolverAddressLookupResultNode extends AbstractPrimitiveNode implements Primitive0 {
         /**
          * Return the host name found by the last host address lookup. Returns nil if the last
          * lookup was unsuccessful.
@@ -173,7 +174,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverLocalAddress")
-    protected abstract static class PrimResolverLocalAddressNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimResolverLocalAddressNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver) {
             final byte[] address = Resolver.getLoopbackAddress();
@@ -185,7 +186,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @ImportStatic(SocketPlugin.class)
     @SqueakPrimitive(names = "primitiveResolverHostNameResult")
-    protected abstract static class PrimResolverHostNameResultNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimResolverHostNameResultNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"targetString.isByteType()", "targetString.getByteLength() >= LOCAL_HOST_NAME.length"})
         protected static final Object doResult(@SuppressWarnings("unused") final Object receiver, final NativeObject targetString) {
             UnsafeUtils.copyBytes(LOCAL_HOST_NAME, 0, targetString.getByteStorage(), 0, LOCAL_HOST_NAME.length);
@@ -195,7 +196,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverHostNameSize")
-    protected abstract static class PrimResolverHostNameSizeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimResolverHostNameSizeNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doSize(@SuppressWarnings("unused") final Object receiver) {
             return LOCAL_HOST_NAME.length;
@@ -204,7 +205,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketLocalPort")
-    protected abstract static class PrimSocketLocalPortNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketLocalPortNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         /** Return the local port for this socket, or zero if no port has yet been assigned. */
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
@@ -220,7 +221,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketListenWithOrWithoutBacklog")
-    protected abstract static class PrimSocketListenWithOrWithoutBacklog3Node extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimSocketListenWithOrWithoutBacklog3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         /**
          * Listen for a connection on the given port. This is an asynchronous call; query the socket
          * status to discover if and when the connection is actually completed.
@@ -246,7 +247,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketListenWithOrWithoutBacklog")
-    protected abstract static class PrimSocketListenWithOrWithoutBacklog4Node extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimSocketListenWithOrWithoutBacklog4Node extends AbstractPrimitiveNode implements Primitive3WithFallback {
         /**
          * Set up the socket to listen on the given port. Will be used in conjunction with #accept
          * only.
@@ -273,7 +274,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketListenOnPortBacklogInterface")
-    protected abstract static class PrimSocketListenOnPortBacklogInterfaceNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimSocketListenOnPortBacklogInterfaceNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
         /**
          * Set up the socket to listen on the given port. Will be used in conjunction with #accept
          * only.
@@ -301,7 +302,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketSetOptions")
-    protected abstract static class PrimSocketSetOptionsNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimSocketSetOptionsNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = "option.isByteType()")
         protected final ArrayObject doSet(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option, final NativeObject value) {
             try {
@@ -324,7 +325,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketConnectToPort")
-    protected abstract static class PrimSocketConnectToPortNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimSocketConnectToPortNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = "hostAddress.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doConnectToPort(
@@ -344,7 +345,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketConnectionStatus")
-    protected abstract static class PrimSocketConnectionStatusNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketConnectionStatusNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doStatus(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
@@ -359,7 +360,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketRemoteAddress")
-    protected abstract static class PrimSocketRemoteAddressNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketRemoteAddressNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
@@ -378,7 +379,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketRemotePort")
-    protected abstract static class PrimSocketRemotePortNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketRemotePortNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doRemotePort(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
@@ -393,7 +394,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketGetOptions")
-    protected abstract static class PrimSocketGetOptionsNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimSocketGetOptionsNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         /**
          * Get some option information on this socket. Refer to the UNIX man pages for valid SO,
          * TCP, IP, UDP options. In case of doubt refer to the source code. TCP_NODELAY,
@@ -419,7 +420,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketReceiveDataAvailable")
-    protected abstract static class PrimSocketReceiveDataAvailableNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketReceiveDataAvailableNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final boolean doDataAvailable(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
@@ -434,7 +435,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketError")
-    protected abstract static class PrimSocketErrorNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketErrorNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         @SuppressWarnings("unused")
         protected static long doWork(final Object receiver, final PointersObject sd) {
@@ -444,7 +445,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketLocalAddress")
-    protected abstract static class PrimSocketLocalAddressNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketLocalAddressNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
@@ -463,7 +464,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketSendDataBufCount")
-    protected abstract static class PrimSocketSendDataBufCountNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimSocketSendDataBufCountNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
         /**
          * Send data to the remote host through the given socket starting with the given byte index
          * of the given byte array. The data sent is 'pushed' immediately. Return the number of
@@ -496,7 +497,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketCloseConnection")
-    protected abstract static class PrimSocketCloseConnectionNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketCloseConnectionNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doClose(final Object receiver, final PointersObject sd) {
             try {
@@ -511,7 +512,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketAbortConnection")
-    protected abstract static class PrimSocketAbortConnectionNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketAbortConnectionNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doAbort(final Object receiver, final PointersObject sd) {
             try {
@@ -526,7 +527,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketSendDone")
-    protected abstract static class PrimSocketSendDoneNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketSendDoneNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doSendDone(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
@@ -545,7 +546,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketReceiveDataBufCount")
-    protected abstract static class PrimSocketReceiveDataBufCountNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+    protected abstract static class PrimSocketReceiveDataBufCountNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
         /**
          * Receive data from the given socket into the given array starting at the given index.
          * Return the number of bytes read or zero if no data is available.
@@ -579,7 +580,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketDestroy")
-    protected abstract static class PrimSocketDestroyNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSocketDestroyNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final long doDestroy(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
@@ -594,7 +595,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketCreate3Semaphores")
-    protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractPrimitiveNode implements OctonaryPrimitiveFallback {
+    protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractPrimitiveNode implements Primitive7WithFallback {
         @SuppressWarnings("unused")
         @Specialization
         protected static final PointersObject doWork(final PointersObject receiver,
@@ -635,7 +636,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketAccept3Semaphores")
-    protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractPrimitiveNode implements SeptenaryPrimitiveFallback {
+    protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractPrimitiveNode implements Primitive6WithFallback {
         @SuppressWarnings("unused")
         @Specialization
         protected final PointersObject doAccept(final Object receiver,
@@ -661,7 +662,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketCreate")
-    protected abstract static class PrimSocketCreateNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimSocketCreateNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
         @SuppressWarnings("unused")
         @Specialization
         protected static long doWork(final PointersObject receiver,

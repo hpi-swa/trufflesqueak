@@ -25,7 +25,7 @@ import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 @GenerateCached(false)
 public abstract class ResolveMethodNode extends AbstractNode {
 
-    protected abstract CompiledCodeObject execute(Node node, SqueakImageContext image, ClassObject receiverClass, Object lookupResult);
+    public abstract CompiledCodeObject execute(Node node, SqueakImageContext image, ClassObject receiverClass, Object lookupResult);
 
     @Specialization
     @SuppressWarnings("unused")

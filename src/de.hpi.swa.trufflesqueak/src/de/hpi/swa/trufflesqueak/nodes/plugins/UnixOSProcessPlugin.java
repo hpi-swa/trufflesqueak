@@ -37,9 +37,10 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin.STDIO_HANDLES;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -73,7 +74,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveArgumentAt")
-    protected abstract static class PrimArgumentAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimArgumentAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
             final SqueakImageContext image = getContext();
@@ -89,7 +90,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCanReceiveSignals")
-    protected abstract static class PrimCanReceiveSignalsNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimCanReceiveSignalsNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = "!isLong(pid)")
         protected static final boolean doCanReceiveSignals(final Object receiver, final Object pid) {
@@ -105,7 +106,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEnvironmentAt")
-    protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         protected static final Object[] ENVIRONMENT_KEYS = System.getenv().keySet().toArray();
 
         @Specialization(guards = "inBounds1(index, ENVIRONMENT_KEYS.length)")
@@ -122,7 +123,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEnvironmentAtSymbol")
-    protected abstract static class PrimEnvironmentAtSymbolNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimEnvironmentAtSymbolNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "aSymbol.isByteType()")
         protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol) {
             final SqueakImageContext image = getContext();
@@ -138,7 +139,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveErrorMessageAt")
-    protected abstract static class PrimErrorMessageAtNode extends AbstractSysCallPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimErrorMessageAtNode extends AbstractSysCallPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final NativeObject doErrorMessageAt(@SuppressWarnings("unused") final Object receiver, final long index,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
@@ -163,7 +164,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileProtectionMask")
-    protected abstract static class PrimFileProtectionMaskNode extends AbstractFilePrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimFileProtectionMaskNode extends AbstractFilePrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final ArrayObject doFileProtectionMask(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Bind("this") final Node node,
@@ -181,7 +182,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileStat")
-    protected abstract static class PrimFileStatNode extends AbstractFilePrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimFileStatNode extends AbstractFilePrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final ArrayObject doFileStat(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Bind("this") final Node node,
@@ -202,7 +203,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveForwardSignalToSemaphore")
-    protected abstract static class PrimForwardSignalToSemaphoreNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimForwardSignalToSemaphoreNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @SuppressWarnings("unused")
         @Specialization
         protected static final boolean doForward(final Object receiver, final long signalNumber, final long semaphoreIndex) {
@@ -212,7 +213,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetEGid")
-    protected abstract static class PrimGetEGidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetEGidNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetEGid(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -227,7 +228,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetEUid")
-    protected abstract static class PrimGetEUidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetEUidNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetEUid(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -242,7 +243,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetGid")
-    protected abstract static class PrimGetGidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetGidNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetGid(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -257,7 +258,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPGid")
-    protected abstract static class PrimGetPGidNode extends AbstractSysCallPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimGetPGidNode extends AbstractSysCallPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetPGid(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @Bind("this") final Node node,
@@ -279,7 +280,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPGrp")
-    protected abstract static class PrimGetPGrpNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetPGrpNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetPGrp(@SuppressWarnings("unused") final Object receiver,
                         @Bind("this") final Node node,
@@ -296,7 +297,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPPid")
-    protected abstract static class PrimGetPPidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetPPidNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetPPid(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -311,7 +312,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetStdErrHandle")
-    protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final PointersObject doGet(@SuppressWarnings("unused") final Object receiver) {
             return FilePlugin.createStdioFileHandle(getContext(), STDIO_HANDLES.ERROR);
@@ -320,7 +321,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetStdInHandle")
-    protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final PointersObject doGet(@SuppressWarnings("unused") final Object receiver) {
             return FilePlugin.createStdioFileHandle(getContext(), STDIO_HANDLES.IN);
@@ -329,7 +330,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetStdOutHandle")
-    protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final PointersObject doGet(@SuppressWarnings("unused") final Object receiver) {
             return FilePlugin.createStdioFileHandle(getContext(), STDIO_HANDLES.OUT);
@@ -338,7 +339,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetUid")
-    protected abstract static class PrimGetUidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetUidNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetUid(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -353,7 +354,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRealpath")
-    protected abstract static class PrimRealpathNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimRealpathNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final NativeObject doRealpath(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Bind("this") final Node node,
@@ -370,7 +371,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigabrtTo")
-    protected abstract static class PrimSendSigabrtToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigabrtToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigabrtTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -380,7 +381,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigalrmTo")
-    protected abstract static class PrimSendSigalrmToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigalrmToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigalrmTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -390,7 +391,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigchldTo")
-    protected abstract static class PrimSendSigchldToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigchldToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"supportsNFI", "isMacOS()"})
         protected final long doSendSigchldToMacOS(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -406,7 +407,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigcontTo")
-    protected abstract static class PrimSendSigcontToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigcontToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigcontTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -416,7 +417,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSighupTo")
-    protected abstract static class PrimSendSighupToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSighupToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSighupTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -426,7 +427,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigintTo")
-    protected abstract static class PrimSendSigintToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigintToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigintTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -436,7 +437,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigkillTo")
-    protected abstract static class PrimSendSigkillToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigkillToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigkillTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -446,7 +447,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigpipeTo")
-    protected abstract static class PrimSendSigpipeToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigpipeToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigpipeTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -456,7 +457,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigquitTo")
-    protected abstract static class PrimSendSigquitToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigquitToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigquitTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -466,7 +467,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigstopTo")
-    protected abstract static class PrimSendSigstopToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigstopToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigstopTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -476,7 +477,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigtermTo")
-    protected abstract static class PrimSendSigtermToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigtermToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSendSigtermTo(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -486,7 +487,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigusr1To")
-    protected abstract static class PrimSendSigusr1ToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigusr1ToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"supportsNFI", "isMacOS()"})
         protected final long doSendSigusr1ToMacOS(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -502,7 +503,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSendSigusr2To")
-    protected abstract static class PrimSendSigusr2ToNode extends AbstractKillPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimSendSigusr2ToNode extends AbstractKillPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"supportsNFI", "isMacOS()"})
         protected final long doSendSigusr2ToMacOS(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -518,7 +519,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetPGid")
-    protected abstract static class PrimSetPGidNode extends AbstractSysCallPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimSetPGidNode extends AbstractSysCallPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSetPGid(@SuppressWarnings("unused") final Object receiver, final long pid, final long pgid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -538,7 +539,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetPGrp")
-    protected abstract static class PrimSetPGrpNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimSetPGrpNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSetPGid(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -558,7 +559,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetSid")
-    protected abstract static class PrimSetSidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimSetSidNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSetSid(@SuppressWarnings("unused") final Object receiver,
                         @Bind("this") final Node node,
@@ -575,7 +576,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigChldNumber")
-    protected abstract static class PrimSigChldNumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigChldNumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization(guards = "isMacOS()")
         protected static final long doSigChldNumberMacOS(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGCHLD_MACOS;
@@ -589,7 +590,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigHupNumber")
-    protected abstract static class PrimSigHupNumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigHupNumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doSigHupNumber(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGHUP;
@@ -598,7 +599,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigIntNumber")
-    protected abstract static class PrimSigIntNumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigIntNumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doSigIntNumber(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGINT;
@@ -607,7 +608,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigKillNumber")
-    protected abstract static class PrimSigKillNumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigKillNumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doSigKillNumber(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGKILL;
@@ -616,7 +617,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigPipeNumber")
-    protected abstract static class PrimSigPipeNumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigPipeNumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doSigPipeNumber(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGPIPE;
@@ -625,7 +626,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigQuitNumber")
-    protected abstract static class PrimSigQuitNumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigQuitNumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doSigQuitNumber(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGQUIT;
@@ -634,7 +635,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigTermNumber")
-    protected abstract static class PrimSigTermNumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigTermNumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doSigTermNumber(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGTERM;
@@ -643,7 +644,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigUsr1Number")
-    protected abstract static class PrimSigUsr1NumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigUsr1NumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization(guards = "isMacOS()")
         protected static final long doSigUsr1NumberMacOS(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGUSR1_MACOS;
@@ -657,7 +658,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigUsr2Number")
-    protected abstract static class PrimSigUsr2NumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigUsr2NumberNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization(guards = "isLinux()")
         protected static final long doSigUsr2NumberLinux(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGUSR2_UNIX;
@@ -671,7 +672,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSizeOfPointer")
-    protected abstract static class PrimSizeOfPointerNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSizeOfPointerNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doSizeOfPointer(@SuppressWarnings("unused") final Object receiver) {
             return 8L;

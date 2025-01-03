@@ -42,10 +42,11 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimitiveFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -380,7 +381,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAccept")
-    protected abstract static class PrimAcceptNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimAcceptNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
         /**
          * Starts or continues a server handshake using the provided data. Will eventually produce
          * output to be sent to the client.
@@ -490,7 +491,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveConnect")
-    protected abstract static class PrimConnectNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimConnectNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
         /**
          * Starts or continues a client handshake using the provided data. Will eventually produce
          * output to be sent to the server.
@@ -673,7 +674,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDecrypt")
-    protected abstract static class PrimDecryptNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimDecryptNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
         /**
          * Takes incoming data for decryption and continues to decrypt data.
          *
@@ -758,7 +759,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEncrypt")
-    protected abstract static class PrimEncryptNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+    protected abstract static class PrimEncryptNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
         /**
          * Encrypt the incoming buffer into the result buffer.
          *
@@ -803,7 +804,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetIntProperty")
-    protected abstract static class PrimGetIntPropertyNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimGetIntPropertyNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         /**
          * Returns an integer property from an SSL session.
          *
@@ -835,7 +836,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetIntProperty")
-    protected abstract static class PrimSetIntPropertyNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimSetIntPropertyNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
         /**
          * Sets an integer property in a SSL session.
          *
@@ -869,7 +870,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetStringProperty")
-    protected abstract static class PrimGetStringPropertyNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+    protected abstract static class PrimGetStringPropertyNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         /**
          * Returns a string property from a SSL session.
          *
@@ -900,7 +901,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetStringProperty")
-    protected abstract static class PrimSetStringPropertyNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+    protected abstract static class PrimSetStringPropertyNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
         /**
          * Sets a string property in a SSL session.
          *
@@ -940,7 +941,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCreate")
-    protected abstract static class PrimCreateNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimCreateNode extends AbstractPrimitiveNode implements Primitive0 {
         /**
          * Creates and returns a new SSL handle.
          *
@@ -955,7 +956,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDestroy")
-    protected abstract static class PrimDestroyNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+    protected abstract static class PrimDestroyNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         /**
          * Destroys the SSL session handle.
          *

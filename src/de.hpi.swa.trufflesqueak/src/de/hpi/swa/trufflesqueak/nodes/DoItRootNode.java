@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives.PrimFullClosureValueWithArgsNode;
 
 public abstract class DoItRootNode extends RootNode {
     private final SqueakImageContext image;
@@ -37,14 +38,14 @@ public abstract class DoItRootNode extends RootNode {
     @Specialization
     protected final Object doIt(final VirtualFrame frame,
                     @Bind("this") final Node node,
-                    @Cached final WrapToSqueakNode wrapNode) {
+                    @Cached final WrapToSqueakNode wrapNode,
+                    @Cached final PrimFullClosureValueWithArgsNode primitiveNode) {
         if (!(maybeClosure instanceof final BlockClosureObject closure)) {
             return NilObject.SINGLETON;
-
         }
         if (closure.getNumArgs() != frame.getArguments().length) {
             return NilObject.SINGLETON;
         }
-        return closure.send(image, "valueWithArguments:", wrapNode.executeWrap(node, frame.getArguments()));
+        return primitiveNode.execute(image.externalSenderFrame, closure, wrapNode.executeWrap(node, frame.getArguments()));
     }
 }

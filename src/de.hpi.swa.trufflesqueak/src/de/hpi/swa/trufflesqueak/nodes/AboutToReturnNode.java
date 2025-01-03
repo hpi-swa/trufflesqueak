@@ -27,6 +27,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchClosureNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @SuppressWarnings("truffle-inlining")
@@ -73,9 +75,9 @@ public abstract class AboutToReturnNode extends AbstractNode {
 
         @Specialization(guards = {"hasModifiedSender(frame)"})
         protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
-                        @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
+                        @Cached("createAboutToReturnSend()") final Dispatch2Node sendAboutToReturnNode) {
             assert nlr.getTargetContextOrMarker() instanceof ContextObject;
-            sendAboutToReturnNode.executeSend(frame, new Object[]{FrameAccess.getContext(frame), nlr.getReturnValue(), nlr.getTargetContextOrMarker()});
+            sendAboutToReturnNode.execute(frame, FrameAccess.getContext(frame), nlr.getReturnValue(), nlr.getTargetContextOrMarker());
         }
     }
 
@@ -100,7 +102,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
     }
 
     @NeverDefault
-    protected static final SendSelectorNode createAboutToReturnSend() {
-        return SendSelectorNode.create(SqueakImageContext.getSlow().aboutToReturnSelector);
+    protected static final Dispatch2Node createAboutToReturnSend() {
+        return Dispatch2NodeGen.create(SqueakImageContext.getSlow().aboutToReturnSelector);
     }
 }

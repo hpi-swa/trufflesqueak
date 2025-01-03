@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
@@ -33,7 +34,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCountry")
-    protected abstract static class PrimCountryNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimCountryNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final NativeObject doCountry(@SuppressWarnings("unused") final Object receiver) {
             final String country = getCountry();
@@ -52,7 +53,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCurrencyNotation")
-    protected abstract static class PrimCurrencyNotationNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimCurrencyNotationNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -61,7 +62,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCurrencySymbol")
-    protected abstract static class PrimCurrencySymbolNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimCurrencySymbolNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final NativeObject doCurrencySymbol(@SuppressWarnings("unused") final Object receiver) {
             return getContext().asByteString(getCurrencyCode());
@@ -75,7 +76,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDaylightSavings")
-    protected abstract static class PrimDaylightSavingsNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDaylightSavingsNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final boolean doDaylightSavings(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.wrap(inDaylightTime());
@@ -89,7 +90,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDecimalSymbol")
-    protected abstract static class PrimDecimalSymbolNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDecimalSymbolNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -98,7 +99,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDigitGroupingSymbol")
-    protected abstract static class PrimDigitGroupingSymbolNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDigitGroupingSymbolNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -107,7 +108,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveLanguage")
-    protected abstract static class PrimLanguageNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimLanguageNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final NativeObject doLanguage(@SuppressWarnings("unused") final Object receiver) {
             final String language = getLanguageString();
@@ -126,7 +127,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveLongDateFormat")
-    protected abstract static class PrimLongDateFormatNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimLongDateFormatNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -135,7 +136,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMeasurementMetric")
-    protected abstract static class PrimMeasurementMetricNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimMeasurementMetricNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -144,7 +145,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveShortDateFormat")
-    protected abstract static class PrimShortDateFormatNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimShortDateFormatNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -153,7 +154,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTimeFormat")
-    protected abstract static class PrimTimeFormatNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimTimeFormatNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -162,7 +163,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTimezoneOffset")
-    protected abstract static class PrimTimezoneOffsetNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimTimezoneOffsetNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doTimezoneOffset(@SuppressWarnings("unused") final Object receiver) {
             return getRawOffset() / 60 / 1000;
@@ -176,7 +177,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveVMOffsetToUTC")
-    protected abstract static class PrimVMOffsetToUTCNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimVMOffsetToUTCNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final long doVMOffsetToUTC(@SuppressWarnings("unused") final Object receiver) {
             return 0L;

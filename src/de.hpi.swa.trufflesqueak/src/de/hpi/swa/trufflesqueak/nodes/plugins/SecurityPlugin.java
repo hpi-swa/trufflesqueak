@@ -11,6 +11,7 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -18,22 +19,23 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
     @DenyReplace
     @SqueakPrimitive(names = "primitiveCanWriteImage")
-    public static final class PrimCanWriteImageNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimCanWriteImageNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return BooleanObject.wrap(getContext().env.getCurrentWorkingDirectory().isWritable());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDisableImageWrite")
-    protected abstract static class PrimDisableImageWriteNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDisableImageWriteNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object doDisable(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -42,7 +44,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetSecureUserDirectory")
-    protected abstract static class PrimGetSecureUserDirectoryNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetSecureUserDirectoryNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -51,9 +53,9 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
     @DenyReplace
     @SqueakPrimitive(names = "primitiveGetUntrustedUserDirectory")
-    public static final class PrimGetUntrustedUserDirectoryNode extends AbstractSingletonPrimitiveNode {
+    public static final class PrimGetUntrustedUserDirectoryNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
-        public Object execute() {
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return getContext().getResourcesDirectory();
         }
     }

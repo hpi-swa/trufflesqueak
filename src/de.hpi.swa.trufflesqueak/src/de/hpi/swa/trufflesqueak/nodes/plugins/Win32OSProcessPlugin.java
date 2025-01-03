@@ -20,7 +20,8 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
@@ -35,7 +36,7 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetEnvironmentStrings")
-    protected abstract static class PrimGetEnvironmentStringNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetEnvironmentStringNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver) {
             final SqueakImageContext image = getContext();
@@ -55,7 +56,7 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetMainThreadID")
-    protected abstract static class PrimGetMainThreadIDNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
+    protected abstract static class PrimGetMainThreadIDNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetMainThreadID(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {

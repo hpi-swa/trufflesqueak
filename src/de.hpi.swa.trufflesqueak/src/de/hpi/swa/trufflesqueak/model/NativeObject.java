@@ -15,7 +15,9 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -25,8 +27,10 @@ import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUtils;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
@@ -350,12 +354,22 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.doesNotUnderstand;
     }
 
-    public Object executeAsSymbolSlow(final VirtualFrame frame, final Object... receiverAndArguments) {
+    public Object executeAsSymbolSlow(final SqueakImageContext image, final VirtualFrame frame, final Object receiver, final Object... arguments) {
         CompilerAsserts.neverPartOfCompilation();
         assert SqueakImageContext.getSlow().isByteSymbolClass(getSqueakClass());
-        final Object method = LookupMethodNode.executeUncached(SqueakObjectClassNode.executeUncached(receiverAndArguments[0]), this);
-        if (method instanceof CompiledCodeObject) {
-            return DispatchUneagerlyNode.executeUncached((CompiledCodeObject) method, receiverAndArguments, GetOrCreateContextNode.getOrCreateUncached(frame));
+        final Object lookupResult = LookupMethodNode.executeUncached(SqueakObjectClassNode.executeUncached(receiver), this);
+        if (lookupResult instanceof CompiledCodeObject method) {
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return primitiveNode.executeWithArguments(image.externalSenderFrame, receiver, arguments);
+                    } catch (final PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(null, primitiveNode, method, pf);
+                    }
+                }
+            }
+            return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(GetOrCreateContextNode.getOrCreateUncached(frame), null, receiver, arguments));
         } else {
             throw SqueakException.create("Illegal uncached message send");
         }

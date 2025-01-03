@@ -35,8 +35,7 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
  */
 @SuppressWarnings("static-method")
 public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
-    @CompilationFinal private CyclicAssumption classHierarchyStable;
-    @CompilationFinal private CyclicAssumption methodDictStable;
+    @CompilationFinal private CyclicAssumption classHierarchyAndMethodDictStable;
     @CompilationFinal private CyclicAssumption classFormatStable;
 
     private final SqueakImageContext image;
@@ -379,12 +378,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setSuperclass(final ClassObject superclass) {
-        classHierarchyStable().invalidate();
+        invalidateClassHierarchyAndMethodDictStableAssumption();
         this.superclass = superclass;
     }
 
     public void setMethodDict(final VariablePointersObject methodDict) {
-        methodDictStable().invalidate();
+        invalidateClassHierarchyAndMethodDictStableAssumption();
         this.methodDict = methodDict;
     }
 
@@ -471,32 +470,20 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         setOtherPointers(otherPointers);
     }
 
-    private CyclicAssumption classHierarchyStable() {
-        if (classHierarchyStable == null) {
+    private CyclicAssumption classHierarchyAndMethodDictStable() {
+        if (classHierarchyAndMethodDictStable == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            classHierarchyStable = new CyclicAssumption("Class hierarchy stability");
+            classHierarchyAndMethodDictStable = new CyclicAssumption("Class hierarchy stability");
         }
-        return classHierarchyStable;
+        return classHierarchyAndMethodDictStable;
     }
 
-    public Assumption getClassHierarchyStable() {
-        return classHierarchyStable().getAssumption();
+    public Assumption getClassHierarchyAndMethodDictStable() {
+        return classHierarchyAndMethodDictStable().getAssumption();
     }
 
-    private CyclicAssumption methodDictStable() {
-        if (methodDictStable == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            methodDictStable = new CyclicAssumption("Method dictionary stability");
-        }
-        return methodDictStable;
-    }
-
-    public Assumption getMethodDictStable() {
-        return methodDictStable().getAssumption();
-    }
-
-    public void invalidateMethodDictStableAssumption() {
-        methodDictStable().invalidate();
+    public void invalidateClassHierarchyAndMethodDictStableAssumption() {
+        classHierarchyAndMethodDictStable().invalidate();
     }
 
     private CyclicAssumption classFormatStable() {

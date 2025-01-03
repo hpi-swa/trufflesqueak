@@ -8,9 +8,11 @@ package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -18,8 +20,9 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUtils;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
@@ -154,7 +157,17 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
             final boolean wasActive = image.interrupt.isActive();
             image.interrupt.deactivate();
             try {
-                return DispatchUneagerlyNode.executeUncached(method, ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
+                if (method.hasPrimitive()) {
+                    final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                    if (primitiveNode != null) {
+                        try {
+                            return primitiveNode.executeWithArguments(image.externalSenderFrame, this, arguments);
+                        } catch (final PrimitiveFailed pf) {
+                            DispatchUtils.handlePrimitiveFailedIndirect(null, primitiveNode, method, pf);
+                        }
+                    }
+                }
+                return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, this, arguments));
             } finally {
                 if (wasActive) {
                     image.interrupt.activate();

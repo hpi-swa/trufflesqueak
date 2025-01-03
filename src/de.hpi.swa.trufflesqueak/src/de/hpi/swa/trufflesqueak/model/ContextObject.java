@@ -168,7 +168,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     @TruffleBoundary
     private static MaterializedFrame createTruffleFrame(final ContextObject context) {
         // Method is unknown, use dummy frame instead
-        final Object[] dummyArguments = FrameAccess.newDummyWith(NilObject.SINGLETON, null, new Object[2]);
+        final Object[] dummyArguments = FrameAccess.newWith(1);
         final CompiledCodeObject dummyMethod = SqueakImageContext.getSlow().dummyMethod;
         final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
         FrameAccess.setContext(truffleFrame, context);
@@ -198,9 +198,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             instructionPointer = FrameAccess.getInstructionPointer(currentFrame);
             stackPointer = FrameAccess.getStackPointer(currentFrame);
         } else {
-            // Receiver plus arguments.
-            final Object[] squeakArguments = new Object[1 + method.getNumArgs()];
-            frameArguments = FrameAccess.newDummyWith(NilObject.SINGLETON, null, squeakArguments);
+            frameArguments = FrameAccess.newWith(method.getNumArgs());
             instructionPointer = method.getInitialPC();
             stackPointer = method.getNumTemps();
         }

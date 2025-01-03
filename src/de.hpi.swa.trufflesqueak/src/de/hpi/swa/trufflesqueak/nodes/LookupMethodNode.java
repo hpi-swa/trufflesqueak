@@ -32,7 +32,7 @@ public abstract class LookupMethodNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass", "selector == cachedSelector"}, //
-                    assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()"})
+                    assumptions = {"cachedClass.getClassHierarchyAndMethodDictStable()"})
     protected static final Object doCached(final ClassObject classObject, final NativeObject selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final NativeObject cachedSelector,

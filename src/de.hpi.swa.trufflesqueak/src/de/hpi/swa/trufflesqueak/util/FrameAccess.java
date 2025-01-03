@@ -20,7 +20,6 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -33,7 +32,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 
 /**
@@ -100,12 +98,23 @@ public final class FrameAccess {
         final int numStackSlots = code.getMaxNumStackSlots();
         final Builder builder = FrameDescriptor.newBuilder(4 + numStackSlots);
         builder.info(code);
+        addDefaultSlots(builder);
+        builder.addSlots(numStackSlots, FrameSlotKind.Illegal);
+        return builder.build();
+    }
+
+    public static VirtualFrame newDummyFrame() {
+        final Builder builder = FrameDescriptor.newBuilder(4);
+        builder.info("dummy");
+        addDefaultSlots(builder);
+        return Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), builder.build());
+    }
+
+    private static void addDefaultSlots(final Builder builder) {
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.THIS_MARKER
         builder.addSlot(FrameSlotKind.Illegal, null, null); // SlotIndicies.THIS_CONTEXT
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.INSTRUCTION_POINTER
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.STACK_POINTER
-        builder.addSlots(numStackSlots, FrameSlotKind.Illegal);
-        return builder.build();
     }
 
     /* Returns the code object matching the frame's descriptor. */
@@ -328,76 +337,98 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final Object sender, final FrameStackReadNode[] receiverAndArgumentsNodes) {
-        final int numReceiverAndArguments = receiverAndArgumentsNodes.length;
-        CompilerAsserts.partialEvaluationConstant(numReceiverAndArguments);
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
-        assert sender != null : "Sender should never be null";
-        assert numReceiverAndArguments > 0 : "At least a receiver must be provided";
-        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
-        for (int i = 0; i < numReceiverAndArguments; i++) {
-            frameArguments[ArgumentIndicies.RECEIVER.ordinal() + i] = receiverAndArgumentsNodes[i].executeRead(frame);
-        }
-        return frameArguments;
-    }
-
-    @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final Object sender, final Object receiver, final FrameStackReadNode[] argumentsNodes) {
-        final int argumentCount = argumentsNodes.length;
-        CompilerAsserts.partialEvaluationConstant(argumentCount);
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + argumentCount];
-        assert sender != null : "Sender should never be null";
-        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
-        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
-        for (int i = 0; i < argumentCount; i++) {
-            frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + i] = argumentsNodes[i].executeRead(frame);
-        }
-        return frameArguments;
-    }
-
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final int numReceiverAndArguments) {
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
-        assert sender != null : "Sender should never be null";
-        assert numReceiverAndArguments > 0 : "At least a receiver must be provided";
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver) {
+        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal()];
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        return frameArguments;
+    }
+
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1) {
+        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 1];
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal()] = arg1;
+        return frameArguments;
+    }
+
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2) {
+        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 2];
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal()] = arg1;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 1] = arg2;
+        return frameArguments;
+    }
+
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 3];
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal()] = arg1;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 1] = arg2;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 2] = arg3;
+        return frameArguments;
+    }
+
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 4];
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal()] = arg1;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 1] = arg2;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 2] = arg3;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 3] = arg4;
+        return frameArguments;
+    }
+
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                    final Object arg5) {
+        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 5];
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal()] = arg1;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 1] = arg2;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 2] = arg3;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 3] = arg4;
+        frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + 4] = arg5;
+        return frameArguments;
+    }
+
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object[] arguments) {
+        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + arguments.length];
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        ArrayUtils.arraycopy(arguments, 0, frameArguments, ArgumentIndicies.ARGUMENTS_START.ordinal(), arguments.length);
+        return frameArguments;
+    }
+
+    public static Object[] newWith(final int numArgs) {
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs];
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = NilObject.SINGLETON;
         return frameArguments;
     }
 
     public static Object[] newDNUWith(final Object sender, final Object receiver, final PointersObject message) {
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + 2];
-        assert sender != null : "Sender should never be null";
-        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
-        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
-        frameArguments[ArgumentIndicies.RECEIVER.ordinal() + 1] = message;
-        return frameArguments;
+        return newWith(sender, null, receiver, message);
     }
 
     public static Object[] newOAMWith(final Object sender, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + 4];
-        assert sender != null : "Sender should never be null";
-        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
-        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = object;
-        frameArguments[ArgumentIndicies.RECEIVER.ordinal() + 1] = selector;
-        frameArguments[ArgumentIndicies.RECEIVER.ordinal() + 2] = arguments;
-        frameArguments[ArgumentIndicies.RECEIVER.ordinal() + 3] = receiver;
-        return frameArguments;
-    }
-
-    public static Object[] newDummyWith(final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
-        final int receiverAndArgumentsLength = receiverAndArguments.length;
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
-        assert sender != null : "Sender should never be null";
-        assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
-        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
-        ArrayUtils.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
-        return frameArguments;
+        return newWith(sender, null, object, selector, arguments, receiver);
     }
 
     /* Template because closure arguments still need to be filled in. */

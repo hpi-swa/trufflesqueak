@@ -13,6 +13,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -87,7 +88,8 @@ public final class ReturnBytecodes {
             } else {
                 CompilerDirectives.transferToInterpreter();
                 final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
-                getContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, returnValue);
+                final SqueakImageContext image = getContext();
+                image.cannotReturn.executeAsSymbolSlow(image, frame, contextObject, returnValue);
                 throw CompilerDirectives.shouldNotReachHere();
             }
         }
@@ -172,7 +174,8 @@ public final class ReturnBytecodes {
                 } else {
                     CompilerDirectives.transferToInterpreter();
                     final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
-                    getContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
+                    final SqueakImageContext image = getContext();
+                    image.cannotReturn.executeAsSymbolSlow(image, frame, contextObject, getReturnValue(frame));
                     throw CompilerDirectives.shouldNotReachHere();
                 }
             } else {
