@@ -1190,6 +1190,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             final Object[] arguments = arrayNode.execute(node, argArray);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return primitiveNode.executeWithArguments(frame, receiver, arguments);
+                    } catch (final PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
             return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arguments));
         }
     }
@@ -1218,6 +1228,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             final Object[] arguments = arrayNode.execute(node, argArray);
+            if (method.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                if (primitiveNode != null) {
+                    try {
+                        return primitiveNode.executeWithArguments(frame, receiver, arguments);
+                    } catch (final PrimitiveFailed pf) {
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                    }
+                }
+            }
             return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arguments));
         }
     }
