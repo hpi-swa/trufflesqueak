@@ -15,8 +15,7 @@ import java.util.Arrays;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
 
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 
 import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
@@ -25,13 +24,13 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class AbstractSqueakTestCase {
@@ -66,36 +65,13 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static final Object runMethod(final CompiledCodeObject code, final Object receiver, final Object... arguments) {
-        final VirtualFrame frame = createTestFrame(code);
         Object result = null;
         try {
-            result = createContext(code, receiver, arguments).execute(frame);
+            result = IndirectCallNode.getUncached().call(code.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, receiver, arguments));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             fail("broken test");
         }
         return result;
-    }
-
-    protected static final ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver) {
-        return createContext(code, receiver, ArrayUtils.EMPTY_ARRAY);
-    }
-
-    protected static final ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver, final Object[] arguments) {
-        final ContextObject testContext = ContextObject.create(image, code.getSqueakContextSize());
-        testContext.setReceiver(receiver);
-        testContext.setCodeObject(code);
-        testContext.setInstructionPointer(code.getInitialPC());
-        testContext.setStackPointer(0);
-        testContext.removeSender();
-        for (final Object argument : arguments) {
-            testContext.push(argument);
-        }
-        // Initialize temporary variables with nil in newContext.
-        final int numTemps = code.getNumTemps();
-        for (int i = 0; i < numTemps - arguments.length; i++) {
-            testContext.push(NilObject.SINGLETON);
-        }
-        return ExecuteTopLevelContextNode.create(image, null, testContext, false);
     }
 
     protected static final Object runMethod(final Object receiver, final int... intbytes) {
@@ -106,22 +82,12 @@ public abstract class AbstractSqueakTestCase {
         return runMethod(makeMethod(intbytes), receiver, arguments);
     }
 
-    protected static final Object runBinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
-        return runPrim(17104899, new Object[0], primCode, rcvr, arguments);
+    protected static final Object runPrimitive(final int primCode, final Object rcvr, final Object arg1) {
+        return ((Primitive1) PrimitiveNodeFactory.getOrCreateIndexed(primCode, 2)).execute(null, rcvr, arg1);
     }
 
-    protected static final Object runQuinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
-        return runPrim(68222979, new Object[0], primCode, rcvr, arguments);
-    }
-
-    protected static final Object runPrim(final int header, final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
-        final CompiledCodeObject method = makeMethod(header, literals, 139, primCode & 0xFF, (primCode & 0xFF00) >> 8);
-        return runMethod(method, rcvr, arguments);
-    }
-
-    protected static final VirtualFrame createTestFrame(final CompiledCodeObject code) {
-        final Object[] arguments = FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON);
-        return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
+    protected static final Object runPrimitive(final int primCode, final Object rcvr, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+        return ((Primitive4) PrimitiveNodeFactory.getOrCreateIndexed(primCode, 5)).execute(null, rcvr, arg1, arg2, arg3, arg4);
     }
 
     protected static final SqueakImage loadImageContext(final String imagePath) {
