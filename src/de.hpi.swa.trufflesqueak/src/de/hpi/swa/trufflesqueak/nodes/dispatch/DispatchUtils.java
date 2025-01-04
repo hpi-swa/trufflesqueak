@@ -69,7 +69,8 @@ public final class DispatchUtils {
             LogUtils.PRIMITIVES.fine(() -> "Named primitive not found for " + code);
         } else if (primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_SIMULATION_GUARD_INDEX &&
                         primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ENSURE_MARKER_INDEX &&
-                        primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX) {
+                        primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX &&
+                        primitiveIndex != 65 && primitiveIndex != 66 && primitiveIndex != 67) {
             LogUtils.PRIMITIVES.fine(() -> "Primitive #" + code.primitiveIndex() + " not found for " + code);
         }
     }
