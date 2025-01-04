@@ -129,7 +129,7 @@ public final class SqueakImageContext {
     @CompilationFinal(dimensions = 1) private final MethodCacheEntry[] methodCache = new MethodCacheEntry[METHOD_CACHE_SIZE];
 
     /* Interpreter state */
-    private int primitiveErrorCode = -1;
+    private int primFailCode = -1;
 
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
@@ -740,16 +740,15 @@ public final class SqueakImageContext {
         }
     }
 
-    public long getPrimitiveErrorCode() {
-        assert primitiveErrorCode >= 0;
-        final long result = primitiveErrorCode;
-        primitiveErrorCode = -1;
+    public int getPrimFailCode() {
+        assert primFailCode >= 0;
+        final int result = primFailCode;
+        primFailCode = 0;
         return result;
     }
 
-    public void setPrimitiveErrorCode(final PrimitiveFailed primitiveFailed) {
-        assert primitiveErrorCode == -1 : "Previous primitive error code was not consumed";
-        primitiveErrorCode = primitiveFailed.getReasonCode();
+    public void setPrimFailCode(final PrimitiveFailed primitiveFailed) {
+        primFailCode = primitiveFailed.getPrimFailCode();
     }
 
     @TruffleBoundary
