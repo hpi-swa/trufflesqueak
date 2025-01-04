@@ -28,8 +28,8 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
     @Test
     public void testPrimEquivalent() {
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
-        assertTrue((boolean) runBinaryPrimitive(110, rcvr, rcvr));
-        assertFalse((boolean) runBinaryPrimitive(110, rcvr, NilObject.SINGLETON));
+        assertTrue((boolean) runPrimitive(110, rcvr, rcvr));
+        assertFalse((boolean) runPrimitive(110, rcvr, NilObject.SINGLETON));
     }
 
     @Test
@@ -41,7 +41,7 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
         for (int i = 1; i < 8; i++) {
             assertNotSame(NilObject.SINGLETON, rcvr.getObject(i));
         }
-        final Object result = runQuinaryPrimitive(105, rcvr, 1L, 6L, ArrayObject.createEmptyStrategy(image, image.arrayClass, 10), 1L);
+        final Object result = runPrimitive(105, rcvr, 1L, 6L, ArrayObject.createEmptyStrategy(image, image.arrayClass, 10), 1L);
         assertSame(result, rcvr);
         for (int i = 0; i < 6; i++) {
             assertSame(NilObject.SINGLETON, rcvr.getObject(i));
@@ -61,7 +61,7 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
             final Object wrappedValue0 = WrapToSqueakNode.executeUncached(values[0]);
             final Object wrappedValue1 = WrapToSqueakNode.executeUncached(values[1]);
             final Object wrappedValue2 = WrapToSqueakNode.executeUncached(values[2]);
-            assertEquals(wrappedValue2, runBinaryPrimitive(1, wrappedValue0, wrappedValue1));
+            assertEquals(wrappedValue2, runPrimitive(1, wrappedValue0, wrappedValue1));
         }
     }
 
@@ -78,10 +78,10 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
             final Object wrappedValue0 = WrapToSqueakNode.executeUncached(values[0]);
             final Object wrappedValue1 = WrapToSqueakNode.executeUncached(values[1]);
             final Object wrappedValue2 = WrapToSqueakNode.executeUncached(values[2]);
-            assertEquals(wrappedValue2, runBinaryPrimitive(2, wrappedValue0, wrappedValue1));
+            assertEquals(wrappedValue2, runPrimitive(2, wrappedValue0, wrappedValue1));
         }
         assertEquals(WrapToSqueakNode.executeUncached(Long.MAX_VALUE),
-                        runBinaryPrimitive(22, WrapToSqueakNode.executeUncached(new LargeIntegerObject(image, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE))),
+                        runPrimitive(22, WrapToSqueakNode.executeUncached(new LargeIntegerObject(image, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE))),
                                         WrapToSqueakNode.executeUncached(1L)));
     }
 }
