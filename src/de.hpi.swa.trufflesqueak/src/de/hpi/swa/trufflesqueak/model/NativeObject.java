@@ -365,7 +365,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
                     try {
                         return primitiveNode.executeWithArguments(image.externalSenderFrame, receiver, arguments);
                     } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(null, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(null, method, pf);
                     }
                 }
             }

@@ -176,7 +176,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     try {
                         return ((Primitive0) primitiveNode).execute(frame, receiver);
                     } catch (PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
@@ -214,7 +214,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     try {
                         return ((Primitive1) primitiveNode).execute(frame, receiver, object1);
                     } catch (PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
@@ -252,7 +252,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     try {
                         return ((Primitive2) primitiveNode).execute(frame, receiver, object1, object2);
                     } catch (PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
@@ -290,7 +290,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     try {
                         return ((Primitive3) primitiveNode).execute(frame, receiver, object1, object2, object3);
                     } catch (PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
@@ -330,7 +330,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     try {
                         return ((Primitive4) primitiveNode).execute(frame, receiver, object1, object2, object3, object4);
                     } catch (PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
@@ -370,7 +370,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     try {
                         return ((Primitive5) primitiveNode).execute(frame, receiver, object1, object2, object3, object4, object5);
                     } catch (PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
@@ -409,7 +409,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     try {
                         return primitiveNode.executeWithArguments(frame, receiver, arguments);
                     } catch (PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
@@ -1146,10 +1146,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract Object execute(Node node, PointersObject mutex, Object mutexOwner, PointersObject activeProcess);
 
             @Specialization
-            protected static final boolean doNilOwner(final Node node, final PointersObject mutex, @SuppressWarnings("unused") final NilObject owner, final PointersObject activeProcess,
+            protected static final boolean doNilOwner(final Node node, final PointersObject mutex, final NilObject owner, final PointersObject activeProcess,
                             @Cached final AbstractPointersObjectWriteNode writeNode) {
-                writeNode.execute(node, mutex, MUTEX.OWNER, activeProcess);
-                return BooleanObject.FALSE;
+                return EnterCriticalSectionNode.doEnterNilOwner(node, mutex, owner, activeProcess, writeNode);
             }
 
             @SuppressWarnings("unused")
@@ -1178,8 +1177,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
-            final Object[] arguments = arrayNode.execute(node, argArray);
-            return dispatchNode.execute(frame, receiver, arguments);
+            return dispatchNode.execute(frame, receiver, arrayNode.execute(node, argArray));
         }
 
         @ReportPolymorphism.Megamorphic
@@ -1196,7 +1194,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     try {
                         return primitiveNode.executeWithArguments(frame, receiver, arguments);
                     } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
@@ -1215,8 +1213,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
-            final Object[] arguments = arrayNode.execute(node, argArray);
-            return dispatchNode.execute(frame, receiver, arguments);
+            return dispatchNode.execute(frame, receiver, arrayNode.execute(node, argArray));
         }
 
         @ReportPolymorphism.Megamorphic
@@ -1227,18 +1224,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
-            final Object[] arguments = arrayNode.execute(node, argArray);
-            if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
-                if (primitiveNode != null) {
-                    try {
-                        return primitiveNode.executeWithArguments(frame, receiver, arguments);
-                    } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
-                    }
-                }
-            }
-            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arguments));
+            return PrimExecuteMethodArgsArray3Node.doExecute(frame, receiver, argArray, method, node, arrayNode, senderNode, callNode);
         }
     }
 

@@ -163,7 +163,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
                         try {
                             return primitiveNode.executeWithArguments(image.externalSenderFrame, this, arguments);
                         } catch (final PrimitiveFailed pf) {
-                            DispatchUtils.handlePrimitiveFailedIndirect(null, primitiveNode, method, pf);
+                            DispatchUtils.handlePrimitiveFailedIndirect(null, method, pf);
                         }
                     }
                 }
