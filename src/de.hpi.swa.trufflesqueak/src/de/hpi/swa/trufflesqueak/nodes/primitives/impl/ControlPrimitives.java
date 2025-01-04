@@ -37,6 +37,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
@@ -165,16 +166,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final CreateFrameArgumentsForIndirectCall0Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final Primitive0 primitiveNode = (Primitive0) primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
-                        return ((Primitive0) primitiveNode).execute(frame, receiver);
+                        return primitiveNode.execute(frame, receiver);
                     } catch (PrimitiveFailed pf) {
                         DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
@@ -203,16 +205,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final CreateFrameArgumentsForIndirectCall1Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final Primitive1 primitiveNode = (Primitive1) primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
-                        return ((Primitive1) primitiveNode).execute(frame, receiver, object1);
+                        return primitiveNode.execute(frame, receiver, object1);
                     } catch (PrimitiveFailed pf) {
                         DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
@@ -241,16 +244,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final CreateFrameArgumentsForIndirectCall2Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final Primitive2 primitiveNode = (Primitive2) primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
-                        return ((Primitive2) primitiveNode).execute(frame, receiver, object1, object2);
+                        return primitiveNode.execute(frame, receiver, object1, object2);
                     } catch (PrimitiveFailed pf) {
                         DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
@@ -279,16 +283,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final CreateFrameArgumentsForIndirectCall3Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final Primitive3 primitiveNode = (Primitive3) primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
-                        return ((Primitive3) primitiveNode).execute(frame, receiver, object1, object2, object3);
+                        return primitiveNode.execute(frame, receiver, object1, object2, object3);
                     } catch (PrimitiveFailed pf) {
                         DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
@@ -319,16 +324,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final CreateFrameArgumentsForIndirectCall4Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final Primitive4 primitiveNode = (Primitive4) primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
-                        return ((Primitive4) primitiveNode).execute(frame, receiver, object1, object2, object3, object4);
+                        return primitiveNode.execute(frame, receiver, object1, object2, object3, object4);
                     } catch (PrimitiveFailed pf) {
                         DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
@@ -359,16 +365,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final CreateFrameArgumentsForIndirectCall5Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final Primitive5 primitiveNode = (Primitive5) primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
-                        return ((Primitive5) primitiveNode).execute(frame, receiver, object1, object2, object3, object4, object5);
+                        return primitiveNode.execute(frame, receiver, object1, object2, object3, object4, object5);
                     } catch (PrimitiveFailed pf) {
                         DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
@@ -397,6 +404,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
@@ -404,7 +412,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final AbstractPrimitiveNode primitiveNode = primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
                         return primitiveNode.executeWithArguments(frame, receiver, arguments);
@@ -1185,11 +1193,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject method,
                         @Bind("this") final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             final Object[] arguments = arrayNode.execute(node, argArray);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final AbstractPrimitiveNode primitiveNode = primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
                         return primitiveNode.executeWithArguments(frame, receiver, arguments);
@@ -1222,9 +1231,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final CompiledCodeObject method,
                         @Bind("this") final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
-            return PrimExecuteMethodArgsArray3Node.doExecute(frame, receiver, argArray, method, node, arrayNode, senderNode, callNode);
+            return PrimExecuteMethodArgsArray3Node.doExecute(frame, receiver, argArray, method, node, arrayNode, primitiveNodeProfile, senderNode, callNode);
         }
     }
 
