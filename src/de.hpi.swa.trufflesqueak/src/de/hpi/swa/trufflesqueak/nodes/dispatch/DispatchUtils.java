@@ -81,7 +81,7 @@ public final class DispatchUtils {
     @TruffleBoundary
     public static void handlePrimitiveFailedIndirect(final Node node, final AbstractPrimitiveNode primitiveNode, final CompiledCodeObject method, final PrimitiveFailed primitiveFailed) {
         if (method.hasStoreIntoTemp1AfterCallPrimitive()) {
-            SqueakImageContext.get(node).setPrimitiveErrorCode(primitiveFailed);
+            SqueakImageContext.get(node).setPrimFailCode(primitiveFailed);
         }
     }
 }

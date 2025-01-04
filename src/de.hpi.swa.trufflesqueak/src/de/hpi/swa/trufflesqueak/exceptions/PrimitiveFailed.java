@@ -21,14 +21,14 @@ public final class PrimitiveFailed extends ControlFlowException {
     public static final PrimitiveFailed INAPPROPRIATE_OPERATION = new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION.ordinal());
     public static final PrimitiveFailed INSUFFICIENT_OBJECT_MEMORY = new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY.ordinal());
 
-    private final int reasonCode;
+    private final int primFailCode;
 
-    private PrimitiveFailed(final int reasonCode) {
-        this.reasonCode = reasonCode;
+    private PrimitiveFailed(final int primFailCode) {
+        this.primFailCode = primFailCode;
     }
 
-    public int getReasonCode() {
-        return reasonCode;
+    public int getPrimFailCode() {
+        return primFailCode;
     }
 
     public static PrimitiveFailed andTransferToInterpreter() {
@@ -36,9 +36,9 @@ public final class PrimitiveFailed extends ControlFlowException {
         throw GENERIC_ERROR;
     }
 
-    public static PrimitiveFailed andTransferToInterpreter(final int reason) {
+    public static PrimitiveFailed andTransferToInterpreter(final int primFailCode) {
         CompilerDirectives.transferToInterpreter();
-        throw new PrimitiveFailed(reason);
+        throw new PrimitiveFailed(primFailCode);
     }
 
     public static PrimitiveFailed andTransferToInterpreterWithError(final Throwable t) {

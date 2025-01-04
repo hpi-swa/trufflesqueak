@@ -17,7 +17,7 @@ abstract class HandlePrimitiveFailedNode extends AbstractNode implements Unadopt
     private static final HandlePrimitiveFailedNode STORE_INSTANCE = new HandlePrimitiveFailedNode() {
         @Override
         protected void execute(final PrimitiveFailed pf) {
-            getContext().setPrimitiveErrorCode(pf);
+            getContext().setPrimFailCode(pf);
         }
     };
 

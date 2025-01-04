@@ -7,11 +7,20 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodesFactory.CallPrimitiveNodeFactory.GetErrorObjectFromPrimFailCodeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
@@ -33,11 +42,15 @@ public final class MiscellaneousBytecodes {
     public static final class CallPrimitiveNode extends AbstractBytecodeNode {
         public static final int NUM_BYTECODES = 3;
         @Child private FrameStackPushNode pushNode;
+        @Child private GetErrorObjectFromPrimFailCodeNode getErrorObjectNode;
 
         public CallPrimitiveNode(final CompiledCodeObject method, final int index, final int primitiveIndex) {
             super(method, index, NUM_BYTECODES);
             assert method.hasPrimitive() && method.primitiveIndex() == primitiveIndex;
-            pushNode = method.hasStoreIntoTemp1AfterCallPrimitive() ? FrameStackPushNode.create() : null;
+            if (method.hasStoreIntoTemp1AfterCallPrimitive()) {
+                pushNode = FrameStackPushNode.create();
+                getErrorObjectNode = GetErrorObjectFromPrimFailCodeNodeGen.create();
+            }
         }
 
         public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final byte byte1, final byte byte2) {
@@ -48,7 +61,7 @@ public final class MiscellaneousBytecodes {
         public void executeVoid(final VirtualFrame frame) {
             // primitives handled specially
             if (pushNode != null) {
-                pushNode.execute(frame, getContext().getPrimitiveErrorCode());
+                pushNode.execute(frame, getErrorObjectNode.execute(getContext().getPrimFailCode()));
             }
         }
 
@@ -56,6 +69,23 @@ public final class MiscellaneousBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "callPrimitive: " + getCode().primitiveIndex();
+        }
+
+        @GenerateInline(false)
+        protected abstract static class GetErrorObjectFromPrimFailCodeNode extends AbstractNode {
+            protected abstract Object execute(int primFailCode);
+
+            @Specialization
+            protected static final Object doGet(final int primFailCode,
+                            @Bind("this") final Node node,
+                            @Cached final InlinedConditionProfile inRangeProfile) {
+                final ArrayObject errorTable = getContext(node).primitiveErrorTable;
+                if (inRangeProfile.profile(node, primFailCode < errorTable.getObjectLength())) {
+                    return errorTable.getObject(primFailCode);
+                } else {
+                    return (long) primFailCode;
+                }
+            }
         }
     }
 
