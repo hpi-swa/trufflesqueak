@@ -145,7 +145,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                             try {
                                 return primitiveNode.executeWithArguments(frame, receiver, arguments);
                             } catch (final PrimitiveFailed pf) {
-                                DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                                DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                             }
                         }
                     }

@@ -130,7 +130,7 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
                     try {
                         return ((Primitive3) primitiveNode).execute(frame, receiver, arg1, arg2, arg3);
                     } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }

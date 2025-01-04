@@ -143,7 +143,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                     try {
                         return primitiveNode.executeWithArguments(frame, receiver, arguments);
                     } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }

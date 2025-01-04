@@ -125,7 +125,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
                     try {
                         return ((Primitive0) primitiveNode).execute(frame, receiver);
                     } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, primitiveNode, method, pf);
+                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
                 }
             }
