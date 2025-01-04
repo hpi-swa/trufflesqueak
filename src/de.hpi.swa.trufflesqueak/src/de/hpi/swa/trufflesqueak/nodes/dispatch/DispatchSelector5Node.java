@@ -20,6 +20,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -124,16 +125,17 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
+                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
                         @Cached final CreateFrameArgumentsForIndirectCall5Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final Primitive5 primitiveNode = (Primitive5) primitiveNodeProfile.profile(node, method.getPrimitiveNode());
                 if (primitiveNode != null) {
                     try {
-                        return ((Primitive5) primitiveNode).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+                        return primitiveNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
                     } catch (final PrimitiveFailed pf) {
                         DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     }
