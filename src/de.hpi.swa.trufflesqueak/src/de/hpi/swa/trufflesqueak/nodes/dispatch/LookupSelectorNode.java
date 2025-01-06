@@ -36,7 +36,7 @@ public abstract class LookupSelectorNode extends AbstractNode {
     public abstract Object execute(ClassObject receiverClass);
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "INLINE_CACHE_SIZE", guards = {"receiverClass == cachedClass"}, assumptions = {"assumptions"})
+    @Specialization(limit = "INLINE_METHOD_CACHE_LIMIT", guards = {"receiverClass == cachedClass"}, assumptions = {"assumptions"})
     protected static final Object doCached(final ClassObject receiverClass,
                     @Cached("receiverClass") final ClassObject cachedClass,
                     @Cached("receiverClass.lookupInMethodDictSlow(selector)") final Object cachedLookupResult,

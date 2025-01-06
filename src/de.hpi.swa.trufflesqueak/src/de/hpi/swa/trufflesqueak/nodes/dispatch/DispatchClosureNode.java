@@ -22,12 +22,10 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 @GenerateInline
 @GenerateCached(false)
 public abstract class DispatchClosureNode extends AbstractNode {
-    protected static final int INLINE_CACHE_SIZE = 3;
-
     public abstract Object execute(Node node, BlockClosureObject closure, Object[] arguments);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+    @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
     protected static final Object doDirect(final BlockClosureObject closure, final Object[] arguments,
                     @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                     @Cached(value = "create(cachedBlock.getCallTarget())", inline = false) final DirectCallNode directCallNode) {

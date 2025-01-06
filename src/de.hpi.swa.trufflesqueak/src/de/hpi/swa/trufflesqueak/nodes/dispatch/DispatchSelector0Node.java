@@ -100,7 +100,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
             return Dispatch0NodeGen.create(selector);
         }
 
-        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_CACHE_SIZE")
+        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
         protected static final Object doDirect(final VirtualFrame frame, final Object receiver,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Cached("create(selector, guard)") final DispatchDirect0Node dispatchDirectNode) {
