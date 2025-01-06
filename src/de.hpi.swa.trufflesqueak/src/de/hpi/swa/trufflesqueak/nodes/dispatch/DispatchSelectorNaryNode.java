@@ -63,8 +63,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     DispatchSelectorNaryNode(final VirtualFrame frame, final int numArgs, final AbstractDispatchNaryNode dispatchNode) {
         final int stackPointer = FrameAccess.getStackPointer(frame);
         final int receiverIndex = stackPointer - 1 - numArgs;
-        // FIXME: should clear receiver?
-        receiverNode = FrameStackReadNode.create(frame, receiverIndex, false);
+        receiverNode = FrameStackReadNode.create(frame, receiverIndex, true);
         argumentNodes = new FrameStackReadNode[numArgs];
         for (int i = 0; i < numArgs; i++) {
             argumentNodes[i] = FrameStackReadNode.create(frame, receiverIndex + 1 + i, true);

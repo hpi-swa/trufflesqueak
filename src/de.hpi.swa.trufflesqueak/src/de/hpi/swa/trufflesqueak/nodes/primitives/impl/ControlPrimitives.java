@@ -71,7 +71,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPointerIncrementNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.CreateFrameArgumentsForIndirectCall0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
@@ -126,19 +125,6 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
-
-    protected abstract static class AbstractPrimitiveStackIncrementNode extends AbstractPrimitiveNode {
-        @Child private FrameStackPointerIncrementNode frameStackPointerIncrementNode;
-
-        protected final FrameStackPointerIncrementNode getFrameStackPointerIncrementNode() {
-            if (frameStackPointerIncrementNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameStackPointerIncrementNode = insert(FrameStackPointerIncrementNode.create());
-            }
-            return frameStackPointerIncrementNode;
-        }
-    }
-
     protected abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
         protected static final int CACHE_LIMIT = 2;
     }
@@ -427,19 +413,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 85)
-    protected abstract static class PrimSignalNode extends AbstractPrimitiveStackIncrementNode implements Primitive0WithFallback {
+    protected abstract static class PrimSignalNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "isSemaphore(receiver)")
         protected final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Bind("this") final Node node,
-                        @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode) {
+                        @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode,
+                        @Cached final FrameStackPushNode pushReceiverNode) {
             try {
                 signalSemaphoreNode.executeSignal(frame, node, receiver);
             } catch (final ProcessSwitch ps) {
-                /*
-                 * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                 * enough to increment the stack pointer.
-                 */
-                getFrameStackPointerIncrementNode().execute(frame);
+                pushReceiverNode.execute(frame, receiver);
                 throw ps;
             }
             return receiver;
@@ -448,7 +431,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 86)
-    protected abstract static class PrimWaitNode extends AbstractPrimitiveStackIncrementNode implements Primitive0WithFallback {
+    protected abstract static class PrimWaitNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         @SuppressWarnings("truffle-static-method")
         protected final PointersObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
@@ -457,7 +440,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final GetActiveProcessNode getActiveProcessNode) {
+                        @Cached final GetActiveProcessNode getActiveProcessNode,
+                        @Cached final FrameStackPushNode pushReceiverNode) {
             assert isSemaphore(receiver);
             final long excessSignals = pointersReadNode.executeLong(node, receiver, SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0) {
@@ -468,11 +452,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 try {
                     throw wakeHighestPriorityNode.executeWake(frame, node);
                 } catch (final ProcessSwitch ps) {
-                    /*
-                     * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                     * enough to increment the stack pointer.
-                     */
-                    getFrameStackPointerIncrementNode().execute(frame);
+                    pushReceiverNode.execute(frame, receiver);
                     throw ps;
                 }
             }
@@ -481,14 +461,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 87)
-    protected abstract static class PrimResumeNode extends AbstractPrimitiveStackIncrementNode implements Primitive0WithFallback {
+    protected abstract static class PrimResumeNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
         @SuppressWarnings("truffle-static-method")
         protected final Object doResume(final VirtualFrame frame, final PointersObject receiver,
                         @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
-                        @Cached final ResumeProcessNode resumeProcessNode) {
+                        @Cached final ResumeProcessNode resumeProcessNode,
+                        @Cached final FrameStackPushNode pushReceiverNode) {
             if (!(readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject)) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;
@@ -496,11 +477,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 resumeProcessNode.executeResume(frame, node, receiver);
             } catch (final ProcessSwitch ps) {
-                /*
-                 * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                 * enough to increment the stack pointer.
-                 */
-                getFrameStackPointerIncrementNode().execute(frame);
+                pushReceiverNode.execute(frame, receiver);
                 throw ps;
             }
             return receiver;
@@ -987,7 +964,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 167)
-    protected abstract static class PrimYieldNode extends AbstractPrimitiveStackIncrementNode implements Primitive0WithFallback {
+    protected abstract static class PrimYieldNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         @SuppressWarnings("truffle-static-method")
         protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
@@ -996,7 +973,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
-                        @Cached final WakeHighestPriorityNode wakeHighestPriorityNode) {
+                        @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
+                        @Cached final FrameStackPushNode pushReceiverNode) {
             final PointersObject activeProcess = getActiveProcessNode.execute(node);
             final long priority = pointersReadNode.executeLong(node, activeProcess, PROCESS.PRIORITY);
             final ArrayObject processLists = pointersReadNode.executeArray(node, scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
@@ -1008,11 +986,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 throw wakeHighestPriorityNode.executeWake(frame, node);
             } catch (final ProcessSwitch ps) {
-                /*
-                 * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                 * enough to increment the stack pointer.
-                 */
-                getFrameStackPointerIncrementNode().execute(frame);
+                pushReceiverNode.execute(frame, scheduler);
                 throw ps;
             }
         }
@@ -1057,17 +1031,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Cached final ResumeProcessNode resumeProcessNode,
-                            @Cached(inline = false) final FrameStackPointerIncrementNode frameStackPointerIncrementNode) {
+                            @Cached final FrameStackPushNode pushReceiverNode,
+                            @Cached final FrameStackPushNode pushFirstLinkNode) {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode, node);
                 writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
                 try {
                     resumeProcessNode.executeResume(frame, node, owningProcess);
                 } catch (final ProcessSwitch ps) {
-                    /*
-                     * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                     * enough to increment the stack pointer.
-                     */
-                    frameStackPointerIncrementNode.execute(frame);
+                    pushReceiverNode.execute(frame, mutex);
+                    pushFirstLinkNode.execute(frame, firstLink);
                     throw ps;
                 }
                 return mutex;
@@ -1387,10 +1359,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 230)
-    protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveStackIncrementNode implements Primitive1WithFallback {
+    protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
-                        @Cached final CheckForInterruptsFullNode interruptNode) {
+                        @Cached final CheckForInterruptsFullNode interruptNode,
+                        @Cached final FrameStackPushNode pushReceiverNode) {
             MiscUtils.sleep(timeMicroseconds / 1000);
             /*
              * Perform interrupt check (even if interrupt handler is not active), otherwise
@@ -1399,11 +1372,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 interruptNode.execute(frame);
             } catch (final ProcessSwitch ps) {
-                /*
-                 * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                 * enough to increment the stack pointer.
-                 */
-                getFrameStackPointerIncrementNode().execute(frame);
+                pushReceiverNode.execute(frame, receiver);
                 throw ps;
             }
             return receiver;
