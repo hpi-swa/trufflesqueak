@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-@ImportStatic({BooleanObject.class, FrameAccess.class, SqueakGuards.class})
+@ImportStatic({BooleanObject.class, CacheLimits.class, FrameAccess.class, SqueakGuards.class})
 @TypeSystemReference(SqueakTypes.class)
 @NodeInfo(language = SqueakLanguageConfig.ID)
 public abstract class AbstractNode extends Node {

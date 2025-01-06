@@ -125,19 +125,15 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
-    protected abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
-        protected static final int CACHE_LIMIT = 2;
-    }
-
     /* primitiveFail (#19) handled specially. */
 
     // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform0Node extends AbstractPerformPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimPerform0Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform0Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
@@ -174,9 +170,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform1Node extends AbstractPerformPrimitiveNode implements Primitive2WithFallback {
+    protected abstract static class PrimPerform1Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
+        @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform1Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
@@ -213,9 +209,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform2Node extends AbstractPerformPrimitiveNode implements Primitive3WithFallback {
+    protected abstract static class PrimPerform2Node extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
+        @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform2Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
@@ -252,9 +248,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform3Node extends AbstractPerformPrimitiveNode implements Primitive4WithFallback {
+    protected abstract static class PrimPerform3Node extends AbstractPrimitiveNode implements Primitive4WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
+        @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform3Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         @Bind("this") final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
@@ -291,9 +287,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform4Node extends AbstractPerformPrimitiveNode implements Primitive5WithFallback {
+    protected abstract static class PrimPerform4Node extends AbstractPrimitiveNode implements Primitive5WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
+        @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform4Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4,
                         @Bind("this") final Node node,
@@ -332,9 +328,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerform5Node extends AbstractPerformPrimitiveNode implements Primitive6WithFallback {
+    protected abstract static class PrimPerform5Node extends AbstractPrimitiveNode implements Primitive6WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector"}, limit = "CACHE_LIMIT")
+        @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform5Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final Object object4, final Object object5,
                         @Bind("this") final Node node,
@@ -373,8 +369,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 84)
-    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
+    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
                         @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
@@ -589,7 +585,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    protected abstract static class AbstractPrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode {
+    protected abstract static class AbstractPrimPerformWithArgumentsInSuperclassNode extends AbstractPrimitiveNode {
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, final ArrayObject arguments, final ClassObject lookupClass,
                         final InheritsFromNode inheritsFromNode, final DirectedSuperDispatchNaryNode dispatchNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode, final Node node) {
             if (inheritsFromNode.execute(node, receiver, lookupClass)) {
@@ -618,7 +614,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 100)
     /* Object>>#perform:withArguments:inSuperclass: */
     protected abstract static class PrimPerformWithArgumentsInSuperclass4Node extends AbstractPrimPerformWithArgumentsInSuperclassNode implements Primitive3WithFallback {
-        @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT" +
+                        "")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
                         final ClassObject lookupClass,
                         @Bind("this") final Node node,
@@ -646,7 +643,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 100)
     /* Context>>#object:perform:withArguments:inClass: */
     protected abstract static class PrimPerformWithArgumentsInSuperclass5Node extends AbstractPrimPerformWithArgumentsInSuperclassNode implements Primitive4WithFallback {
-        @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object performContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target,
                         @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
                         final ClassObject lookupClass,

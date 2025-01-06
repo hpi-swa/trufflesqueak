@@ -129,8 +129,6 @@ public final class SendBytecodes {
     }
 
     public static final class SelfSendNode extends AbstractSendNode {
-        public static final int INLINE_CACHE_SIZE = 6;
-
         @Child private DispatchSelectorNode dispatchNode;
 
         private SelfSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {

@@ -10,8 +10,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 abstract class AbstractDispatchNode extends AbstractNode {
-    public static final int INLINE_CACHE_SIZE = 6;
-
     protected final NativeObject selector;
 
     AbstractDispatchNode(final NativeObject selector) {

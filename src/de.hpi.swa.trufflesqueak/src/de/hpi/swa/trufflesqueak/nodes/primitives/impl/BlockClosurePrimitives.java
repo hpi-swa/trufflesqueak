@@ -28,8 +28,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
@@ -40,8 +40,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
     public abstract static class AbstractClosurePrimitiveNode extends AbstractPrimitiveNode {
-        protected static final int INLINE_CACHE_SIZE = 3;
-
         @Child protected GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
         protected final Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure) {
@@ -93,7 +91,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {201, 221})
     public abstract static class PrimClosureValue0Node extends AbstractClosurePrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 0"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 0"}, assumptions = {
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -112,7 +111,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 202)
     protected abstract static class PrimClosureValue1Node extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 1"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 1"}, assumptions = {
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -131,7 +131,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 203)
     protected abstract static class PrimClosureValue2Node extends AbstractClosurePrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 2"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 2"}, assumptions = {
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -150,7 +151,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 204)
     protected abstract static class PrimClosureValue3Node extends AbstractClosurePrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 3"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 3"}, assumptions = {
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -169,7 +171,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 205)
     protected abstract static class PrimClosureValue4Node extends AbstractClosurePrimitiveNode implements Primitive4WithFallback {
-        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 4"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 4"}, assumptions = {
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -188,7 +191,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 205)
     protected abstract static class PrimClosureValue5Node extends AbstractClosurePrimitiveNode implements Primitive5WithFallback {
-        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 5"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+        @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 5"}, assumptions = {
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValue5Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         final Object arg5,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
@@ -210,7 +214,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = {206, 222})
     protected abstract static class PrimClosureValueAryNode extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(node, argArray)"}, assumptions = {
-                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
@@ -240,7 +244,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue0Node extends AbstractClosurePrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 0"}, assumptions = {
-                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValue0Direct(final VirtualFrame frame, final BlockClosureObject closure,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -260,7 +264,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue1Node extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 1"}, assumptions = {
-                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValue1Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -280,7 +284,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue2Node extends AbstractClosurePrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 2"}, assumptions = {
-                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValue2Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -300,7 +304,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue3Node extends AbstractClosurePrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 3"}, assumptions = {
-                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValue3Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -320,7 +324,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue4Node extends AbstractClosurePrimitiveNode implements Primitive4WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 4"}, assumptions = {
-                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValue4Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -340,7 +344,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue5Node extends AbstractClosurePrimitiveNode implements Primitive5WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 5"}, assumptions = {
-                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValue5Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         final Object arg5,
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
@@ -362,7 +366,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = 208)
     public abstract static class PrimFullClosureValueWithArgsNode extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(node, argArray)"}, assumptions = {
-                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
+                        "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
