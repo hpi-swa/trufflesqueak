@@ -50,8 +50,7 @@ public final class DispatchSelector1Node extends DispatchSelectorNode {
 
     DispatchSelector1Node(final VirtualFrame frame, final AbstractDispatch1Node dispatchNode) {
         final int stackPointer = FrameAccess.getStackPointer(frame);
-        // FIXME: should clear receiver?
-        receiverNode = FrameStackReadNode.create(frame, stackPointer - 2, false);
+        receiverNode = FrameStackReadNode.create(frame, stackPointer - 2, true);
         arg1Node = FrameStackReadNode.create(frame, stackPointer - 1, true);
         this.dispatchNode = dispatchNode;
     }
