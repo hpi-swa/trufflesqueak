@@ -360,7 +360,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         final Object lookupResult = LookupMethodNode.executeUncached(SqueakObjectClassNode.executeUncached(receiver), this);
         if (lookupResult instanceof CompiledCodeObject method) {
             if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                 if (primitiveNode != null) {
                     try {
                         return primitiveNode.executeWithArguments(image.externalSenderFrame, receiver, arguments);

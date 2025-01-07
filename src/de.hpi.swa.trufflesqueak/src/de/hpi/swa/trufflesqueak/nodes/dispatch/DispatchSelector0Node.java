@@ -115,35 +115,9 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
         @SuppressWarnings("truffle-static-method")
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver,
                         @Bind("this") final Node node,
-                        @Cached final SqueakObjectClassNode classNode,
-                        @Cached final ResolveMethodNode methodNode,
-                        @Cached final InlinedBranchProfile hasPrimitiveProfile,
-                        @Cached final CreateFrameArgumentsForIndirectCall0Node argumentsNode,
+                        @Cached final DispatchIndirect0Node dispatchNode,
                         @Cached final IndirectCallNode callNode) {
-            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
-            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
-            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
-            if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
-                if (primitiveNode != null) {
-                    hasPrimitiveProfile.enter(node);
-                    final Object result = tryPrimitive(primitiveNode, frame.materialize(), node, method, receiver);
-                    if (result != null) {
-                        return result;
-                    }
-                }
-            }
-            return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, receiverClass, lookupResult, method, selector));
-        }
-
-        @TruffleBoundary
-        private static Object tryPrimitive(final AbstractPrimitiveNode primitiveNode, final MaterializedFrame frame, final Node node, final CompiledCodeObject method, final Object receiver) {
-            try {
-                return ((Primitive0) primitiveNode).execute(frame, receiver);
-            } catch (final PrimitiveFailed pf) {
-                DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
-                return null;
-            }
+            return dispatchNode.execute(frame, node, callNode, selector, receiver);
         }
     }
 
@@ -361,33 +335,102 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
 
     @GenerateInline
     @GenerateCached(false)
-    public abstract static class CreateFrameArgumentsForIndirectCall0Node extends AbstractNode {
-        public abstract Object[] execute(VirtualFrame frame, Node node, Object receiver, ClassObject receiverClass, Object lookupResult, CompiledCodeObject method, NativeObject selector);
+    public abstract static class DispatchIndirect0Node extends AbstractNode {
+        public abstract Object execute(VirtualFrame frame, Node node, IndirectCallNode callNode, NativeObject selector, Object receiver);
 
         @Specialization
-        @SuppressWarnings("unused")
-        protected static final Object[] doMethod(final VirtualFrame frame, final Node node, final Object receiver, final ClassObject receiverClass,
-                        final CompiledCodeObject lookupResult, final CompiledCodeObject method, final NativeObject selector,
-                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
-            return FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver);
+        protected static final Object doIndirect(final VirtualFrame frame, final Node node, final IndirectCallNode callNode, final NativeObject selector, final Object receiver,
+                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached final ResolveMethodNode methodNode,
+                        @Cached final TryPrimitive0Node tryPrimitiveNode,
+                        @Cached final CreateFrameArgumentsForIndirectCall0Node argumentsNode) {
+            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
+            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            final Object result = tryPrimitiveNode.execute(frame, node, method, receiver);
+            if (result != null) {
+                return result;
+            } else {
+                return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, receiverClass, lookupResult, method, selector));
+            }
         }
 
-        @Specialization(guards = "lookupResult == null")
-        protected static final Object[] doDoesNotUnderstand(final VirtualFrame frame, final Node node, final Object receiver, final ClassObject receiverClass,
-                        @SuppressWarnings("unused") final Object lookupResult, final CompiledCodeObject method, final NativeObject selector,
-                        @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
-            final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
-            final PointersObject message = getContext(node).newMessage(writeNode, node, selector, receiverClass, arguments);
-            return FrameAccess.newDNUWith(senderNode.execute(frame, node, method), receiver, message);
+        @GenerateInline
+        @GenerateCached(false)
+        protected abstract static class TryPrimitive0Node extends AbstractNode {
+            abstract Object execute(VirtualFrame frame, Node node, CompiledCodeObject method, Object receiver);
+
+            @SuppressWarnings("unused")
+            @Specialization(guards = "method.getPrimitiveNodeOrNull() == null")
+            protected static final Object doNoPrimitive(final CompiledCodeObject method, final Object receiver) {
+                return null;
+            }
+
+            @Specialization(guards = {"method == cachedMethod", "primitiveNode != null"}, limit = "INDIRECT_PRIMITIVE_CACHE_LIMIT")
+            protected static final Object doCached(final VirtualFrame frame, final Node node, @SuppressWarnings("unused") final CompiledCodeObject method, final Object receiver,
+                            @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                            @Bind("cachedMethod.getPrimitiveNodeOrNull()") final AbstractPrimitiveNode primitiveNode,
+                            @Cached final InlinedBranchProfile primitiveFailedProfile) {
+                try {
+                    return ((Primitive0) primitiveNode).execute(frame, receiver);
+                } catch (final PrimitiveFailed pf) {
+                    primitiveFailedProfile.enter(node);
+                    DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
+                    return null;
+                }
+            }
+
+            @Specialization(replaces = {"doNoPrimitive", "doCached"})
+            protected static final Object doUncached(final VirtualFrame frame, final Node node, final CompiledCodeObject method, final Object receiver) {
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
+                if (primitiveNode != null) {
+                    return tryPrimitive(primitiveNode, frame.materialize(), node, method, receiver);
+                } else {
+                    return null;
+                }
+            }
+
+            @TruffleBoundary
+            private static Object tryPrimitive(final AbstractPrimitiveNode primitiveNode, final MaterializedFrame frame, final Node node, final CompiledCodeObject method, final Object receiver) {
+                try {
+                    return ((Primitive0) primitiveNode).execute(frame, receiver);
+                } catch (final PrimitiveFailed pf) {
+                    DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
+                    return null;
+                }
+            }
         }
 
-        @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
-        protected static final Object[] doObjectAsMethod(final VirtualFrame frame, final Node node, final Object receiver, @SuppressWarnings("unused") final ClassObject receiverClass,
-                        final Object targetObject, final CompiledCodeObject method, final NativeObject selector,
-                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
-            final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
-            return FrameAccess.newOAMWith(senderNode.execute(frame, node, method), targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
+        @GenerateInline
+        @GenerateCached(false)
+        protected abstract static class CreateFrameArgumentsForIndirectCall0Node extends AbstractNode {
+            abstract Object[] execute(VirtualFrame frame, Node node, Object receiver, ClassObject receiverClass, Object lookupResult, CompiledCodeObject method, NativeObject selector);
+
+            @Specialization
+            @SuppressWarnings("unused")
+            protected static final Object[] doMethod(final VirtualFrame frame, final Node node, final Object receiver, final ClassObject receiverClass,
+                            final CompiledCodeObject lookupResult, final CompiledCodeObject method, final NativeObject selector,
+                            @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
+                return FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver);
+            }
+
+            @Specialization(guards = "lookupResult == null")
+            protected static final Object[] doDoesNotUnderstand(final VirtualFrame frame, final Node node, final Object receiver, final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final CompiledCodeObject method, final NativeObject selector,
+                            @Cached final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
+                final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
+                final PointersObject message = getContext(node).newMessage(writeNode, node, selector, receiverClass, arguments);
+                return FrameAccess.newDNUWith(senderNode.execute(frame, node, method), receiver, message);
+            }
+
+            @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
+            protected static final Object[] doObjectAsMethod(final VirtualFrame frame, final Node node, final Object receiver, @SuppressWarnings("unused") final ClassObject receiverClass,
+                            final Object targetObject, final CompiledCodeObject method, final NativeObject selector,
+                            @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
+                final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
+                return FrameAccess.newOAMWith(senderNode.execute(frame, node, method), targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
+            }
         }
     }
 }

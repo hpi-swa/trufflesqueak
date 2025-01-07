@@ -139,7 +139,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         arguments[i] = wrapNode.executeWrap(node, rawArguments[i]);
                     }
                     if (method.hasPrimitive()) {
-                        final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                        final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                         if (primitiveNode != null) {
                             final VirtualFrame frame = null; // FIXME?
                             try {

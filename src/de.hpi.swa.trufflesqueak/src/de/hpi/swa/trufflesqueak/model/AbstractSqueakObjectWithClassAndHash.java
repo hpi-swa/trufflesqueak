@@ -158,7 +158,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
             image.interrupt.deactivate();
             try {
                 if (method.hasPrimitive()) {
-                    final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
+                    final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                     if (primitiveNode != null) {
                         try {
                             return primitiveNode.executeWithArguments(image.externalSenderFrame, this, arguments);
