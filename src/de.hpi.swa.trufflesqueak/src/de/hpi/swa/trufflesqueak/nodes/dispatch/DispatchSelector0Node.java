@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -16,11 +17,12 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -114,23 +116,33 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
                         @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
-                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
+                        @Cached final InlinedBranchProfile hasPrimitiveProfile,
                         @Cached final CreateFrameArgumentsForIndirectCall0Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
             if (method.hasPrimitive()) {
-                final Primitive0 primitiveNode = (Primitive0) primitiveNodeProfile.profile(node, method.getPrimitiveNode());
+                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNode();
                 if (primitiveNode != null) {
-                    try {
-                        return primitiveNode.execute(frame, receiver);
-                    } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
+                    hasPrimitiveProfile.enter(node);
+                    final Object result = tryPrimitive(primitiveNode, frame.materialize(), node, method, receiver);
+                    if (result != null) {
+                        return result;
                     }
                 }
             }
             return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, receiverClass, lookupResult, method, selector));
+        }
+
+        @TruffleBoundary
+        private static Object tryPrimitive(final AbstractPrimitiveNode primitiveNode, final MaterializedFrame frame, final Node node, final CompiledCodeObject method, final Object receiver) {
+            try {
+                return ((Primitive0) primitiveNode).execute(frame, receiver);
+            } catch (final PrimitiveFailed pf) {
+                DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
+                return null;
+            }
         }
     }
 
@@ -193,10 +205,26 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
         @NeverDefault
         protected static final DispatchDirect0Node create(final NativeObject selector, final LookupClassGuard guard) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            final Object lookupResult = receiverClass.lookupInMethodDictSlow(selector);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, lookupResult, guard.getIsValidAssumption());
+            return create(selector, receiverClass, guard.getIsValidAssumption());
+        }
+
+        @NeverDefault
+        public static DispatchDirect0Node create(final NativeObject selector, final ClassObject lookupClass) {
+            return create(selector, lookupClass, null);
+        }
+
+        @NeverDefault
+        public static final DispatchDirect0Node create(final CompiledCodeObject method, final LookupClassGuard guard) {
+            final ClassObject receiverClass = guard.getSqueakClassInternal(null);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method, guard.getIsValidAssumption());
+            return create(assumptions, method);
+        }
+
+        private static DispatchDirect0Node create(final NativeObject selector, final ClassObject lookupClass, final Assumption guardAssumptionOrNull) {
+            final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult, guardAssumptionOrNull);
             if (lookupResult == null) {
-                return createDNUNode(selector, assumptions, receiverClass);
+                return createDNUNode(selector, assumptions, lookupClass);
             } else if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
                 return create(assumptions, lookupMethod);
             } else {
@@ -209,24 +237,6 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
                     return createDNUNode(selector, assumptions, lookupResultClass);
                 }
             }
-        }
-
-        @NeverDefault
-        public static DispatchDirect0Node create(final NativeObject selector, final ClassObject lookupClass) {
-            final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
-            if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
-                final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult, null);
-                return create(assumptions, lookupMethod);
-            } else {
-                throw SqueakException.create("superSend should resolve to method, not DNU or OAM");
-            }
-        }
-
-        @NeverDefault
-        public static final DispatchDirect0Node create(final CompiledCodeObject method, final LookupClassGuard guard) {
-            final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method, guard.getIsValidAssumption());
-            return create(assumptions, method);
         }
 
         private static DispatchDirect0Node create(final Assumption[] assumptions, final CompiledCodeObject method) {

@@ -204,10 +204,26 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
         @NeverDefault
         protected static final DispatchDirect5Node create(final NativeObject selector, final LookupClassGuard guard) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            final Object lookupResult = receiverClass.lookupInMethodDictSlow(selector);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, lookupResult, guard.getIsValidAssumption());
+            return create(selector, receiverClass, guard.getIsValidAssumption());
+        }
+
+        @NeverDefault
+        public static DispatchDirect5Node create(final NativeObject selector, final ClassObject lookupClass) {
+            return create(selector, lookupClass, null);
+        }
+
+        @NeverDefault
+        public static final DispatchDirect5Node create(final CompiledCodeObject method, final LookupClassGuard guard) {
+            final ClassObject receiverClass = guard.getSqueakClassInternal(null);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method, guard.getIsValidAssumption());
+            return create(assumptions, method);
+        }
+
+        private static DispatchDirect5Node create(final NativeObject selector, final ClassObject lookupClass, final Assumption guardAssumptionOrNull) {
+            final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult, guardAssumptionOrNull);
             if (lookupResult == null) {
-                return createDNUNode(selector, assumptions, receiverClass);
+                return createDNUNode(selector, assumptions, lookupClass);
             } else if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
                 return create(assumptions, lookupMethod);
             } else {
@@ -220,24 +236,6 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
                     return createDNUNode(selector, assumptions, lookupResultClass);
                 }
             }
-        }
-
-        @NeverDefault
-        public static DispatchDirect5Node create(final NativeObject selector, final ClassObject lookupClass) {
-            final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
-            if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
-                final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult, null);
-                return create(assumptions, lookupMethod);
-            } else {
-                throw SqueakException.create("superSend should resolve to method, not DNU or OAM");
-            }
-        }
-
-        @NeverDefault
-        public static final DispatchDirect5Node create(final CompiledCodeObject method, final LookupClassGuard guard) {
-            final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method, guard.getIsValidAssumption());
-            return create(assumptions, method);
         }
 
         private static DispatchDirect5Node create(final Assumption[] assumptions, final CompiledCodeObject method) {
