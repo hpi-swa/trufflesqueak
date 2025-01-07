@@ -211,10 +211,26 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         @NeverDefault
         protected static final DispatchDirectNaryNode create(final NativeObject selector, final LookupClassGuard guard) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            final Object lookupResult = receiverClass.lookupInMethodDictSlow(selector);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, lookupResult, guard.getIsValidAssumption());
+            return create(selector, receiverClass, guard.getIsValidAssumption());
+        }
+
+        @NeverDefault
+        public static DispatchDirectNaryNode create(final NativeObject selector, final ClassObject lookupClass) {
+            return create(selector, lookupClass, null);
+        }
+
+        @NeverDefault
+        public static final DispatchDirectNaryNode create(final CompiledCodeObject method, final LookupClassGuard guard) {
+            final ClassObject receiverClass = guard.getSqueakClassInternal(null);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method, guard.getIsValidAssumption());
+            return create(assumptions, method);
+        }
+
+        private static DispatchDirectNaryNode create(final NativeObject selector, final ClassObject lookupClass, final Assumption guardAssumptionOrNull) {
+            final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult, guardAssumptionOrNull);
             if (lookupResult == null) {
-                return createDNUNode(selector, assumptions, receiverClass);
+                return createDNUNode(selector, assumptions, lookupClass);
             } else if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
                 return create(assumptions, lookupMethod);
             } else {
@@ -227,24 +243,6 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                     return createDNUNode(selector, assumptions, lookupResultClass);
                 }
             }
-        }
-
-        @NeverDefault
-        public static DispatchDirectNaryNode create(final NativeObject selector, final ClassObject lookupClass) {
-            final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
-            if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
-                final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult, null);
-                return create(assumptions, lookupMethod);
-            } else {
-                throw SqueakException.create("superSend should resolve to method, not DNU or OAM");
-            }
-        }
-
-        @NeverDefault
-        public static final DispatchDirectNaryNode create(final CompiledCodeObject method, final LookupClassGuard guard) {
-            final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method, guard.getIsValidAssumption());
-            return create(assumptions, method);
         }
 
         private static DispatchDirectNaryNode create(final Assumption[] assumptions, final CompiledCodeObject method) {
