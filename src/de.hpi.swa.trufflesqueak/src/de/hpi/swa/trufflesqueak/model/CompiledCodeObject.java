@@ -53,6 +53,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
 
+    private static final AbstractPrimitiveNode NULL_PRIMITIVE = new AbstractPrimitiveNode() {
+    };
+
     // header info and data
     @CompilationFinal private int header;
     /*
@@ -93,7 +96,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         @CompilationFinal private RootCallTarget resumptionCallTarget;
     }
 
-    private AbstractPrimitiveNode primitiveNode;
+    @CompilationFinal private AbstractPrimitiveNode primitiveNode;
 
     @TruffleBoundary
     public CompiledCodeObject(final long header, final ClassObject classObject) {
@@ -196,13 +199,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             executionData.source = Source.newBuilder(SqueakLanguageConfig.ID, contents, name).mimeType("text/plain").build();
         }
         return executionData.source;
-    }
-
-    public AbstractPrimitiveNode getPrimitiveNode() {
-        if (primitiveNode == null) {
-            primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
-        }
-        return primitiveNode;
     }
 
     // used by CompiledMethod>>callTarget
@@ -437,6 +433,20 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public int primitiveIndex() {
         assert hasPrimitive() && bytes.length >= 3;
         return (Byte.toUnsignedInt(bytes[2]) << 8) + Byte.toUnsignedInt(bytes[1]);
+    }
+
+    @Idempotent
+    public AbstractPrimitiveNode getPrimitiveNodeOrNull() {
+        if (primitiveNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (hasPrimitive()) {
+                primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
+            }
+            if (primitiveNode == null) {
+                primitiveNode = NULL_PRIMITIVE;
+            }
+        }
+        return primitiveNode == NULL_PRIMITIVE ? null : primitiveNode;
     }
 
     public boolean isUnwindMarked() {
