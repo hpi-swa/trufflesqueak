@@ -13,7 +13,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -402,10 +401,9 @@ public final class PushBytecodes {
             @Specialization
             protected final void doPushLiteralVariable(final VirtualFrame frame,
                             @Bind("this") final Node node,
-                            @Cached final InlinedExactClassProfile valueProfile,
                             @Cached final SqueakObjectAt0Node at0Node,
                             @Cached final FrameStackPushNode pushNode) {
-                pushNode.execute(frame, valueProfile.profile(node, at0Node.execute(node, literal, ASSOCIATION.VALUE)));
+                pushNode.execute(frame, at0Node.execute(node, literal, ASSOCIATION.VALUE));
             }
         }
 
