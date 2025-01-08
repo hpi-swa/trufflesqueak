@@ -124,10 +124,8 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
         @Specialization(replaces = "doDirect")
         @SuppressWarnings("truffle-static-method")
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
-                        @Bind("this") final Node node,
-                        @Cached final DispatchIndirect5Node dispatchNode,
-                        @Cached final IndirectCallNode callNode) {
-            return dispatchNode.execute(frame, node, callNode, selector, receiver, arg1, arg2, arg3, arg4, arg5);
+                        @Cached final DispatchIndirect5Node dispatchNode) {
+            return dispatchNode.execute(frame, selector, receiver, arg1, arg2, arg3, arg4, arg5);
         }
     }
 
@@ -345,23 +343,23 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
         }
     }
 
-    @GenerateInline
-    @GenerateCached(false)
+    @GenerateInline(false)
     public abstract static class DispatchIndirect5Node extends AbstractNode {
-        public abstract Object execute(VirtualFrame frame, Node node, IndirectCallNode callNode, NativeObject selector, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4,
-                        Object arg5);
+        public abstract Object execute(VirtualFrame frame, NativeObject selector, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
 
         @Specialization
-        protected static final Object doIndirect(final VirtualFrame frame, final Node node, final IndirectCallNode callNode, final NativeObject selector, final Object receiver, final Object arg1,
-                        final Object arg2, final Object arg3, final Object arg4, final Object arg5,
+        protected static final Object doIndirect(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+                        final Object arg4, final Object arg5,
+                        @Bind("this") final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Cached final TryPrimitive5Node tryPrimitiveNode,
-                        @Cached final CreateFrameArgumentsForIndirectCall5Node argumentsNode) {
+                        @Cached final CreateFrameArgumentsForIndirectCall5Node argumentsNode,
+                        @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
-            final Object result = tryPrimitiveNode.execute(frame, node, method, receiver, arg1, arg2, arg3, arg4, arg5);
+            final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2, arg3, arg4, arg5);
             if (result != null) {
                 return result;
             } else {
@@ -369,11 +367,10 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
             }
         }
 
-        @GenerateInline
-        @GenerateCached(false)
+        @GenerateInline(false)
         @ImportStatic(PrimitiveNodeFactory.class)
         protected abstract static class TryPrimitive5Node extends AbstractNode {
-            abstract Object execute(VirtualFrame frame, Node node, CompiledCodeObject method, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
+            abstract Object execute(VirtualFrame frame, CompiledCodeObject method, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
 
             @SuppressWarnings("unused")
             @Specialization(guards = "method.getPrimitiveNodeOrNull() == null")
@@ -383,9 +380,9 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
             }
 
             @Specialization(guards = {"method == cachedMethod", "primitiveNode != null"}, limit = "INDIRECT_PRIMITIVE_CACHE_LIMIT")
-            protected static final Object doCached(final VirtualFrame frame, final Node node, @SuppressWarnings("unused") final CompiledCodeObject method, final Object receiver, final Object arg1,
-                            final Object arg2,
-                            final Object arg3, final Object arg4, final Object arg5,
+            protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object receiver, final Object arg1,
+                            final Object arg2, final Object arg3, final Object arg4, final Object arg5,
+                            @Bind("this") final Node node,
                             @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                             @Cached("getOrCreateIndexedOrNamed(cachedMethod)") final AbstractPrimitiveNode primitiveNode,
                             @Cached final InlinedBranchProfile primitiveFailedProfile) {
@@ -399,8 +396,9 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
             }
 
             @Specialization(replaces = {"doNoPrimitive", "doCached"})
-            protected static final Object doUncached(final VirtualFrame frame, final Node node, final CompiledCodeObject method, final Object receiver, final Object arg1, final Object arg2,
-                            final Object arg3, final Object arg4, final Object arg5) {
+            protected static final Object doUncached(final VirtualFrame frame, final CompiledCodeObject method, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+                            final Object arg4, final Object arg5,
+                            @Bind("this") final Node node) {
                 final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                 if (primitiveNode != null) {
                     return tryPrimitive(primitiveNode, frame.materialize(), node, method, receiver, arg1, arg2, arg3, arg4, arg5);

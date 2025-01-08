@@ -146,10 +146,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform0Cached")
         protected static final Object perform0(final VirtualFrame frame, final Object receiver, final NativeObject selector,
-                        @Bind("this") final Node node,
-                        @Cached final DispatchIndirect0Node dispatchNode,
-                        @Cached final IndirectCallNode callNode) {
-            return dispatchNode.execute(frame, node, callNode, selector, receiver);
+                        @Cached final DispatchIndirect0Node dispatchNode) {
+            return dispatchNode.execute(frame, selector, receiver);
         }
     }
 
@@ -169,10 +167,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform1Cached")
         protected static final Object perform1(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1,
-                        @Bind("this") final Node node,
-                        @Cached final DispatchIndirect1Node dispatchNode,
-                        @Cached final IndirectCallNode callNode) {
-            return dispatchNode.execute(frame, node, callNode, selector, receiver, arg1);
+                        @Cached final DispatchIndirect1Node dispatchNode) {
+            return dispatchNode.execute(frame, selector, receiver, arg1);
         }
     }
 
@@ -192,10 +188,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform2Cached")
         protected static final Object perform2(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2,
-                        @Bind("this") final Node node,
-                        @Cached final DispatchIndirect2Node dispatchNode,
-                        @Cached final IndirectCallNode callNode) {
-            return dispatchNode.execute(frame, node, callNode, selector, receiver, arg1, arg2);
+                        @Cached final DispatchIndirect2Node dispatchNode) {
+            return dispatchNode.execute(frame, selector, receiver, arg1, arg2);
         }
     }
 
@@ -215,10 +209,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "perform3Cached")
         protected static final Object perform3(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
-                        @Bind("this") final Node node,
-                        @Cached final DispatchIndirect3Node dispatchNode,
-                        @Cached final IndirectCallNode callNode) {
-            return dispatchNode.execute(frame, node, callNode, selector, receiver, arg1, arg2, arg3);
+                        @Cached final DispatchIndirect3Node dispatchNode) {
+            return dispatchNode.execute(frame, selector, receiver, arg1, arg2, arg3);
         }
     }
 
@@ -240,10 +232,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform4Cached")
         protected static final Object perform4(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4,
-                        @Bind("this") final Node node,
-                        @Cached final DispatchIndirect4Node dispatchNode,
-                        @Cached final IndirectCallNode callNode) {
-            return dispatchNode.execute(frame, node, callNode, selector, receiver, arg1, arg2, arg3, arg4);
+                        @Cached final DispatchIndirect4Node dispatchNode) {
+            return dispatchNode.execute(frame, selector, receiver, arg1, arg2, arg3, arg4);
         }
     }
 
@@ -265,10 +255,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "perform5Cached")
         protected static final Object perform5(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4, final Object arg5,
-                        @Bind("this") final Node node,
-                        @Cached final DispatchIndirect5Node dispatchNode,
-                        @Cached final IndirectCallNode callNode) {
-            return dispatchNode.execute(frame, node, callNode, selector, receiver, arg1, arg2, arg3, arg4, arg5);
+                        @Cached final DispatchIndirect5Node dispatchNode) {
+            return dispatchNode.execute(frame, selector, receiver, arg1, arg2, arg3, arg4, arg5);
         }
     }
 
@@ -289,10 +277,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject argumentsArray,
                         @Bind("this") final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
-                        @Cached final DispatchIndirectNaryNode dispatchNode,
-                        @Cached final IndirectCallNode callNode) {
+                        @Cached final DispatchIndirectNaryNode dispatchNode) {
             final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
-            return dispatchNode.execute(frame, node, callNode, selector, receiver, arguments);
+            return dispatchNode.execute(frame, selector, receiver, arguments);
         }
     }
 
