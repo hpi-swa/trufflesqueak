@@ -14,6 +14,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -370,6 +371,7 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
 
         @GenerateInline
         @GenerateCached(false)
+        @ImportStatic(PrimitiveNodeFactory.class)
         protected abstract static class TryPrimitive5Node extends AbstractNode {
             abstract Object execute(VirtualFrame frame, Node node, CompiledCodeObject method, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
 
@@ -385,7 +387,7 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
                             final Object arg2,
                             final Object arg3, final Object arg4, final Object arg5,
                             @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
-                            @Bind("cachedMethod.getPrimitiveNodeOrNull()") final AbstractPrimitiveNode primitiveNode,
+                            @Cached("getOrCreateIndexedOrNamed(cachedMethod)") final AbstractPrimitiveNode primitiveNode,
                             @Cached final InlinedBranchProfile primitiveFailedProfile) {
                 try {
                     return ((Primitive5) primitiveNode).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
