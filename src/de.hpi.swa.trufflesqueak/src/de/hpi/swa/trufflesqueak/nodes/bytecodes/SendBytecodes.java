@@ -52,6 +52,7 @@ public final class SendBytecodes {
         protected final int argumentCount;
         @CompilationFinal private int stackPointer = -1;
 
+        @Child protected DispatchSelectorNode dispatchNode;
         @Child private FrameStackPushNode pushNode;
 
         private final ConditionProfile nlrProfile = ConditionProfile.create();
@@ -67,7 +68,7 @@ public final class SendBytecodes {
             Object result;
             try {
                 decrementStackPointer(frame);
-                result = dispatchSend(frame);
+                result = dispatchNode.execute(frame);
             } catch (final NonLocalReturn nlr) {
                 if (nlrProfile.profile(nlr.getTargetContextOrMarker() == FrameAccess.getMarker(frame) || nlr.getTargetContextOrMarker() == FrameAccess.getContext(frame))) {
                     result = nlr.getReturnValue();
@@ -98,8 +99,6 @@ public final class SendBytecodes {
             return 1 + argumentCount;
         }
 
-        protected abstract Object dispatchSend(VirtualFrame frame);
-
         private FrameStackPushNode getPushNode() {
             if (pushNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -108,7 +107,9 @@ public final class SendBytecodes {
             return pushNode;
         }
 
-        public abstract NativeObject getSelector();
+        private NativeObject getSelector() {
+            return dispatchNode.getSelector();
+        }
 
         @Override
         public final boolean hasTag(final Class<? extends Tag> tag) {
@@ -122,42 +123,27 @@ public final class SendBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "send: " + getSelector().asStringUnsafe();
+            return getBytecodeName() + ": " + getSelector().asStringUnsafe();
         }
+
+        protected abstract String getBytecodeName();
     }
 
     public static final class SelfSendNode extends AbstractSendNode {
-        @Child private DispatchSelectorNode dispatchNode;
-
-        private SelfSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
+        public SelfSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
             dispatchNode = DispatchSelectorNode.create(frame, selector, numArgs);
         }
 
-        public static SelfSendNode create(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
-            return new SelfSendNode(frame, code, index, numBytecodes, selector, numArgs);
-        }
-
         @Override
-        protected Object dispatchSend(final VirtualFrame frame) {
-            return dispatchNode.execute(frame);
-        }
-
-        @Override
-        public NativeObject getSelector() {
-            return dispatchNode.getSelector();
+        protected String getBytecodeName() {
+            return "send";
         }
     }
 
     public static final class SuperSendNode extends AbstractSendNode {
-        @Child private DispatchSelectorNode dispatchNode;
-
-        public SuperSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
-            this(frame, code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
-        }
-
         public SuperSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
             final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
@@ -165,25 +151,12 @@ public final class SendBytecodes {
         }
 
         @Override
-        protected Object dispatchSend(final VirtualFrame frame) {
-            return dispatchNode.execute(frame);
-        }
-
-        @Override
-        public NativeObject getSelector() {
-            return dispatchNode.getSelector();
-        }
-
-        @Override
-        public String toString() {
-            CompilerAsserts.neverPartOfCompilation();
-            return "sendSuper: " + getSelector().asStringUnsafe();
+        protected String getBytecodeName() {
+            return "sendSuper";
         }
     }
 
     public static final class DirectedSuperSendNode extends AbstractSendNode {
-        @Child private DispatchSelectorNode dispatchNode;
-
         public DirectedSuperSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int numBytecodes, final int selectorLiteralIndex, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
             assert 0 <= selectorLiteralIndex && selectorLiteralIndex < 65535 : "selectorLiteralIndex out of range";
@@ -193,24 +166,13 @@ public final class SendBytecodes {
         }
 
         @Override
-        protected Object dispatchSend(final VirtualFrame frame) {
-            return dispatchNode.execute(frame);
-        }
-
-        @Override
         protected int numPop() {
             return 1 + 1 + argumentCount; // pop directed class, receiver, args
         }
 
         @Override
-        public NativeObject getSelector() {
-            return dispatchNode.getSelector();
-        }
-
-        @Override
-        public String toString() {
-            CompilerAsserts.neverPartOfCompilation();
-            return "directedSuperSend: " + getSelector().asStringUnsafe();
+        protected String getBytecodeName() {
+            return "directedSuperSend";
         }
     }
 

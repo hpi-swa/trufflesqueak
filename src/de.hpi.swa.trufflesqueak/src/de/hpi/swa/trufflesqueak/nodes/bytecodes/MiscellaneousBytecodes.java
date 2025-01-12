@@ -96,7 +96,7 @@ public final class MiscellaneousBytecodes {
             final int second = Byte.toUnsignedInt(param1);
             final int third = Byte.toUnsignedInt(param2);
             return switch (second >> 5) {
-                case 0 -> SelfSendNode.create(frame, code, index, numBytecodes, (NativeObject) code.getLiteral(third), second & 31);
+                case 0 -> new SelfSendNode(frame, code, index, numBytecodes, (NativeObject) code.getLiteral(third), second & 31);
                 case 1 -> new SuperSendNode(frame, code, index, numBytecodes, third, second & 31);
                 case 2 -> PushReceiverVariableNode.create(code, index, numBytecodes, third);
                 case 3 -> new PushLiteralConstantNode(code, index, numBytecodes, third);
