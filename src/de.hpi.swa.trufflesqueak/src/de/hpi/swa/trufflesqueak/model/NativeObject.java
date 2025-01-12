@@ -17,7 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -27,8 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUtils;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -170,22 +168,22 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void convertToBytesStorage(final byte[] bytes) {
-        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
+        assert storage.getClass() != byte[].class : "Converting storage of same type unnecessary";
         setStorage(bytes);
     }
 
     public void convertToIntsStorage(final int[] ints) {
-        assert storage.getClass() != ints.getClass() : "Converting storage of same type unnecessary";
+        assert storage.getClass() != int[].class : "Converting storage of same type unnecessary";
         setStorage(ints);
     }
 
     public void convertToLongsStorage(final long[] longs) {
-        assert storage.getClass() != longs.getClass() : "Converting storage of same type unnecessary";
+        assert storage.getClass() != long[].class : "Converting storage of same type unnecessary";
         setStorage(longs);
     }
 
     public void convertToShortsStorage(final short[] shorts) {
-        assert storage.getClass() != shorts.getClass() : "Converting storage of same type unnecessary";
+        assert storage.getClass() != short[].class : "Converting storage of same type unnecessary";
         setStorage(shorts);
     }
 
@@ -359,17 +357,12 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         assert SqueakImageContext.getSlow().isByteSymbolClass(getSqueakClass());
         final Object lookupResult = LookupMethodNode.executeUncached(SqueakObjectClassNode.executeUncached(receiver), this);
         if (lookupResult instanceof CompiledCodeObject method) {
-            if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
-                if (primitiveNode != null) {
-                    try {
-                        return primitiveNode.executeWithArguments(image.externalSenderFrame, receiver, arguments);
-                    } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(null, method, pf);
-                    }
-                }
+            final Object result = TryPrimitiveNaryNode.executeUncached(image.externalSenderFrame, method, this, arguments);
+            if (result != null) {
+                return result;
+            } else {
+                return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(GetOrCreateContextNode.getOrCreateUncached(frame), null, receiver, arguments));
             }
-            return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(GetOrCreateContextNode.getOrCreateUncached(frame), null, receiver, arguments));
         } else {
             throw SqueakException.create("Illegal uncached message send");
         }

@@ -19,7 +19,6 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -32,7 +31,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
@@ -40,9 +38,8 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectNaryNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUtils;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @SuppressWarnings("static-method")
@@ -126,6 +123,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Cached final LookupMethodNode lookupNode,
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                        @Cached(inline = false) final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached(inline = false) final IndirectCallNode callNode) throws Exception {
             final SqueakImageContext image = SqueakImageContext.get(node);
             if (message.getLibraryClass() == InteropLibrary.class) {
@@ -138,18 +136,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                     for (int i = 0; i < arguments.length; i++) {
                         arguments[i] = wrapNode.executeWrap(node, rawArguments[i]);
                     }
-                    if (method.hasPrimitive()) {
-                        final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
-                        if (primitiveNode != null) {
-                            final VirtualFrame frame = null; // FIXME?
-                            try {
-                                return primitiveNode.executeWithArguments(frame, receiver, arguments);
-                            } catch (final PrimitiveFailed pf) {
-                                DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
-                            }
-                        }
+                    final Object result = tryPrimitiveNode.execute(image.externalSenderFrame, method, receiver, arguments);
+                    if (result != null) {
+                        return result;
+                    } else {
+                        return callNode.call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, receiver, arguments));
                     }
-                    return callNode.call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, receiver, arguments));
                 } else {
                     image.printToStdErr(selector, "method:", methodObject);
                 }

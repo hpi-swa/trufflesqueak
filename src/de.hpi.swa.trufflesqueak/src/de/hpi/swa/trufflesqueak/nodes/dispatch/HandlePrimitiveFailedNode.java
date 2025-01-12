@@ -24,6 +24,7 @@ abstract class HandlePrimitiveFailedNode extends AbstractNode implements Unadopt
     private static final HandlePrimitiveFailedNode NOP_INSTANCE = new HandlePrimitiveFailedNode() {
         @Override
         protected void execute(final PrimitiveFailed pf) {
+            // Nothing to do
         }
     };
 
