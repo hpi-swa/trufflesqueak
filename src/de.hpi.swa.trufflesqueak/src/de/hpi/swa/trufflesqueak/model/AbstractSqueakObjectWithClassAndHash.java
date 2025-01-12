@@ -12,7 +12,6 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -20,8 +19,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUtils;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
@@ -112,7 +110,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     public final long getOrCreateSqueakHash(final InlinedBranchProfile needsHashProfile, final Node node) {
         if (needsSqueakHash()) {
-            /** Lazily initialize squeakHash and derive value from hashCode. */
+            /* Lazily initialize squeakHash and derive value from hashCode. */
             needsHashProfile.enter(node);
             setSqueakHash(System.identityHashCode(this) & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK);
         }
@@ -157,17 +155,12 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
             final boolean wasActive = image.interrupt.isActive();
             image.interrupt.deactivate();
             try {
-                if (method.hasPrimitive()) {
-                    final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
-                    if (primitiveNode != null) {
-                        try {
-                            return primitiveNode.executeWithArguments(image.externalSenderFrame, this, arguments);
-                        } catch (final PrimitiveFailed pf) {
-                            DispatchUtils.handlePrimitiveFailedIndirect(null, method, pf);
-                        }
-                    }
+                final Object result = TryPrimitiveNaryNode.executeUncached(image.externalSenderFrame, method, this, arguments);
+                if (result != null) {
+                    return result;
+                } else {
+                    return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, this, arguments));
                 }
-                return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, this, arguments));
             } finally {
                 if (wasActive) {
                     image.interrupt.activate();

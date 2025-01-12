@@ -37,7 +37,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
@@ -93,8 +92,8 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.Dispatch
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectedSuperNaryNode.DirectedSuperDispatchNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.CreateFrameArgumentsForIndirectCallNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchNaryNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUtils;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.GetOrCreateContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.ResolveMethodNode;
@@ -1037,21 +1036,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject method,
                         @Bind("this") final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
-                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
+                        @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             final Object[] arguments = arrayNode.execute(node, argArray);
-            if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = primitiveNodeProfile.profile(node, method.getPrimitiveNodeOrNull());
-                if (primitiveNode != null) {
-                    try {
-                        return primitiveNode.executeWithArguments(frame, receiver, arguments);
-                    } catch (final PrimitiveFailed pf) {
-                        DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
-                    }
-                }
+            final Object result = tryPrimitiveNode.execute(frame, method, receiver, arguments);
+            if (result != null) {
+                return result;
+            } else {
+                return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arguments));
             }
-            return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arguments));
         }
     }
 
@@ -1075,10 +1069,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final CompiledCodeObject method,
                         @Bind("this") final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
-                        @Cached final InlinedExactClassProfile primitiveNodeProfile,
+                        @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
-            return PrimExecuteMethodArgsArray3Node.doExecute(frame, receiver, argArray, method, node, arrayNode, primitiveNodeProfile, senderNode, callNode);
+            return PrimExecuteMethodArgsArray3Node.doExecute(frame, receiver, argArray, method, node, arrayNode, tryPrimitiveNode, senderNode, callNode);
         }
     }
 
