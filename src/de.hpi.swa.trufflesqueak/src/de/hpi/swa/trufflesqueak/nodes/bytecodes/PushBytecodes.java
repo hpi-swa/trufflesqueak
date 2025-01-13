@@ -53,14 +53,11 @@ public final class PushBytecodes {
     }
 
     private abstract static class AbstractPushClosureNode extends AbstractInstrumentableBytecodeNode {
-        protected final int numCopied;
-
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
-        @Child private FrameStackPopNNode popCopiedValuesNode;
+        @Child protected FrameStackPopNNode popCopiedValuesNode;
 
         private AbstractPushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numCopied) {
             super(code, index, numBytecodes);
-            this.numCopied = numCopied;
             popCopiedValuesNode = FrameStackPopNNode.create(numCopied);
         }
 
@@ -71,8 +68,9 @@ public final class PushBytecodes {
 
         protected abstract BlockClosureObject createClosure(VirtualFrame frame, Object[] copiedValues);
 
-        public final int getNumCopied() {
-            return numCopied;
+        protected final int getNumCopied() {
+            CompilerAsserts.neverPartOfCompilation();
+            return popCopiedValuesNode.numPop();
         }
     }
 
@@ -115,16 +113,12 @@ public final class PushBytecodes {
             return new BlockClosureObject(image, image.blockClosureClass, shadowBlock, startPC, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
         }
 
-        public int getBlockSize() {
-            return blockSize;
-        }
-
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             final int start = getSuccessorIndex();
             final int end = start + blockSize;
-            return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
+            return "closureNumCopied: " + getNumCopied() + " numArgs: " + numArgs + " bytes " + start + " to " + end;
         }
     }
 
@@ -170,7 +164,7 @@ public final class PushBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushFullClosure: (self literalAt: " + literalIndex + ") numCopied: " + numCopied + " numArgs: " + block.getNumArgs();
+            return "pushFullClosure: (self literalAt: " + literalIndex + ") numCopied: " + getNumCopied() + " numArgs: " + block.getNumArgs();
         }
 
         private static final class PushFullClosureOnStackReceiverWithOuterContextNode extends AbstractPushFullClosureNode {

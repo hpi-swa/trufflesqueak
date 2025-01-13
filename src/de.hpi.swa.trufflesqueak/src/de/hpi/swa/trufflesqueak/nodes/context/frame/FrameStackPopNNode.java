@@ -29,10 +29,17 @@ public abstract class FrameStackPopNNode extends AbstractNode {
 
     public abstract Object[] execute(VirtualFrame frame);
 
+    public abstract int numPop();
+
     private static final class FrameStackPop0Node extends FrameStackPopNNode {
         @Override
         public Object[] execute(final VirtualFrame frame) {
             return ArrayUtils.EMPTY_ARRAY;
+        }
+
+        @Override
+        public int numPop() {
+            return 0;
         }
     }
 
@@ -50,6 +57,11 @@ public abstract class FrameStackPopNNode extends AbstractNode {
             }
             FrameAccess.setStackPointer(frame, stackPointer);
             return new Object[]{readNode.executeRead(frame)};
+        }
+
+        @Override
+        public int numPop() {
+            return 1;
         }
     }
 
@@ -78,6 +90,11 @@ public abstract class FrameStackPopNNode extends AbstractNode {
                 result[i] = readNodes[i].executeRead(frame);
             }
             return result;
+        }
+
+        @Override
+        public int numPop() {
+            return readNodes.length;
         }
     }
 }
