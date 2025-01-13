@@ -90,10 +90,6 @@ public final class CheckForInterruptsState {
         nextWakeupTick = msTime;
     }
 
-    public long getNextWakeupTick() {
-        return nextWakeupTick;
-    }
-
     public boolean isActive() {
         return isActive;
     }

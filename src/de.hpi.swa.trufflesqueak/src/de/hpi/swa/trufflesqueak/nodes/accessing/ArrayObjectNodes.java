@@ -28,7 +28,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory.ArrayObj
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayCopyNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayWithFirstNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectWriteNodeGen;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -251,15 +250,10 @@ public final class ArrayObjectNodes {
     }
 
     @GenerateInline
-    @GenerateUncached
     @GenerateCached(false)
     public abstract static class ArrayObjectToObjectArrayWithFirstNode extends AbstractNode {
 
         public abstract Object[] execute(Node node, Object first, ArrayObject obj);
-
-        public static final Object[] executeUncached(final Object first, final ArrayObject obj) {
-            return ArrayObjectToObjectArrayWithFirstNodeGen.getUncached().execute(null, first, obj);
-        }
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object[] doArrayOfObjects(final Object first, final ArrayObject obj) {
