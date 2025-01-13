@@ -28,8 +28,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
@@ -72,7 +72,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             return loadArgumentPointAt(point, POINT.Y, readNode, errorProfile, node);
         }
 
-        private double loadArgumentPointAt(final PointersObject point, final int index, final AbstractPointersObjectReadNode readNode, final InlinedBranchProfile errorProfile, final Node node) {
+        private double loadArgumentPointAt(final PointersObject point, final long index, final AbstractPointersObjectReadNode readNode, final InlinedBranchProfile errorProfile, final Node node) {
             if (isPoint(point)) {
                 final Object value = readNode.execute(node, point, index);
                 if (value instanceof final Long longValue) {

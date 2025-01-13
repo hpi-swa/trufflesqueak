@@ -43,13 +43,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Child protected GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
         protected final Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure) {
-            return FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0);
+            return FrameAccess.createFrameArguments(frame, closure, getContextOrMarkerNode);
         }
 
         protected final Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 1);
-            frameArguments[FrameAccess.getArgumentStartIndex() + 0] = arg1;
-            return frameArguments;
+            return FrameAccess.createFrameArguments(frame, closure, getContextOrMarkerNode, arg1);
         }
 
         protected final Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2) {

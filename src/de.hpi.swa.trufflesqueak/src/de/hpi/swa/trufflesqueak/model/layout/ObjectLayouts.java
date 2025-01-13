@@ -266,8 +266,8 @@ public final class ObjectLayouts {
     }
 
     public static final class POINT {
-        public static final int X = 0;
-        public static final int Y = 1;
+        public static final long X = 0;
+        public static final long Y = 1;
         public static final int SIZE = 2;
     }
 

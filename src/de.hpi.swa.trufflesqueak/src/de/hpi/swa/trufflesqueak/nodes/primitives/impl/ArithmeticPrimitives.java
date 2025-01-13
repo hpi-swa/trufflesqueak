@@ -40,9 +40,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -504,10 +504,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"arg < 0", "!inLongSizeRange(arg)"})
         protected static final long doLongNegative(final long receiver, @SuppressWarnings("unused") final long arg) {
             return receiver >= 0 ? 0L : -1L;
-        }
-
-        protected static final boolean isLShiftLongOverflow(final long receiver, final long arg) {
-            return Long.numberOfLeadingZeros(receiver) - 1 < arg;
         }
 
         protected static final boolean inLongSizeRange(final long arg) {
@@ -1616,7 +1612,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final long MAX_SAFE_INTEGER_LONG = (1L << FloatObject.PRECISION) - 1;
         private static final long MIN_SAFE_INTEGER_LONG = -MAX_SAFE_INTEGER_LONG;
 
-        protected static final double ensureFinite(final double value) throws RespecializeException {
+        public static final double ensureFinite(final double value) throws RespecializeException {
             if (Double.isFinite(value)) {
                 return value;
             } else {

@@ -446,6 +446,16 @@ public final class FrameAccess {
         return arguments;
     }
 
+    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetContextOrMarkerNode getContextOrMarkerNode) {
+        return FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0);
+    }
+
+    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetContextOrMarkerNode getContextOrMarkerNode, final Object arg1) {
+        final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 1);
+        frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
+        return frameArguments;
+    }
+
     public static int expectedArgumentSize(final int numArgsAndCopied) {
         return ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgsAndCopied;
     }
