@@ -151,6 +151,10 @@ public final class SqueakGuards {
         return value == Long.MIN_VALUE;
     }
 
+    public static boolean isLShiftLongOverflow(final long receiver, final long arg) {
+        return Long.numberOfLeadingZeros(receiver) - 1 < arg;
+    }
+
     @Idempotent
     public static boolean isMacOS() {
         return OS.isMacOS();

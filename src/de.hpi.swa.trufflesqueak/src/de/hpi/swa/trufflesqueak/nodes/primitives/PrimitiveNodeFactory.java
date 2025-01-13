@@ -124,12 +124,6 @@ public final class PrimitiveNodeFactory {
     private PrimitiveNodeFactory() {
     }
 
-    public enum ArgumentsLocation {
-        IN_FRAME_ARGUMENTS,
-        ON_STACK,
-        ON_STACK_REVERSED,
-    }
-
     public static String[] getPluginNames() {
         final Set<String> target = new HashSet<>();
         for (final String key : PLUGIN_MAP.getKeys()) {
@@ -158,16 +152,6 @@ public final class PrimitiveNodeFactory {
             } else {
                 return null;
             }
-        }
-    }
-
-    public static DispatchPrimitiveNode getOrCreateIndexedOrNamed(final CompiledCodeObject method, final ArgumentsLocation location) {
-        final AbstractPrimitiveNode primitiveNode = getOrCreateIndexedOrNamed(method);
-        if (primitiveNode != null) {
-            final int numReceiverAndArguments = 1 + method.getNumArgs();
-            return DispatchPrimitiveNode.create(primitiveNode, location, numReceiverAndArguments);
-        } else {
-            return null;
         }
     }
 
