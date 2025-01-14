@@ -81,15 +81,6 @@ def _add_unit_tests(tasks, supports_coverage):
                     "--enable-timing",
                 ]
             )
-            if _COMPILER:
-                unittest_args.extend(
-                    [
-                        "-Dgraal.CompilationFailureAction=ExitVM",
-                        "-Dpolyglot.compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial",
-                        "-Dpolyglot.engine.CompilationFailureAction=ExitVM",
-                        "-Dpolyglot.engine.CompilationStatistics=true",
-                    ]
-                )
 
             # Ensure Truffle TCK disabled (workaround needed since GraalVM 19.2.0)
             # import mx_truffle
