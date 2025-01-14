@@ -58,14 +58,14 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     public static void loadTestImage() {
-        loadTestImage(true);
+        loadTestImage(true, true);
     }
 
-    private static void loadTestImage(final boolean retry) {
+    private static void loadTestImage(final boolean retry, final boolean showResourceSummary) {
         executor = Executors.newSingleThreadExecutor();
         final String imagePath = getPathToTestImage();
         try {
-            runWithTimeout(imagePath, AbstractSqueakTestCase::loadImageContext, TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
+            runWithTimeout(new TestImageSpec(imagePath, showResourceSummary), AbstractSqueakTestCase::loadImageContext, TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
             println("Test image loaded from " + imagePath + "...");
             patchImageForTesting();
         } catch (final InterruptedException e) {
@@ -95,7 +95,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     protected static void reloadImage() {
         cleanUp();
-        loadTestImage(false);
+        loadTestImage(false, false);
     }
 
     private static void patchImageForTesting() {

@@ -24,7 +24,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
     @BeforeClass
     public static void setUpSqueakImageContext() {
         SqueakImageContext.initializeBeforeLoadingImage();
-        loadImageContext("fake.image");
+        loadImageContext(new TestImageSpec("fake.image", false));
         final Object[] dummySpecialObjects = new Object[100];
         final ArrayObject dummySpecialSelectors = createDummySpecialSelectors();
         dummySpecialObjects[SPECIAL_OBJECT.SPECIAL_SELECTORS] = dummySpecialSelectors;
