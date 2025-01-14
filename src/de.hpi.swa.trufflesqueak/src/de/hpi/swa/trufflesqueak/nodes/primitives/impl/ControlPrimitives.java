@@ -286,7 +286,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 85)
     protected abstract static class PrimSignalNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "isSemaphore(receiver)")
-        protected final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
+        protected static final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Bind("this") final Node node,
                         @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode,
                         @Cached final FrameStackPushNode pushReceiverNode) {
@@ -333,10 +333,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 87)
     protected abstract static class PrimResumeNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-
         @Specialization
-        @SuppressWarnings("truffle-static-method")
-        protected final Object doResume(final VirtualFrame frame, final PointersObject receiver,
+        protected static final Object doResume(final VirtualFrame frame, final PointersObject receiver,
                         @Bind("this") final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ResumeProcessNode resumeProcessNode,
@@ -837,8 +835,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 167)
     protected abstract static class PrimYieldNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
-        @SuppressWarnings("truffle-static-method")
-        protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
+        protected static final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
                         @Bind("this") final Node node,
                         @Cached final ArrayObjectReadNode arrayReadNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
@@ -1227,7 +1224,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 230)
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
+        protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final CheckForInterruptsFullNode interruptNode,
                         @Cached final FrameStackPushNode pushReceiverNode) {
             MiscUtils.sleep(timeMicroseconds / 1000);
