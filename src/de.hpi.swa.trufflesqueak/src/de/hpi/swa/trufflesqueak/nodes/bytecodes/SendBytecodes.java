@@ -241,7 +241,9 @@ public final class SendBytecodes {
             final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
             final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
             final CompiledCodeObject code = FrameAccess.getCodeObject(frame);
-            replace(new SelfSendNode(frame, code, index - code.getInitialPC(), 1, specialSelector, numArguments)).executeVoid(frame);
+            final int numBytescodes = 1;
+            final int index = getSuccessorIndex() - code.getInitialPC() - numBytescodes;
+            replace(new SelfSendNode(frame, code, index, numBytescodes, specialSelector, numArguments)).executeVoid(frame);
         }
 
         protected abstract static class DispatchBytecodePrimNode extends AbstractNode {
