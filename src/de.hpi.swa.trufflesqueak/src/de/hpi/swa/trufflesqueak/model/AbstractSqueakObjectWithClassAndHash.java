@@ -112,7 +112,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         if (needsSqueakHash()) {
             /* Lazily initialize squeakHash and derive value from hashCode. */
             needsHashProfile.enter(node);
-            setSqueakHash(System.identityHashCode(this) & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK);
+            setSqueakHash(System.identityHashCode(this) % SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK);
         }
         return getSqueakHash();
     }
