@@ -66,15 +66,15 @@ public abstract class AbstractSqueakBytecodeDecoder {
         return sb.toString();
     }
 
-    public final int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
+    public final int findLineNumber(final CompiledCodeObject code, final int successorIndex) {
         final int trailerPosition = trailerPosition(code);
-        assert 0 <= targetIndex && targetIndex <= trailerPosition : targetIndex + " not between 0 and " + trailerPosition;
+        assert 0 <= successorIndex && successorIndex <= trailerPosition : successorIndex + " not between 0 and " + trailerPosition;
         int index = 0;
-        int lineNumber = 1;
-        while (index != targetIndex) {
+        int lineNumber = 0;
+        do {
             index += decodeNumBytes(code, index);
             lineNumber++;
-        }
+        } while (index != successorIndex);
         assert lineNumber <= trailerPosition;
         return lineNumber;
     }

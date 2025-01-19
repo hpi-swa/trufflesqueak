@@ -15,7 +15,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 public abstract class AbstractBytecodeNode extends AbstractNode {
-    protected final int index;
     private final int successorIndex;
 
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index) {
@@ -24,12 +23,10 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
 
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
         final int initialPC = code.getInitialPC();
-        this.index = initialPC + index;
         successorIndex = initialPC + index + numBytecodes;
     }
 
     public AbstractBytecodeNode(final AbstractBytecodeNode original) {
-        index = original.index;
         successorIndex = original.successorIndex;
     }
 
@@ -37,10 +34,6 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
 
     public final int getSuccessorIndex() {
         return successorIndex;
-    }
-
-    public final int getNumBytecodes() {
-        return successorIndex - index;
     }
 
     @Override
@@ -51,7 +44,7 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
         if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
             return source.createUnavailableSection();
         } else {
-            final int lineNumber = code.findLineNumber(index - code.getInitialPC());
+            final int lineNumber = code.findLineNumber(successorIndex - code.getInitialPC());
             return source.createSection(lineNumber);
         }
     }

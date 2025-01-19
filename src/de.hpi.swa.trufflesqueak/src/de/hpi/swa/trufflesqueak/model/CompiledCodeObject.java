@@ -350,8 +350,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return getDecoder().decodeBytecode(frame, this, bytecodeNodes, pc);
     }
 
-    public int findLineNumber(final int index) {
-        return getDecoder().findLineNumber(this, index);
+    public int findLineNumber(final int successorIndex) {
+        return getDecoder().findLineNumber(this, successorIndex);
     }
 
     public void become(final CompiledCodeObject other) {
