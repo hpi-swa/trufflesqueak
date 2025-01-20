@@ -345,7 +345,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
         @Specialization
         protected static final Object doIndirect(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Cached final TryPrimitive4Node tryPrimitiveNode,
@@ -376,7 +376,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
             @Specialization(guards = {"method == cachedMethod", "primitiveNode != null"}, limit = "INDIRECT_PRIMITIVE_CACHE_LIMIT")
             protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object receiver, final Object arg1, final Object arg2,
                             final Object arg3, final Object arg4,
-                            @Bind("this") final Node node,
+                            @Bind final Node node,
                             @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                             @Cached("getOrCreateIndexedOrNamed(cachedMethod)") final AbstractPrimitiveNode primitiveNode,
                             @Cached final InlinedBranchProfile primitiveFailedProfile) {
@@ -392,7 +392,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
             @Specialization(replaces = {"doNoPrimitive", "doCached"})
             protected static final Object doUncached(final VirtualFrame frame, final CompiledCodeObject method, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                             final Object arg4,
-                            @Bind("this") final Node node,
+                            @Bind final Node node,
                             @Cached final InlinedConditionProfile needsFrameProfile) {
                 final DispatchPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                 if (primitiveNode != null) {

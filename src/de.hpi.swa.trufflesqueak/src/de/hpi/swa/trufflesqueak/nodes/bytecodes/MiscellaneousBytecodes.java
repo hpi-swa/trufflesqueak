@@ -77,7 +77,7 @@ public final class MiscellaneousBytecodes {
 
             @Specialization
             protected static final Object doGet(final int primFailCode,
-                            @Bind("this") final Node node,
+                            @Bind final Node node,
                             @Cached final InlinedConditionProfile inRangeProfile) {
                 final ArrayObject errorTable = getContext(node).primitiveErrorTable;
                 if (inRangeProfile.profile(node, primFailCode < errorTable.getObjectLength())) {

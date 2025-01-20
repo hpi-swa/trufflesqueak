@@ -48,7 +48,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCopyBits1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected final Object doCopy(final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile resultProfile) {
             final long result = getContext().bitblt.primitiveCopyBits(receiver, -1);
             return resultProfile.profile(node, result == -1) ? receiver : result;
@@ -60,7 +60,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCopyBits2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doCopyTranslucent(final PointersObject receiver, final long factor,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile resultProfile) {
             final long result = getContext().bitblt.primitiveCopyBits(receiver, factor);
             return resultProfile.profile(node, result == -1) ? receiver : result;

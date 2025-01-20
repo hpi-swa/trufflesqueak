@@ -55,7 +55,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
          */
         @Specialization(guards = {"!hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
         protected static final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("createTemporaryReadNode(frame, 0)") final FrameStackReadNode blockArgumentNode,
                         @SuppressWarnings("unused") @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode,
                         @Cached("create(frame, 1)") final FrameStackWriteNode completeTempWriteNode,

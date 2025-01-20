@@ -111,7 +111,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
         @Specialization(guards = "pathString.isByteType()")
         protected final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
             final SqueakImageContext image = getContext();
             try {

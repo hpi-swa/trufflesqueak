@@ -276,7 +276,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCalloutWithArgsNode extends AbstractFFIPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
             return doCallout(asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(node, argArray));
         }
@@ -413,7 +413,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
         protected final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile positiveProfile) {
             return PrimUnsignedInt64AtNode.unsignedInt64At(getContext(), byteArray, byteOffsetLong, positiveProfile, node);
         }
@@ -710,7 +710,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimUnsignedInt64AtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
         protected final Object doAt(final NativeObject byteArray, final long byteOffset,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile positiveProfile) {
             return unsignedInt64At(getContext(), byteArray, byteOffset, positiveProfile, node);
         }
