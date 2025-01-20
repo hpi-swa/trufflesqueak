@@ -52,7 +52,7 @@ public final class SqueakLanguageView implements TruffleObject {
     }
 
     @ExportMessage
-    protected Object getMetaObject(@Bind("$node") final Node node, @Cached final SqueakObjectClassNode classNode) {
+    protected Object getMetaObject(@Bind final Node node, @Cached final SqueakObjectClassNode classNode) {
         return classNode.executeLookup(node, delegate);
     }
 
@@ -62,7 +62,7 @@ public final class SqueakLanguageView implements TruffleObject {
         @Specialization(guards = "guard.check(view.delegate)", assumptions = "dispatchNode.getAssumptions()", limit = "1")
         protected static final Object toDisplayString(final SqueakLanguageView view, final boolean allowSideEffects,
                         @Cached(value = "create(view.delegate)", allowUncached = true) final LookupClassGuard guard,
-                        @Bind("$node") final Node node,
+                        @Bind final Node node,
                         @Cached(value = "create(guard)", allowUncached = true) final DispatchDirect0Node dispatchNode) {
             return dispatchNode.execute(SqueakImageContext.get(node).externalSenderFrame, view.delegate);
         }
