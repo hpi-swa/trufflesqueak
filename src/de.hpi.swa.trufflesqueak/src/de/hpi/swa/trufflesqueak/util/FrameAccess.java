@@ -117,6 +117,10 @@ public final class FrameAccess {
         builder.addSlot(FrameSlotKind.Static, null, null);  // SlotIndicies.STACK_POINTER
     }
 
+    public static void copyAllSlots(final MaterializedFrame source, final MaterializedFrame destination) {
+        source.copyTo(0, destination, 0, source.getFrameDescriptor().getNumberOfSlots());
+    }
+
     /* Returns the code object matching the frame's descriptor. */
     public static CompiledCodeObject getCodeObject(final Frame frame) {
         return (CompiledCodeObject) frame.getFrameDescriptor().getInfo();
