@@ -14,6 +14,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -66,20 +67,9 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         escaped = original.escaped;
         size = original.size;
         // Create shallow copy of Truffle frame
-        final CompiledCodeObject methodOrBlock = FrameAccess.getCodeObject(original.truffleFrame);
-        truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments().clone(), methodOrBlock.getFrameDescriptor());
-        // Copy frame slot values
-        FrameAccess.initializeMarker(truffleFrame);
-        FrameAccess.setContext(truffleFrame, this);
-        FrameAccess.setInstructionPointer(truffleFrame, FrameAccess.getInstructionPointer(original.truffleFrame));
-        FrameAccess.setStackPointer(truffleFrame, FrameAccess.getStackPointer(original.truffleFrame));
-        // Copy stack
-        FrameAccess.iterateStackSlots(original.truffleFrame, slotIndex -> {
-            final Object stackValue = original.truffleFrame.getValue(slotIndex);
-            if (stackValue != null) {
-                FrameAccess.setSlot(truffleFrame, slotIndex, stackValue);
-            }
-        });
+        final FrameDescriptor frameDescriptor = FrameAccess.getCodeObject(original.truffleFrame).getFrameDescriptor();
+        truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments().clone(), frameDescriptor);
+        FrameAccess.copyAllSlots(original.truffleFrame, truffleFrame);
     }
 
     public static ContextObject create(final SqueakImageContext image, final int size) {
@@ -339,9 +329,9 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         final int expectedFrameArgumentSize = FrameAccess.expectedArgumentSize(numArgs);
         final Object[] arguments = Arrays.copyOf(oldFrame.getArguments(), expectedFrameArgumentSize + numCopied);
         System.arraycopy(value.getCopiedValues(), 0, arguments, expectedFrameArgumentSize, numCopied);
-        final CompiledCodeObject block = value.getCompiledBlock();
+        final FrameDescriptor frameDescriptor = value.getCompiledBlock().getFrameDescriptor();
         // Create and initialize new frame
-        truffleFrame = Truffle.getRuntime().createMaterializedFrame(arguments, block.getFrameDescriptor());
+        truffleFrame = Truffle.getRuntime().createMaterializedFrame(arguments, frameDescriptor);
         FrameAccess.assertSenderNotNull(truffleFrame);
         FrameAccess.assertReceiverNotNull(truffleFrame);
         FrameAccess.initializeMarker(truffleFrame);
@@ -349,6 +339,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         FrameAccess.setInstructionPointer(truffleFrame, pc);
         FrameAccess.setStackPointer(truffleFrame, sp);
         FrameAccess.setClosure(truffleFrame, value);
+        // Cannot use copyTo here as frame descriptors may be different
         FrameAccess.iterateStackSlots(oldFrame, slotIndex -> {
             final Object stackValue = oldFrame.getValue(slotIndex);
             if (stackValue != null) {
