@@ -195,26 +195,19 @@ def _patch_svm_support_native_image():
                 ),
             )
         build_args.remove("--macro:smalltalkvm-library")
-        dist_names = (
-            [
-                "TRUFFLESQUEAK",
-                "TRUFFLESQUEAK_LAUNCHER",
-                "TRUFFLE_NFI_LIBFFI",
-                "SDK-NATIVEBRIDGE",
-            ]
-            + (["TRUFFLE-ENTERPRISE"] if is_oracle_graalvm else [])
-            + mx_truffle.resolve_truffle_dist_names(
-                use_optimized_runtime=True, use_enterprise=True
-            )
-        )
         selected_gc = "G1" if is_oracle_graalvm and mx.is_linux() else "serial"
         build_command = (
             [native_image_bin]
             + build_args
-            + mx.get_runtime_jvm_args(names=dist_names)
+            + mx.get_runtime_jvm_args(names=[
+                "TRUFFLESQUEAK",
+                "TRUFFLESQUEAK_LAUNCHER",
+                "sdk:NATIVEBRIDGE",
+                "truffle:TRUFFLE_NFI_LIBFFI",
+                "truffle:TRUFFLE_RUNTIME",
+            ])
             + [
-                "-o",
-                os.path.splitext(output_file)[0],
+                "-o", os.path.splitext(output_file)[0],
                 "--shared",
                 "--gc=" + selected_gc,
                 "--module",

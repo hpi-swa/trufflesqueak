@@ -108,25 +108,6 @@ suite = {
                 "<others>": {"<others>": {"optional": True}},
             },
         },
-        "TRUFFLE-ENTERPRISE": {
-            "digest": "sha512:a9eee386efea7b5866e81e7e19e31ef1fe8ec322f733ca0cc4431522ce1d7c6a73727f588cfef738e0384ec94c4b6241450227d45ea94156dc5286df1b4683d9",
-            "maven": {
-                "groupId": "org.graalvm.truffle",
-                "artifactId": "truffle-enterprise",
-                "version": "24.1.1",
-            },
-            "useModulePath": True,
-            "licence": "GFTC",
-        },
-        "SDK-NATIVEBRIDGE": {
-            "digest": "sha512:7b53c53afdc6d6394e95629f3a763aa061e1d6654e63f1464176729cd39fe1ca63014d76943c9cdb1047267d23006a140c03c14d51343645599f0c8196656803",
-            "maven": {
-                "groupId": "org.graalvm.sdk",
-                "artifactId": "nativebridge",
-                "version": "24.1.1",
-            },
-            "useModulePath": True,
-        },
     },
     # ==========================================================================
     #  PROJECTS
@@ -273,39 +254,16 @@ suite = {
             "noMavenJavadoc": True,
             "license": ["MIT"],
         },
-        "TRUFFLE_ENTERPRISE_PLACEHOLDER": {
-            "maven": {
-                "groupId": "org.graalvm.truffle",
-                "artifactId": "truffle-enterprise",
-            },
-            "testDistribution": True,  # ensure it does not get 'maven-deploy'ed
-            "noMavenJavadoc": True,
-            "license": ["GFTC"],
-        },
         "SMALLTALK": {
-            "type": "pom",
-            "runtimeDependencies": [
-                "TRUFFLESQUEAK",
-                "TRUFFLE_ENTERPRISE_PLACEHOLDER",
-            ],
-            "description": "TruffleSqueak virtual machine for Oracle GraalVM",
-            "maven": {
-                "groupId": "de.hpi.swa.trufflesqueak",
-                "artifactId": "smalltalk",
-                "tag": ["default", "public"],
-            },
-            "license": ["MIT", "GFTC"],
-        },
-        "SMALLTALK_COMMUNITY": {
             "type": "pom",
             "runtimeDependencies": [
                 "TRUFFLESQUEAK",
                 "truffle:TRUFFLE_RUNTIME",
             ],
-            "description": "TruffleSqueak virtual machine for GraalVM CE",
+            "description": "TruffleSqueak virtual machine",
             "maven": {
                 "groupId": "de.hpi.swa.trufflesqueak",
-                "artifactId": "smalltalk-community",
+                "artifactId": "smalltalk",
                 "tag": ["default", "public"],
             },
             "license": ["MIT"],
