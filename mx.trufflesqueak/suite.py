@@ -33,12 +33,6 @@ suite = {
         "read": "https://github.com/hpi-swa/trufflesqueak.git",
         "write": "git@github.com:hpi-swa/trufflesqueak.git",
     },
-    "licenses": {
-        "GFTC": {
-            "name": "GraalVM Free Terms and Conditions (GFTC) including License for Early Adopter Versions",
-            "url": "https://www.oracle.com/downloads/licenses/graal-free-license.html",
-        },
-    },
     # ==========================================================================
     #  DEPENDENCIES
     # ==========================================================================
@@ -107,25 +101,6 @@ suite = {
                 },
                 "<others>": {"<others>": {"optional": True}},
             },
-        },
-        "TRUFFLE-ENTERPRISE": {
-            "digest": "sha512:ce4cefe6706110cf352271c58d519cfed5bc73d419f1946ff03f0064a80d1a64e633cd4a1f6aa93c3e732b422ff69c132ae73767972526dbf4063cae7cc9df60",
-            "maven": {
-                "groupId": "org.graalvm.truffle",
-                "artifactId": "truffle-enterprise",
-                "version": "24.1.2",
-            },
-            "useModulePath": True,
-            "licence": "GFTC",
-        },
-        "SDK-NATIVEBRIDGE": {
-            "digest": "sha512:1e25b3b58ae01ef929ad71c9c1bb01376258919384810634e23a483836f53e9e77f1c5317c6220fee6bc3e7f5f36359c2ce84e5287c8335208431c675fa0925a",
-            "maven": {
-                "groupId": "org.graalvm.sdk",
-                "artifactId": "nativebridge",
-                "version": "24.1.2",
-            },
-            "useModulePath": True,
         },
     },
     # ==========================================================================
@@ -273,39 +248,16 @@ suite = {
             "noMavenJavadoc": True,
             "license": ["MIT"],
         },
-        "TRUFFLE_ENTERPRISE_PLACEHOLDER": {
-            "maven": {
-                "groupId": "org.graalvm.truffle",
-                "artifactId": "truffle-enterprise",
-            },
-            "testDistribution": True,  # ensure it does not get 'maven-deploy'ed
-            "noMavenJavadoc": True,
-            "license": ["GFTC"],
-        },
         "SMALLTALK": {
-            "type": "pom",
-            "runtimeDependencies": [
-                "TRUFFLESQUEAK",
-                "TRUFFLE_ENTERPRISE_PLACEHOLDER",
-            ],
-            "description": "TruffleSqueak virtual machine for Oracle GraalVM",
-            "maven": {
-                "groupId": "de.hpi.swa.trufflesqueak",
-                "artifactId": "smalltalk",
-                "tag": ["default", "public"],
-            },
-            "license": ["MIT", "GFTC"],
-        },
-        "SMALLTALK_COMMUNITY": {
             "type": "pom",
             "runtimeDependencies": [
                 "TRUFFLESQUEAK",
                 "truffle:TRUFFLE_RUNTIME",
             ],
-            "description": "TruffleSqueak virtual machine for GraalVM CE",
+            "description": "TruffleSqueak virtual machine",
             "maven": {
                 "groupId": "de.hpi.swa.trufflesqueak",
-                "artifactId": "smalltalk-community",
+                "artifactId": "smalltalk",
                 "tag": ["default", "public"],
             },
             "license": ["MIT"],
