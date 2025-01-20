@@ -37,7 +37,7 @@ public abstract class DoItRootNode extends RootNode {
 
     @Specialization
     protected final Object doIt(final VirtualFrame frame,
-                    @Bind("this") final Node node,
+                    @Bind final Node node,
                     @Cached final WrapToSqueakNode wrapNode,
                     @Cached final PrimFullClosureValueWithArgsNode primitiveNode) {
         if (!(maybeClosure instanceof final BlockClosureObject closure)) {

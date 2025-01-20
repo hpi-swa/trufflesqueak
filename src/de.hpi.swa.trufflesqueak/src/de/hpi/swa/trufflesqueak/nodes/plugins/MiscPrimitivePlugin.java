@@ -329,7 +329,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
         protected static final long doFindCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
                         final long start,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
                         @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
             return doFind(receiver, string, cachedInclusionMap, start, node, notFoundProfile);
@@ -341,7 +341,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindCached")
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
             final int stringSize = string.getByteLength();
             long index = start - 1;
@@ -364,7 +364,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile quickReturnProfile,
                         @Cached final InlinedBranchProfile foundProfile,
                         @Cached final InlinedBranchProfile notFoundProfile) {
@@ -400,7 +400,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile foundProfile,
                         @Cached final InlinedBranchProfile notFoundProfile) {
             final byte valueByte = (byte) value;
@@ -433,7 +433,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimStringHash2Node extends AbstractPrimStringHashNode implements Primitive1WithFallback {
         @Specialization
         protected static final long doStringHash(final Object receiver, final long initialHash,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final GetHashBytesNode getHashBytesNode) {
             return calculateHash(initialHash, getHashBytesNode.execute(node, receiver));
         }
@@ -445,7 +445,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimStringHash3Node extends AbstractPrimStringHashNode implements Primitive2WithFallback {
         @Specialization
         protected static final long doStringHash(@SuppressWarnings("unused") final Object receiver, final Object target, final long initialHash,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final GetHashBytesNode getHashBytesNode) {
             return calculateHash(initialHash, getHashBytesNode.execute(node, target));
         }

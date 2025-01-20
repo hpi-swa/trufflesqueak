@@ -52,7 +52,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"id == DEFAULT_HOST_WINDOW_ID"})
         protected final Object doSize(final Object receiver, final long id,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             return getContext().asPoint(writeNode, node, 0L, 0L);
         }

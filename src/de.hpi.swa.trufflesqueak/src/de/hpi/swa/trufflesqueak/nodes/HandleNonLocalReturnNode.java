@@ -34,7 +34,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
 
     @Specialization
     protected final Object doHandle(final VirtualFrame frame, final NonLocalReturn nlr,
-                    @Bind("this") final Node node,
+                    @Bind final Node node,
                     @Cached final InlinedConditionProfile hasModifiedSenderProfile) {
         aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
         if (hasModifiedSenderProfile.profile(node, FrameAccess.hasModifiedSender(frame))) {
