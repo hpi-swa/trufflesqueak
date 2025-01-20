@@ -188,7 +188,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
         protected static final AbstractSqueakObjectWithClassAndHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
@@ -202,7 +202,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newDirect")
         protected static final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
@@ -221,7 +221,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
         protected static final AbstractSqueakObjectWithClassAndHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached(value = "createIdentityProfile()", inline = true) final InlinedIntValueProfile sizeProfile,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
@@ -236,7 +236,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
         protected static final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
@@ -285,7 +285,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInstVarAt2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, receiver))", limit = "1")
         protected static final Object doAt(final Object receiver, final long index,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAt0Node at0Node) {
             return at0Node.execute(node, receiver, index - 1);
@@ -298,7 +298,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInstVarAt3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, target))", limit = "1")
         protected static final Object doAt(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAt0Node at0Node) {
             return at0Node.execute(node, target, index - 1);
@@ -310,7 +310,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInstVarAtPut3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, receiver))", limit = "1")
         protected static final Object doAtPut(final Object receiver, final long index, final Object value,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atPut0Node) {
             atPut0Node.execute(node, receiver, index - 1, value);
@@ -324,7 +324,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInstVarAtPut4Node extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, target))", limit = "1")
         protected static final Object doAtPut(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atPut0Node) {
             atPut0Node.execute(node, target, index - 1, value);
@@ -352,7 +352,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash object,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile needsHashProfile) {
             return object.getOrCreateSqueakHash(needsHashProfile, node);
         }
@@ -379,7 +379,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"sizeNode.execute(node, receiver) == sizeNode.execute(node, other)"})
         protected final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final SqueakObjectBecomeNode becomeNode,
                         @Cached final ArrayObjectReadNode readNode,
@@ -410,7 +410,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"sizeNode.execute(node, receiver) != sizeNode.execute(node, other)"})
         @SuppressWarnings("unused")
         protected static final ArrayObject doBadSize(final ArrayObject receiver, final ArrayObject other,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode) {
             throw PrimitiveFailed.BAD_ARGUMENT;
         }
@@ -480,7 +480,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"0 <= receiver", "receiver <= MAX_VALUE"}, replaces = "doLongExact")
         protected static final Object doLong(final long receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile isImmediateProfile) {
             return CharacterObject.valueOf(receiver, isImmediateProfile, node);
         }
@@ -497,7 +497,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"0 <= target", "target <= MAX_VALUE"}, replaces = "doClassLongExact")
         protected static final Object doClassLong(@SuppressWarnings("unused") final Object receiver, final long target,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile isImmediateProfile) {
             return CharacterObject.valueOf(target, isImmediateProfile, node);
         }
@@ -528,7 +528,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSlotAt2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, receiver))", limit = "1")
         protected static final Object doSlotAt(final Object receiver, final long index,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAt0Node at0Node) {
             return at0Node.execute(node, receiver, index - 1);
@@ -540,7 +540,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSlotAt3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, target))", limit = "1")
         protected static final Object doSlotAt(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAt0Node at0Node) {
             return at0Node.execute(node, target, index - 1);
@@ -552,7 +552,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSlotAtPut3Node extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, receiver))", limit = "1")
         protected static final Object doSlotAtPut(final Object receiver, final long index, final Object value,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atPut0Node) {
             atPut0Node.execute(node, receiver, index - 1, value);
@@ -565,7 +565,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSlotAtPut4Node extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = "inBounds1(index, sizeNode.execute(node, target))", limit = "1")
         protected static final Object doSlotAtPut(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atPut0Node) {
             atPut0Node.execute(node, target, index - 1, value);
@@ -677,7 +677,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile copyHashProfile) {
             return performPointersBecomeOneWay(fromArray, toArray, copyHashProfile.profile(node, copyHash));
         }

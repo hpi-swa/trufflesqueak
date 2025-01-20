@@ -132,21 +132,21 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDigitAddNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             return Math.addExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
         }
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             return LargeIntegerObject.add(getContext(), lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
         }
 
         @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             if (differentSignProfile.profile(node, !lhs.sameSign(rhs))) {
                 return lhs.subtract(rhs);
@@ -157,7 +157,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             if (differentSignProfile.profile(node, rhs.differentSign(getContext(), lhs))) {
                 return LargeIntegerObject.subtract(lhs, rhs);
@@ -168,7 +168,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             if (differentSignProfile.profile(node, lhs.differentSign(getContext(), rhs))) {
                 return lhs.subtract(rhs);
@@ -183,21 +183,21 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDigitSubtractNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             return Math.subtractExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
         }
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             return LargeIntegerObject.subtract(getContext(), lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
         }
 
         @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             if (differentSignProfile.profile(node, !lhs.sameSign(rhs))) {
                 return lhs.add(rhs);
@@ -208,7 +208,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             if (differentSignProfile.profile(node, rhs.differentSign(getContext(), lhs))) {
                 return rhs.add(lhs);
@@ -219,7 +219,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
             if (differentSignProfile.profile(node, lhs.differentSign(getContext(), rhs))) {
                 return lhs.add(rhs);
@@ -273,7 +273,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doLong(final long receiver, final LargeIntegerObject arg,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("positiveProfile") @Cached final InlinedConditionProfile positiveProfile) {
             if (positiveProfile.profile(node, receiver >= 0)) {
                 return receiver & arg.longValue();
@@ -284,7 +284,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("positiveProfile") @Cached final InlinedConditionProfile positiveProfile) {
             if (positiveProfile.profile(node, arg >= 0)) {
                 return receiver.longValue() & arg;
@@ -356,7 +356,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final long doLong(final long lhs, final long rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final InlinedConditionProfile smallerProfile,
                         @Exclusive @Cached final InlinedConditionProfile equalProfile) {
             if (smallerProfile.profile(node, lhs < rhs)) {
@@ -375,7 +375,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("fitsIntoLongProfile") @Cached final InlinedConditionProfile fitsIntoLongProfile) {
             if (fitsIntoLongProfile.profile(node, rhs.fitsIntoLong())) {
                 final long value = rhs.longValue();
@@ -387,7 +387,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final long doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("fitsIntoLongProfile") @Cached final InlinedConditionProfile fitsIntoLongProfile) {
             if (fitsIntoLongProfile.profile(node, lhs.fitsIntoLong())) {
                 final long value = lhs.longValue();
@@ -403,7 +403,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode implements Primitive2WithFallback {
         @Specialization
         protected final ArrayObject doLong(final long rcvr, final long arg, final boolean negative,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile signProfile) {
             final SqueakImageContext image = getContext();
             long divide = rcvr / arg;
@@ -522,7 +522,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doLongQuick")
         protected final Object doGeneric(final Object receiver, final Object a, final Object m, final Object mInv,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ToIntsNode receiverToIntsNode,
                         @Cached final ToIntsNode aToIntsNode,
                         @Cached final ToIntsNode mToIntsNode,

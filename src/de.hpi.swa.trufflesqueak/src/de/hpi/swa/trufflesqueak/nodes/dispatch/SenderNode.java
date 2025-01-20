@@ -35,7 +35,7 @@ abstract class SenderNode extends AbstractNode {
 
     @Specialization(replaces = "doContextOrMarker")
     protected static final Object doContext(final VirtualFrame frame,
-                    @Bind("this") final Node node,
+                    @Bind final Node node,
                     @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
         return getOrCreateContextNode.executeGet(frame, node);
     }

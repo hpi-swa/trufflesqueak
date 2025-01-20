@@ -135,7 +135,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform0Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(cachedSelector)") final Dispatch0Node dispatchNode) {
             return dispatchNode.execute(frame, receiver);
@@ -156,7 +156,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform1Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(cachedSelector)") final Dispatch1Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1);
@@ -177,7 +177,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform2Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(cachedSelector)") final Dispatch2Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2);
@@ -198,7 +198,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform3Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(cachedSelector)") final Dispatch3Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2, arg3);
@@ -220,7 +220,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform4Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(cachedSelector)") final Dispatch4Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
@@ -243,7 +243,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"selector == cachedSelector"}, limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform5Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4, final Object arg5,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(cachedSelector)") final Dispatch5Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
@@ -264,7 +264,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimPerformWithArgumentsNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached("create(cachedSelector)") final DispatchNaryNode dispatchNode) {
@@ -274,7 +274,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performCached")
         protected static final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject argumentsArray,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final DispatchIndirectNaryNode dispatchNode) {
             final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
@@ -287,7 +287,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSignalNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "isSemaphore(receiver)")
         protected static final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode,
                         @Cached final FrameStackPushNode pushReceiverNode) {
             try {
@@ -306,7 +306,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @SuppressWarnings("truffle-static-method")
         protected final PointersObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
@@ -335,7 +335,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimResumeNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doResume(final VirtualFrame frame, final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ResumeProcessNode resumeProcessNode,
                         @Cached final FrameStackPushNode pushReceiverNode) {
@@ -359,7 +359,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
         protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
@@ -374,7 +374,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
         protected static final PointersObject doSuspendOtherProcess(final PointersObject receiver,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
@@ -397,7 +397,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
         protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
@@ -412,7 +412,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
         protected static final Object doSuspendOtherProcess(final PointersObject receiver,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
@@ -490,7 +490,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
                         final ClassObject lookupClass,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
@@ -501,7 +501,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "performCached")
         protected static final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject lookupClass,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
@@ -519,7 +519,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object performContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target,
                         @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
                         final ClassObject lookupClass,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
@@ -531,7 +531,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "performContextCached")
         protected static final Object performContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target, final NativeObject selector,
                         final ArrayObject arguments, final ClassObject lookupClass,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
@@ -546,7 +546,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimIdentical2Node extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         protected static final boolean doObject(final Object a, final Object b,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectIdentityNode identityNode) {
             return identityNode.execute(node, a, b);
         }
@@ -557,7 +557,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimIdentical3Node extends AbstractPrimitiveNode implements Primitive2 {
         @Specialization
         public static final boolean doObject(@SuppressWarnings("unused") final Object context, final Object a, final Object b,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectIdentityNode identityNode) {
             return identityNode.execute(node, a, b);
         }
@@ -571,7 +571,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimClass1Node extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final ClassObject doClass(final Object receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
             return classNode.executeLookup(node, receiver);
         }
@@ -582,7 +582,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimClass2Node extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         protected static final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
             return classNode.executeLookup(node, object);
         }
@@ -633,7 +633,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final AbstractSqueakObject doPrimChangeClass(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash argument,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
             changeClassOfToNode.execute(node, receiver, argument.getSqueakClass());
             return receiver;
@@ -646,7 +646,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFlushCacheByMethodNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "receiver.hasMethodClass(readNode, node)", limit = "1")
         protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             receiver.flushCache();
             getContext().flushMethodCacheForMethod(receiver);
@@ -690,7 +690,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDoPrimitiveWithArgs3Node extends AbstractPrimDoPrimitiveWithArgsNode implements Primitive2WithFallback {
         @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize"}, limit = "2")
         protected static final Object doPrimitiveWithArgsCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Cached("primitiveIndex") final long cachedPrimitiveIndex,
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(node, argumentArray)") final int cachedArraySize,
@@ -712,7 +712,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize"}, limit = "2")
         protected static final Object doPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
                         @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Cached("primitiveIndex") final long cachedPrimitiveIndex,
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(node, argumentArray)") final int cachedArraySize,
@@ -824,7 +824,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final ClassObject doPrimAdoptInstance(final ClassObject receiver, final AbstractSqueakObjectWithClassAndHash argument,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
             changeClassOfToNode.execute(node, argument, receiver);
             return receiver;
@@ -836,7 +836,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimYieldNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ArrayObjectReadNode arrayReadNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
@@ -865,7 +865,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         public static final boolean doObject(final Object a, final Object b,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectIdentityNode identityNode) {
             return !identityNode.execute(node, a, b);
         }
@@ -876,7 +876,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final PointersObject doExit(final VirtualFrame frame, final PointersObject mutex,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ExitCriticalSectionNode exitCriticalSectionNode) {
             return exitCriticalSectionNode.execute(frame, node, mutex, readNode.execute(node, mutex, LINKED_LIST.FIRST_LINK));
@@ -920,7 +920,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEnterCriticalSection1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final EnterCriticalSectionNode enterCriticalSectionNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode) {
@@ -933,7 +933,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEnterCriticalSection2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex, final PointersObject effectiveProcess,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final EnterCriticalSectionNode enterCriticalSectionNode) {
             return enterCriticalSectionNode.execute(frame, node, mutex, readNode.execute(node, mutex, MUTEX.OWNER), effectiveProcess);
@@ -981,7 +981,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTestAndSetOwnershipOfCriticalSectionNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doTestAndSet(final PointersObject rcvrMutex,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final TestAndSetOwnershipOfCriticalSectionNode testAndSetOwnershipOfCriticalSectionNode) {
@@ -1022,7 +1022,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
             return dispatchNode.execute(frame, receiver, arrayNode.execute(node, argArray));
@@ -1031,7 +1031,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject method,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
@@ -1054,7 +1054,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
             return dispatchNode.execute(frame, receiver, arrayNode.execute(node, argArray));
@@ -1064,7 +1064,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
                         final CompiledCodeObject method,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
@@ -1087,7 +1087,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final CompiledCodeObject method,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver));
@@ -1108,7 +1108,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final CompiledCodeObject method,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1));
@@ -1129,7 +1129,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final CompiledCodeObject method,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1, arg2));
@@ -1151,7 +1151,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final CompiledCodeObject method,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1, arg2, arg3));
@@ -1174,7 +1174,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         final CompiledCodeObject method,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @Cached final IndirectCallNode callNode) {
             return callNode.call(method.getCallTarget(), FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1, arg2, arg3, arg4));
@@ -1189,7 +1189,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         "cachedArraySize == cachedMethodObject.getNumArgs()"}, limit = "2")
         protected static final Object doNamedPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context,
                         @SuppressWarnings("unused") final CompiledCodeObject methodObject, final Object target, final ArrayObject argumentArray,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Cached("methodObject") final CompiledCodeObject cachedMethodObject,
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Cached("sizeNode.execute(node, argumentArray)") final int cachedArraySize,
@@ -1349,7 +1349,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doReceiverVariable(final Object receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectAt0Node at0Node) {
             return at0Node.execute(node, receiver, variableIndex);
         }

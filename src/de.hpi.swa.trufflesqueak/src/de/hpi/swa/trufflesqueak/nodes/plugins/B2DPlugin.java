@@ -237,7 +237,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"rect.size() >= 2"})
         protected final PointersObject doGet(final PointersObject receiver, final PointersObject rect,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             getContext().b2d.primitiveGetClipRect(writeNode, node, receiver, rect);
             return rect;
@@ -281,7 +281,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final PointersObject doGet(final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             return getContext().b2d.primitiveGetOffset(writeNode, node, receiver);
         }

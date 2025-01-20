@@ -130,7 +130,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         public final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
             writeImage(getOrCreateContextNode.executeGet(frame, node));
             /* Return false to signal that the image is not resuming. */
@@ -182,7 +182,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimBeCursor1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected final PointersObject doCursor(final PointersObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode cursorReadNode,
                         @Cached final AbstractPointersObjectReadNode offsetReadNode) {
             final SqueakImageContext image = getContext();
@@ -202,7 +202,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimBeCursor2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode cursorReadNode,
                         @Cached final AbstractPointersObjectReadNode offsetReadNode,
                         @Cached final InlinedConditionProfile depthProfile) {
@@ -257,7 +257,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         "arraySizeNode.execute(node, stops) >= 258", "hasCorrectSlots(pointersReadNode, arraySizeNode, node, receiver)"}, limit = "1")
         protected static final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
                         final ArrayObject stops, final long kernData,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
                         @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                         @Cached final ArrayObjectSizeNode arraySizeNode,
@@ -316,7 +316,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
         @Specialization
         protected static final NativeObject doNative(final NativeObject rcvr, final long start, final long stop, final Object repl, final long replStart,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final NativeObjectReplaceNode replaceNode) {
             replaceNode.execute(node, rcvr, start, stop, repl, replStart);
             return rcvr;
@@ -324,7 +324,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final ArrayObject doArray(final ArrayObject rcvr, final long start, final long stop, final Object repl, final long replStart,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ArrayObjectReplaceNode replaceNode) {
             replaceNode.execute(node, rcvr, start, stop, repl, replStart);
             return rcvr;
@@ -332,7 +332,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final LargeIntegerObject doLarge(final LargeIntegerObject rcvr, final long start, final long stop, final Object repl, final long replStart,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final LargeIntegerObjectReplaceNode replaceNode) {
             replaceNode.execute(node, rcvr, start, stop, repl, replStart);
             return rcvr;
@@ -340,7 +340,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final PointersObject doPointers(final PointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final PointersObjectReplaceNode replaceNode) {
             replaceNode.execute(node, rcvr, start, stop, repl, replStart);
             return rcvr;
@@ -348,7 +348,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final VariablePointersObject doPointers(final VariablePointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final VariablePointersObjectReplaceNode replaceNode) {
             replaceNode.execute(node, rcvr, start, stop, repl, replStart);
             return rcvr;
@@ -356,7 +356,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final WeakVariablePointersObject doWeakPointers(final WeakVariablePointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final WeakPointersObjectReplaceNode replaceNode) {
             replaceNode.execute(node, rcvr, start, stop, repl, replStart);
             return rcvr;
@@ -364,7 +364,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final CompiledCodeObject doMethod(final CompiledCodeObject rcvr, final long start, final long stop, final CompiledCodeObject repl, final long replStart,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
             if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
                 errorProfile.enter(node);
@@ -381,7 +381,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"repl.isIntType()"})
         protected static final FloatObject doFloat(final FloatObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
             if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getIntLength(), replStart)) {
                 errorProfile.enter(node);
@@ -817,7 +817,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final Object doScreenSize(@SuppressWarnings("unused") final Object receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final long x;
             final long y;
@@ -843,7 +843,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doDefer(final Object receiver, final boolean flag,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedExactClassProfile displayProfile) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {

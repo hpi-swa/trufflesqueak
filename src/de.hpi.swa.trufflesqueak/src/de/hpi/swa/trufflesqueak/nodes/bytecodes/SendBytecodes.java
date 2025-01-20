@@ -301,7 +301,7 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final long doArray(final ArrayObject receiver,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final ArrayObjectSizeNode sizeNode) {
                     return sizeNode.execute(node, receiver);
                 }
@@ -316,7 +316,7 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final ClassObject doGeneric(final Object receiver,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final SqueakObjectClassNode classNode) {
                     return classNode.executeLookup(node, receiver);
                 }
@@ -331,7 +331,7 @@ public final class SendBytecodes {
 
                 @Specialization(guards = "getContext(node).isPointClass(receiver.getSqueakClass())")
                 protected static final Object doX(final AbstractPointersObject receiver,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final AbstractPointersObjectReadNode readNode) {
                     return readNode.execute(node, receiver, POINT.X);
                 }
@@ -346,7 +346,7 @@ public final class SendBytecodes {
 
                 @Specialization(guards = "getContext(node).isPointClass(receiver.getSqueakClass())")
                 protected static final Object doY(final AbstractPointersObject receiver,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final AbstractPointersObjectReadNode readNode) {
                     return readNode.execute(node, receiver, POINT.Y);
                 }
@@ -570,7 +570,7 @@ public final class SendBytecodes {
 
                 @Specialization(replaces = "doDoubleFinite")
                 protected static final Object doDouble(final double lhs, final double rhs,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final AsFloatObjectIfNessaryNode boxNode) {
                     return boxNode.execute(node, lhs * rhs);
                 }
@@ -595,7 +595,7 @@ public final class SendBytecodes {
 
                 @Specialization(guards = "!isZero(rhs)", replaces = "doDoubleFinite")
                 protected static final Object doDouble(final double lhs, final double rhs,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final AsFloatObjectIfNessaryNode boxNode) {
                     return boxNode.execute(node, lhs / rhs);
                 }
@@ -611,7 +611,7 @@ public final class SendBytecodes {
                 /** Profiled version of {@link Math#floorMod(long, long)}. */
                 @Specialization(guards = "rhs != 0")
                 protected static final long doLong(final long lhs, final long rhs,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final InlinedConditionProfile profile) {
                     final long r = lhs % rhs;
                     // if the signs are different and modulo not zero, adjust result
@@ -632,14 +632,14 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final PointersObject doLong(final long xPos, final long yPos,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
                     return getContext(node).asPoint(writeNode, node, xPos, yPos);
                 }
 
                 @Specialization
                 protected static final PointersObject doDouble(final double xPos, final double yPos,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
                     return getContext(node).asPoint(writeNode, node, xPos, yPos);
                 }
@@ -668,7 +668,7 @@ public final class SendBytecodes {
                 /** Profiled version of {@link Math#floorDiv(long, long)}. */
                 @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
                 protected static final long doLong(final long lhs, final long rhs,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final InlinedConditionProfile profile) {
                     final long q = lhs / rhs;
                     // if the signs are different and modulo not zero, round down
@@ -715,7 +715,7 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final boolean doGeneric(final Object receiver, final Object arg1,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final SqueakObjectIdentityNode identityNode) {
                     return identityNode.execute(node, receiver, arg1);
                 }
@@ -730,7 +730,7 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final boolean doGeneric(final Object receiver, final Object arg1,
-                                @Bind("this") final Node node,
+                                @Bind final Node node,
                                 @Cached final SqueakObjectIdentityNode identityNode) {
                     return !identityNode.execute(node, receiver, arg1);
                 }
