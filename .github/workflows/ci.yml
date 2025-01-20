@@ -20,6 +20,7 @@ on:
 env:
   VERBOSE_GRAALVM_LAUNCHERS: true
   MX_GATE_OPTS: '--strict-mode --omit-clean'
+  PYTHONIOENCODING: 'utf-8'
 
 jobs:
   style_and_build_config:
@@ -53,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2022]
-        java: [23]
+        java: [24]
         jdk_identifier: [latest]
     env:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-22.04' }}"
@@ -142,7 +143,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
-      JAVA_VERSION: "23"
+      JAVA_VERSION: "24"
       JDK_IDENTIFIER: "latest"
       MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
@@ -155,7 +156,7 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@v1
       with:
-        java-version: '${{ env.JAVA_VERSION }}.0.2'
+        java-version: '${{ env.JAVA_VERSION }}'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'native' }}
@@ -201,7 +202,7 @@ jobs:
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
-        trufflesqueak-polyglot-get -v 24.1.2 -a js
+        trufflesqueak-polyglot-get -v 24.2.0 -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' }}
     - name: Upload TruffleSqueak standalone
