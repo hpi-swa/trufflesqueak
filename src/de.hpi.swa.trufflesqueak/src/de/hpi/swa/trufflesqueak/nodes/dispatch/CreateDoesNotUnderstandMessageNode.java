@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -26,9 +27,10 @@ abstract class CreateDoesNotUnderstandMessageNode extends AbstractNode {
     @Specialization
     protected static final PointersObject doCreate(final NativeObject selector, final Object receiver, final Object[] arguments,
                     @Bind final Node node,
+                    @Bind final SqueakImageContext image,
                     @Cached final AbstractPointersObjectWriteNode writeNode,
                     @Cached final SqueakObjectClassNode classNode) {
         final ClassObject receiverClass = classNode.executeLookup(node, receiver);
-        return getContext(node).newMessage(writeNode, node, selector, receiverClass, arguments);
+        return image.newMessage(writeNode, node, selector, receiverClass, arguments);
     }
 }

@@ -405,8 +405,8 @@ public final class SendBytecodes {
                 }
 
                 @Specialization(replaces = "doLong")
-                protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-                    return LargeIntegerObject.add(getContext(), lhs, rhs);
+                protected static final Object doLongWithOverflow(final long lhs, final long rhs, @Bind final SqueakImageContext image) {
+                    return LargeIntegerObject.add(image, lhs, rhs);
                 }
 
                 @Specialization
@@ -428,8 +428,8 @@ public final class SendBytecodes {
                 }
 
                 @Specialization(replaces = "doLong")
-                protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-                    return LargeIntegerObject.subtract(getContext(), lhs, rhs);
+                protected static final Object doLongWithOverflow(final long lhs, final long rhs, @Bind final SqueakImageContext image) {
+                    return LargeIntegerObject.subtract(image, lhs, rhs);
                 }
 
                 @Specialization
@@ -559,8 +559,8 @@ public final class SendBytecodes {
                 }
 
                 @Specialization(replaces = "doLong")
-                protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-                    return LargeIntegerObject.multiply(getContext(), lhs, rhs);
+                protected static final Object doLongWithOverflow(final long lhs, final long rhs, @Bind final SqueakImageContext image) {
+                    return LargeIntegerObject.multiply(image, lhs, rhs);
                 }
 
                 @Specialization(rewriteOn = RespecializeException.class)

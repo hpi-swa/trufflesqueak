@@ -396,43 +396,54 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 578)
     protected abstract static class PrimSuspendBackingUpV2Node extends AbstractPrimitiveWithFrameNode implements Primitive0WithFallback {
 
-        @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
-        protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+        @Specialization
+        protected static final Object doSuspend(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Bind final Node node,
-                        @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushNode) {
-            try {
-                throw wakeHighestPriorityNode.executeWake(frame, node);
-            } catch (final ProcessSwitch ps) {
-                /* Leave `nil` as result on stack. */
-                pushNode.execute(frame, NilObject.SINGLETON);
-                throw ps;
-            }
+                        @Cached final GetActiveProcessNode getActiveProcessNode,
+                        @Cached final SuspendBackingUpNode suspendNode) {
+            return suspendNode.execute(frame, receiver, getActiveProcessNode.execute(node));
         }
 
-        @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
-        protected static final Object doSuspendOtherProcess(final PointersObject receiver,
-                        @SuppressWarnings("unused") @Bind final Node node,
-                        @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached final RemoveProcessFromListNode removeProcessNode,
-                        @Cached final AbstractPointersObjectReadNode readNode,
-                        @Cached final AbstractPointersObjectWriteNode writeNode) {
-            final Object myListOrNil = readNode.execute(node, receiver, PROCESS.LIST);
-            final Object myContext = readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT);
-            if (myListOrNil instanceof final PointersObject myList) {
-                removeProcessNode.executeRemove(receiver, myList, readNode, writeNode, node);
-                writeNode.execute(node, receiver, PROCESS.LIST, NilObject.SINGLETON);
-                if (myList.getSqueakClass() != getContext(node).getLinkedListClass()) {
-                    backupContextToBlockingSendTo((ContextObject) myContext, myList);
-                    return NilObject.SINGLETON;
-                } else {
-                    return myList;
+        protected abstract static class SuspendBackingUpNode extends AbstractNode {
+            protected abstract Object execute(VirtualFrame frame, PointersObject receiver, PointersObject activeProcess);
+
+            @Specialization(guards = "receiver == activeProcess")
+            protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+                            @SuppressWarnings("unused") final PointersObject activeProcess,
+                            @Bind final Node node,
+                            @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
+                            @Cached final FrameStackPushNode pushNode) {
+                try {
+                    throw wakeHighestPriorityNode.executeWake(frame, node);
+                } catch (final ProcessSwitch ps) {
+                    /* Leave `nil` as result on stack. */
+                    pushNode.execute(frame, NilObject.SINGLETON);
+                    throw ps;
                 }
-            } else {
-                CompilerDirectives.transferToInterpreter();
-                assert myListOrNil == NilObject.SINGLETON : "Unexpected object for myList";
-                throw PrimitiveFailed.BAD_RECEIVER;
+            }
+
+            @Specialization(guards = {"receiver != activeProcess"})
+            protected static final Object doSuspendOtherProcess(final PointersObject receiver, @SuppressWarnings("unused") final PointersObject activeProcess,
+                            @Bind final Node node,
+                            @Cached final RemoveProcessFromListNode removeProcessNode,
+                            @Cached final AbstractPointersObjectReadNode readNode,
+                            @Cached final AbstractPointersObjectWriteNode writeNode) {
+                final Object myListOrNil = readNode.execute(node, receiver, PROCESS.LIST);
+                final Object myContext = readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT);
+                if (myListOrNil instanceof final PointersObject myList) {
+                    removeProcessNode.executeRemove(receiver, myList, readNode, writeNode, node);
+                    writeNode.execute(node, receiver, PROCESS.LIST, NilObject.SINGLETON);
+                    if (myList.getSqueakClass() != getContext(node).getLinkedListClass()) {
+                        backupContextToBlockingSendTo((ContextObject) myContext, myList);
+                        return NilObject.SINGLETON;
+                    } else {
+                        return myList;
+                    }
+                } else {
+                    CompilerDirectives.transferToInterpreter();
+                    assert myListOrNil == NilObject.SINGLETON : "Unexpected object for myList";
+                    throw PrimitiveFailed.BAD_RECEIVER;
+                }
             }
         }
 
@@ -453,8 +464,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 89)
     protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final Object doFlush(final Object receiver) {
-            getContext().flushMethodCache();
+        protected static final Object doFlush(final Object receiver, @Bind final SqueakImageContext image) {
+            image.flushMethodCache();
             return receiver;
         }
     }
@@ -471,11 +482,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final Object performGeneric(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject lookupClass,
-                        final InheritsFromNode inheritsFromNode, final ResolveMethodNode methodNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        final SqueakImageContext image, final InheritsFromNode inheritsFromNode, final ResolveMethodNode methodNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode, final IndirectCallNode callNode, final Node node) {
             if (inheritsFromNode.execute(node, receiver, lookupClass)) {
-                final Object lookupResult = getContext(node).lookup(lookupClass, selector);
-                final CompiledCodeObject method = methodNode.execute(node, getContext(node), lookupClass, lookupResult);
+                final Object lookupResult = image.lookup(lookupClass, selector);
+                final CompiledCodeObject method = methodNode.execute(node, image, lookupClass, lookupResult);
                 return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, getObjectArrayNode.execute(node, arguments), lookupClass, lookupResult, method, selector));
             } else {
                 CompilerDirectives.transferToInterpreter();
@@ -503,12 +514,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "performCached")
         protected static final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject lookupClass,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
-            return performGeneric(frame, receiver, selector, arguments, lookupClass, inheritsFromNode, methodNode, getObjectArrayNode, argumentsNode, callNode, node);
+            return performGeneric(frame, receiver, selector, arguments, lookupClass, image, inheritsFromNode, methodNode, getObjectArrayNode, argumentsNode, callNode, node);
         }
     }
 
@@ -533,12 +545,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object performContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target, final NativeObject selector,
                         final ArrayObject arguments, final ClassObject lookupClass,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
-            return performGeneric(frame, target, selector, arguments, lookupClass, inheritsFromNode, methodNode, getObjectArrayNode, argumentsNode, callNode, node);
+            return performGeneric(frame, target, selector, arguments, lookupClass, image, inheritsFromNode, methodNode, getObjectArrayNode, argumentsNode, callNode, node);
         }
     }
 
@@ -646,11 +659,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 116)
     protected abstract static class PrimFlushCacheByMethodNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "receiver.hasMethodClass(readNode, node)", limit = "1")
-        protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
+        protected static final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             receiver.flushCache();
-            getContext().flushMethodCacheForMethod(receiver);
+            image.flushMethodCacheForMethod(receiver);
             /*
              * TODO: maybe the method's callTarget could be invalidated to remove it from any PIC
              * and to avoid invalidating the entire methodDict assumption.
@@ -734,8 +748,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 119)
     protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
-        protected final NativeObject doFlush(final NativeObject receiver) {
-            getContext().flushMethodCacheForSelector(receiver);
+        protected static final NativeObject doFlush(final NativeObject receiver, @Bind final SqueakImageContext image) {
+            image.flushMethodCacheForSelector(receiver);
             return receiver;
         }
     }
@@ -1255,8 +1269,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 233)
     protected abstract static class PrimSetFullScreenNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final Object doFullScreen(final Object receiver, final boolean enable) {
-            final SqueakImageContext image = getContext();
+        protected static final Object doFullScreen(final Object receiver, final boolean enable, @Bind final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 image.getDisplay().setFullscreen(enable);
             }

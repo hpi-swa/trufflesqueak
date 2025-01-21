@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -13,6 +14,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodesFactory.AsFloatObjectIfNessaryNodeGen;
@@ -37,8 +39,8 @@ public final class FloatObjectNodes {
         }
 
         @Specialization(guards = "!isFinite(value)")
-        protected final FloatObject doNaNOrInfinite(final double value) {
-            return new FloatObject(getContext(), value);
+        protected static final FloatObject doNaNOrInfinite(final double value, @Bind final SqueakImageContext image) {
+            return new FloatObject(image, value);
         }
     }
 }

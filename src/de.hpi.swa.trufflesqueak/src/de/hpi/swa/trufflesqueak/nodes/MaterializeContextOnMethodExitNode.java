@@ -26,18 +26,19 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     public abstract void execute(VirtualFrame frame);
 
-    @Specialization(guards = {"getSqueakImageContext(frame).lastSeenContext == null", "hasEscapedContext(frame)"})
-    protected final void doStartMaterialization(final VirtualFrame frame) {
-        getContext().lastSeenContext = FrameAccess.getContext(frame);
+    @Specialization(guards = {"image.lastSeenContext == null", "hasEscapedContext(frame)"})
+    protected static final void doStartMaterialization(final VirtualFrame frame,
+                    @Bind final SqueakImageContext image) {
+        image.lastSeenContext = FrameAccess.getContext(frame);
     }
 
-    @Specialization(guards = {"getSqueakImageContext(frame).lastSeenContext != null"})
-    protected final void doMaterialize(final VirtualFrame frame,
+    @Specialization(guards = {"image.lastSeenContext != null"})
+    protected static final void doMaterialize(final VirtualFrame frame,
                     @Bind final Node node,
+                    @Bind final SqueakImageContext image,
                     @Cached final InlinedConditionProfile isNotLastSeenContextProfile,
                     @Cached final InlinedConditionProfile continueProfile,
                     @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
-        final SqueakImageContext image = getContext();
         final ContextObject lastSeenContext = image.lastSeenContext;
         final ContextObject context = getOrCreateContextNode.executeGet(frame, node);
         if (isNotLastSeenContextProfile.profile(node, context != lastSeenContext)) {
@@ -56,15 +57,10 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
     }
 
     @Specialization(guards = {"!hasEscapedContext(frame)"})
-    protected final void doNothing(@SuppressWarnings("unused") final VirtualFrame frame) {
+    protected static final void doNothing(@SuppressWarnings("unused") final VirtualFrame frame) {
         /*
          * Nothing to do because neither was a child context materialized nor has this context been
          * requested and allocated.
          */
-    }
-
-    /* Avoid that the DSL generates an assertion for this. */
-    protected final SqueakImageContext getSqueakImageContext(@SuppressWarnings("unused") final VirtualFrame frame) {
-        return getContext();
     }
 }

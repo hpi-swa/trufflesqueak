@@ -558,14 +558,15 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         @Specialization
         protected static final Object doIndirect(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object[] arguments,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
-            final Object lookupResult = getContext(node).lookup(receiverClass, selector);
-            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            final Object lookupResult = image.lookup(receiverClass, selector);
+            final CompiledCodeObject method = methodNode.execute(node, image, receiverClass, lookupResult);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arguments);
             if (result != null) {
                 return result;

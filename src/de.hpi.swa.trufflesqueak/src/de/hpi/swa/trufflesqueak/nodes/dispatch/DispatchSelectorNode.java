@@ -18,7 +18,7 @@ public abstract class DispatchSelectorNode extends AbstractNode {
     public abstract Object execute(VirtualFrame frame);
 
     public static final DispatchSelectorNode create(final VirtualFrame frame, final NativeObject selector, final int numArgs) {
-        final SqueakImageContext image = getContext(null);
+        final SqueakImageContext image = SqueakImageContext.getSlow();
         if (image.isHeadless()) {
             if (selector.isDebugErrorSelector(image)) {
                 return new DispatchSendHeadlessErrorNode(frame, selector, numArgs);

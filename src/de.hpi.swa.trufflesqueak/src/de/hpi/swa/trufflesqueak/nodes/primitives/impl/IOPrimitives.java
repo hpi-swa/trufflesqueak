@@ -60,13 +60,13 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode.AbstractPrimitiveWithFrameNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -79,8 +79,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
-        protected final boolean doTest(@SuppressWarnings("unused") final Object receiver, final long depth) {
-            if (getContext().hasDisplay()) {
+        protected static final boolean doTest(@SuppressWarnings("unused") final Object receiver, final long depth, @Bind final SqueakImageContext image) {
+            if (image.hasDisplay()) {
                 // TODO: support all depths ({1, 2, 4, 8, 16, 32} and negative values)?
                 return BooleanObject.wrap(depth == 32);
             } else {
@@ -94,10 +94,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 93)
     protected abstract static class PrimInputSemaphoreNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization
-        protected final Object doSet(final Object receiver, final long semaIndex) {
-            final SqueakImageContext image = getContext();
+        protected static final Object doSet(final Object receiver, final long semaIndex, @Bind final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 image.getDisplay().setInputSemaphoreIndex((int) semaIndex);
             }
@@ -108,10 +106,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 94)
     protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization
-        protected final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray) {
-            final SqueakImageContext image = getContext();
+        protected static final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray, @Bind final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 final SqueakDisplay display = image.getDisplay();
                 final long[] event = display.getNextEvent();
@@ -128,21 +124,21 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 97)
     protected abstract static class PrimSnapshotNode extends AbstractPrimitiveWithFrameNode implements Primitive0WithFallback {
-
         @Specialization
-        public final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+        public static final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
-            writeImage(getOrCreateContextNode.executeGet(frame, node));
+            writeImage(image, getOrCreateContextNode.executeGet(frame, node));
             /* Return false to signal that the image is not resuming. */
             return BooleanObject.FALSE;
         }
 
         @TruffleBoundary
-        private void writeImage(final ContextObject thisContext) {
+        private static void writeImage(final SqueakImageContext image, final ContextObject thisContext) {
             /* Push true on stack for saved snapshot. */
             thisContext.push(BooleanObject.TRUE);
-            SqueakImageWriter.write(getContext(), thisContext);
+            SqueakImageWriter.write(image, thisContext);
             /* Pop true again. */
             thisContext.pop();
         }
@@ -182,11 +178,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 101)
     protected abstract static class PrimBeCursor1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
-        protected final PointersObject doCursor(final PointersObject receiver,
+        protected static final PointersObject doCursor(final PointersObject receiver,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final AbstractPointersObjectReadNode cursorReadNode,
                         @Cached final AbstractPointersObjectReadNode offsetReadNode) {
-            final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
                 final PointersObject offset = receiver.getFormOffset(cursorReadNode, node);
                 final int offsetX = Math.abs(offsetReadNode.executeInt(node, offset, POINT.X));
@@ -202,12 +198,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 101)
     protected abstract static class PrimBeCursor2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject,
+        protected static final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final AbstractPointersObjectReadNode cursorReadNode,
                         @Cached final AbstractPointersObjectReadNode offsetReadNode,
                         @Cached final InlinedConditionProfile depthProfile) {
-            final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
                 final int[] words = receiver.getFormBits(cursorReadNode, node);
                 final int depth = receiver.getFormDepth(cursorReadNode, node);
@@ -234,10 +230,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 102)
     protected abstract static class PrimBeDisplayNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-
         @Specialization(guards = {"receiver.size() >= 4"})
-        protected final boolean doDisplay(final PointersObject receiver) {
-            final SqueakImageContext image = getContext();
+        protected static final boolean doDisplay(final PointersObject receiver, @Bind final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 image.setSpecialObject(SPECIAL_OBJECT.THE_DISPLAY, receiver);
                 image.getDisplay().open(receiver);
@@ -819,10 +813,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doScreenSize(@SuppressWarnings("unused") final Object receiver,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final long x;
             final long y;
-            final SqueakImageContext image = getContext(node);
             if (image.hasDisplay() && image.getDisplay().isVisible()) {
                 x = image.getDisplay().getWindowWidth();
                 y = image.getDisplay().getWindowHeight();
@@ -841,12 +835,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 126)
     protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization
-        protected final Object doDefer(final Object receiver, final boolean flag,
+        protected static final Object doDefer(final Object receiver, final boolean flag,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final InlinedExactClassProfile displayProfile) {
-            final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
                 displayProfile.profile(node, image.getDisplay()).setDeferUpdates(flag);
             }
@@ -857,10 +850,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 127)
     protected abstract static class PrimShowDisplayRectNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
-
         @Specialization
-        protected final PointersObject doShow(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
-            final SqueakImageContext image = getContext();
+        protected static final PointersObject doShow(final PointersObject receiver, final long left, final long right, final long top, final long bottom, @Bind final SqueakImageContext image) {
             if (image.hasDisplay() && left < right && top < bottom) {
                 image.getDisplay().showDisplayRect((int) left, (int) top, (int) right, (int) bottom);
             }
@@ -871,7 +862,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 133)
     protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization
         protected static final Object set(final Object receiver, @SuppressWarnings("unused") final long keycode) {
             // TODO: interrupt key is obsolete in image, but maybe still needed in the vm?
@@ -882,10 +872,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 140)
     protected abstract static class PrimBeepNode extends AbstractPrimitiveNode implements Primitive0 {
-
         @Specialization
-        protected final Object doBeep(final Object receiver) {
-            final SqueakImageContext image = getContext();
+        protected static final Object doBeep(final Object receiver, @Bind final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 SqueakDisplay.beep();
             } else {

@@ -6,12 +6,14 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -39,48 +41,48 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected final ClassObject doNil(@SuppressWarnings("unused") final NilObject value) {
-        return getContext().nilClass;
+    protected static final ClassObject doNil(@SuppressWarnings("unused") final NilObject value, @Bind final SqueakImageContext image) {
+        return image.nilClass;
     }
 
     @Specialization(guards = "value == TRUE")
-    protected final ClassObject doTrue(@SuppressWarnings("unused") final boolean value) {
-        return getContext().trueClass;
+    protected static final ClassObject doTrue(@SuppressWarnings("unused") final boolean value, @Bind final SqueakImageContext image) {
+        return image.trueClass;
     }
 
     @Specialization(guards = "value != TRUE")
-    protected final ClassObject doFalse(@SuppressWarnings("unused") final boolean value) {
-        return getContext().falseClass;
+    protected static final ClassObject doFalse(@SuppressWarnings("unused") final boolean value, @Bind final SqueakImageContext image) {
+        return image.falseClass;
     }
 
     @Specialization
-    protected final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value) {
-        return getContext().smallIntegerClass;
+    protected static final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value, @Bind final SqueakImageContext image) {
+        return image.smallIntegerClass;
     }
 
     @Specialization
-    protected final ClassObject doChar(@SuppressWarnings("unused") final char value) {
-        return getContext().characterClass;
+    protected static final ClassObject doChar(@SuppressWarnings("unused") final char value, @Bind final SqueakImageContext image) {
+        return image.characterClass;
     }
 
     @Specialization
-    protected final ClassObject doDouble(@SuppressWarnings("unused") final double value) {
-        return getContext().smallFloatClass;
+    protected static final ClassObject doDouble(@SuppressWarnings("unused") final double value, @Bind final SqueakImageContext image) {
+        return image.smallFloatClass;
     }
 
     @Specialization
-    protected final ClassObject doCharacter(@SuppressWarnings("unused") final CharacterObject value) {
-        return getContext().characterClass;
+    protected static final ClassObject doCharacter(@SuppressWarnings("unused") final CharacterObject value, @Bind final SqueakImageContext image) {
+        return image.characterClass;
     }
 
     @Specialization
-    protected final ClassObject doContext(@SuppressWarnings("unused") final ContextObject value) {
-        return getContext().methodContextClass;
+    protected static final ClassObject doContext(@SuppressWarnings("unused") final ContextObject value, @Bind final SqueakImageContext image) {
+        return image.methodContextClass;
     }
 
     @Specialization
-    protected final ClassObject doFloat(@SuppressWarnings("unused") final FloatObject value) {
-        return getContext().floatClass;
+    protected static final ClassObject doFloat(@SuppressWarnings("unused") final FloatObject value, @Bind final SqueakImageContext image) {
+        return image.floatClass;
     }
 
     @Specialization
@@ -89,7 +91,7 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"})
-    protected final ClassObject doForeignObject(@SuppressWarnings("unused") final Object value) {
-        return getContext().getForeignObjectClass();
+    protected static final ClassObject doForeignObject(@SuppressWarnings("unused") final Object value, @Bind final SqueakImageContext image) {
+        return image.getForeignObjectClass();
     }
 }

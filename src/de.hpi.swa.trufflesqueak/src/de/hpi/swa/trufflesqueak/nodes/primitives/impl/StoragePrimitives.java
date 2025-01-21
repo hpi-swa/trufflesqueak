@@ -187,10 +187,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"}, limit = "NEW_CACHE_LIMIT")
         protected static final AbstractSqueakObjectWithClassAndHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
-                return newNode.execute(node, getContext(node), cachedReceiver);
+                return newNode.execute(node, image, cachedReceiver);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -201,10 +202,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "newDirect")
         protected static final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
-                return newNode.execute(node, getContext(node), receiver);
+                return newNode.execute(node, image, receiver);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -218,11 +220,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"}, limit = "NEW_CACHE_LIMIT")
         protected static final AbstractSqueakObjectWithClassAndHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached(value = "createIdentityProfile()", inline = true) final InlinedIntValueProfile sizeProfile,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
-                return newNode.execute(node, getContext(node), cachedReceiver, sizeProfile.profile(node, (int) size));
+                return newNode.execute(node, image, cachedReceiver, sizeProfile.profile(node, (int) size));
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -233,10 +236,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
         protected static final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
-                return newNode.execute(node, getContext(node), receiver, (int) size);
+                return newNode.execute(node, image, receiver, (int) size);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -360,8 +364,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 79)
     protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "receiver.isCompiledMethodClassType()")
-        protected final CompiledCodeObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
-            final SqueakImageContext image = getContext();
+        protected static final CompiledCodeObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header, @Bind final SqueakImageContext image) {
             assert receiver.getBasicInstanceSize() == 0;
             assert receiver.getSuperclassOrNull() == image.compiledMethodClass.getSuperclassOrNull() : "Receiver must be subclass of CompiledCode";
             final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize(image, (int) bytecodeCount, receiver);
@@ -374,8 +377,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 128)
     protected abstract static class PrimArrayBecomeNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"sizeNode.execute(node, receiver) == sizeNode.execute(node, other)"})
-        protected final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other,
+        protected static final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final SqueakObjectBecomeNode becomeNode,
                         @Cached final ArrayObjectReadNode readNode,
@@ -399,7 +403,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.GENERIC_ERROR;
                 }
             }
-            getContext().flushMethodCacheAfterBecome();
+            image.flushMethodCacheAfterBecome();
             return receiver;
         }
 
@@ -447,8 +451,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimNextObjectNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
         @Specialization
-        protected final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver) {
-            return getNext(receiver, ObjectGraphUtils.allInstances(getContext()));
+        protected static final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver, @Bind final SqueakImageContext image) {
+            return getNext(receiver, ObjectGraphUtils.allInstances(image));
         }
 
         @TruffleBoundary
@@ -594,8 +598,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAllObjectsNode extends AbstractPrimitiveNode implements Primitive0 {
 
         @Specialization
-        protected final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver) {
-            final SqueakImageContext image = getContext();
+        protected static final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver, @Bind final SqueakImageContext image) {
             return image.asArrayOfObjects(ArrayUtils.toArray(ObjectGraphUtils.allInstances(image)));
         }
     }

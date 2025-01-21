@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
@@ -18,6 +17,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -45,6 +45,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
@@ -257,8 +258,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 121)
     protected abstract static class PrimImageName1Node extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final NativeObject doGetName(@SuppressWarnings("unused") final Object receiver) {
-            final SqueakImageContext image = getContext();
+        protected static final NativeObject doGetName(@SuppressWarnings("unused") final Object receiver, @Bind final SqueakImageContext image) {
             return image.asByteString(image.getImagePath());
         }
     }
@@ -267,8 +267,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 121)
     protected abstract static class PrimImageName2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "newName.isByteType()")
-        protected final NativeObject doSetName(@SuppressWarnings("unused") final Object receiver, final NativeObject newName) {
-            getContext().setImagePath(newName.asStringUnsafe());
+        protected static final NativeObject doSetName(@SuppressWarnings("unused") final Object receiver, final NativeObject newName, @Bind final SqueakImageContext image) {
+            image.setImagePath(newName.asStringUnsafe());
             return newName;
         }
     }
@@ -301,7 +301,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 125)
     protected abstract static class PrimSetLowSpaceThresholdNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization
         protected static final Object doSet(final Object receiver, @SuppressWarnings("unused") final long numBytes) {
             // TODO: do something with numBytes
@@ -312,7 +311,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 132)
     protected abstract static class PrimObjectPointsToNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization
         protected static final boolean doClass(final ClassObject receiver, final Object thang) {
             return BooleanObject.wrap(receiver.pointsTo(thang));
@@ -433,17 +431,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 134)
     protected abstract static class PrimInterruptSemaphoreNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization
-        protected final Object set(final Object receiver, final PointersObject semaphore) {
-            final SqueakImageContext image = getContext();
+        protected static final Object set(final Object receiver, final PointersObject semaphore, @Bind final SqueakImageContext image) {
             image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
             return receiver;
         }
 
         @Specialization
-        protected final Object set(final Object receiver, final NilObject semaphore) {
-            final SqueakImageContext image = getContext();
+        protected static final Object set(final Object receiver, final NilObject semaphore, @Bind final SqueakImageContext image) {
             image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
             return receiver;
         }
@@ -488,8 +483,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 141)
     protected abstract static class PrimClipboardText1Node extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final NativeObject getClipboardText(@SuppressWarnings("unused") final Object receiver) {
-            final SqueakImageContext image = getContext();
+        protected static final NativeObject getClipboardText(@SuppressWarnings("unused") final Object receiver, @Bind final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 return image.asByteString(SqueakDisplay.getClipboardData());
             } else {
@@ -502,8 +496,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 141)
     protected abstract static class PrimClipboardText2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "value.isByteType()")
-        protected final NativeObject setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
-            final SqueakImageContext image = getContext();
+        protected static final NativeObject setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value, @Bind final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 SqueakDisplay.setClipboardData(value.asStringUnsafe());
             } else {
@@ -580,10 +573,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 148)
     public abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final Object doShallowCopy(final Object receiver,
+        protected static final Object doShallowCopy(final Object receiver,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final SqueakObjectShallowCopyNode shallowCopyNode) {
-            return shallowCopyNode.execute(node, getContext(), receiver);
+            return shallowCopyNode.execute(node, image, receiver);
         }
     }
 
@@ -592,16 +586,17 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 149)
     protected abstract static class PrimGetAttributeNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "index == cachedIndex", limit = "1")
-        protected final AbstractSqueakObject doGetCached(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long index,
+        protected static final AbstractSqueakObject doGetCached(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long index,
+                        @Bind final SqueakImageContext image,
                         @Cached("toIntExact(index)") final int cachedIndex) {
-            return getContext().getSystemAttribute(cachedIndex);
+            return image.getSystemAttribute(cachedIndex);
         }
 
         @TruffleBoundary
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doGetCached")
-        protected final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final long index) {
-            return getContext().getSystemAttribute((int) index);
+        protected static final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final long index, @Bind final SqueakImageContext image) {
+            return image.getSystemAttribute((int) index);
         }
     }
 
@@ -744,23 +739,22 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 177)
     protected abstract static class PrimAllInstancesNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
-        protected final ArrayObject noInstances(final ClassObject classObject) {
-            return getContext().newEmptyArray();
+        protected static final ArrayObject noInstances(final ClassObject classObject, @Bind final SqueakImageContext image) {
+            return image.newEmptyArray();
         }
 
         @Specialization(guards = {"!classObject.isImmediateClassType()"})
-        protected final ArrayObject allInstances(final ClassObject classObject,
+        protected static final ArrayObject allInstances(final ClassObject classObject,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final InlinedConditionProfile isNilClass) {
-            final SqueakImageContext image = getContext();
             if (isNilClass.profile(node, image.isNilClass(classObject))) {
-                return getContext().asArrayOfObjects(NilObject.SINGLETON);
+                return image.asArrayOfObjects(NilObject.SINGLETON);
             } else {
                 if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
-                    return getContext().newEmptyArray(); // Class has not been instantiated yet
+                    return image.newEmptyArray(); // Class has not been instantiated yet
                 } else {
                     return image.asArrayOfObjects(ObjectGraphUtils.allInstancesOf(image, classObject));
                 }
@@ -972,8 +966,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
          */
 
         @Specialization
-        protected final ArrayObject getVMParameters(@SuppressWarnings("unused") final Object receiver) {
-            final SqueakImageContext image = getContext();
+        protected static final ArrayObject getVMParameters(@SuppressWarnings("unused") final Object receiver, @Bind final SqueakImageContext image) {
             final Object[] vmParameters = new Object[PARAMS_ARRAY_SIZE];
             for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
                 vmParameters[i] = vmParameterAt(image, i + 1);
@@ -988,15 +981,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimVMParameters2Node extends AbstractPrimVMParametersNode implements Primitive1WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"index == cachedIndex", "index >= 1", "index < PARAMS_ARRAY_SIZE"}, limit = "1")
-        protected final Object getVMParametersCached(final Object receiver, final long index,
+        protected static final Object getVMParametersCached(final Object receiver, final long index,
+                        @Bind final SqueakImageContext image,
                         @Cached("toIntExact(index)") final int cachedIndex) {
-            return vmParameterAt(getContext(), cachedIndex);
+            return vmParameterAt(image, cachedIndex);
         }
 
         @TruffleBoundary
         @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"}, replaces = "getVMParametersCached")
-        protected final Object getVMParameters(@SuppressWarnings("unused") final Object receiver, final long index) {
-            return vmParameterAt(getContext(), MiscUtils.toIntExact(index));
+        protected static final Object getVMParameters(@SuppressWarnings("unused") final Object receiver, final long index, @Bind final SqueakImageContext image) {
+            return vmParameterAt(image, MiscUtils.toIntExact(index));
         }
     }
 
@@ -1018,26 +1012,25 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 573)
     protected abstract static class PrimListExternalModuleNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @CompilationFinal(dimensions = 1) private String[] externalModuleNames;
-
-        @Specialization(guards = "inBounds1(index, getExternalModuleNames().length)")
-        protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver, final long index) {
-            return getContext().asByteString(getExternalModuleNames()[(int) index - 1]);
-        }
-
-        protected final String[] getExternalModuleNames() {
-            if (externalModuleNames == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                externalModuleNames = PrimitiveNodeFactory.getPluginNames();
-                Arrays.sort(externalModuleNames);
+        @Specialization
+        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final long index,
+                        @Bind final Node node,
+                        @Bind final SqueakImageContext image,
+                        @Cached(value = "getExternalModuleNames()", dimensions = 1) final String[] externalModuleNames,
+                        @Cached final InlinedConditionProfile inBoundsProfile) {
+            if (inBoundsProfile.profile(node, SqueakGuards.inBounds1(index, externalModuleNames.length))) {
+                return image.asByteString(externalModuleNames[(int) index - 1]);
+            } else {
+                return NilObject.SINGLETON;
             }
-            return externalModuleNames;
         }
 
-        @Specialization(guards = "!inBounds1(index, getExternalModuleNames().length)")
-        @SuppressWarnings("unused")
-        protected static final NilObject doGetOutOfBounds(final Object receiver, final long index) {
-            return NilObject.SINGLETON;
+        @NeverDefault
+        protected static final String[] getExternalModuleNames() {
+            CompilerAsserts.neverPartOfCompilation();
+            final String[] externalModuleNames = PrimitiveNodeFactory.getPluginNames();
+            Arrays.sort(externalModuleNames);
+            return externalModuleNames;
         }
     }
 

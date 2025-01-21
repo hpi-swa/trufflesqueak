@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -14,6 +15,7 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
@@ -42,8 +44,9 @@ public abstract class LookupMethodNode extends AbstractNode {
 
     @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
-    protected final Object doUncached(final ClassObject classObject, final NativeObject selector) {
-        final MethodCacheEntry cachedEntry = getContext().findMethodCacheEntry(classObject, selector);
+    protected static final Object doUncached(final ClassObject classObject, final NativeObject selector,
+                    @Bind final SqueakImageContext image) {
+        final MethodCacheEntry cachedEntry = image.findMethodCacheEntry(classObject, selector);
         if (cachedEntry.getResult() == null) {
             cachedEntry.setResult(classObject.lookupInMethodDictSlow(selector));
         }
