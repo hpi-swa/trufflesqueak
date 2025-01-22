@@ -278,7 +278,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
-        @Specialization(guards = {"index < receiver.getStackSize()"})
+        @Specialization(guards = {"index <= receiver.getStackSize()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
                         @Bind("this") final Node node,
                         @Cached final ContextObjectReadNode readNode) {
@@ -289,7 +289,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
-        @Specialization(guards = "index < receiver.getStackSize()")
+        @Specialization(guards = "index <= receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
                         @Bind("this") final Node node,
                         @Cached final ContextObjectWriteNode writeNode) {
