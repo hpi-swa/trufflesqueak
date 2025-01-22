@@ -25,7 +25,7 @@ jobs:
   style_and_build_config:
     name: style and fullbuild
     timeout-minutes: 15
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v4
@@ -52,11 +52,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, macos-13, macos-14, windows-2022]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2022]
         java: [23]
         jdk_identifier: [latest]
     env:
-      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-20.04' }}"
+      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-22.04' }}"
       MX_ENV: "trufflesqueak-jar"
       
     name: jar ${{ matrix.os }} + JDK${{ matrix.java }}
@@ -97,7 +97,7 @@ jobs:
     #     mx.trufflesqueak/utils.sh conditional-deploy \
     #       mx --env trufflesqueak-jar build --dependencies SMALLTALK,SMALLTALK_COMMUNITY && \
     #       mx --env trufflesqueak-jar maven-deploy --settings mx.trufflesqueak/mvn-settings.xml --version-string ${{ github.ref_name }} --validate full --licenses MIT --suppress-javadoc github https://maven.pkg.github.com/hpi-swa/trufflesqueak
-    #   if: ${{ matrix.os == 'ubuntu-20.04' && github.ref_type == 'tag' }}
+    #   if: ${{ matrix.os == 'ubuntu-22.04' && github.ref_type == 'tag' }}
     - name: Run SystemReporter on TruffleSqueak
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Clone Graal.js repository
@@ -139,7 +139,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-20.04-aarch64, windows-2022, macos-13, macos-14]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
       JAVA_VERSION: "23"
@@ -220,4 +220,4 @@ jobs:
         mx.trufflesqueak/utils.sh download-cuis-test-image
         trufflesqueak --vm.ea --vm.esa --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=ExitVM --engine.CompilationStatistics images/Cuis6.0-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
       timeout-minutes: 10
-      if: ${{ matrix.os == 'ubuntu-20.04' }}
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
