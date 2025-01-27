@@ -40,6 +40,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -53,8 +54,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
 
-    private static final AbstractPrimitiveNode UNINITIALIZED_PRIMITIVE_NODE = new AbstractPrimitiveNode() {
-    };
+    private static final DispatchPrimitiveNode UNINITIALIZED_PRIMITIVE_NODE = DispatchPrimitiveNode.create(null, 0);
 
     // header info and data
     @CompilationFinal private int header;
@@ -66,7 +66,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal(dimensions = 1) private Object[] literals;
     @CompilationFinal(dimensions = 1) private byte[] bytes;
 
-    @CompilationFinal private AbstractPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+    @CompilationFinal private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
 
     @CompilationFinal private ExecutionData executionData;
 
@@ -436,11 +436,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Idempotent
-    public AbstractPrimitiveNode getPrimitiveNodeOrNull() {
+    public DispatchPrimitiveNode getPrimitiveNodeOrNull() {
         if (primitiveNodeOrNull == UNINITIALIZED_PRIMITIVE_NODE) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (hasPrimitive()) {
-                primitiveNodeOrNull = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
+                final AbstractPrimitiveNode nodeOrNull = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
+                if (nodeOrNull != null) {
+                    primitiveNodeOrNull = DispatchPrimitiveNode.create(nodeOrNull, getNumArgs());
+                } else {
+                    primitiveNodeOrNull = null;
+                }
             } else {
                 primitiveNodeOrNull = null;
             }

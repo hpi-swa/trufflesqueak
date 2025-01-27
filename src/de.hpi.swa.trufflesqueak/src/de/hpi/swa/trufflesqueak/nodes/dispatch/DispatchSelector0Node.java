@@ -41,6 +41,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Disp
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchDirectPrimitiveFallback0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchDirectedSuper0NodeFactory.DirectedSuperDispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchSuper0NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -384,7 +385,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
             @Specialization(replaces = {"doNoPrimitive", "doCached"})
             protected static final Object doUncached(final VirtualFrame frame, final CompiledCodeObject method, final Object receiver,
                             @Bind("this") final Node node) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
+                final DispatchPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                 if (primitiveNode != null) {
                     return tryPrimitive(primitiveNode, frame.materialize(), node, method, receiver);
                 } else {
@@ -393,9 +394,9 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
             }
 
             @TruffleBoundary
-            private static Object tryPrimitive(final AbstractPrimitiveNode primitiveNode, final MaterializedFrame frame, final Node node, final CompiledCodeObject method, final Object receiver) {
+            private static Object tryPrimitive(final DispatchPrimitiveNode primitiveNode, final MaterializedFrame frame, final Node node, final CompiledCodeObject method, final Object receiver) {
                 try {
-                    return ((Primitive0) primitiveNode).execute(frame, receiver);
+                    return ((DispatchPrimitiveNode.DispatchPrimitive0Node) primitiveNode).execute(frame, receiver);
                 } catch (final PrimitiveFailed pf) {
                     DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     return null;

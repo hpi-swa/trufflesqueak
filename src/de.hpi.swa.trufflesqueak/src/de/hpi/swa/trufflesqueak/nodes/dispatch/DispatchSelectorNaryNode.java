@@ -25,6 +25,7 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.UnadoptableNode;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -274,8 +275,8 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         }
     }
 
-    protected abstract static class DispatchPrimitiveNode extends AbstractNode {
-        protected abstract Object execute(VirtualFrame frame, Object receiver, Object[] arguments);
+    public abstract static class DispatchPrimitiveNode extends AbstractNode implements UnadoptableNode {
+        public abstract Object execute(VirtualFrame frame, Object receiver, Object[] arguments);
 
         public static DispatchPrimitiveNode create(final AbstractPrimitiveNode primitiveNode, final int numArgs) {
             return switch (numArgs) {
@@ -295,7 +296,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             };
         }
 
-        private static final class DispatchPrimitive0Node extends DispatchPrimitiveNode {
+        public static final class DispatchPrimitive0Node extends DispatchPrimitiveNode {
             @Child private Primitive0 primitiveNode;
 
             private DispatchPrimitive0Node(final Primitive0 primitiveNode) {
@@ -303,12 +304,17 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 0;
+                return primitiveNode.execute(frame, receiver);
+            }
+
+            public Object execute(final VirtualFrame frame, final Object receiver) {
                 return primitiveNode.execute(frame, receiver);
             }
         }
 
-        private static final class DispatchPrimitive1Node extends DispatchPrimitiveNode {
+        public static final class DispatchPrimitive1Node extends DispatchPrimitiveNode {
             @Child private Primitive1 primitiveNode;
 
             private DispatchPrimitive1Node(final Primitive1 primitiveNode) {
@@ -316,12 +322,17 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 1;
+                return primitiveNode.execute(frame, receiver, args[0]);
+            }
+
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
+                return primitiveNode.execute(frame, receiver, arg1);
             }
         }
 
-        private static final class DispatchPrimitive2Node extends DispatchPrimitiveNode {
+        public static final class DispatchPrimitive2Node extends DispatchPrimitiveNode {
             @Child private Primitive2 primitiveNode;
 
             private DispatchPrimitive2Node(final Primitive2 primitiveNode) {
@@ -330,11 +341,16 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
+                assert arguments.length == 2;
                 return primitiveNode.execute(frame, receiver, arguments[0], arguments[1]);
+            }
+
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
+                return primitiveNode.execute(frame, receiver, arg1, arg2);
             }
         }
 
-        private static final class DispatchPrimitive3Node extends DispatchPrimitiveNode {
+        public static final class DispatchPrimitive3Node extends DispatchPrimitiveNode {
             @Child private Primitive3 primitiveNode;
 
             private DispatchPrimitive3Node(final Primitive3 primitiveNode) {
@@ -342,12 +358,17 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 3;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2]);
+            }
+
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+                return primitiveNode.execute(frame, receiver, arg1, arg2, arg3);
             }
         }
 
-        private static final class DispatchPrimitive4Node extends DispatchPrimitiveNode {
+        public static final class DispatchPrimitive4Node extends DispatchPrimitiveNode {
             @Child private Primitive4 primitiveNode;
 
             private DispatchPrimitive4Node(final Primitive4 primitiveNode) {
@@ -355,12 +376,17 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2], arguments[3]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 4;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3]);
+            }
+
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+                return primitiveNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
             }
         }
 
-        private static final class DispatchPrimitive5Node extends DispatchPrimitiveNode {
+        public static final class DispatchPrimitive5Node extends DispatchPrimitiveNode {
             @Child private Primitive5 primitiveNode;
 
             private DispatchPrimitive5Node(final Primitive5 primitiveNode) {
@@ -368,8 +394,13 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 5;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4]);
+            }
+
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
+                return primitiveNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
             }
         }
 
@@ -381,8 +412,9 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 6;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5]);
             }
         }
 
@@ -394,8 +426,9 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 7;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
             }
         }
 
@@ -407,8 +440,9 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 8;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
             }
         }
 
@@ -420,8 +454,9 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 9;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
             }
         }
 
@@ -433,9 +468,9 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8],
-                                arguments[9]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 10;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
             }
         }
 
@@ -447,9 +482,9 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @Override
-            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8],
-                                arguments[9], arguments[10]);
+            public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
+                assert args.length == 11;
+                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
             }
         }
     }
@@ -589,7 +624,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Specialization(replaces = {"doNoPrimitive", "doCached"})
             protected static final Object doUncached(final VirtualFrame frame, final CompiledCodeObject method, final Object receiver, final Object[] arguments,
                             @Bind("this") final Node node) {
-                final AbstractPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
+                final DispatchPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                 if (primitiveNode != null) {
                     return tryPrimitive(primitiveNode, frame.materialize(), node, method, receiver, arguments);
                 } else {
@@ -598,10 +633,10 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             }
 
             @TruffleBoundary
-            private static Object tryPrimitive(final AbstractPrimitiveNode primitiveNode, final MaterializedFrame frame, final Node node, final CompiledCodeObject method, final Object receiver,
+            private static Object tryPrimitive(final DispatchPrimitiveNode primitiveNode, final MaterializedFrame frame, final Node node, final CompiledCodeObject method, final Object receiver,
                             final Object[] arguments) {
                 try {
-                    return primitiveNode.executeWithArguments(frame, receiver, arguments);
+                    return primitiveNode.execute(frame, receiver, arguments);
                 } catch (final PrimitiveFailed pf) {
                     DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     return null;
