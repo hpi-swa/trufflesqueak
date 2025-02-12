@@ -12,18 +12,18 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive11;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive10;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive11;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive10;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
 
 public abstract class AbstractPrimitiveNode extends AbstractNode {
 
@@ -48,5 +48,16 @@ public abstract class AbstractPrimitiveNode extends AbstractNode {
     public boolean acceptsMethod(@SuppressWarnings("unused") final CompiledCodeObject method) {
         CompilerAsserts.neverPartOfCompilation();
         return true;
+    }
+
+    public boolean needsFrame() {
+        return false;
+    }
+
+    public abstract static class AbstractPrimitiveWithFrameNode extends AbstractPrimitiveNode {
+        @Override
+        public final boolean needsFrame() {
+            return true;
+        }
     }
 }

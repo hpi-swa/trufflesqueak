@@ -24,6 +24,7 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -37,11 +38,11 @@ import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchDirectPrimitiveFallback0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchDirectedSuper0NodeFactory.DirectedSuperDispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchSuper0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchDirectedSuper0NodeFactory.DirectedSuperDispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -384,10 +385,12 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
 
             @Specialization(replaces = {"doNoPrimitive", "doCached"})
             protected static final Object doUncached(final VirtualFrame frame, final CompiledCodeObject method, final Object receiver,
-                            @Bind("this") final Node node) {
+                            @Bind("this") final Node node,
+                            @Cached final InlinedConditionProfile needsFrameProfile) {
                 final DispatchPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                 if (primitiveNode != null) {
-                    return tryPrimitive(primitiveNode, frame.materialize(), node, method, receiver);
+                    final MaterializedFrame frameOrNull = needsFrameProfile.profile(node, primitiveNode.needsFrame()) ? frame.materialize() : null;
+                    return tryPrimitive(primitiveNode, frameOrNull, node, method, receiver);
                 } else {
                     return null;
                 }

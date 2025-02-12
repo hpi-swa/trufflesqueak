@@ -47,6 +47,11 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
         this.numReceiverAndArguments = numReceiverAndArguments;
     }
 
+    @Override
+    public boolean needsFrame() {
+        return true;
+    }
+
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
         final Object moduleLibrary = lookupModuleLibrary(context, moduleName);

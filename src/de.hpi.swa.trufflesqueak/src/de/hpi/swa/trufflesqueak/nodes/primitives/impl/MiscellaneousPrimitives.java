@@ -272,12 +272,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @GenerateNodeFactory
+    @DenyReplace
     @SqueakPrimitive(indices = 122)
-    protected abstract static class PrimNoopNode extends AbstractPrimitiveNode implements Primitive0 {
-
-        @Specialization
-        protected static final Object doNothing(final Object receiver) {
+    protected static final class PrimNoopNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return receiver;
         }
     }
@@ -444,11 +443,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @GenerateNodeFactory
+    @DenyReplace
     @SqueakPrimitive(indices = 135)
-    protected abstract static class PrimMillisecondClockNode extends AbstractPrimitiveNode implements Primitive0 {
-        @Specialization
-        protected final long doClock(@SuppressWarnings("unused") final Object receiver) {
+    protected static final class PrimMillisecondClockNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             return MiscUtils.currentTimeMillis() - getContext().startUpMillis;
         }
     }
@@ -1044,6 +1043,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @Override
     public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
         return List.of(
+                        new PrimNoopNode(),
+                        new PrimMillisecondClockNode(),
                         new PrimSecondClockNode(),
                         new PrimVMPathNode(),
                         new PrimMaxIdentityHashNode(),

@@ -19,4 +19,9 @@ public abstract class AbstractSingletonPrimitiveNode extends AbstractPrimitiveNo
     public final Node deepCopy() {
         return this;
     }
+
+    @Override
+    public final boolean needsFrame() {
+        return false;
+    }
 }

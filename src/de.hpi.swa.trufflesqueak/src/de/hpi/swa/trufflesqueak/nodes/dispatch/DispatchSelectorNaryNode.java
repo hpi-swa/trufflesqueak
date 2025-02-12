@@ -27,6 +27,7 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnadoptableNode;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -41,10 +42,10 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectPrimitiveFallbackNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeFactory.DirectedSuperDispatchNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchIndirectNaryNodeGen.TryPrimitiveNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeFactory.DirectedSuperDispatchNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchIndirectNaryNodeGen.TryPrimitiveNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
@@ -278,6 +279,12 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     public abstract static class DispatchPrimitiveNode extends AbstractNode implements UnadoptableNode {
         public abstract Object execute(VirtualFrame frame, Object receiver, Object[] arguments);
 
+        public final boolean needsFrame() {
+            return getPrimitiveNode().needsFrame();
+        }
+
+        protected abstract AbstractPrimitiveNode getPrimitiveNode();
+
         public static DispatchPrimitiveNode create(final AbstractPrimitiveNode primitiveNode, final int numArgs) {
             return switch (numArgs) {
                 case 0 -> new DispatchPrimitiveNode.DispatchPrimitive0Node((Primitive0) primitiveNode);
@@ -312,6 +319,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             public Object execute(final VirtualFrame frame, final Object receiver) {
                 return primitiveNode.execute(frame, receiver);
             }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
+            }
         }
 
         public static final class DispatchPrimitive1Node extends DispatchPrimitiveNode {
@@ -329,6 +341,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
                 return primitiveNode.execute(frame, receiver, arg1);
+            }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
             }
         }
 
@@ -348,6 +365,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
                 return primitiveNode.execute(frame, receiver, arg1, arg2);
             }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
+            }
         }
 
         public static final class DispatchPrimitive3Node extends DispatchPrimitiveNode {
@@ -365,6 +387,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
                 return primitiveNode.execute(frame, receiver, arg1, arg2, arg3);
+            }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
             }
         }
 
@@ -384,6 +411,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
                 return primitiveNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
             }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
+            }
         }
 
         public static final class DispatchPrimitive5Node extends DispatchPrimitiveNode {
@@ -402,6 +434,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
                 return primitiveNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
             }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
+            }
         }
 
         private static final class DispatchPrimitive6Node extends DispatchPrimitiveNode {
@@ -415,6 +452,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 6;
                 return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5]);
+            }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
             }
         }
 
@@ -430,6 +472,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 assert args.length == 7;
                 return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
             }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
+            }
         }
 
         private static final class DispatchPrimitive8Node extends DispatchPrimitiveNode {
@@ -443,6 +490,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 8;
                 return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+            }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
             }
         }
 
@@ -458,6 +510,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 assert args.length == 9;
                 return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
             }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
+            }
         }
 
         private static final class DispatchPrimitive10Node extends DispatchPrimitiveNode {
@@ -472,6 +529,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 assert args.length == 10;
                 return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
             }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
+            }
         }
 
         private static final class DispatchPrimitive11Node extends DispatchPrimitiveNode {
@@ -485,6 +547,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 11;
                 return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
+            }
+
+            @Override
+            protected AbstractPrimitiveNode getPrimitiveNode() {
+                return (AbstractPrimitiveNode) primitiveNode;
             }
         }
     }
@@ -623,10 +690,12 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
             @Specialization(replaces = {"doNoPrimitive", "doCached"})
             protected static final Object doUncached(final VirtualFrame frame, final CompiledCodeObject method, final Object receiver, final Object[] arguments,
-                            @Bind("this") final Node node) {
+                            @Bind("this") final Node node,
+                            @Cached final InlinedConditionProfile needsFrameProfile) {
                 final DispatchPrimitiveNode primitiveNode = method.getPrimitiveNodeOrNull();
                 if (primitiveNode != null) {
-                    return tryPrimitive(primitiveNode, frame.materialize(), node, method, receiver, arguments);
+                    final MaterializedFrame frameOrNull = needsFrameProfile.profile(node, primitiveNode.needsFrame()) ? frame.materialize() : null;
+                    return tryPrimitive(primitiveNode, frameOrNull, node, method, receiver, arguments);
                 } else {
                     return null;
                 }

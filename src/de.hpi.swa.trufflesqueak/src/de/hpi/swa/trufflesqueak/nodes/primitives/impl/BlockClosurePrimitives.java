@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode.AbstractPrimitiveWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
@@ -39,7 +40,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
-    public abstract static class AbstractClosurePrimitiveNode extends AbstractPrimitiveNode {
+    public abstract static class AbstractClosurePrimitiveNode extends AbstractPrimitiveWithFrameNode {
         @Child protected GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
         protected final Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure) {
