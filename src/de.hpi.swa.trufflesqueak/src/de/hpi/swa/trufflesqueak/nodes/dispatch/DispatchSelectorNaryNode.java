@@ -42,10 +42,10 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectPrimitiveFallbackNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeFactory.DirectedSuperDispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchIndirectNaryNodeGen.TryPrimitiveNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
@@ -277,281 +277,203 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     }
 
     public abstract static class DispatchPrimitiveNode extends AbstractNode implements UnadoptableNode {
+        @Child protected AbstractPrimitiveNode primitiveNode;
+        private final boolean needsFrame;
+
+        private DispatchPrimitiveNode(final AbstractPrimitiveNode primitiveNode) {
+            this.primitiveNode = primitiveNode;
+            this.needsFrame = primitiveNode.needsFrame();
+        }
+
         public abstract Object execute(VirtualFrame frame, Object receiver, Object[] arguments);
 
         public final boolean needsFrame() {
-            return getPrimitiveNode().needsFrame();
+            return needsFrame;
         }
-
-        protected abstract AbstractPrimitiveNode getPrimitiveNode();
 
         public static DispatchPrimitiveNode create(final AbstractPrimitiveNode primitiveNode, final int numArgs) {
             return switch (numArgs) {
-                case 0 -> new DispatchPrimitiveNode.DispatchPrimitive0Node((Primitive0) primitiveNode);
-                case 1 -> new DispatchPrimitiveNode.DispatchPrimitive1Node((Primitive1) primitiveNode);
-                case 2 -> new DispatchPrimitiveNode.DispatchPrimitive2Node((Primitive2) primitiveNode);
-                case 3 -> new DispatchPrimitiveNode.DispatchPrimitive3Node((Primitive3) primitiveNode);
-                case 4 -> new DispatchPrimitiveNode.DispatchPrimitive4Node((Primitive4) primitiveNode);
-                case 5 -> new DispatchPrimitiveNode.DispatchPrimitive5Node((Primitive5) primitiveNode);
-                case 6 -> new DispatchPrimitiveNode.DispatchPrimitive6Node((Primitive6) primitiveNode);
-                case 7 -> new DispatchPrimitiveNode.DispatchPrimitive7Node((Primitive7) primitiveNode);
-                case 8 -> new DispatchPrimitiveNode.DispatchPrimitive8Node((Primitive8) primitiveNode);
-                case 9 -> new DispatchPrimitiveNode.DispatchPrimitive9Node((Primitive9) primitiveNode);
-                case 10 -> new DispatchPrimitiveNode.DispatchPrimitive10Node((Primitive10) primitiveNode);
-                case 11 -> new DispatchPrimitiveNode.DispatchPrimitive11Node((Primitive11) primitiveNode);
+                case 0 -> new DispatchPrimitiveNode.DispatchPrimitive0Node(primitiveNode);
+                case 1 -> new DispatchPrimitiveNode.DispatchPrimitive1Node(primitiveNode);
+                case 2 -> new DispatchPrimitiveNode.DispatchPrimitive2Node(primitiveNode);
+                case 3 -> new DispatchPrimitiveNode.DispatchPrimitive3Node(primitiveNode);
+                case 4 -> new DispatchPrimitiveNode.DispatchPrimitive4Node(primitiveNode);
+                case 5 -> new DispatchPrimitiveNode.DispatchPrimitive5Node(primitiveNode);
+                case 6 -> new DispatchPrimitiveNode.DispatchPrimitive6Node(primitiveNode);
+                case 7 -> new DispatchPrimitiveNode.DispatchPrimitive7Node(primitiveNode);
+                case 8 -> new DispatchPrimitiveNode.DispatchPrimitive8Node(primitiveNode);
+                case 9 -> new DispatchPrimitiveNode.DispatchPrimitive9Node(primitiveNode);
+                case 10 -> new DispatchPrimitiveNode.DispatchPrimitive10Node(primitiveNode);
+                case 11 -> new DispatchPrimitiveNode.DispatchPrimitive11Node(primitiveNode);
                 default -> throw SqueakException.create("Unexpected number of arguments " + numArgs);
             };
         }
 
         public static final class DispatchPrimitive0Node extends DispatchPrimitiveNode {
-            @Child private Primitive0 primitiveNode;
-
-            private DispatchPrimitive0Node(final Primitive0 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive0Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 0;
-                return primitiveNode.execute(frame, receiver);
+                return ((Primitive0) primitiveNode).execute(frame, receiver);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver) {
-                return primitiveNode.execute(frame, receiver);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive0) primitiveNode).execute(frame, receiver);
             }
         }
 
         public static final class DispatchPrimitive1Node extends DispatchPrimitiveNode {
-            @Child private Primitive1 primitiveNode;
-
-            private DispatchPrimitive1Node(final Primitive1 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive1Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 1;
-                return primitiveNode.execute(frame, receiver, args[0]);
+                return ((Primitive1) primitiveNode).execute(frame, receiver, args[0]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
-                return primitiveNode.execute(frame, receiver, arg1);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive1) primitiveNode).execute(frame, receiver, arg1);
             }
         }
 
         public static final class DispatchPrimitive2Node extends DispatchPrimitiveNode {
-            @Child private Primitive2 primitiveNode;
-
-            private DispatchPrimitive2Node(final Primitive2 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive2Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
                 assert arguments.length == 2;
-                return primitiveNode.execute(frame, receiver, arguments[0], arguments[1]);
+                return ((Primitive2) primitiveNode).execute(frame, receiver, arguments[0], arguments[1]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
-                return primitiveNode.execute(frame, receiver, arg1, arg2);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive2) primitiveNode).execute(frame, receiver, arg1, arg2);
             }
         }
 
         public static final class DispatchPrimitive3Node extends DispatchPrimitiveNode {
-            @Child private Primitive3 primitiveNode;
-
-            private DispatchPrimitive3Node(final Primitive3 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive3Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 3;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2]);
+                return ((Primitive3) primitiveNode).execute(frame, receiver, args[0], args[1], args[2]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
-                return primitiveNode.execute(frame, receiver, arg1, arg2, arg3);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive3) primitiveNode).execute(frame, receiver, arg1, arg2, arg3);
             }
         }
 
         public static final class DispatchPrimitive4Node extends DispatchPrimitiveNode {
-            @Child private Primitive4 primitiveNode;
-
-            private DispatchPrimitive4Node(final Primitive4 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive4Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 4;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3]);
+                return ((Primitive4) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-                return primitiveNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive4) primitiveNode).execute(frame, receiver, arg1, arg2, arg3, arg4);
             }
         }
 
         public static final class DispatchPrimitive5Node extends DispatchPrimitiveNode {
-            @Child private Primitive5 primitiveNode;
-
-            private DispatchPrimitive5Node(final Primitive5 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive5Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 5;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4]);
+                return ((Primitive5) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-                return primitiveNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive5) primitiveNode).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
             }
         }
 
         private static final class DispatchPrimitive6Node extends DispatchPrimitiveNode {
-            @Child private Primitive6 primitiveNode;
-
-            private DispatchPrimitive6Node(final Primitive6 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive6Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 6;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5]);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive6) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5]);
             }
         }
 
         private static final class DispatchPrimitive7Node extends DispatchPrimitiveNode {
-            @Child private Primitive7 primitiveNode;
-
-            private DispatchPrimitive7Node(final Primitive7 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive7Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 7;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive7) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
             }
         }
 
         private static final class DispatchPrimitive8Node extends DispatchPrimitiveNode {
-            @Child private Primitive8 primitiveNode;
-
-            private DispatchPrimitive8Node(final Primitive8 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive8Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 8;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive8) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
             }
         }
 
         private static final class DispatchPrimitive9Node extends DispatchPrimitiveNode {
-            @Child private Primitive9 primitiveNode;
-
-            private DispatchPrimitive9Node(final Primitive9 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive9Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 9;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive9) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
             }
         }
 
         private static final class DispatchPrimitive10Node extends DispatchPrimitiveNode {
-            @Child private Primitive10 primitiveNode;
-
-            private DispatchPrimitive10Node(final Primitive10 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive10Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 10;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive10) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
             }
         }
 
         private static final class DispatchPrimitive11Node extends DispatchPrimitiveNode {
-            @Child private Primitive11 primitiveNode;
-
-            private DispatchPrimitive11Node(final Primitive11 primitiveNode) {
-                this.primitiveNode = primitiveNode;
+            private DispatchPrimitive11Node(final AbstractPrimitiveNode primitiveNode) {
+                super(primitiveNode);
             }
 
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 11;
-                return primitiveNode.execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
-            }
-
-            @Override
-            protected AbstractPrimitiveNode getPrimitiveNode() {
-                return (AbstractPrimitiveNode) primitiveNode;
+                return ((Primitive11) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
             }
         }
     }

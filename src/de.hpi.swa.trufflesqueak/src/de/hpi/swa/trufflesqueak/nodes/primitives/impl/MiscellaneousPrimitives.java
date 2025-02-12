@@ -274,7 +274,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @DenyReplace
     @SqueakPrimitive(indices = 122)
-    protected static final class PrimNoopNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
+    public static final class PrimNoopNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
             return receiver;
