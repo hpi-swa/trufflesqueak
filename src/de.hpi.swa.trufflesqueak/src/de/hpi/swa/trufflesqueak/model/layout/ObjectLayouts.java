@@ -315,7 +315,7 @@ public final class ObjectLayouts {
         public static final int CLASS_CHARACTER = 19;
         public static final int SELECTOR_DOES_NOT_UNDERSTAND = 20;
         public static final int SELECTOR_CANNOT_RETURN = 21;
-        public static final int THE_INPUT_SEMAPHORE = 22;
+        public static final int PROCESS_SIGNALING_LOW_SPACE = 22;
         public static final int SPECIAL_SELECTORS = 23;
         public static final int CHARACTER_TABLE = 24;
         public static final int SELECTOR_MUST_BE_BOOLEAN = 25;

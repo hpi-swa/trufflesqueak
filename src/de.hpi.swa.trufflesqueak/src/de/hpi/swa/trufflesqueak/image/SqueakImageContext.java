@@ -70,6 +70,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReader;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Zip;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.InterpreterProxy;
+import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNodeGen;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -167,6 +168,10 @@ public final class SqueakImageContext {
     /* Stack Management */
     private ContextObject interopExceptionThrowingContextPrototype;
     public ContextObject lastSeenContext;
+
+    /* Low space handling */
+    private static final int LOW_SPACE_NUM_SKIPPED_SENDS = 4;
+    private int lowSpaceSkippedSendsCount;
 
     @CompilationFinal private ClassObject fractionClass;
     private PointersObject parserSharedInstance;
@@ -677,6 +682,34 @@ public final class SqueakImageContext {
     public void setSemaphore(final int index, final AbstractSqueakObject semaphore) {
         assert semaphore == NilObject.SINGLETON || isSemaphoreClass(((AbstractSqueakObjectWithClassAndHash) semaphore).getSqueakClass());
         setSpecialObject(index, semaphore);
+    }
+
+    /**
+     * Ensure the active process is saved and try to signal low space semaphore (see
+     * #setSignalLowSpaceFlagAndSaveProcess). The JVM has just thrown a {@link StackOverflowError},
+     * so thread stack space is limited. To avoid hitting the limit again, free up some space by
+     * unwinding a couple of sends before actually signaling the low space semaphore.
+     */
+    public StackOverflowError tryToSignalLowSpace(final VirtualFrame frame, final StackOverflowError stackOverflowError) {
+        CompilerAsserts.neverPartOfCompilation();
+        final Object lastSavedProcess = getSpecialObject(SPECIAL_OBJECT.PROCESS_SIGNALING_LOW_SPACE);
+        if (lastSavedProcess == NilObject.SINGLETON) {
+            setSpecialObject(SPECIAL_OBJECT.PROCESS_SIGNALING_LOW_SPACE, getActiveProcessSlow());
+        }
+        if (lowSpaceSkippedSendsCount < LOW_SPACE_NUM_SKIPPED_SENDS) {
+            lowSpaceSkippedSendsCount++;
+            throw stackOverflowError; // continue further up the sender chain
+        } else {
+            final Object lowSpaceSemaphoreOrNil = getSpecialObject(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE);
+            try {
+                SignalSemaphoreNodeGen.executeUncached(frame, this, lowSpaceSemaphoreOrNil);
+            } catch (final ProcessSwitch ps) {
+                // success! reset counter and continue in new process
+                lowSpaceSkippedSendsCount = 0;
+                throw ps;
+            }
+            throw CompilerDirectives.shouldNotReachHere("Failed to signal low space semaphore.", stackOverflowError);
+        }
     }
 
     public boolean hasDisplay() {
