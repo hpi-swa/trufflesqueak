@@ -161,11 +161,9 @@ public final class PrimitiveNodeFactory {
             assert numReceiverAndArguments == 1;
             return ControlPrimitives.PrimLoadInstVarNode.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX);
         } else {
-            if (numReceiverAndArguments == 1) { // Check for singleton primitive
-                final AbstractPrimitiveNode primitiveNode = SINGLETON_PRIMITIVE_TABLE.get(primitiveIndex);
-                if (primitiveNode != null) {
-                    return primitiveNode;
-                }
+            final AbstractPrimitiveNode primitiveNode = SINGLETON_PRIMITIVE_TABLE.get(primitiveIndex);
+            if (primitiveNode != null) {
+                return primitiveNode;
             }
             final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = PRIMITIVE_TABLE.get(primitiveIndex);
             if (map == null) {

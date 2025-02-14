@@ -59,6 +59,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive10WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive11WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
@@ -281,13 +282,18 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @GenerateNodeFactory
+    @DenyReplace
     @SqueakPrimitive(indices = 124)
-    protected abstract static class PrimLowSpaceSemaphoreNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
-        @Specialization
-        protected final Object get(final Object receiver, final AbstractSqueakObjectWithClassAndHash semaphore) {
-            getContext().setSemaphore(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE, semaphore);
+    private static final class PrimLowSpaceSemaphoreNode extends AbstractSingletonPrimitiveNode implements Primitive1 {
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
+            final AbstractSqueakObject semaphoreOrNil;
+            if (arg1 instanceof PointersObject pointersObject && isSemaphore(pointersObject)) {
+                semaphoreOrNil = pointersObject;
+            } else {
+                semaphoreOrNil = NilObject.SINGLETON;
+            }
+            getContext().setSemaphore(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE, semaphoreOrNil);
             return receiver;
         }
     }
@@ -1044,6 +1050,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public List<? extends AbstractSingletonPrimitiveNode> getSingletonPrimitives() {
         return List.of(
                         new PrimNoopNode(),
+                        new PrimLowSpaceSemaphoreNode(),
                         new PrimMillisecondClockNode(),
                         new PrimSecondClockNode(),
                         new PrimVMPathNode(),
