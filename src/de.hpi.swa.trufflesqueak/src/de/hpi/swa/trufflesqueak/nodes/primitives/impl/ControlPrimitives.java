@@ -689,7 +689,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 118)
     protected abstract static class PrimDoPrimitiveWithArgs3Node extends AbstractPrimDoPrimitiveWithArgsNode implements Primitive2WithFallback {
-        @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize"}, limit = "2")
+        @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize"}, limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doPrimitiveWithArgsCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
                         @Bind("this") final Node node,
                         @SuppressWarnings("unused") @Cached("primitiveIndex") final long cachedPrimitiveIndex,
@@ -710,7 +710,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 118)
     protected abstract static class PrimDoPrimitiveWithArgs4Node extends AbstractPrimDoPrimitiveWithArgsNode implements Primitive3WithFallback {
-        @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize"}, limit = "2")
+        @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize"}, limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
                         @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
                         @Bind("this") final Node node,
@@ -1018,7 +1018,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 188)
     protected abstract static class PrimExecuteMethodArgsArray3Node extends AbstractPrimitiveWithFrameNode implements Primitive2WithFallback {
         /** Deprecated since Kernel-eem.1204. Kept for backward compatibility. */
-        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final ArrayObject argArray,
                         @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
@@ -1050,7 +1050,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
     protected abstract static class PrimExecuteMethodArgsArray4Node extends AbstractPrimitiveWithFrameNode implements Primitive3WithFallback {
-        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
                         @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
@@ -1077,7 +1077,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
     protected abstract static class PrimExecuteMethod2Node extends AbstractPrimitiveWithFrameNode implements Primitive1WithFallback {
-        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
@@ -1098,7 +1098,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
     protected abstract static class PrimExecuteMethod3Node extends AbstractPrimitiveWithFrameNode implements Primitive2WithFallback {
-        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
@@ -1119,7 +1119,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
     protected abstract static class PrimExecuteMethod4Node extends AbstractPrimitiveWithFrameNode implements Primitive3WithFallback {
-        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
@@ -1140,7 +1140,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
     protected abstract static class PrimExecuteMethod5Node extends AbstractPrimitiveWithFrameNode implements Primitive4WithFallback {
-        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                         @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
@@ -1162,7 +1162,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
     protected abstract static class PrimExecuteMethod6Node extends AbstractPrimitiveWithFrameNode implements Primitive5WithFallback {
-        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "3")
+        @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         @SuppressWarnings("unused") final CompiledCodeObject method,
                         @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
@@ -1185,9 +1185,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 218)
     protected abstract static class PrimDoNamedPrimitiveWithArgsNode extends AbstractPrimitiveWithFrameNode implements Primitive3WithFallback {
-
         @Specialization(guards = {"methodObject == cachedMethodObject", "primitiveNode != null", "sizeNode.execute(node, argumentArray) == cachedArraySize",
-                        "cachedArraySize == cachedMethodObject.getNumArgs()"}, limit = "2")
+                        "cachedArraySize == cachedMethodObject.getNumArgs()"}, limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doNamedPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context,
                         @SuppressWarnings("unused") final CompiledCodeObject methodObject, final Object target, final ArrayObject argumentArray,
                         @Bind("this") final Node node,
