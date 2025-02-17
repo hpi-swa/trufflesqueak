@@ -137,6 +137,15 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return layout;
     }
 
+    public final boolean matchesLayout(final ObjectLayout expectedLayout) {
+        if (!getLayout().isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            updateLayout();
+        }
+        assert layout.isValid() : "Should only ever match valid layout (invalid expectedLayout will be replaced in PIC)";
+        return layout == expectedLayout;
+    }
+
     public final void changeClassTo(final ClassObject newClass) {
         setSqueakClass(newClass);
         migrateToLayout(newClass.getLayout());

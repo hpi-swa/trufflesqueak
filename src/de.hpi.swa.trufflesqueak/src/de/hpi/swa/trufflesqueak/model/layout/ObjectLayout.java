@@ -11,7 +11,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Idempotent;
 
@@ -207,7 +206,6 @@ public final class ObjectLayout {
         isValidAssumption.invalidate("Layout no longer valid");
     }
 
-    @TruffleBoundary
     public boolean isValid() {
         return isValidAssumption.isValid();
     }

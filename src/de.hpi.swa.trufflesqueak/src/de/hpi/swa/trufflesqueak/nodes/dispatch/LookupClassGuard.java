@@ -189,7 +189,7 @@ public abstract class LookupClassGuard {
 
         @Override
         public boolean check(final Object receiver) {
-            return receiver instanceof final AbstractPointersObject o && o.getLayout() == expectedLayout;
+            return receiver instanceof final AbstractPointersObject o && o.matchesLayout(expectedLayout);
         }
 
         @Override
