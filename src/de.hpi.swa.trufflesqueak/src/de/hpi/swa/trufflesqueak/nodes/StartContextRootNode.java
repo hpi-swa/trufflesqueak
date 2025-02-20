@@ -31,6 +31,13 @@ public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
 
+    private static final int MaximumStackDepth = 1000;
+    private static int ApproximateStackDepth = 0;
+
+    public static void StartingNewProcess() {
+        ApproximateStackDepth = 0;
+    }
+
     @Children private FrameStackWriteNode[] writeTempNodes;
     @Child private CheckForInterruptsQuickNode interruptHandlerNode;
     @Child private AbstractExecuteContextNode executeBytecodeNode;
@@ -47,13 +54,18 @@ public final class StartContextRootNode extends AbstractRootNode {
     public Object execute(final VirtualFrame frame) {
         initializeFrame(frame);
         try {
+            if ( ++ApproximateStackDepth > MaximumStackDepth ) {
+                throw ProcessSwitch.create(getGetOrCreateContextNode().executeGet(frame));
+            }
+
             interruptHandlerNode.execute(frame);
             return executeBytecodeNode.execute(frame, initialPC);
         } catch (final NonVirtualReturn | ProcessSwitch nvr) {
-            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
+            /* {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw nvr;
         } finally {
+            --ApproximateStackDepth;
             materializeContextOnMethodExitNode.execute(frame);
         }
     }
