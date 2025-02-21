@@ -32,9 +32,9 @@ public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialSP;
 
     private static final int MaximumStackDepth = 1000;
-    private static int ApproximateStackDepth = 0;
+    private static int ApproximateStackDepth;
 
-    public static void StartingNewProcess() {
+    public static void startingNewProcess() {
         ApproximateStackDepth = 0;
     }
 
@@ -54,7 +54,7 @@ public final class StartContextRootNode extends AbstractRootNode {
     public Object execute(final VirtualFrame frame) {
         initializeFrame(frame);
         try {
-            if ( ++ApproximateStackDepth > MaximumStackDepth ) {
+            if (++ApproximateStackDepth > MaximumStackDepth) {
                 throw ProcessSwitch.create(getGetOrCreateContextNode().executeGet(frame));
             }
 
