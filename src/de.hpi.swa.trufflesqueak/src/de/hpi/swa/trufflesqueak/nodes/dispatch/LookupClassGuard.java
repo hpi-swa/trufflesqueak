@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -19,7 +18,6 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
 public abstract class LookupClassGuard {
@@ -53,8 +51,6 @@ public abstract class LookupClassGuard {
             return ContextObjectGuard.SINGLETON;
         } else if (receiver instanceof FloatObject) {
             return FloatObjectGuard.SINGLETON;
-        } else if (receiver instanceof final AbstractPointersObject o) {
-            return new AbstractPointersObjectGuard(o);
         } else if (receiver instanceof final AbstractSqueakObjectWithClassAndHash o) {
             return new AbstractSqueakObjectWithClassAndHashGuard(o);
         } else {
@@ -172,34 +168,6 @@ public abstract class LookupClassGuard {
         @Override
         protected ClassObject getSqueakClassInternal(final Node node) {
             return SqueakImageContext.get(node).floatClass;
-        }
-    }
-
-    private static final class AbstractPointersObjectGuard extends LookupClassGuard {
-        private final ObjectLayout expectedLayout;
-
-        private AbstractPointersObjectGuard(final AbstractPointersObject receiver) {
-            if (!receiver.getLayout().isValid()) {
-                /* Ensure only valid layouts are cached. */
-                receiver.updateLayout();
-            }
-            expectedLayout = receiver.getLayout();
-            assert expectedLayout.isValid();
-        }
-
-        @Override
-        public boolean check(final Object receiver) {
-            return receiver instanceof final AbstractPointersObject o && o.matchesLayout(expectedLayout);
-        }
-
-        @Override
-        protected Assumption getIsValidAssumption() {
-            return expectedLayout.getValidAssumption();
-        }
-
-        @Override
-        protected ClassObject getSqueakClassInternal(final Node node) {
-            return expectedLayout.getSqueakClass();
         }
     }
 

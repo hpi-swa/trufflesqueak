@@ -137,13 +137,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return layout;
     }
 
-    public final boolean matchesLayout(final ObjectLayout expectedLayout) {
-        if (!getLayout().isValid()) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateLayout();
-        }
-        assert layout.isValid() : "Should only ever match valid layout (invalid expectedLayout will be replaced in PIC)";
-        return layout == expectedLayout;
+    public final ObjectLayout getValidLayoutOrNull() {
+        CompilerAsserts.neverPartOfCompilation();
+        return layout.isValid() ? layout : null;
     }
 
     public final void changeClassTo(final ClassObject newClass) {
@@ -161,14 +157,15 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     @TruffleBoundary
     public final ObjectLayout updateLayout(final long index, final Object value) {
         assert !layout.getLocation(index).canStore(value);
-        ObjectLayout latestLayout = getSqueakClass().getLayout();
+        final ClassObject squeakClass = getSqueakClass();
+        ObjectLayout latestLayout = squeakClass.getLayout();
         if (!latestLayout.getLocation(index).canStore(value)) {
-            latestLayout = latestLayout.evolveLocation(index, value);
+            latestLayout = latestLayout.evolveLocation(squeakClass, index, value);
         } else {
             assert !layout.isValid() && layout != latestLayout : "Layout must have changed";
         }
         migrateToLayout(latestLayout);
-        return getSqueakClass().getLayout(); /* Layout may have evolved again during migration. */
+        return squeakClass.getLayout(); /* Layout may have evolved again during migration. */
     }
 
     @TruffleBoundary
@@ -178,6 +175,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         final ObjectLayout oldLayout = layout;
         assert oldLayout.getInstSize() == newLayout.getInstSize();
         final int instSize = oldLayout.getInstSize();
+        final ClassObject squeakClass = getSqueakClass();
         final Object[] values = new Object[instSize];
         for (int i = 0; i < instSize; i++) {
             final SlotLocation oldLocation = oldLayout.getLocation(i);
@@ -186,7 +184,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
                 final Object oldValue = oldLocation.read(this);
                 oldLocation.unset(this);
                 if (!newLocation.canStore(oldValue)) {
-                    newLayout = newLayout.evolveLocation(i, oldValue);
+                    newLayout = newLayout.evolveLocation(squeakClass, i, oldValue);
                 }
                 values[i] = oldValue;
             }
