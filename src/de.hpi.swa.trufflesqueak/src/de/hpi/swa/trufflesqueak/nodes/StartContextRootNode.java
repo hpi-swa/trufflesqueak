@@ -52,12 +52,12 @@ public final class StartContextRootNode extends AbstractRootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
+        final boolean inCompilationRoot = CompilerDirectives.inCompilationRoot();
         initializeFrame(frame);
         try {
-            if (++ApproximateStackDepth > MaximumStackDepth) {
+            if (inCompilationRoot && ++ApproximateStackDepth > MaximumStackDepth) {
                 throw ProcessSwitch.create(getGetOrCreateContextNode().executeGet(frame));
             }
-
             interruptHandlerNode.execute(frame);
             return executeBytecodeNode.execute(frame, initialPC);
         } catch (final NonVirtualReturn | ProcessSwitch nvr) {
@@ -65,7 +65,9 @@ public final class StartContextRootNode extends AbstractRootNode {
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw nvr;
         } finally {
-            --ApproximateStackDepth;
+            if (inCompilationRoot) {
+                --ApproximateStackDepth;
+            }
             materializeContextOnMethodExitNode.execute(frame);
         }
     }
