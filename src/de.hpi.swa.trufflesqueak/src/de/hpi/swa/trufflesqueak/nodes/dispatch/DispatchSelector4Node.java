@@ -38,11 +38,11 @@ import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4NodeFactory.Dispatch4NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4NodeFactory.DispatchDirectPrimitiveFallback4NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4NodeFactory.DispatchSuper4NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4NodeFactory.DispatchDirectedSuper4NodeFactory.DirectedSuperDispatch4NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4NodeFactory.DispatchSuper4NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -188,24 +188,20 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
         @NeverDefault
         protected static final DispatchDirect4Node create(final NativeObject selector, final LookupClassGuard guard) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            return create(selector, receiverClass, guard.getIsValidAssumption());
-        }
-
-        @NeverDefault
-        public static DispatchDirect4Node create(final NativeObject selector, final ClassObject lookupClass) {
-            return create(selector, lookupClass, null);
+            return create(selector, receiverClass);
         }
 
         @NeverDefault
         public static final DispatchDirect4Node create(final CompiledCodeObject method, final LookupClassGuard guard) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method, guard.getIsValidAssumption());
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method);
             return create(assumptions, method);
         }
 
-        private static DispatchDirect4Node create(final NativeObject selector, final ClassObject lookupClass, final Assumption guardAssumptionOrNull) {
+        @NeverDefault
+        public static final DispatchDirect4Node create(final NativeObject selector, final ClassObject lookupClass) {
             final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult, guardAssumptionOrNull);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult);
             if (lookupResult == null) {
                 return createDNUNode(selector, assumptions, lookupClass);
             } else if (lookupResult instanceof final CompiledCodeObject lookupMethod) {

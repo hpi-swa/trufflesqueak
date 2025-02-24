@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -29,10 +28,6 @@ public abstract class LookupClassGuard {
     }
 
     protected abstract ClassObject getSqueakClassInternal(Node node);
-
-    protected Assumption getIsValidAssumption() {
-        return Assumption.ALWAYS_VALID;
-    }
 
     public static LookupClassGuard create(final Object receiver) {
         if (receiver == NilObject.SINGLETON) {

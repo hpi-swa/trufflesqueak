@@ -22,7 +22,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class DispatchUtils {
-    static Assumption[] createAssumptions(final ClassObject startClass, final Object lookupResult, final Assumption guardAssumptionOrNull) {
+    static Assumption[] createAssumptions(final ClassObject startClass, final Object lookupResult) {
         final ClassObject targetClass;
         if (lookupResult instanceof CompiledCodeObject method) {
             assert method.isCompiledMethod();
@@ -31,21 +31,14 @@ public final class DispatchUtils {
             /* DNU or OAM, return assumptions for all superclasses. */
             targetClass = null;
         }
-        return createAssumptions(startClass, targetClass, guardAssumptionOrNull);
+        return createAssumptions(startClass, targetClass);
     }
 
-    static Assumption[] createAssumptions(final ClassObject startClass, final ClassObject targetClass, final Assumption guardAssumptionOrNull) {
+    static Assumption[] createAssumptions(final ClassObject startClass, final ClassObject targetClass) {
         if (startClass == targetClass) {
-            if (guardAssumptionOrNull != null && guardAssumptionOrNull != Assumption.ALWAYS_VALID) {
-                return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable(), guardAssumptionOrNull};
-            } else {
-                return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable()};
-            }
+            return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable()};
         } else {
             final ArrayList<Assumption> list = new ArrayList<>();
-            if (guardAssumptionOrNull != null && guardAssumptionOrNull != Assumption.ALWAYS_VALID) {
-                list.add(guardAssumptionOrNull);
-            }
             ClassObject currentClass = startClass;
             while (currentClass != null) {
                 list.add(currentClass.getClassHierarchyAndMethodDictStable());
