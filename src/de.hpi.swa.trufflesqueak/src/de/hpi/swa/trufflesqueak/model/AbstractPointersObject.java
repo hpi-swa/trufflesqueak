@@ -137,11 +137,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return layout;
     }
 
-    public final ObjectLayout getValidLayoutOrNull() {
-        CompilerAsserts.neverPartOfCompilation();
-        return layout.isValid() ? layout : null;
-    }
-
     public final void changeClassTo(final ClassObject newClass) {
         setSqueakClass(newClass);
         migrateToLayout(newClass.getLayout());
@@ -155,7 +150,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     @TruffleBoundary
-    public final ObjectLayout updateLayout(final long index, final Object value) {
+    public final void updateLayout(final long index, final Object value) {
         assert !layout.getLocation(index).canStore(value);
         final ClassObject squeakClass = getSqueakClass();
         ObjectLayout latestLayout = squeakClass.getLayout();
@@ -165,7 +160,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             assert !layout.isValid() && layout != latestLayout : "Layout must have changed";
         }
         migrateToLayout(latestLayout);
-        return squeakClass.getLayout(); /* Layout may have evolved again during migration. */
     }
 
     @TruffleBoundary

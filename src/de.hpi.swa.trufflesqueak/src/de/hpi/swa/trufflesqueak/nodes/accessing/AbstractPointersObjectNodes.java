@@ -63,11 +63,10 @@ public class AbstractPointersObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedIndex == index", "cachedLayout != null", "object.getLayout() == cachedLayout"}, //
-                        assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
+        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
         protected static final Object doReadCached(final AbstractPointersObject object, final long index,
                         @Cached("index") final long cachedIndex,
-                        @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout,
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("create(cachedLayout.getLocation(index), true)") final AbstractSlotLocationAccessorNode accessorNode) {
             return accessorNode.executeRead(object);
         }
@@ -107,36 +106,32 @@ public class AbstractPointersObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedIndex == index", "cachedLayout != null", "object.getLayout() == cachedLayout"}, //
-                        assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
+        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
         protected static final void doWriteCached(final AbstractPointersObject object, final long index,
                         final Object value,
                         @Cached("index") final long cachedIndex,
-                        @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout,
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("create(cachedLayout.getLocation(index), false)") final AbstractSlotLocationAccessorNode accessorNode) {
-            if (!accessorNode.canStore(value)) {
+            if (accessorNode.canStore(value)) {
+                try {
+                    accessorNode.executeWrite(object, value);
+                } catch (final IllegalWriteException e) {
+                    throw CompilerDirectives.shouldNotReachHere("write must succeed", e);
+                }
+            } else {
                 /*
                  * Update layout in interpreter if it is not stable yet. This will also invalidate
                  * the assumption and therefore this particular instance of the specialization will
                  * be removed from the cache and replaced by an updated version.
                  */
-                CompilerDirectives.transferToInterpreter();
-                object.updateLayout(index, value);
-                object.getLayout().getLocation(index).writeMustSucceed(object, value);
-                return;
-            }
-            try {
-                accessorNode.executeWrite(object, value);
-            } catch (final IllegalWriteException e) {
-                CompilerDirectives.transferToInterpreter();
-                e.printStackTrace();
+                transferToInterpreterUpdateLocationAndWrite(object, index, value);
             }
         }
 
         @TruffleBoundary
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final void doWriteInvalid(final AbstractPointersObject object, final long index, final Object value) {
-            object.updateLayout(); // ensure layout is updated
+            object.updateLayout();
             doWriteGeneric(object, index, value);
         }
 
@@ -151,10 +146,14 @@ public class AbstractPointersObjectNodes {
                  * Although the layout was valid, it is possible that the location cannot store the
                  * value. Generialize location in the interpreter.
                  */
-                CompilerDirectives.transferToInterpreter();
-                object.updateLayout(index, value);
-                object.getLayout().getLocation(index).writeMustSucceed(object, value);
+                transferToInterpreterUpdateLocationAndWrite(object, index, value);
             }
+        }
+
+        private static void transferToInterpreterUpdateLocationAndWrite(final AbstractPointersObject object, final long index, final Object value) {
+            CompilerDirectives.transferToInterpreter();
+            object.updateLayout(index, value);
+            object.getLayout().getLocation(index).writeMustSucceed(object, value);
         }
     }
 
@@ -164,10 +163,9 @@ public class AbstractPointersObjectNodes {
     public abstract static class AbstractPointersObjectInstSizeNode extends AbstractNode {
         public abstract int execute(Node node, AbstractPointersObject obj);
 
-        @Specialization(guards = {"cachedLayout != null", "object.getLayout() == cachedLayout"}, //
-                        assumptions = "cachedLayout.getValidAssumption()", limit = "1")
+        @Specialization(guards = {"object.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
         protected static final int doSizeCached(@SuppressWarnings("unused") final AbstractPointersObject object,
-                        @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout) {
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout) {
             return cachedLayout.getInstSize();
         }
 
@@ -192,11 +190,11 @@ public class AbstractPointersObjectNodes {
 
         public abstract Object execute(Node node, VariablePointersObject object, long index);
 
-        @Specialization(guards = {"cachedLayout != null", "cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
+        @Specialization(guards = {"cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
         protected static final Object doReadCached(final Node node, final VariablePointersObject object, @SuppressWarnings("unused") final long index,
                         @Cached("index") final long cachedIndex,
-                        @SuppressWarnings("unused") @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout,
+                        @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectReadNode readNode) {
             return readNode.execute(node, object, cachedIndex);
         }
@@ -216,11 +214,11 @@ public class AbstractPointersObjectNodes {
             return readNode.execute(node, object, index);
         }
 
-        @Specialization(guards = {"cachedLayout != null", "cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
+        @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_VARIABLE_PART_CACHE_LIMIT")
         protected static final Object doReadFromVariablePartCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index,
                         @Cached("index") final long cachedIndex,
-                        @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout) {
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout) {
             return object.getFromVariablePart(cachedIndex - cachedLayout.getInstSize());
         }
 
@@ -244,11 +242,11 @@ public class AbstractPointersObjectNodes {
 
         public abstract void execute(Node node, VariablePointersObject object, long index, Object value);
 
-        @Specialization(guards = {"cachedLayout != null", "cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
+        @Specialization(guards = {"cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
         protected static final void doWriteCached(final Node node, final VariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
                         @Cached("index") final long cachedIndex,
-                        @SuppressWarnings("unused") @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout,
+                        @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
             writeNode.execute(node, object, cachedIndex, value);
         }
@@ -268,11 +266,11 @@ public class AbstractPointersObjectNodes {
             writeNode.execute(node, object, index, value);
         }
 
-        @Specialization(guards = {"cachedLayout != null", "cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
+        @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_VARIABLE_PART_CACHE_LIMIT")
         protected static final void doWriteIntoVariablePartCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
                         @Cached("index") final long cachedIndex,
-                        @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout) {
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout) {
             object.putIntoVariablePart(cachedIndex - cachedLayout.getInstSize(), value);
         }
 
@@ -296,11 +294,11 @@ public class AbstractPointersObjectNodes {
 
         public abstract Object execute(Node node, WeakVariablePointersObject object, long index);
 
-        @Specialization(guards = {"cachedLayout != null", "cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
+        @Specialization(guards = {"cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
         protected static final Object doReadCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
                         @Cached("index") final long cachedIndex,
-                        @SuppressWarnings("unused") @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout,
+                        @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectReadNode readNode) {
             return readNode.execute(node, object, cachedIndex);
         }
@@ -320,11 +318,11 @@ public class AbstractPointersObjectNodes {
             return readNode.execute(node, object, index);
         }
 
-        @Specialization(guards = {"cachedLayout != null", "cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
+        @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_VARIABLE_PART_CACHE_LIMIT")
         protected static final Object doReadFromVariablePartCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
                         @Cached("index") final long cachedIndex,
-                        @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout,
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final InlinedConditionProfile weakRefProfile) {
             return object.getFromVariablePart(cachedIndex - cachedLayout.getInstSize(), weakRefProfile, node);
         }
@@ -351,11 +349,11 @@ public class AbstractPointersObjectNodes {
 
         public abstract void execute(Node node, WeakVariablePointersObject object, long index, Object value);
 
-        @Specialization(guards = {"cachedLayout != null", "cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
+        @Specialization(guards = {"cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
         protected static final void doWriteCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
                         @Cached("index") final long cachedIndex,
-                        @SuppressWarnings("unused") @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout,
+                        @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
             writeNode.execute(node, object, cachedIndex, value);
         }
@@ -375,11 +373,11 @@ public class AbstractPointersObjectNodes {
             writeNode.execute(node, object, index, value);
         }
 
-        @Specialization(guards = {"cachedLayout != null", "cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
+        @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_VARIABLE_PART_CACHE_LIMIT")
         protected static final void doWriteIntoVariablePartCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
                         @Cached("index") final long cachedIndex,
-                        @Cached("object.getValidLayoutOrNull()") final ObjectLayout cachedLayout,
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final InlinedConditionProfile primitiveProfile) {
             object.putIntoVariablePart(cachedIndex - cachedLayout.getInstSize(), value, primitiveProfile, node);
         }
