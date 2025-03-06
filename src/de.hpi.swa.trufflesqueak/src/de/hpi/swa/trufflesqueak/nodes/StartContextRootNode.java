@@ -34,10 +34,6 @@ public final class StartContextRootNode extends AbstractRootNode {
     private static final int MaximumStackDepth = 1000;
     private static int ApproximateStackDepth;
 
-    public static void startingNewProcess() {
-        ApproximateStackDepth = 0;
-    }
-
     @Children private FrameStackWriteNode[] writeTempNodes;
     @Child private CheckForInterruptsQuickNode interruptHandlerNode;
     @Child private AbstractExecuteContextNode executeBytecodeNode;
@@ -48,6 +44,10 @@ public final class StartContextRootNode extends AbstractRootNode {
         super(language, code);
         interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
         executeBytecodeNode = new ExecuteBytecodeNode(code);
+    }
+
+    public static void startingNewProcess() {
+        ApproximateStackDepth = 0;
     }
 
     @Override

@@ -69,7 +69,7 @@ public final class SqueakSystemAttributes {
                 final String minor1 = new StringBuilder("0").append(osVersionParts[1]).toString();
                 final String minor2 = osVersionParts[1];
                 final String sub = osVersionParts[2];
-                value = new StringBuilder(major).append(minor2.length() == 2 ? minor2 : minor1).append(".").append(sub).toString();
+                value = new StringBuilder(major).append(minor2.length() == 2 ? minor2 : minor1).append('.').append(sub).toString();
             }
         } else {
             value = osVersion;
