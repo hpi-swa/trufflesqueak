@@ -3760,7 +3760,7 @@ public final class B2D {
         final int w;
 
         w = (point2GetX() - point1GetX()) / 2;
-        h = (point2GetX() - point1GetY()) / 2;
+        h = (point2GetY() - point1GetY()) / 2;
         cx = (point2GetX() + point1GetX()) / 2;
         cy = (point2GetY() + point1GetY()) / 2;
         for (int i = 0; i <= 15; i++) {
@@ -7145,7 +7145,7 @@ public final class B2D {
     }
 
     private static int fetchIntegerofObject(final int index, final PointersObject object) {
-        return (int) object.instVarAt0Slow(index);
+        return (int) (long) object.instVarAt0Slow(index);
     }
 
     private void workbufferAtput(final int index, final int value) {
