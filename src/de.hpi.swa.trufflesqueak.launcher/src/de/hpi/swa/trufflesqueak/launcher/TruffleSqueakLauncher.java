@@ -67,6 +67,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 final List<String> remainingArguments = arguments.subList(i + 1, arguments.size());
                 imageArguments = remainingArguments.toArray(new String[0]);
                 break;
+            } else if (arg.equals("xxx")) {
+                imagePath = arg;
             } else if (SqueakLanguageOptions.CODE_FLAG.equals(arg) || SqueakLanguageOptions.CODE_FLAG_SHORT.equals(arg)) {
                 sourceCode = arguments.get(++i);
                 headless = true;

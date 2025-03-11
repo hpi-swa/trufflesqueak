@@ -32,11 +32,27 @@ public final class SqueakImageLocator {
     public static String findImage(final String userImage, final boolean isQuiet) {
         final File resourcesDirectory = findResourcesDirectory();
         try {
+            if (userImage != null && userImage.equals("xxx")) {
+                System.out.println("Deleting existing images...");
+                if (resourcesDirectory.exists() && resourcesDirectory.isDirectory()) {
+
+                    File[] files = resourcesDirectory.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            System.out.println(file);
+                            try {
+                                Files.delete(file.toPath());
+                            } catch ( final IOException e ) {
+                            }
+                        }
+                    }
+                }
+            }
             ensureDirectory(resourcesDirectory);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
-        if (userImage != null) {
+        if (userImage != null && !userImage.equals("xxx")) {
             return userImage;
         }
         final String imageFile = findImageFile(resourcesDirectory);
