@@ -64,14 +64,12 @@ public final class SqueakSystemAttributes {
              */
             value = "1016.0";
             final String[] osVersionParts = osVersion.split("\\.");
-            if (osVersionParts.length == 2) {
+            if (osVersionParts.length == 3) {
                 final String major = osVersionParts[0];
-                try {
-                    final int minor = Integer.parseInt(osVersionParts[1]);
-                    value = String.format("%s%02d.0", major, minor);
-                } catch (final NumberFormatException e) {
-                    // give up
-                }
+                final String minor1 = new StringBuilder("0").append(osVersionParts[1]).toString();
+                final String minor2 = osVersionParts[1];
+                final String sub = osVersionParts[2];
+                value = new StringBuilder(major).append(minor2.length() == 2 ? minor2 : minor1).append('.').append(sub).toString();
             }
         } else {
             value = osVersion;
@@ -79,7 +77,9 @@ public final class SqueakSystemAttributes {
         operatingSystemVersion = asByteString(value);
 
         if (osArch.equals("aarch64")) {
-            value = "armv8"; /* For `SmalltalkImage>>#isLowerPerformance`. */
+            value = "arm64";    /* Requires one of #('aarch64' 'arm64') for 'FFIPlatformDescription>>#abi'. */
+                                /* Begins with "arm" for `SmalltalkImage>>#isLowerPerformance`. */
+//            value = "aarch64";
         } else {
             value = "x64"; /* For users of `Smalltalk os platformSubtype`. */
         }
