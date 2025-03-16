@@ -55,35 +55,8 @@ public final class SqueakSystemAttributes {
         vmPath = asByteString(System.getProperty("java.home") + separator + "bin" + separator + "java");
 
         platformName = asByteString(OS.findSqueakOSName());
-
-        String value;
-        if (OS.isMacOS()) {
-            /*
-             * The image expects things like 1095, so convert 10.10.5 into 1010.5 (e.g., see
-             * #systemConverterClass)
-             */
-            value = "1016.0";
-            final String[] osVersionParts = osVersion.split("\\.");
-            if (osVersionParts.length == 3) {
-                final String major = osVersionParts[0];
-                final String minor1 = new StringBuilder("0").append(osVersionParts[1]).toString();
-                final String minor2 = osVersionParts[1];
-                final String sub = osVersionParts[2];
-                value = new StringBuilder(major).append(minor2.length() == 2 ? minor2 : minor1).append('.').append(sub).toString();
-            }
-        } else {
-            value = osVersion;
-        }
-        operatingSystemVersion = asByteString(value);
-
-        if (osArch.equals("aarch64")) {
-            value = "arm64";    /* Requires one of #('aarch64' 'arm64') for 'FFIPlatformDescription>>#abi'. */
-                                /* Begins with "arm" for `SmalltalkImage>>#isLowerPerformance`. */
-//            value = "aarch64";
-        } else {
-            value = "x64"; /* For users of `Smalltalk os platformSubtype`. */
-        }
-        platformProcessorType = asByteString(value);
+        operatingSystemVersion = asByteString(determineOperatingSystemVersion(osVersion));
+        platformProcessorType = asByteString(determinePlatformProcessorType(osArch));
 
         /*
          * Start with "Croquet" to let `LanguageEnvironment win32VMUsesUnicode` return `true`. Add
@@ -247,6 +220,42 @@ public final class SqueakSystemAttributes {
             /* Report 0 x 0 in headless mode. */
         }
         return asByteString(String.format("Display Information: \n\tPrimary monitor resolution: %s x %s\n", width, height));
+    }
+
+    /**
+     * The image expects things like 1095, so convert 10.10.5 into 1010.5 (e.g., see
+     * #systemConverterClass).
+     */
+    private static String determineOperatingSystemVersion(final String osVersion) {
+        if (OS.isMacOS()) {
+            String major = "10";
+            String minor = "16";
+            String patch = "0";
+            final String[] osVersionParts = osVersion.split("\\.");
+            if (osVersionParts.length > 0) {
+                major = osVersionParts[0];
+                if (osVersionParts.length > 1) {
+                    minor = osVersionParts[1];
+                    minor = minor.length() == 1 ? "0" + minor : minor;
+                    if (osVersionParts.length > 2) {
+                        patch = osVersionParts[2];
+                    }
+                }
+            }
+            return String.format("%s%s.%s", major, minor, patch);
+        } else {
+            return osVersion;
+        }
+    }
+
+    private static String determinePlatformProcessorType(final String osArch) {
+        if (osArch.equals("aarch64")) {
+            /* Requires one of #('aarch64' 'arm64') for 'FFIPlatformDescription>>#abi'. */
+            /* Begins with "arm" for `SmalltalkImage>>#isLowerPerformance`. */
+            return OS.isMacOS() ? "aarch64" : "arm64";
+        } else {
+            return "x64"; /* For users of `Smalltalk os platformSubtype`. */
+        }
     }
 
     private NativeObject asByteString(final String value) {
