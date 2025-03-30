@@ -167,6 +167,12 @@ public final class ObjectLayouts {
         public static final int OBSERVERS = 5;
     }
 
+    public static final class EPHEMERON {
+        public static final int KEY = 0;
+        public static final int VALUE = 1;
+        public static final int MIN_SIZE = 2;
+    }
+
     public enum ERROR_TABLE {
         GENERIC_ERROR, // nil
         BAD_RECEIVER,

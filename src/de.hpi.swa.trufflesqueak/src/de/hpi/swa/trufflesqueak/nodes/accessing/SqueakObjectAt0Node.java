@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -33,6 +34,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 import de.hpi.swa.trufflesqueak.nodes.accessing.BlockClosureObjectNodes.BlockClosureObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ClassObjectNodes.ClassObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.EphemeronObjectNodes.EphemeronObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
 
 @GenerateInline
@@ -102,6 +104,12 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     protected static final Object doContext(final Node node, final ContextObject obj, final long index,
                     @Cached final ContextObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
+    }
+
+    @Specialization
+    protected static final Object doEphemeron(final Node node, final EphemeronObject obj, final long index,
+                                              @Cached final EphemeronObjectReadNode readNode) {
+        return readNode.execute(node, obj, (int) index);
     }
 
     @Specialization

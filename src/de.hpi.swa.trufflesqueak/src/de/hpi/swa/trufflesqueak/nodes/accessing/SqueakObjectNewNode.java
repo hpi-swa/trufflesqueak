@@ -23,6 +23,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -31,6 +32,7 @@ import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.EPHEMERON;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
@@ -155,10 +157,10 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new WeakVariablePointersObject(image, classObject, null, extraSize);
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = "classObject.isEphemeronClassType()")
-    protected static final WeakVariablePointersObject doEphemerons(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        throw SqueakException.create("Ephemerons not (yet) supported");
+    protected static final EphemeronObject doEphemeron(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert extraSize == 0;
+        return EphemeronObject.create(image, classObject);
     }
 
     @Specialization(guards = "classObject.isLongs()")

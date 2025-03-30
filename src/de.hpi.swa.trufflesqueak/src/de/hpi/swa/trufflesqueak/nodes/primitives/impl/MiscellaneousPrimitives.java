@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -325,6 +326,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final boolean doContext(final ContextObject receiver, final Object thang) {
+            return BooleanObject.wrap(receiver.pointsTo(thang));
+        }
+
+        @Specialization
+        protected static final boolean doEphemeron(final EphemeronObject receiver, final Object thang) {
             return BooleanObject.wrap(receiver.pointsTo(thang));
         }
 
