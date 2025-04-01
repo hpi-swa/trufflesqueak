@@ -6,12 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -24,8 +20,8 @@ public final class EphemeronObject extends AbstractSqueakObjectWithClassAndHash 
 
     private final SqueakImageContext image;
 
-    @CompilerDirectives.CompilationFinal private Object key;
-    @CompilerDirectives.CompilationFinal private Object value;
+    private Object key;
+    private Object value;
 
    private Object[] pointers;
 
