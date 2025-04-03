@@ -306,17 +306,4 @@ shallow-clone-graal() {
   echo "[graal repo patched successfully]"
 }
 
-shallow-clone-graaljs() {
-  # Load metadata from vm suite.py
-readonly py_graaljs_export=$(cat <<-END
-from suite import suite;
-js_version = next(x['version'] for x in suite['imports']['suites'] if x['name'] == 'graal-js')
-print('export GRAALJS_VERSION=%s' % js_version)
-END
-)
-  $(cd "${BASE_DIRECTORY}/../graal/vm/mx.vm" && python3 -c "${py_graaljs_export}")
-  shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git "${GRAALJS_VERSION}"
-  echo "[graaljs repo (${GRAALJS_VERSION}) cloned successfully]"
-}
-
 eval "$@"
