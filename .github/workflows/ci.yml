@@ -101,20 +101,17 @@ jobs:
     #   if: ${{ matrix.os == 'ubuntu-22.04' && github.ref_type == 'tag' }}
     - name: Run SystemReporter on TruffleSqueak
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Clone Graal.js repository
-      shell: bash
-      run: mx.trufflesqueak/utils.sh shallow-clone-graaljs
-    - name: Run gate with Graal compiler and Graal.js
-      run: mx --disable-polyglot --dy /compiler,/graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test
+    - name: Run gate with Graal compiler
+      run: mx --disable-polyglot --dy /compiler gate ${{ env.MX_GATE_OPTS }} --tags build,test
       if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE != 'true' }}
-    - name: Run gate with Graal.js and code coverage # do not use Graal compiler with JaCoCo code coverage
-      run: mx --disable-polyglot --dy /graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
+    - name: Run gate with code coverage # do not use Graal compiler with JaCoCo code coverage
+      run: mx --disable-polyglot gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
       if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE == 'true' }}
-    - name: Run gate with Graal compiler and Graal.js via cmd.exe
+    - name: Run gate with Graal compiler via cmd.exe
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-polyglot --dy /compiler,/graal-js gate ${{ env.MX_GATE_OPTS }} --tags build,test
+        mx --disable-polyglot --dy /compiler gate ${{ env.MX_GATE_OPTS }} --tags build,test
       if: ${{ runner.os == 'Windows' }}
     - name: Report code coverage
       env:
