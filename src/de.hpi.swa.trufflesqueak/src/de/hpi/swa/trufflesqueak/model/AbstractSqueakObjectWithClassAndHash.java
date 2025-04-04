@@ -183,6 +183,18 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
+    /**
+     * @return <tt>true</tt> if already marked, <tt>false</tt> otherwise
+     */
+    public final boolean tryToUnmark(final boolean currentMarkingFlag) {
+        if (getMarkingFlag() == currentMarkingFlag) {
+            toggleMarkingFlag();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @SuppressWarnings("unused")
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         // Do nothing by default.
