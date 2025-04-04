@@ -102,7 +102,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
-        protected static final Object doImmeditate(final ClassObject classObject) {
+        protected static final Object doImmediate(final ClassObject classObject) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
 
@@ -111,11 +111,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
                 return NilObject.SINGLETON; // Class has not been instantiated yet
             }
-            try {
-                return ObjectGraphUtils.someInstanceOf(getContext(), classObject);
-            } catch (final IndexOutOfBoundsException e) {
-                throw PrimitiveFailed.GENERIC_ERROR;
-            }
+            return ObjectGraphUtils.someInstanceOf(getContext(), classObject);
         }
     }
 
