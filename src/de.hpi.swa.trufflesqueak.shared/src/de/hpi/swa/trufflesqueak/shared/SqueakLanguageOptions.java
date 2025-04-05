@@ -10,6 +10,9 @@ public final class SqueakLanguageOptions {
     public static final String CODE_FLAG = "--code";
     public static final String CODE_FLAG_SHORT = "-c";
     public static final String CODE_HELP = "Smalltalk code to be executed without display";
+    public static final String CONTEXT_STACK_DEPTH = "context-stack-depth";
+    public static final String CONTEXT_STACK_DEPTH_FLAG = "--" + CONTEXT_STACK_DEPTH;
+    public static final String CONTEXT_STACK_DEPTH_HELP = "Flush context stack when it reaches this depth (0 = disabled)";
     public static final String HEADLESS = "headless";
     public static final String HEADLESS_FLAG = "--" + HEADLESS;
     public static final String HEADLESS_HELP = "Run without a display";
