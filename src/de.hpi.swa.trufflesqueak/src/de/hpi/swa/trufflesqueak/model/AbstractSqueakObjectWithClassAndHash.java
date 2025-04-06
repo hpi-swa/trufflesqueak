@@ -183,16 +183,9 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
-    /**
-     * @return <tt>true</tt> if already marked, <tt>false</tt> otherwise
-     */
-    public final boolean tryToUnmark(final boolean currentMarkingFlag) {
-        if (getMarkingFlag() == currentMarkingFlag) {
-            toggleMarkingFlag();
-            return true;
-        } else {
-            return false;
-        }
+    public final void unmark(final boolean currentMarkingFlag) {
+        assert getMarkingFlag() == currentMarkingFlag : "Object not marked with currentMarkingFlag: " + currentMarkingFlag;
+        toggleMarkingFlag();
     }
 
     @SuppressWarnings("unused")

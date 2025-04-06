@@ -80,15 +80,22 @@ public final class ObjectGraphUtils {
     public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final ClassObject targetClass) {
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
         final ObjectTracer pending = new ObjectTracer(image);
+        final boolean currentMarkingFlag = pending.getCurrentMarkingFlag();
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
-            if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
                 marked.add(currentObject);
                 if (targetClass == currentObject.getSqueakClass()) {
-                    pending.cancelPendingTrace(image, marked);
+                    // Unmark marked objects
+                    for (final AbstractSqueakObjectWithClassAndHash object : marked) {
+                        object.unmark(currentMarkingFlag);
+                    }
+                    // Restore marking flag
+                    image.toggleCurrentMarkingFlag();
                     return currentObject;
+                } else {
+                    pending.tracePointers(currentObject);
                 }
-                pending.tracePointers(currentObject);
             }
         }
         return NilObject.SINGLETON;
@@ -107,16 +114,6 @@ public final class ObjectGraphUtils {
             // Add roots
             addIfUnmarked(image.specialObjectsArray);
             addObjectsFromTruffleFrames();
-        }
-
-        private void cancelPendingTrace(final SqueakImageContext image, final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked) {
-            AbstractSqueakObjectWithClassAndHash currentObject;
-            // Unmark known marked objects.
-            while ((currentObject = marked.pollLast()) != null) {
-                currentObject.tryToUnmark(currentMarkingFlag);
-            }
-            // Restore marking flag.
-            image.toggleCurrentMarkingFlag();
         }
 
         private void addObjectsFromTruffleFrames() {
