@@ -15,9 +15,11 @@ public final class SqueakLanguageConfig {
     public static final String ST_MIME_TYPE = "text/x-smalltalk";
     public static final String VERSION = "24.2.0"; // sync with Truffle import
     public static final String WEBSITE = "https://github.com/hpi-swa/trufflesqueak";
+    private static final String IMAGE_VERSION = "24.1.2"; // on release: `VERSION;`
 
     public static final String[][] SUPPORTED_IMAGES = {
-                    {"TruffleSqueak image (" + VERSION + ") (recommended)", "https://github.com/hpi-swa/trufflesqueak/releases/download/" + VERSION + "/TruffleSqueakImage-" + VERSION + ".zip"},
+                    {"TruffleSqueak image (" + IMAGE_VERSION + ") (recommended)",
+                                    "https://github.com/hpi-swa/trufflesqueak/releases/download/" + IMAGE_VERSION + "/TruffleSqueakImage-" + IMAGE_VERSION + ".zip"},
                     {"Squeak/Smalltalk (6.0-22104)", "https://files.squeak.org/6.0/Squeak6.0-22104-64bit/Squeak6.0-22104-64bit.zip"},
                     {"TruffleSqueak test image (6.0-22104)", "https://github.com/hpi-swa/trufflesqueak/releases/download/22.3.0/TruffleSqueakTestImage-6.0-22104-64bit.zip"},
                     {"Cuis-Smalltalk test image (6.0-5053)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.3.0/CuisTestImage-6.0-5053.zip"}};
