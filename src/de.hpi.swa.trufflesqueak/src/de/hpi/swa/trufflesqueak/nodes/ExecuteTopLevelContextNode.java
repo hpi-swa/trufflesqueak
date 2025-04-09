@@ -93,7 +93,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 image.lastSeenContext = null;  // Reset materialization mechanism.
-                image.enteringTopLevelContextNode();
+                image.resetContextStackDepth();
                 final Object result = callNode.call(activeContext.getCallTarget());
                 activeContext = returnTo(activeContext, sender, result);
                 LogUtils.SCHEDULING.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
