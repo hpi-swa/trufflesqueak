@@ -98,7 +98,7 @@ $GRAALVM_HOME/bin/trufflesqueak \
 The following runs the `ArrayTest>>testAtWrap` SUnit test from Squeak/Smalltalk
 using mx's unittest command in debug mode:
 ```bash
-mx -d --env trufflesqueak-jvm unittest -Xss64M \
+mx -d --env trufflesqueak-jvm unittest \
    -DsqueakTests="ArrayTest>>testAtWrap" \
    SqueakSUnitTest --very-verbose --enable-timing --color
 ```

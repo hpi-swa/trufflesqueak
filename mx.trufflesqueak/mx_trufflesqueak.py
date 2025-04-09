@@ -27,8 +27,6 @@ LANGUAGE_ID = "smalltalk"
 PACKAGE_NAME = "de.hpi.swa.trufflesqueak"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 VM_ARGS_TESTING = [
-    # Tweak Runtime
-    "-Xss16M",  # Increase stack size
     # Make ReflectionUtils work
     "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED",
     # Tweak GC for GitHub Actions
@@ -356,7 +354,6 @@ mx_sdk.register_graalvm_component(
                 ],
                 default_vm_args=[
                     "--vm.Xms512M",
-                    "--vm.Xss16M",
                     "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
                 ],
             )
