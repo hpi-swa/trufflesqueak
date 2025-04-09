@@ -52,7 +52,8 @@ public final class StartContextRootNode extends AbstractRootNode {
         initializeFrame(frame);
         try {
             if (image.enteringContextExceedsDepth()) {
-                throw ProcessSwitch.create(getGetOrCreateContextNode().executeGet(frame));
+                CompilerDirectives.transferToInterpreter();
+                throw ProcessSwitch.create(GetOrCreateContextNode.getOrCreateUncached(frame));
             }
             interruptHandlerNode.execute(frame);
             return executeBytecodeNode.execute(frame, initialPC);
