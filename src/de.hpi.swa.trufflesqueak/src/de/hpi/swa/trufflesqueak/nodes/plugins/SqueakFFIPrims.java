@@ -614,7 +614,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @ImportStatic(FFIGuards.class)
-    @SqueakPrimitive(names = "primitiveSignedInt64AtPut")
+    @SqueakPrimitive(names = {"primitiveSignedInt64AtPut", //
+                    "primitiveSignedInt648At" /* typo in ByteArray>>#long64At:put: */})
     protected abstract static class PrimSignedInt64AtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0"})
