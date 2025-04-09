@@ -174,8 +174,7 @@ public final class SqueakImageContext {
     private int lowSpaceSkippedSendsCount;
 
     /* Context stack depth */
-    @CompilationFinal
-    private final int MAXIMUM_CONTEXT_STACK_DEPTH;
+    @CompilationFinal private final int maxContextStackDepth;
     private int currentContextStackDepth;
 
     @CompilationFinal private ClassObject fractionClass;
@@ -205,7 +204,7 @@ public final class SqueakImageContext {
         patch(environment);
         options = SqueakContextOptions.create(env.getOptions());
         isHeadless = options.isHeadless();
-        MAXIMUM_CONTEXT_STACK_DEPTH = options.maximumContextStackDepth();
+        maxContextStackDepth = options.maxContextStackDepth();
         interrupt = new CheckForInterruptsState(this);
         allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
@@ -423,21 +422,24 @@ public final class SqueakImageContext {
      * CONTEXT STACK DEPTH MANAGEMENT
      */
 
-    public void enteringTopLevelContextNode() {
-        if (MAXIMUM_CONTEXT_STACK_DEPTH != 0)
-            currentContextStackDepth = 0;
-    }
-
-    public boolean enteringContextNodeWouldExceedDepth() {
-        if (MAXIMUM_CONTEXT_STACK_DEPTH == 0)
+    public boolean enteringContextExceedsDepth() {
+        if (maxContextStackDepth == 0) {
             return false;
-        else
-            return ++currentContextStackDepth > MAXIMUM_CONTEXT_STACK_DEPTH;
+        } else {
+            return ++currentContextStackDepth > maxContextStackDepth;
+        }
     }
 
-    public void exitingContextNode() {
-        if (MAXIMUM_CONTEXT_STACK_DEPTH != 0)
+    public void exitingContext() {
+        if (maxContextStackDepth != 0) {
             --currentContextStackDepth;
+        }
+    }
+
+    public void resetContextStackDepth() {
+        if (maxContextStackDepth != 0) {
+            currentContextStackDepth = 0;
+        }
     }
 
     /*

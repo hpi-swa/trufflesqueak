@@ -51,10 +51,9 @@ public final class StartContextRootNode extends AbstractRootNode {
     public Object execute(final VirtualFrame frame) {
         initializeFrame(frame);
         try {
-            if (image.enteringContextNodeWouldExceedDepth()) {
+            if (image.enteringContextExceedsDepth()) {
                 throw ProcessSwitch.create(getGetOrCreateContextNode().executeGet(frame));
             }
-
             interruptHandlerNode.execute(frame);
             return executeBytecodeNode.execute(frame, initialPC);
         } catch (final NonVirtualReturn | ProcessSwitch nvr) {
@@ -62,7 +61,7 @@ public final class StartContextRootNode extends AbstractRootNode {
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw nvr;
         } finally {
-            image.exitingContextNode();
+            image.exitingContext();
             materializeContextOnMethodExitNode.execute(frame);
         }
     }
