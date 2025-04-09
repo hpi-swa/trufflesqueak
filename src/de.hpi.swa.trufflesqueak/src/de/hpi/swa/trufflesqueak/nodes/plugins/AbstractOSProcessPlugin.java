@@ -29,8 +29,8 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
@@ -158,6 +158,15 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
                 sessionByteArray = getContext().asByteArray(bytes);
             }
             return sessionByteArray;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSizeOfInt")
+    protected abstract static class PrimSizeOfIntNode extends AbstractPrimitiveNode implements Primitive0 {
+        @Specialization
+        protected static final long doSizeOf(@SuppressWarnings("unused") final Object receiver) {
+            return Integer.BYTES;
         }
     }
 }
