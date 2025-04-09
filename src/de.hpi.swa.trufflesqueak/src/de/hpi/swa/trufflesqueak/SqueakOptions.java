@@ -44,7 +44,7 @@ public final class SqueakOptions {
     public static final OptionKey<Boolean> ResourceSummary = new OptionKey<>(false);
 
     @Option(name = SqueakLanguageOptions.CONTEXT_STACK_DEPTH, category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.CONTEXT_STACK_DEPTH_HELP, usageSyntax = "number")//
-    public static final OptionKey<Integer> ContextStackDepth = new OptionKey<>(1000);
+    public static final OptionKey<Integer> ContextStackDepth = new OptionKey<>(2 << 12);
 
     @Option(name = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> SignalInputSemaphore = new OptionKey<>(false);
