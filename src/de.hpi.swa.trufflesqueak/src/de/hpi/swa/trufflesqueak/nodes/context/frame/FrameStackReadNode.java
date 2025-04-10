@@ -22,6 +22,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadAndClearNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -49,7 +50,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
         // Only clear stack values, not receiver, arguments, or temporary variables.
         final boolean shouldClear = clear && index >= initialSP;
         if (stackSlotIndex < numberOfSlots) {
-            return FrameSlotReadNodeGen.create(stackSlotIndex, shouldClear);
+            if (shouldClear) {
+                return FrameSlotReadAndClearNodeGen.create(stackSlotIndex);
+            } else {
+                return FrameSlotReadNodeGen.create(stackSlotIndex);
+            }
         } else {
             return new FrameAuxiliarySlotReadNode(frame, stackSlotIndex, shouldClear);
         }
@@ -64,7 +69,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
             final int stackSlotIndex = FrameAccess.toStackSlotIndex(frame, index);
             final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
             if (stackSlotIndex < numberOfSlots) {
-                return FrameSlotReadNodeGen.create(stackSlotIndex, false);
+                return FrameSlotReadNodeGen.create(stackSlotIndex);
             } else {
                 return new FrameAuxiliarySlotReadNode(frame, stackSlotIndex, false);
             }
@@ -82,12 +87,10 @@ public abstract class FrameStackReadNode extends AbstractNode {
 
     protected abstract static class FrameSlotReadNode extends FrameStackReadNode {
         protected final byte slotIndex;
-        protected final boolean clearSlotAfterRead;
 
-        FrameSlotReadNode(final int slotIndex, final boolean clearSlotAfterRead) {
+        FrameSlotReadNode(final int slotIndex) {
             this.slotIndex = (byte) slotIndex;
             assert this.slotIndex == slotIndex;
-            this.clearSlotAfterRead = clearSlotAfterRead;
         }
 
         @Specialization(guards = "frame.isBoolean(slotIndex)")
@@ -118,15 +121,60 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  */
                 CompilerDirectives.transferToInterpreter();
                 value = frame.getValue(slotIndex);
-                if (!clearSlotAfterRead) {
-                    frame.setObject(slotIndex, value);
-                }
+                frame.setObject(slotIndex, value);
             } else {
                 value = frame.getObject(slotIndex);
             }
-            if (clearSlotAfterRead) {
-                frame.setObject(slotIndex, null);
+            return value;
+        }
+    }
+
+    protected abstract static class FrameSlotReadAndClearNode extends FrameStackReadNode {
+        protected final byte slotIndex;
+
+        FrameSlotReadAndClearNode(final int slotIndex) {
+            this.slotIndex = (byte) slotIndex;
+            assert this.slotIndex == slotIndex;
+        }
+
+        @Specialization(guards = "frame.isBoolean(slotIndex)")
+        protected final boolean readBoolean(final VirtualFrame frame) {
+            final boolean value = frame.getBoolean(slotIndex);
+            frame.clear(slotIndex);
+            return value;
+        }
+
+        @Specialization(guards = "frame.isLong(slotIndex)")
+        protected final long readLong(final VirtualFrame frame) {
+            final long value = frame.getLong(slotIndex);
+            frame.clear(slotIndex);
+            return value;
+        }
+
+        @Specialization(guards = "frame.isDouble(slotIndex)")
+        protected final double readDouble(final VirtualFrame frame) {
+            final double value = frame.getDouble(slotIndex);
+            frame.clear(slotIndex);
+            return value;
+        }
+
+        @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
+        protected final Object readObject(final VirtualFrame frame) {
+            final Object value;
+            if (!frame.isObject(slotIndex)) {
+                /*
+                 * The FrameSlotKind has been set to Object, so from now on all writes to the slot
+                 * will be Object writes. However, now we are in a frame that still has an old
+                 * non-Object value. This is a slow-path operation: we read the non-Object value,
+                 * and clear it immediately as an Object value so that we do not hit this path again
+                 * multiple times for the same slot of the same frame.
+                 */
+                CompilerDirectives.transferToInterpreter();
+                value = frame.getValue(slotIndex);
+            } else {
+                value = frame.getObject(slotIndex);
             }
+            frame.clear(slotIndex);
             return value;
         }
     }
