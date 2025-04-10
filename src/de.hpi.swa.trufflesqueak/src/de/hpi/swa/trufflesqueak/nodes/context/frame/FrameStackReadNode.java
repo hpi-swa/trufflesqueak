@@ -140,21 +140,27 @@ public abstract class FrameStackReadNode extends AbstractNode {
         @Specialization(guards = "frame.isBoolean(slotIndex)")
         protected final boolean readBoolean(final VirtualFrame frame) {
             final boolean value = frame.getBoolean(slotIndex);
-            frame.clear(slotIndex);
+            if (CompilerDirectives.inCompiledCode()) {
+                frame.clear(slotIndex);
+            }
             return value;
         }
 
         @Specialization(guards = "frame.isLong(slotIndex)")
         protected final long readLong(final VirtualFrame frame) {
             final long value = frame.getLong(slotIndex);
-            frame.clear(slotIndex);
+            if (CompilerDirectives.inCompiledCode()) {
+                frame.clear(slotIndex);
+            }
             return value;
         }
 
         @Specialization(guards = "frame.isDouble(slotIndex)")
         protected final double readDouble(final VirtualFrame frame) {
             final double value = frame.getDouble(slotIndex);
-            frame.clear(slotIndex);
+            if (CompilerDirectives.inCompiledCode()) {
+                frame.clear(slotIndex);
+            }
             return value;
         }
 
@@ -174,7 +180,9 @@ public abstract class FrameStackReadNode extends AbstractNode {
             } else {
                 value = frame.getObject(slotIndex);
             }
-            frame.clear(slotIndex);
+            if (CompilerDirectives.inCompiledCode()) {
+                frame.clear(slotIndex);
+            }
             return value;
         }
     }
