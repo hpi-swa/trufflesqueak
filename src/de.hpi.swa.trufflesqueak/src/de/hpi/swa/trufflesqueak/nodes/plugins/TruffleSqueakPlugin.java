@@ -113,7 +113,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "form.instsize() > OFFSET")
         protected final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             try {
                 /* Extract information from form. */

@@ -167,7 +167,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimFileProtectionMaskNode extends AbstractFilePrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final ArrayObject doFileProtectionMask(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
             final SqueakImageContext image = getContext();
             try {
@@ -185,7 +185,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimFileStatNode extends AbstractFilePrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final ArrayObject doFileStat(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
             final SqueakImageContext image = getContext();
             try {
@@ -261,7 +261,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimGetPGidNode extends AbstractSysCallPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetPGid(@SuppressWarnings("unused") final Object receiver, final long pid,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
                         @Cached final InlinedBranchProfile errorProfile) {
             return failIfMinusOne(getValue(lib, pid), errorProfile, node);
@@ -283,7 +283,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimGetPGrpNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetPGrp(@SuppressWarnings("unused") final Object receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
                         @Cached final InlinedBranchProfile errorProfile) {
             return failIfMinusOne(getValue(lib), errorProfile, node);
@@ -357,7 +357,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimRealpathNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "pathString.isByteType()")
         protected final NativeObject doRealpath(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
             final SqueakImageContext image = getContext();
             try {
@@ -562,7 +562,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     protected abstract static class PrimSetSidNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doSetSid(@SuppressWarnings("unused") final Object receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
                         @Cached final InlinedBranchProfile errorProfile) {
             return failIfMinusOne(getValue(lib), errorProfile, node);

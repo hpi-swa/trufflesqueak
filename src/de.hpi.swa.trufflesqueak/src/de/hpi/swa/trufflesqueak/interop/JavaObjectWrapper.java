@@ -591,7 +591,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     @ExportMessage(name = "isArrayElementModifiable")
     @TruffleBoundary
-    protected boolean isArrayElementReadable(final long index, @Bind("$node") final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) {
+    protected boolean isArrayElementReadable(final long index, @Bind final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) {
         try {
             return 0 <= index && index < sizeNode.execute(node, wrappedObject);
         } catch (final UnsupportedSpecializationException | UnsupportedMessageException e) {
@@ -606,7 +606,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    protected long getArraySize(@Bind("$node") final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) throws UnsupportedMessageException {
+    protected long getArraySize(@Bind final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) throws UnsupportedMessageException {
         try {
             return sizeNode.execute(node, wrappedObject);
         } catch (final UnsupportedSpecializationException e) {
@@ -672,7 +672,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected Object readArrayElement(final long index, @Bind("$node") final Node node, @Cached final ReadArrayElementNode readNode) throws InvalidArrayIndexException, UnsupportedMessageException {
+    protected Object readArrayElement(final long index, @Bind final Node node, @Cached final ReadArrayElementNode readNode) throws InvalidArrayIndexException, UnsupportedMessageException {
         try {
             return readNode.execute(node, wrappedObject, (int) index);
         } catch (final ArrayIndexOutOfBoundsException e) {
@@ -741,7 +741,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected void writeArrayElement(final long index, final Object value, @Bind("$node") final Node node, @Cached final WriteArrayElementNode writeNode)
+    protected void writeArrayElement(final long index, final Object value, @Bind final Node node, @Cached final WriteArrayElementNode writeNode)
                     throws InvalidArrayIndexException, UnsupportedMessageException, UnsupportedTypeException {
         try {
             writeNode.execute(node, wrappedObject, (int) index, value);

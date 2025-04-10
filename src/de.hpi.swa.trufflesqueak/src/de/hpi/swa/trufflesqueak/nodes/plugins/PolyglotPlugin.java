@@ -155,7 +155,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode) {
             return wrapNode.executeWrap(node, evalString(this, languageIdOrMimeTypeObj, sourceObject));
         }
@@ -168,7 +168,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()", "sizeNode.execute(node, argumentNames) == sizeNode.execute(node, argumentValues)"}, limit = "1")
         protected static final Object doEvalWithArguments(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         final ArrayObject argumentNames, final ArrayObject argumentValues,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode) {
@@ -193,7 +193,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
             final Object p = innerContext.enter(this);
@@ -231,7 +231,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode) {
             return wrapNode.executeWrap(node, evalFile(languageIdOrMimeTypeObj, path));
         }
@@ -243,7 +243,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
             final Object p = innerContext.enter(null);
@@ -378,7 +378,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimExecuteNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"lib.isExecutable(object)"}, limit = "2")
         protected static final Object doExecute(@SuppressWarnings("unused") final Object receiver, final Object object, final ArrayObject argumentArray,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
@@ -411,7 +411,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doIsInstantiable(@SuppressWarnings("unused") final Object receiver, final Object object, final ArrayObject argumentArray,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
@@ -926,7 +926,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimReadArrayElementNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"lib.isArrayElementReadable(object, to0(index))"}, limit = "2")
         protected static final Object doReadArrayElement(@SuppressWarnings("unused") final Object receiver, final Object object, final long index,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
@@ -1127,7 +1127,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInvokeMemberNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = {"member.isByteType()", "lib.isMemberInvocable(object, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doInvokeMember(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member, final ArrayObject argumentArray,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
@@ -1148,7 +1148,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimReadMemberNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(object, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doReadMember(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {

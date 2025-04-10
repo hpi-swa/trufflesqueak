@@ -138,7 +138,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
         protected static final Object doRead(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source, final PointersObject form,
                         final boolean ditherFlag, final NativeObject aJPEGErrorMgr2Struct,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             if (TruffleOptions.AOT) { /* ImageIO not yet working properly when AOT-compiled. */
                 throw PrimitiveFailed.GENERIC_ERROR;
@@ -173,7 +173,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"aJPEGCompressStruct.isByteType()", "destination.isByteType()"})
         protected static final long doWrite(final Object receiver, final NativeObject aJPEGCompressStruct, final NativeObject destination, final PointersObject form,
                         final long quality, final boolean progressiveFlag, final NativeObject aJPEGErrorMgr2Struct,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             if (TruffleOptions.AOT) { /* ImageIO not yet working properly when AOT-compiled. */
                 throw PrimitiveFailed.GENERIC_ERROR;

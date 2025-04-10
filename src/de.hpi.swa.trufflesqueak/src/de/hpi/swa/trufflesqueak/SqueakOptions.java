@@ -43,6 +43,9 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.RESOURCE_SUMMARY, category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.RESOURCE_SUMMARY_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> ResourceSummary = new OptionKey<>(false);
 
+    @Option(name = SqueakLanguageOptions.CONTEXT_STACK_DEPTH, category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.CONTEXT_STACK_DEPTH_HELP, usageSyntax = "number")//
+    public static final OptionKey<Integer> ContextStackDepth = new OptionKey<>(2 << 12);
+
     @Option(name = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> SignalInputSemaphore = new OptionKey<>(false);
 
@@ -60,7 +63,7 @@ public final class SqueakOptions {
     }
 
     public record SqueakContextOptions(String imagePath, String[] imageArguments, boolean printResourceSummary, boolean isHeadless, boolean isQuiet, boolean disableInterruptHandler,
-                    boolean disableStartup, boolean isTesting, boolean signalInputSemaphore) {
+                    int maxContextStackDepth, boolean disableStartup, boolean isTesting, boolean signalInputSemaphore) {
         public static SqueakContextOptions create(final OptionValues options) {
             return new SqueakContextOptions(
                             options.get(ImagePath).isEmpty() ? null : options.get(ImagePath),
@@ -69,6 +72,7 @@ public final class SqueakOptions {
                             options.get(Headless),
                             options.get(Quiet),
                             options.get(Interrupts),
+                            Math.max(0, options.get(ContextStackDepth)),
                             options.get(Startup),
                             options.get(Testing),
                             options.get(SignalInputSemaphore));

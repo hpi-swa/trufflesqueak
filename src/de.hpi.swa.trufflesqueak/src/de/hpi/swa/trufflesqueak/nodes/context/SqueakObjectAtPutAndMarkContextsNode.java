@@ -35,7 +35,7 @@ public abstract class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode 
 
     @Specialization
     public void doWrite(final Object object, final Object value,
-                    @Bind("this") final Node node,
+                    @Bind final Node node,
                     @Cached final SqueakObjectAtPut0Node atPut0Node,
                     @Cached final InlinedBranchProfile isContextObjectProfile) {
         if (value instanceof final ContextObject context) {

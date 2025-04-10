@@ -113,6 +113,7 @@ public abstract class AbstractSqueakTestCase {
             contextBuilder.option("engine.CompilationStatistics", Boolean.toString(spec.showStatistics));
             contextBuilder.option("compiler.TreatPerformanceWarningsAsErrors", "call,instanceof,store,trivial");
             contextBuilder.option("engine.CompilationFailureAction", "ExitVM");
+            contextBuilder.option("engine.MaximumCompilations", "-1");
         }
 
         final String logLevel = System.getProperty("log.level");

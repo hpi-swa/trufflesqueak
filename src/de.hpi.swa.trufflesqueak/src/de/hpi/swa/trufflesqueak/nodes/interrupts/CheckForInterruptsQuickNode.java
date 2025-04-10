@@ -23,8 +23,7 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 public abstract class CheckForInterruptsQuickNode extends AbstractNode {
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
-    public static final CheckForInterruptsQuickNode createForSend(final CompiledCodeObject code) {
-        final SqueakImageContext image = code.getSqueakClass().getImage();
+    public static final CheckForInterruptsQuickNode createForSend(final SqueakImageContext image, final CompiledCodeObject code) {
         /*
          * Only check for interrupts if method is relatively large. Avoid check if primitive method
          * or if a closure is activated (effectively what #primitiveClosureValueNoContextSwitch is

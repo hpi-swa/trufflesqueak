@@ -103,7 +103,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()", "isFraction(value, node)"})
         protected static final double doFraction(final NativeObject receiver, final long index, final PointersObject value,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
             return doDouble(receiver, index, SqueakImageContext.fromFraction(value, readNode, node));
         }
@@ -111,7 +111,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "isFallback(node, receiver, index, value)")
         protected static final Object doFail(final NativeObject receiver, final long index, final Object value,
-                        @Bind("this") final Node node) {
+                        @Bind final Node node) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
 

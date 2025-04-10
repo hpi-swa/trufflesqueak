@@ -25,7 +25,7 @@ abstract class CreateDoesNotUnderstandMessageNode extends AbstractNode {
 
     @Specialization
     protected static final PointersObject doCreate(final NativeObject selector, final Object receiver, final Object[] arguments,
-                    @Bind("this") final Node node,
+                    @Bind final Node node,
                     @Cached final AbstractPointersObjectWriteNode writeNode,
                     @Cached final SqueakObjectClassNode classNode) {
         final ClassObject receiverClass = classNode.executeLookup(node, receiver);

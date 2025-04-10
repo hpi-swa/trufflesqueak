@@ -280,7 +280,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"index <= receiver.getStackSize()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ContextObjectReadNode readNode) {
             return readNode.execute(node, receiver, CONTEXT.RECEIVER + index);
         }
@@ -291,7 +291,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "index <= receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final ContextObjectWriteNode writeNode) {
             writeNode.execute(node, receiver, CONTEXT.RECEIVER + index, value);
             return value;

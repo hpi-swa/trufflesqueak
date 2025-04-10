@@ -165,7 +165,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject point,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final InlinedBranchProfile errorProfile) {
@@ -182,7 +182,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readPointNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
@@ -252,7 +252,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject point,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final InlinedBranchProfile errorProfile) {
@@ -268,7 +268,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readPointNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode,

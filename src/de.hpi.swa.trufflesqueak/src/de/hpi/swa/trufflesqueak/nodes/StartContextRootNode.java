@@ -16,6 +16,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -31,6 +32,8 @@ public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
 
+    @CompilationFinal private final SqueakImageContext image;
+
     @Children private FrameStackWriteNode[] writeTempNodes;
     @Child private CheckForInterruptsQuickNode interruptHandlerNode;
     @Child private AbstractExecuteContextNode executeBytecodeNode;
@@ -39,7 +42,8 @@ public final class StartContextRootNode extends AbstractRootNode {
 
     public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code);
-        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
+        image = code.getSqueakClass().getImage();
+        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(image, code);
         executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
 
@@ -47,13 +51,18 @@ public final class StartContextRootNode extends AbstractRootNode {
     public Object execute(final VirtualFrame frame) {
         initializeFrame(frame);
         try {
+            if (image.enteringContextExceedsDepth()) {
+                CompilerDirectives.transferToInterpreter();
+                throw ProcessSwitch.create(GetOrCreateContextNode.getOrCreateUncached(frame));
+            }
             interruptHandlerNode.execute(frame);
             return executeBytecodeNode.execute(frame, initialPC);
         } catch (final NonVirtualReturn | ProcessSwitch nvr) {
-            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
+            /* {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw nvr;
         } finally {
+            image.exitingContext();
             materializeContextOnMethodExitNode.execute(frame);
         }
     }

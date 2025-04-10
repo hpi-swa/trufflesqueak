@@ -81,7 +81,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimBasicAt2Node extends AbstractBasicAtOrAtPutNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doSqueakObject(final Object receiver, final long index,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
                         @Cached final SqueakObjectAt0Node at0Node,
@@ -95,7 +95,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimBasicAt3Node extends AbstractBasicAtOrAtPutNode implements Primitive2WithFallback {
         @Specialization
         protected static final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
                         @Cached final SqueakObjectAt0Node at0Node,
@@ -109,7 +109,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimBasicAtPut3Node extends AbstractBasicAtOrAtPutNode implements Primitive2WithFallback {
         @Specialization
         protected static final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
@@ -123,7 +123,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimBasicAtPut4Node extends AbstractBasicAtOrAtPutNode implements Primitive3WithFallback {
         @Specialization
         protected static final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
@@ -137,7 +137,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final long doSqueakObject(final AbstractSqueakObject receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode) {
             return sizeNode.execute(node, receiver) - instSizeNode.execute(node, receiver);
@@ -149,7 +149,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode) {
             return sizeNode.execute(node, target) - instSizeNode.execute(node, target);
@@ -167,7 +167,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"obj.isIntType()", "inBounds1(index, obj.getIntLength())"})
         protected static final Object doNativeObjectInts(final NativeObject obj, final long index,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile isImmediateProfile) {
             return CharacterObject.valueOf(Integer.toUnsignedLong(obj.getInt(index - 1)), isImmediateProfile, node);
         }
@@ -256,7 +256,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"}, replaces = "doAtIntFinite")
         protected static final Object doAtInt(final NativeObject receiver, final long index,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(node, Float.intBitsToFloat(receiver.getInt(index - 1)));
         }
@@ -268,7 +268,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, replaces = "doAtLongFinite")
         protected static final Object doAtLong(final NativeObject receiver, final long index,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(node, Double.longBitsToDouble(receiver.getLong(index - 1)));
         }

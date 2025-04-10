@@ -33,7 +33,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     @Specialization(guards = {"getSqueakImageContext(frame).lastSeenContext != null"})
     protected final void doMaterialize(final VirtualFrame frame,
-                    @Bind("this") final Node node,
+                    @Bind final Node node,
                     @Cached final InlinedConditionProfile isNotLastSeenContextProfile,
                     @Cached final InlinedConditionProfile continueProfile,
                     @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {

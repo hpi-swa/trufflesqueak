@@ -183,6 +183,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
+    public final void unmark(final boolean currentMarkingFlag) {
+        assert getMarkingFlag() == currentMarkingFlag : "Object not marked with currentMarkingFlag: " + currentMarkingFlag;
+        toggleMarkingFlag();
+    }
+
     @SuppressWarnings("unused")
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         // Do nothing by default.

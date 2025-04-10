@@ -63,7 +63,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     @ExportMessage
     protected static final Object send(final AbstractSqueakObject receiver, final Message message, final Object[] arguments,
-                    @SuppressWarnings("unused") @Bind("$node") final Node node,
+                    @SuppressWarnings("unused") @Bind final Node node,
                     @Cached final PerformInteropSendNode performInteropSendNode) throws Exception {
         final SqueakImageContext image = SqueakImageContext.get(node);
         final boolean wasActive = image.interrupt.isActive();

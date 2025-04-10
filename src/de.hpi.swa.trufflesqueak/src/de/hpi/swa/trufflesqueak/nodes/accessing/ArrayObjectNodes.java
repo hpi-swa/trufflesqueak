@@ -355,7 +355,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isBooleanType()")
         protected final void doArrayOfBoolean(final Object[] target, final ArrayObject obj,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile isNilTagProfile) {
             final byte[] booleans = obj.getBooleanStorage();
             for (int i = 0; i < booleans.length; i++) {
@@ -365,7 +365,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isCharType()")
         protected final void doArrayOfChars(final Object[] target, final ArrayObject obj,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final char[] chars = obj.getCharStorage();
             for (int i = 0; i < chars.length; i++) {
@@ -375,7 +375,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isLongType()")
         protected final void doArrayOfLongs(final Object[] target, final ArrayObject obj,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final long[] longs = obj.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
@@ -385,7 +385,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isDoubleType()")
         protected final void doArrayOfDoubles(final Object[] target, final ArrayObject obj,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("isNilTagProfile") @Cached final InlinedConditionProfile isNilTagProfile) {
             final double[] doubles = obj.getDoubleStorage();
             for (int i = 0; i < doubles.length; i++) {

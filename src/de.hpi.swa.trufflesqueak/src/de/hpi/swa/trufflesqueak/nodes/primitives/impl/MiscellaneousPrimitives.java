@@ -103,7 +103,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
-        protected static final Object doImmeditate(final ClassObject classObject) {
+        protected static final Object doImmediate(final ClassObject classObject) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
 
@@ -112,11 +112,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
                 return NilObject.SINGLETON; // Class has not been instantiated yet
             }
-            try {
-                return ObjectGraphUtils.someInstanceOf(getContext(), classObject);
-            } catch (final IndexOutOfBoundsException e) {
-                throw PrimitiveFailed.GENERIC_ERROR;
-            }
+            return ObjectGraphUtils.someInstanceOf(getContext(), classObject);
         }
     }
 
@@ -336,7 +332,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.isEmptyType()"})
         protected static final boolean doEmptyArray(final ArrayObject receiver, final Object thang,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile noElementsProfile) {
             if (noElementsProfile.profile(node, receiver.getEmptyStorage() == 0)) {
                 return BooleanObject.FALSE;
@@ -416,21 +412,21 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final boolean doPointers(final PointersObject receiver, final Object thang,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
             return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
         }
 
         @Specialization
         protected static final boolean doVariablePointers(final VariablePointersObject receiver, final Object thang,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
             return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
         }
 
         @Specialization
         protected static final boolean doWeakPointers(final WeakVariablePointersObject receiver, final Object thang,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
             return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
         }
@@ -587,7 +583,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final Object doShallowCopy(final Object receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectShallowCopyNode shallowCopyNode) {
             return shallowCopyNode.execute(node, getContext(), receiver);
         }
@@ -648,7 +644,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimGetImmutabilityNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final boolean doGet(final Object receiver,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
             return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
@@ -659,7 +655,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimSetImmutabilityNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final boolean doGet(final Object receiver, @SuppressWarnings("unused") final boolean value,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectClassNode classNode) {
             // FIXME: implement immutability
             return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
@@ -726,7 +722,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         "!isNativeObject(receiver)", "!isAbstractPointersObject(receiver)", "!isContextObject(receiver)",
                         "receiverSize == sizeNode.execute(node, anotherObject)"}, limit = "1")
         protected static final AbstractSqueakObject doCopy(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash anotherObject,
-                        @SuppressWarnings("unused") @Bind("this") final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Bind("sizeNode.execute(node, receiver)") final int receiverSize,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
@@ -759,7 +755,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"!classObject.isImmediateClassType()"})
         protected final ArrayObject allInstances(final ClassObject classObject,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedConditionProfile isNilClass) {
             final SqueakImageContext image = getContext();
             if (isNilClass.profile(node, image.isNilClass(classObject))) {

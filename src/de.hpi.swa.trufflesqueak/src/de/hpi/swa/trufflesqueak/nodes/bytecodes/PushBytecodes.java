@@ -394,7 +394,7 @@ public final class PushBytecodes {
 
             @Specialization
             protected final void doPushLiteralVariable(final VirtualFrame frame,
-                            @Bind("this") final Node node,
+                            @Bind final Node node,
                             @Cached final SqueakObjectAt0Node at0Node,
                             @Cached final FrameStackPushNode pushNode) {
                 pushNode.execute(frame, at0Node.execute(node, literal, ASSOCIATION.VALUE));
@@ -528,7 +528,7 @@ public final class PushBytecodes {
 
         @Specialization
         protected final void doPushReceiver(final VirtualFrame frame,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final SqueakObjectAt0Node at0Node,
                         @Cached final FrameStackPushNode pushNode) {
             pushNode.execute(frame, at0Node.execute(node, FrameAccess.getReceiver(frame), variableIndex));
@@ -558,7 +558,7 @@ public final class PushBytecodes {
         @SuppressWarnings("truffle-static-method")
         @Specialization
         protected final void doPushRemoteTemp(final VirtualFrame frame,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached("create(frame, indexOfArray, false)") final FrameStackReadNode readTempNode,
                         @Cached final SqueakObjectAt0Node at0Node,
                         @Cached final FrameStackPushNode pushNode) {

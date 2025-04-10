@@ -815,7 +815,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         protected static final long doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
             final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
@@ -851,7 +851,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                         final PointersObject sslHandle,
                         final long propertyId,
                         final long anInteger,
-                        @Bind("this") final Node node,
+                        @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
             final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);

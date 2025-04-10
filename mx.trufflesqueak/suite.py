@@ -10,9 +10,9 @@ suite = {
     #  METADATA
     # ==========================================================================
     "name": "trufflesqueak",
-    "mxversion": "7.33.1",
+    "mxversion": "7.38.1",
     "versionConflictResolution": "latest",
-    "version": "24.1.2",
+    "version": "24.2.0",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-6.0-5053.zip",
         "cuis_test_image_tag": "21.3.0",
@@ -47,7 +47,7 @@ suite = {
             {
                 "name": "truffle",
                 "subdir": True,
-                "version": "vm-24.1.2",
+                "version": "vm-24.2.0",
                 "urls": [{"url": "https://github.com/oracle/graal", "kind": "git"}],
             }
         ],
@@ -108,22 +108,63 @@ suite = {
                 "<others>": {"<others>": {"optional": True}},
             },
         },
+        "GRAALJS_LANGUAGE": {
+            "digest": "sha512:d21f679d4ecd7e299781c6450f315997fe3e92687dc476b1998ea57fc47017457003bc78c966481d6ceae1a464944f0746596d86bdc6b217e7d6409334eb6e77",
+            "maven": {
+                "groupId": "org.graalvm.js",
+                "artifactId": "js-language",
+                "version": "24.2.0",
+            },
+            "dependencies": ["REGEX_LANGUAGE", "SHADOWED_ICU4J"],
+            "useModulePath": True,
+            "licence": "UPL",
+        },
+        "REGEX_LANGUAGE": {
+            "digest": "sha512:dcb0ac1f6f3f62fe5d7ef6cf89ac45e7e5985b69812809495f59aa984ba3a5f92f68478fbcc01be3fc3b60d3b555bbed36c9392c5bed6c3823755af54be28e4f",
+            "maven": {
+                "groupId": "org.graalvm.regex",
+                "artifactId": "regex",
+                "version": "24.2.0",
+            },
+            "dependencies": ["SHADOWED_ICU4J"],
+            "useModulePath": True,
+            "licence": "UPL",
+        },
+        "SHADOWED_ICU4J": {
+            "digest": "sha512:ac2649c594038e5b7d6b11919a521ab8919202095baca8c7cd77a19e261b69e4fe5387a7d991c67a81c0ad07f7a46444a967f7858b3ff6569355728f4c093980",
+            "maven": {
+                "groupId": "org.graalvm.shadowed",
+                "artifactId": "icu4j",
+                "version": "24.2.0",
+            },
+            "dependencies": ["SHADOWED_XZ"],
+            "useModulePath": True,
+        },
+        "SHADOWED_XZ": {
+            "digest": "sha512:51ef344d13845ed79121bf20ccf56bd548af223a5f057d993f5f31edfcdc54631ce0f0696deb5b6eb6ef999e94063c0e12ab7e56570564bca15dc7509d36721f",
+            "maven": {
+                "groupId": "org.graalvm.shadowed",
+                "artifactId": "xz",
+                "version": "24.2.0",
+            },
+            "useModulePath": True,
+        },
         "TRUFFLE-ENTERPRISE": {
-            "digest": "sha512:ce4cefe6706110cf352271c58d519cfed5bc73d419f1946ff03f0064a80d1a64e633cd4a1f6aa93c3e732b422ff69c132ae73767972526dbf4063cae7cc9df60",
+            "digest": "sha512:492d8586d34d7af86683783219283057df6675038de76cbe91a57a6a1084f5c180dccf387ebe331736990e1c0d8a01d8fdde05cf6d34edd46c321fce555a7c60",
             "maven": {
                 "groupId": "org.graalvm.truffle",
                 "artifactId": "truffle-enterprise",
-                "version": "24.1.2",
+                "version": "24.2.0",
             },
             "useModulePath": True,
             "licence": "GFTC",
         },
         "SDK-NATIVEBRIDGE": {
-            "digest": "sha512:1e25b3b58ae01ef929ad71c9c1bb01376258919384810634e23a483836f53e9e77f1c5317c6220fee6bc3e7f5f36359c2ce84e5287c8335208431c675fa0925a",
+            "digest": "sha512:d417231a5f05993017ae3e1c67b420d24a2dd527ac982f40abb3c1116434f56d51ab360add7db48ca2f077165d7548e878264adfc995355ac9b52ccc60e66774",
             "maven": {
                 "groupId": "org.graalvm.sdk",
                 "artifactId": "nativebridge",
-                "version": "24.1.2",
+                "version": "24.2.0",
             },
             "useModulePath": True,
         },
@@ -223,6 +264,8 @@ suite = {
                 "de.hpi.swa.trufflesqueak",
                 "mx:JUNIT",
                 "sdk:MAVEN_DOWNLOADER",
+                "GRAALJS_LANGUAGE",
+                "REGEX_LANGUAGE",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
