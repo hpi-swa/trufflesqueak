@@ -130,10 +130,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     protected abstract void fillInVariablePart(SqueakImageChunk chunk, int instSize);
 
     public final ObjectLayout getLayout() {
-        if (layout == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            layout = getSqueakClass().getLayout();
-        }
+        assert layout != null;
         return layout;
     }
 
