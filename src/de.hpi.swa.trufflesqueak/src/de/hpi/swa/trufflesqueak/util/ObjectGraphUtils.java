@@ -130,7 +130,19 @@ public final class ObjectGraphUtils {
             }
         }
 
-        // Now, trace any ephemerons that have marked keys until there are only unmarked keys left.
+        // Now, trace the ephemerons until there are only ephemerons whose keys are reachable through ephemerons.
+        traceRemainingEphemerons(ephemeronsToBeMarked, pending, currentMarkingFlag);
+
+        // Make sure that they do not signal more than once.
+        image.ephemeronsQueue.addAll(ephemeronsToBeMarked);
+        for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) {
+            ephemeronObject.setHasBeenSignaled();
+        }
+        return true;
+    }
+
+    private static void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer pending, final boolean currentMarkingFlag) {
+        // Trace the ephemerons that have marked keys until there are only ephemerons with unmarked keys left.
         while (true) {
             boolean finished = true;
             Iterator<EphemeronObject> iterator = ephemeronsToBeMarked.iterator();
@@ -146,21 +158,12 @@ public final class ObjectGraphUtils {
             finishPendingMarking(pending, currentMarkingFlag);
         }
 
-        if (ephemeronsToBeMarked.isEmpty()) {
-            return !image.ephemeronsQueue.isEmpty();
-        }
+        if (ephemeronsToBeMarked.isEmpty()) return;
 
         // Now, we have ephemerons whose keys are reachable only through ephemerons.
-        // Mark them.
+        // Mark them to keep consistent marking flags.
         for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) { pending.tracePointers(ephemeronObject); }
         finishPendingMarking(pending, currentMarkingFlag);
-
-        // Make sure that they do not signal more than once.
-        image.ephemeronsQueue.addAll(ephemeronsToBeMarked);
-        for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) {
-            ephemeronObject.setHasBeenSignaled();
-        }
-        return true;
     }
 
     private static void finishPendingMarking(final ObjectTracer pending, final boolean currentMarkingFlag) {

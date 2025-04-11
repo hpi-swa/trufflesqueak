@@ -43,7 +43,7 @@ collection.
 Consider a traditional implementation of a property table (for example, dependents in MVC).  There is a Dictionary in
 ActiveModel, ActionMaps, into which objects wishing to have dependents are entered as keys, with the value being the
 sequence of their dependents.  Since a key's dependents (if they are like views/morphs, etc in MVC) will refer directly
-back to the key (e.g. in their model inst var etc), the key remains srongly referenced; there is no way to use weak
+back to the key (e.g. in their model inst var etc), the key remains strongly referenced; there is no way to use weak
 collections in DependentsFields to allow the cycle of an object and its dependents to be collected.  If ActionMaps
 were to use a WeakArray to hold the associations from objects to their dependents then those associations, and the
 dependencies they record, would simply be lost since the only reference to the associations is from ActionMaps.
@@ -73,7 +73,7 @@ At the end of the initial scavenge or mark-sweep phase, this set of triggerable 
 in the set whose key is reachable are traced, and removed from the set.  i.e. what has happened was that their key was
 found reachable from the roots after they were added in set list (the garbage collector traces the object graph in an
 arbitrary order, typically breadth first in scavenging, depth-first in mark-sweep).  The set is then populated only
-with ephemerons whose keys are as yet untraced, and hence only referenced from the ephemerons in the set..  All these
+with ephemerons whose keys are as yet untraced, and hence only referenced from the ephemerons in the set.  All these
 ephemerons are added to the finalization queue for processing in the image above, and all objects reachable from these
 ephemerons are traced (scavenged or marked).  This tracing phase may encounter new potentially triggerable ephemerons
 which will be added to the set (not likely in practice, but essential for sound semantics).  So the triggering phase
@@ -83,7 +83,7 @@ continues until the system reaches a fixed point with an empty triggerable ephem
 
 public final class EphemeronObject extends AbstractPointersObject {
 
-    private boolean hasBeenSignaled = false;
+    private boolean hasBeenSignaled;
 
     public EphemeronObject(final SqueakImageContext image, final long header, final ClassObject classObject) {
         super(header, classObject);
