@@ -26,6 +26,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -176,11 +177,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private void setLiteralsAndBytes(final int header, final Object[] literals, final byte[] bytes) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.header = header;
         this.literals = literals;
         this.bytes = bytes;
-        renewCallTarget();
+        callTargetStable().invalidate();
     }
 
     public Source getSource() {
@@ -214,35 +214,27 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public RootCallTarget getCallTarget() {
         if (getExecutionData().callTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            initializeCallTargetUnsafe();
+            final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
+            assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
+            executionData.callTarget = new StartContextRootNode(language, this).getCallTarget();
         }
         return executionData.callTarget;
     }
 
     private void invalidateCallTarget() {
-        if (!hasExecutionData() || executionData.callTarget != null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callTargetStable().invalidate();
+        invalidateCallTarget("CompiledCodeObject modification");
+    }
+
+    private void invalidateCallTarget(final String reason) {
+        if (hasExecutionData()) {
+            callTargetStable().invalidate(reason);
             executionData.callTarget = null;
         }
     }
 
-    private void renewCallTarget() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        callTargetStable().invalidate();
-        initializeCallTargetUnsafe();
-    }
-
-    private void initializeCallTargetUnsafe() {
-        CompilerAsserts.neverPartOfCompilation();
-        final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
-        assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
-        getExecutionData().callTarget = new StartContextRootNode(language, this).getCallTarget();
-    }
-
     public void flushCache() {
         /* Invalidate callTargetStable assumption to ensure this method is released from caches. */
-        callTargetStable().invalidate("primitive 116");
+        invalidateCallTarget("primitive 116");
     }
 
     private CyclicAssumption callTargetStable() {
@@ -356,7 +348,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public void become(final CompiledCodeObject other) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final int header2 = other.header;
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;
@@ -373,37 +364,25 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             getExecutionData().shadowBlocks = shadowBlocks2;
             executionData.outerMethod = outerMethod2;
         }
-        callTargetStable().invalidate();
+        other.invalidateCallTarget();
+        invalidateCallTarget();
     }
 
     public long at0(final long index) {
         final int offset = getBytecodeOffset();
         if (index < offset) {
-            CompilerDirectives.transferToInterpreter();
-            // FIXME: check bounds of compiled code objects
-            throw new ArrayIndexOutOfBoundsException();
+            throw PrimitiveFailed.BAD_INDEX;
         } else {
-            return Byte.toUnsignedLong(UnsafeUtils.getByte(bytes, (int) index - offset));
+            return Byte.toUnsignedLong(bytes[(int) index - offset]);
         }
     }
 
-    public void atput0(final long longIndex, final Object obj) {
-        final int index = (int) longIndex;
-        assert index >= 0;
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        if (index < getBytecodeOffset()) {
-            assert index % SqueakImageConstants.WORD_SIZE == 0;
-            setLiteral(index / SqueakImageConstants.WORD_SIZE, obj);
+    public void atput0(final long index, final long value) {
+        final int offset = getBytecodeOffset();
+        if (index < offset) {
+            throw PrimitiveFailed.BAD_INDEX;
         } else {
-            final int realIndex = index - getBytecodeOffset();
-            assert realIndex < bytes.length;
-            if (obj instanceof final Integer i) {
-                bytes[realIndex] = i.byteValue();
-            } else if (obj instanceof final Long l) {
-                bytes[realIndex] = l.byteValue();
-            } else {
-                bytes[realIndex] = (byte) obj;
-            }
+            bytes[(int) index - offset] = (byte) value;
             invalidateCallTarget();
         }
     }
@@ -414,7 +393,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public void setLiteral(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         if (index == 0) {
             assert obj instanceof Long;
             final int oldNumLiterals = getNumLiterals();
