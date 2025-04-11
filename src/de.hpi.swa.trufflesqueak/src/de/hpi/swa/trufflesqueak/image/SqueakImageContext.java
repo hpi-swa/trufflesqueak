@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.image;
 
 import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +46,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.CompiledCodeHeaderUtils;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -172,6 +174,10 @@ public final class SqueakImageContext {
     /* Low space handling */
     private static final int LOW_SPACE_NUM_SKIPPED_SENDS = 4;
     private int lowSpaceSkippedSendsCount;
+
+    /* Ephemeron support */
+    public boolean containsEphemerons = false;
+    public final ArrayDeque<EphemeronObject> ephemeronsQueue = new ArrayDeque<>();
 
     /* Context stack depth */
     @CompilationFinal private final int maxContextStackDepth;
