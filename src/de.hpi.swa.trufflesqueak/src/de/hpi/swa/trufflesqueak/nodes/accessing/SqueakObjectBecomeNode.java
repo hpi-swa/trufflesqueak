@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
@@ -87,6 +88,12 @@ public abstract class SqueakObjectBecomeNode extends AbstractNode {
 
     @Specialization(guards = {"left != right"})
     protected static final boolean doVariablePointers(final VariablePointersObject left, final VariablePointersObject right) {
+        left.become(right);
+        return true;
+    }
+
+    @Specialization(guards = {"left != right"})
+    protected static final boolean doEphemeron(final EphemeronObject left, final EphemeronObject right) {
         left.become(right);
         return true;
     }
