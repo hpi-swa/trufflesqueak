@@ -739,6 +739,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 172)
     protected abstract static class PrimFetchMournerNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
+        @SuppressWarnings("unused")
         @Specialization
         protected final AbstractSqueakObject fetchMourner(final ClassObject classObject) {
             final SqueakImageContext image = getContext();
@@ -850,7 +851,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since
                 // startup (read-only)
                 case 10 -> MiscUtils.getCollectionTime(MiscUtils.GC_YOUNG_GEN_NAMES);
-                // tenures of surving objects since startup (read-only)
+                // tenures of surviving objects since startup (read-only)
                 case 11 -> 1L;
                 // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
                 case 12, 13, 14, 15, 16, 17, 18, 19 -> 0L;

@@ -79,12 +79,12 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
 
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
     protected static final EphemeronObject doEphemeronCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
-                    @Cached("getEphemeronLayoutOrNull(image, classObject)") final ObjectLayout cachedLayout) {
+                    @Cached("getEphemeronLayoutOrNull(classObject)") final ObjectLayout cachedLayout) {
         assert extraSize == 0 && classObject.isEphemeronClassType();
         return new EphemeronObject(image, classObject, cachedLayout);
     }
 
-    protected static final ObjectLayout getEphemeronLayoutOrNull(final SqueakImageContext image, final ClassObject classObject) {
+    protected static final ObjectLayout getEphemeronLayoutOrNull(final ClassObject classObject) {
         return classObject.isEphemeronClassType() ? classObject.getLayout() : null;
     }
 
