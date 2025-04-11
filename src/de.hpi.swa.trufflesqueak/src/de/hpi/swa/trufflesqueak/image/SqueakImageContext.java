@@ -176,7 +176,7 @@ public final class SqueakImageContext {
     private int lowSpaceSkippedSendsCount;
 
     /* Ephemeron support */
-    public boolean containsEphemerons = false;
+    public boolean containsEphemerons;
     public final ArrayDeque<EphemeronObject> ephemeronsQueue = new ArrayDeque<>();
 
     /* Context stack depth */
