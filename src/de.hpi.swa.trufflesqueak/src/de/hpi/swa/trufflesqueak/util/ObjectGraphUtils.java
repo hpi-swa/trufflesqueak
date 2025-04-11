@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.util.AbstractCollection;
 import java.util.ArrayDeque;
+import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -19,6 +20,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
 public final class ObjectGraphUtils {
@@ -101,6 +103,75 @@ public final class ObjectGraphUtils {
         return NilObject.SINGLETON;
     }
 
+    @TruffleBoundary
+    public static boolean checkEphemerons(final SqueakImageContext image) {
+        final ObjectTracer pending = new ObjectTracer(image);
+        final boolean currentMarkingFlag = pending.getCurrentMarkingFlag();
+        final ArrayDeque<EphemeronObject> ephemeronsToBeMarked = new ArrayDeque<>();
+        AbstractSqueakObjectWithClassAndHash currentObject;
+
+        while ((currentObject = pending.getNextPending()) != null) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
+                // Ephemerons are traced in a special way.
+                if (currentObject instanceof final EphemeronObject ephemeronObject) {
+                    // An Ephemeron is traced normally if it has been signaled or its key has been marked already.
+                    // Otherwise, they are traced after all other objects.
+                    if (ephemeronObject.hasBeenSignaled() || ephemeronObject.keyHasBeenMarked(currentMarkingFlag)) {
+                        pending.tracePointers(currentObject);
+                    }
+                    else {
+                        ephemeronsToBeMarked.add(ephemeronObject);
+                    }
+                }
+                // Normal object
+                else {
+                    pending.tracePointers(currentObject);
+                }
+            }
+        }
+
+        // Now, trace any ephemerons that have marked keys until there are only unmarked keys left.
+        while (true) {
+            boolean finished = true;
+            Iterator<EphemeronObject> iterator = ephemeronsToBeMarked.iterator();
+            while (iterator.hasNext()) {
+                EphemeronObject ephemeronObject = iterator.next();
+                if (ephemeronObject.keyHasBeenMarked(currentMarkingFlag)) {
+                    pending.tracePointers(ephemeronObject);
+                    iterator.remove();
+                    finished = false;
+                }
+            }
+            if (finished)   break;
+            finishPendingMarking(pending, currentMarkingFlag);
+        }
+
+        if (ephemeronsToBeMarked.isEmpty()) {
+            return !image.ephemeronsQueue.isEmpty();
+        }
+
+        // Now, we have ephemerons whose keys are reachable only through ephemerons.
+        // Mark them.
+        for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) { pending.tracePointers(ephemeronObject); }
+        finishPendingMarking(pending, currentMarkingFlag);
+
+        // Make sure that they do not signal more than once.
+        image.ephemeronsQueue.addAll(ephemeronsToBeMarked);
+        for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) {
+            ephemeronObject.setHasBeenSignaled();
+        }
+        return true;
+    }
+
+    private static void finishPendingMarking(final ObjectTracer pending, final boolean currentMarkingFlag) {
+        AbstractSqueakObjectWithClassAndHash currentObject;
+        while ((currentObject = pending.getNextPending()) != null) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
+                pending.tracePointers(currentObject);
+            }
+        }
+    }
+
     public static final class ObjectTracer {
         /* Power of two, large enough to avoid resizing. */
         private static final int PENDING_INITIAL_SIZE = 1 << 17;
@@ -114,6 +185,10 @@ public final class ObjectGraphUtils {
             // Add roots
             addIfUnmarked(image.specialObjectsArray);
             addObjectsFromTruffleFrames();
+            // Unreachable ephemerons in the queue must be kept visible to the rest of the image.
+            // These are technically "dead" and do not need to be saved when the image is stored on disk,
+            // but by tracing them we avoid an expensive reachability test in the fetch-next-mourner primitive.
+            deque.addAll(image.ephemeronsQueue);
         }
 
         private void addObjectsFromTruffleFrames() {

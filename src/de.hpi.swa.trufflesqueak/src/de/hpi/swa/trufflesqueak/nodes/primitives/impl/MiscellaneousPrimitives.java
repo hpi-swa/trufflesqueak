@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -322,6 +323,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         protected static final boolean doContext(final ContextObject receiver, final Object thang) {
             return BooleanObject.wrap(receiver.pointsTo(thang));
+        }
+
+        @Specialization
+        protected static final boolean doEphemeron(final EphemeronObject receiver, final Object thang,
+                        @Bind final Node node,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
         }
 
         @Specialization(guards = {"receiver.isEmptyType()"})
@@ -725,6 +733,21 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 atput0Node.execute(node, receiver, i, at0Node.execute(node, anotherObject, i));
             }
             return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 172)
+    protected abstract static class PrimFetchMournerNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
+        @Specialization
+        protected final AbstractSqueakObject fetchMourner(final ClassObject classObject) {
+            final SqueakImageContext image = getContext();
+            if (image.ephemeronsQueue.isEmpty()) {
+                return NilObject.SINGLETON;
+            }
+            else {
+                return image.ephemeronsQueue.removeFirst();
+            }
         }
     }
 
