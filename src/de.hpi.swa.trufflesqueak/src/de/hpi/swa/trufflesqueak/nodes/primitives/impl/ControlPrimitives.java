@@ -119,6 +119,7 @@ import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     /* primitiveFail (#19) handled specially. */
@@ -797,8 +798,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             final SqueakImageContext image = getContext();
             final boolean hasPendingFinalizations = LogUtils.GC_IS_LOGGABLE_FINE ? hasPendingFinalizationsWithLogging(image) : hasPendingFinalizations(image);
-            if (hasPendingFinalizations) {
-                image.interrupt.setPendingFinalizations(true);
+            final boolean hasPendingEphemerons = image.containsEphemerons && ObjectGraphUtils.checkEphemerons(image);
+            if (hasPendingFinalizations || hasPendingEphemerons) {
+                image.interrupt.setPendingFinalizations();
             }
             return MiscUtils.runtimeFreeMemory();
         }
