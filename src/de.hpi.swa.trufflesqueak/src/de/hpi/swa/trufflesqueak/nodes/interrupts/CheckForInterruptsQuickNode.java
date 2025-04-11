@@ -91,33 +91,36 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
             }
             /* Exclude interrupts case from compilation. */
             CompilerDirectives.transferToInterpreter();
-            istate.resetTrigger();
-            final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
-            if (istate.interruptPending()) {
-                LogUtils.INTERRUPTS.fine("User interrupt");
-                istate.interruptPending = false; // reset interrupt flag
-                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
-            }
-            if (istate.nextWakeUpTickTrigger()) {
-                LogUtils.INTERRUPTS.fine("Timer interrupt");
-                istate.nextWakeupTick = 0; // reset timer interrupt
-                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
-            }
-            if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
-                LogUtils.INTERRUPTS.fine("Finalization interrupt");
-                istate.setPendingFinalizations(false);
-                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
-            }
-            if (istate.hasSemaphoresToSignal()) {
-                LogUtils.INTERRUPTS.fine("Semaphore interrupt");
-                final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
-                if (!externalObjects.isEmptyType()) { // signal external semaphores
-                    final Object[] semaphores = externalObjects.getObjectStorage();
-                    Integer semaIndex;
-                    while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                        SignalSemaphoreNode.executeUncached(frame, image, semaphores[semaIndex - 1]);
+            try {
+                final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
+                if (istate.interruptPending()) {
+                    LogUtils.INTERRUPTS.fine("User interrupt");
+                    istate.interruptPending = false; // reset interrupt flag
+                    SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+                }
+                if (istate.nextWakeUpTickTrigger()) {
+                    LogUtils.INTERRUPTS.fine("Timer interrupt");
+                    istate.nextWakeupTick = 0; // reset timer interrupt
+                    SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+                }
+                if (istate.hasPendingFinalizations()) { // signal any pending finalizations
+                    LogUtils.INTERRUPTS.fine("Finalization interrupt");
+                    istate.clearPendingFinalizations();
+                    SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+                }
+                if (istate.hasSemaphoresToSignal()) {
+                    LogUtils.INTERRUPTS.fine("Semaphore interrupt");
+                    final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
+                    if (!externalObjects.isEmptyType()) { // signal external semaphores
+                        final Object[] semaphores = externalObjects.getObjectStorage();
+                        Integer semaIndex;
+                        while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
+                            SignalSemaphoreNode.executeUncached(frame, image, semaphores[semaIndex - 1]);
+                        }
                     }
                 }
+            } finally {
+                istate.resetTrigger();
             }
         }
 

@@ -37,32 +37,35 @@ public final class CheckForInterruptsFullNode extends Node {
         if (!istate.shouldTrigger()) {
             return;
         }
-        istate.resetTrigger();
-        if (istate.interruptPending()) {
-            LogUtils.INTERRUPTS.fine("User interrupt");
-            istate.interruptPending = false; // reset interrupt flag
-            signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
-        }
-        if (istate.nextWakeUpTickTrigger()) {
-            LogUtils.INTERRUPTS.fine("Timer interrupt");
-            istate.nextWakeupTick = 0; // reset timer interrupt
-            signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
-        }
-        if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
-            LogUtils.INTERRUPTS.fine("Finalization interrupt");
-            istate.setPendingFinalizations(false);
-            signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
-        }
-        if (istate.hasSemaphoresToSignal()) {
-            LogUtils.INTERRUPTS.fine("Semaphore interrupt");
-            final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
-            if (!externalObjects.isEmptyType()) { // signal external semaphores
-                final Object[] semaphores = externalObjects.getObjectStorage();
-                Integer semaIndex;
-                while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                    signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
+        try {
+            if (istate.interruptPending()) {
+                LogUtils.INTERRUPTS.fine("User interrupt");
+                istate.interruptPending = false; // reset interrupt flag
+                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+            }
+            if (istate.nextWakeUpTickTrigger()) {
+                LogUtils.INTERRUPTS.fine("Timer interrupt");
+                istate.nextWakeupTick = 0; // reset timer interrupt
+                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            }
+            if (istate.hasPendingFinalizations()) { // signal any pending finalizations
+                LogUtils.INTERRUPTS.fine("Finalization interrupt");
+                istate.clearPendingFinalizations();
+                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+            }
+            if (istate.hasSemaphoresToSignal()) {
+                LogUtils.INTERRUPTS.fine("Semaphore interrupt");
+                final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
+                if (!externalObjects.isEmptyType()) { // signal external semaphores
+                    final Object[] semaphores = externalObjects.getObjectStorage();
+                    Integer semaIndex;
+                    while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
+                        signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
+                    }
                 }
             }
+        } finally {
+            istate.resetTrigger();
         }
     }
 }
