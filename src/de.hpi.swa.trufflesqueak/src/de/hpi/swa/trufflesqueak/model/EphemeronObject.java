@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-/*
+/**
 From Cuis 7.3: Ephemeron - eem 12/18/2024 10:26:19
 
 An Ephemeron is an association known to the garbage collection system, allowing it to function as a "pre-mortem"

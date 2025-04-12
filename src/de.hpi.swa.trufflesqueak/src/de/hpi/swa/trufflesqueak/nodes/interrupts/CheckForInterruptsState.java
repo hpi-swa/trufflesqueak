@@ -22,11 +22,17 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public final class CheckForInterruptsState {
     private static final String CHECK_FOR_INTERRUPTS_THREAD_NAME = "TruffleSqueakCheckForInterrupts";
 
-    private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 20;
+    private static final int DEFAULT_INTERRUPT_CHECK_MILLISECONDS = 2;
 
     private final SqueakImageContext image;
     private ScheduledExecutorService executor;
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
+
+    /**
+     * `interruptCheckMilliseconds` is the interval between updates to 'shouldTrigger'.
+     * This controls the timing accuracy of Smalltalk Delays.
+     */
+    private int interruptCheckMilliseconds;
 
     private boolean isActive = true;
     protected long nextWakeupTick;
@@ -45,6 +51,7 @@ public final class CheckForInterruptsState {
 
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
+        this.interruptCheckMilliseconds = DEFAULT_INTERRUPT_CHECK_MILLISECONDS;
         if (image.options.disableInterruptHandler()) {
             image.printToStdOut("Interrupt handler disabled...");
         }
@@ -55,14 +62,13 @@ public final class CheckForInterruptsState {
         if (image.options.disableInterruptHandler()) {
             return;
         }
-        executor = Executors.newSingleThreadScheduledExecutor(r -> {
-            final Thread t = new Thread(r, CHECK_FOR_INTERRUPTS_THREAD_NAME);
-            t.setDaemon(true);
-            return t;
-        });
-        interruptChecks = executor.scheduleWithFixedDelay(() -> {
-            if (!shouldTrigger) updateShouldTrigger();
-        }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
+        executor =
+                Executors.newSingleThreadScheduledExecutor(r -> {
+                    final Thread t = new Thread(r, CHECK_FOR_INTERRUPTS_THREAD_NAME);
+                    t.setDaemon(true);
+                    return t;
+                });
+        createOrUpdateInterruptChecks();
     }
 
     @TruffleBoundary
@@ -72,26 +78,79 @@ public final class CheckForInterruptsState {
         }
     }
 
-    private void updateShouldTrigger() {
-        shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || hasPendingFinalizations() || hasSemaphoresToSignal());
+    @TruffleBoundary
+    private void createOrUpdateInterruptChecks() {
+        if (executor != null) {
+            if (interruptChecks != null && !interruptChecks.isCancelled()) {
+                interruptChecks.cancel(false);
+            }
+            interruptChecks =
+                    executor.scheduleWithFixedDelay(() -> {
+                        if (!shouldTrigger) setShouldTriggerIfNeeded();
+                    }, interruptCheckMilliseconds, interruptCheckMilliseconds, TimeUnit.MILLISECONDS);
+        }
+    }
+    
+    /* Interrupt check interval */
+
+    public int getInterruptCheckMilliseconds() { return interruptCheckMilliseconds; }
+
+    public void setInterruptCheckMilliseconds(final int milliseconds) {
+        interruptCheckMilliseconds = Math.max(1, milliseconds);
+        createOrUpdateInterruptChecks();
     }
 
-    public boolean shouldTrigger() {
-        return shouldTrigger;
-    }
+    /* Interrupt trigger state */
+
+    public boolean shouldTrigger() { return shouldTrigger; }
 
     public void resetTrigger() {
-        /*
+        /**
          CheckForInterrupts***Node signals semaphores as part of interrupt handling. If the semaphore signalled wakes a
          process with higher priority than the current process, a ProcessSwitch exception will be raised, and the
          remaining interrupts will be left unhandled. Rather than simply resetting shouldTrigger, we must recompute it.
         */
-        updateShouldTrigger();
+        setShouldTriggerIfNeeded();
     }
+
+    private void setShouldTriggerIfNeeded() {
+        shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || hasPendingFinalizations() || hasSemaphoresToSignal());
+    }
+
+    /* Enable / disable interrupts */
+
+    public boolean isActive() { return isActive; }
+
+    public void activate() {
+        isActive = true;
+        setShouldTriggerIfNeeded();
+    }
+
+    public void deactivate() {
+        isActive = false;
+        shouldTrigger = false;
+    }
+
+    /* User interrupt */
+
+    protected boolean interruptPending() { return interruptPending; }
 
     public void setInterruptPending() {
         interruptPending = true;
         shouldTrigger = isActive;
+    }
+
+    /* Timer interrupt */
+
+    protected boolean nextWakeUpTickTrigger() {
+        if (nextWakeupTick != 0) {
+            final long time = MiscUtils.currentTimeMillis();
+            if (time >= nextWakeupTick) {
+                LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick);
+                return true;
+            }
+        }
+        return false;
     }
 
     public void setNextWakeupTick(final long msTime) {
@@ -105,33 +164,9 @@ public final class CheckForInterruptsState {
         nextWakeupTick = msTime;
     }
 
-    public boolean isActive() {
-        return isActive;
-    }
+    /* Finalization interrupt */
 
-    public void activate() {
-        isActive = true;
-    }
-
-    public void deactivate() {
-        isActive = false;
-        resetTrigger();
-    }
-
-    protected boolean interruptPending() {
-        return interruptPending;
-    }
-
-    protected boolean nextWakeUpTickTrigger() {
-        if (nextWakeupTick != 0) {
-            final long time = MiscUtils.currentTimeMillis();
-            if (time >= nextWakeupTick) {
-                LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick);
-                return true;
-            }
-        }
-        return false;
-    }
+    protected boolean hasPendingFinalizations() { return hasPendingFinalizations; }
 
     public void clearPendingFinalizations() { hasPendingFinalizations = false; }
 
@@ -140,7 +175,7 @@ public final class CheckForInterruptsState {
         shouldTrigger = isActive;
     }
 
-    protected boolean hasPendingFinalizations() { return hasPendingFinalizations; }
+    /* Semaphore interrupts */
 
     protected boolean hasSemaphoresToSignal() {
         return !semaphoresToSignal.isEmpty();
@@ -149,8 +184,6 @@ public final class CheckForInterruptsState {
     protected Integer nextSemaphoreToSignal() {
         return semaphoresToSignal.pollFirst();
     }
-
-    public static int getInterruptChecksEveryNms() { return INTERRUPT_CHECKS_EVERY_N_MILLISECONDS; }
 
     @TruffleBoundary
     public void signalSemaphoreWithIndex(final int index) {
