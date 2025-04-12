@@ -739,9 +739,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 172)
     protected abstract static class PrimFetchMournerNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-        @SuppressWarnings("unused")
         @Specialization
-        protected final AbstractSqueakObject fetchMourner(final ClassObject classObject) {
+        protected final AbstractSqueakObject fetchMourner(@SuppressWarnings("unused") final ClassObject classObject) {
             final SqueakImageContext image = getContext();
             if (image.ephemeronsQueue.isEmpty()) {
                 return NilObject.SINGLETON;
@@ -870,7 +869,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // memory headroom when growing object memory (rw)
                 case 25 -> 1L;
                 // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
-                case 26 -> (long) CheckForInterruptsState.getInterruptChecksEveryNms();
+                case 26 -> (long) image.interrupt.getInterruptCheckMilliseconds();
                 // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL
                 // marking
                 case 27 -> 0L;
@@ -976,9 +975,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 default -> NilObject.SINGLETON;
             };
         }
+
+        protected static void vmParameterAtPut(final SqueakImageContext image, final int index, final long parameter) {
+            switch (index) {
+                // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
+                case 26 -> image.interrupt.setInterruptCheckMilliseconds((int) parameter);
+            };
+        }
     }
 
-    @GenerateNodeFactory
+@GenerateNodeFactory
     @SqueakPrimitive(indices = 254)
     protected abstract static class PrimVMParameters1Node extends AbstractPrimVMParametersNode implements Primitive0 {
         /**
@@ -1023,11 +1029,20 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 254)
     protected abstract static class PrimVMParameters3Node extends AbstractPrimVMParametersNode implements Primitive2WithFallback {
-        @SuppressWarnings("unused")
         @Specialization
-        protected static final NilObject getVMParameters(final Object receiver, final long index, final Object value) {
-            return NilObject.SINGLETON; // ignore writes
+        protected final Object setVMParameters(@SuppressWarnings("unused") final Object receiver, final long index, final long value) {
+            SqueakImageContext image = getContext();
+            final int theIndex = MiscUtils.toIntExact(index);
+            final Object result = vmParameterAt(image, theIndex);
+            vmParameterAtPut(image, theIndex, value);
+            return result;
         }
+
+        @Specialization
+        protected final Object setVMParameters(@SuppressWarnings("unused") final Object receiver, final long index, final Object value) {
+            return vmParameterAt(getContext(), MiscUtils.toIntExact(index)); // ignore writes
+        }
+
     }
 
     /* Primitive 255 is reserved for RSqueak/VM and no longer needed in TruffleSqueak. */
