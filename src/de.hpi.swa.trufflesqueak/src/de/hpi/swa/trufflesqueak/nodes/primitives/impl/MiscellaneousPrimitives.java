@@ -977,10 +977,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         protected static void vmParameterAtPut(final SqueakImageContext image, final int index, final long parameter) {
-            switch (index) {
-                // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
-                case 26 -> image.interrupt.setInterruptCheckMilliseconds((int) parameter);
-            };
+            // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
+            if (index == 26) {
+                image.interrupt.setInterruptCheckMilliseconds((int) parameter);
+            }
         }
     }
 
