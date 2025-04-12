@@ -90,7 +90,7 @@ public final class CheckForInterruptsState {
                     }, interruptCheckMilliseconds, interruptCheckMilliseconds, TimeUnit.MILLISECONDS);
         }
     }
-    
+
     /* Interrupt check interval */
 
     public int getInterruptCheckMilliseconds() { return interruptCheckMilliseconds; }
