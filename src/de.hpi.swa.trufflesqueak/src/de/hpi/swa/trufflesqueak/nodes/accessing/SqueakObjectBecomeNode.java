@@ -15,6 +15,7 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -45,8 +46,7 @@ public abstract class SqueakObjectBecomeNode extends AbstractNode {
 
     @Specialization(guards = {"left != right"})
     protected static final boolean doClass(final ClassObject left, final ClassObject right) {
-        left.become(right);
-        return true;
+        return BooleanObject.wrap(left.become(right));
     }
 
     @Specialization(guards = {"left != right"})

@@ -68,7 +68,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal(dimensions = 1) private Object[] literals;
     @CompilationFinal(dimensions = 1) private byte[] bytes;
 
-    @CompilationFinal private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+    private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
 
     @CompilationFinal private ExecutionData executionData;
 
@@ -213,7 +213,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public RootCallTarget getCallTarget() {
         if (getExecutionData().callTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
             assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
             executionData.callTarget = new StartContextRootNode(language, this).getCallTarget();
@@ -417,7 +417,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Idempotent
     public DispatchPrimitiveNode getPrimitiveNodeOrNull() {
         if (primitiveNodeOrNull == UNINITIALIZED_PRIMITIVE_NODE) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             if (hasPrimitive()) {
                 final AbstractPrimitiveNode nodeOrNull = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
                 if (nodeOrNull != null) {
@@ -428,6 +428,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             } else {
                 primitiveNodeOrNull = null;
             }
+            assert primitiveNodeOrNull != UNINITIALIZED_PRIMITIVE_NODE : "initialization of primitive node failed";
         }
         return primitiveNodeOrNull;
     }

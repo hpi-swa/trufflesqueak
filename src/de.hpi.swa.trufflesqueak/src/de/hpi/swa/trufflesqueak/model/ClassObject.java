@@ -211,8 +211,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setInstancesAreClasses() {
+        CompilerAsserts.neverPartOfCompilation();
         if (!instancesAreClasses) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             instancesAreClasses = true;
         }
     }
@@ -445,14 +445,14 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return ArrayUtils.contains(pointers, thang);
     }
 
-    public void become(final ClassObject other) {
-        becomeOtherClass(other);
-
+    public boolean become(final ClassObject other) {
         final boolean otherInstancesAreClasses = image.isMetaClass(other.getSqueakClass());
         if (instancesAreClasses != otherInstancesAreClasses) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            instancesAreClasses = otherInstancesAreClasses;
+            CompilerDirectives.transferToInterpreter();
+            return false;
         }
+
+        becomeOtherClass(other);
 
         final ClassObject otherSuperclass = other.superclass;
         final VariablePointersObject otherMethodDict = other.methodDict;
@@ -474,11 +474,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         setInstanceVariables(otherInstanceVariables);
         setOrganization(otherOrganization);
         setOtherPointers(otherPointers);
+        return true;
     }
 
     private CyclicAssumption classHierarchyAndMethodDictStable() {
         if (classHierarchyAndMethodDictStable == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             classHierarchyAndMethodDictStable = new CyclicAssumption("Class hierarchy stability");
         }
         return classHierarchyAndMethodDictStable;
@@ -494,7 +495,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     private CyclicAssumption classFormatStable() {
         if (classFormatStable == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             classFormatStable = new CyclicAssumption("Class format stability");
         }
         return classFormatStable;
