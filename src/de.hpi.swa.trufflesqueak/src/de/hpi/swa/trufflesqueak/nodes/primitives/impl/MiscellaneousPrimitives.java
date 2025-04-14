@@ -1039,7 +1039,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final Object setVMParameters(@SuppressWarnings("unused") final Object receiver, final long index, final Object value) {
+        protected final Object setVMParameters(@SuppressWarnings("unused") final Object receiver, final long index, @SuppressWarnings("unused") final Object value) {
             return vmParameterAt(getContext(), MiscUtils.toIntExact(index)); // ignore writes
         }
 
