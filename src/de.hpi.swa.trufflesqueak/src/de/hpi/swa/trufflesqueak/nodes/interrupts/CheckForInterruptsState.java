@@ -66,6 +66,7 @@ public final class CheckForInterruptsState {
                 Executors.newSingleThreadScheduledExecutor(r -> {
                     final Thread t = new Thread(r, CHECK_FOR_INTERRUPTS_THREAD_NAME);
                     t.setDaemon(true);
+                    t.setPriority(Thread.MAX_PRIORITY);
                     return t;
                 });
         createOrUpdateInterruptChecks();
@@ -85,9 +86,11 @@ public final class CheckForInterruptsState {
                 interruptChecks.cancel(false);
             }
             interruptChecks =
-                    executor.scheduleWithFixedDelay(() -> {
-                        if (!shouldTrigger) setShouldTriggerIfNeeded();
-                    }, interruptCheckMilliseconds, interruptCheckMilliseconds, TimeUnit.MILLISECONDS);
+                    executor.scheduleWithFixedDelay(
+                            this::setShouldTriggerIfNeeded,
+                            interruptCheckMilliseconds,
+                            interruptCheckMilliseconds,
+                            TimeUnit.MILLISECONDS);
         }
     }
 
@@ -110,11 +113,13 @@ public final class CheckForInterruptsState {
          process with higher priority than the current process, a ProcessSwitch exception will be raised, and the
          remaining interrupts will be left unhandled. Rather than simply resetting shouldTrigger, we must recompute it.
         */
+        shouldTrigger = false;
         setShouldTriggerIfNeeded();
     }
 
     private void setShouldTriggerIfNeeded() {
-        shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || hasPendingFinalizations() || hasSemaphoresToSignal());
+        if (!shouldTrigger)
+            shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || hasPendingFinalizations() || hasSemaphoresToSignal());
     }
 
     /* Enable / disable interrupts */
