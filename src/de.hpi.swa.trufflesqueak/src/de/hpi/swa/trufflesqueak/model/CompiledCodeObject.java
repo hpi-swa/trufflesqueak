@@ -603,7 +603,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
         final Object mca = getMethodClassAssociation();
-        return mca != NilObject.SINGLETON && readNode.execute(inlineTarget, (AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
+        if (mca instanceof final AbstractPointersObject apo) {
+            return readNode.execute(inlineTarget, apo, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
+        } else {
+            return false;
+        }
     }
 
     public ClassObject getMethodClassSlow() {
