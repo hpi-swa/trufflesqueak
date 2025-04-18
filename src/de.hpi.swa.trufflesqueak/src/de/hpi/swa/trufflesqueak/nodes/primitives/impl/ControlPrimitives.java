@@ -669,7 +669,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final Object primitiveWithArgs(final VirtualFrame frame, final Object receiver, final ArrayObject argumentArray,
                         final AbstractPrimitiveNode primitiveNode, final ArrayObjectToObjectArrayCopyNode toObjectArrayNode, final Node inlineTarget) {
-            return primitiveNode.executeWithArguments(frame, receiver, toObjectArrayNode.execute(inlineTarget, argumentArray));
+            try {
+                return primitiveNode.executeWithArguments(frame, receiver, toObjectArrayNode.execute(inlineTarget, argumentArray));
+            } catch (NegativeArraySizeException | ArrayIndexOutOfBoundsException oob) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_NUMBER_OF_ARGUMENTS;
+            }
         }
 
         protected final Object primitiveWithArgsSlow(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
@@ -681,7 +686,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 final Object[] arguments = ArrayObjectToObjectArrayCopyNode.executeUncached(argumentArray);
-                return primitiveNode.executeWithArguments(frame, receiver, arguments);
+                try {
+                    return primitiveNode.executeWithArguments(frame, receiver, arguments);
+                } catch (NegativeArraySizeException | ArrayIndexOutOfBoundsException oob) {
+                    CompilerDirectives.transferToInterpreter();
+                    throw PrimitiveFailed.BAD_NUMBER_OF_ARGUMENTS;
+                }
             }
         }
     }
