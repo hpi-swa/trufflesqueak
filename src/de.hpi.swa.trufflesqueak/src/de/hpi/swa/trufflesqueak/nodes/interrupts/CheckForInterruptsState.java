@@ -34,7 +34,7 @@ public final class CheckForInterruptsState {
      */
     private int interruptCheckMilliseconds;
 
-    private boolean isActive = true;
+    private volatile boolean isActive = true;
     protected long nextWakeupTick;
     protected boolean interruptPending;
     private boolean hasPendingFinalizations;
@@ -132,6 +132,8 @@ public final class CheckForInterruptsState {
     }
 
     public void deactivate() {
+        /* avoid race condition caused by interference from interruptChecks thread */
+        shouldTrigger = true;
         isActive = false;
         shouldTrigger = false;
     }
