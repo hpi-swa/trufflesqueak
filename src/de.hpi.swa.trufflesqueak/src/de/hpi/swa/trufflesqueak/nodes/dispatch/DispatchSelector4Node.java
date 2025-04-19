@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
@@ -124,7 +125,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
         @SuppressWarnings("truffle-static-method")
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         @Cached final DispatchIndirect4Node dispatchNode) {
-            return dispatchNode.execute(frame, selector, receiver, arg1, arg2, arg3, arg4);
+            return dispatchNode.execute(frame, false, selector, receiver, arg1, arg2, arg3, arg4);
         }
     }
 
@@ -187,8 +188,18 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
 
         @NeverDefault
         protected static final DispatchDirect4Node create(final NativeObject selector, final LookupClassGuard guard) {
+            return create(selector, guard, true);
+        }
+
+        @NeverDefault
+        public static final DispatchDirect4Node create(final NativeObject selector, final LookupClassGuard guard, final boolean canPrimFail) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            return create(selector, receiverClass);
+            return create(selector, receiverClass, canPrimFail);
+        }
+
+        @NeverDefault
+        public static final DispatchDirect4Node create(final NativeObject selector, final ClassObject lookupClass) {
+            return create(selector, lookupClass, true);
         }
 
         @NeverDefault
@@ -199,13 +210,22 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
         }
 
         @NeverDefault
-        public static final DispatchDirect4Node create(final NativeObject selector, final ClassObject lookupClass) {
+        public static final DispatchDirect4Node create(final NativeObject selector, final ClassObject lookupClass, final boolean canPrimFail) {
             final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
             final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult);
             if (lookupResult == null) {
                 return createDNUNode(selector, assumptions, lookupClass);
             } else if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
-                return create(assumptions, lookupMethod);
+                if (lookupMethod.getNumArgs() == 4) {
+                    return create(assumptions, lookupMethod);
+                } else {
+                    // argument count mismatch
+                    if (canPrimFail) {
+                        return new DispatchDirectPrimitiveBadArguments4Node(assumptions);
+                    } else {
+                        return create(assumptions, lookupMethod);
+                    }
+                }
             } else {
                 final ClassObject lookupResultClass = SqueakObjectClassNode.executeUncached(lookupResult);
                 final Object runWithInLookupResult = LookupMethodNode.executeUncached(lookupResultClass, SqueakImageContext.getSlow().runWithInSelector);
@@ -219,6 +239,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
         }
 
         private static DispatchDirect4Node create(final Assumption[] assumptions, final CompiledCodeObject method) {
+            assert method.getNumArgs() == 4 : "Expected method with 4 arguments, got " + method.getNumArgs();
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
                 if (primitiveNode instanceof final Primitive4 primitive4) {
@@ -257,6 +278,18 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
                 DispatchUtils.logPrimitiveFailed(primitiveNode);
                 return dispatchFallbackNode.execute(frame, receiver, arg1, arg2, arg3, arg4, pf);
             }
+        }
+    }
+
+    static final class DispatchDirectPrimitiveBadArguments4Node extends DispatchDirect4Node {
+        DispatchDirectPrimitiveBadArguments4Node(final Assumption[] assumptions) {
+            super(assumptions);
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+            CompilerDirectives.transferToInterpreter();
+            throw PrimitiveFailed.BAD_NUMBER_OF_ARGUMENTS;
         }
     }
 
@@ -340,10 +373,11 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
 
     @GenerateInline(false)
     public abstract static class DispatchIndirect4Node extends AbstractNode {
-        public abstract Object execute(VirtualFrame frame, NativeObject selector, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4);
+        public abstract Object execute(VirtualFrame frame, boolean canPrimFail, NativeObject selector, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4);
 
         @Specialization
-        protected static final Object doIndirect(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+        protected static final Object doIndirect(final VirtualFrame frame, final boolean canPrimFail, final NativeObject selector, final Object receiver, final Object arg1, final Object arg2,
+                        final Object arg3,
                         final Object arg4,
                         @Bind final Node node,
                         @Cached final SqueakObjectClassNode classNode,
@@ -351,9 +385,10 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
                         @Cached final TryPrimitive4Node tryPrimitiveNode,
                         @Cached final CreateFrameArgumentsForIndirectCall4Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
+            CompilerAsserts.partialEvaluationConstant(canPrimFail);
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
-            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), 4, canPrimFail, receiverClass, lookupResult);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2, arg3, arg4);
             if (result != null) {
                 return result;
