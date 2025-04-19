@@ -27,25 +27,21 @@ public final class ObjectLayout {
 
     private final Assumption isValidAssumption = Truffle.getRuntime().createAssumption("Latest layout assumption");
 
-    public ObjectLayout(final ClassObject classObject, final int instSize) {
-        slowPathOperation();
-        classObject.updateLayout(this);
+    public ObjectLayout(final int instSize) {
         locations = new SlotLocation[instSize];
         Arrays.fill(locations, SlotLocation.UNINITIALIZED_LOCATION);
         numPrimitiveExtension = 0;
         numObjectExtension = 0;
     }
 
-    public ObjectLayout(final ClassObject classObject, final SlotLocation[] locations) {
-        slowPathOperation();
-        classObject.updateLayout(this);
+    private ObjectLayout(final SlotLocation[] locations) {
         this.locations = locations;
         numPrimitiveExtension = countPrimitiveExtension(locations);
         numObjectExtension = countObjectExtension(locations);
     }
 
     public ObjectLayout evolveLocation(final ClassObject squeakClass, final long longIndex, final Object value) {
-        slowPathOperation();
+        CompilerAsserts.neverPartOfCompilation("Should only happen on slow path");
         final int index = Math.toIntExact(longIndex);
         if (!isValid()) {
             throw SqueakException.create("Only the latest layout should be evolved");
@@ -78,11 +74,9 @@ public final class ObjectLayout {
 
         assert !newLocations[index].isUninitialized();
         assert slotLocationsAreConsecutive(newLocations) : "Locations are not consecutive";
-        return new ObjectLayout(squeakClass, newLocations);
-    }
-
-    private static void slowPathOperation() {
-        CompilerAsserts.neverPartOfCompilation("Should only happen on slow path");
+        final ObjectLayout newLayout = new ObjectLayout(newLocations);
+        squeakClass.updateLayout(newLayout);
+        return newLayout;
     }
 
     private static void assignGenericLocation(final SlotLocation[] newLocations, final int index) {

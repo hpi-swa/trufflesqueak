@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
@@ -137,7 +138,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         @SuppressWarnings("truffle-static-method")
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
                         @Cached final DispatchIndirectNaryNode dispatchNode) {
-            return dispatchNode.execute(frame, selector, receiver, arguments);
+            return dispatchNode.execute(frame, false, selector, receiver, arguments);
         }
     }
 
@@ -197,8 +198,10 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         public abstract Object execute(VirtualFrame frame, Object receiver, Object[] arguments);
 
+        public abstract int expectedNumArguments();
+
         @NeverDefault
-        protected static final DispatchDirectNaryNode create(final NativeObject selector, final LookupClassGuard guard) {
+        public static final DispatchDirectNaryNode create(final NativeObject selector, final LookupClassGuard guard) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
             return create(selector, receiverClass);
         }
@@ -231,6 +234,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         }
 
         private static DispatchDirectNaryNode create(final Assumption[] assumptions, final CompiledCodeObject method) {
+            // Cannot check argument count here (actual count of arguments only known when called).
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
                 if (primitiveNode != null) {
@@ -252,13 +256,20 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     }
 
     static final class DispatchDirectPrimitiveNaryNode extends DispatchDirectNaryNode {
+        private final int numArguments;
         @Child private DispatchPrimitiveNode primitiveNode;
         @Child private DispatchDirectPrimitiveFallbackNaryNode dispatchFallbackNode;
 
         DispatchDirectPrimitiveNaryNode(final Assumption[] assumptions, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
             super(assumptions);
-            this.primitiveNode = DispatchPrimitiveNode.create(primitiveNode, method.getNumArgs());
+            numArguments = method.getNumArgs();
+            this.primitiveNode = DispatchPrimitiveNode.create(primitiveNode, numArguments);
             dispatchFallbackNode = DispatchDirectPrimitiveFallbackNaryNodeGen.create(method);
+        }
+
+        @Override
+        public int expectedNumArguments() {
+            return numArguments;
         }
 
         @Override
@@ -494,11 +505,18 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     }
 
     abstract static class DispatchDirectWithSenderNaryNode extends DispatchDirectNaryNode {
+        private final int numArguments;
         @Child protected SenderNode senderNode;
 
         DispatchDirectWithSenderNaryNode(final Assumption[] assumptions, final CompiledCodeObject method) {
             super(assumptions);
+            numArguments = method.getNumArgs();
             senderNode = SenderNodeGen.create(method);
+        }
+
+        @Override
+        public final int expectedNumArguments() {
+            return numArguments;
         }
     }
 
@@ -553,19 +571,20 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
     @GenerateInline(false)
     public abstract static class DispatchIndirectNaryNode extends AbstractNode {
-        public abstract Object execute(VirtualFrame frame, NativeObject selector, Object receiver, Object[] arguments);
+        public abstract Object execute(VirtualFrame frame, boolean canPrimFail, NativeObject selector, Object receiver, Object[] arguments);
 
         @Specialization
-        protected static final Object doIndirect(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object[] arguments,
+        protected static final Object doIndirect(final VirtualFrame frame, final boolean canPrimFail, final NativeObject selector, final Object receiver, final Object[] arguments,
                         @Bind final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
+            CompilerAsserts.partialEvaluationConstant(canPrimFail);
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
-            final CompiledCodeObject method = methodNode.execute(node, getContext(node), receiverClass, lookupResult);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), arguments.length, canPrimFail, receiverClass, lookupResult);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arguments);
             if (result != null) {
                 return result;

@@ -45,6 +45,37 @@ public abstract class AbstractPrimitiveNode extends AbstractNode {
         };
     }
 
+    public final int getNumArgumentsSlow() {
+        CompilerAsserts.neverPartOfCompilation();
+        if (this instanceof Primitive0) {
+            return 0;
+        } else if (this instanceof Primitive1) {
+            return 1;
+        } else if (this instanceof Primitive2) {
+            return 2;
+        } else if (this instanceof Primitive3) {
+            return 3;
+        } else if (this instanceof Primitive4) {
+            return 4;
+        } else if (this instanceof Primitive5) {
+            return 5;
+        } else if (this instanceof Primitive6) {
+            return 6;
+        } else if (this instanceof Primitive7) {
+            return 7;
+        } else if (this instanceof Primitive8) {
+            return 8;
+        } else if (this instanceof Primitive9) {
+            return 9;
+        } else if (this instanceof Primitive10) {
+            return 10;
+        } else if (this instanceof Primitive11) {
+            return 11;
+        } else {
+            throw SqueakException.create(this + " has unexpected number of arguments");
+        }
+    }
+
     public boolean acceptsMethod(@SuppressWarnings("unused") final CompiledCodeObject method) {
         CompilerAsserts.neverPartOfCompilation();
         return true;

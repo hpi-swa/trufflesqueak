@@ -88,7 +88,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final long doCode(final CompiledCodeObject obj, final long index) {
+    protected static final Object doCode(final CompiledCodeObject obj, final long index) {
         return obj.at0(index);
     }
 

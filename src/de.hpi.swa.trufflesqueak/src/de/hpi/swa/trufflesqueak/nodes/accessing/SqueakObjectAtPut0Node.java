@@ -84,7 +84,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doCode(final CompiledCodeObject obj, final long index, final Object value) {
+    protected static final void doCode(final CompiledCodeObject obj, final long index, final long value) {
         obj.atput0(index, value);
     }
 

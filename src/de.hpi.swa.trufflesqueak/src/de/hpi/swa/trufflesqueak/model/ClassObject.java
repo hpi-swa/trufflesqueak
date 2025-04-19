@@ -70,6 +70,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         instanceVariables = copiedInstanceVariablesOrNull;
         organization = original.organization == null ? null : original.organization.shallowCopy();
         pointers = original.pointers.clone();
+        initializeLayout();
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
@@ -90,16 +91,16 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public ObjectLayout getLayout() {
-        if (layout == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            layout = new ObjectLayout(this, getBasicInstanceSize());
-        }
+        assert layout != null : this + " has layout of null";
         return layout;
+    }
+
+    private void initializeLayout() {
+        layout = new ObjectLayout(getBasicInstanceSize());
     }
 
     public void updateLayout(final ObjectLayout newLayout) {
         assert layout == null || !layout.isValid() : "Old layout not invalidated";
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         layout = newLayout;
     }
 
@@ -260,6 +261,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             instanceVariables = (ArrayObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.INSTANCE_VARIABLES));
             organization = (PointersObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.ORGANIZATION));
             pointers = chunk.getPointers(CLASS_DESCRIPTION.SIZE);
+            initializeLayout();
         }
     }
 
@@ -280,7 +282,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setFormat(final long format) {
         classFormatStable().invalidate();
+        final int oldBasicInstanceSize = getBasicInstanceSize();
         this.format = format;
+        if (oldBasicInstanceSize != getBasicInstanceSize()) {
+            initializeLayout();
+        }
     }
 
     @Override
