@@ -7,10 +7,6 @@
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import java.util.ArrayDeque;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -25,7 +21,6 @@ public final class CheckForInterruptsState {
     private static final int DEFAULT_INTERRUPT_CHECK_MILLISECONDS = 2;
 
     private final SqueakImageContext image;
-    private ScheduledExecutorService executor;
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     /**
@@ -48,7 +43,7 @@ public final class CheckForInterruptsState {
      */
     private boolean shouldTrigger;
 
-    private ScheduledFuture<?> interruptChecks;
+    private Thread thread;
 
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
@@ -62,32 +57,48 @@ public final class CheckForInterruptsState {
         if (image.options.disableInterruptHandler()) {
             return;
         }
-        executor = Executors.newSingleThreadScheduledExecutor(r -> {
-            final Thread t = new Thread(r, CHECK_FOR_INTERRUPTS_THREAD_NAME);
-            t.setDaemon(true);
-            t.setPriority(Thread.MAX_PRIORITY);
-            return t;
-        });
-        createOrUpdateInterruptChecks();
+        thread = new CheckForInterruptsThread();
+        thread.start();
+    }
+
+    final class CheckForInterruptsThread extends Thread {
+        CheckForInterruptsThread() {
+            super(CHECK_FOR_INTERRUPTS_THREAD_NAME);
+            setDaemon(true);
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                checkForInterrupts();
+                try {
+                    Thread.sleep(interruptCheckMilliseconds);
+                } catch (final InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+
+        private void checkForInterrupts() {
+            if (hasTriggered) {
+                /*
+                 * Handler has triggered recently, so skip the next check. This avoids that
+                 * interrupts can be triggered more than once in the specified interval.
+                 */
+                hasTriggered = false;
+                shouldTrigger = false;
+            } else {
+                shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
+            }
+        }
     }
 
     @TruffleBoundary
     public void shutdown() {
-        if (executor != null) {
-            executor.shutdown();
+        if (thread != null) {
+            thread.interrupt();
         }
-    }
-
-    @TruffleBoundary
-    private void createOrUpdateInterruptChecks() {
-        if (interruptChecks != null && !interruptChecks.isCancelled()) {
-            interruptChecks.cancel(false);
-        }
-        interruptChecks = executor.scheduleWithFixedDelay(
-                        this::checkForInterrupts,
-                        interruptCheckMilliseconds,
-                        interruptCheckMilliseconds,
-                        TimeUnit.MILLISECONDS);
     }
 
     /* Interrupt check interval */
@@ -98,7 +109,6 @@ public final class CheckForInterruptsState {
 
     public void setInterruptCheckMilliseconds(final long milliseconds) {
         interruptCheckMilliseconds = Math.max(DEFAULT_INTERRUPT_CHECK_MILLISECONDS, milliseconds);
-        createOrUpdateInterruptChecks();
     }
 
     /* Interrupt trigger state */
@@ -112,19 +122,6 @@ public final class CheckForInterruptsState {
             return false;
         } else {
             return true;
-        }
-    }
-
-    private void checkForInterrupts() {
-        if (hasTriggered) {
-            /*
-             * Handler has triggered recently, so skip the next check. This avoids that interrupts
-             * can be triggered more than once in the specified interval.
-             */
-            hasTriggered = false;
-            shouldTrigger = false;
-        } else {
-            shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
         }
     }
 
@@ -254,9 +251,6 @@ public final class CheckForInterruptsState {
     public void reset() {
         CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
         isActive = true;
-        if (interruptChecks != null) {
-            interruptChecks.cancel(true);
-        }
         shutdown();
         clear();
     }
