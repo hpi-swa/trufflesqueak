@@ -209,7 +209,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     private static TopLevelReturn returnToTopLevel(final ContextObject targetContext, final Object returnValue) {
-        assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe());
+        assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe()) : targetContext;
         throw new TopLevelReturn(returnValue);
     }
 

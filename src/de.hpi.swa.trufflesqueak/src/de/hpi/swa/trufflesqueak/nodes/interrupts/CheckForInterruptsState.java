@@ -35,6 +35,7 @@ public final class CheckForInterruptsState {
     private long interruptCheckMilliseconds = DEFAULT_INTERRUPT_CHECK_MILLISECONDS;
 
     private boolean isActive = true;
+    private volatile boolean hasTriggered;
     private long nextWakeupTick;
     private boolean interruptPending;
     private boolean hasPendingFinalizations;
@@ -114,8 +115,17 @@ public final class CheckForInterruptsState {
         }
     }
 
-    public void checkForInterrupts() {
-        shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
+    private void checkForInterrupts() {
+        if (hasTriggered) {
+            /*
+             * Handler has triggered recently, so skip the next check. This avoids that interrupts
+             * can be triggered more than once in the specified interval.
+             */
+            hasTriggered = false;
+            shouldTrigger = false;
+        } else {
+            shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
+        }
     }
 
     /* Enable / disable interrupts */
@@ -126,7 +136,6 @@ public final class CheckForInterruptsState {
 
     public void activate() {
         isActive = true;
-        checkForInterrupts();
     }
 
     public void deactivate() {
@@ -139,7 +148,7 @@ public final class CheckForInterruptsState {
         if (interruptPending) {
             LogUtils.INTERRUPTS.fine("User interrupt");
             interruptPending = false; // reset
-            checkForInterrupts(); // re-check for other interrupts
+            hasTriggered = true;
             return true;
         } else {
             return false;
@@ -168,7 +177,7 @@ public final class CheckForInterruptsState {
         if (nextWakeUpTickTrigger()) {
             LogUtils.INTERRUPTS.fine("Timer interrupt");
             nextWakeupTick = 0; // reset
-            checkForInterrupts(); // re-check for other interrupts
+            hasTriggered = true;
             return true;
         } else {
             return false;
@@ -192,6 +201,7 @@ public final class CheckForInterruptsState {
         if (hasPendingFinalizations) {
             LogUtils.INTERRUPTS.fine("Finalization interrupt");
             hasPendingFinalizations = false;
+            hasTriggered = true;
             return true;
         } else {
             return false;
@@ -212,7 +222,7 @@ public final class CheckForInterruptsState {
     public boolean trySemaphoresToSignal() {
         if (hasSemaphoresToSignal()) {
             LogUtils.INTERRUPTS.fine("Semaphore interrupt");
-            /* No reset or re-check as list of external semaphores will be processed later on. */
+            hasTriggered = true;
             return true;
         } else {
             return false;

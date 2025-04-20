@@ -51,7 +51,6 @@ public final class CheckForInterruptsFullNode extends Node {
                 final Object[] semaphores = externalObjects.getObjectStorage();
                 Integer semaIndex;
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                    istate.checkForInterrupts(); // re-check for other interrupts
                     signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
                 }
             }
