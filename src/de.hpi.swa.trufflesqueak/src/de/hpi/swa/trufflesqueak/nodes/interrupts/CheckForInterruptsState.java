@@ -29,8 +29,8 @@ public final class CheckForInterruptsState {
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     /**
-     * `interruptCheckMilliseconds` is the interval between updates to 'shouldTrigger'.
-     * This controls the timing accuracy of Smalltalk Delays.
+     * `interruptCheckMilliseconds` is the interval between updates to 'shouldTrigger'. This
+     * controls the timing accuracy of Smalltalk Delays.
      */
     private int interruptCheckMilliseconds;
 
@@ -62,13 +62,12 @@ public final class CheckForInterruptsState {
         if (image.options.disableInterruptHandler()) {
             return;
         }
-        executor =
-                Executors.newSingleThreadScheduledExecutor(r -> {
-                    final Thread t = new Thread(r, CHECK_FOR_INTERRUPTS_THREAD_NAME);
-                    t.setDaemon(true);
-                    t.setPriority(Thread.MAX_PRIORITY);
-                    return t;
-                });
+        executor = Executors.newSingleThreadScheduledExecutor(r -> {
+            final Thread t = new Thread(r, CHECK_FOR_INTERRUPTS_THREAD_NAME);
+            t.setDaemon(true);
+            t.setPriority(Thread.MAX_PRIORITY);
+            return t;
+        });
         createOrUpdateInterruptChecks();
     }
 
@@ -85,8 +84,7 @@ public final class CheckForInterruptsState {
             if (interruptChecks != null && !interruptChecks.isCancelled()) {
                 interruptChecks.cancel(false);
             }
-            interruptChecks =
-                    executor.scheduleWithFixedDelay(
+            interruptChecks = executor.scheduleWithFixedDelay(
                             this::setShouldTriggerIfNeeded,
                             interruptCheckMilliseconds,
                             interruptCheckMilliseconds,
@@ -96,7 +94,9 @@ public final class CheckForInterruptsState {
 
     /* Interrupt check interval */
 
-    public int getInterruptCheckMilliseconds() { return interruptCheckMilliseconds; }
+    public int getInterruptCheckMilliseconds() {
+        return interruptCheckMilliseconds;
+    }
 
     public void setInterruptCheckMilliseconds(final int milliseconds) {
         interruptCheckMilliseconds = Math.max(1, milliseconds);
@@ -105,26 +105,32 @@ public final class CheckForInterruptsState {
 
     /* Interrupt trigger state */
 
-    public boolean shouldTrigger() { return shouldTrigger; }
+    public boolean shouldTrigger() {
+        return shouldTrigger;
+    }
 
     public void resetTrigger() {
         /**
-         CheckForInterrupts***Node signals semaphores as part of interrupt handling. If the semaphore signalled wakes a
-         process with higher priority than the current process, a ProcessSwitch exception will be raised, and the
-         remaining interrupts will be left unhandled. Rather than simply resetting shouldTrigger, we must recompute it.
-        */
+         * CheckForInterrupts***Node signals semaphores as part of interrupt handling. If the
+         * semaphore signalled wakes a process with higher priority than the current process, a
+         * ProcessSwitch exception will be raised, and the remaining interrupts will be left
+         * unhandled. Rather than simply resetting shouldTrigger, we must recompute it.
+         */
         shouldTrigger = false;
         setShouldTriggerIfNeeded();
     }
 
     private void setShouldTriggerIfNeeded() {
-        if (!shouldTrigger)
+        if (!shouldTrigger) {
             shouldTrigger = isActive && (interruptPending() || nextWakeUpTickTrigger() || hasPendingFinalizations() || hasSemaphoresToSignal());
+        }
     }
 
     /* Enable / disable interrupts */
 
-    public boolean isActive() { return isActive; }
+    public boolean isActive() {
+        return isActive;
+    }
 
     public void activate() {
         isActive = true;
@@ -140,7 +146,9 @@ public final class CheckForInterruptsState {
 
     /* User interrupt */
 
-    protected boolean interruptPending() { return interruptPending; }
+    protected boolean interruptPending() {
+        return interruptPending;
+    }
 
     public void setInterruptPending() {
         interruptPending = true;
@@ -173,9 +181,13 @@ public final class CheckForInterruptsState {
 
     /* Finalization interrupt */
 
-    protected boolean hasPendingFinalizations() { return hasPendingFinalizations; }
+    protected boolean hasPendingFinalizations() {
+        return hasPendingFinalizations;
+    }
 
-    public void clearPendingFinalizations() { hasPendingFinalizations = false; }
+    public void clearPendingFinalizations() {
+        hasPendingFinalizations = false;
+    }
 
     public void setPendingFinalizations() {
         hasPendingFinalizations = true;

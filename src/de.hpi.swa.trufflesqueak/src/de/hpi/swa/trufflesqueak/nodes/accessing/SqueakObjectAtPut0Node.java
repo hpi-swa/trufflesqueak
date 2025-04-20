@@ -103,7 +103,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doEphemeron(final Node node, final EphemeronObject obj, final long index, final Object value,
-                                            @Cached.Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+                    @Cached.Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
     }
 

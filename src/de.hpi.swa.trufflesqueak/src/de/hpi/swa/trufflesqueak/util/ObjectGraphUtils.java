@@ -114,23 +114,23 @@ public final class ObjectGraphUtils {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 // Ephemerons are traced in a special way.
                 if (currentObject instanceof final EphemeronObject ephemeronObject) {
-                    // An Ephemeron is traced normally if it has been signaled or its key has been marked already.
+                    // An Ephemeron is traced normally if it has been signaled or its key has been
+                    // marked already.
                     // Otherwise, they are traced after all other objects.
                     if (ephemeronObject.hasBeenSignaled() || ephemeronObject.keyHasBeenMarked(currentMarkingFlag)) {
                         pending.tracePointers(currentObject);
-                    }
-                    else {
+                    } else {
                         ephemeronsToBeMarked.add(ephemeronObject);
                     }
-                }
-                // Normal object
-                else {
+                } else {
+                    // Normal object
                     pending.tracePointers(currentObject);
                 }
             }
         }
 
-        // Now, trace the ephemerons until there are only ephemerons whose keys are reachable through ephemerons.
+        // Now, trace the ephemerons until there are only ephemerons whose keys are reachable
+        // through ephemerons.
         traceRemainingEphemerons(ephemeronsToBeMarked, pending, currentMarkingFlag);
 
         // Make sure that they do not signal more than once.
@@ -142,27 +142,34 @@ public final class ObjectGraphUtils {
     }
 
     private static void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer pending, final boolean currentMarkingFlag) {
-        // Trace the ephemerons that have marked keys until there are only ephemerons with unmarked keys left.
+        // Trace the ephemerons that have marked keys until there are only ephemerons with unmarked
+        // keys left.
         while (true) {
             boolean finished = true;
-            Iterator<EphemeronObject> iterator = ephemeronsToBeMarked.iterator();
+            final Iterator<EphemeronObject> iterator = ephemeronsToBeMarked.iterator();
             while (iterator.hasNext()) {
-                EphemeronObject ephemeronObject = iterator.next();
+                final EphemeronObject ephemeronObject = iterator.next();
                 if (ephemeronObject.keyHasBeenMarked(currentMarkingFlag)) {
                     pending.tracePointers(ephemeronObject);
                     iterator.remove();
                     finished = false;
                 }
             }
-            if (finished)   break;
+            if (finished) {
+                break;
+            }
             finishPendingMarking(pending, currentMarkingFlag);
         }
 
-        if (ephemeronsToBeMarked.isEmpty()) return;
+        if (ephemeronsToBeMarked.isEmpty()) {
+            return;
+        }
 
         // Now, we have ephemerons whose keys are reachable only through ephemerons.
         // Mark them to keep consistent marking flags.
-        for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) { pending.tracePointers(ephemeronObject); }
+        for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) {
+            pending.tracePointers(ephemeronObject);
+        }
         finishPendingMarking(pending, currentMarkingFlag);
     }
 
@@ -189,8 +196,10 @@ public final class ObjectGraphUtils {
             addIfUnmarked(image.specialObjectsArray);
             addObjectsFromTruffleFrames();
             // Unreachable ephemerons in the queue must be kept visible to the rest of the image.
-            // These are technically "dead" and do not need to be saved when the image is stored on disk,
-            // but by tracing them we avoid an expensive reachability test in the fetch-next-mourner primitive.
+            // These are technically "dead" and do not need to be saved when the image is stored on
+            // disk,
+            // but by tracing them we avoid an expensive reachability test in the fetch-next-mourner
+            // primitive.
             deque.addAll(image.ephemeronsQueue);
         }
 

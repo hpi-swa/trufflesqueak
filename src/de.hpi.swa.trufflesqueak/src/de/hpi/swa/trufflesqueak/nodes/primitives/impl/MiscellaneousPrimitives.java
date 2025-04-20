@@ -52,7 +52,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.nodes.plugins.MiscPrimitivePlugin.AbstractPrimCompareStringNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -744,8 +743,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             final SqueakImageContext image = getContext();
             if (image.ephemeronsQueue.isEmpty()) {
                 return NilObject.SINGLETON;
-            }
-            else {
+            } else {
                 return image.ephemeronsQueue.removeFirst();
             }
         }
@@ -984,7 +982,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-@GenerateNodeFactory
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 254)
     protected abstract static class PrimVMParameters1Node extends AbstractPrimVMParametersNode implements Primitive0 {
         /**
@@ -1031,7 +1029,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimVMParameters3Node extends AbstractPrimVMParametersNode implements Primitive2WithFallback {
         @Specialization
         protected final Object setVMParameters(@SuppressWarnings("unused") final Object receiver, final long index, final long value) {
-            SqueakImageContext image = getContext();
+            final SqueakImageContext image = getContext();
             final int theIndex = MiscUtils.toIntExact(index);
             final Object result = vmParameterAt(image, theIndex);
             vmParameterAtPut(image, theIndex, value);
