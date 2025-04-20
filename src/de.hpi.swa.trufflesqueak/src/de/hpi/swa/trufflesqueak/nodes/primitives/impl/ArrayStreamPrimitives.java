@@ -31,8 +31,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectInstSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -204,6 +204,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 143)
     protected abstract static class PrimShortAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
+        @Specialization(guards = {"receiver.isShortType()", "inBounds1(index, receiver.getShortLength())"})
+        protected static final long doNativeShorts(final NativeObject receiver, final long index) {
+            return UnsafeUtils.getShort(receiver.getShortStorage(), index - 1);
+        }
+
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)"})
         protected static final long doNativeInts(final NativeObject receiver, final long index) {
             return UnsafeUtils.getShort(receiver.getIntStorage(), index - 1);
@@ -214,6 +219,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 144)
     protected abstract static class PrimShortAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
+        @Specialization(guards = {"receiver.isShortType()", "inBounds1(index, receiver.getShortLength())", "inShortRange(value)"})
+        protected static final long doNativeShorts(final NativeObject receiver, final long index, final long value) {
+            UnsafeUtils.putShort(receiver.getShortStorage(), index - 1, (short) value);
+            return value;
+        }
+
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)", "inShortRange(value)"})
         protected static final long doNativeInts(final NativeObject receiver, final long index, final long value) {
             UnsafeUtils.putShort(receiver.getIntStorage(), index - 1, (short) value);
@@ -221,7 +232,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         protected static final boolean inShortRange(final long value) {
-            return -0x8000 <= value && value <= 0x8000;
+            return Short.MIN_VALUE <= value && value <= Short.MAX_VALUE;
         }
     }
 
