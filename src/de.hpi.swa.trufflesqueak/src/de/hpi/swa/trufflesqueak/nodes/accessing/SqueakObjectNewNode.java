@@ -14,7 +14,6 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -75,23 +74,6 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     protected static final ClassObject doClassOdd(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
         return new ClassObject(image, classObject, classObject.getBasicInstanceSize() + METACLASS.INST_SIZE);
-    }
-
-    @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
-    protected static final EphemeronObject doEphemeronCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
-                    @Cached("getEphemeronLayoutOrNull(classObject)") final ObjectLayout cachedLayout) {
-        assert extraSize == 0 && classObject.isEphemeronClassType();
-        return new EphemeronObject(image, classObject, cachedLayout);
-    }
-
-    protected static final ObjectLayout getEphemeronLayoutOrNull(final ClassObject classObject) {
-        return classObject.isEphemeronClassType() ? classObject.getLayout() : null;
-    }
-
-    @Specialization(guards = {"classObject.isEphemeronClassType()"}, replaces = "doEphemeronCached")
-    protected static final EphemeronObject doEphemeronUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert extraSize == 0;
-        return new EphemeronObject(image, classObject, null);
     }
 
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
@@ -171,6 +153,23 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     @Specialization(guards = "instantiatesWeakVariablePointersObject(classObject)", replaces = "doWeakPointersCached")
     protected static final WeakVariablePointersObject doWeakPointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         return new WeakVariablePointersObject(image, classObject, null, extraSize);
+    }
+
+    @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
+    protected static final EphemeronObject doEphemeronCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
+                    @Cached("getEphemeronLayoutOrNull(classObject)") final ObjectLayout cachedLayout) {
+        assert extraSize == 0 && classObject.isEphemeronClassType();
+        return new EphemeronObject(image, classObject, cachedLayout);
+    }
+
+    protected static final ObjectLayout getEphemeronLayoutOrNull(final ClassObject classObject) {
+        return classObject.isEphemeronClassType() ? classObject.getLayout() : null;
+    }
+
+    @Specialization(guards = {"classObject.isEphemeronClassType()"}, replaces = "doEphemeronCached")
+    protected static final EphemeronObject doEphemeronUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert extraSize == 0;
+        return new EphemeronObject(image, classObject, null);
     }
 
     @Specialization(guards = "classObject.isLongs()")

@@ -68,4 +68,8 @@ public final class CharacterObject extends AbstractSqueakObject {
     public long getValue() {
         return value;
     }
+
+    public CharacterObject shallowCopy() {
+        return new CharacterObject(value);
+    }
 }

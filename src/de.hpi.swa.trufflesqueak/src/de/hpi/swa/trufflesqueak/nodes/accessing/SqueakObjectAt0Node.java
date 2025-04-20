@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -55,7 +56,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doPointers(final Node node, final PointersObject obj, final long index,
-                    @Cached.Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
+                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
     }
 
@@ -107,7 +108,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doEphemeron(final Node node, final EphemeronObject obj, final long index,
-                    @Cached.Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
+                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
     }
 
