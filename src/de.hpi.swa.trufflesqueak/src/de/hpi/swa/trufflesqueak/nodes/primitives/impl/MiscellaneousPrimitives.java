@@ -862,7 +862,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // memory headroom when growing object memory (rw)
                 case 25 -> 1L;
                 // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
-                case 26 -> (long) image.interrupt.getInterruptCheckMilliseconds();
+                case 26 -> image.interrupt.getInterruptCheckMilliseconds();
                 // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL
                 // marking
                 case 27 -> 0L;
@@ -972,7 +972,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected static void vmParameterAtPut(final SqueakImageContext image, final int index, final long parameter) {
             // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
             if (index == 26) {
-                image.interrupt.setInterruptCheckMilliseconds((int) parameter);
+                image.interrupt.setInterruptCheckMilliseconds(parameter);
             }
         }
     }
