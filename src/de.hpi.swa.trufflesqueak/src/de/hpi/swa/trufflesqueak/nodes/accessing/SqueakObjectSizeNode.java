@@ -106,7 +106,7 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
 
     @Specialization
     protected static final int doEphemeron(final Node node, final EphemeronObject obj,
-                                           @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
         return sizeNode.execute(node, obj);
     }
 

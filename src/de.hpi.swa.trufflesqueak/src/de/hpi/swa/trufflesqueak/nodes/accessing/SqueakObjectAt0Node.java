@@ -107,7 +107,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doEphemeron(final Node node, final EphemeronObject obj, final long index,
-                                              @Cached.Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
+                    @Cached.Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
     }
 
