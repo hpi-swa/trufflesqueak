@@ -14,8 +14,8 @@ suite = {
     "versionConflictResolution": "latest",
     "version": "24.2.0",
     "trufflesqueak:dependencyMap": {
-        "cuis_test_image": "CuisTestImage-6.0-5053.zip",
-        "cuis_test_image_tag": "21.3.0",
+        "cuis_test_image": "CuisTestImage-7.3-7036.zip",
+        "cuis_test_image_tag": "24.1.2",
         "test_image": "TruffleSqueakTestImage-6.0-22104-64bit.zip",
         "test_image_tag": "22.3.0",
     },

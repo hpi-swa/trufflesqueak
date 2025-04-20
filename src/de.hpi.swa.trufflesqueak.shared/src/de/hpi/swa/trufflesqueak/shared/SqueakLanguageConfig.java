@@ -22,7 +22,7 @@ public final class SqueakLanguageConfig {
                                     "https://github.com/hpi-swa/trufflesqueak/releases/download/" + IMAGE_VERSION + "/TruffleSqueakImage-" + IMAGE_VERSION + ".zip"},
                     {"Squeak/Smalltalk (6.0-22104)", "https://files.squeak.org/6.0/Squeak6.0-22104-64bit/Squeak6.0-22104-64bit.zip"},
                     {"TruffleSqueak test image (6.0-22104)", "https://github.com/hpi-swa/trufflesqueak/releases/download/22.3.0/TruffleSqueakTestImage-6.0-22104-64bit.zip"},
-                    {"Cuis-Smalltalk test image (6.0-5053)", "https://github.com/hpi-swa/trufflesqueak/releases/download/21.3.0/CuisTestImage-6.0-5053.zip"}};
+                    {"Cuis Smalltalk test image (7.3-7036)", "https://github.com/hpi-swa/trufflesqueak/releases/download/24.1.2/CuisTestImage-7.3-7036.zip"}};
 
     private SqueakLanguageConfig() {
     }
