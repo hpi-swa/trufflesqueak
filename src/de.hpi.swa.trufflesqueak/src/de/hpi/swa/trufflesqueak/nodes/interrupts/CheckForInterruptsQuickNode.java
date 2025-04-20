@@ -106,7 +106,6 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
                     final Object[] semaphores = externalObjects.getObjectStorage();
                     Integer semaIndex;
                     while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                        istate.checkForInterrupts(); // re-check for other interrupts
                         SignalSemaphoreNode.executeUncached(frame, image, semaphores[semaIndex - 1]);
                     }
                 }
