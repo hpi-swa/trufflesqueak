@@ -324,13 +324,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return BooleanObject.wrap(receiver.pointsTo(thang));
         }
 
-        @Specialization
-        protected static final boolean doEphemeron(final EphemeronObject receiver, final Object thang,
-                        @Bind final Node node,
-                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
-            return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
-        }
-
         @Specialization(guards = {"receiver.isEmptyType()"})
         protected static final boolean doEmptyArray(final ArrayObject receiver, final Object thang,
                         @Bind final Node node,
@@ -427,6 +420,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final boolean doWeakPointers(final WeakVariablePointersObject receiver, final Object thang,
+                        @Bind final Node node,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
+        }
+
+        @Specialization
+        protected static final boolean doEphemeron(final EphemeronObject receiver, final Object thang,
                         @Bind final Node node,
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
             return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
@@ -735,17 +735,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @GenerateNodeFactory
+    @DenyReplace
     @SqueakPrimitive(indices = 172)
-    protected abstract static class PrimFetchMournerNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-        @Specialization
-        protected final AbstractSqueakObject fetchMourner(@SuppressWarnings("unused") final ClassObject classObject) {
-            final SqueakImageContext image = getContext();
-            if (image.ephemeronsQueue.isEmpty()) {
-                return NilObject.SINGLETON;
-            } else {
-                return image.ephemeronsQueue.removeFirst();
-            }
+    protected static final class PrimFetchMournerNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver) {
+            return NilObject.nullToNil(getContext().ephemeronsQueue.pollFirst());
         }
     }
 
@@ -1087,6 +1082,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         new PrimMillisecondClockNode(),
                         new PrimSecondClockNode(),
                         new PrimVMPathNode(),
+                        new PrimFetchMournerNode(),
                         new PrimMaxIdentityHashNode(),
                         new PrimUTCClockNode(),
                         new PrimLocalMicrosecondsClockNode());

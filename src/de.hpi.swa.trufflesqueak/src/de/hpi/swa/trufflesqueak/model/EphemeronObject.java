@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2017-2025 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2025 Oracle and/or its affiliates
+ * Copyright (c) 2025 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2025 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -154,15 +154,18 @@ public final class EphemeronObject extends AbstractPointersObject {
 
     @Override
     protected void traceVariablePart(final ObjectTracer tracer) {
-        /* nothing to do */ }
+        /* nothing to do */
+    }
 
     @Override
     protected void traceVariablePart(final SqueakImageWriter writer) {
-        /* nothing to do */ }
+        /* nothing to do */
+    }
 
     @Override
     protected void writeVariablePart(final SqueakImageWriter writer) {
-        /* nothing to do */ }
+        /* nothing to do */
+    }
 
     @Override
     public String toString() {
