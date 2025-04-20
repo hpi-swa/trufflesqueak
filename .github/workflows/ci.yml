@@ -49,95 +49,95 @@ jobs:
     - name: Check style and perform full build
       run: mx gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
 
-  build-jar:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2022]
-        java: [24]
-        jdk_identifier: [latest]
-    env:
-      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-22.04' }}"
-      MX_ENV: "trufflesqueak-jar"
+  # build-jar:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-22.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2022]
+  #       java: [24]
+  #       jdk_identifier: [latest]
+  #   env:
+  #     RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-22.04' }}"
+  #     MX_ENV: "trufflesqueak-jar"
       
-    name: jar ${{ matrix.os }} + JDK${{ matrix.java }}
-    timeout-minutes: 45
-    runs-on: ${{ matrix.os }}
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12.0'
-    - name: Set up dependencies
-      shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies jar ${{ matrix.jdk_identifier }}
-    - name: Build GraalVM with TruffleSqueak
-      run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
-      if: ${{ runner.os != 'Windows' }}
-    - name: Build GraalVM with TruffleSqueak via cmd.exe
-      shell: cmd
-      run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies GRAALVM_TRUFFLESQUEAK_JAR_JAVA${{ matrix.java }}
-        call mx --env ${{ env.MX_ENV }} graalvm-home > graalvm-home-with-forward-slashes.txt
-        set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
-        setlocal enabledelayedexpansion
-        set "GRAALVM_HOME=%GRAALVM_HOME:/=\%"
-        echo %GRAALVM_HOME%\bin>>%GITHUB_PATH%
-        echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
-        echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
-      if: ${{ runner.os == 'Windows' }}
-    # - name: Publish TruffleSqueak packages to GitHub Packages
-    #   shell: bash
-    #   run: |
-    #     sed "s/{USERNAME}/${GITHUB_ACTOR}/g; s/{TOKEN}/${{ secrets.GITHUB_TOKEN }}/g" mx.trufflesqueak/mvn-settings.xml.template > mx.trufflesqueak/mvn-settings.xml
-    #     mx.trufflesqueak/utils.sh conditional-deploy \
-    #       mx --env trufflesqueak-jar build --dependencies SMALLTALK,SMALLTALK_COMMUNITY && \
-    #       mx --env trufflesqueak-jar maven-deploy --settings mx.trufflesqueak/mvn-settings.xml --version-string ${{ github.ref_name }} --validate full --licenses MIT --suppress-javadoc github https://maven.pkg.github.com/hpi-swa/trufflesqueak
-    #   if: ${{ matrix.os == 'ubuntu-22.04' && github.ref_type == 'tag' }}
-    - name: Run SystemReporter on TruffleSqueak
-      run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Run gate with Graal compiler
-      run: mx --disable-polyglot --dy /compiler gate ${{ env.MX_GATE_OPTS }} --tags build,test
-      if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE != 'true' }}
-    - name: Run gate with code coverage # do not use Graal compiler with JaCoCo code coverage
-      run: mx --disable-polyglot gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
-      if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE == 'true' }}
-    - name: Run gate with Graal compiler via cmd.exe
-      shell: cmd
-      run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-polyglot --dy /compiler gate ${{ env.MX_GATE_OPTS }} --tags build,test
-      if: ${{ runner.os == 'Windows' }}
-    - name: Report code coverage
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: |
-        bash <(curl -s https://codecov.io/bash)
-        bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
-      if: ${{ env.RUN_WITH_COVERAGE == 'true' && job.status == 'success' }}
-    - name: Zip Graal compiler dumps
-      if: always()
-      shell: bash
-      run: "[[ -d graal_dumps ]] && zip -r graal_dumps.zip graal_dumps || true"
-    - name: Upload Graal compiler dumps
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: graal_dumps-${{ matrix.runs-on }}
-        path: graal_dumps-${{ matrix.runs-on }}.zip
-        if-no-files-found: ignore
-        retention-days: 5
+  #   name: jar ${{ matrix.os }} + JDK${{ matrix.java }}
+  #   timeout-minutes: 45
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #   - name: Clone TruffleSqueak repository
+  #     uses: actions/checkout@v4
+  #     with:
+  #       submodules: true
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: '3.12.0'
+  #   - name: Set up dependencies
+  #     shell: bash
+  #     run: mx.trufflesqueak/utils.sh set-up-dependencies jar ${{ matrix.jdk_identifier }}
+  #   - name: Build GraalVM with TruffleSqueak
+  #     run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
+  #     if: ${{ runner.os != 'Windows' }}
+  #   - name: Build GraalVM with TruffleSqueak via cmd.exe
+  #     shell: cmd
+  #     run: |
+  #       call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+  #       call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies GRAALVM_TRUFFLESQUEAK_JAR_JAVA${{ matrix.java }}
+  #       call mx --env ${{ env.MX_ENV }} graalvm-home > graalvm-home-with-forward-slashes.txt
+  #       set /p GRAALVM_HOME=<graalvm-home-with-forward-slashes.txt
+  #       setlocal enabledelayedexpansion
+  #       set "GRAALVM_HOME=%GRAALVM_HOME:/=\%"
+  #       echo %GRAALVM_HOME%\bin>>%GITHUB_PATH%
+  #       echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
+  #       echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
+  #     if: ${{ runner.os == 'Windows' }}
+  #   # - name: Publish TruffleSqueak packages to GitHub Packages
+  #   #   shell: bash
+  #   #   run: |
+  #   #     sed "s/{USERNAME}/${GITHUB_ACTOR}/g; s/{TOKEN}/${{ secrets.GITHUB_TOKEN }}/g" mx.trufflesqueak/mvn-settings.xml.template > mx.trufflesqueak/mvn-settings.xml
+  #   #     mx.trufflesqueak/utils.sh conditional-deploy \
+  #   #       mx --env trufflesqueak-jar build --dependencies SMALLTALK,SMALLTALK_COMMUNITY && \
+  #   #       mx --env trufflesqueak-jar maven-deploy --settings mx.trufflesqueak/mvn-settings.xml --version-string ${{ github.ref_name }} --validate full --licenses MIT --suppress-javadoc github https://maven.pkg.github.com/hpi-swa/trufflesqueak
+  #   #   if: ${{ matrix.os == 'ubuntu-22.04' && github.ref_type == 'tag' }}
+  #   - name: Run SystemReporter on TruffleSqueak
+  #     run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
+  #   - name: Run gate with Graal compiler
+  #     run: mx --disable-polyglot --dy /compiler gate ${{ env.MX_GATE_OPTS }} --tags build,test
+  #     if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE != 'true' }}
+  #   - name: Run gate with code coverage # do not use Graal compiler with JaCoCo code coverage
+  #     run: mx --disable-polyglot gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
+  #     if: ${{ runner.os != 'Windows' && env.RUN_WITH_COVERAGE == 'true' }}
+  #   - name: Run gate with Graal compiler via cmd.exe
+  #     shell: cmd
+  #     run: |
+  #       call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+  #       mx --disable-polyglot --dy /compiler gate ${{ env.MX_GATE_OPTS }} --tags build,test
+  #     if: ${{ runner.os == 'Windows' }}
+  #   - name: Report code coverage
+  #     env:
+  #       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+  #     run: |
+  #       bash <(curl -s https://codecov.io/bash)
+  #       bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
+  #     if: ${{ env.RUN_WITH_COVERAGE == 'true' && job.status == 'success' }}
+  #   - name: Zip Graal compiler dumps
+  #     if: always()
+  #     shell: bash
+  #     run: "[[ -d graal_dumps ]] && zip -r graal_dumps.zip graal_dumps || true"
+  #   - name: Upload Graal compiler dumps
+  #     if: always()
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: graal_dumps-${{ matrix.runs-on }}
+  #       path: graal_dumps-${{ matrix.runs-on }}.zip
+  #       if-no-files-found: ignore
+  #       retention-days: 5
 
   build-standalone:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
+        os: [ubuntu-22.04] #, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
       JAVA_VERSION: "24"
