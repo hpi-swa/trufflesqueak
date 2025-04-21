@@ -19,7 +19,11 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public final class CheckForInterruptsState {
     private static final String CHECK_FOR_INTERRUPTS_THREAD_NAME = "TruffleSqueakCheckForInterrupts";
 
-    private static final int DEFAULT_INTERRUPT_CHECK_NANOS = 2_000_000;
+    /*
+     * Process switches are relatively expensive. So to give interrupts enough time to run,
+     * TruffleSqueak uses an interval of 4ms by default (twice of what OpenSmalltalkVM uses).
+     */
+    private static final int DEFAULT_INTERRUPT_CHECK_NANOS = 4_000_000;
 
     private final SqueakImageContext image;
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
