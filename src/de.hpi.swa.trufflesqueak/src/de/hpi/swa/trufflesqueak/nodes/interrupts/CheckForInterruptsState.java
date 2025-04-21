@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
 import java.util.ArrayDeque;
+import java.util.concurrent.locks.LockSupport;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -18,16 +19,16 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public final class CheckForInterruptsState {
     private static final String CHECK_FOR_INTERRUPTS_THREAD_NAME = "TruffleSqueakCheckForInterrupts";
 
-    private static final int DEFAULT_INTERRUPT_CHECK_MILLISECONDS = 2;
+    private static final int DEFAULT_INTERRUPT_CHECK_NANOS = 2_000_000;
 
     private final SqueakImageContext image;
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     /**
-     * `interruptCheckMilliseconds` is the interval between updates to 'shouldTrigger'. This
-     * controls the timing accuracy of Smalltalk Delays.
+     * `interruptCheckNanos` is the interval between updates to 'shouldTrigger'. This controls the
+     * timing accuracy of Smalltalk Delays.
      */
-    private long interruptCheckMilliseconds = DEFAULT_INTERRUPT_CHECK_MILLISECONDS;
+    private long interruptCheckNanos = DEFAULT_INTERRUPT_CHECK_NANOS;
 
     private boolean isActive = true;
     private volatile boolean hasTriggered;
@@ -71,10 +72,8 @@ public final class CheckForInterruptsState {
         public void run() {
             while (true) {
                 checkForInterrupts();
-                try {
-                    Thread.sleep(interruptCheckMilliseconds);
-                } catch (final InterruptedException ie) {
-                    Thread.currentThread().interrupt();
+                LockSupport.parkNanos(interruptCheckNanos);
+                if (Thread.interrupted()) {
                     break;
                 }
             }
@@ -104,11 +103,11 @@ public final class CheckForInterruptsState {
     /* Interrupt check interval */
 
     public long getInterruptCheckMilliseconds() {
-        return interruptCheckMilliseconds;
+        return interruptCheckNanos / 1_000_000;
     }
 
     public void setInterruptCheckMilliseconds(final long milliseconds) {
-        interruptCheckMilliseconds = Math.max(DEFAULT_INTERRUPT_CHECK_MILLISECONDS, milliseconds);
+        interruptCheckNanos = Math.max(DEFAULT_INTERRUPT_CHECK_NANOS, milliseconds * 1_000_000);
     }
 
     /* Interrupt trigger state */
