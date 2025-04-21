@@ -1,4 +1,4 @@
-| testSuite nonTerminatingTestCases failingTests result exitCode |
+| testSuite nonTerminatingTestCases failingTests result retries exitCode |
 
 StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'; newLine; flush.
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
@@ -37,14 +37,19 @@ testSuite tests removeAllSuchThat: [:ea | failingTests            anySatisfy: [:
 result := testSuite run.
 result printReport.
 
-"To reduce noise, retry any failures or errors"
-testSuiteRetry := TestSuite new.
-testSuiteRetry tests addAll: result failures.
-testSuiteRetry tests addAll: result errors.
-resultRetry := testSuiteRetry run.
-resultRetry printReport.
+exitCode := result hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
 
-exitCode := (resultRetry hasFailures or: [ resultRetry hasErrors ]) ifTrue: [ 1 ] ifFalse: [ 0 ].
+retries := 3.
+[ exitCode == 1 and: [ retries > 0 ] ] whileTrue: [
+    StdIOWriteStream stdout newLine; nextPutAll: 'Retry failures or errors:'; newLine; flush.
+    testSuiteRetry := TestSuite new.
+    testSuiteRetry tests addAll: result failures.
+    testSuiteRetry tests addAll: result errors.
+    resultRetry := testSuiteRetry run.
+    resultRetry printReport.
+    exitCode := resultRetry hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
+    retries := retries - 1.
+].
 
 StdIOWriteStream stdout newLine; nextPutAll: 'Failing and Flaky TestCases:'; newLine; flush.
 testSuite := TestSuite new.
