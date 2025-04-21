@@ -19,11 +19,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public final class CheckForInterruptsState {
     private static final String CHECK_FOR_INTERRUPTS_THREAD_NAME = "TruffleSqueakCheckForInterrupts";
 
-    /*
-     * Process switches are relatively expensive. So to give interrupts enough time to run,
-     * TruffleSqueak uses an interval of 4ms by default (twice of what OpenSmalltalkVM uses).
-     */
-    private static final int DEFAULT_INTERRUPT_CHECK_NANOS = 4_000_000;
+    private static final int DEFAULT_INTERRUPT_CHECK_NANOS = 2_000_000;
 
     private final SqueakImageContext image;
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
@@ -75,24 +71,23 @@ public final class CheckForInterruptsState {
         @Override
         public void run() {
             while (true) {
-                checkForInterrupts();
+                if (hasTriggered) {
+                    /*
+                     * An interrupt has triggered recently, so give it some time to do useful work
+                     * before the next check may trigger another one.
+                     */
+                    hasTriggered = false;
+                    shouldTrigger = false;
+                    LockSupport.parkNanos(10 * interruptCheckNanos);
+                }
+                // Check for interrupts
+                shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
+                // Park thread
                 LockSupport.parkNanos(interruptCheckNanos);
+                // Handle thread interrupts
                 if (Thread.interrupted()) {
                     break;
                 }
-            }
-        }
-
-        private void checkForInterrupts() {
-            if (hasTriggered) {
-                /*
-                 * Handler has triggered recently, so skip the next check. This avoids that
-                 * interrupts can be triggered more than once in the specified interval.
-                 */
-                hasTriggered = false;
-                shouldTrigger = false;
-            } else {
-                shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
             }
         }
     }
