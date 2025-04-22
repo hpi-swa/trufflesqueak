@@ -31,7 +31,7 @@ public final class CheckForInterruptsState {
     private long interruptCheckNanos = DEFAULT_INTERRUPT_CHECK_NANOS;
 
     private boolean isActive = true;
-    private volatile boolean hasTriggered;
+    private volatile long nanosToWait;
     private long nextWakeupTick;
     private boolean interruptPending;
     private boolean hasPendingFinalizations;
@@ -71,14 +71,14 @@ public final class CheckForInterruptsState {
         @Override
         public void run() {
             while (true) {
-                if (hasTriggered) {
+                if (nanosToWait > 0) {
                     /*
                      * An interrupt has triggered recently, so give it some time to do useful work
                      * before the next check may trigger another one.
                      */
-                    hasTriggered = false;
-                    shouldTrigger = false;
-                    LockSupport.parkNanos(10 * interruptCheckNanos);
+                    assert !shouldTrigger;
+                    LockSupport.parkNanos(nanosToWait);
+                    nanosToWait = 0;
                 }
                 // Check for interrupts
                 shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
@@ -123,6 +123,24 @@ public final class CheckForInterruptsState {
         }
     }
 
+    private void delayNextCheck() {
+        // wait a full interval to ensure interrupts are not triggered more than once per interval
+        delayNextCheck(interruptCheckNanos);
+    }
+
+    /** Used for #primitiveClosureValueNoContextSwitch. */
+    public void delayNextContextSwitch() {
+        // wait 20 times longer than usual
+        delayNextCheck(20 * interruptCheckNanos);
+    }
+
+    private void delayNextCheck(final long delayNanos) {
+        // avoid any immediate triggers
+        shouldTrigger = false;
+        // let CheckForInterruptsThread wait before the next check
+        nanosToWait = delayNanos;
+    }
+
     /* Enable / disable interrupts */
 
     public boolean isActive() {
@@ -143,7 +161,7 @@ public final class CheckForInterruptsState {
         if (interruptPending) {
             LogUtils.INTERRUPTS.fine("User interrupt");
             interruptPending = false; // reset
-            hasTriggered = true;
+            delayNextCheck();
             return true;
         } else {
             return false;
@@ -172,7 +190,7 @@ public final class CheckForInterruptsState {
         if (nextWakeUpTickTrigger()) {
             LogUtils.INTERRUPTS.fine("Timer interrupt");
             nextWakeupTick = 0; // reset
-            hasTriggered = true;
+            delayNextCheck();
             return true;
         } else {
             return false;
@@ -196,7 +214,7 @@ public final class CheckForInterruptsState {
         if (hasPendingFinalizations) {
             LogUtils.INTERRUPTS.fine("Finalization interrupt");
             hasPendingFinalizations = false;
-            hasTriggered = true;
+            delayNextCheck();
             return true;
         } else {
             return false;
@@ -217,7 +235,7 @@ public final class CheckForInterruptsState {
     public boolean trySemaphoresToSignal() {
         if (hasSemaphoresToSignal()) {
             LogUtils.INTERRUPTS.fine("Semaphore interrupt");
-            hasTriggered = true;
+            delayNextCheck();
             return true;
         } else {
             return false;
