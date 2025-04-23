@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -51,7 +52,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.nodes.plugins.MiscPrimitivePlugin.AbstractPrimCompareStringNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -424,6 +424,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
             return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
         }
+
+        @Specialization
+        protected static final boolean doEphemeron(final EphemeronObject receiver, final Object thang,
+                        @Bind final Node node,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, node, thang));
+        }
     }
 
     @GenerateNodeFactory
@@ -729,6 +736,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @DenyReplace
+    @SqueakPrimitive(indices = 172)
+    protected static final class PrimFetchMournerNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver) {
+            return NilObject.nullToNil(getContext().ephemeronsQueue.pollFirst());
+        }
+    }
+
+    @DenyReplace
     @SqueakPrimitive(indices = 176)
     public static final class PrimMaxIdentityHashNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
@@ -827,7 +843,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since
                 // startup (read-only)
                 case 10 -> MiscUtils.getCollectionTime(MiscUtils.GC_YOUNG_GEN_NAMES);
-                // tenures of surving objects since startup (read-only)
+                // tenures of surviving objects since startup (read-only)
                 case 11 -> 1L;
                 // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
                 case 12, 13, 14, 15, 16, 17, 18, 19 -> 0L;
@@ -846,7 +862,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // memory headroom when growing object memory (rw)
                 case 25 -> 1L;
                 // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
-                case 26 -> (long) CheckForInterruptsState.getInterruptChecksEveryNms();
+                case 26 -> image.interrupt.getInterruptCheckMilliseconds();
                 // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL
                 // marking
                 case 27 -> 0L;
@@ -952,6 +968,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 default -> NilObject.SINGLETON;
             };
         }
+
+        protected static void vmParameterAtPut(final SqueakImageContext image, final int index, final long parameter) {
+            // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
+            if (index == 26) {
+                image.interrupt.setInterruptCheckMilliseconds(parameter);
+            }
+        }
     }
 
     @GenerateNodeFactory
@@ -999,11 +1022,20 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 254)
     protected abstract static class PrimVMParameters3Node extends AbstractPrimVMParametersNode implements Primitive2WithFallback {
-        @SuppressWarnings("unused")
         @Specialization
-        protected static final NilObject getVMParameters(final Object receiver, final long index, final Object value) {
-            return NilObject.SINGLETON; // ignore writes
+        protected final Object setVMParameters(@SuppressWarnings("unused") final Object receiver, final long index, final long value) {
+            final SqueakImageContext image = getContext();
+            final int theIndex = MiscUtils.toIntExact(index);
+            final Object result = vmParameterAt(image, theIndex);
+            vmParameterAtPut(image, theIndex, value);
+            return result;
         }
+
+        @Specialization
+        protected final Object setVMParameters(@SuppressWarnings("unused") final Object receiver, final long index, @SuppressWarnings("unused") final Object value) {
+            return vmParameterAt(getContext(), MiscUtils.toIntExact(index)); // ignore writes
+        }
+
     }
 
     /* Primitive 255 is reserved for RSqueak/VM and no longer needed in TruffleSqueak. */
@@ -1050,6 +1082,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         new PrimMillisecondClockNode(),
                         new PrimSecondClockNode(),
                         new PrimVMPathNode(),
+                        new PrimFetchMournerNode(),
                         new PrimMaxIdentityHashNode(),
                         new PrimUTCClockNode(),
                         new PrimLocalMicrosecondsClockNode());

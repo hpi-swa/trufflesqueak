@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -19,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -56,7 +58,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doPointers(final Node node, final PointersObject obj, final long index, final Object value,
-                    @Cached final AbstractPointersObjectWriteNode writeNode) {
+                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
         writeNode.execute(node, obj, (int) index, value);
     }
 
@@ -97,6 +99,12 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     @Specialization
     protected static final void doContext(final Node node, final ContextObject obj, final long index, final Object value,
                     @Cached final ContextObjectWriteNode writeNode) {
+        writeNode.execute(node, obj, index, value);
+    }
+
+    @Specialization
+    protected static final void doEphemeron(final Node node, final EphemeronObject obj, final long index, final Object value,
+                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
     }
 

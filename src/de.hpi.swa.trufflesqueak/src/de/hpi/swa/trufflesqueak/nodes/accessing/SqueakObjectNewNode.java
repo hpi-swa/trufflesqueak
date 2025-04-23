@@ -14,7 +14,6 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -23,6 +22,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -155,10 +155,21 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new WeakVariablePointersObject(image, classObject, null, extraSize);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "classObject.isEphemeronClassType()")
-    protected static final WeakVariablePointersObject doEphemerons(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        throw SqueakException.create("Ephemerons not (yet) supported");
+    @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
+    protected static final EphemeronObject doEphemeronCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
+                    @Cached("getEphemeronLayoutOrNull(classObject)") final ObjectLayout cachedLayout) {
+        assert extraSize == 0 && classObject.isEphemeronClassType();
+        return new EphemeronObject(image, classObject, cachedLayout);
+    }
+
+    protected static final ObjectLayout getEphemeronLayoutOrNull(final ClassObject classObject) {
+        return classObject.isEphemeronClassType() ? classObject.getLayout() : null;
+    }
+
+    @Specialization(guards = {"classObject.isEphemeronClassType()"}, replaces = "doEphemeronCached")
+    protected static final EphemeronObject doEphemeronUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert extraSize == 0;
+        return new EphemeronObject(image, classObject, null);
     }
 
     @Specialization(guards = "classObject.isLongs()")

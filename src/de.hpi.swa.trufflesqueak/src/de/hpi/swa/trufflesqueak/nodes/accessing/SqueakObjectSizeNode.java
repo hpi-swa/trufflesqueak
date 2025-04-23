@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -47,6 +48,17 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     @Specialization
     protected static final int doNil(final NilObject obj) {
         return obj.size();
+    }
+
+    @Specialization
+    protected static final int doEmpty(final EmptyObject obj) {
+        return obj.size();
+    }
+
+    @Specialization
+    protected static final int doNative(final Node node, final NativeObject obj,
+                    @Cached final NativeObjectSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
     }
 
     @Specialization
@@ -83,6 +95,12 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
+    protected static final int doEphemeron(final Node node, final EphemeronObject obj,
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
+    }
+
+    @Specialization
     protected static final int doClosure(final BlockClosureObject obj) {
         return obj.size();
     }
@@ -93,23 +111,12 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doEmpty(final EmptyObject obj) {
+    protected static final int doLargeInteger(final LargeIntegerObject obj) {
         return obj.size();
-    }
-
-    @Specialization
-    protected static final int doNative(final Node node, final NativeObject obj,
-                    @Cached final NativeObjectSizeNode sizeNode) {
-        return sizeNode.execute(node, obj);
     }
 
     @Specialization
     protected static final int doFloat(final FloatObject obj) {
-        return obj.size();
-    }
-
-    @Specialization
-    protected static final int doLargeInteger(final LargeIntegerObject obj) {
         return obj.size();
     }
 

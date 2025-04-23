@@ -18,7 +18,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public abstract class CheckForInterruptsQuickNode extends AbstractNode {
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
@@ -86,30 +85,22 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
         public void execute(final VirtualFrame frame) {
             final SqueakImageContext image = getContext();
             final CheckForInterruptsState istate = image.interrupt;
-            if (!istate.shouldTrigger()) {
+            if (istate.shouldSkip()) {
                 return;
             }
             /* Exclude interrupts case from compilation. */
             CompilerDirectives.transferToInterpreter();
-            istate.resetTrigger();
             final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
-            if (istate.interruptPending()) {
-                LogUtils.INTERRUPTS.fine("User interrupt");
-                istate.interruptPending = false; // reset interrupt flag
+            if (istate.tryInterruptPending()) {
                 SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
             }
-            if (istate.nextWakeUpTickTrigger()) {
-                LogUtils.INTERRUPTS.fine("Timer interrupt");
-                istate.nextWakeupTick = 0; // reset timer interrupt
+            if (istate.tryWakeUpTickTrigger()) {
                 SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
             }
-            if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
-                LogUtils.INTERRUPTS.fine("Finalization interrupt");
-                istate.setPendingFinalizations(false);
+            if (istate.tryPendingFinalizations()) {
                 SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
             }
-            if (istate.hasSemaphoresToSignal()) {
-                LogUtils.INTERRUPTS.fine("Semaphore interrupt");
+            if (istate.trySemaphoresToSignal()) {
                 final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
                 if (!externalObjects.isEmptyType()) { // signal external semaphores
                     final Object[] semaphores = externalObjects.getObjectStorage();

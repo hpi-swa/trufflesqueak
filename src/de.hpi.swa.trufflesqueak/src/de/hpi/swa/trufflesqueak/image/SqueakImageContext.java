@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.image;
 
 import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
+import com.oracle.truffle.api.dsl.Bind.DefaultExpression;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
@@ -45,6 +47,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.CompiledCodeHeaderUtils;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -78,6 +81,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
+@DefaultExpression("get($node)")
 public final class SqueakImageContext {
     private static final ContextReference<SqueakImageContext> REFERENCE = ContextReference.create(SqueakLanguage.class);
 
@@ -172,6 +176,10 @@ public final class SqueakImageContext {
     /* Low space handling */
     private static final int LOW_SPACE_NUM_SKIPPED_SENDS = 4;
     private int lowSpaceSkippedSendsCount;
+
+    /* Ephemeron support */
+    public boolean containsEphemerons;
+    public final ArrayDeque<EphemeronObject> ephemeronsQueue = new ArrayDeque<>();
 
     /* Context stack depth */
     @CompilationFinal private final int maxContextStackDepth;

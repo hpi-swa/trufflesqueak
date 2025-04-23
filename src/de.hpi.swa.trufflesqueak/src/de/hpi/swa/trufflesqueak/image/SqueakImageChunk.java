@@ -17,6 +17,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
+import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -86,8 +87,8 @@ public final class SqueakImageChunk {
                 }
             } else if (format == 4) { // indexable weak fields
                 object = new WeakVariablePointersObject(getImage(), header, classObject);
-            } else if (format == 5) { // fixed weak fields
-                throw SqueakException.create("Ephemerons not (yet) supported");
+            } else if (format == 5) { // fixed fields, special notification
+                object = new EphemeronObject(getImage(), header, classObject);
             } else if (format <= 8) {
                 assert false : "Should never happen (unused format)";
             } else if (format == 9) { // 64-bit integers

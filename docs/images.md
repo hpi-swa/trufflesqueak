@@ -33,12 +33,12 @@ Metacello new
 Run the following in a [Cuis-Smalltalk-Dev](https://github.com/Cuis-Smalltalk/Cuis-Smalltalk-Dev) checkout:
 
 ```bash
-squeak Cuis6.0-XYZ.image -d "\
+./CuisVM.app/Contents/MacOS/Squeak CuisImage/Cuis?.?-????.image -d "\
   Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
   Utilities classPool at: #AuthorInitials put: 'TS'.
   ChangeSet installNewUpdates.
-  CodePackageFile installPackage: './Packages/BaseImageTests.pck.st' asFileEntry.
-  ChangeSet fileIn: './.ContinuousIntegrationScripts/TestResultConsolePrinter.st' asFileEntry.
-  Smalltalk saveAsNewReleaseAndQuit.
+  CodePackageFile installPackage: DirectoryEntry currentDirectory // 'Packages/BaseImageTests.pck.st'.
+  ChangeSet fileIn: DirectoryEntry currentDirectory // '.ContinuousIntegrationScripts/TestResultConsolePrinter.st'.
+  Smalltalk saveAndQuit.
 "
 ```

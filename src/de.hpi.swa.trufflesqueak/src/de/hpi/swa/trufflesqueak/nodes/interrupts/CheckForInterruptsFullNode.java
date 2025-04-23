@@ -14,7 +14,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class CheckForInterruptsFullNode extends Node {
     @Child private SignalSemaphoreNode signalSemaporeNode;
@@ -34,27 +33,19 @@ public final class CheckForInterruptsFullNode extends Node {
     }
 
     public void execute(final VirtualFrame frame) {
-        if (!istate.shouldTrigger()) {
+        if (istate.shouldSkip()) {
             return;
         }
-        istate.resetTrigger();
-        if (istate.interruptPending()) {
-            LogUtils.INTERRUPTS.fine("User interrupt");
-            istate.interruptPending = false; // reset interrupt flag
+        if (istate.tryInterruptPending()) {
             signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
         }
-        if (istate.nextWakeUpTickTrigger()) {
-            LogUtils.INTERRUPTS.fine("Timer interrupt");
-            istate.nextWakeupTick = 0; // reset timer interrupt
+        if (istate.tryWakeUpTickTrigger()) {
             signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
         }
-        if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
-            LogUtils.INTERRUPTS.fine("Finalization interrupt");
-            istate.setPendingFinalizations(false);
+        if (istate.tryPendingFinalizations()) {
             signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
         }
-        if (istate.hasSemaphoresToSignal()) {
-            LogUtils.INTERRUPTS.fine("Semaphore interrupt");
+        if (istate.trySemaphoresToSignal()) {
             final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
             if (!externalObjects.isEmptyType()) { // signal external semaphores
                 final Object[] semaphores = externalObjects.getObjectStorage();
