@@ -153,6 +153,7 @@ public final class CheckForInterruptsState {
 
     public void deactivate() {
         isActive = false;
+        shouldTrigger = false;
     }
 
     /* User interrupt */
