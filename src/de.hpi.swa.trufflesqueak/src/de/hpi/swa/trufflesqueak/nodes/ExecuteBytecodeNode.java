@@ -109,7 +109,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                         if (returnValue != null) {
                             break bytecode_loop;
                         }
-                    } else if (backJumpCounter.value % 10_000 == 0) {
+                    } else {
                         jumpNode.executeCheck(frame);
                     }
                 }
