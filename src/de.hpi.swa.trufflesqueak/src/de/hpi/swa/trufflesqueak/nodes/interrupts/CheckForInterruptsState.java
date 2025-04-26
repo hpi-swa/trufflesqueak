@@ -130,8 +130,8 @@ public final class CheckForInterruptsState {
 
     /** Used for #primitiveClosureValueNoContextSwitch. */
     public void delayNextContextSwitch() {
-        // wait 20 times longer than usual
-        delayNextCheck(20 * interruptCheckNanos);
+        // wait 50 times longer than usual
+        delayNextCheck(50 * interruptCheckNanos);
     }
 
     private void delayNextCheck(final long delayNanos) {
