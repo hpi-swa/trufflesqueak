@@ -261,7 +261,7 @@ public final class SqueakImageContext {
                             "Set author information."
                             Utilities
                                 authorName: 'TruffleSqueak';
-                                setAuthorInitials: 'TruffleSqueak'.
+                                setAuthorInitials: 'TS'.
                             """.formatted(Boolean.toString(options.isTesting()));
             try {
                 evaluate(prepareHeadlessImageScript);
