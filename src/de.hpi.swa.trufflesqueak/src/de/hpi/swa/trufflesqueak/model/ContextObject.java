@@ -576,9 +576,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             tracer.addIfUnmarked(getCodeObject());
             tracer.addIfUnmarked(getClosure());
             tracer.addIfUnmarked(getReceiver());
-            for (final Object arg : truffleFrame.getArguments()) {
-                tracer.addIfUnmarked(arg);
-            }
+            tracer.addAllIfUnmarked(truffleFrame.getArguments());
             FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
                 if (truffleFrame.isObject(slotIndex)) {
                     tracer.addIfUnmarked(truffleFrame.getObject(slotIndex));

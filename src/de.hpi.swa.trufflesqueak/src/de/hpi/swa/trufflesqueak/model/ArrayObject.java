@@ -347,9 +347,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void tracePointers(final ObjectTracer tracer) {
         if (isObjectType()) {
-            for (final Object value : getObjectStorage()) {
-                tracer.addIfUnmarked(value);
-            }
+            tracer.addAllIfUnmarked(getObjectStorage());
         }
     }
 

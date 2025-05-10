@@ -521,15 +521,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
-        for (final Object literal : getLiterals()) {
-            tracer.addIfUnmarked(literal);
-        }
+        tracer.addAllIfUnmarked(literals);
     }
 
     @Override
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
-        writer.traceAllIfNecessary(getLiterals());
+        writer.traceAllIfNecessary(literals);
     }
 
     @Override

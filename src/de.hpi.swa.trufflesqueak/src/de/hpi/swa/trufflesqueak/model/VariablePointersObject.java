@@ -31,9 +31,7 @@ public final class VariablePointersObject extends AbstractVariablePointersObject
 
     @Override
     protected void traceVariablePart(final ObjectTracer tracer) {
-        for (final Object object : variablePart) {
-            tracer.addIfUnmarked(object);
-        }
+        tracer.addAllIfUnmarked(variablePart);
     }
 
     @Override

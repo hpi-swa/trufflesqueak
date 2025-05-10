@@ -531,13 +531,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
-        tracer.addIfUnmarked(getSuperclass());
-        tracer.addIfUnmarked(getMethodDict());
-        tracer.addIfUnmarked(getInstanceVariables());
-        tracer.addIfUnmarked(getOrganization());
-        for (final Object value : getOtherPointers()) {
-            tracer.addIfUnmarked(value);
-        }
+        tracer.addIfUnmarked(superclass);
+        tracer.addIfUnmarked(methodDict);
+        tracer.addIfUnmarked(instanceVariables);
+        tracer.addIfUnmarked(organization);
+        tracer.addAllIfUnmarked(pointers);
     }
 
     @Override

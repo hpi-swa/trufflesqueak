@@ -210,9 +210,7 @@ public final class ObjectGraphUtils {
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
                     return null;
                 }
-                for (final Object argument : current.getArguments()) {
-                    addIfUnmarked(argument);
-                }
+                addAllIfUnmarked(current.getArguments());
                 addIfUnmarked(FrameAccess.getContext(current));
                 FrameAccess.iterateStackSlots(current, slotIndex -> {
                     if (current.isObject(slotIndex)) {
@@ -232,6 +230,12 @@ public final class ObjectGraphUtils {
         public void addIfUnmarked(final Object object) {
             if (object instanceof final AbstractSqueakObjectWithClassAndHash o) {
                 addIfUnmarked(o);
+            }
+        }
+
+        public void addAllIfUnmarked(final Object[] objects) {
+            for (final Object object : objects) {
+                addIfUnmarked(object);
             }
         }
 

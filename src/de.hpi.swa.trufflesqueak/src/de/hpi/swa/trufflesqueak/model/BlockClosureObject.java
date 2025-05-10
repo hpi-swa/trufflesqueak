@@ -294,17 +294,15 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
-        tracer.addIfUnmarked(getOuterContext());
-        for (final Object value : getCopiedValues()) {
-            tracer.addIfUnmarked(value);
-        }
+        tracer.addIfUnmarked(outerContext);
+        tracer.addAllIfUnmarked(copiedValues);
     }
 
     @Override
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
         writer.traceIfNecessary(outerContext);
-        writer.traceAllIfNecessary(getCopiedValues());
+        writer.traceAllIfNecessary(copiedValues);
     }
 
     @Override

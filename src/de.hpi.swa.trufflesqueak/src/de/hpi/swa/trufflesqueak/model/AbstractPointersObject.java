@@ -345,9 +345,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         tracer.addIfUnmarked(object1);
         tracer.addIfUnmarked(object2);
         if (objectExtension != null) {
-            for (final Object object : objectExtension) {
-                tracer.addIfUnmarked(object);
-            }
+            tracer.addAllIfUnmarked(objectExtension);
         }
         traceVariablePart(tracer);
     }
