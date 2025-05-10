@@ -31,6 +31,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.DebugUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
@@ -209,7 +210,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     private static TopLevelReturn returnToTopLevel(final ContextObject targetContext, final Object returnValue) {
-        assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe()) : targetContext;
+        assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe()) : DebugUtils.getSqStackTrace(targetContext);
         throw new TopLevelReturn(returnValue);
     }
 

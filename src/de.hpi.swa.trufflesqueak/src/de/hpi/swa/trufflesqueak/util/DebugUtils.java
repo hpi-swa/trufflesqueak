@@ -178,10 +178,14 @@ public final class DebugUtils {
     }
 
     public static void printSqStackTrace(final ContextObject context) {
+        SqueakImageContext.getSlow().getOutput().println(getSqStackTrace(context));
+    }
+
+    public static StringBuilder getSqStackTrace(final ContextObject context) {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final StringBuilder b = new StringBuilder();
         printSqMaterializedStackTraceOn(b, context);
-        SqueakImageContext.getSlow().getOutput().println(b);
+        return b;
     }
 
     private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
