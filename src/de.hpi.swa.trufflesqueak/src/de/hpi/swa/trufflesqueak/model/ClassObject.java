@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -27,6 +28,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
@@ -343,20 +345,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return hasInstanceVariables() ? instanceVariables : NilObject.SINGLETON;
     }
 
-    public ArrayObject getInstanceVariablesOrNull() {
-        return instanceVariables;
-    }
-
     public void setInstanceVariables(final ArrayObject instanceVariables) {
         this.instanceVariables = instanceVariables;
     }
 
     public AbstractSqueakObject getOrganization() {
         return NilObject.nullToNil(organization);
-    }
-
-    public PointersObject getOrganizationOrNull() {
-        return organization;
     }
 
     public void setOrganization(final PointersObject organization) {
@@ -420,6 +414,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public int getInstanceSpecification() {
         return (int) (format >> 16 & 0x1f);
+    }
+
+    public ClassObject shallowCopy(final Node inlineTarget, final ArrayObjectShallowCopyNode arrayCopyNode) {
+        assert hasInstanceVariables();
+        return shallowCopy(arrayCopyNode.execute(inlineTarget, instanceVariables));
     }
 
     public ClassObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
@@ -512,21 +511,26 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-            if (fromPointer == getSuperclassOrNull() && to[i] instanceof final ClassObject o) {
+            final Object toPointer = to[i];
+            if (fromPointer == superclass && toPointer instanceof final ClassObject o) {
                 setSuperclass(o);
             }
-            if (fromPointer == getMethodDict() && fromPointer != to[i] && to[i] instanceof final VariablePointersObject o) {
+            if (fromPointer == methodDict && fromPointer != toPointer && toPointer instanceof final VariablePointersObject o) {
                 // Only update methodDict if changed to avoid redundant invalidation.
                 setMethodDict(o);
             }
-            if (fromPointer == getInstanceVariablesOrNull() && to[i] instanceof final ArrayObject o) {
+            if (fromPointer == instanceVariables && toPointer instanceof final ArrayObject o) {
                 setInstanceVariables(o);
             }
-            if (fromPointer == getOrganizationOrNull() && to[i] instanceof final PointersObject o) {
+            if (fromPointer == organization && toPointer instanceof final PointersObject o) {
                 setOrganization(o);
             }
+            for (int j = 0; j < pointers.length; j++) {
+                if (pointers[j] == fromPointer) {
+                    pointers[j] = toPointer;
+                }
+            }
         }
-        pointersBecomeOneWay(getOtherPointers(), from, to);
     }
 
     @Override

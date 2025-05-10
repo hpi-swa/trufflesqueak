@@ -188,27 +188,9 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         toggleMarkingFlag();
     }
 
-    @SuppressWarnings("unused")
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        // Do nothing by default.
-    }
+    public abstract void pointersBecomeOneWay(Object[] from, Object[] to);
 
-    protected static final void pointersBecomeOneWay(final Object[] target, final Object[] from, final Object[] to) {
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            for (int j = 0; j < target.length; j++) {
-                final Object newPointer = target[j];
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    target[j] = toPointer;
-                }
-            }
-        }
-    }
-
-    public void tracePointers(@SuppressWarnings("unused") final ObjectTracer objectTracer) {
-        // Nothing to trace by default.
-    }
+    public abstract void tracePointers(ObjectTracer objectTracer);
 
     public void trace(final SqueakImageWriter writer) {
         writer.traceIfNecessary(getSqueakClass());

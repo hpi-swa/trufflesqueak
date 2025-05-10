@@ -103,7 +103,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         private static void patchTruffleFrames(final Object[] fromPointers, final Object[] toPointers) {
             final int fromPointersLength = fromPointers.length;
-
             Truffle.getRuntime().iterateFrames((frameInstance) -> {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
@@ -113,10 +112,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 for (int i = 0; i < arguments.length; i++) {
                     final Object argument = arguments[i];
                     for (int j = 0; j < fromPointersLength; j++) {
-                        final Object fromPointer = fromPointers[j];
-                        if (argument == fromPointer) {
-                            final Object toPointer = toPointers[j];
-                            arguments[i] = toPointer;
+                        if (argument == fromPointers[j]) {
+                            arguments[i] = toPointers[j];
                         } else if (argument instanceof final AbstractSqueakObjectWithClassAndHash o) {
                             o.pointersBecomeOneWay(fromPointers, toPointers);
                         }
@@ -126,10 +123,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 final ContextObject context = FrameAccess.getContext(current);
                 if (context != null) {
                     for (int j = 0; j < fromPointersLength; j++) {
-                        final Object fromPointer = fromPointers[j];
-                        if (context == fromPointer) {
-                            final Object toPointer = toPointers[j];
-                            FrameAccess.setContext(current, (ContextObject) toPointer);
+                        if (context == fromPointers[j]) {
+                            FrameAccess.setContext(current, (ContextObject) toPointers[j]);
                         } else {
                             context.pointersBecomeOneWay(fromPointers, toPointers);
                         }
@@ -144,8 +139,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     if (current.isObject(slotIndex)) {
                         final Object stackObject = current.getObject(slotIndex);
                         for (int j = 0; j < fromPointersLength; j++) {
-                            final Object fromPointer = fromPointers[j];
-                            if (stackObject == fromPointer) {
+                            if (stackObject == fromPointers[j]) {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null : "Unexpected `null` value";
                                 current.setObject(slotIndex, toPointer);
