@@ -318,22 +318,24 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            if (object0 == fromPointer) {
-                object0 = to[i];
-            }
-            if (object1 == fromPointer) {
-                object1 = to[i];
-            }
-            if (object2 == fromPointer) {
-                object2 = to[i];
-            }
-            if (objectExtension != null) {
-                for (int j = 0; j < objectExtension.length; j++) {
-                    final Object object = objectExtension[j];
-                    if (object == fromPointer) {
-                        objectExtension[j] = to[i];
-                    }
+            layoutValueBecomeOneWay(from[i], to[i]);
+        }
+    }
+
+    protected final void layoutValueBecomeOneWay(final Object fromPointer, final Object toPointer) {
+        if (object0 == fromPointer) {
+            object0 = toPointer;
+        }
+        if (object1 == fromPointer) {
+            object1 = toPointer;
+        }
+        if (object2 == fromPointer) {
+            object2 = toPointer;
+        }
+        if (objectExtension != null) {
+            for (int j = 0; j < objectExtension.length; j++) {
+                if (objectExtension[j] == fromPointer) {
+                    objectExtension[j] = toPointer;
                 }
             }
         }

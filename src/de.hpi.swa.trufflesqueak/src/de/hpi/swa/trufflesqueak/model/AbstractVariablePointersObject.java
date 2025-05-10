@@ -71,16 +71,14 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        layoutValuesBecomeOneWay(from, to);
         final int variableSize = variablePart.length;
-        if (variableSize > 0) {
-            for (int i = 0; i < from.length; i++) {
-                final Object fromPointer = from[i];
-                for (int j = 0; j < variableSize; j++) {
-                    final Object object = getFromVariablePart(j);
-                    if (object == fromPointer) {
-                        putIntoVariablePart(j, to[i]);
-                    }
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            final Object toPointer = to[i];
+            layoutValueBecomeOneWay(fromPointer, toPointer);
+            for (int j = 0; j < variableSize; j++) {
+                if (getFromVariablePart(j) == fromPointer) {
+                    putIntoVariablePart(j, toPointer);
                 }
             }
         }

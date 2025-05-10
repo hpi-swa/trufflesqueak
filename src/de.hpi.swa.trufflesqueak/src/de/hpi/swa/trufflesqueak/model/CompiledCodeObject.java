@@ -496,7 +496,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             for (int j = 0; j < getLiterals().length; j++) {

@@ -10,6 +10,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
@@ -46,6 +47,16 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
     public EmptyObject shallowCopy() {
         return new EmptyObject(this);
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+        // Nothing to do.
+    }
+
+    @Override
+    public void tracePointers(final ObjectTracer objectTracer) {
+        // Nothing to trace.
     }
 
     @Override
