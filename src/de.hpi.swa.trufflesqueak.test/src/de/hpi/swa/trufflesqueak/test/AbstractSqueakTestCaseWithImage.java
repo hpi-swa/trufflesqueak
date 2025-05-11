@@ -58,14 +58,14 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     public static void loadTestImage() {
-        loadTestImage(true, true);
+        loadTestImage(true);
     }
 
-    private static void loadTestImage(final boolean retry, final boolean showResourceSummary) {
+    private static void loadTestImage(final boolean retry) {
         executor = Executors.newSingleThreadExecutor();
         final String imagePath = getPathToTestImage();
         try {
-            runWithTimeout(new TestImageSpec(imagePath, showResourceSummary), AbstractSqueakTestCase::loadImageContext, TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
+            runWithTimeout(new TestImageSpec(imagePath, true), AbstractSqueakTestCase::loadImageContext, TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
             println("Test image loaded from " + imagePath + "...");
             patchImageForTesting();
         } catch (final InterruptedException e) {
@@ -95,7 +95,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     protected static void reloadImage() {
         cleanUp();
-        loadTestImage(false, false);
+        loadTestImage(false);
     }
 
     private static void patchImageForTesting() {
@@ -137,7 +137,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     /**
-     * Some expressions need to be evaluate through the normal Compiler>>#evaluate: infrastructure,
+     * Some expressions need to be evaluated through the normal Compiler>>#evaluate: infrastructure,
      * for example because they require a parent context when they include non-local returns.
      */
     protected static Object compilerEvaluate(final String expression) {
