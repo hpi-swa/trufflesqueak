@@ -7,6 +7,10 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -67,6 +71,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
+        private static final ExecutorService executor = Executors.newSingleThreadExecutor();
+
         protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
                 CompilerDirectives.transferToInterpreter();
@@ -75,17 +81,31 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
             final Object[] fromPointers = fromArray.getObjectStorage();
             final Object[] toPointers = toArray.getObjectStorage();
-
-            if (copyHash) {
-                copyHash(fromPointers, toPointers);
-            }
             final SqueakImageContext image = getContext();
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            image.objectGraphUtils.pointersBecomeOneWay(fromPointersClone, toPointers);
+            Future<?> future = submit(image, fromPointersClone, toPointers);
+            if (copyHash) {
+                copyHash(fromPointers, toPointers);
+            }
             patchTruffleFrames(fromPointersClone, toPointers);
             image.flushMethodCacheAfterBecome();
+            wait(future);
             return fromArray;
+        }
+
+        @TruffleBoundary
+        private Future<?> submit(SqueakImageContext image, Object[] fromPointersClone, Object[] toPointers) {
+            return executor.submit(() -> image.objectGraphUtils.pointersBecomeOneWay(fromPointersClone, toPointers));
+        }
+
+        @TruffleBoundary
+        private static void wait(Future<?> future) {
+            try {
+                future.get();
+            } catch (final ExecutionException | InterruptedException e) {
+                throw CompilerDirectives.shouldNotReachHere(e);
+            }
         }
 
         private static void copyHash(final Object[] fromPointers, final Object[] toPointers) {
@@ -141,8 +161,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null : "Unexpected `null` value";
                                 current.setObject(slotIndex, toPointer);
-                            } else if (stackObject instanceof final AbstractSqueakObjectWithClassAndHash o) {
-                                o.pointersBecomeOneWay(fromPointers, toPointers);
                             }
                         }
                     }
