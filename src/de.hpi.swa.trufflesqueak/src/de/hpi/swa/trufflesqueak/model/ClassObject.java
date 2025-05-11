@@ -283,7 +283,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setFormat(final long format) {
-        classFormatStable().invalidate();
+        invalidateClassFormatStableAssumption();
         final int oldBasicInstanceSize = getBasicInstanceSize();
         this.format = format;
         if (oldBasicInstanceSize != getBasicInstanceSize()) {
@@ -488,7 +488,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void invalidateClassHierarchyAndMethodDictStableAssumption() {
-        classHierarchyAndMethodDictStable().invalidate();
+        if (classHierarchyAndMethodDictStable != null) {
+            classHierarchyAndMethodDictStable.invalidate();
+        }
     }
 
     private CyclicAssumption classFormatStable() {
@@ -497,6 +499,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             classFormatStable = new CyclicAssumption("Class format stability");
         }
         return classFormatStable;
+    }
+
+    private void invalidateClassFormatStableAssumption() {
+        if (classFormatStable != null) {
+            classFormatStable.invalidate();
+        }
     }
 
     public Assumption getClassFormatStable() {
