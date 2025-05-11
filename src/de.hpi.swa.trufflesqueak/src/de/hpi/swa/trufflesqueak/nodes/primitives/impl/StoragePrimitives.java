@@ -442,7 +442,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver) {
-            return getNext(receiver, ObjectGraphUtils.allInstances(getContext()));
+            return getNext(receiver, getContext().objectGraphUtils.allInstances());
         }
 
         @TruffleBoundary
@@ -590,7 +590,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver) {
             final SqueakImageContext image = getContext();
-            return image.asArrayOfObjects(ArrayUtils.toArray(ObjectGraphUtils.allInstances(image)));
+            return image.asArrayOfObjects(ArrayUtils.toArray(image.objectGraphUtils.allInstances()));
         }
     }
 

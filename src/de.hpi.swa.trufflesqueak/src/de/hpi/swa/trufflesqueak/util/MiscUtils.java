@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectGraphOperations;
 
 public final class MiscUtils {
 
@@ -274,7 +275,9 @@ public final class MiscUtils {
         image.printToStdOut("# Resource Summary");
         final double totalProcessTimeSeconds = millisToSeconds(System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
         final long processCPUTime = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getProcessCpuTime();
-        image.printToStdOut(String.format("> Total process time: %ss | CPU load: %.2f", totalProcessTimeSeconds, nanosToSeconds(processCPUTime) / totalProcessTimeSeconds));
+        image.printToStdOut("- Total process time: %ss | CPU load: %.2f".formatted(totalProcessTimeSeconds, nanosToSeconds(processCPUTime) / totalProcessTimeSeconds));
+        image.printToStdOut("");
+        image.printToStdOut("## GC Statistics");
         long totalGCCount = 0;
         long totalGCTime = 0;
         for (final GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
@@ -283,10 +286,16 @@ public final class MiscUtils {
             totalGCTime += Math.max(time, 0);
             totalGCCount += Math.max(count, 0);
             final double timeSeconds = millisToSeconds(time);
-            image.printToStdOut(String.format("> %8.4fs (%5.2f%% of total time) in %4s GCs of %s", timeSeconds, timeSeconds / totalProcessTimeSeconds * 100, count, gcBean.getName()));
+            image.printToStdOut("- %10.4fs (%5.2f%% of total time) in %4s GCs of %s".formatted(timeSeconds, timeSeconds / totalProcessTimeSeconds * 100, count, gcBean.getName()));
         }
         final double totalGCSeconds = millisToSeconds(totalGCTime);
-        image.printToStdOut(String.format("> %8.4fs (%5.2f%% of total time) in %4s GCs in total", totalGCSeconds, totalGCSeconds / totalProcessTimeSeconds * 100, totalGCCount));
+        image.printToStdOut("- %10.4fs (%5.2f%% of total time) in %4s GCs in total".formatted(totalGCSeconds, totalGCSeconds / totalProcessTimeSeconds * 100, totalGCCount));
+        image.printToStdOut("");
+        image.printToStdOut("## Object Graph Operations Statistics");
+        for (var operation : ObjectGraphOperations.values()) {
+            final double timeSeconds = millisToSeconds(operation.getMillis());
+            image.printToStdOut("- %10.4fs (%5.2f%% of total time) for %4s '%s'".formatted(timeSeconds, timeSeconds / totalProcessTimeSeconds * 100, operation.getCount(), operation.getName()));
+        }
     }
 
     @TruffleBoundary

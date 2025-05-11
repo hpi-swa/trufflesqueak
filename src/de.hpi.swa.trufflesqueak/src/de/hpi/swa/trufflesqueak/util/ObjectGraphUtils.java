@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.util;
 import java.util.AbstractCollection;
 import java.util.ArrayDeque;
 import java.util.Iterator;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -28,7 +29,12 @@ public final class ObjectGraphUtils {
 
     private static int lastSeenObjects = 500_000;
 
-    private ObjectGraphUtils() {
+    private final SqueakImageContext image;
+    private final boolean trackOperations;
+
+    public ObjectGraphUtils(final SqueakImageContext image) {
+        this.image = image;
+        this.trackOperations = image.options.printResourceSummary() || LogUtils.OBJECT_GRAPH.isLoggable(Level.FINE);
     }
 
     public static int getLastSeenObjects() {
@@ -36,34 +42,28 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances(final SqueakImageContext image) {
+    public AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances() {
+        final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
         final ObjectTracer pending = new ObjectTracer(image);
+        final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
-            if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
                 seen.add(currentObject);
                 pending.tracePointers(currentObject);
             }
         }
         lastSeenObjects = seen.size();
+        if (trackOperations) {
+            ObjectGraphOperations.ALL_INSTANCES.addNanos(System.nanoTime() - startTime);
+        }
         return seen;
     }
 
     @TruffleBoundary
-    public static void pointersBecomeOneWay(final SqueakImageContext image, final Object[] fromPointers, final Object[] toPointers) {
-        final ObjectTracer pending = new ObjectTracer(image);
-        AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = pending.getNextPending()) != null) {
-            if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                currentObject.pointersBecomeOneWay(fromPointers, toPointers);
-                pending.tracePointers(currentObject);
-            }
-        }
-    }
-
-    @TruffleBoundary
-    public static Object[] allInstancesOf(final SqueakImageContext image, final ClassObject targetClass) {
+    public Object[] allInstancesOf(final ClassObject targetClass) {
+        final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithClassAndHash currentObject;
@@ -75,14 +75,17 @@ public final class ObjectGraphUtils {
                 pending.tracePointers(currentObject);
             }
         }
+        ObjectGraphOperations.ALL_INSTANCES_OF.addNanos(System.nanoTime() - startTime);
         return result.toArray();
     }
 
     @TruffleBoundary
-    public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final ClassObject targetClass) {
+    public AbstractSqueakObject someInstanceOf(final ClassObject targetClass) {
+        final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
         final ObjectTracer pending = new ObjectTracer(image);
         final boolean currentMarkingFlag = pending.getCurrentMarkingFlag();
+        AbstractSqueakObject result = NilObject.SINGLETON;
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
@@ -94,17 +97,37 @@ public final class ObjectGraphUtils {
                     }
                     // Restore marking flag
                     image.toggleCurrentMarkingFlag();
-                    return currentObject;
+                    result = currentObject;
+                    break;
                 } else {
                     pending.tracePointers(currentObject);
                 }
             }
         }
-        return NilObject.SINGLETON;
+        if (trackOperations) {
+            ObjectGraphOperations.SOME_INSTANCE_OF.addNanos(System.nanoTime() - startTime);
+        }
+        return result;
     }
 
     @TruffleBoundary
-    public static boolean checkEphemerons(final SqueakImageContext image) {
+    public static void pointersBecomeOneWay(final SqueakImageContext image, final Object[] fromPointers, final Object[] toPointers) {
+        final long startTime = System.nanoTime();
+        final ObjectTracer pending = new ObjectTracer(image);
+        final boolean currentMarkingFlag = pending.currentMarkingFlag;
+        AbstractSqueakObjectWithClassAndHash currentObject;
+        while ((currentObject = pending.getNextPending()) != null) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
+                currentObject.pointersBecomeOneWay(fromPointers, toPointers);
+                pending.tracePointers(currentObject);
+            }
+        }
+        ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
+    }
+
+    @TruffleBoundary
+    public boolean checkEphemerons() {
+        final long startTime = System.nanoTime();
         final ObjectTracer pending = new ObjectTracer(image);
         final boolean currentMarkingFlag = pending.getCurrentMarkingFlag();
         final ArrayDeque<EphemeronObject> ephemeronsToBeMarked = new ArrayDeque<>();
@@ -137,6 +160,9 @@ public final class ObjectGraphUtils {
         image.ephemeronsQueue.addAll(ephemeronsToBeMarked);
         for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) {
             ephemeronObject.setHasBeenSignaled();
+        }
+        if (trackOperations) {
+            ObjectGraphOperations.CHECK_EPHEMERONS.addNanos(System.nanoTime() - startTime);
         }
         return true;
     }
@@ -183,11 +209,8 @@ public final class ObjectGraphUtils {
     }
 
     public static final class ObjectTracer {
-        /* Power of two, large enough to avoid resizing. */
-        private static final int PENDING_INITIAL_SIZE = 1 << 17;
-
         private final boolean currentMarkingFlag;
-        private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> deque = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> deque = new ArrayDeque<>();
 
         private ObjectTracer(final SqueakImageContext image) {
             // Flip the marking flag
@@ -221,15 +244,9 @@ public final class ObjectGraphUtils {
             });
         }
 
-        public void addIfUnmarked(final AbstractSqueakObjectWithClassAndHash object) {
-            if (object != null && !object.isMarked(currentMarkingFlag)) {
-                deque.add(object);
-            }
-        }
-
         public void addIfUnmarked(final Object object) {
-            if (object instanceof final AbstractSqueakObjectWithClassAndHash o) {
-                addIfUnmarked(o);
+            if (object instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isMarked(currentMarkingFlag)) {
+                deque.add(o);
             }
         }
 
@@ -244,12 +261,52 @@ public final class ObjectGraphUtils {
         }
 
         private AbstractSqueakObjectWithClassAndHash getNextPending() {
-            return deque.pollFirst();
+            /*
+             * For some reason, using pollLast() is faster than pollFirst() and keeps the max size
+             * of the deque significantly smaller.
+             */
+            return deque.pollLast();
         }
 
         private void tracePointers(final AbstractSqueakObjectWithClassAndHash object) {
             addIfUnmarked(object.getSqueakClass());
             object.tracePointers(this);
+        }
+    }
+
+    public enum ObjectGraphOperations {
+        ALL_INSTANCES("allInstances"),
+        ALL_INSTANCES_OF("allInstancesOf"),
+        SOME_INSTANCE_OF("someInstanceOf"),
+        POINTERS_BECOME_ONE_WAY("pointersBecomeOneWay"),
+        CHECK_EPHEMERONS("checkEphemerons");
+
+        private static final int[] COUNTS = new int[ObjectGraphOperations.values().length];
+        private static final long[] MILLIS = new long[ObjectGraphOperations.values().length];
+
+        private final String name;
+
+        ObjectGraphOperations(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void addNanos(final long nanos) {
+            final long millis = nanos / 1_000_000;
+            MILLIS[ordinal()] += millis;
+            COUNTS[ordinal()]++;
+            LogUtils.OBJECT_GRAPH.log(Level.FINE, () -> getName() + " took " + millis + "ms");
+        }
+
+        public int getCount() {
+            return COUNTS[ordinal()];
+        }
+
+        public long getMillis() {
+            return MILLIS[ordinal()];
         }
     }
 }

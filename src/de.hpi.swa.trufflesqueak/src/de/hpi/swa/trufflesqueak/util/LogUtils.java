@@ -23,6 +23,7 @@ public final class LogUtils {
     public static final TruffleLogger INTERRUPTS = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interrupts");
     public static final TruffleLogger IO = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "io");
     public static final TruffleLogger ITERATE_FRAMES = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "iterate-frames");
+    public static final TruffleLogger OBJECT_GRAPH = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "object-graph");
     public static final TruffleLogger PRIMITIVES = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "primitives");
     public static final TruffleLogger READER = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "reader");
     public static final TruffleLogger SCHEDULING = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "scheduling");
