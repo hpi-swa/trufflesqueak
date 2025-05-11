@@ -1254,7 +1254,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final CheckForInterruptsFullNode interruptNode,
                         @Cached final FrameStackPushNode pushReceiverNode) {
-            MiscUtils.sleep(timeMicroseconds / 1000);
+            MiscUtils.park(timeMicroseconds * 1000);
             /*
              * Perform interrupt check (even if interrupt handler is not active), otherwise
              * idleProcess gets stuck.

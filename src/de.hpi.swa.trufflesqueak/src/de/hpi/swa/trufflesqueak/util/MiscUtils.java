@@ -26,6 +26,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Properties;
+import java.util.concurrent.locks.LockSupport;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -314,12 +315,8 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
-    public static void sleep(final long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    public static void park(final long nanos) {
+        LockSupport.parkNanos(nanos);
     }
 
     @TruffleBoundary
