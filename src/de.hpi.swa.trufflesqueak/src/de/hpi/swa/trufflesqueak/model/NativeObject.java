@@ -309,7 +309,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         final ClassObject squeakClass = getSqueakClass();
-        final SqueakImageContext image = squeakClass.getImage();
+        final SqueakImageContext image = SqueakImageContext.getSlow();
         if (isByteType()) {
             if (image.isByteStringClass(squeakClass)) {
                 final String fullString = asStringUnsafe();

@@ -223,7 +223,7 @@ public final class SendBytecodes {
                 case 30 /* #x: */ -> new SendSpecial0Node(frame, code, index, selectorIndex, BytecodePrimPointXNodeGen.create());
                 case 31 /* #y: */ -> new SendSpecial0Node(frame, code, index, selectorIndex, BytecodePrimPointYNodeGen.create());
                 default -> {
-                    final SqueakImageContext image = code.getSqueakClass().getImage();
+                    final SqueakImageContext image = SqueakImageContext.getSlow();
                     final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
                     final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
                     yield new SelfSendNode(frame, code, index, 1, specialSelector, numArguments);

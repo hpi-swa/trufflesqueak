@@ -148,7 +148,7 @@ public final class PointersObject extends AbstractPointersObject {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         final ClassObject classObject = getSqueakClass();
-        if (classObject.getImage().isPointClass(classObject)) {
+        if (SqueakImageContext.getSlow().isPointClass(classObject)) {
             return readNode.execute(null, this, POINT.X) + "@" + readNode.execute(null, this, POINT.Y);
         }
         final String squeakClassName = classObject.getClassName();
