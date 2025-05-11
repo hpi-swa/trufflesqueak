@@ -70,7 +70,7 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public final void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         final int variableSize = variablePart.length;
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];

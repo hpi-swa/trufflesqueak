@@ -62,14 +62,12 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
         protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
-            final SqueakImageContext image = getContext();
             if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -81,9 +79,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             if (copyHash) {
                 copyHash(fromPointers, toPointers);
             }
+            final SqueakImageContext image = getContext();
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            ObjectGraphUtils.pointersBecomeOneWay(image, fromPointersClone, toPointers);
+            image.objectGraphUtils.pointersBecomeOneWay(fromPointersClone, toPointers);
             patchTruffleFrames(fromPointersClone, toPointers);
             image.flushMethodCacheAfterBecome();
             return fromArray;
