@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -439,23 +438,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 139)
     protected abstract static class PrimNextObjectNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-
         @Specialization
         protected final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver) {
-            return getNext(receiver, getContext().objectGraphUtils.allInstances());
-        }
-
-        @TruffleBoundary
-        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final Collection<AbstractSqueakObjectWithClassAndHash> allInstances) {
-            boolean foundMyself = false;
-            for (final AbstractSqueakObjectWithClassAndHash instance : allInstances) {
-                if (instance == receiver) {
-                    foundMyself = true;
-                } else if (foundMyself) {
-                    return instance;
-                }
-            }
-            return allInstances.iterator().next(); // first
+            return getContext().objectGraphUtils.nextObject(receiver);
         }
     }
 

@@ -111,6 +111,41 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
+    public AbstractSqueakObject nextObject(final AbstractSqueakObjectWithClassAndHash targetObject) {
+        final long startTime = System.nanoTime();
+        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
+        final ObjectTracer pending = new ObjectTracer(image);
+        final boolean currentMarkingFlag = pending.currentMarkingFlag;
+        AbstractSqueakObjectWithClassAndHash currentObject = pending.getNextPending();
+        AbstractSqueakObject result = currentObject; // first object
+        boolean foundObject = false;
+        while (currentObject != null) {
+            if (foundObject) {
+                // Unmark marked objects
+                for (final AbstractSqueakObjectWithClassAndHash object : marked) {
+                    object.unmark(currentMarkingFlag);
+                }
+                // Restore marking flag
+                image.toggleCurrentMarkingFlag();
+                result = currentObject;
+                break;
+            }
+            if (currentObject.tryToMark(currentMarkingFlag)) {
+                marked.add(currentObject);
+                if (currentObject == targetObject) {
+                    foundObject = true;
+                }
+                pending.tracePointers(currentObject);
+            }
+            currentObject = pending.getNextPending();
+        }
+        if (trackOperations) {
+            ObjectGraphOperations.NEXT_OBJECT.addNanos(System.nanoTime() - startTime);
+        }
+        return result;
+    }
+
+    @TruffleBoundary
     public static void pointersBecomeOneWay(final SqueakImageContext image, final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
         final ObjectTracer pending = new ObjectTracer(image);
@@ -278,6 +313,7 @@ public final class ObjectGraphUtils {
         ALL_INSTANCES("allInstances"),
         ALL_INSTANCES_OF("allInstancesOf"),
         SOME_INSTANCE_OF("someInstanceOf"),
+        NEXT_OBJECT("nextObject"),
         POINTERS_BECOME_ONE_WAY("pointersBecomeOneWay"),
         CHECK_EPHEMERONS("checkEphemerons");
 
