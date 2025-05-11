@@ -552,17 +552,13 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
                 final Object[] arguments = truffleFrame.getArguments();
                 for (int j = FrameAccess.getArgumentStartIndex(); j < arguments.length; j++) {
-                    final Object argument = arguments[j];
-                    if (argument == fromPointer) {
+                    if (arguments[j] == fromPointer) {
                         arguments[j] = toPointer;
                     }
                 }
                 FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
-                    if (truffleFrame.isObject(slotIndex)) {
-                        final Object stackValue = truffleFrame.getObject(slotIndex);
-                        if (fromPointer == stackValue) {
-                            truffleFrame.setObject(slotIndex, toPointer);
-                        }
+                    if (truffleFrame.isObject(slotIndex) && truffleFrame.getObject(slotIndex) == fromPointer) {
+                        truffleFrame.setObject(slotIndex, toPointer);
                     }
                 });
             }
@@ -576,9 +572,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             tracer.addIfUnmarked(getCodeObject());
             tracer.addIfUnmarked(getClosure());
             tracer.addIfUnmarked(getReceiver());
-            for (final Object arg : truffleFrame.getArguments()) {
-                tracer.addIfUnmarked(arg);
-            }
+            tracer.addAllIfUnmarked(truffleFrame.getArguments());
             FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
                 if (truffleFrame.isObject(slotIndex)) {
                     tracer.addIfUnmarked(truffleFrame.getObject(slotIndex));

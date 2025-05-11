@@ -175,7 +175,7 @@ public final class JumpBytecodes {
 
     public static AbstractUnconditionalJumpNode createUnconditionalShortJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode) {
         final int offset = calculateShortOffset(bytecode);
-        if (needsCheck(code, bytecodeNodes, index, 1, offset)) {
+        if (needsCheck(bytecodeNodes, index, 1, offset)) {
             return new UnconditionalJumpWithCheckNode(code, index, 1, offset);
         } else {
             return new UnconditionalJumpWithoutCheckNode(code, index, 1, offset);
@@ -185,7 +185,7 @@ public final class JumpBytecodes {
     public static AbstractUnconditionalJumpNode createUnconditionalLongJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode,
                     final byte parameter) {
         final int offset = ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter);
-        if (needsCheck(code, bytecodeNodes, index, 2, offset)) {
+        if (needsCheck(bytecodeNodes, index, 2, offset)) {
             return new UnconditionalJumpWithCheckNode(code, index, 2, offset);
         } else {
             return new UnconditionalJumpWithoutCheckNode(code, index, 2, offset);
@@ -195,18 +195,18 @@ public final class JumpBytecodes {
     public static AbstractUnconditionalJumpNode createUnconditionalLongExtendedJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes,
                     final byte bytecode, final int extB) {
         final int offset = calculateLongExtendedOffset(bytecode, extB);
-        if (needsCheck(code, bytecodeNodes, index, numBytecodes, offset)) {
+        if (needsCheck(bytecodeNodes, index, numBytecodes, offset)) {
             return new UnconditionalJumpWithCheckNode(code, index, numBytecodes, offset);
         } else {
             return new UnconditionalJumpWithoutCheckNode(code, index, numBytecodes, offset);
         }
     }
 
-    private static boolean needsCheck(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes, final int offset) {
-        if (code.getSqueakClass().getImage().interruptHandlerDisabled()) {
+    private static boolean needsCheck(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes, final int offset) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (SqueakImageContext.getSlow().interruptHandlerDisabled()) {
             return false;
         }
-        CompilerAsserts.neverPartOfCompilation();
         if (offset < 0) { // back-jumps only
             final int backJumpIndex = index + numBytecodes + offset;
             for (int i = backJumpIndex; i < index; i++) {

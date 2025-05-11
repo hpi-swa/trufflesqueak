@@ -80,6 +80,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 @DefaultExpression("get($node)")
 public final class SqueakImageContext {
@@ -150,6 +151,7 @@ public final class SqueakImageContext {
     /* System */
     public NativeObject clipboardTextHeadless = asByteString("");
     private boolean currentMarkingFlag;
+    public final ObjectGraphUtils objectGraphUtils;
     private ArrayObject hiddenRoots;
     // first page of classTable is special
     public int classTableIndex = SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
@@ -214,6 +216,7 @@ public final class SqueakImageContext {
         isHeadless = options.isHeadless();
         maxContextStackDepth = options.maxContextStackDepth();
         interrupt = new CheckForInterruptsState(this);
+        objectGraphUtils = new ObjectGraphUtils(this);
         allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
         final String truffleLanguageHome = language.getTruffleLanguageHome();
@@ -261,7 +264,7 @@ public final class SqueakImageContext {
                             "Set author information."
                             Utilities
                                 authorName: 'TruffleSqueak';
-                                setAuthorInitials: 'TruffleSqueak'.
+                                setAuthorInitials: 'TS'.
                             """.formatted(Boolean.toString(options.isTesting()));
             try {
                 evaluate(prepareHeadlessImageScript);

@@ -29,6 +29,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
@@ -308,7 +309,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         final ClassObject squeakClass = getSqueakClass();
-        final SqueakImageContext image = squeakClass.getImage();
+        final SqueakImageContext image = SqueakImageContext.getSlow();
         if (isByteType()) {
             if (image.isByteStringClass(squeakClass)) {
                 final String fullString = asStringUnsafe();
@@ -375,6 +376,16 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             }
         }
         return false;
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+        // Nothing to do.
+    }
+
+    @Override
+    public void tracePointers(final ObjectTracer objectTracer) {
+        // Nothing to trace.
     }
 
     @Override

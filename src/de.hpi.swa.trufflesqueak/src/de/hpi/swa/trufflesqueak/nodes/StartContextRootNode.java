@@ -31,6 +31,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
+    @CompilationFinal private boolean needsContextObject;
 
     @CompilationFinal private final SqueakImageContext image;
 
@@ -43,7 +44,7 @@ public final class StartContextRootNode extends AbstractRootNode {
     public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code);
         image = code.getSqueakClass().getImage();
-        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(image, code);
+        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
         executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
 
@@ -72,8 +73,9 @@ public final class StartContextRootNode extends AbstractRootNode {
         if (writeTempNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final int numArgs = FrameAccess.getNumArguments(frame);
+            final CompiledCodeObject code = getCode();
+            needsContextObject = code.isExceptionHandlerMarked() || code.isUnwindMarked();
             if (!FrameAccess.hasClosure(frame)) {
-                final CompiledCodeObject code = getCode();
                 initialPC = code.getInitialPC();
                 initialSP = code.getNumTemps();
                 assert numArgs == code.getNumArgs();
@@ -88,6 +90,9 @@ public final class StartContextRootNode extends AbstractRootNode {
                 writeTempNodes[i] = insert(FrameStackWriteNode.create(frame, numArgs + i));
                 assert writeTempNodes[i] instanceof FrameSlotWriteNode;
             }
+        }
+        if (needsContextObject) {
+            getGetOrCreateContextNode().executeGet(frame);
         }
         FrameAccess.setInstructionPointer(frame, initialPC);
         FrameAccess.setStackPointer(frame, initialSP);

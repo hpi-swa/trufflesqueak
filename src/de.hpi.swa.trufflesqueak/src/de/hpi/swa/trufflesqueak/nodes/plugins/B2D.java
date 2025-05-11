@@ -7172,9 +7172,9 @@ public final class B2D {
         return SqueakGuards.isArrayObject(object);
     }
 
-    private static boolean isBitmap(final AbstractSqueakObjectWithClassAndHash object) {
+    private boolean isBitmap(final AbstractSqueakObjectWithClassAndHash object) {
         final ClassObject squeakClass = object.getSqueakClass();
-        return squeakClass.getImage().isBitmapClass(squeakClass);
+        return image.isBitmapClass(squeakClass);
     }
 
     private int aetBuffer(final int index) {

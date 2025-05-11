@@ -22,13 +22,14 @@ import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 public abstract class CheckForInterruptsQuickNode extends AbstractNode {
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
-    public static final CheckForInterruptsQuickNode createForSend(final SqueakImageContext image, final CompiledCodeObject code) {
+    public static final CheckForInterruptsQuickNode createForSend(final CompiledCodeObject code) {
         /*
          * Only check for interrupts if method is relatively large. Avoid check if primitive method
          * or if a closure is activated (effectively what #primitiveClosureValueNoContextSwitch is
          * for).
          */
-        if (image.interruptHandlerDisabled() || code.hasPrimitive() || //
+
+        if (SqueakImageContext.getSlow().interruptHandlerDisabled() || code.hasPrimitive() || //
                         code.getBytes().length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS || //
                         /* FullBlockClosure or normal closure */
                         code.isCompiledBlock() || code.hasOuterMethod()) {
