@@ -77,8 +77,8 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
             final Object toPointer = to[i];
             layoutValueBecomeOneWay(fromPointer, toPointer);
             for (int j = 0; j < variableSize; j++) {
-                if (getFromVariablePart(j) == fromPointer) {
-                    putIntoVariablePart(j, toPointer);
+                if (variablePart[j] == fromPointer) {
+                    variablePart[j] = toPointer;
                 }
             }
         }

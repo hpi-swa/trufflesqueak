@@ -534,6 +534,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         if (hasTruffleFrame()) {
+            final Object[] arguments = truffleFrame.getArguments();
+            final int argumentsLength = arguments.length;
             for (int i = 0; i < from.length; i++) {
                 final Object fromPointer = from[i];
                 final Object toPointer = to[i];
@@ -549,9 +551,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                 if (fromPointer == getReceiver()) {
                     setReceiver(toPointer);
                 }
-
-                final Object[] arguments = truffleFrame.getArguments();
-                for (int j = FrameAccess.getArgumentStartIndex(); j < arguments.length; j++) {
+                for (int j = FrameAccess.getArgumentStartIndex(); j < argumentsLength; j++) {
                     if (arguments[j] == fromPointer) {
                         arguments[j] = toPointer;
                     }

@@ -272,6 +272,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+        final int copiedValuesLength = copiedValues.length;
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             final Object toPointer = to[i];
@@ -284,7 +285,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
             if (outerContext == fromPointer && fromPointer != toPointer && toPointer instanceof final ContextObject c) {
                 setOuterContext(c);
             }
-            for (int j = 0; j < copiedValues.length; j++) {
+            for (int j = 0; j < copiedValuesLength; j++) {
                 if (copiedValues[j] == fromPointer) {
                     copiedValues[j] = toPointer;
                 }
@@ -294,6 +295,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
+        tracer.addIfUnmarked(receiver);
+        tracer.addIfUnmarked(block);
         tracer.addIfUnmarked(outerContext);
         tracer.addAllIfUnmarked(copiedValues);
     }
