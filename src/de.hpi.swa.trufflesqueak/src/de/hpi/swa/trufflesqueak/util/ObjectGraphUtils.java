@@ -46,6 +46,47 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances() {
         final long startTime = System.nanoTime();
+        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
+        final ObjectTracer pending = new ObjectTracer();
+        final boolean currentMarkingFlag = pending.currentMarkingFlag;
+        AbstractSqueakObjectWithClassAndHash currentObject;
+        while ((currentObject = getNextFromWorklist()) != null) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
+                seen.add(currentObject);
+                pending.tracePointers(currentObject);
+            }
+        }
+        lastSeenObjects = seen.size();
+        if (trackOperations) {
+            ObjectGraphOperations.ALL_INSTANCES.addNanos(System.nanoTime() - startTime);
+        }
+        return seen;
+    }
+
+    @TruffleBoundary
+    public Object[] allInstancesOf(final ClassObject targetClass) {
+        final long startTime = System.nanoTime();
+        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
+        final ObjectTracer pending = new ObjectTracer();
+        final boolean currentMarkingFlag = pending.currentMarkingFlag;
+        AbstractSqueakObjectWithClassAndHash currentObject;
+        while ((currentObject = getNextFromWorklist()) != null) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
+                if (targetClass == currentObject.getSqueakClass()) {
+                    result.add(currentObject);
+                }
+                pending.tracePointers(currentObject);
+            }
+        }
+        if (trackOperations) {
+            ObjectGraphOperations.ALL_INSTANCES_OF.addNanos(System.nanoTime() - startTime);
+        }
+        return result.toArray();
+    }
+
+    @TruffleBoundary
+    public AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances1() {
+        final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
         final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
         assert !image.specialObjectsArray.isMarked(currentMarkingFlag);
@@ -79,7 +120,7 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public Object[] allInstancesOf(final ClassObject targetClass) {
+    public Object[] allInstancesOf1(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
         final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
