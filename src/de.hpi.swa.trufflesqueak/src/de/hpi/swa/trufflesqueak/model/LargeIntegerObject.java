@@ -228,7 +228,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         // Nothing to do.
     }
 

@@ -516,7 +516,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         final int pointersLength = pointers.length;
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
@@ -540,6 +540,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                 }
             }
         }
+        pointersBecomeOneWay(superclass, currentMarkingFlag, from, to);
+        pointersBecomeOneWay(methodDict, currentMarkingFlag, from, to);
+        pointersBecomeOneWay(instanceVariables, currentMarkingFlag, from, to);
+        pointersBecomeOneWay(organization, currentMarkingFlag, from, to);
+        pointersBecomeOneWayAll(pointers, currentMarkingFlag, from, to);
     }
 
     @Override

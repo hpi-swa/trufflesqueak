@@ -148,8 +148,9 @@ public final class EphemeronObject extends AbstractPointersObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         layoutValuesBecomeOneWay(from, to);
+        layoutPointersBecomeOneWay(currentMarkingFlag, from, to);
     }
 
     @Override

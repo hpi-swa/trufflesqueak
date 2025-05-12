@@ -532,11 +532,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         if (hasTruffleFrame()) {
             final Object[] arguments = truffleFrame.getArguments();
+            final int fromLength = from.length;
             final int argumentsLength = arguments.length;
-            for (int i = 0; i < from.length; i++) {
+            for (int i = 0; i < fromLength; i++) {
                 final Object fromPointer = from[i];
                 final Object toPointer = to[i];
                 if (fromPointer == getFrameSender() && toPointer instanceof final ContextObject o) {
@@ -556,12 +557,24 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                         arguments[j] = toPointer;
                     }
                 }
-                FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
-                    if (truffleFrame.isObject(slotIndex) && truffleFrame.getObject(slotIndex) == fromPointer) {
-                        truffleFrame.setObject(slotIndex, toPointer);
-                    }
-                });
             }
+            pointersBecomeOneWay(getFrameSender(), currentMarkingFlag, from, to);
+            pointersBecomeOneWay(getCodeObject(), currentMarkingFlag, from, to);
+            pointersBecomeOneWay(getClosure(), currentMarkingFlag, from, to);
+            pointersBecomeOneWay(getReceiver(), currentMarkingFlag, from, to);
+            pointersBecomeOneWayAll(arguments, currentMarkingFlag, from, to);
+            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
+                for (int i = 0; i < fromLength; i++) {
+                    final Object fromPointer = from[i];
+                    final Object toPointer = to[i];
+                    if (truffleFrame.isObject(slotIndex)) {
+                        if (truffleFrame.getObject(slotIndex) == fromPointer) {
+                            truffleFrame.setObject(slotIndex, toPointer);
+                        }
+                        pointersBecomeOneWay(truffleFrame.getObject(slotIndex), currentMarkingFlag, from, to);
+                    }
+                }
+            });
         }
     }
 

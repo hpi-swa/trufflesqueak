@@ -30,6 +30,23 @@ public final class VariablePointersObject extends AbstractVariablePointersObject
     }
 
     @Override
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
+        layoutValuesBecomeOneWay(from, to);
+        final int variableSize = variablePart.length;
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            final Object toPointer = to[i];
+            for (int j = 0; j < variableSize; j++) {
+                if (variablePart[j] == fromPointer) {
+                    variablePart[j] = toPointer;
+                }
+            }
+        }
+        layoutPointersBecomeOneWay(currentMarkingFlag, from, to);
+        pointersBecomeOneWayAll(variablePart, currentMarkingFlag, from, to);
+    }
+
+    @Override
     protected void traceVariablePart(final ObjectTracer tracer) {
         tracer.addAllIfUnmarked(variablePart);
     }

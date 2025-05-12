@@ -318,26 +318,33 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
-            layoutValueBecomeOneWay(from[i], to[i]);
+            final Object fromPointer = from[i];
+            final Object toPointer = to[i];
+            if (object0 == fromPointer) {
+                object0 = toPointer;
+            }
+            if (object1 == fromPointer) {
+                object1 = toPointer;
+            }
+            if (object2 == fromPointer) {
+                object2 = toPointer;
+            }
+            if (objectExtension != null) {
+                for (int j = 0; j < objectExtension.length; j++) {
+                    if (objectExtension[j] == fromPointer) {
+                        objectExtension[j] = toPointer;
+                    }
+                }
+            }
         }
     }
 
-    protected final void layoutValueBecomeOneWay(final Object fromPointer, final Object toPointer) {
-        if (object0 == fromPointer) {
-            object0 = toPointer;
-        }
-        if (object1 == fromPointer) {
-            object1 = toPointer;
-        }
-        if (object2 == fromPointer) {
-            object2 = toPointer;
-        }
+    protected final void layoutPointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
+        pointersBecomeOneWay(object0, currentMarkingFlag, from, to);
+        pointersBecomeOneWay(object1, currentMarkingFlag, from, to);
+        pointersBecomeOneWay(object2, currentMarkingFlag, from, to);
         if (objectExtension != null) {
-            for (int j = 0; j < objectExtension.length; j++) {
-                if (objectExtension[j] == fromPointer) {
-                    objectExtension[j] = toPointer;
-                }
-            }
+            pointersBecomeOneWayAll(objectExtension, currentMarkingFlag, from, to);
         }
     }
 

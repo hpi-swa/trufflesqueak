@@ -188,7 +188,19 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         toggleMarkingFlag();
     }
 
-    public abstract void pointersBecomeOneWay(Object[] from, Object[] to);
+    public abstract void pointersBecomeOneWay(boolean currentMarkingFlag, Object[] from, Object[] to);
+
+    protected static final void pointersBecomeOneWay(final Object object, final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
+        if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
+            o.pointersBecomeOneWay(currentMarkingFlag, from, to);
+        }
+    }
+
+    protected static final void pointersBecomeOneWayAll(final Object[] objects, final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
+        for (final Object object : objects) {
+            pointersBecomeOneWay(object, currentMarkingFlag, from, to);
+        }
+    }
 
     public abstract void tracePointers(ObjectTracer objectTracer);
 

@@ -271,7 +271,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         final int copiedValuesLength = copiedValues.length;
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
@@ -291,6 +291,10 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
                 }
             }
         }
+        pointersBecomeOneWay(receiver, currentMarkingFlag, from, to);
+        pointersBecomeOneWay(block, currentMarkingFlag, from, to);
+        pointersBecomeOneWay(outerContext, currentMarkingFlag, from, to);
+        pointersBecomeOneWayAll(copiedValues, currentMarkingFlag, from, to);
     }
 
     @Override

@@ -68,19 +68,4 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
     public void putIntoVariablePart(final long index, final Object value) {
         UnsafeUtils.putObject(variablePart, index, value);
     }
-
-    @Override
-    public final void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        final int variableSize = variablePart.length;
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            final Object toPointer = to[i];
-            layoutValueBecomeOneWay(fromPointer, toPointer);
-            for (int j = 0; j < variableSize; j++) {
-                if (variablePart[j] == fromPointer) {
-                    variablePart[j] = toPointer;
-                }
-            }
-        }
-    }
 }

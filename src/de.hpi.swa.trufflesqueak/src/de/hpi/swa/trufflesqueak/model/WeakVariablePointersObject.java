@@ -105,6 +105,12 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
     }
 
     @Override
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
+        layoutValuesBecomeOneWay(from, to);
+        layoutPointersBecomeOneWay(currentMarkingFlag, from, to);
+    }
+
+    @Override
     protected void traceVariablePart(final ObjectTracer tracer) {
         /* Weak pointers excluded from tracing. */
     }

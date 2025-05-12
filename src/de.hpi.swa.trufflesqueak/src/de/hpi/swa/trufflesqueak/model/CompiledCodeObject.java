@@ -495,7 +495,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         final int literalsLength = literals.length;
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
@@ -511,10 +511,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                 executionData.outerMethod = o;
             }
         }
-        // Migrate all shadow blocks
-        if (hasExecutionData() && executionData.shadowBlocks != null) {
-            for (final CompiledCodeObject shadowBlock : executionData.shadowBlocks.getValues()) {
-                shadowBlock.pointersBecomeOneWay(from, to);
+        pointersBecomeOneWayAll(literals, currentMarkingFlag, from, to);
+        if (hasExecutionData()) {
+            pointersBecomeOneWay(executionData.outerMethod, currentMarkingFlag, from, to);
+            // Migrate all shadow blocks
+            if (executionData.shadowBlocks != null) {
+                for (final CompiledCodeObject shadowBlock : executionData.shadowBlocks.getValues()) {
+                    shadowBlock.pointersBecomeOneWay(currentMarkingFlag, from, to);
+                }
             }
         }
     }

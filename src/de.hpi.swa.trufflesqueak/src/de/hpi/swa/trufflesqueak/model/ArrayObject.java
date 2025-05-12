@@ -338,7 +338,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         if (isObjectType()) {
             final Object[] objectStorage = getObjectStorage();
             final int objectStorageLength = objectStorage.length;
@@ -350,6 +350,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
                     }
                 }
             }
+            pointersBecomeOneWayAll(objectStorage, currentMarkingFlag, from, to);
         }
     }
 
