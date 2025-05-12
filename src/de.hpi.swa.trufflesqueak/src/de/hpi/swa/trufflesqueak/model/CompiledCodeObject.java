@@ -536,7 +536,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             // Migrate all shadow blocks
             if (executionData.shadowBlocks != null) {
                 for (final CompiledCodeObject shadowBlock : executionData.shadowBlocks.getValues()) {
-                    shadowBlock.pointersBecomeOneWay(currentMarkingFlag, from, to);
+                    pointersBecomeOneWay(shadowBlock, currentMarkingFlag, from, to);
                 }
             }
         }

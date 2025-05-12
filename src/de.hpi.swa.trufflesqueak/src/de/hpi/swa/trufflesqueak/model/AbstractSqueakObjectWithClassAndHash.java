@@ -194,7 +194,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     public static final void allInstances(final Object object, final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
         if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
-            result.addFirst(o);
+            result.addLast(o);
             o.allInstances(currentMarkingFlag, result);
         }
     }
@@ -210,7 +210,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     public static final void allInstancesOf(final Object object, final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
         if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
             if (o.getSqueakClass() == targetClass) {
-                result.addFirst(o);
+                result.addLast(o);
             }
             o.allInstancesOf(currentMarkingFlag, result, targetClass);
         }

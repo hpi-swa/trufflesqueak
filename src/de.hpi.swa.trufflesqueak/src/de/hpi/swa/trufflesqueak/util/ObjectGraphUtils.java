@@ -46,11 +46,12 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances() {
         final long startTime = System.nanoTime();
-        final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
+        final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
+        assert !image.specialObjectsArray.isMarked(currentMarkingFlag);
         AbstractSqueakObjectWithClassAndHash.allInstances(image.specialObjectsArray, currentMarkingFlag, result);
         for (final EphemeronObject ephemeron : image.ephemeronsQueue) {
-            ephemeron.allInstances(currentMarkingFlag, result);
+            AbstractSqueakObjectWithClassAndHash.allInstances(ephemeron, currentMarkingFlag, result);
         }
         allInstancesFrames(currentMarkingFlag, result);
         lastSeenObjects = result.size();
@@ -80,11 +81,12 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public Object[] allInstancesOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
-        final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
+        final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
+        assert !image.specialObjectsArray.isMarked(currentMarkingFlag);
         AbstractSqueakObjectWithClassAndHash.allInstancesOf(image.specialObjectsArray, currentMarkingFlag, result, targetClass);
         for (final EphemeronObject ephemeron : image.ephemeronsQueue) {
-            ephemeron.allInstancesOf(currentMarkingFlag, result, targetClass);
+            AbstractSqueakObjectWithClassAndHash.allInstancesOf(ephemeron, currentMarkingFlag, result, targetClass);
         }
         allInstancesOfFrames(currentMarkingFlag, result, targetClass);
         if (trackOperations) {
@@ -182,9 +184,10 @@ public final class ObjectGraphUtils {
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
         final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
+        assert !image.specialObjectsArray.isMarked(currentMarkingFlag);
         AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(image.specialObjectsArray, currentMarkingFlag, fromPointers, toPointers);
-        for (final EphemeronObject eo : image.ephemeronsQueue) {
-            eo.pointersBecomeOneWay(currentMarkingFlag, fromPointers, toPointers);
+        for (final EphemeronObject ephemeron : image.ephemeronsQueue) {
+            AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(ephemeron, currentMarkingFlag, fromPointers, toPointers);
         }
         pointersBecomeOneWayFrames(currentMarkingFlag, fromPointers, toPointers);
         if (trackOperations) {
@@ -200,15 +203,15 @@ public final class ObjectGraphUtils {
             if (!FrameAccess.isTruffleSqueakFrame(current)) {
                 return null;
             }
+
             final Object[] arguments = current.getArguments();
             for (int i = 0; i < arguments.length; i++) {
                 final Object argument = arguments[i];
                 for (int j = 0; j < fromPointersLength; j++) {
                     if (argument == fromPointers[j]) {
                         arguments[i] = toPointers[j];
-                    } else if (argument instanceof final AbstractSqueakObjectWithClassAndHash o) {
-                        o.pointersBecomeOneWay(currentMarkingFlag, fromPointers, toPointers);
                     }
+                    AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(fromPointers[j], currentMarkingFlag, fromPointers, toPointers);
                 }
             }
 
@@ -217,9 +220,8 @@ public final class ObjectGraphUtils {
                 for (int j = 0; j < fromPointersLength; j++) {
                     if (context == fromPointers[j]) {
                         FrameAccess.setContext(current, (ContextObject) toPointers[j]);
-                    } else {
-                        context.pointersBecomeOneWay(currentMarkingFlag, fromPointers, toPointers);
                     }
+                    AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(FrameAccess.getContext(current), currentMarkingFlag, fromPointers, toPointers);
                 }
             }
 
@@ -229,15 +231,13 @@ public final class ObjectGraphUtils {
              */
             FrameAccess.iterateStackSlots(current, slotIndex -> {
                 if (current.isObject(slotIndex)) {
-                    final Object stackObject = current.getObject(slotIndex);
                     for (int j = 0; j < fromPointersLength; j++) {
-                        if (stackObject == fromPointers[j]) {
+                        if (current.getObject(slotIndex) == fromPointers[j]) {
                             final Object toPointer = toPointers[j];
                             assert toPointer != null : "Unexpected `null` value";
                             current.setObject(slotIndex, toPointer);
-                        } else if (stackObject instanceof final AbstractSqueakObjectWithClassAndHash o) {
-                            o.pointersBecomeOneWay(currentMarkingFlag, fromPointers, toPointers);
                         }
+                        AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(current.getObject(slotIndex), currentMarkingFlag, fromPointers, toPointers);
                     }
                 }
             });
