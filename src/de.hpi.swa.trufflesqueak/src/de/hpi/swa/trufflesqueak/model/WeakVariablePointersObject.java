@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Deque;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -103,21 +102,6 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
 
     public WeakVariablePointersObject shallowCopy() {
         return new WeakVariablePointersObject(this);
-    }
-
-    @Override
-    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
-        layoutAllInstances(currentMarkingFlag, result);
-    }
-
-    @Override
-    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
-        layoutAllInstancesOf(currentMarkingFlag, result, targetClass);
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
-        layoutValuesBecomeOneWay(currentMarkingFlag, from, to);
     }
 
     @Override

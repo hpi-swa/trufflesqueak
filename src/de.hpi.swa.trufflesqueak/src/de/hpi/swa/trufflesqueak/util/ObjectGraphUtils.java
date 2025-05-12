@@ -199,7 +199,7 @@ public final class ObjectGraphUtils {
     private static void pointersBecomeOneWayFrames(final boolean currentMarkingFlag, final Object[] fromPointers, final Object[] toPointers) {
         final int fromPointersLength = fromPointers.length;
         Truffle.getRuntime().iterateFrames((frameInstance) -> {
-            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!FrameAccess.isTruffleSqueakFrame(current)) {
                 return null;
             }
@@ -209,7 +209,7 @@ public final class ObjectGraphUtils {
                 final Object argument = arguments[i];
                 for (int j = 0; j < fromPointersLength; j++) {
                     if (argument == fromPointers[j]) {
-                        arguments[i] = toPointers[j];
+                        frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE).getArguments()[i] = toPointers[j];
                     }
                     AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(fromPointers[j], currentMarkingFlag, fromPointers, toPointers);
                 }
@@ -219,7 +219,7 @@ public final class ObjectGraphUtils {
             if (context != null) {
                 for (int j = 0; j < fromPointersLength; j++) {
                     if (context == fromPointers[j]) {
-                        FrameAccess.setContext(current, (ContextObject) toPointers[j]);
+                        FrameAccess.setContext(frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE), (ContextObject) toPointers[j]);
                     }
                     AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(FrameAccess.getContext(current), currentMarkingFlag, fromPointers, toPointers);
                 }
@@ -235,7 +235,7 @@ public final class ObjectGraphUtils {
                         if (current.getObject(slotIndex) == fromPointers[j]) {
                             final Object toPointer = toPointers[j];
                             assert toPointer != null : "Unexpected `null` value";
-                            current.setObject(slotIndex, toPointer);
+                            frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE).setObject(slotIndex, toPointer);
                         }
                         AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(current.getObject(slotIndex), currentMarkingFlag, fromPointers, toPointers);
                     }

@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Deque;
-
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
@@ -29,36 +27,6 @@ public final class VariablePointersObject extends AbstractVariablePointersObject
 
     public VariablePointersObject shallowCopy() {
         return new VariablePointersObject(this);
-    }
-
-    @Override
-    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
-        layoutAllInstances(currentMarkingFlag, result);
-        allInstancesAll(variablePart, currentMarkingFlag, result);
-    }
-
-    @Override
-    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
-        layoutAllInstancesOf(currentMarkingFlag, result, targetClass);
-        allInstancesOfAll(variablePart, currentMarkingFlag, result, targetClass);
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
-        layoutValuesBecomeOneWay(currentMarkingFlag, from, to);
-        final int variableSize = variablePart.length;
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            final Object toPointer = to[i];
-            for (int j = 0; j < variableSize; j++) {
-                final Object part = variablePart[j];
-                if (part == fromPointer) {
-                    variablePart[j] = toPointer;
-                } else {
-                    pointersBecomeOneWay(part, currentMarkingFlag, from, to);
-                }
-            }
-        }
     }
 
     @Override
