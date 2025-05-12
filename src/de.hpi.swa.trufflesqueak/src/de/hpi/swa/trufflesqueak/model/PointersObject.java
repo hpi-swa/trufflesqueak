@@ -137,8 +137,7 @@ public final class PointersObject extends AbstractPointersObject {
 
     @Override
     public void pointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
-        layoutValuesBecomeOneWay(from, to);
-        layoutPointersBecomeOneWay(currentMarkingFlag, from, to);
+        layoutValuesBecomeOneWay(currentMarkingFlag, from, to);
     }
 
     @Override

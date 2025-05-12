@@ -296,23 +296,28 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
             final Object toPointer = to[i];
             if (receiver == fromPointer) {
                 receiver = toPointer;
+            } else {
+                pointersBecomeOneWay(receiver, currentMarkingFlag, from, to);
             }
             if (block == fromPointer && toPointer instanceof final CompiledCodeObject b) {
                 block = b;
+            } else {
+                pointersBecomeOneWay(block, currentMarkingFlag, from, to);
             }
             if (outerContext == fromPointer && fromPointer != toPointer && toPointer instanceof final ContextObject c) {
                 setOuterContext(c);
+            } else {
+                pointersBecomeOneWay(outerContext, currentMarkingFlag, from, to);
             }
             for (int j = 0; j < copiedValuesLength; j++) {
-                if (copiedValues[j] == fromPointer) {
+                final Object copiedValue = copiedValues[j];
+                if (copiedValue == fromPointer) {
                     copiedValues[j] = toPointer;
+                } else {
+                    pointersBecomeOneWay(copiedValue, currentMarkingFlag, from, to);
                 }
             }
         }
-        pointersBecomeOneWay(receiver, currentMarkingFlag, from, to);
-        pointersBecomeOneWay(block, currentMarkingFlag, from, to);
-        pointersBecomeOneWay(outerContext, currentMarkingFlag, from, to);
-        pointersBecomeOneWayAll(copiedValues, currentMarkingFlag, from, to);
     }
 
     @Override

@@ -361,12 +361,14 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
             for (int i = 0; i < from.length; i++) {
                 final Object fromPointer = from[i];
                 for (int j = 0; j < objectStorageLength; j++) {
-                    if (objectStorage[j] == fromPointer) {
+                    final Object object = objectStorage[j];
+                    if (object == fromPointer) {
                         objectStorage[j] = to[i];
+                    } else {
+                        pointersBecomeOneWay(object, currentMarkingFlag, from, to);
                     }
                 }
             }
-            pointersBecomeOneWayAll(objectStorage, currentMarkingFlag, from, to);
         }
     }
 

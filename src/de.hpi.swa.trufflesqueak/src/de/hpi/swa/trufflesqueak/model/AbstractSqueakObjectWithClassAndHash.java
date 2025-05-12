@@ -230,12 +230,6 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
-    protected static final void pointersBecomeOneWayAll(final Object[] objects, final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
-        for (final Object object : objects) {
-            pointersBecomeOneWay(object, currentMarkingFlag, from, to);
-        }
-    }
-
     public abstract void tracePointers(ObjectTracer objectTracer);
 
     public void trace(final SqueakImageWriter writer) {

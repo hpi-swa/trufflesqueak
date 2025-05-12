@@ -1251,7 +1251,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 230)
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveWithFrameNode implements Primitive1WithFallback {
         @Specialization
-        protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
+        protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final CheckForInterruptsFullNode interruptNode,
                         @Cached final FrameStackPushNode pushReceiverNode) {
             MiscUtils.park(timeMicroseconds * 1000);

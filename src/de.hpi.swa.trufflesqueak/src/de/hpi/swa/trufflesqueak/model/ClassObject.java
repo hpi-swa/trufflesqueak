@@ -543,28 +543,35 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             final Object toPointer = to[i];
             if (fromPointer == superclass && toPointer instanceof final ClassObject o) {
                 setSuperclass(o);
+            } else {
+                pointersBecomeOneWay(superclass, currentMarkingFlag, from, to);
             }
             if (fromPointer == methodDict && fromPointer != toPointer && toPointer instanceof final VariablePointersObject o) {
                 // Only update methodDict if changed to avoid redundant invalidation.
                 setMethodDict(o);
+            } else {
+                pointersBecomeOneWay(methodDict, currentMarkingFlag, from, to);
             }
             if (fromPointer == instanceVariables && toPointer instanceof final ArrayObject o) {
                 setInstanceVariables(o);
+            } else {
+                pointersBecomeOneWay(instanceVariables, currentMarkingFlag, from, to);
             }
             if (fromPointer == organization && toPointer instanceof final PointersObject o) {
                 setOrganization(o);
+            } else {
+                pointersBecomeOneWay(organization, currentMarkingFlag, from, to);
             }
             for (int j = 0; j < pointersLength; j++) {
-                if (pointers[j] == fromPointer) {
+                final Object pointer = pointers[j];
+                if (pointer == fromPointer) {
                     pointers[j] = toPointer;
+                } else {
+                    pointersBecomeOneWay(pointer, currentMarkingFlag, from, to);
                 }
             }
         }
-        pointersBecomeOneWay(superclass, currentMarkingFlag, from, to);
-        pointersBecomeOneWay(methodDict, currentMarkingFlag, from, to);
-        pointersBecomeOneWay(instanceVariables, currentMarkingFlag, from, to);
-        pointersBecomeOneWay(organization, currentMarkingFlag, from, to);
-        pointersBecomeOneWayAll(pointers, currentMarkingFlag, from, to);
+
     }
 
     @Override

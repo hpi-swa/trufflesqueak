@@ -520,23 +520,27 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             final Object fromPointer = from[i];
             final Object toPointer = to[i];
             for (int j = 0; j < literalsLength; j++) {
-                if (literals[j] == fromPointer) {
+                final Object literal = literals[j];
+                if (literal == fromPointer) {
                     // FIXME: literals are @CompilationFinal, assumption needed (maybe
                     // pointersBecome should not modify literals at all?).
                     literals[j] = toPointer;
+                } else {
+                    pointersBecomeOneWay(literal, currentMarkingFlag, from, to);
                 }
             }
-            if (hasExecutionData() && fromPointer == executionData.outerMethod && toPointer instanceof final CompiledCodeObject o) {
-                executionData.outerMethod = o;
-            }
-        }
-        pointersBecomeOneWayAll(literals, currentMarkingFlag, from, to);
-        if (hasExecutionData()) {
-            pointersBecomeOneWay(executionData.outerMethod, currentMarkingFlag, from, to);
-            // Migrate all shadow blocks
-            if (executionData.shadowBlocks != null) {
-                for (final CompiledCodeObject shadowBlock : executionData.shadowBlocks.getValues()) {
-                    pointersBecomeOneWay(shadowBlock, currentMarkingFlag, from, to);
+            if (hasExecutionData()) {
+                if (fromPointer == executionData.outerMethod && toPointer instanceof final CompiledCodeObject o) {
+                    executionData.outerMethod = o;
+                    // } else {
+                    // FIXME? pointersBecomeOneWay(executionData.outerMethod, currentMarkingFlag,
+                    // from, to);
+                }
+                // Migrate all shadow blocks
+                if (executionData.shadowBlocks != null) {
+                    for (final CompiledCodeObject shadowBlock : executionData.shadowBlocks.getValues()) {
+                        pointersBecomeOneWay(shadowBlock, currentMarkingFlag, from, to);
+                    }
                 }
             }
         }

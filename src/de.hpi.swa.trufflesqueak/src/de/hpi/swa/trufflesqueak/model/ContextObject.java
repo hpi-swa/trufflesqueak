@@ -575,36 +575,44 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                 final Object toPointer = to[i];
                 if (fromPointer == getFrameSender() && toPointer instanceof final ContextObject o) {
                     setSender(o);
+                } else {
+                    pointersBecomeOneWay(getFrameSender(), currentMarkingFlag, from, to);
                 }
                 if (fromPointer == getCodeObject() && toPointer instanceof final CompiledCodeObject o) {
                     setCodeObject(o);
+                } else {
+                    pointersBecomeOneWay(getCodeObject(), currentMarkingFlag, from, to);
                 }
                 if (fromPointer == getClosure() && toPointer instanceof final BlockClosureObject o) {
                     setClosure(o);
+                } else {
+                    pointersBecomeOneWay(getClosure(), currentMarkingFlag, from, to);
                 }
                 if (fromPointer == getReceiver()) {
                     setReceiver(toPointer);
+                } else {
+                    pointersBecomeOneWay(getReceiver(), currentMarkingFlag, from, to);
                 }
                 for (int j = FrameAccess.getArgumentStartIndex(); j < argumentsLength; j++) {
-                    if (arguments[j] == fromPointer) {
+                    final Object argument = arguments[j];
+                    if (argument == fromPointer) {
                         arguments[j] = toPointer;
+                    } else {
+                        pointersBecomeOneWay(argument, currentMarkingFlag, from, to);
                     }
                 }
             }
-            pointersBecomeOneWay(getFrameSender(), currentMarkingFlag, from, to);
-            pointersBecomeOneWay(getCodeObject(), currentMarkingFlag, from, to);
-            pointersBecomeOneWay(getClosure(), currentMarkingFlag, from, to);
-            pointersBecomeOneWay(getReceiver(), currentMarkingFlag, from, to);
-            pointersBecomeOneWayAll(arguments, currentMarkingFlag, from, to);
             FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
                 for (int i = 0; i < fromLength; i++) {
                     final Object fromPointer = from[i];
                     final Object toPointer = to[i];
                     if (truffleFrame.isObject(slotIndex)) {
-                        if (truffleFrame.getObject(slotIndex) == fromPointer) {
+                        final Object stackValue = truffleFrame.getObject(slotIndex);
+                        if (stackValue == fromPointer) {
                             truffleFrame.setObject(slotIndex, toPointer);
+                        } else {
+                            pointersBecomeOneWay(stackValue, currentMarkingFlag, from, to);
                         }
-                        pointersBecomeOneWay(truffleFrame.getObject(slotIndex), currentMarkingFlag, from, to);
                     }
                 }
             });

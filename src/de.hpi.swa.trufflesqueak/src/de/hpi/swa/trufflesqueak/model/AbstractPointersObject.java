@@ -335,35 +335,35 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         }
     }
 
-    protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to) {
+    protected final void layoutValuesBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             final Object toPointer = to[i];
             if (object0 == fromPointer) {
                 object0 = toPointer;
+            } else {
+                pointersBecomeOneWay(object0, currentMarkingFlag, from, to);
             }
             if (object1 == fromPointer) {
                 object1 = toPointer;
+            } else {
+                pointersBecomeOneWay(object1, currentMarkingFlag, from, to);
             }
             if (object2 == fromPointer) {
                 object2 = toPointer;
+            } else {
+                pointersBecomeOneWay(object2, currentMarkingFlag, from, to);
             }
             if (objectExtension != null) {
                 for (int j = 0; j < objectExtension.length; j++) {
-                    if (objectExtension[j] == fromPointer) {
+                    final Object object = objectExtension[j];
+                    if (object == fromPointer) {
                         objectExtension[j] = toPointer;
+                    } else {
+                        pointersBecomeOneWay(object, currentMarkingFlag, from, to);
                     }
                 }
             }
-        }
-    }
-
-    protected final void layoutPointersBecomeOneWay(final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
-        pointersBecomeOneWay(object0, currentMarkingFlag, from, to);
-        pointersBecomeOneWay(object1, currentMarkingFlag, from, to);
-        pointersBecomeOneWay(object2, currentMarkingFlag, from, to);
-        if (objectExtension != null) {
-            pointersBecomeOneWayAll(objectExtension, currentMarkingFlag, from, to);
         }
     }
 
