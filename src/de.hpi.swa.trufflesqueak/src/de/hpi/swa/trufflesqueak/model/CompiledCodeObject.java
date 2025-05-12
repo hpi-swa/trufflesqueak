@@ -496,17 +496,18 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+        final int literalsLength = literals.length;
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-            for (int j = 0; j < getLiterals().length; j++) {
-                if (fromPointer == getLiterals()[j]) {
-                    final Object toPointer = to[i];
+            final Object toPointer = to[i];
+            for (int j = 0; j < literalsLength; j++) {
+                if (literals[j] == fromPointer) {
                     // FIXME: literals are @CompilationFinal, assumption needed (maybe
                     // pointersBecome should not modify literals at all?).
-                    setLiteral(1 + j, toPointer);
+                    literals[j] = toPointer;
                 }
             }
-            if (hasExecutionData() && fromPointer == executionData.outerMethod && to[i] instanceof final CompiledCodeObject o) {
+            if (hasExecutionData() && fromPointer == executionData.outerMethod && toPointer instanceof final CompiledCodeObject o) {
                 executionData.outerMethod = o;
             }
         }

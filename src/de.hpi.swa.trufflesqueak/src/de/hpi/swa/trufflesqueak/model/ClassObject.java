@@ -517,6 +517,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+        final int pointersLength = pointers.length;
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             final Object toPointer = to[i];
@@ -533,7 +534,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             if (fromPointer == organization && toPointer instanceof final PointersObject o) {
                 setOrganization(o);
             }
-            for (int j = 0; j < pointers.length; j++) {
+            for (int j = 0; j < pointersLength; j++) {
                 if (pointers[j] == fromPointer) {
                     pointers[j] = toPointer;
                 }
