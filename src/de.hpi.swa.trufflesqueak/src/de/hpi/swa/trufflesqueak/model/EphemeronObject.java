@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Deque;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -145,6 +147,16 @@ public final class EphemeronObject extends AbstractPointersObject {
 
     public EphemeronObject shallowCopy() {
         return new EphemeronObject(this);
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        layoutAllInstances(currentMarkingFlag, result);
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        layoutAllInstancesOf(currentMarkingFlag, result, targetClass);
     }
 
     @Override

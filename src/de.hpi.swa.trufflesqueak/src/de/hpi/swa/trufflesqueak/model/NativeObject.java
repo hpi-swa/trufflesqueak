@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Deque;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -376,6 +377,16 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             }
         }
         return false;
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        // Nothing to do.
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        // Nothing to do.
     }
 
     @Override

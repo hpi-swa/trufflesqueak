@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Deque;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -268,6 +270,22 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     public BlockClosureObject shallowCopy() {
         return new BlockClosureObject(this);
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        allInstances(receiver, currentMarkingFlag, result);
+        allInstances(block, currentMarkingFlag, result);
+        allInstances(outerContext, currentMarkingFlag, result);
+        allInstancesAll(copiedValues, currentMarkingFlag, result);
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        allInstancesOf(receiver, currentMarkingFlag, result, targetClass);
+        allInstancesOf(block, currentMarkingFlag, result, targetClass);
+        allInstancesOf(outerContext, currentMarkingFlag, result, targetClass);
+        allInstancesOfAll(copiedValues, currentMarkingFlag, result, targetClass);
     }
 
     @Override

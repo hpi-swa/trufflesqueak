@@ -56,7 +56,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -77,7 +76,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final SqueakImageContext image = getContext();
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            ObjectGraphUtils.pointersBecomeOneWay(image, fromPointersClone, toPointers);
+            image.objectGraphUtils.pointersBecomeOneWay(fromPointersClone, toPointers);
             image.flushMethodCacheAfterBecome();
             return fromArray;
         }

@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Deque;
+
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -47,6 +49,16 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
     public EmptyObject shallowCopy() {
         return new EmptyObject(this);
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        // Nothing to do.
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        // Nothing to do.
     }
 
     @Override

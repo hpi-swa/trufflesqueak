@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Deque;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -513,6 +515,24 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public String getClassComment() {
         return CLASS_DESCRIPTION.getClassComment(this);
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        allInstances(superclass, currentMarkingFlag, result);
+        allInstances(methodDict, currentMarkingFlag, result);
+        allInstances(instanceVariables, currentMarkingFlag, result);
+        allInstances(organization, currentMarkingFlag, result);
+        allInstancesAll(pointers, currentMarkingFlag, result);
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        allInstancesOf(superclass, currentMarkingFlag, result, targetClass);
+        allInstancesOf(methodDict, currentMarkingFlag, result, targetClass);
+        allInstancesOf(instanceVariables, currentMarkingFlag, result, targetClass);
+        allInstancesOf(organization, currentMarkingFlag, result, targetClass);
+        allInstancesOfAll(pointers, currentMarkingFlag, result, targetClass);
     }
 
     @Override

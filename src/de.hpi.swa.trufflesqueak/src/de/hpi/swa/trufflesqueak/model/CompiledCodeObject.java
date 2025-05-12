@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
+import java.util.Deque;
 
 import org.graalvm.collections.EconomicMap;
 
@@ -492,6 +493,24 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             return true;
         }
         return ArrayUtils.contains(getLiterals(), thang);
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        allInstancesAll(literals, currentMarkingFlag, result);
+        if (hasExecutionData()) {
+            allInstances(executionData.outerMethod, currentMarkingFlag, result);
+            // Hide shadow blocks from image
+        }
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        allInstancesOfAll(literals, currentMarkingFlag, result, targetClass);
+        if (hasExecutionData()) {
+            allInstancesOf(executionData.outerMethod, currentMarkingFlag, result, targetClass);
+            // Hide shadow blocks from image
+        }
     }
 
     @Override

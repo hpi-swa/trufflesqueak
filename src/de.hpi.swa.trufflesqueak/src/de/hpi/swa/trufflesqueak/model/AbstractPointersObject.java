@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
+import java.util.Deque;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -314,6 +315,24 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             }
         }
         return false;
+    }
+
+    protected final void layoutAllInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        allInstances(object0, currentMarkingFlag, result);
+        allInstances(object1, currentMarkingFlag, result);
+        allInstances(object2, currentMarkingFlag, result);
+        if (objectExtension != null) {
+            allInstancesAll(objectExtension, currentMarkingFlag, result);
+        }
+    }
+
+    protected final void layoutAllInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        allInstancesOf(object0, currentMarkingFlag, result, targetClass);
+        allInstancesOf(object1, currentMarkingFlag, result, targetClass);
+        allInstancesOf(object2, currentMarkingFlag, result, targetClass);
+        if (objectExtension != null) {
+            allInstancesOfAll(objectExtension, currentMarkingFlag, result, targetClass);
+        }
     }
 
     protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to) {

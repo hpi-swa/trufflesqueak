@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Deque;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -335,6 +337,20 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
             objects[i] = toObjectFromLong(longs[i], isNilTagProfile, node);
         }
         storage = objects;
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        if (isObjectType()) {
+            allInstancesAll(getObjectStorage(), currentMarkingFlag, result);
+        }
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        if (isObjectType()) {
+            allInstancesOfAll(getObjectStorage(), currentMarkingFlag, result, targetClass);
+        }
     }
 
     @Override

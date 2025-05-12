@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
+import java.util.Deque;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -529,6 +530,38 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             }
         }
         return false;
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        if (hasTruffleFrame()) {
+            allInstances(getFrameSender(), currentMarkingFlag, result);
+            allInstances(getCodeObject(), currentMarkingFlag, result);
+            allInstances(getClosure(), currentMarkingFlag, result);
+            allInstances(getReceiver(), currentMarkingFlag, result);
+            allInstancesAll(truffleFrame.getArguments(), currentMarkingFlag, result);
+            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
+                if (truffleFrame.isObject(slotIndex)) {
+                    allInstances(truffleFrame.getObject(slotIndex), currentMarkingFlag, result);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        if (hasTruffleFrame()) {
+            allInstancesOf(getFrameSender(), currentMarkingFlag, result, targetClass);
+            allInstancesOf(getCodeObject(), currentMarkingFlag, result, targetClass);
+            allInstancesOf(getClosure(), currentMarkingFlag, result, targetClass);
+            allInstancesOf(getReceiver(), currentMarkingFlag, result, targetClass);
+            allInstancesOfAll(truffleFrame.getArguments(), currentMarkingFlag, result, targetClass);
+            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
+                if (truffleFrame.isObject(slotIndex)) {
+                    allInstancesOf(truffleFrame.getObject(slotIndex), currentMarkingFlag, result, targetClass);
+                }
+            });
+        }
     }
 
     @Override

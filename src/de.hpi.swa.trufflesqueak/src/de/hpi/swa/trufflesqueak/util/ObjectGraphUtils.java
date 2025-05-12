@@ -46,40 +46,68 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances() {
         final long startTime = System.nanoTime();
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
-        final ObjectTracer pending = new ObjectTracer();
-        final boolean currentMarkingFlag = pending.currentMarkingFlag;
-        AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorklist()) != null) {
-            if (currentObject.tryToMark(currentMarkingFlag)) {
-                seen.add(currentObject);
-                pending.tracePointers(currentObject);
-            }
+        final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
+        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
+        AbstractSqueakObjectWithClassAndHash.allInstances(image.specialObjectsArray, currentMarkingFlag, result);
+        for (final EphemeronObject ephemeron : image.ephemeronsQueue) {
+            ephemeron.allInstances(currentMarkingFlag, result);
         }
-        lastSeenObjects = seen.size();
+        allInstancesFrames(currentMarkingFlag, result);
+        lastSeenObjects = result.size();
         if (trackOperations) {
             ObjectGraphOperations.ALL_INSTANCES.addNanos(System.nanoTime() - startTime);
         }
-        return seen;
+        return result;
+    }
+
+    private static void allInstancesFrames(final boolean currentMarkingFlag, final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result) {
+        Truffle.getRuntime().iterateFrames(frameInstance -> {
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            if (!FrameAccess.isTruffleSqueakFrame(current)) {
+                return null;
+            }
+            AbstractSqueakObjectWithClassAndHash.allInstancesAll(current.getArguments(), currentMarkingFlag, result);
+            AbstractSqueakObjectWithClassAndHash.allInstances(FrameAccess.getContext(current), currentMarkingFlag, result);
+            FrameAccess.iterateStackSlots(current, slotIndex -> {
+                if (current.isObject(slotIndex)) {
+                    AbstractSqueakObjectWithClassAndHash.allInstances(current.getObject(slotIndex), currentMarkingFlag, result);
+                }
+            });
+            return null;
+        });
     }
 
     @TruffleBoundary
     public Object[] allInstancesOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
+        final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
-        final ObjectTracer pending = new ObjectTracer();
-        final boolean currentMarkingFlag = pending.currentMarkingFlag;
-        AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorklist()) != null) {
-            if (currentObject.tryToMark(currentMarkingFlag)) {
-                if (targetClass == currentObject.getSqueakClass()) {
-                    result.add(currentObject);
-                }
-                pending.tracePointers(currentObject);
-            }
+        AbstractSqueakObjectWithClassAndHash.allInstancesOf(image.specialObjectsArray, currentMarkingFlag, result, targetClass);
+        for (final EphemeronObject ephemeron : image.ephemeronsQueue) {
+            ephemeron.allInstancesOf(currentMarkingFlag, result, targetClass);
         }
-        ObjectGraphOperations.ALL_INSTANCES_OF.addNanos(System.nanoTime() - startTime);
+        allInstancesOfFrames(currentMarkingFlag, result, targetClass);
+        if (trackOperations) {
+            ObjectGraphOperations.ALL_INSTANCES_OF.addNanos(System.nanoTime() - startTime);
+        }
         return result.toArray();
+    }
+
+    private static void allInstancesOfFrames(final boolean currentMarkingFlag, final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        Truffle.getRuntime().iterateFrames(frameInstance -> {
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            if (!FrameAccess.isTruffleSqueakFrame(current)) {
+                return null;
+            }
+            AbstractSqueakObjectWithClassAndHash.allInstancesOfAll(current.getArguments(), currentMarkingFlag, result, targetClass);
+            AbstractSqueakObjectWithClassAndHash.allInstancesOf(FrameAccess.getContext(current), currentMarkingFlag, result, targetClass);
+            FrameAccess.iterateStackSlots(current, slotIndex -> {
+                if (current.isObject(slotIndex)) {
+                    AbstractSqueakObjectWithClassAndHash.allInstancesOf(current.getObject(slotIndex), currentMarkingFlag, result, targetClass);
+                }
+            });
+            return null;
+        });
     }
 
     @TruffleBoundary
@@ -151,15 +179,17 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static void pointersBecomeOneWay(final SqueakImageContext image, final Object[] fromPointers, final Object[] toPointers) {
+    public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
         final boolean currentMarkingFlag = image.toggleCurrentMarkingFlag();
-        image.specialObjectsArray.pointersBecomeOneWay(currentMarkingFlag, fromPointers, toPointers);
+        AbstractSqueakObjectWithClassAndHash.pointersBecomeOneWay(image.specialObjectsArray, currentMarkingFlag, fromPointers, toPointers);
         for (final EphemeronObject eo : image.ephemeronsQueue) {
             eo.pointersBecomeOneWay(currentMarkingFlag, fromPointers, toPointers);
         }
         pointersBecomeOneWayFrames(currentMarkingFlag, fromPointers, toPointers);
-        ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
+        if (trackOperations) {
+            ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
+        }
     }
 
     @TruffleBoundary
@@ -310,6 +340,7 @@ public final class ObjectGraphUtils {
         worklist.clear();
     }
 
+    /* FIXME: Drop and use BFS traversal instead. */
     public final class ObjectTracer {
         private final boolean currentMarkingFlag;
 

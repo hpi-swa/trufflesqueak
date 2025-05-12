@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Deque;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
@@ -188,9 +190,41 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         toggleMarkingFlag();
     }
 
+    public abstract void allInstances(boolean currentMarkingFlag, Deque<AbstractSqueakObjectWithClassAndHash> result);
+
+    public static final void allInstances(final Object object, final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
+            result.addFirst(o);
+            o.allInstances(currentMarkingFlag, result);
+        }
+    }
+
+    public static final void allInstancesAll(final Object[] objects, final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        for (final Object object : objects) {
+            allInstances(object, currentMarkingFlag, result);
+        }
+    }
+
+    public abstract void allInstancesOf(boolean currentMarkingFlag, Deque<AbstractSqueakObjectWithClassAndHash> result, ClassObject targetClass);
+
+    public static final void allInstancesOf(final Object object, final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
+            if (o.getSqueakClass() == targetClass) {
+                result.addFirst(o);
+            }
+            o.allInstancesOf(currentMarkingFlag, result, targetClass);
+        }
+    }
+
+    public static final void allInstancesOfAll(final Object[] objects, final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        for (final Object object : objects) {
+            allInstancesOf(object, currentMarkingFlag, result, targetClass);
+        }
+    }
+
     public abstract void pointersBecomeOneWay(boolean currentMarkingFlag, Object[] from, Object[] to);
 
-    protected static final void pointersBecomeOneWay(final Object object, final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
+    public static final void pointersBecomeOneWay(final Object object, final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
             o.pointersBecomeOneWay(currentMarkingFlag, from, to);
         }

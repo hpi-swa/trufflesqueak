@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Deque;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -225,6 +226,16 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public int hashCode() {
         return super.hashCode();
+    }
+
+    @Override
+    public void allInstances(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
+        // Nothing to do.
+    }
+
+    @Override
+    public void allInstancesOf(final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
+        // Nothing to do.
     }
 
     @Override
