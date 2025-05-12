@@ -195,6 +195,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     public static final void allInstances(final Object object, final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result) {
         if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
             result.addLast(o);
+            allInstances(o.getSqueakClass(), currentMarkingFlag, result);
             o.allInstances(currentMarkingFlag, result);
         }
     }
@@ -209,9 +210,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     public static final void allInstancesOf(final Object object, final boolean currentMarkingFlag, final Deque<AbstractSqueakObjectWithClassAndHash> result, final ClassObject targetClass) {
         if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
-            if (o.getSqueakClass() == targetClass) {
+            final ClassObject squeakClass = o.getSqueakClass();
+            if (squeakClass == targetClass) {
                 result.addLast(o);
             }
+            allInstancesOf(squeakClass, currentMarkingFlag, result, targetClass);
             o.allInstancesOf(currentMarkingFlag, result, targetClass);
         }
     }
@@ -226,6 +229,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     public static final void pointersBecomeOneWay(final Object object, final boolean currentMarkingFlag, final Object[] from, final Object[] to) {
         if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
+            pointersBecomeOneWay(o.getSqueakClass(), currentMarkingFlag, from, to);
             o.pointersBecomeOneWay(currentMarkingFlag, from, to);
         }
     }
