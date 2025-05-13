@@ -118,6 +118,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             getExecutionData().frameDescriptor = original.executionData.frameDescriptor;
         }
         setLiteralsAndBytes(original.header, original.literals.clone(), original.bytes.clone());
+        primitiveNodeOrNull = original.primitiveNodeOrNull;
     }
 
     private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
@@ -265,7 +266,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         } else {
             final ResumeContextRootNode resumeNode = (ResumeContextRootNode) executionData.resumptionCallTarget.getRootNode();
             if (resumeNode.getActiveContext() != context) {
-                /**
+                /*
                  * This is a trick: we set the activeContext of the {@link ResumeContextRootNode} to
                  * the given context to be able to reuse the call target.
                  */
@@ -496,27 +497,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        final int literalsLength = literals.length;
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            final Object toPointer = to[i];
-            for (int j = 0; j < literalsLength; j++) {
-                if (literals[j] == fromPointer) {
-                    // FIXME: literals are @CompilationFinal, assumption needed (maybe
-                    // pointersBecome should not modify literals at all?).
-                    literals[j] = toPointer;
-                }
-            }
-            if (hasExecutionData() && fromPointer == executionData.outerMethod && toPointer instanceof final CompiledCodeObject o) {
-                executionData.outerMethod = o;
-            }
-        }
-        // Migrate all shadow blocks
-        if (hasExecutionData() && executionData.shadowBlocks != null) {
-            for (final CompiledCodeObject shadowBlock : executionData.shadowBlocks.getValues()) {
-                shadowBlock.pointersBecomeOneWay(from, to);
-            }
-        }
+        /*
+         * Literals are cached in the AST and are not allowed to change (at least currently) because
+         * that would require invalidation. Do nothing for now until this really is needed.
+         */
     }
 
     @Override
@@ -561,7 +545,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public NativeObject getCompiledInSelector() {
-        /**
+        /*
          *
          * By convention the penultimate literal of a method is either its selector or an instance
          * of AdditionalMethodState. AdditionalMethodState holds the method's selector and any
@@ -587,7 +571,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     /** CompiledMethod>>#methodClassAssociation. */
     private Object getMethodClassAssociation() {
-        /**
+        /*
          * From the CompiledMethod class description:
          *
          * The last literal in a CompiledMethod must be its methodClassAssociation, a binding whose
