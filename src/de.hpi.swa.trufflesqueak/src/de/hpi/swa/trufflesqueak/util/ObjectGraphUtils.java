@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
@@ -163,9 +164,63 @@ public final class ObjectGraphUtils {
                 pending.tracePointers(currentObject);
             }
         }
+        pointersBecomeOneWayFrames(fromPointers, toPointers);
         if (trackOperations) {
             ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
         }
+    }
+
+    @TruffleBoundary
+    private static void pointersBecomeOneWayFrames(final Object[] fromPointers, final Object[] toPointers) {
+        final int fromPointersLength = fromPointers.length;
+        Truffle.getRuntime().iterateFrames((frameInstance) -> {
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+            if (!FrameAccess.isTruffleSqueakFrame(current)) {
+                return null;
+            }
+            final Object[] arguments = current.getArguments();
+            for (int i = 0; i < arguments.length; i++) {
+                final Object argument = arguments[i];
+                for (int j = 0; j < fromPointersLength; j++) {
+                    if (argument == fromPointers[j]) {
+                        arguments[i] = toPointers[j];
+                    } else if (argument instanceof final AbstractSqueakObjectWithClassAndHash o) {
+                        o.pointersBecomeOneWay(fromPointers, toPointers);
+                    }
+                }
+            }
+
+            final ContextObject context = FrameAccess.getContext(current);
+            if (context != null) {
+                for (int j = 0; j < fromPointersLength; j++) {
+                    if (context == fromPointers[j]) {
+                        FrameAccess.setContext(current, (ContextObject) toPointers[j]);
+                    } else {
+                        context.pointersBecomeOneWay(fromPointers, toPointers);
+                    }
+                }
+            }
+
+            /*
+             * Iterate over all stack slots here instead of stackPointer because in rare cases, the
+             * stack is accessed behind the stackPointer.
+             */
+            FrameAccess.iterateStackSlots(current, slotIndex -> {
+                if (current.isObject(slotIndex)) {
+                    final Object stackObject = current.getObject(slotIndex);
+                    for (int j = 0; j < fromPointersLength; j++) {
+                        if (stackObject == fromPointers[j]) {
+                            final Object toPointer = toPointers[j];
+                            assert toPointer != null : "Unexpected `null` value";
+                            current.setObject(slotIndex, toPointer);
+                        } else if (stackObject instanceof final AbstractSqueakObjectWithClassAndHash o) {
+                            o.pointersBecomeOneWay(fromPointers, toPointers);
+                        }
+                    }
+                }
+            });
+            return null;
+        });
     }
 
     @TruffleBoundary
