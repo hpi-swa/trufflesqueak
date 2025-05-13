@@ -496,25 +496,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        final int literalsLength = literals.length;
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            final Object toPointer = to[i];
-            for (int j = 0; j < literalsLength; j++) {
-                if (literals[j] == fromPointer) {
-                    // FIXME: literals are @CompilationFinal, assumption needed (maybe
-                    // pointersBecome should not modify literals at all?).
-                    literals[j] = toPointer;
+        if (!hasExecutionData()) {
+            /*
+             * Can only change literals as long as it has not been executed yet. Literals are cached
+             * in the AST and if they were allowed to change, we had to invalidate the call target.
+             */
+            final int literalsLength = literals.length;
+            for (int i = 0; i < from.length; i++) {
+                final Object fromPointer = from[i];
+                for (int j = 0; j < literalsLength; j++) {
+                    if (literals[j] == fromPointer) {
+                        literals[j] = to[i];
+                    }
                 }
-            }
-            if (hasExecutionData() && fromPointer == executionData.outerMethod && toPointer instanceof final CompiledCodeObject o) {
-                executionData.outerMethod = o;
-            }
-        }
-        // Migrate all shadow blocks
-        if (hasExecutionData() && executionData.shadowBlocks != null) {
-            for (final CompiledCodeObject shadowBlock : executionData.shadowBlocks.getValues()) {
-                shadowBlock.pointersBecomeOneWay(from, to);
             }
         }
     }
