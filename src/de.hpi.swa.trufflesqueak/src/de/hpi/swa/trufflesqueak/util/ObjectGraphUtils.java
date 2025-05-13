@@ -32,7 +32,8 @@ public final class ObjectGraphUtils {
 
     private final SqueakImageContext image;
     private final boolean trackOperations;
-    private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> workQueue = new ArrayDeque<>();
+    /* Using a stack for DFS traversal when walking Smalltalk objects. */
+    private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> workStack = new ArrayDeque<>();
 
     public ObjectGraphUtils(final SqueakImageContext image) {
         this.image = image;
@@ -50,7 +51,7 @@ public final class ObjectGraphUtils {
         final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkQueue()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 seen.add(currentObject);
                 pending.tracePointers(currentObject);
@@ -70,7 +71,7 @@ public final class ObjectGraphUtils {
         final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkQueue()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 if (targetClass == currentObject.getSqueakClass()) {
                     result.add(currentObject);
@@ -92,11 +93,11 @@ public final class ObjectGraphUtils {
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObject result = NilObject.SINGLETON;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkQueue()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 marked.add(currentObject);
                 if (targetClass == currentObject.getSqueakClass()) {
-                    clearWorkQueue();
+                    clearWorkStack();
                     // Unmark marked objects
                     for (final AbstractSqueakObjectWithClassAndHash object : marked) {
                         object.unmark(currentMarkingFlag);
@@ -122,12 +123,12 @@ public final class ObjectGraphUtils {
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
         final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
-        AbstractSqueakObjectWithClassAndHash currentObject = getNextFromWorkQueue();
+        AbstractSqueakObjectWithClassAndHash currentObject = getNextFromWorkStack();
         AbstractSqueakObject result = currentObject; // first object
         boolean foundObject = false;
         while (currentObject != null) {
             if (foundObject) {
-                clearWorkQueue();
+                clearWorkStack();
                 // Unmark marked objects
                 for (final AbstractSqueakObjectWithClassAndHash object : marked) {
                     object.unmark(currentMarkingFlag);
@@ -144,7 +145,7 @@ public final class ObjectGraphUtils {
                 }
                 pending.tracePointers(currentObject);
             }
-            currentObject = getNextFromWorkQueue();
+            currentObject = getNextFromWorkStack();
         }
         if (trackOperations) {
             ObjectGraphOperations.NEXT_OBJECT.addNanos(System.nanoTime() - startTime);
@@ -159,7 +160,7 @@ public final class ObjectGraphUtils {
         pointersBecomeOneWayFrames(pending, fromPointers, toPointers);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkQueue()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 currentObject.pointersBecomeOneWay(fromPointers, toPointers);
                 pending.tracePointers(currentObject);
@@ -228,7 +229,7 @@ public final class ObjectGraphUtils {
         final ArrayDeque<EphemeronObject> ephemeronsToBeMarked = new ArrayDeque<>();
         AbstractSqueakObjectWithClassAndHash currentObject;
 
-        while ((currentObject = getNextFromWorkQueue()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 // Ephemerons are traced in a special way.
                 if (currentObject instanceof final EphemeronObject ephemeronObject) {
@@ -296,30 +297,26 @@ public final class ObjectGraphUtils {
 
     private void finishPendingMarking(final ObjectTracer pending, final boolean currentMarkingFlag) {
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkQueue()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 pending.tracePointers(currentObject);
             }
         }
     }
 
-    private AbstractSqueakObjectWithClassAndHash getNextFromWorkQueue() {
-        /*
-         * For some reason, using pollLast() is faster than pollFirst() and keeps the max size of
-         * the deque significantly smaller.
-         */
-        return workQueue.pollLast();
+    private AbstractSqueakObjectWithClassAndHash getNextFromWorkStack() {
+        return workStack.pollFirst();
     }
 
-    private void clearWorkQueue() {
-        workQueue.clear();
+    private void clearWorkStack() {
+        workStack.clear();
     }
 
     public final class ObjectTracer {
         private final boolean currentMarkingFlag;
 
         private ObjectTracer(final boolean addObjectsFromFrames) {
-            assert workQueue.isEmpty() : "workQueue should be empty";
+            assert workStack.isEmpty() : "workQueue should be empty";
             // Flip the marking flag
             currentMarkingFlag = image.toggleCurrentMarkingFlag();
             // Add roots
@@ -332,7 +329,7 @@ public final class ObjectGraphUtils {
             // disk,
             // but by tracing them we avoid an expensive reachability test in the fetch-next-mourner
             // primitive.
-            workQueue.addAll(image.ephemeronsQueue);
+            workStack.addAll(image.ephemeronsQueue);
         }
 
         private void addObjectsFromFrames() {
@@ -355,7 +352,7 @@ public final class ObjectGraphUtils {
 
         public void addIfUnmarked(final Object object) {
             if (object instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isMarked(currentMarkingFlag)) {
-                workQueue.addLast(o);
+                workStack.addFirst(o);
             }
         }
 
