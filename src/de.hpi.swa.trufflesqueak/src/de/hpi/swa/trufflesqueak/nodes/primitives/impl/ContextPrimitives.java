@@ -116,7 +116,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 196)
     protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final ContextObject doUnwindAndTerminate(final ContextObject receiver, final ContextObject previousContext) {
+        protected static final ContextObject doUnwindAndTerminate(final ContextObject receiver, final ContextObject previousContext) {
             /*
              * Terminate all the Contexts between me and previousContext, if previousContext is on
              * my Context stack. Make previousContext my sender.
@@ -132,7 +132,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        private void terminateBetween(final ContextObject start, final ContextObject end) {
+        private static void terminateBetween(final ContextObject start, final ContextObject end) {
             ContextObject current = start;
             while (current.hasMaterializedSender()) {
                 final AbstractSqueakObject sender = current.getSender();
@@ -149,7 +149,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private void terminateBetween(final FrameMarker start, final ContextObject end) {
+        private static void terminateBetween(final FrameMarker start, final ContextObject end) {
             assert start != null : "Unexpected `null` value";
             final ContextObject[] bottomContextOnTruffleStack = new ContextObject[1];
             final ContextObject result = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<>() {
@@ -185,7 +185,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private void terminateBetweenRecursively(final ContextObject start, final ContextObject end) {
+        private static void terminateBetweenRecursively(final ContextObject start, final ContextObject end) {
             terminateBetween(start, end);
         }
     }
