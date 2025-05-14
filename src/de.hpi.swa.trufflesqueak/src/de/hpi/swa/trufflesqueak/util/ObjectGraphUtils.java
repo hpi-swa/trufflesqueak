@@ -13,6 +13,7 @@ import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
@@ -64,6 +65,11 @@ public final class ObjectGraphUtils {
         return seen;
     }
 
+    /*
+     * This is not a bytecode interpreter switch, but it is an important operation that should
+     * receive additional optimization budget.
+     */
+    @BytecodeInterpreterSwitch
     @TruffleBoundary
     public Object[] allInstancesOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
@@ -153,6 +159,11 @@ public final class ObjectGraphUtils {
         return result;
     }
 
+    /*
+     * This is not a bytecode interpreter switch, but it is an important operation that should
+     * receive additional optimization budget.
+     */
+    @BytecodeInterpreterSwitch
     @TruffleBoundary
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
