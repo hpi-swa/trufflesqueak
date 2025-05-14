@@ -41,21 +41,21 @@ public final class CheckForInterruptsFullNode extends Node {
         if (istate.tryInterruptPending()) {
             try {
                 signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
-            } catch (ProcessSwitch ps) {
+            } catch (final ProcessSwitch ps) {
                 pendingSwitch = ps;
             }
         }
         if (istate.tryWakeUpTickTrigger()) {
             try {
                 signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
-            } catch (ProcessSwitch ps) {
+            } catch (final ProcessSwitch ps) {
                 pendingSwitch = ps;
             }
         }
         if (istate.tryPendingFinalizations()) {
             try {
                 signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
-            } catch (ProcessSwitch ps) {
+            } catch (final ProcessSwitch ps) {
                 pendingSwitch = ps;
             }
         }
@@ -67,7 +67,7 @@ public final class CheckForInterruptsFullNode extends Node {
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
                     try {
                         signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
-                    } catch (ProcessSwitch ps) {
+                    } catch (final ProcessSwitch ps) {
                         pendingSwitch = ps;
                     }
                 }

@@ -97,21 +97,21 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
             if (istate.tryInterruptPending()) {
                 try {
                     SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
-                } catch (ProcessSwitch ps) {
+                } catch (final ProcessSwitch ps) {
                     pendingSwitch = ps;
                 }
             }
             if (istate.tryWakeUpTickTrigger()) {
                 try {
                     SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
-                } catch (ProcessSwitch ps) {
+                } catch (final ProcessSwitch ps) {
                     pendingSwitch = ps;
                 }
             }
             if (istate.tryPendingFinalizations()) {
                 try {
                     SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
-                } catch (ProcessSwitch ps) {
+                } catch (final ProcessSwitch ps) {
                     pendingSwitch = ps;
                 }
             }
@@ -123,7 +123,7 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
                     while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
                         try {
                             SignalSemaphoreNode.executeUncached(frame, image, semaphores[semaIndex - 1]);
-                        } catch (ProcessSwitch ps) {
+                        } catch (final ProcessSwitch ps) {
                             pendingSwitch = ps;
                         }
                     }
