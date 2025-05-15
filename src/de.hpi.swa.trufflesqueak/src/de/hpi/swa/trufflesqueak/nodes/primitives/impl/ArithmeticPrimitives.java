@@ -1173,17 +1173,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 159)
     public abstract static class PrimHashMultiplyNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        public static final int HASH_MULTIPLY_CONSTANT = 1664525;
+        public static final int HASH_MULTIPLY_CONSTANT = 0x19660D;
         public static final int HASH_MULTIPLY_MASK = 0xFFFFFFF;
+
+        @Specialization
+        public static final long doLong(final long receiver) {
+            return receiver * HASH_MULTIPLY_CONSTANT & HASH_MULTIPLY_MASK;
+        }
 
         @Specialization
         protected static final long doLargeInteger(final LargeIntegerObject receiver) {
             return doLong(receiver.longValue());
-        }
-
-        @Specialization
-        protected static final long doLong(final long receiver) {
-            return receiver * HASH_MULTIPLY_CONSTANT & HASH_MULTIPLY_MASK;
         }
     }
 
