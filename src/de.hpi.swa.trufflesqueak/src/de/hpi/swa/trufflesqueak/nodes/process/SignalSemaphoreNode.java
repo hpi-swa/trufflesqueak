@@ -15,6 +15,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -32,39 +33,42 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
         return SignalSemaphoreNodeGen.create();
     }
 
-    public static final void executeUncached(final VirtualFrame frame, final SqueakImageContext image, final Object semaphoreOrNil) {
+    public static final ProcessSwitch executeUncached(final VirtualFrame frame, final SqueakImageContext image, final Object semaphoreOrNil) {
         if (!(semaphoreOrNil instanceof final PointersObject semaphore) || !image.isSemaphoreClass(semaphore.getSqueakClass())) {
-            return;
+            return null;
         }
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         if (semaphore.isEmptyList(AbstractPointersObjectReadNode.getUncached(), null)) {
             writeNode.execute(null, semaphore, SEMAPHORE.EXCESS_SIGNALS,
-                            readNode.executeLong(null, semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
+                    readNode.executeLong(null, semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
+            return null;
         } else {
-            ResumeProcessNode.executeUncached(frame, image, semaphore.removeFirstLinkOfList(readNode, writeNode, null));
+            return ResumeProcessNode.executeUncached(frame, image, semaphore.removeFirstLinkOfList(readNode, writeNode, null), false);
         }
     }
 
-    public abstract void executeSignal(VirtualFrame frame, Node node, Object semaphoreOrNil);
+    public abstract ProcessSwitch executeSignal(VirtualFrame frame, Node node, Object semaphoreOrNil);
 
     @Specialization(guards = {"isSemaphore(semaphore)", "semaphore.isEmptyList(readNode, node)"}, limit = "1")
-    protected static final void doSignalEmpty(final Node node, final PointersObject semaphore,
+    protected static final ProcessSwitch doSignalEmpty(final Node node, final PointersObject semaphore,
                     @Exclusive @Cached final AbstractPointersObjectReadNode readNode,
                     @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
         writeNode.execute(node, semaphore, SEMAPHORE.EXCESS_SIGNALS, readNode.executeLong(node, semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
+        return null;
     }
 
     @Specialization(guards = {"isSemaphore(semaphore)", "!semaphore.isEmptyList(readNode, node)"}, limit = "1")
-    protected static final void doSignal(final VirtualFrame frame, final Node node, final PointersObject semaphore,
+    protected static final ProcessSwitch doSignal(final VirtualFrame frame, final Node node, final PointersObject semaphore,
                     @Exclusive @Cached final AbstractPointersObjectReadNode readNode,
                     @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                     @Cached final ResumeProcessNode resumeProcessNode) {
-        resumeProcessNode.executeResume(frame, node, semaphore.removeFirstLinkOfList(readNode, writeNode, node));
+        return resumeProcessNode.executeResume(frame, node, semaphore.removeFirstLinkOfList(readNode, writeNode, node), false);
     }
 
     @Specialization
-    protected static final void doNothing(@SuppressWarnings("unused") final NilObject nil) {
+    protected static final ProcessSwitch doNothing(@SuppressWarnings("unused") final NilObject nil) {
         // nothing to do
+        return null;
     }
 }

@@ -300,9 +300,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode,
                         @Cached final FrameStackPushNode pushReceiverNode) {
-            try {
-                signalSemaphoreNode.executeSignal(frame, node, receiver);
-            } catch (final ProcessSwitch ps) {
+            final ProcessSwitch ps = signalSemaphoreNode.executeSignal(frame, node, receiver);
+            if (ps != null) {
                 pushReceiverNode.execute(frame, receiver);
                 throw ps;
             }
@@ -353,9 +352,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            try {
-                resumeProcessNode.executeResume(frame, node, receiver);
-            } catch (final ProcessSwitch ps) {
+            final ProcessSwitch ps = resumeProcessNode.executeResume(frame, node, receiver, false);
+            if (ps != null) {
                 pushReceiverNode.execute(frame, receiver);
                 throw ps;
             }
@@ -931,9 +929,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Cached final FrameStackPushNode pushFirstLinkNode) {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode, node);
                 writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
-                try {
-                    resumeProcessNode.executeResume(frame, node, owningProcess);
-                } catch (final ProcessSwitch ps) {
+                final ProcessSwitch ps = resumeProcessNode.executeResume(frame, node, owningProcess, false);
+                if (ps != null) {
                     pushReceiverNode.execute(frame, mutex);
                     pushFirstLinkNode.execute(frame, firstLink);
                     throw ps;

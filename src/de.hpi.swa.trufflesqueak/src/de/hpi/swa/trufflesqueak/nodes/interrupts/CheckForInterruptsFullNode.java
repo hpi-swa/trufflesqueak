@@ -37,26 +37,23 @@ public final class CheckForInterruptsFullNode extends Node {
         if (istate.shouldSkip()) {
             return;
         }
-        ProcessSwitch pendingSwitch = null;
+        ProcessSwitch processSwitch = null;
         if (istate.tryInterruptPending()) {
-            try {
-                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
-            } catch (final ProcessSwitch ps) {
-                pendingSwitch = ps;
+            final ProcessSwitch ps = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+            if (ps != null) {
+                processSwitch = ps;
             }
         }
         if (istate.tryWakeUpTickTrigger()) {
-            try {
-                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
-            } catch (final ProcessSwitch ps) {
-                pendingSwitch = ps;
+            final ProcessSwitch ps = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            if (ps != null) {
+                processSwitch = ps;
             }
         }
         if (istate.tryPendingFinalizations()) {
-            try {
-                signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
-            } catch (final ProcessSwitch ps) {
-                pendingSwitch = ps;
+            final ProcessSwitch ps = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+            if (ps != null) {
+                processSwitch = ps;
             }
         }
         if (istate.trySemaphoresToSignal()) {
@@ -65,20 +62,20 @@ public final class CheckForInterruptsFullNode extends Node {
                 final Object[] semaphores = externalObjects.getObjectStorage();
                 Integer semaIndex;
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                    try {
-                        signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
-                    } catch (final ProcessSwitch ps) {
-                        pendingSwitch = ps;
+                    final ProcessSwitch ps = signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
+                    if (ps != null) {
+                        processSwitch = ps;
                     }
                 }
             }
         }
-        /* OpenSmalltalk VM signals all semaphores and switches to the highest priority process.
-         *  If we do not do this, small Delays in a loop in the image will prevent the code after the
-         *  wake-up-tick handler from getting executed (finalizations, for example).
+        /*
+         * OpenSmalltalk VM signals all semaphores and switches to the highest priority process.
+         * If we do not do this, small Delays in a loop in the image will prevent the code after the
+         * wake-up-tick handler from getting executed (finalizations, for example).
          */
-        if (pendingSwitch != null) {
-            throw pendingSwitch;
+        if (processSwitch != null) {
+            throw processSwitch;
         }
     }
 }

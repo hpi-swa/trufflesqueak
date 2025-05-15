@@ -46,7 +46,7 @@ public abstract class TransferToNode extends AbstractNode {
         if (!(newActiveContext instanceof final ContextObject newActiveContextObject)) {
             throw SqueakException.create("new process not runnable");
         }
-        throw ProcessSwitch.createWithBoundary(newActiveContextObject);
+        return ProcessSwitch.createWithBoundary(newActiveContextObject);
     }
 
     @Specialization
@@ -70,10 +70,10 @@ public abstract class TransferToNode extends AbstractNode {
             throw SqueakException.create("new process not runnable");
         }
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContextObject)) {
-            throw ProcessSwitch.create(newActiveContextObject);
+            return ProcessSwitch.create(newActiveContextObject);
         } else {
             // Avoid further PE if newActiveContext is not a PE constant.
-            throw ProcessSwitch.createWithBoundary(newActiveContextObject);
+            return ProcessSwitch.createWithBoundary(newActiveContextObject);
         }
     }
 }
