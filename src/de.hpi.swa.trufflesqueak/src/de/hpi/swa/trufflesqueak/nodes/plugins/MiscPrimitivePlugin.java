@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -30,10 +31,10 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -65,17 +66,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final long compareAsciiOrder(final NativeObject string1, final NativeObject string2) {
-            final int len1 = string1.getByteLength();
-            final int len2 = string2.getByteLength();
-            final int min = Math.min(len1, len2);
-            for (int i = 0; i < min; i++) {
-                final byte c1 = string1.getByte(i);
-                final byte c2 = string2.getByte(i);
-                if (c1 != c2) {
-                    return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
-                }
-            }
-            return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
+            return Math.min(1L, Math.max(Arrays.compareUnsigned(string1.getByteStorage(), string2.getByteStorage()), -1L));
         }
 
         protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
