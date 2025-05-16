@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
@@ -127,16 +126,6 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
 
     public double getValue() {
         return doubleValue;
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        // Nothing to do.
-    }
-
-    @Override
-    public void tracePointers(final ObjectTracer objectTracer) {
-        // Nothing to trace.
     }
 
     @Override

@@ -188,9 +188,13 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         toggleMarkingFlag();
     }
 
-    public abstract void pointersBecomeOneWay(Object[] from, Object[] to);
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+        // Do nothing by default.
+    }
 
-    public abstract void tracePointers(ObjectTracer objectTracer);
+    public void tracePointers(final ObjectTracer objectTracer) {
+        // Do nothing by default.
+    }
 
     public void trace(final SqueakImageWriter writer) {
         writer.traceIfNecessary(getSqueakClass());
