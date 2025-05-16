@@ -188,11 +188,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         toggleMarkingFlag();
     }
 
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(@SuppressWarnings("unused") final Object[] from, @SuppressWarnings("unused") final Object[] to) {
         // Do nothing by default.
     }
 
-    public void tracePointers(final ObjectTracer objectTracer) {
+    public void tracePointers(@SuppressWarnings("unused") final ObjectTracer objectTracer) {
         // Do nothing by default.
     }
 
