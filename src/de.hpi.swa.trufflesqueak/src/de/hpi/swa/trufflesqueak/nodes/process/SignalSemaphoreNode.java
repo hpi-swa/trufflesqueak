@@ -41,7 +41,7 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         if (semaphore.isEmptyList(AbstractPointersObjectReadNode.getUncached(), null)) {
             writeNode.execute(null, semaphore, SEMAPHORE.EXCESS_SIGNALS,
-                    readNode.executeLong(null, semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
+                            readNode.executeLong(null, semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
             return null;
         } else {
             return ResumeProcessNode.executeUncached(frame, image, semaphore.removeFirstLinkOfList(readNode, writeNode, null), false);

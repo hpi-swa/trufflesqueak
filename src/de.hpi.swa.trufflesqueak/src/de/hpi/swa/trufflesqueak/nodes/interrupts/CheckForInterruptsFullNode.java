@@ -70,8 +70,8 @@ public final class CheckForInterruptsFullNode extends Node {
             }
         }
         /*
-         * OpenSmalltalk VM signals all semaphores and switches to the highest priority process.
-         * If we do not do this, small Delays in a loop in the image will prevent the code after the
+         * OpenSmalltalk VM signals all semaphores and switches to the highest priority process. If
+         * we do not do this, small Delays in a loop in the image will prevent the code after the
          * wake-up-tick handler from getting executed (finalizations, for example).
          */
         if (processSwitch != null) {
