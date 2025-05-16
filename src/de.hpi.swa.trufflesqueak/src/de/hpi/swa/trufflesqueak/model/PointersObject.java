@@ -68,6 +68,14 @@ public final class PointersObject extends AbstractPointersObject {
         becomeLayout(other);
     }
 
+    public void becomeOneWay(final PointersObject other) {
+        becomeOneWayLayout(other);
+    }
+
+    public boolean identical(final PointersObject other) {
+        return identicalLayout(other);
+    }
+
     @Override
     public int size() {
         return instsize();

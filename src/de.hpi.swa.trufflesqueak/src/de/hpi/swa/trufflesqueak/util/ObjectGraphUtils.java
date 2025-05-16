@@ -9,6 +9,10 @@ package de.hpi.swa.trufflesqueak.util;
 import java.util.AbstractCollection;
 import java.util.ArrayDeque;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -24,6 +28,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 
 public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
@@ -32,8 +37,6 @@ public final class ObjectGraphUtils {
 
     private final SqueakImageContext image;
     private final boolean trackOperations;
-    /* Using a stack for DFS traversal when walking Smalltalk objects. */
-    private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> workStack = new ArrayDeque<>();
 
     public ObjectGraphUtils(final SqueakImageContext image) {
         this.image = image;
@@ -51,7 +54,7 @@ public final class ObjectGraphUtils {
         final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkStack()) != null) {
+        while ((currentObject = pending.getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 seen.add(currentObject);
                 pending.tracePointers(currentObject);
@@ -71,7 +74,7 @@ public final class ObjectGraphUtils {
         final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkStack()) != null) {
+        while ((currentObject = pending.getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 if (targetClass == currentObject.getSqueakClass()) {
                     result.add(currentObject);
@@ -93,11 +96,10 @@ public final class ObjectGraphUtils {
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObject result = NilObject.SINGLETON;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkStack()) != null) {
+        while ((currentObject = pending.getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 marked.add(currentObject);
                 if (targetClass == currentObject.getSqueakClass()) {
-                    clearWorkStack();
                     // Unmark marked objects
                     for (final AbstractSqueakObjectWithClassAndHash object : marked) {
                         object.unmark(currentMarkingFlag);
@@ -123,12 +125,11 @@ public final class ObjectGraphUtils {
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
         final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
-        AbstractSqueakObjectWithClassAndHash currentObject = getNextFromWorkStack();
+        AbstractSqueakObjectWithClassAndHash currentObject = pending.getNextFromWorkStack();
         AbstractSqueakObject result = currentObject; // first object
         boolean foundObject = false;
         while (currentObject != null) {
             if (foundObject) {
-                clearWorkStack();
                 // Unmark marked objects
                 for (final AbstractSqueakObjectWithClassAndHash object : marked) {
                     object.unmark(currentMarkingFlag);
@@ -145,7 +146,7 @@ public final class ObjectGraphUtils {
                 }
                 pending.tracePointers(currentObject);
             }
-            currentObject = getNextFromWorkStack();
+            currentObject = pending.getNextFromWorkStack();
         }
         if (trackOperations) {
             ObjectGraphOperations.NEXT_OBJECT.addNanos(System.nanoTime() - startTime);
@@ -153,14 +154,49 @@ public final class ObjectGraphUtils {
         return result;
     }
 
+    private ClassObject classBindingClass;
+
+    public ClassObject getClassBindingClass() {
+        if (classBindingClass == null) {
+            classBindingClass = (ClassObject) image.lookup("ClassBinding");
+        }
+        return classBindingClass;
+    }
+
+    private ClassObject globalClass;
+
+    public ClassObject getGlobalClass() {
+        if (globalClass == null) {
+            globalClass = (ClassObject) image.lookup("Global");
+        }
+        return globalClass;
+    }
+
+    private static final ExecutorService service = Executors.newSingleThreadExecutor();
+
     @TruffleBoundary
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
+        if (fromPointers.length == 1 && fromPointers[0] instanceof final PointersObject fromPointer && toPointers[0] instanceof final PointersObject toPointer) {
+            final ClassObject squeakClass = fromPointer.getSqueakClass();
+            if (squeakClass == toPointer.getSqueakClass() && (squeakClass == getGlobalClass() || squeakClass == getClassBindingClass())) {
+                fromPointer.becomeOneWay(toPointer);
+                service.submit(() -> {
+                    performBecomeOneWay(fromPointers, toPointers);
+                    assert fromPointer.identical(toPointer) : "objects should not change during async migration";
+                });
+                return;
+            }
+        }
+        performBecomeOneWay(fromPointers, toPointers);
+    }
+
+    private void performBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
         final ObjectTracer pending = new ObjectTracer(false);
         pointersBecomeOneWayFrames(pending, fromPointers, toPointers);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkStack()) != null) {
+        while ((currentObject = pending.getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 currentObject.pointersBecomeOneWay(fromPointers, toPointers);
                 pending.tracePointers(currentObject);
@@ -229,7 +265,7 @@ public final class ObjectGraphUtils {
         final ArrayDeque<EphemeronObject> ephemeronsToBeMarked = new ArrayDeque<>();
         AbstractSqueakObjectWithClassAndHash currentObject;
 
-        while ((currentObject = getNextFromWorkStack()) != null) {
+        while ((currentObject = pending.getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 // Ephemerons are traced in a special way.
                 if (currentObject instanceof final EphemeronObject ephemeronObject) {
@@ -297,26 +333,19 @@ public final class ObjectGraphUtils {
 
     private void finishPendingMarking(final ObjectTracer pending, final boolean currentMarkingFlag) {
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkStack()) != null) {
+        while ((currentObject = pending.getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 pending.tracePointers(currentObject);
             }
         }
     }
 
-    private AbstractSqueakObjectWithClassAndHash getNextFromWorkStack() {
-        return workStack.pollFirst();
-    }
-
-    private void clearWorkStack() {
-        workStack.clear();
-    }
-
     public final class ObjectTracer {
+        /* Using a stack for DFS traversal when walking Smalltalk objects. */
+        private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> workStack = new ArrayDeque<>();
         private final boolean currentMarkingFlag;
 
         private ObjectTracer(final boolean addObjectsFromFrames) {
-            assert workStack.isEmpty() : "workQueue should be empty";
             // Flip the marking flag
             currentMarkingFlag = image.toggleCurrentMarkingFlag();
             // Add roots
@@ -330,6 +359,10 @@ public final class ObjectGraphUtils {
             // but by tracing them we avoid an expensive reachability test in the fetch-next-mourner
             // primitive.
             workStack.addAll(image.ephemeronsQueue);
+        }
+
+        private AbstractSqueakObjectWithClassAndHash getNextFromWorkStack() {
+            return workStack.pollFirst();
         }
 
         private void addObjectsFromFrames() {
@@ -376,8 +409,15 @@ public final class ObjectGraphUtils {
         POINTERS_BECOME_ONE_WAY("pointersBecomeOneWay"),
         CHECK_EPHEMERONS("checkEphemerons");
 
-        private static final int[] COUNTS = new int[ObjectGraphOperations.values().length];
-        private static final long[] MILLIS = new long[ObjectGraphOperations.values().length];
+        private static final AtomicInteger[] COUNTS = new AtomicInteger[ObjectGraphOperations.values().length];
+        private static final AtomicLong[] MILLIS = new AtomicLong[ObjectGraphOperations.values().length];
+
+        static {
+            for (int i = 0; i < COUNTS.length; i++) {
+                COUNTS[i] = new AtomicInteger();
+                MILLIS[i] = new AtomicLong();
+            }
+        }
 
         private final String name;
 
@@ -391,17 +431,17 @@ public final class ObjectGraphUtils {
 
         public void addNanos(final long nanos) {
             final long millis = nanos / 1_000_000;
-            MILLIS[ordinal()] += millis;
-            COUNTS[ordinal()]++;
+            MILLIS[ordinal()].addAndGet(millis);
+            COUNTS[ordinal()].incrementAndGet();
             LogUtils.OBJECT_GRAPH.log(Level.FINE, () -> getName() + " took " + millis + "ms");
         }
 
         public int getCount() {
-            return COUNTS[ordinal()];
+            return COUNTS[ordinal()].get();
         }
 
         public long getMillis() {
-            return MILLIS[ordinal()];
+            return MILLIS[ordinal()].get();
         }
     }
 }

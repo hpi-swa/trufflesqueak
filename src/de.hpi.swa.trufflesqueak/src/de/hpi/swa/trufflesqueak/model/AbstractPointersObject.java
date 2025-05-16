@@ -278,6 +278,40 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         objectExtension = otherObjectExtension;
     }
 
+    public final void becomeOneWayLayout(final AbstractPointersObject other) {
+        assert getClass() == other.getClass();
+        setSqueakClass(other.getSqueakClass());
+
+        // Move copied content to this object.
+        layout = other.layout;
+
+        primitiveUsedMap = other.primitiveUsedMap;
+        primitive0 = other.primitive0;
+        primitive1 = other.primitive1;
+        primitive2 = other.primitive2;
+
+        object0 = other.object0;
+        object1 = other.object1;
+        object2 = other.object2;
+
+        primitiveExtension = other.primitiveExtension;
+        objectExtension = other.objectExtension;
+    }
+
+    protected final boolean identicalLayout(final AbstractPointersObject other) {
+        return getClass() == other.getClass() &&
+                        layout == other.layout &&
+                        primitiveUsedMap == other.primitiveUsedMap &&
+                        primitive0 == other.primitive0 &&
+                        primitive1 == other.primitive1 &&
+                        primitive2 == other.primitive2 &&
+                        object0 == other.object0 &&
+                        object1 == other.object1 &&
+                        object2 == other.object2 &&
+                        primitiveExtension == other.primitiveExtension &&
+                        objectExtension == other.objectExtension;
+    }
+
     @Override
     public final int instsize() {
         assert getSqueakClass().getBasicInstanceSize() == getLayout().getInstSize();
