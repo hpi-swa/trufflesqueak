@@ -26,8 +26,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 
 /**
- * Return the Context for the highest priority process that is ready to run.
- * Suspends the active Context and returns the new active Context.
+ * Return the Context for the highest priority process that is ready to run. Suspends the active
+ * Context and returns the new active Context.
  */
 @GenerateInline
 @GenerateCached(false)

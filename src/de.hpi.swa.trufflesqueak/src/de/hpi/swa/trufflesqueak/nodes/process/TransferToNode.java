@@ -25,8 +25,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 
 /**
- * Record a Process to be awakened on the next interpreter cycle.
- * Suspends the active Context and returns the new active Context.
+ * Record a Process to be awakened on the next interpreter cycle. Suspends the active Context and
+ * returns the new active Context.
  */
 @GenerateInline
 @GenerateCached(false)
