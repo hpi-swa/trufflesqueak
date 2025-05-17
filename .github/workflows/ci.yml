@@ -119,17 +119,13 @@ jobs:
       run: |
         bash <(curl -s https://codecov.io/bash)
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
-      if: ${{ env.RUN_WITH_COVERAGE == 'true' && job.status == 'success' }}
-    - name: Zip Graal compiler dumps
-      if: always()
-      shell: bash
-      run: "[[ -d graal_dumps ]] && zip -r graal_dumps.zip graal_dumps || true"
+      if: ${{ env.RUN_WITH_COVERAGE == 'true' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
     - name: Upload Graal compiler dumps
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: graal_dumps-${{ matrix.runs-on }}
-        path: graal_dumps-${{ matrix.runs-on }}.zip
+        path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
 

@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
@@ -31,7 +32,8 @@ public final class ObjectGraphUtils {
 
     private final SqueakImageContext image;
     private final boolean trackOperations;
-    private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> worklist = new ArrayDeque<>();
+    /* Using a stack for DFS traversal when walking Smalltalk objects. */
+    private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> workStack = new ArrayDeque<>();
 
     public ObjectGraphUtils(final SqueakImageContext image) {
         this.image = image;
@@ -46,10 +48,10 @@ public final class ObjectGraphUtils {
     public AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances() {
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
-        final ObjectTracer pending = new ObjectTracer();
+        final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorklist()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 seen.add(currentObject);
                 pending.tracePointers(currentObject);
@@ -66,10 +68,10 @@ public final class ObjectGraphUtils {
     public Object[] allInstancesOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>();
-        final ObjectTracer pending = new ObjectTracer();
+        final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorklist()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 if (targetClass == currentObject.getSqueakClass()) {
                     result.add(currentObject);
@@ -77,7 +79,9 @@ public final class ObjectGraphUtils {
                 pending.tracePointers(currentObject);
             }
         }
-        ObjectGraphOperations.ALL_INSTANCES_OF.addNanos(System.nanoTime() - startTime);
+        if (trackOperations) {
+            ObjectGraphOperations.ALL_INSTANCES_OF.addNanos(System.nanoTime() - startTime);
+        }
         return result.toArray();
     }
 
@@ -85,15 +89,15 @@ public final class ObjectGraphUtils {
     public AbstractSqueakObject someInstanceOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
-        final ObjectTracer pending = new ObjectTracer();
+        final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObject result = NilObject.SINGLETON;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorklist()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 marked.add(currentObject);
                 if (targetClass == currentObject.getSqueakClass()) {
-                    clearWorklist();
+                    clearWorkStack();
                     // Unmark marked objects
                     for (final AbstractSqueakObjectWithClassAndHash object : marked) {
                         object.unmark(currentMarkingFlag);
@@ -117,14 +121,14 @@ public final class ObjectGraphUtils {
     public AbstractSqueakObject nextObject(final AbstractSqueakObjectWithClassAndHash targetObject) {
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
-        final ObjectTracer pending = new ObjectTracer();
+        final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
-        AbstractSqueakObjectWithClassAndHash currentObject = getNextFromWorklist();
+        AbstractSqueakObjectWithClassAndHash currentObject = getNextFromWorkStack();
         AbstractSqueakObject result = currentObject; // first object
         boolean foundObject = false;
         while (currentObject != null) {
             if (foundObject) {
-                clearWorklist();
+                clearWorkStack();
                 // Unmark marked objects
                 for (final AbstractSqueakObjectWithClassAndHash object : marked) {
                     object.unmark(currentMarkingFlag);
@@ -141,7 +145,7 @@ public final class ObjectGraphUtils {
                 }
                 pending.tracePointers(currentObject);
             }
-            currentObject = getNextFromWorklist();
+            currentObject = getNextFromWorkStack();
         }
         if (trackOperations) {
             ObjectGraphOperations.NEXT_OBJECT.addNanos(System.nanoTime() - startTime);
@@ -152,27 +156,80 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
-        final ObjectTracer pending = new ObjectTracer();
+        final ObjectTracer pending = new ObjectTracer(false);
+        pointersBecomeOneWayFrames(pending, fromPointers, toPointers);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorklist()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 currentObject.pointersBecomeOneWay(fromPointers, toPointers);
                 pending.tracePointers(currentObject);
             }
         }
-        ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
+        if (trackOperations) {
+            ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
+        }
+    }
+
+    @TruffleBoundary
+    private static void pointersBecomeOneWayFrames(final ObjectTracer tracer, final Object[] fromPointers, final Object[] toPointers) {
+        final int fromPointersLength = fromPointers.length;
+        Truffle.getRuntime().iterateFrames((frameInstance) -> {
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+            if (!FrameAccess.isTruffleSqueakFrame(current)) {
+                return null;
+            }
+            final Object[] arguments = current.getArguments();
+            for (int i = 0; i < arguments.length; i++) {
+                final Object argument = arguments[i];
+                for (int j = 0; j < fromPointersLength; j++) {
+                    if (argument == fromPointers[j]) {
+                        arguments[i] = toPointers[j];
+                    }
+                }
+                tracer.addIfUnmarked(arguments[i]);
+            }
+
+            final ContextObject context = FrameAccess.getContext(current);
+            if (context != null) {
+                for (int j = 0; j < fromPointersLength; j++) {
+                    if (context == fromPointers[j]) {
+                        FrameAccess.setContext(current, (ContextObject) toPointers[j]);
+                    }
+                }
+                tracer.addIfUnmarked(FrameAccess.getContext(current));
+            }
+
+            /*
+             * Iterate over all stack slots here instead of stackPointer because in rare cases, the
+             * stack is accessed behind the stackPointer.
+             */
+            FrameAccess.iterateStackSlots(current, slotIndex -> {
+                if (current.isObject(slotIndex)) {
+                    final Object stackObject = current.getObject(slotIndex);
+                    for (int j = 0; j < fromPointersLength; j++) {
+                        if (stackObject == fromPointers[j]) {
+                            final Object toPointer = toPointers[j];
+                            assert toPointer != null : "Unexpected `null` value";
+                            current.setObject(slotIndex, toPointer);
+                        }
+                    }
+                    tracer.addIfUnmarked(current.getObject(slotIndex));
+                }
+            });
+            return null;
+        });
     }
 
     @TruffleBoundary
     public boolean checkEphemerons() {
         final long startTime = System.nanoTime();
-        final ObjectTracer pending = new ObjectTracer();
+        final ObjectTracer pending = new ObjectTracer(true);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         final ArrayDeque<EphemeronObject> ephemeronsToBeMarked = new ArrayDeque<>();
         AbstractSqueakObjectWithClassAndHash currentObject;
 
-        while ((currentObject = getNextFromWorklist()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 // Ephemerons are traced in a special way.
                 if (currentObject instanceof final EphemeronObject ephemeronObject) {
@@ -240,44 +297,42 @@ public final class ObjectGraphUtils {
 
     private void finishPendingMarking(final ObjectTracer pending, final boolean currentMarkingFlag) {
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorklist()) != null) {
+        while ((currentObject = getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
                 pending.tracePointers(currentObject);
             }
         }
     }
 
-    private AbstractSqueakObjectWithClassAndHash getNextFromWorklist() {
-        /*
-         * For some reason, using pollLast() is faster than pollFirst() and keeps the max size of
-         * the deque significantly smaller.
-         */
-        return worklist.pollLast();
+    private AbstractSqueakObjectWithClassAndHash getNextFromWorkStack() {
+        return workStack.pollFirst();
     }
 
-    private void clearWorklist() {
-        worklist.clear();
+    private void clearWorkStack() {
+        workStack.clear();
     }
 
     public final class ObjectTracer {
         private final boolean currentMarkingFlag;
 
-        private ObjectTracer() {
-            assert worklist.isEmpty() : "worklist should be empty";
+        private ObjectTracer(final boolean addObjectsFromFrames) {
+            assert workStack.isEmpty() : "workQueue should be empty";
             // Flip the marking flag
             currentMarkingFlag = image.toggleCurrentMarkingFlag();
             // Add roots
             addIfUnmarked(image.specialObjectsArray);
-            addObjectsFromTruffleFrames();
+            if (addObjectsFromFrames) {
+                addObjectsFromFrames();
+            }
             // Unreachable ephemerons in the queue must be kept visible to the rest of the image.
             // These are technically "dead" and do not need to be saved when the image is stored on
             // disk,
             // but by tracing them we avoid an expensive reachability test in the fetch-next-mourner
             // primitive.
-            worklist.addAll(image.ephemeronsQueue);
+            workStack.addAll(image.ephemeronsQueue);
         }
 
-        private void addObjectsFromTruffleFrames() {
+        private void addObjectsFromFrames() {
             CompilerAsserts.neverPartOfCompilation();
             Truffle.getRuntime().iterateFrames(frameInstance -> {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
@@ -297,7 +352,7 @@ public final class ObjectGraphUtils {
 
         public void addIfUnmarked(final Object object) {
             if (object instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isMarked(currentMarkingFlag)) {
-                worklist.addLast(o);
+                workStack.addFirst(o);
             }
         }
 

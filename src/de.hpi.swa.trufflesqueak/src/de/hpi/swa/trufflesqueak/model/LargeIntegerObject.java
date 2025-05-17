@@ -19,7 +19,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
-import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHash {
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
@@ -225,16 +224,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public int hashCode() {
         return super.hashCode();
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        // Nothing to do.
-    }
-
-    @Override
-    public void tracePointers(final ObjectTracer objectTracer) {
-        // Nothing to trace.
     }
 
     @Override

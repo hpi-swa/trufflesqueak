@@ -534,24 +534,21 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         if (hasTruffleFrame()) {
+            final Object[] arguments = truffleFrame.getArguments();
+            final int argumentsLength = arguments.length;
             for (int i = 0; i < from.length; i++) {
                 final Object fromPointer = from[i];
                 final Object toPointer = to[i];
-                if (fromPointer == getFrameSender() && toPointer instanceof final ContextObject o) {
-                    setSender(o);
-                }
-                if (fromPointer == getCodeObject() && toPointer instanceof final CompiledCodeObject o) {
+                if (fromPointer == FrameAccess.getCodeObject(truffleFrame) && toPointer instanceof final CompiledCodeObject o) {
                     setCodeObject(o);
                 }
-                if (fromPointer == getClosure() && toPointer instanceof final BlockClosureObject o) {
+                if (fromPointer == FrameAccess.getSender(truffleFrame) && toPointer instanceof final ContextObject o) {
+                    setSender(o);
+                }
+                if (fromPointer == FrameAccess.getClosure(truffleFrame) && toPointer instanceof final BlockClosureObject o) {
                     setClosure(o);
                 }
-                if (fromPointer == getReceiver()) {
-                    setReceiver(toPointer);
-                }
-
-                final Object[] arguments = truffleFrame.getArguments();
-                for (int j = FrameAccess.getArgumentStartIndex(); j < arguments.length; j++) {
+                for (int j = FrameAccess.getReceiverStartIndex(); j < argumentsLength; j++) {
                     if (arguments[j] == fromPointer) {
                         arguments[j] = toPointer;
                     }
@@ -568,10 +565,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void tracePointers(final ObjectTracer tracer) {
         if (hasTruffleFrame()) {
-            tracer.addIfUnmarked(getFrameSender());
-            tracer.addIfUnmarked(getCodeObject());
-            tracer.addIfUnmarked(getClosure());
-            tracer.addIfUnmarked(getReceiver());
+            tracer.addIfUnmarked(FrameAccess.getCodeObject(truffleFrame));
             tracer.addAllIfUnmarked(truffleFrame.getArguments());
             FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
                 if (truffleFrame.isObject(slotIndex)) {
@@ -585,13 +579,9 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
         if (hasTruffleFrame()) {
-            writer.traceIfNecessary(getSender()); /* May materialize sender. */
-            writer.traceIfNecessary(getCodeObject());
-            writer.traceIfNecessary(getClosure());
-            writer.traceIfNecessary(getReceiver());
-            for (final Object arg : truffleFrame.getArguments()) {
-                writer.traceIfNecessary(arg);
-            }
+            getSender(); /* May materialize sender. */
+            writer.traceIfNecessary(FrameAccess.getCodeObject(truffleFrame));
+            writer.traceAllIfNecessary(truffleFrame.getArguments());
             FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
                 if (truffleFrame.isObject(slotIndex)) {
                     writer.traceIfNecessary(truffleFrame.getObject(slotIndex));
@@ -618,7 +608,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         }
         // Write remaining stack values
         final int numSlots = FrameAccess.getNumStackSlots(truffleFrame);
-        for (int i = numArgs; i < getCodeObject().getSqueakContextSize(); i++) {
+        final int contextSize = getCodeObject().getSqueakContextSize();
+        for (int i = numArgs; i < contextSize; i++) {
             if (i < numSlots) { // stack value stored in frame slot
                 final int slotIndex = FrameAccess.toStackSlotIndex(truffleFrame, i);
                 final Object stackValue = truffleFrame.getValue(slotIndex);
@@ -631,6 +622,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                 writer.writeNil();
             }
         }
-        assert FrameAccess.hasUnusedAuxiliarySlots(truffleFrame) : "Auxiliary slots are used by not (yet) persisted";
+        assert FrameAccess.hasUnusedAuxiliarySlots(truffleFrame) : "Auxiliary slots are used but not (yet) persisted";
     }
 }
