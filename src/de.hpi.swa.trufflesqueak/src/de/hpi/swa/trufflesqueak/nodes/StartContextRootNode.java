@@ -19,7 +19,10 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
@@ -54,7 +57,10 @@ public final class StartContextRootNode extends AbstractRootNode {
         try {
             if (image.enteringContextExceedsDepth()) {
                 CompilerDirectives.transferToInterpreter();
-                throw ProcessSwitch.create(GetOrCreateContextNode.getOrCreateUncached(frame));
+                // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
+                final ContextObject activeContext = GetOrCreateContextNode.getOrCreateUncached(frame);
+                AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
+                throw ProcessSwitch.SINGLETON;
             }
             interruptHandlerNode.execute(frame);
             return executeBytecodeNode.execute(frame, initialPC);

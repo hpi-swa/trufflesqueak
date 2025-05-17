@@ -13,10 +13,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -33,10 +31,10 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSize
 @GenerateCached(false)
 public abstract class WakeHighestPriorityNode extends AbstractNode {
 
-    public abstract ContextObject executeWake(VirtualFrame frame, Node node);
+    public abstract void executeWake(VirtualFrame frame, Node node);
 
     @Specialization
-    protected static final ContextObject doWake(final VirtualFrame frame, final Node node,
+    protected static final void doWake(final VirtualFrame frame, final Node node,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final ArrayObjectSizeNode arraySizeNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
@@ -53,6 +51,6 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
             processList = (PointersObject) arrayReadNode.execute(node, schedLists, p--);
         } while (processList.isEmptyList(pointersReadNode, node));
         final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode, node);
-        return transferToNode.execute(frame, node, newProcess);
+        transferToNode.execute(frame, node, newProcess);
     }
 }
