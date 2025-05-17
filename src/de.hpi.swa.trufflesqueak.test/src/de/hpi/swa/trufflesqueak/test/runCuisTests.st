@@ -19,13 +19,10 @@ StdIOWriteStream stdout newLine; flush.
 
 failingTests := OrderedCollection new.
 {
-    #EphemeronIdentityDictionaryTest -> #(#testFinalizeValuesWhenLastChainContinuesAtFront).
-    #FinalizationRegistryTest -> #(#testAddGC #testEKeyDictionary #testFinalizationWithError).
-    #FinalizationTest -> #(#testFinalization #testFinalization2).
+    #FinalizationRegistryTest -> #(#testAddGC #testFinalizationWithError). "first test fails when non-command line"
     #FloatTest -> #(#testIsDenormalized #testPrimTruncated).
     #ProcessorTest -> #("flaky" #testGrabProcessor #testGrabProcessorOnlyForNoTimeout #testGrabProcessorOnlyForTimeout #testValueUnpreemptively).
     #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString).
-    #WeakIdentitySetTest -> #(#test). "Failing (or flaky?) on TruffleSqueak Native"
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
     assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].

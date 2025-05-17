@@ -300,11 +300,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode,
                         @Cached final FrameStackPushNode pushReceiverNode) {
-            try {
-                signalSemaphoreNode.executeSignal(frame, node, receiver);
-            } catch (final ProcessSwitch ps) {
+            final ContextObject newContext = signalSemaphoreNode.executeSignal(frame, node, receiver);
+            if (newContext != null) {
                 pushReceiverNode.execute(frame, receiver);
-                throw ps;
+                throw ProcessSwitch.transferExecutionToContext(newContext);
             }
             return receiver;
         }
@@ -330,12 +329,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 return receiver;
             } else {
                 addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), receiver);
-                try {
-                    throw wakeHighestPriorityNode.executeWake(frame, node);
-                } catch (final ProcessSwitch ps) {
-                    pushReceiverNode.execute(frame, receiver);
-                    throw ps;
-                }
+                final ContextObject newActiveContext = wakeHighestPriorityNode.executeWake(frame, node);
+                pushReceiverNode.execute(frame, receiver);
+                throw ProcessSwitch.transferExecutionToContext(newActiveContext);
             }
         }
     }
@@ -353,11 +349,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            try {
-                resumeProcessNode.executeResume(frame, node, receiver);
-            } catch (final ProcessSwitch ps) {
+            final ContextObject newActiveContextOrNull = resumeProcessNode.executeResume(frame, node, receiver);
+            if (newActiveContextOrNull != null) {
                 pushReceiverNode.execute(frame, receiver);
-                throw ps;
+                throw ProcessSwitch.transferExecutionToContext(newActiveContextOrNull);
             }
             return receiver;
         }
@@ -373,13 +368,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
-            try {
-                throw wakeHighestPriorityNode.executeWake(frame, node);
-            } catch (final ProcessSwitch ps) {
-                /* Leave `nil` as result on stack. */
-                pushNode.execute(frame, NilObject.SINGLETON);
-                throw ps;
-            }
+            final ContextObject newActiveContext = wakeHighestPriorityNode.executeWake(frame, node);
+            /* Leave `nil` as result on stack. */
+            pushNode.execute(frame, NilObject.SINGLETON);
+            throw ProcessSwitch.transferExecutionToContext(newActiveContext);
         }
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
@@ -411,13 +403,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final FrameStackPushNode pushNode) {
-            try {
-                throw wakeHighestPriorityNode.executeWake(frame, node);
-            } catch (final ProcessSwitch ps) {
-                /* Leave `nil` as result on stack. */
-                pushNode.execute(frame, NilObject.SINGLETON);
-                throw ps;
-            }
+            final ContextObject newActiveContext = wakeHighestPriorityNode.executeWake(frame, node);
+            /* Leave `nil` as result on stack. */
+            pushNode.execute(frame, NilObject.SINGLETON);
+            throw ProcessSwitch.transferExecutionToContext(newActiveContext);
         }
 
         @Specialization(guards = {"receiver != getActiveProcessNode.execute(node)"}, limit = "1")
@@ -879,12 +868,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 return NilObject.SINGLETON;
             }
             addLastLinkToListNode.execute(node, activeProcess, processList);
-            try {
-                throw wakeHighestPriorityNode.executeWake(frame, node);
-            } catch (final ProcessSwitch ps) {
-                pushReceiverNode.execute(frame, scheduler);
-                throw ps;
-            }
+            final ContextObject newActiveContext = wakeHighestPriorityNode.executeWake(frame, node);
+            pushReceiverNode.execute(frame, scheduler);
+            throw ProcessSwitch.transferExecutionToContext(newActiveContext);
         }
     }
 
@@ -931,12 +917,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Cached final FrameStackPushNode pushFirstLinkNode) {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode, node);
                 writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
-                try {
-                    resumeProcessNode.executeResume(frame, node, owningProcess);
-                } catch (final ProcessSwitch ps) {
+                final ContextObject newActiveContext = resumeProcessNode.executeResume(frame, node, owningProcess);
+                if (newActiveContext != null) {
                     pushReceiverNode.execute(frame, mutex);
                     pushFirstLinkNode.execute(frame, firstLink);
-                    throw ps;
+                    throw ProcessSwitch.transferExecutionToContext(newActiveContext);
                 }
                 return mutex;
             }
@@ -993,13 +978,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached(inline = false) final FrameStackPushNode pushNode) {
             addLastLinkToListNode.execute(node, effectiveProcess, mutex);
-            try {
-                throw wakeHighestPriorityNode.executeWake(frame, node);
-            } catch (final ProcessSwitch ps) {
-                /* Leave `false` as result on stack. */
-                pushNode.execute(frame, BooleanObject.FALSE);
-                throw ps;
-            }
+            final ContextObject newActiveContext = wakeHighestPriorityNode.executeWake(frame, node);
+            /* Leave `false` as result on stack. */
+            pushNode.execute(frame, BooleanObject.FALSE);
+            throw ProcessSwitch.transferExecutionToContext(newActiveContext);
         }
     }
 

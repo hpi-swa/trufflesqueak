@@ -16,6 +16,7 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -24,20 +25,23 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 
+/**
+ * Return the Context for the highest priority process that is ready to run.
+ * Suspends the active Context and returns the new active Context.
+ */
 @GenerateInline
 @GenerateCached(false)
 public abstract class WakeHighestPriorityNode extends AbstractNode {
 
-    public abstract ProcessSwitch executeWake(VirtualFrame frame, Node node);
+    public abstract ContextObject executeWake(VirtualFrame frame, Node node);
 
     @Specialization
-    protected static final ProcessSwitch doWake(final VirtualFrame frame, final Node node,
+    protected static final ContextObject doWake(final VirtualFrame frame, final Node node,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final ArrayObjectSizeNode arraySizeNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached final TransferToNode transferToNode) {
-        // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
         final ArrayObject schedLists = pointersReadNode.executeArray(node, getContext(node).getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
         long p = arraySizeNode.execute(node, schedLists) - 1;  // index of last indexable field
@@ -49,6 +53,6 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
             processList = (PointersObject) arrayReadNode.execute(node, schedLists, p--);
         } while (processList.isEmptyList(pointersReadNode, node));
         final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode, node);
-        throw transferToNode.execute(frame, node, newProcess);
+        return transferToNode.execute(frame, node, newProcess);
     }
 }

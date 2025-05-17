@@ -13,33 +13,39 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 
+/**
+ * Returns the new active Context or null if the current active Context has not been preempted.
+ */
 @GenerateInline
 @GenerateCached(false)
 public abstract class ResumeProcessNode extends AbstractNode {
 
-    public static final void executeUncached(final VirtualFrame frame, final SqueakImageContext image, final PointersObject newProcess) {
+    public static final ContextObject executeUncached(final VirtualFrame frame, final SqueakImageContext image, final PointersObject newProcess) {
         final PointersObject activeProcess = image.getActiveProcessSlow();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         final long activePriority = readNode.executeLong(null, activeProcess, PROCESS.PRIORITY);
         final long newPriority = readNode.executeLong(null, newProcess, PROCESS.PRIORITY);
         if (newPriority > activePriority) {
             PutToSleepNode.executeUncached(image, activeProcess);
-            throw TransferToNode.executeUncached(frame, newProcess);
+            return TransferToNode.executeUncached(frame, newProcess);
         } else {
             PutToSleepNode.executeUncached(image, newProcess);
+            return null;
         }
     }
 
-    public abstract void executeResume(VirtualFrame frame, Node node, PointersObject newProcess);
+    public abstract ContextObject executeResume(VirtualFrame frame, Node node, PointersObject newProcess);
 
     @Specialization
-    protected static final void resumeProcess(final VirtualFrame frame, final Node node, final PointersObject newProcess,
+    protected static final ContextObject resumeProcess(final VirtualFrame frame, final Node node, final PointersObject newProcess,
                     @Cached final AbstractPointersObjectReadNode readNode,
                     @Cached final GetActiveProcessNode getActiveProcessNode,
                     @Cached final PutToSleepNode putToSleepNode,
@@ -49,9 +55,10 @@ public abstract class ResumeProcessNode extends AbstractNode {
         final long newPriority = readNode.executeLong(node, newProcess, PROCESS.PRIORITY);
         if (newPriority > activePriority) {
             putToSleepNode.executePutToSleep(node, activeProcess);
-            throw transferToNode.execute(frame, node, newProcess);
+            return transferToNode.execute(frame, node, newProcess);
         } else {
             putToSleepNode.executePutToSleep(node, newProcess);
+            return null;
         }
     }
 }

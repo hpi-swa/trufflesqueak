@@ -10,8 +10,10 @@ import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 
@@ -36,14 +38,24 @@ public final class CheckForInterruptsFullNode extends Node {
         if (istate.shouldSkip()) {
             return;
         }
+        ContextObject newActiveContext = null;
         if (istate.tryInterruptPending()) {
-            signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+            final ContextObject newContext = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+            if (newContext != null) {
+                newActiveContext = newContext;
+            }
         }
         if (istate.tryWakeUpTickTrigger()) {
-            signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            final ContextObject newContext = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            if (newContext != null) {
+                newActiveContext = newContext;
+            }
         }
         if (istate.tryPendingFinalizations()) {
-            signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+            final ContextObject newContext = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+            if (newContext != null) {
+                newActiveContext = newContext;
+            }
         }
         if (istate.trySemaphoresToSignal()) {
             final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
@@ -51,9 +63,20 @@ public final class CheckForInterruptsFullNode extends Node {
                 final Object[] semaphores = externalObjects.getObjectStorage();
                 Integer semaIndex;
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                    signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
+                    final ContextObject newContext = signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
+                    if (newContext != null) {
+                        newActiveContext = newContext;
+                    }
                 }
             }
+        }
+        /*
+         * OpenSmalltalk VM signals all semaphores and switches to the highest priority process. If
+         * we do not do this, small Delays in a loop in the image will prevent the code after the
+         * wake-up-tick handler from getting executed (finalizations, for example).
+         */
+        if (newActiveContext != null) {
+            throw ProcessSwitch.transferExecutionToContext(newActiveContext);
         }
     }
 }
