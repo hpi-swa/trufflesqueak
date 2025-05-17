@@ -13,6 +13,7 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 
@@ -37,23 +38,23 @@ public final class CheckForInterruptsFullNode extends Node {
         if (istate.shouldSkip()) {
             return;
         }
-        ProcessSwitch processSwitch = null;
+        ContextObject newActiveContext = null;
         if (istate.tryInterruptPending()) {
-            final ProcessSwitch ps = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
-            if (ps != null) {
-                processSwitch = ps;
+            final ContextObject newContext = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+            if (newContext != null) {
+                newActiveContext = newContext;
             }
         }
         if (istate.tryWakeUpTickTrigger()) {
-            final ProcessSwitch ps = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
-            if (ps != null) {
-                processSwitch = ps;
+            final ContextObject newContext = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            if (newContext != null) {
+                newActiveContext = newContext;
             }
         }
         if (istate.tryPendingFinalizations()) {
-            final ProcessSwitch ps = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
-            if (ps != null) {
-                processSwitch = ps;
+            final ContextObject newContext = signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+            if (newContext != null) {
+                newActiveContext = newContext;
             }
         }
         if (istate.trySemaphoresToSignal()) {
@@ -62,9 +63,9 @@ public final class CheckForInterruptsFullNode extends Node {
                 final Object[] semaphores = externalObjects.getObjectStorage();
                 Integer semaIndex;
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                    final ProcessSwitch ps = signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
-                    if (ps != null) {
-                        processSwitch = ps;
+                    final ContextObject newContext = signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
+                    if (newContext != null) {
+                        newActiveContext = newContext;
                     }
                 }
             }
@@ -74,8 +75,8 @@ public final class CheckForInterruptsFullNode extends Node {
          * we do not do this, small Delays in a loop in the image will prevent the code after the
          * wake-up-tick handler from getting executed (finalizations, for example).
          */
-        if (processSwitch != null) {
-            throw processSwitch;
+        if (newActiveContext != null) {
+            throw ProcessSwitch.transferExecutionToContext(newActiveContext);
         }
     }
 }

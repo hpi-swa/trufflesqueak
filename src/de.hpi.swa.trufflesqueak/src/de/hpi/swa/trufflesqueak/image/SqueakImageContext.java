@@ -741,11 +741,11 @@ public final class SqueakImageContext {
             throw stackOverflowError; // continue further up the sender chain
         } else {
             final Object lowSpaceSemaphoreOrNil = getSpecialObject(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE);
-            final ProcessSwitch ps = SignalSemaphoreNodeGen.executeUncached(frame, this, lowSpaceSemaphoreOrNil);
-            if (ps != null) {
+            final ContextObject newActiveContext = SignalSemaphoreNodeGen.executeUncached(frame, this, lowSpaceSemaphoreOrNil);
+            if (newActiveContext != null) {
                 // success! reset counter and continue in new process
                 lowSpaceSkippedSendsCount = 0;
-                throw ps;
+                throw ProcessSwitch.transferExecutionToContextUncached(newActiveContext);
             }
             throw CompilerDirectives.shouldNotReachHere("Failed to signal low space semaphore.", stackOverflowError);
         }
