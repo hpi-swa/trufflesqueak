@@ -30,6 +30,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
+import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -38,11 +39,13 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 @NodeInfo(language = SqueakLanguageConfig.ID)
 public final class ExecuteTopLevelContextNode extends RootNode {
     private static final FrameDescriptor TOP_LEVEL_FRAME_DESCRIPTOR = new FrameDescriptor();
+
     private final SqueakImageContext image;
     private final boolean isImageResuming;
     private ContextObject initialContext;
 
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
+    @Child private GetNextActiveContextNode getNextActiveContextNode = GetNextActiveContextNode.create();
     @Child private Dispatch1Node sendCannotReturnNode;
     @Child private Dispatch2Node sendAboutToReturnNode;
 
@@ -107,7 +110,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
                 }
             } catch (final ProcessSwitch ps) {
-                activeContext = ps.getNewContext();
+                activeContext = getNextActiveContextNode.execute();
                 LogUtils.SCHEDULING.log(Level.FINE, "Process Switch: {0}", activeContext);
             }
         }
