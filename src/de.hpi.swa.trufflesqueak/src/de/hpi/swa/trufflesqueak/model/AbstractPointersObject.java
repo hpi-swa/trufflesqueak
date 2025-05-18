@@ -281,6 +281,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public final void becomeOneWayLayout(final AbstractPointersObject other) {
         assert getClass() == other.getClass();
         setSqueakClass(other.getSqueakClass());
+        setSqueakHash(Math.toIntExact(other.getSqueakHash()));
 
         // Move copied content to this object.
         layout = other.layout;
@@ -299,7 +300,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     protected final boolean identicalLayout(final AbstractPointersObject other) {
-        return getClass() == other.getClass() &&
+        return getSqueakClass() == other.getSqueakClass() &&
+                        getSqueakHash() == other.getSqueakHash() &&
                         layout == other.layout &&
                         primitiveUsedMap == other.primitiveUsedMap &&
                         primitive0 == other.primitive0 &&

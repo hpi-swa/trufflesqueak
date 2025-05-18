@@ -172,28 +172,28 @@ public final class ObjectGraphUtils {
         return globalClass;
     }
 
-    private static final ExecutorService service = Executors.newSingleThreadExecutor();
+    private static final ExecutorService service = Executors.newSingleThreadExecutor(r -> new Thread(r, "Async becomeForward"));
 
     @TruffleBoundary
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
+        final ObjectTracer pending = new ObjectTracer(false);
+        pointersBecomeOneWayFrames(pending, fromPointers, toPointers);
         if (fromPointers.length == 1 && fromPointers[0] instanceof final PointersObject fromPointer && toPointers[0] instanceof final PointersObject toPointer) {
             final ClassObject squeakClass = fromPointer.getSqueakClass();
             if (squeakClass == toPointer.getSqueakClass() && (squeakClass == getGlobalClass() || squeakClass == getClassBindingClass())) {
                 fromPointer.becomeOneWay(toPointer);
                 service.submit(() -> {
-                    performBecomeOneWay(fromPointers, toPointers);
+                    performBecomeOneWay(pending, fromPointers, toPointers);
                     assert fromPointer.identical(toPointer) : "objects should not change during async migration";
                 });
                 return;
             }
         }
-        performBecomeOneWay(fromPointers, toPointers);
+        performBecomeOneWay(pending, fromPointers, toPointers);
     }
 
-    private void performBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
+    private void performBecomeOneWay(final ObjectTracer pending, final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
-        final ObjectTracer pending = new ObjectTracer(false);
-        pointersBecomeOneWayFrames(pending, fromPointers, toPointers);
         final boolean currentMarkingFlag = pending.currentMarkingFlag;
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextFromWorkStack()) != null) {
@@ -331,7 +331,7 @@ public final class ObjectGraphUtils {
         finishPendingMarking(pending, currentMarkingFlag);
     }
 
-    private void finishPendingMarking(final ObjectTracer pending, final boolean currentMarkingFlag) {
+    private static void finishPendingMarking(final ObjectTracer pending, final boolean currentMarkingFlag) {
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextFromWorkStack()) != null) {
             if (currentObject.tryToMark(currentMarkingFlag)) {
