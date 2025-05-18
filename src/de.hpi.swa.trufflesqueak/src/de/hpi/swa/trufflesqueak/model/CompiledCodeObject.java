@@ -495,14 +495,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return ArrayUtils.contains(getLiterals(), thang);
     }
 
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        /*
-         * Literals are cached in the AST and are not allowed to change (at least currently) because
-         * that would require invalidation. Do nothing for now until this really is needed.
-         */
-    }
-
+    /**
+     * This class traces through the literals but does not overwrite
+     * {@link AbstractSqueakObjectWithClassAndHash#pointersBecomeOneWay(Object, Object)} and
+     * {@link AbstractSqueakObjectWithClassAndHash#pointersBecomeOneWay(org.graalvm.collections.UnmodifiableEconomicMap)}}.
+     * Literals are cached in the AST and are not allowed to change (at least currently) because
+     * that would require invalidation. Do nothing for now until this really is needed.
+     */
     @Override
     public void tracePointers(final ObjectTracer tracer) {
         tracer.addAllIfUnmarked(literals);

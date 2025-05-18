@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -271,23 +273,43 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        final int copiedValuesLength = copiedValues.length;
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            final Object toPointer = to[i];
-            if (receiver == fromPointer) {
-                receiver = toPointer;
+    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
+        if (receiver == fromPointer) {
+            receiver = toPointer;
+        }
+        if (block == fromPointer && toPointer instanceof final CompiledCodeObject b) {
+            block = b;
+        }
+        if (outerContext == fromPointer && toPointer instanceof final ContextObject c && c != outerContext) {
+            setOuterContext(c);
+        }
+        for (int i = 0; i < copiedValues.length; i++) {
+            if (copiedValues[i] == fromPointer) {
+                copiedValues[i] = toPointer;
             }
-            if (block == fromPointer && toPointer instanceof final CompiledCodeObject b) {
-                block = b;
+        }
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        if (receiver != null) {
+            final Object toReceiver = fromToMap.get(receiver);
+            if (toReceiver != null) {
+                receiver = toReceiver;
             }
-            if (outerContext == fromPointer && fromPointer != toPointer && toPointer instanceof final ContextObject c) {
-                setOuterContext(c);
-            }
-            for (int j = 0; j < copiedValuesLength; j++) {
-                if (copiedValues[j] == fromPointer) {
-                    copiedValues[j] = toPointer;
+        }
+        if (block != null && fromToMap.get(block) instanceof final CompiledCodeObject b) {
+            block = b;
+        }
+        if (outerContext != null && fromToMap.get(outerContext) instanceof final ContextObject c && c != outerContext) {
+            setOuterContext(c);
+        }
+        for (int i = 0; i < copiedValues.length; i++) {
+            final Object copiedValue = copiedValues[i];
+            if (copiedValue != null) {
+                final Object migratedValue = fromToMap.get(copiedValue);
+                if (migratedValue != null) {
+                    copiedValues[i] = migratedValue;
                 }
             }
         }

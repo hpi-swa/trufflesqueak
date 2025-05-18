@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
@@ -188,7 +190,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         toggleMarkingFlag();
     }
 
-    public void pointersBecomeOneWay(@SuppressWarnings("unused") final Object[] from, @SuppressWarnings("unused") final Object[] to) {
+    public void pointersBecomeOneWay(@SuppressWarnings("unused") final Object fromPointer, @SuppressWarnings("unused") final Object toPointer) {
+        // Do nothing by default.
+    }
+
+    public void pointersBecomeOneWay(@SuppressWarnings("unused") final UnmodifiableEconomicMap<Object, Object> fromToMap) {
         // Do nothing by default.
     }
 

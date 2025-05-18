@@ -11,6 +11,10 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.logging.Level;
 
+import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.Equivalence;
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -156,24 +160,48 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
-        final ObjectTracer pending = new ObjectTracer(false);
-        pointersBecomeOneWayFrames(pending, fromPointers, toPointers);
-        final boolean currentMarkingFlag = pending.currentMarkingFlag;
-        AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = getNextFromWorkStack()) != null) {
-            if (currentObject.tryToMark(currentMarkingFlag)) {
-                currentObject.pointersBecomeOneWay(fromPointers, toPointers);
-                pending.tracePointers(currentObject);
-            }
+        if (fromPointers.length == 1) {
+            pointersBecomeOneWaySinglePair(fromPointers[0], toPointers[0]);
+        } else {
+            pointersBecomeOneWayManyPairs(fromPointers, toPointers);
         }
         if (trackOperations) {
             ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
         }
     }
 
+    private void pointersBecomeOneWaySinglePair(final Object fromPointer, final Object toPointer) {
+        final ObjectTracer pending = new ObjectTracer(false);
+        pointersBecomeOneWayFrames(pending, fromPointer, toPointer);
+        final boolean currentMarkingFlag = pending.currentMarkingFlag;
+        AbstractSqueakObjectWithClassAndHash currentObject;
+        while ((currentObject = getNextFromWorkStack()) != null) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
+                currentObject.pointersBecomeOneWay(fromPointer, toPointer);
+                pending.tracePointers(currentObject);
+            }
+        }
+    }
+
+    private void pointersBecomeOneWayManyPairs(final Object[] fromPointers, final Object[] toPointers) {
+        final EconomicMap<Object, Object> fromToMap = EconomicMap.create(Equivalence.IDENTITY, fromPointers.length);
+        for (int i = 0; i < fromPointers.length; i++) {
+            fromToMap.put(fromPointers[i], toPointers[i]);
+        }
+        final ObjectTracer pending = new ObjectTracer(false);
+        pointersBecomeOneWayFrames(pending, fromToMap);
+        final boolean currentMarkingFlag = pending.currentMarkingFlag;
+        AbstractSqueakObjectWithClassAndHash currentObject;
+        while ((currentObject = getNextFromWorkStack()) != null) {
+            if (currentObject.tryToMark(currentMarkingFlag)) {
+                currentObject.pointersBecomeOneWay(fromToMap);
+                pending.tracePointers(currentObject);
+            }
+        }
+    }
+
     @TruffleBoundary
-    private static void pointersBecomeOneWayFrames(final ObjectTracer tracer, final Object[] fromPointers, final Object[] toPointers) {
-        final int fromPointersLength = fromPointers.length;
+    private static void pointersBecomeOneWayFrames(final ObjectTracer tracer, final Object fromPointer, final Object toPointer) {
         Truffle.getRuntime().iterateFrames((frameInstance) -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
             if (!FrameAccess.isTruffleSqueakFrame(current)) {
@@ -181,21 +209,16 @@ public final class ObjectGraphUtils {
             }
             final Object[] arguments = current.getArguments();
             for (int i = 0; i < arguments.length; i++) {
-                final Object argument = arguments[i];
-                for (int j = 0; j < fromPointersLength; j++) {
-                    if (argument == fromPointers[j]) {
-                        arguments[i] = toPointers[j];
-                    }
+                if (arguments[i] == fromPointer) {
+                    arguments[i] = toPointer;
                 }
                 tracer.addIfUnmarked(arguments[i]);
             }
 
             final ContextObject context = FrameAccess.getContext(current);
             if (context != null) {
-                for (int j = 0; j < fromPointersLength; j++) {
-                    if (context == fromPointers[j]) {
-                        FrameAccess.setContext(current, (ContextObject) toPointers[j]);
-                    }
+                if (context == fromPointer && toPointer instanceof final ContextObject o) {
+                    FrameAccess.setContext(current, o);
                 }
                 tracer.addIfUnmarked(FrameAccess.getContext(current));
             }
@@ -207,14 +230,65 @@ public final class ObjectGraphUtils {
             FrameAccess.iterateStackSlots(current, slotIndex -> {
                 if (current.isObject(slotIndex)) {
                     final Object stackObject = current.getObject(slotIndex);
-                    for (int j = 0; j < fromPointersLength; j++) {
-                        if (stackObject == fromPointers[j]) {
-                            final Object toPointer = toPointers[j];
-                            assert toPointer != null : "Unexpected `null` value";
-                            current.setObject(slotIndex, toPointer);
+                    if (stackObject == null) {
+                        return;
+                    }
+                    if (stackObject == fromPointer) {
+                        current.setObject(slotIndex, toPointer);
+                        tracer.addIfUnmarked(toPointer);
+                    } else {
+                        tracer.addIfUnmarked(stackObject);
+                    }
+                }
+            });
+            return null;
+        });
+    }
+
+    @TruffleBoundary
+    private static void pointersBecomeOneWayFrames(final ObjectTracer tracer, final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        Truffle.getRuntime().iterateFrames((frameInstance) -> {
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+            if (!FrameAccess.isTruffleSqueakFrame(current)) {
+                return null;
+            }
+            final Object[] arguments = current.getArguments();
+            for (int i = 0; i < arguments.length; i++) {
+                final Object argument = arguments[i];
+                if (argument != null) {
+                    final Object migratedValue = fromToMap.get(argument);
+                    if (migratedValue != null) {
+                        arguments[i] = migratedValue;
+                    }
+                }
+                tracer.addIfUnmarked(arguments[i]);
+            }
+
+            final ContextObject context = FrameAccess.getContext(current);
+            if (context != null) {
+                final Object toContext = fromToMap.get(context);
+                if (toContext instanceof final ContextObject o) {
+                    FrameAccess.setContext(current, o);
+                }
+                tracer.addIfUnmarked(FrameAccess.getContext(current));
+            }
+
+            /*
+             * Iterate over all stack slots here instead of stackPointer because in rare cases, the
+             * stack is accessed behind the stackPointer.
+             */
+            FrameAccess.iterateStackSlots(current, slotIndex -> {
+                if (current.isObject(slotIndex)) {
+                    final Object stackObject = current.getObject(slotIndex);
+                    if (stackObject != null) {
+                        final Object migratedObject = fromToMap.get(stackObject);
+                        if (migratedObject != null) {
+                            current.setObject(slotIndex, migratedObject);
+                            tracer.addIfUnmarked(migratedObject);
+                        } else {
+                            tracer.addIfUnmarked(stackObject);
                         }
                     }
-                    tracer.addIfUnmarked(current.getObject(slotIndex));
                 }
             });
             return null;

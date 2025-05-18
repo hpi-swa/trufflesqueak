@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -516,27 +518,48 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        final int pointersLength = pointers.length;
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            final Object toPointer = to[i];
-            if (fromPointer == superclass && toPointer instanceof final ClassObject o) {
-                setSuperclass(o);
+    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
+        if (superclass == fromPointer && toPointer instanceof final ClassObject o) {
+            setSuperclass(o);
+        }
+        if (methodDict == fromPointer && toPointer instanceof final VariablePointersObject o && o != methodDict) {
+            // Only update methodDict if changed to avoid redundant invalidation.
+            setMethodDict(o);
+        }
+        if (instanceVariables == fromPointer && toPointer instanceof final ArrayObject o) {
+            setInstanceVariables(o);
+        }
+        if (organization == fromPointer && toPointer instanceof final PointersObject o) {
+            setOrganization(o);
+        }
+        for (int i = 0; i < pointers.length; i++) {
+            if (pointers[i] == fromPointer) {
+                pointers[i] = toPointer;
             }
-            if (fromPointer == methodDict && fromPointer != toPointer && toPointer instanceof final VariablePointersObject o) {
-                // Only update methodDict if changed to avoid redundant invalidation.
-                setMethodDict(o);
-            }
-            if (fromPointer == instanceVariables && toPointer instanceof final ArrayObject o) {
-                setInstanceVariables(o);
-            }
-            if (fromPointer == organization && toPointer instanceof final PointersObject o) {
-                setOrganization(o);
-            }
-            for (int j = 0; j < pointersLength; j++) {
-                if (pointers[j] == fromPointer) {
-                    pointers[j] = toPointer;
+        }
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        if (superclass != null && fromToMap.get(superclass) instanceof final ClassObject o) {
+            setSuperclass(o);
+        }
+        if (methodDict != null && fromToMap.get(methodDict) instanceof final VariablePointersObject o && o != methodDict) {
+            // Only update methodDict if changed to avoid redundant invalidation.
+            setMethodDict(o);
+        }
+        if (instanceVariables != null && fromToMap.get(instanceVariables) instanceof final ArrayObject o) {
+            setInstanceVariables(o);
+        }
+        if (organization != null && fromToMap.get(organization) instanceof final PointersObject o) {
+            setOrganization(o);
+        }
+        for (int i = 0; i < pointers.length; i++) {
+            final Object pointer = pointers[i];
+            if (pointer != null) {
+                final Object migratedPointer = fromToMap.get(pointer);
+                if (migratedPointer != null) {
+                    pointers[i] = migratedPointer;
                 }
             }
         }

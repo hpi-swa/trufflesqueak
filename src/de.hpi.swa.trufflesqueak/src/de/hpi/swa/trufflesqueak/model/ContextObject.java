@@ -8,6 +8,8 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -532,33 +534,67 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         if (hasTruffleFrame()) {
-            final Object[] arguments = truffleFrame.getArguments();
-            final int argumentsLength = arguments.length;
-            for (int i = 0; i < from.length; i++) {
-                final Object fromPointer = from[i];
-                final Object toPointer = to[i];
-                if (fromPointer == FrameAccess.getCodeObject(truffleFrame) && toPointer instanceof final CompiledCodeObject o) {
-                    setCodeObject(o);
-                }
-                if (fromPointer == FrameAccess.getSender(truffleFrame) && toPointer instanceof final ContextObject o) {
-                    setSender(o);
-                }
-                if (fromPointer == FrameAccess.getClosure(truffleFrame) && toPointer instanceof final BlockClosureObject o) {
-                    setClosure(o);
-                }
-                for (int j = FrameAccess.getReceiverStartIndex(); j < argumentsLength; j++) {
-                    if (arguments[j] == fromPointer) {
-                        arguments[j] = toPointer;
-                    }
-                }
-                FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
-                    if (truffleFrame.isObject(slotIndex) && truffleFrame.getObject(slotIndex) == fromPointer) {
-                        truffleFrame.setObject(slotIndex, toPointer);
-                    }
-                });
+            if (FrameAccess.getCodeObject(truffleFrame) == fromPointer && toPointer instanceof final CompiledCodeObject o) {
+                setCodeObject(o);
             }
+            if (FrameAccess.getSender(truffleFrame) == fromPointer && toPointer instanceof final ContextObject o) {
+                setSender(o);
+            }
+            if (FrameAccess.getClosure(truffleFrame) == fromPointer && toPointer instanceof final BlockClosureObject o) {
+                setClosure(o);
+            }
+            final Object[] arguments = truffleFrame.getArguments();
+            for (int i = FrameAccess.getReceiverStartIndex(); i < arguments.length; i++) {
+                if (arguments[i] == fromPointer) {
+                    arguments[i] = toPointer;
+                }
+            }
+            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
+                if (truffleFrame.isObject(slotIndex) && truffleFrame.getObject(slotIndex) == fromPointer) {
+                    truffleFrame.setObject(slotIndex, toPointer);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        if (hasTruffleFrame()) {
+            final CompiledCodeObject compiledCodeObject = FrameAccess.getCodeObject(truffleFrame);
+            if (compiledCodeObject != null && fromToMap.get(compiledCodeObject) instanceof final CompiledCodeObject o) {
+                setCodeObject(o);
+            }
+            final Object sender = FrameAccess.getSender(truffleFrame);
+            if (sender != null && fromToMap.get(sender) instanceof final ContextObject o) {
+                setSender(o);
+            }
+            final Object closure = FrameAccess.getClosure(truffleFrame);
+            if (closure != null && fromToMap.get(closure) instanceof final BlockClosureObject o) {
+                setClosure(o);
+            }
+            final Object[] arguments = truffleFrame.getArguments();
+            for (int i = FrameAccess.getReceiverStartIndex(); i < arguments.length; i++) {
+                final Object argument = arguments[i];
+                if (argument != null) {
+                    final Object migratedValue = fromToMap.get(argument);
+                    if (migratedValue != null) {
+                        arguments[i] = migratedValue;
+                    }
+                }
+            }
+            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
+                if (truffleFrame.isObject(slotIndex)) {
+                    final Object stackValue = truffleFrame.getObject(slotIndex);
+                    if (stackValue != null) {
+                        final Object migratedValue = fromToMap.get(stackValue);
+                        if (migratedValue != null) {
+                            truffleFrame.setObject(slotIndex, migratedValue);
+                        }
+                    }
+                }
+            });
         }
     }
 
