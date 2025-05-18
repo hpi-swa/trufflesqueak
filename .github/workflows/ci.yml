@@ -47,7 +47,7 @@ jobs:
         sudo apt update && sudo apt install python3-pip python-setuptools
         jq -r '.pip | to_entries[] | .key+.value' ../graal/common.json | xargs sudo pip install
     - name: Check style and perform full build
-      run: mx gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
+      run: mx --java-home="${JAVA_HOME}" --tools-java-home="${JAVA_HOME}" gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
 
   build-jar:
     strategy:
