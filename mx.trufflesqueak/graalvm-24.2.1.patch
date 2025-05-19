@@ -1,5 +1,18 @@
+diff --git a/sdk/mx.sdk/suite.py b/sdk/mx.sdk/suite.py
+index 9906251a7d6..319984255fb 100644
+--- a/sdk/mx.sdk/suite.py
++++ b/sdk/mx.sdk/suite.py
+@@ -461,6 +461,8 @@ suite = {
+       "javaCompliance" : "17+",
+       "workingSets" : "Truffle,Tools",
+       "checkstyle" : "org.graalvm.word",
++      # disable SpotBugs due to incorrect lazy initialization
++      "spotbugs" : "false",
+       "graalCompilerSourceEdition": "ignore",
+     },
+     "org.graalvm.launcher.test" : {
 diff --git a/sdk/src/org.graalvm.launcher.native/src/launcher.cc b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
-index a5ee4d97a47..6b4157b77cd 100644
+index c344340439b..028a38702f0 100644
 --- a/sdk/src/org.graalvm.launcher.native/src/launcher.cc
 +++ b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
 @@ -263,7 +263,7 @@ static void *load_jli_lib(std::string exeDir) {
@@ -26,7 +39,7 @@ index a5ee4d97a47..6b4157b77cd 100644
          HMODULE jvmHandle = LoadLibraryA(liblangPath.c_str());
          if (jvmHandle != NULL) {
              return (CreateJVM) GetProcAddress(jvmHandle, "JNI_CreateJavaVM");
-@@ -723,7 +731,7 @@ static int jvm_main_thread(int argc, char *argv[], std::string exeDir, bool jvmM
+@@ -711,7 +719,7 @@ static int jvm_main_thread(int argc, char *argv[], std::string exeDir, bool jvmM
  
      /* load VM library - after parsing arguments s.t. NMT
       * tracking variable is already set */
