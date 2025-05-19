@@ -630,6 +630,10 @@ public final class SqueakImageContext {
         byteSymbolClass = classObject;
     }
 
+    public ClassObject getWideStringClassOrNull() {
+        return wideStringClass;
+    }
+
     public ClassObject getWideStringClass() {
         if (wideStringClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -958,10 +962,6 @@ public final class SqueakImageContext {
         return object == semaphoreClass;
     }
 
-    public boolean isWideStringClass(final ClassObject object) {
-        return object == getWideStringClass();
-    }
-
     /*
      * INSTANCE CREATION
      */
@@ -1031,7 +1031,7 @@ public final class SqueakImageContext {
         return (NativeObject) asByteString(value).send(this, "asSymbol");
     }
 
-    public NativeObject asWideString(final String value) {
+    private NativeObject asWideString(final String value) {
         return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
 
