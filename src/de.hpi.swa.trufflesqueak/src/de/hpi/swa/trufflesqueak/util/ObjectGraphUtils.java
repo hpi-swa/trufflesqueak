@@ -11,19 +11,20 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import org.graalvm.collections.EconomicMap;
 import org.graalvm.collections.Equivalence;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
@@ -39,10 +40,9 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 
 public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
-
     private static int lastSeenObjects = 500_000;
-
-    private final int usableThreadCount = Math.min(Runtime.getRuntime().availableProcessors(), 4);
+    private static final int USABLE_THREAD_COUNT = Math.min(Runtime.getRuntime().availableProcessors(), 4);
+    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(USABLE_THREAD_COUNT, r -> new Thread(r, "TruffleSqueakObjectGraphUtils"));
 
     private final SqueakImageContext image;
     private final boolean trackOperations;
@@ -73,60 +73,64 @@ public final class ObjectGraphUtils {
         return seen;
     }
 
-    @TruffleBoundary
-    public Object[] allInstancesOf(final ClassObject targetClass) {
+    final class AllInstancesOfTask implements Runnable {
+        private final ClassObject targetClass;
+        private final ObjectTracer roots;
+        private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects;
 
-        class AllInstancesOfTask implements Runnable {
-            private final ObjectTracer roots;
-            private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects;
-
-            public AllInstancesOfTask(final ObjectTracer theRoots, final ArrayDeque<AbstractSqueakObjectWithClassAndHash> theObjects) {
-                roots = theRoots;
-                objects = theObjects;
-            }
-
-            public void run() {
-                final ObjectTracer pending = new ObjectTracer(roots);
-                AbstractSqueakObjectWithClassAndHash root;
-                while ((root = roots.getNextWithLock()) != null) {
-                    AbstractSqueakObjectWithClassAndHash currentObject = root;
-                    do {
-                        if (targetClass == currentObject.getSqueakClass()) {
-                            objects.add(currentObject);
-                        }
-                        pending.tracePointers(currentObject);
-                    } while ((currentObject = pending.getNext()) != null);
-                }
-            }
+        AllInstancesOfTask(final ClassObject theTargetClass, final ObjectTracer theRoots, final ArrayDeque<AbstractSqueakObjectWithClassAndHash> theObjects) {
+            targetClass = theTargetClass;
+            roots = theRoots;
+            objects = theObjects;
         }
 
+        public void run() {
+            final ObjectTracer pending = new ObjectTracer(roots);
+            AbstractSqueakObjectWithClassAndHash root;
+            while ((root = roots.getNextWithLock()) != null) {
+                AbstractSqueakObjectWithClassAndHash currentObject = root;
+                do {
+                    if (targetClass == currentObject.getSqueakClass()) {
+                        objects.add(currentObject);
+                    }
+                    pending.tracePointers(currentObject);
+                } while ((currentObject = pending.getNext()) != null);
+            }
+        }
+    }
+
+    @TruffleBoundary
+    public Object[] allInstancesOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
 
         final ObjectTracer roots = new ObjectTracer(true);
 
-        Runnable[] tasks = new Runnable[usableThreadCount];
-        List<ArrayDeque<AbstractSqueakObjectWithClassAndHash>> objectsList = new ArrayList<>(usableThreadCount);
-        for (int i = 0; i < usableThreadCount; i++) {
+        final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
+        final List<ArrayDeque<AbstractSqueakObjectWithClassAndHash>> objectsList = new ArrayList<>(USABLE_THREAD_COUNT);
+        for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
             final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects = new ArrayDeque<>();
             objectsList.add(objects);
-            tasks[i] = new AllInstancesOfTask(roots,objects);
+            tasks[i] = new AllInstancesOfTask(targetClass, roots, objects);
         }
-        roots.runTasks(tasks);
+        runTasks(tasks);
 
         int totalSize = 0;
         for (ArrayDeque<AbstractSqueakObjectWithClassAndHash> deque : objectsList) {
             totalSize += deque.size();
         }
 
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> result = new ArrayDeque<>(totalSize);
-        for (ArrayDeque<AbstractSqueakObjectWithClassAndHash> deque : objectsList) {
-            result.addAll(deque);
+        final AbstractSqueakObjectWithClassAndHash[] result = new AbstractSqueakObjectWithClassAndHash[totalSize];
+        int i = 0;
+        for (final ArrayDeque<AbstractSqueakObjectWithClassAndHash> deque : objectsList) {
+            for (final AbstractSqueakObjectWithClassAndHash value : deque) {
+                result[i++] = value;
+            }
         }
 
         if (trackOperations) {
             ObjectGraphOperations.ALL_INSTANCES_OF.addNanos(System.nanoTime() - startTime);
         }
-        return result.toArray();
+        return result;
     }
 
     @TruffleBoundary
@@ -210,66 +214,64 @@ public final class ObjectGraphUtils {
         }
     }
 
-    private void pointersBecomeOneWaySinglePair(final Object fromPointer, final Object toPointer) {
+    final class BecomeOneWaySinglePairTask implements Runnable {
+        private final ObjectTracer roots;
+        private final Object from;
+        private final Object to;
 
-        class BecomeOneWaySinglePairTask implements Runnable {
-            private final ObjectTracer roots;
-            private final Object from;
-            private final Object to;
-
-            public BecomeOneWaySinglePairTask(final ObjectTracer theRoots) {
-                roots = theRoots;
-                from = fromPointer;
-                to = toPointer;
-            }
-
-            public void run() {
-                final ObjectTracer pending = new ObjectTracer(roots);
-                AbstractSqueakObjectWithClassAndHash root;
-                while ((root = roots.getNextWithLock()) != null) {
-                    AbstractSqueakObjectWithClassAndHash currentObject = root;
-                    do {
-                        currentObject.pointersBecomeOneWay(from, to);
-                        pending.tracePointers(currentObject);
-                    } while ((currentObject = pending.getNext()) != null);
-                }
-            }
+        BecomeOneWaySinglePairTask(final ObjectTracer theRoots, final Object fromPointer, final Object toPointer) {
+            roots = theRoots;
+            from = fromPointer;
+            to = toPointer;
         }
 
+        public void run() {
+            final ObjectTracer pending = new ObjectTracer(roots);
+            AbstractSqueakObjectWithClassAndHash root;
+            while ((root = roots.getNextWithLock()) != null) {
+                AbstractSqueakObjectWithClassAndHash currentObject = root;
+                do {
+                    currentObject.pointersBecomeOneWay(from, to);
+                    pending.tracePointers(currentObject);
+                } while ((currentObject = pending.getNext()) != null);
+            }
+        }
+    }
+
+    private void pointersBecomeOneWaySinglePair(final Object fromPointer, final Object toPointer) {
         final ObjectTracer roots = new ObjectTracer(false);
         pointersBecomeOneWayFrames(roots, fromPointer, toPointer);
 
-        Runnable[] tasks = new Runnable[usableThreadCount];
-        for (int i = 0; i < usableThreadCount; i++) {
-            tasks[i] = new BecomeOneWaySinglePairTask(roots);
+        final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
+        for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
+            tasks[i] = new BecomeOneWaySinglePairTask(roots, fromPointer, toPointer);
         }
-        roots.runTasks(tasks);
+        runTasks(tasks);
+    }
+
+    final class BecomeOneWayManyPairsTask implements Runnable {
+        private final ObjectTracer roots;
+        private final EconomicMap<Object, Object> fromToMap;
+
+        BecomeOneWayManyPairsTask(final ObjectTracer theRoots, final EconomicMap<Object, Object> theFromToMap) {
+            roots = theRoots;
+            fromToMap = theFromToMap;
+        }
+
+        public void run() {
+            final ObjectTracer pending = new ObjectTracer(roots);
+            AbstractSqueakObjectWithClassAndHash root;
+            while ((root = roots.getNextWithLock()) != null) {
+                AbstractSqueakObjectWithClassAndHash currentObject = root;
+                do {
+                    currentObject.pointersBecomeOneWay(fromToMap);
+                    pending.tracePointers(currentObject);
+                } while ((currentObject = pending.getNext()) != null);
+            }
+        }
     }
 
     private void pointersBecomeOneWayManyPairs(final Object[] fromPointers, final Object[] toPointers) {
-
-        class BecomeOneWayManyPairsTask implements Runnable {
-            private final ObjectTracer roots;
-            private final EconomicMap<Object, Object> fromToMap;
-
-            public BecomeOneWayManyPairsTask(final ObjectTracer theRoots, final EconomicMap<Object, Object> theFromToMap) {
-                roots = theRoots;
-                fromToMap = theFromToMap;
-            }
-
-            public void run() {
-                final ObjectTracer pending = new ObjectTracer(roots);
-                AbstractSqueakObjectWithClassAndHash root;
-                while ((root = roots.getNextWithLock()) != null) {
-                    AbstractSqueakObjectWithClassAndHash currentObject = root;
-                    do {
-                        currentObject.pointersBecomeOneWay(fromToMap);
-                        pending.tracePointers(currentObject);
-                    } while ((currentObject = pending.getNext()) != null);
-                }
-            }
-        }
-
         final EconomicMap<Object, Object> fromToMap = EconomicMap.create(Equivalence.IDENTITY, fromPointers.length);
         for (int i = 0; i < fromPointers.length; i++) {
             fromToMap.put(fromPointers[i], toPointers[i]);
@@ -278,24 +280,11 @@ public final class ObjectGraphUtils {
         final ObjectTracer roots = new ObjectTracer(false);
         pointersBecomeOneWayFrames(roots, fromToMap);
 
-        Runnable[] tasks = new Runnable[usableThreadCount];
-        for (int i = 0; i < usableThreadCount; i++) {
+        final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
+        for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
             tasks[i] = new BecomeOneWayManyPairsTask(roots, fromToMap);
         }
-        roots.runTasks(tasks);
-//
-//
-//        try (final ExecutorService executor = Executors.newFixedThreadPool(usableThreadCount)) {
-//            final ObjectTracer roots = new ObjectTracer(false);
-//            pointersBecomeOneWayFrames(roots, fromToMap);
-//            for (int i = 0; i < usableThreadCount; i++) {
-//                executor.submit(new BecomeOneWayManyPairsTask(roots, fromToMap));
-//            }
-//            executor.shutdown();
-//            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-//        } catch (final InterruptedException e) {
-//            throw CompilerDirectives.shouldNotReachHere("pointersBecomeOneWayManyPairs was interrupted");
-//        }
+        runTasks(tasks);
     }
 
     @TruffleBoundary
@@ -471,6 +460,20 @@ public final class ObjectGraphUtils {
         }
     }
 
+    private static void runTasks(final Runnable[] tasks) {
+        try {
+            final Future<?>[] futures = new Future[USABLE_THREAD_COUNT];
+            for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
+                futures[i] = EXECUTOR.submit(tasks[i]);
+            }
+            for (Future<?> future : futures) {
+                future.get();
+            }
+        } catch (final ExecutionException | InterruptedException e) {
+            throw CompilerDirectives.shouldNotReachHere("runTasks was interrupted");
+        }
+    }
+
     public final class ObjectTracer {
         /* Using a stack for DFS traversal when walking Smalltalk objects. */
         private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> workStack = new ArrayDeque<>();
@@ -495,6 +498,11 @@ public final class ObjectGraphUtils {
             tracePointers(image.specialObjectsArray);
         }
 
+        public ObjectTracer(final ObjectTracer roots) {
+            // Create an empty traversal based on this root traversal.
+            this.currentMarkingFlag = roots.currentMarkingFlag;
+        }
+
         private void addObjectsFromFrames() {
             CompilerAsserts.neverPartOfCompilation();
             Truffle.getRuntime().iterateFrames(frameInstance -> {
@@ -511,11 +519,6 @@ public final class ObjectGraphUtils {
                 });
                 return null;
             });
-        }
-
-        public ObjectTracer(final ObjectTracer roots) {
-            // Create an empty traversal based on this root traversal.
-            this.currentMarkingFlag = roots.currentMarkingFlag;
         }
 
         private AbstractSqueakObjectWithClassAndHash getNext() {
@@ -546,22 +549,6 @@ public final class ObjectGraphUtils {
             } finally {
                 lock.unlock();
             }
-        }
-
-        private void runTasks(final Runnable[] tasks) {
-            try (final ExecutorService executor = Executors.newFixedThreadPool(usableThreadCount)) {
-                for (Runnable task : tasks) {
-                    executor.submit(task);
-                }
-                executor.shutdown();
-                boolean success = executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-                if (!success) {
-                    throw CompilerDirectives.shouldNotReachHere("runTasks timed out");
-                }
-            } catch (final InterruptedException e) {
-                throw CompilerDirectives.shouldNotReachHere("runTasks was interrupted");
-            }
-
         }
     }
 
