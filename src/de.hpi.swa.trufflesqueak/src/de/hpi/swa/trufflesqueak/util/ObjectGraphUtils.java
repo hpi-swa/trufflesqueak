@@ -100,7 +100,6 @@ public final class ObjectGraphUtils {
             }
         }
 
-
         final long startTime = System.nanoTime();
 
         final ObjectTracer roots = new ObjectTracer(true);
@@ -433,7 +432,7 @@ public final class ObjectGraphUtils {
         return true;
     }
 
-    private void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer pending, final boolean currentMarkingFlag) {
+    private static void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer pending, final boolean currentMarkingFlag) {
         // Trace the ephemerons that have marked keys until there are only ephemerons with unmarked
         // keys left.
         while (true) {
