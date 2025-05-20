@@ -42,6 +42,8 @@ public final class ObjectGraphUtils {
 
     private static int lastSeenObjects = 500_000;
 
+    private final int usableThreadCount = Math.min(Runtime.getRuntime().availableProcessors(), 4);
+
     private final SqueakImageContext image;
     private final boolean trackOperations;
 
@@ -49,8 +51,6 @@ public final class ObjectGraphUtils {
         this.image = image;
         this.trackOperations = image.options.printResourceSummary() || LogUtils.OBJECT_GRAPH.isLoggable(Level.FINE);
     }
-
-    final int usableThreadCount = Math.min(Runtime.getRuntime().availableProcessors(), 4);
 
     public static int getLastSeenObjects() {
         return lastSeenObjects;
@@ -514,7 +514,7 @@ public final class ObjectGraphUtils {
             });
         }
 
-        public ObjectTracer(ObjectTracer roots) {
+        public ObjectTracer(final ObjectTracer roots) {
             // Create an empty traversal based on this root traversal.
             this.currentMarkingFlag = roots.currentMarkingFlag;
         }
