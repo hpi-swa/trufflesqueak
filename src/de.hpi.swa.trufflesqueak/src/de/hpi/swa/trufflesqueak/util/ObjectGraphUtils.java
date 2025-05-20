@@ -465,7 +465,7 @@ public final class ObjectGraphUtils {
         finishPendingMarking(pending);
     }
 
-    private void finishPendingMarking(final ObjectTracer pending) {
+    private static void finishPendingMarking(final ObjectTracer pending) {
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNext()) != null) {
             pending.tracePointers(currentObject);
