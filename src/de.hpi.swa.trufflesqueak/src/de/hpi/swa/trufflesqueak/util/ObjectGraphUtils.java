@@ -505,13 +505,11 @@ public final class ObjectGraphUtils {
 
         private void addObjectsFromFrames() {
             CompilerAsserts.neverPartOfCompilation();
-            boolean[] atLeastOneFrame = {false};
             Truffle.getRuntime().iterateFrames(frameInstance -> {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
                     return null;
                 }
-                atLeastOneFrame[0] = true;
                 addAllIfUnmarked(current.getArguments());
                 addIfUnmarked(FrameAccess.getContext(current));
                 FrameAccess.iterateStackSlots(current, slotIndex -> {
@@ -521,9 +519,6 @@ public final class ObjectGraphUtils {
                 });
                 return null;
             });
-            if (!atLeastOneFrame[0]) {
-                System.out.println("ObjectTracer did not find any frames!");
-            }
         }
 
         private AbstractSqueakObjectWithClassAndHash getNext() {
