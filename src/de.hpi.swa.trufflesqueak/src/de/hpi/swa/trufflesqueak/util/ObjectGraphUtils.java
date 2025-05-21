@@ -26,6 +26,7 @@ import org.graalvm.collections.UnmodifiableEconomicMap;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
@@ -37,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 
 public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
@@ -505,10 +507,17 @@ public final class ObjectGraphUtils {
 
         private void addObjectsFromFrames() {
             CompilerAsserts.neverPartOfCompilation();
-            Truffle.getRuntime().iterateFrames(frameInstance -> {
+            final ContextObject resumeContextObject = Truffle.getRuntime().iterateFrames(frameInstance -> {
+                if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
+                    /*
+                     * Reached end of Smalltalk activations on Truffle frames. From here, tracing
+                     * should continue to walk senders via ContextObjects.
+                     */
+                    return rcrn.getActiveContext(); // break
+                }
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
-                    return null;
+                    return null; // skip
                 }
                 addAllIfUnmarked(current.getArguments());
                 addIfUnmarked(FrameAccess.getContext(current));
@@ -517,8 +526,10 @@ public final class ObjectGraphUtils {
                         addIfUnmarked(current.getObject(slotIndex));
                     }
                 });
-                return null;
+                return null; // continue
             });
+            assert resumeContextObject != null : "Failed to find ResumeContextRootNode";
+            addIfUnmarked(resumeContextObject);
         }
 
         private AbstractSqueakObjectWithClassAndHash getNext() {
