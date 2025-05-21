@@ -41,7 +41,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
     private static int lastSeenObjects = 500_000;
-    private static final int USABLE_THREAD_COUNT = Math.min(Runtime.getRuntime().availableProcessors(), 4);
+    private static final int USABLE_THREAD_COUNT = Math.min(Runtime.getRuntime().availableProcessors(), 1);
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(USABLE_THREAD_COUNT, r -> new Thread(r, "TruffleSqueakObjectGraphUtils"));
 
     private final SqueakImageContext image;
@@ -505,11 +505,13 @@ public final class ObjectGraphUtils {
 
         private void addObjectsFromFrames() {
             CompilerAsserts.neverPartOfCompilation();
+            boolean[] atLeastOneFrame = {false};
             Truffle.getRuntime().iterateFrames(frameInstance -> {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
                     return null;
                 }
+                atLeastOneFrame[0] = true;
                 addAllIfUnmarked(current.getArguments());
                 addIfUnmarked(FrameAccess.getContext(current));
                 FrameAccess.iterateStackSlots(current, slotIndex -> {
@@ -519,6 +521,9 @@ public final class ObjectGraphUtils {
                 });
                 return null;
             });
+            if (!atLeastOneFrame[0]) {
+                System.out.println("ObjectTracer did not find any frames!");
+            }
         }
 
         private AbstractSqueakObjectWithClassAndHash getNext() {
