@@ -1022,7 +1022,7 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asByteString(final String value) {
-        return NativeObject.newNativeBytes(this, byteStringClass, MiscUtils.stringToBytes(value));
+        return NativeObject.newNativeByteString(this, value);
     }
 
     public NativeObject asByteSymbol(final String value) {
@@ -1031,7 +1031,7 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asWideString(final String value) {
-        return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
+        return NativeObject.newNativeWideString(this, value);
     }
 
     public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node) {

@@ -114,16 +114,31 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, klass, shorts);
     }
 
-    public static NativeObject newNativeTruffleString(final SqueakImageChunk chunk) {
+    public static NativeObject newNativeString(final SqueakImageChunk chunk) {
         final ClassObject klass = chunk.getSqueakClass();
         final byte[] bytes = chunk.getBytes();
         final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
         return new NativeObject(chunk.getHeader(), klass, MutableTruffleString.fromByteArrayUncached(bytes,0, bytes.length, encoding, false));
     }
 
-    public static NativeObject newNativeTruffleString(final SqueakImageContext img, final ClassObject klass, final MutableTruffleString string) {
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final String string) {
+        final byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
+        final TruffleString.Encoding encoding = getTruffleStringEncoding(img.byteStringClass);
+        final MutableTruffleString truffleString = MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false);
+        return new NativeObject(img, img.byteStringClass, truffleString);
+    }
+
+    public static NativeObject newNativeWideString(final SqueakImageContext img, final String string) {
+        final ClassObject wideStringClass = img.getWideStringClass();
+        final TruffleString.Encoding encoding = getTruffleStringEncoding(wideStringClass);
+        TruffleString immuntableString = TruffleString.fromJavaStringUncached(string, encoding);
+        return new NativeObject(img, wideStringClass, immuntableString.asMutableTruffleStringUncached(encoding));
+    }
+    public static NativeObject newNativeString(final SqueakImageContext img, final ClassObject klass, final MutableTruffleString string) {
         return new NativeObject(img, klass, string);
     }
+
+
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
@@ -264,7 +279,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     private static TruffleString.Encoding getTruffleStringEncoding(final ClassObject squeakClass) {
         final SqueakImageContext image = squeakClass.getImage();
         if (squeakClass == image.byteStringClass) {
-            return TruffleString.Encoding.US_ASCII;
+            return TruffleString.Encoding.UTF_8;
         } else if (squeakClass == image.getWideStringClass()) {
             return TruffleString.Encoding.UTF_32;
         } else {

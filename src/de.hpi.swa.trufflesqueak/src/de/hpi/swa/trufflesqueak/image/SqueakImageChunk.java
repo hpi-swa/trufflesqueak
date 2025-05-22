@@ -104,6 +104,8 @@ public final class SqueakImageChunk {
             } else if (format <= 23) { // bytes
                 if (classObject == getImage().largePositiveIntegerClass || classObject == getImage().largeNegativeIntegerClass) {
                     object = new LargeIntegerObject(getImage(), header, classObject, getBytes()).reduceIfPossible();
+                } else if (classObject == getImage().getWideStringClass() || classObject == getImage().byteStringClass) {
+                    object = NativeObject.newNativeString(this);
                 } else {
                     object = NativeObject.newNativeBytes(this);
                 }
