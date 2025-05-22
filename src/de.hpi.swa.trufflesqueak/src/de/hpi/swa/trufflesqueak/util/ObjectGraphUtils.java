@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
-import java.util.AbstractCollection;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,8 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 import org.graalvm.collections.EconomicMap;
@@ -58,24 +55,69 @@ public final class ObjectGraphUtils {
         return lastSeenObjects;
     }
 
-    @TruffleBoundary
-    public AbstractCollection<AbstractSqueakObjectWithClassAndHash> allInstances() {
-        final long startTime = System.nanoTime();
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
-        final ObjectTracer pending = new ObjectTracer(true);
-        AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = pending.getNext()) != null) {
-            seen.add(currentObject);
-            pending.tracePointers(currentObject);
+    public SqueakImageContext getImage() {
+        return image;
+    }
+
+    static final class AllInstancesTask implements Runnable {
+        private final ObjectTracer roots;
+        private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects;
+
+        AllInstancesTask(final ObjectTracer theRoots, final ArrayDeque<AbstractSqueakObjectWithClassAndHash> theObjects) {
+            roots = theRoots;
+            objects = theObjects;
         }
-        lastSeenObjects = seen.size();
+
+        public void run() {
+            final ObjectTracer pending = roots.copyEmpty();
+            AbstractSqueakObjectWithClassAndHash root;
+            while ((root = roots.getNextWithLock()) != null) {
+                AbstractSqueakObjectWithClassAndHash currentObject = root;
+                do {
+                    objects.add(currentObject);
+                    pending.tracePointers(currentObject);
+                } while ((currentObject = pending.getNext()) != null);
+            }
+        }
+    }
+
+    @TruffleBoundary
+    public Object[] allInstances() {
+        final long startTime = System.nanoTime();
+
+        final ObjectTracer roots = ObjectTracer.fromRoots(image, true);
+
+        final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
+        final List<ArrayDeque<AbstractSqueakObjectWithClassAndHash>> objectsList = new ArrayList<>(USABLE_THREAD_COUNT);
+        final int initialSize = (lastSeenObjects + ADDITIONAL_SPACE) / USABLE_THREAD_COUNT;
+        for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
+            final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects = new ArrayDeque<>(initialSize);
+            objectsList.add(objects);
+            tasks[i] = new AllInstancesTask(roots, objects);
+        }
+        runTasks(tasks);
+
+        int totalSize = 0;
+        for (ArrayDeque<AbstractSqueakObjectWithClassAndHash> deque : objectsList) {
+            totalSize += deque.size();
+        }
+        lastSeenObjects = totalSize;
+
+        final AbstractSqueakObjectWithClassAndHash[] result = new AbstractSqueakObjectWithClassAndHash[totalSize];
+        int i = 0;
+        for (final ArrayDeque<AbstractSqueakObjectWithClassAndHash> deque : objectsList) {
+            for (final AbstractSqueakObjectWithClassAndHash value : deque) {
+                result[i++] = value;
+            }
+        }
+
         if (trackOperations) {
             ObjectGraphOperations.ALL_INSTANCES.addNanos(System.nanoTime() - startTime);
         }
-        return seen;
+        return result;
     }
 
-    final class AllInstancesOfTask implements Runnable {
+    static final class AllInstancesOfTask implements Runnable {
         private final ClassObject targetClass;
         private final ObjectTracer roots;
         private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects;
@@ -87,7 +129,7 @@ public final class ObjectGraphUtils {
         }
 
         public void run() {
-            final ObjectTracer pending = new ObjectTracer(roots);
+            final ObjectTracer pending = roots.copyEmpty();
             AbstractSqueakObjectWithClassAndHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithClassAndHash currentObject = root;
@@ -105,7 +147,7 @@ public final class ObjectGraphUtils {
     public Object[] allInstancesOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
 
-        final ObjectTracer roots = new ObjectTracer(true);
+        final ObjectTracer roots = ObjectTracer.fromRoots(image, true);
 
         final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
         final List<ArrayDeque<AbstractSqueakObjectWithClassAndHash>> objectsList = new ArrayList<>(USABLE_THREAD_COUNT);
@@ -139,8 +181,7 @@ public final class ObjectGraphUtils {
     public AbstractSqueakObject someInstanceOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
-        final ObjectTracer pending = new ObjectTracer(true);
-        final boolean currentMarkingFlag = pending.currentMarkingFlag;
+        final ObjectTracer pending = ObjectTracer.fromRoots(image, true);
         AbstractSqueakObject result = NilObject.SINGLETON;
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNext()) != null) {
@@ -148,12 +189,7 @@ public final class ObjectGraphUtils {
             if (targetClass == currentObject.getSqueakClass()) {
                 result = currentObject;
                 // Unmark marked objects
-                while ((currentObject = pending.getNext()) != null) {
-                    currentObject.unmark(currentMarkingFlag);
-                }
-                for (final AbstractSqueakObjectWithClassAndHash object : marked) {
-                    object.unmark(currentMarkingFlag);
-                }
+                pending.unmarkAll(marked);
                 // Restore marking flag
                 image.toggleCurrentMarkingFlag();
                 break;
@@ -171,8 +207,7 @@ public final class ObjectGraphUtils {
     public AbstractSqueakObject nextObject(final AbstractSqueakObjectWithClassAndHash targetObject) {
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
-        final ObjectTracer pending = new ObjectTracer(true);
-        final boolean currentMarkingFlag = pending.currentMarkingFlag;
+        final ObjectTracer pending = ObjectTracer.fromRoots(image, true);
         AbstractSqueakObjectWithClassAndHash currentObject = pending.getNext();
         AbstractSqueakObject result = currentObject; // first object
         boolean foundObject = false;
@@ -180,12 +215,7 @@ public final class ObjectGraphUtils {
             if (foundObject) {
                 result = currentObject;
                 // Unmark marked objects
-                while ((currentObject = pending.getNext()) != null) {
-                    currentObject.unmark(currentMarkingFlag);
-                }
-                for (final AbstractSqueakObjectWithClassAndHash object : marked) {
-                    object.unmark(currentMarkingFlag);
-                }
+                pending.unmarkAll(marked);
                 // Restore marking flag
                 image.toggleCurrentMarkingFlag();
                 break;
@@ -216,7 +246,7 @@ public final class ObjectGraphUtils {
         }
     }
 
-    final class BecomeOneWaySinglePairTask implements Runnable {
+    static final class BecomeOneWaySinglePairTask implements Runnable {
         private final ObjectTracer roots;
         private final Object from;
         private final Object to;
@@ -228,7 +258,7 @@ public final class ObjectGraphUtils {
         }
 
         public void run() {
-            final ObjectTracer pending = new ObjectTracer(roots);
+            final ObjectTracer pending = roots.copyEmpty();
             AbstractSqueakObjectWithClassAndHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithClassAndHash currentObject = root;
@@ -241,7 +271,7 @@ public final class ObjectGraphUtils {
     }
 
     private void pointersBecomeOneWaySinglePair(final Object fromPointer, final Object toPointer) {
-        final ObjectTracer roots = new ObjectTracer(false);
+        final ObjectTracer roots = ObjectTracer.fromRoots(image, false);
         pointersBecomeOneWayFrames(roots, fromPointer, toPointer);
 
         final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
@@ -251,7 +281,7 @@ public final class ObjectGraphUtils {
         runTasks(tasks);
     }
 
-    final class BecomeOneWayManyPairsTask implements Runnable {
+    static final class BecomeOneWayManyPairsTask implements Runnable {
         private final ObjectTracer roots;
         private final EconomicMap<Object, Object> fromToMap;
 
@@ -261,7 +291,7 @@ public final class ObjectGraphUtils {
         }
 
         public void run() {
-            final ObjectTracer pending = new ObjectTracer(roots);
+            final ObjectTracer pending = roots.copyEmpty();
             AbstractSqueakObjectWithClassAndHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithClassAndHash currentObject = root;
@@ -279,7 +309,7 @@ public final class ObjectGraphUtils {
             fromToMap.put(fromPointers[i], toPointers[i]);
         }
 
-        final ObjectTracer roots = new ObjectTracer(false);
+        final ObjectTracer roots = ObjectTracer.fromRoots(image, false);
         pointersBecomeOneWayFrames(roots, fromToMap);
 
         final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
@@ -384,37 +414,63 @@ public final class ObjectGraphUtils {
         });
     }
 
+    static final class EphemeronsTask implements Runnable {
+        private final ObjectTracer roots;
+        private final ArrayDeque<EphemeronObject> ephemeronsToBeTraced;
+
+        EphemeronsTask(final ObjectTracer theRoots, final ArrayDeque<EphemeronObject> ephemerons) {
+            roots = theRoots;
+            ephemeronsToBeTraced = ephemerons;
+        }
+
+        public void run() {
+            final ObjectTracer pending = roots.copyEmpty();
+            AbstractSqueakObjectWithClassAndHash root;
+            while ((root = roots.getNextWithLock()) != null) {
+                AbstractSqueakObjectWithClassAndHash currentObject = root;
+                do {
+                    // Ephemerons are traced in a special way.
+                    if (currentObject instanceof final EphemeronObject ephemeronObject) {
+                        // An Ephemeron is traced normally if it has been signaled or its key has been
+                        // marked already. Otherwise, they are traced after all other objects.
+                        if (ephemeronObject.hasBeenSignaled() || ephemeronObject.keyHasBeenMarked(pending)) {
+                            pending.tracePointers(currentObject);
+                        } else {
+                            synchronized (ephemeronsToBeTraced) {
+                                ephemeronsToBeTraced.add(ephemeronObject);
+                            }
+                        }
+                    } else {
+                        // Normal object
+                        pending.tracePointers(currentObject);
+                    }
+                } while ((currentObject = pending.getNext()) != null);
+            }
+        }
+    }
+
     @TruffleBoundary
     public boolean checkEphemerons() {
         final long startTime = System.nanoTime();
-        final ObjectTracer pending = new ObjectTracer(true);
-        final boolean currentMarkingFlag = pending.currentMarkingFlag;
-        final ArrayDeque<EphemeronObject> ephemeronsToBeMarked = new ArrayDeque<>();
-        AbstractSqueakObjectWithClassAndHash currentObject;
 
-        while ((currentObject = pending.getNext()) != null) {
-            // Ephemerons are traced in a special way.
-            if (currentObject instanceof final EphemeronObject ephemeronObject) {
-                // An Ephemeron is traced normally if it has been signaled or its key has been
-                // marked already. Otherwise, they are traced after all other objects.
-                if (ephemeronObject.hasBeenSignaled() || ephemeronObject.keyHasBeenMarked(currentMarkingFlag)) {
-                    pending.tracePointers(currentObject);
-                } else {
-                    ephemeronsToBeMarked.add(ephemeronObject);
-                }
-            } else {
-                // Normal object
-                pending.tracePointers(currentObject);
-            }
+        final ObjectTracer roots = ObjectTracer.fromRoots(image, true);
+
+        // Mark and trace all non-ephemeron objects. Mark and trace ephemerons that have
+        // been signaled or whose keys have been marked. Save all other ephemerons for later.
+        final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
+        final ArrayDeque<EphemeronObject> ephemeronsToBeTraced = new ArrayDeque<>();
+        for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
+            tasks[i] = new EphemeronsTask(roots, ephemeronsToBeTraced);
         }
+        runTasks(tasks);
 
         // Now, trace the ephemerons until there are only ephemerons whose keys are reachable
         // through ephemerons.
-        traceRemainingEphemerons(ephemeronsToBeMarked, pending, currentMarkingFlag);
+        traceRemainingEphemerons(ephemeronsToBeTraced, roots);
 
         // Make sure that they do not signal more than once.
-        image.ephemeronsQueue.addAll(ephemeronsToBeMarked);
-        for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) {
+        image.ephemeronsQueue.addAll(ephemeronsToBeTraced);
+        for (EphemeronObject ephemeronObject : ephemeronsToBeTraced) {
             ephemeronObject.setHasBeenSignaled();
         }
         if (trackOperations) {
@@ -423,7 +479,7 @@ public final class ObjectGraphUtils {
         return true;
     }
 
-    private static void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer pending, final boolean currentMarkingFlag) {
+    private static void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer pending) {
         // Trace the ephemerons that have marked keys until there are only ephemerons with unmarked
         // keys left.
         while (true) {
@@ -431,7 +487,7 @@ public final class ObjectGraphUtils {
             final Iterator<EphemeronObject> iterator = ephemeronsToBeMarked.iterator();
             while (iterator.hasNext()) {
                 final EphemeronObject ephemeronObject = iterator.next();
-                if (ephemeronObject.keyHasBeenMarked(currentMarkingFlag)) {
+                if (ephemeronObject.keyHasBeenMarked(pending)) {
                     pending.tracePointers(ephemeronObject);
                     iterator.remove();
                     finished = false;
@@ -476,15 +532,31 @@ public final class ObjectGraphUtils {
         }
     }
 
-    public final class ObjectTracer {
+    public static final class ObjectTracer {
         /* Using a stack for DFS traversal when walking Smalltalk objects. */
         private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> workStack = new ArrayDeque<>();
         private final boolean currentMarkingFlag;
-        private final Lock lock = new ReentrantLock();
 
-        private ObjectTracer(final boolean addObjectsFromFrames) {
-            // Flip the marking flag
-            currentMarkingFlag = image.toggleCurrentMarkingFlag();
+        private ObjectTracer(final boolean markingFlag) {
+            this.currentMarkingFlag = markingFlag;
+        }
+
+        /** Return an empty traversal based on this root traversal. */
+        public ObjectTracer copyEmpty() {
+            return new ObjectTracer(currentMarkingFlag);
+        }
+
+        /**
+         * Return an ObjectTracer initialized with the roots and optionally including objects in the
+         * Truffle frames. Flips the global marking flag.
+         */
+        private static ObjectTracer fromRoots(final SqueakImageContext image, final boolean addObjectsFromFrames) {
+            final ObjectTracer tracer = new ObjectTracer(image.toggleCurrentMarkingFlag());
+            tracer.addRoots(image, addObjectsFromFrames);
+            return tracer;
+        }
+
+        private void addRoots(final SqueakImageContext image, final boolean addObjectsFromFrames) {
             // Add roots, in reversed order because workStack is LIFO
             if (addObjectsFromFrames) {
                 addObjectsFromFrames();
@@ -498,11 +570,6 @@ public final class ObjectGraphUtils {
             // Trace the special objects to give separate roots to the threads.
             addIfUnmarked(image.specialObjectsArray);
             tracePointers(image.specialObjectsArray);
-        }
-
-        public ObjectTracer(final ObjectTracer roots) {
-            // Create an empty traversal based on this root traversal.
-            this.currentMarkingFlag = roots.currentMarkingFlag;
         }
 
         private void addObjectsFromFrames() {
@@ -536,9 +603,27 @@ public final class ObjectGraphUtils {
             return workStack.pollFirst();
         }
 
+        private synchronized AbstractSqueakObjectWithClassAndHash getNextWithLock() {
+            return workStack.pollFirst();
+        }
+
+        public boolean isMarked(final AbstractSqueakObjectWithClassAndHash object) {
+            if (currentMarkingFlag) {
+                return object.isMarkedTrue();
+            } else {
+                return object.isMarkedFalse();
+            }
+        }
+
         public void addIfUnmarked(final Object object) {
-            if (object instanceof final AbstractSqueakObjectWithClassAndHash o && o.tryToMark(currentMarkingFlag)) {
-                workStack.addFirst(o);
+            if (currentMarkingFlag) {
+                if ((object instanceof final AbstractSqueakObjectWithClassAndHash o) && o.tryToMarkTrue()) {
+                    workStack.addFirst(o);
+                }
+            } else {
+                if ((object instanceof final AbstractSqueakObjectWithClassAndHash o) && o.tryToMarkFalse()) {
+                    workStack.addFirst(o);
+                }
             }
         }
 
@@ -553,12 +638,24 @@ public final class ObjectGraphUtils {
             addIfUnmarked(object.getSqueakClass());
         }
 
-        private AbstractSqueakObjectWithClassAndHash getNextWithLock() {
-            lock.lock();
-            try {
-                return getNext();
-            } finally {
-                lock.unlock();
+        /**
+         * Unmark all objects remaining in the object graph traversal AND in the argument.
+         */
+        private void unmarkAll(ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects) {
+            if (currentMarkingFlag) {
+                for (final AbstractSqueakObjectWithClassAndHash object : workStack) {
+                    object.unmarkTrue();
+                }
+                for (final AbstractSqueakObjectWithClassAndHash object : objects) {
+                    object.unmarkTrue();
+                }
+            } else {
+                for (final AbstractSqueakObjectWithClassAndHash object : workStack) {
+                    object.unmarkFalse();
+                }
+                for (final AbstractSqueakObjectWithClassAndHash object : objects) {
+                    object.unmarkFalse();
+                }
             }
         }
     }

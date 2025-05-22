@@ -25,6 +25,9 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.Dispatch
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
     private static final int MARK_BIT = 1 << 24;
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
@@ -41,6 +44,20 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
      */
     private ClassObject squeakClass;
     private int squeakHashAndBits;
+
+    /**
+     * Support for atomically accessing the flags contained within squeakHashAndBits.
+     */
+    private static final VarHandle FLAGS_HANDLE;
+
+    static {
+        try {
+            // Lookup a VarHandle for the 'flag' squeakHashAndBits
+            FLAGS_HANDLE = MethodHandles.lookup().findVarHandle(AbstractSqueakObjectWithClassAndHash.class, "squeakHashAndBits", int.class);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new Error(e);
+        }
+    }
 
     // For special/well-known objects only.
     protected AbstractSqueakObjectWithClassAndHash() {
@@ -61,7 +78,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits = AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED;
         squeakClass = klass;
         if (markingFlag) {
-            toggleMarkingFlag();
+            tryToMarkTrue();
         }
     }
 
@@ -132,38 +149,64 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits = (squeakHashAndBits & ~SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) + newHash;
     }
 
-    private boolean getMarkingFlag() {
-        return (squeakHashAndBits & MARK_BIT) != 0;
-    }
-
-    private void toggleMarkingFlag() {
-        squeakHashAndBits ^= MARK_BIT;
-    }
+    /*
+     * Marking flag manipulations. The True/False suffix indicates the state of the
+     * MARK_BIT that corresponds to the object being in the marked state. All operations
+     * are thread safe.
+     */
 
     /**
-     * @return <tt>true</tt> if marked, <tt>false</tt> otherwise; NOT thread safe
+     * @return <tt>true</tt> if marked, <tt>false</tt> otherwise; thread safe
      */
-    public final boolean isMarked(final boolean currentMarkingFlag) {
-        return getMarkingFlag() == currentMarkingFlag;
+    public final boolean isMarkedTrue() {
+        return ((int) FLAGS_HANDLE.getAcquire(this) & MARK_BIT) != 0;
+    }
+
+    public final boolean isMarkedFalse() {
+        return ((int) FLAGS_HANDLE.getAcquire(this) & MARK_BIT) == 0;
     }
 
     /**
      * Mark this object; thread safe.
+     *
      * @return <tt>false</tt> if already marked, <tt>true</tt> otherwise
      */
-    public final synchronized boolean tryToMark(final boolean currentMarkingFlag) {
-        if (getMarkingFlag() == currentMarkingFlag) {
-            return false;
-        } else {
-            toggleMarkingFlag();
-            return true;
-        }
+    public final boolean tryToMarkTrue() {
+        int oldValue, newValue;
+        // Atomically set the new value with release semantics.
+        // If another thread modified 'flags' since our getAcquire, CAS will fail and we retry.
+        do {
+            oldValue = (int) FLAGS_HANDLE.getAcquire(this);
+            if ((oldValue & MARK_BIT) != 0) {
+                return false; // Already marked
+            }
+            newValue = oldValue | MARK_BIT;
+        } while (!FLAGS_HANDLE.compareAndSet(this, oldValue, newValue));
+
+        return true; // Successfully marked
     }
 
-    public final void unmark(final boolean currentMarkingFlag) {
-        assert getMarkingFlag() == currentMarkingFlag : "Object not marked with currentMarkingFlag: " + currentMarkingFlag;
-        toggleMarkingFlag();
+    public final boolean tryToMarkFalse() {
+        int oldValue, newValue;
+        // Atomically set the new value with release semantics.
+        // If another thread modified 'flags' since our getAcquire, CAS will fail and we retry.
+        do {
+            oldValue = (int) FLAGS_HANDLE.getAcquire(this);
+            if ((oldValue & MARK_BIT) == 0) {
+                return false; // Already marked
+            }
+            newValue = oldValue & ~MARK_BIT;
+        } while (!FLAGS_HANDLE.compareAndSet(this, oldValue, newValue));
+
+        return true; // Successfully marked
     }
+
+    /**
+     * Unmark this object; thread safe.
+     */
+    public final void unmarkTrue() { tryToMarkFalse(); }
+
+    public final void unmarkFalse() { tryToMarkTrue(); }
 
     @Override
     public String toString() {
