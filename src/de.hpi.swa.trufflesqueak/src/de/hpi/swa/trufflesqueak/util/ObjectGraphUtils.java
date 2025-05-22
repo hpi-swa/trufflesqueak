@@ -43,7 +43,7 @@ import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
     private static int lastSeenObjects = 500_000;
-    private static final int USABLE_THREAD_COUNT = Math.min(Runtime.getRuntime().availableProcessors(), 1);
+    private static final int USABLE_THREAD_COUNT = Math.min(Runtime.getRuntime().availableProcessors(), 4);
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(USABLE_THREAD_COUNT, r -> new Thread(r, "TruffleSqueakObjectGraphUtils"));
 
     private final SqueakImageContext image;

@@ -132,7 +132,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits = (squeakHashAndBits & ~SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) + newHash;
     }
 
-    public final boolean getMarkingFlag() {
+    private boolean getMarkingFlag() {
         return (squeakHashAndBits & MARK_BIT) != 0;
     }
 
@@ -140,8 +140,29 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits ^= MARK_BIT;
     }
 
+    /**
+     * @return <tt>true</tt> if marked, <tt>false</tt> otherwise; NOT thread safe
+     */
     public final boolean isMarked(final boolean currentMarkingFlag) {
         return getMarkingFlag() == currentMarkingFlag;
+    }
+
+    /**
+     * Mark this object; thread safe.
+     * @return <tt>false</tt> if already marked, <tt>true</tt> otherwise
+     */
+    public final synchronized boolean tryToMark(final boolean currentMarkingFlag) {
+        if (getMarkingFlag() == currentMarkingFlag) {
+            return false;
+        } else {
+            toggleMarkingFlag();
+            return true;
+        }
+    }
+
+    public final void unmark(final boolean currentMarkingFlag) {
+        assert getMarkingFlag() == currentMarkingFlag : "Object not marked with currentMarkingFlag: " + currentMarkingFlag;
+        toggleMarkingFlag();
     }
 
     @Override
@@ -171,23 +192,6 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         } else {
             throw SqueakExceptions.SqueakException.create("CompiledMethodObject expected, got: " + methodObject);
         }
-    }
-
-    /**
-     * @return <tt>false</tt> if already marked, <tt>true</tt> otherwise
-     */
-    public final boolean tryToMark(final boolean currentMarkingFlag) {
-        if (getMarkingFlag() == currentMarkingFlag) {
-            return false;
-        } else {
-            toggleMarkingFlag();
-            return true;
-        }
-    }
-
-    public final void unmark(final boolean currentMarkingFlag) {
-        assert getMarkingFlag() == currentMarkingFlag : "Object not marked with currentMarkingFlag: " + currentMarkingFlag;
-        toggleMarkingFlag();
     }
 
     public void pointersBecomeOneWay(@SuppressWarnings("unused") final Object fromPointer, @SuppressWarnings("unused") final Object toPointer) {
