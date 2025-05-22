@@ -114,7 +114,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, klass, shorts);
     }
 
-    public static NativeObject newNativeWideString(final SqueakImageChunk chunk) {
+    public static NativeObject newNativeTruffleString(final SqueakImageChunk chunk) {
         final ClassObject klass = chunk.getSqueakClass();
         final byte[] bytes = chunk.getBytes();
         final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
