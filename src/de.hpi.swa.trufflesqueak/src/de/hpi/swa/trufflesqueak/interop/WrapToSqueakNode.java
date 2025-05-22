@@ -88,9 +88,8 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final NativeObject doTruffleString(final Node node, final TruffleString value,
-                    @Cached(inline = false) final TruffleString.ToJavaStringNode toJavaString,
                     @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile) {
-        return doString(node, toJavaString.execute(value), wideStringProfile);
+        return getContext(node).asString(value, wideStringProfile, node);
     }
 
     @Specialization
