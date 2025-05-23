@@ -118,9 +118,9 @@ public final class EphemeronObject extends AbstractPointersObject {
         hasBeenSignaled = true;
     }
 
-    public boolean keyHasBeenMarked(final boolean currentMarkingFlag) {
+    public boolean keyHasBeenMarked(final ObjectTracer tracer) {
         if (instVarAt0Slow(ObjectLayouts.EPHEMERON.KEY) instanceof final AbstractSqueakObjectWithClassAndHash key) {
-            return key.isMarked(currentMarkingFlag);
+            return tracer.isMarked(key);
         } else {
             return true;
         }

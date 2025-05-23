@@ -54,7 +54,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
@@ -514,7 +513,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver) {
             final SqueakImageContext image = getContext();
-            return image.asArrayOfObjects(ArrayUtils.toArray(image.objectGraphUtils.allInstances()));
+            return image.asArrayOfObjects(image.objectGraphUtils.allInstances());
         }
     }
 
