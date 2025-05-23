@@ -205,6 +205,9 @@ public final class ObjectGraphUtils {
 
     @TruffleBoundary
     public AbstractSqueakObject nextObject(final AbstractSqueakObjectWithClassAndHash targetObject) {
+        // Should not be parallelized since Smalltalk is assuming a fixed order enumeration
+        // of all live objects and a parallel search is likely to produce a different result
+        // each time it is called.
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
         final ObjectTracer pending = ObjectTracer.fromRoots(image, true);
@@ -431,8 +434,8 @@ public final class ObjectGraphUtils {
                 do {
                     // Ephemerons are traced in a special way.
                     if (currentObject instanceof final EphemeronObject ephemeronObject) {
-                        // An Ephemeron is traced normally if it has been signaled or its key has been
-                        // marked already. Otherwise, they are traced after all other objects.
+                        // An Ephemeron is traced normally if it has been signaled or its key has
+                        // been marked already. Otherwise, they are traced after all other objects.
                         if (ephemeronObject.hasBeenSignaled() || ephemeronObject.keyHasBeenMarked(pending)) {
                             pending.tracePointers(currentObject);
                         } else {
@@ -641,7 +644,7 @@ public final class ObjectGraphUtils {
         /**
          * Unmark all objects remaining in the object graph traversal AND in the argument.
          */
-        private void unmarkAll(ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects) {
+        private void unmarkAll(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects) {
             if (currentMarkingFlag) {
                 for (final AbstractSqueakObjectWithClassAndHash object : workStack) {
                     object.unmarkTrue();

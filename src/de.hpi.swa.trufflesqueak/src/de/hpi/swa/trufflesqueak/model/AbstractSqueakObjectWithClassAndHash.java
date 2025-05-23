@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -55,7 +56,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
             // Lookup a VarHandle for the 'flag' squeakHashAndBits
             FLAGS_HANDLE = MethodHandles.lookup().findVarHandle(AbstractSqueakObjectWithClassAndHash.class, "squeakHashAndBits", int.class);
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new Error(e);
+            throw CompilerDirectives.shouldNotReachHere("Unable to find a VarHandle for squeakHashAndBits", e);
         }
     }
 
@@ -150,9 +151,8 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     /*
-     * Marking flag manipulations. The True/False suffix indicates the state of the
-     * MARK_BIT that corresponds to the object being in the marked state. All operations
-     * are thread safe.
+     * Marking flag manipulations. The True/False suffix indicates the state of the MARK_BIT that
+     * corresponds to the object being in the marked state. All operations are thread safe.
      */
 
     /**
@@ -204,9 +204,13 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     /**
      * Unmark this object; thread safe.
      */
-    public final void unmarkTrue() { tryToMarkFalse(); }
+    public final void unmarkTrue() {
+        tryToMarkFalse();
+    }
 
-    public final void unmarkFalse() { tryToMarkTrue(); }
+    public final void unmarkFalse() {
+        tryToMarkTrue();
+    }
 
     @Override
     public String toString() {
