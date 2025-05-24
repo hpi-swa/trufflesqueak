@@ -582,8 +582,8 @@ public final class ObjectGraphUtils {
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
                     if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
                         /*
-                         * Reached end of Smalltalk activations on Truffle frames. From here, tracing
-                         * should continue to walk senders via ContextObjects.
+                         * Reached end of Smalltalk activations on Truffle frames. From here,
+                         * tracing should continue to walk senders via ContextObjects.
                          */
                         return rcrn.getActiveContext(); // break
                     } else {
