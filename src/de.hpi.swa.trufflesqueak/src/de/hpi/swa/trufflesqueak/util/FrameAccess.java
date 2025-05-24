@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -31,6 +32,7 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 
@@ -488,6 +490,22 @@ public final class FrameAccess {
             return null;
         });
         if (frame == null) {
+
+            // Try to find the resume context, if any.
+            final ContextObject resumeContextObject = Truffle.getRuntime().iterateFrames(frameInstance -> {
+                if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
+                    /*
+                     * Reached end of Smalltalk activations on Truffle frames. From here, tracing
+                     * should continue to walk senders via ContextObjects.
+                     */
+                    return rcrn.getActiveContext(); // break
+                }
+                return null;
+            });
+            if (resumeContextObject != null && resumeContextObject.getFrameMarker() == frameMarker) {
+                return resumeContextObject.getTruffleFrame();
+            }
+
             throw SqueakException.create("Could not find frame for:", frameMarker);
         } else {
             return frame.materialize();
