@@ -479,17 +479,18 @@ public final class FrameAccess {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a marker...");
         final Frame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
-            if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
-                /*
-                 * Reached end of Smalltalk activations on Truffle frames.
-                 */
-                final ContextObject context = rcrn.getActiveContext();
-                assert context.getFrameMarker() == frameMarker : "Failed to find frameMarker in ResumeContextRootNode";
-                return context.getTruffleFrame();
-            }
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!isTruffleSqueakFrame(current)) {
-                return null;
+                if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
+                    /*
+                     * Reached end of Smalltalk activations on Truffle frames.
+                     */
+                    final ContextObject context = rcrn.getActiveContext();
+                    assert context.getFrameMarker() == frameMarker : "Failed to find frameMarker in ResumeContextRootNode";
+                    return context.getTruffleFrame();
+                } else {
+                    return null;
+                }
             }
             LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
             if (frameMarker == getMarker(current)) {

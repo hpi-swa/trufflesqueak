@@ -578,16 +578,17 @@ public final class ObjectGraphUtils {
         private void addObjectsFromFrames() {
             CompilerAsserts.neverPartOfCompilation();
             final ContextObject resumeContextObject = Truffle.getRuntime().iterateFrames(frameInstance -> {
-                if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
-                    /*
-                     * Reached end of Smalltalk activations on Truffle frames. From here, tracing
-                     * should continue to walk senders via ContextObjects.
-                     */
-                    return rcrn.getActiveContext(); // break
-                }
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
-                    return null; // skip
+                    if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
+                        /*
+                         * Reached end of Smalltalk activations on Truffle frames. From here, tracing
+                         * should continue to walk senders via ContextObjects.
+                         */
+                        return rcrn.getActiveContext(); // break
+                    } else {
+                        return null; // skip
+                    }
                 }
                 addAllIfUnmarked(current.getArguments());
                 addIfUnmarked(FrameAccess.getContext(current));
