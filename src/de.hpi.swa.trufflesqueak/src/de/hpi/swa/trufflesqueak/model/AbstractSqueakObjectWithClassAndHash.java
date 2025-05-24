@@ -79,7 +79,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits = AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED;
         squeakClass = klass;
         if (markingFlag) {
-            tryToMarkTrue();
+            initMarkTrue();
         }
     }
 
@@ -154,6 +154,10 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
      * Marking flag manipulations. The True/False suffix indicates the state of the MARK_BIT that
      * corresponds to the object being in the marked state. All operations are thread safe.
      */
+
+    private void initMarkTrue() {
+        squeakHashAndBits |= MARK_BIT;
+    }
 
     /**
      * @return <tt>true</tt> if marked, <tt>false</tt> otherwise; thread safe
