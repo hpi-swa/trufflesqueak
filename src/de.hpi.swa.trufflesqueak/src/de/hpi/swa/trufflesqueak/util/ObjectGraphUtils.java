@@ -69,14 +69,14 @@ public final class ObjectGraphUtils {
         }
 
         public void run() {
-            final ObjectTracer pending = roots.copyEmpty();
+            final ObjectTracer tracer = roots.copyEmpty();
             AbstractSqueakObjectWithClassAndHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithClassAndHash currentObject = root;
                 do {
                     objects.add(currentObject);
-                    pending.tracePointers(currentObject);
-                } while ((currentObject = pending.getNext()) != null);
+                    tracer.tracePointers(currentObject);
+                } while ((currentObject = tracer.getNext()) != null);
             }
         }
     }
@@ -129,7 +129,7 @@ public final class ObjectGraphUtils {
         }
 
         public void run() {
-            final ObjectTracer pending = roots.copyEmpty();
+            final ObjectTracer tracer = roots.copyEmpty();
             AbstractSqueakObjectWithClassAndHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithClassAndHash currentObject = root;
@@ -137,8 +137,8 @@ public final class ObjectGraphUtils {
                     if (targetClass == currentObject.getSqueakClass()) {
                         objects.add(currentObject);
                     }
-                    pending.tracePointers(currentObject);
-                } while ((currentObject = pending.getNext()) != null);
+                    tracer.tracePointers(currentObject);
+                } while ((currentObject = tracer.getNext()) != null);
             }
         }
     }
@@ -181,20 +181,20 @@ public final class ObjectGraphUtils {
     public AbstractSqueakObject someInstanceOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
-        final ObjectTracer pending = ObjectTracer.fromRoots(image, true);
+        final ObjectTracer tracer = ObjectTracer.fromRoots(image, true);
         AbstractSqueakObject result = NilObject.SINGLETON;
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = pending.getNext()) != null) {
+        while ((currentObject = tracer.getNext()) != null) {
             marked.add(currentObject);
             if (targetClass == currentObject.getSqueakClass()) {
                 result = currentObject;
                 // Unmark marked objects
-                pending.unmarkAll(marked);
+                tracer.unmarkAll(marked);
                 // Restore marking flag
                 image.toggleCurrentMarkingFlag();
                 break;
             } else {
-                pending.tracePointers(currentObject);
+                tracer.tracePointers(currentObject);
             }
         }
         if (trackOperations) {
@@ -210,15 +210,15 @@ public final class ObjectGraphUtils {
         // each time it is called.
         final long startTime = System.nanoTime();
         final ArrayDeque<AbstractSqueakObjectWithClassAndHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
-        final ObjectTracer pending = ObjectTracer.fromRoots(image, true);
-        AbstractSqueakObjectWithClassAndHash currentObject = pending.getNext();
+        final ObjectTracer tracer = ObjectTracer.fromRoots(image, true);
+        AbstractSqueakObjectWithClassAndHash currentObject = tracer.getNext();
         AbstractSqueakObject result = currentObject; // first object
         boolean foundObject = false;
         while (currentObject != null) {
             if (foundObject) {
                 result = currentObject;
                 // Unmark marked objects
-                pending.unmarkAll(marked);
+                tracer.unmarkAll(marked);
                 // Restore marking flag
                 image.toggleCurrentMarkingFlag();
                 break;
@@ -227,8 +227,8 @@ public final class ObjectGraphUtils {
             if (currentObject == targetObject) {
                 foundObject = true;
             }
-            pending.tracePointers(currentObject);
-            currentObject = pending.getNext();
+            tracer.tracePointers(currentObject);
+            currentObject = tracer.getNext();
         }
         if (trackOperations) {
             ObjectGraphOperations.NEXT_OBJECT.addNanos(System.nanoTime() - startTime);
@@ -261,14 +261,14 @@ public final class ObjectGraphUtils {
         }
 
         public void run() {
-            final ObjectTracer pending = roots.copyEmpty();
+            final ObjectTracer tracer = roots.copyEmpty();
             AbstractSqueakObjectWithClassAndHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithClassAndHash currentObject = root;
                 do {
                     currentObject.pointersBecomeOneWay(from, to);
-                    pending.tracePointers(currentObject);
-                } while ((currentObject = pending.getNext()) != null);
+                    tracer.tracePointers(currentObject);
+                } while ((currentObject = tracer.getNext()) != null);
             }
         }
     }
@@ -294,14 +294,14 @@ public final class ObjectGraphUtils {
         }
 
         public void run() {
-            final ObjectTracer pending = roots.copyEmpty();
+            final ObjectTracer tracer = roots.copyEmpty();
             AbstractSqueakObjectWithClassAndHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithClassAndHash currentObject = root;
                 do {
                     currentObject.pointersBecomeOneWay(fromToMap);
-                    pending.tracePointers(currentObject);
-                } while ((currentObject = pending.getNext()) != null);
+                    tracer.tracePointers(currentObject);
+                } while ((currentObject = tracer.getNext()) != null);
             }
         }
     }
@@ -427,7 +427,7 @@ public final class ObjectGraphUtils {
         }
 
         public void run() {
-            final ObjectTracer pending = roots.copyEmpty();
+            final ObjectTracer tracer = roots.copyEmpty();
             AbstractSqueakObjectWithClassAndHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithClassAndHash currentObject = root;
@@ -436,8 +436,8 @@ public final class ObjectGraphUtils {
                     if (currentObject instanceof final EphemeronObject ephemeronObject) {
                         // An Ephemeron is traced normally if it has been signaled or its key has
                         // been marked already. Otherwise, they are traced after all other objects.
-                        if (ephemeronObject.hasBeenSignaled() || ephemeronObject.keyHasBeenMarked(pending)) {
-                            pending.tracePointers(currentObject);
+                        if (ephemeronObject.hasBeenSignaled() || ephemeronObject.keyHasBeenMarked(tracer)) {
+                            tracer.tracePointers(currentObject);
                         } else {
                             synchronized (ephemeronsToBeTraced) {
                                 ephemeronsToBeTraced.add(ephemeronObject);
@@ -445,9 +445,9 @@ public final class ObjectGraphUtils {
                         }
                     } else {
                         // Normal object
-                        pending.tracePointers(currentObject);
+                        tracer.tracePointers(currentObject);
                     }
-                } while ((currentObject = pending.getNext()) != null);
+                } while ((currentObject = tracer.getNext()) != null);
             }
         }
     }
@@ -482,7 +482,7 @@ public final class ObjectGraphUtils {
         return true;
     }
 
-    private static void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer pending) {
+    private static void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer tracer) {
         // Trace the ephemerons that have marked keys until there are only ephemerons with unmarked
         // keys left.
         while (true) {
@@ -490,8 +490,8 @@ public final class ObjectGraphUtils {
             final Iterator<EphemeronObject> iterator = ephemeronsToBeMarked.iterator();
             while (iterator.hasNext()) {
                 final EphemeronObject ephemeronObject = iterator.next();
-                if (ephemeronObject.keyHasBeenMarked(pending)) {
-                    pending.tracePointers(ephemeronObject);
+                if (ephemeronObject.keyHasBeenMarked(tracer)) {
+                    tracer.tracePointers(ephemeronObject);
                     iterator.remove();
                     finished = false;
                 }
@@ -499,7 +499,7 @@ public final class ObjectGraphUtils {
             if (finished) {
                 break;
             }
-            finishPendingMarking(pending);
+            finishPendingMarking(tracer);
         }
 
         if (ephemeronsToBeMarked.isEmpty()) {
@@ -509,15 +509,15 @@ public final class ObjectGraphUtils {
         // Now, we have ephemerons whose keys are reachable only through ephemerons.
         // Mark them to keep consistent marking flags.
         for (EphemeronObject ephemeronObject : ephemeronsToBeMarked) {
-            pending.tracePointers(ephemeronObject);
+            tracer.tracePointers(ephemeronObject);
         }
-        finishPendingMarking(pending);
+        finishPendingMarking(tracer);
     }
 
-    private static void finishPendingMarking(final ObjectTracer pending) {
+    private static void finishPendingMarking(final ObjectTracer tracer) {
         AbstractSqueakObjectWithClassAndHash currentObject;
-        while ((currentObject = pending.getNext()) != null) {
-            pending.tracePointers(currentObject);
+        while ((currentObject = tracer.getNext()) != null) {
+            tracer.tracePointers(currentObject);
         }
     }
 
