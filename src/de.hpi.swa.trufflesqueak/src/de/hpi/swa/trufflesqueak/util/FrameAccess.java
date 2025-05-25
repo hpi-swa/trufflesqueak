@@ -474,34 +474,51 @@ public final class FrameAccess {
         assert getReceiver(frame) != null : "Receiver should not be null";
     }
 
+    public static ContextObject getResumingContextObjectOrSkip(final FrameInstance frameInstance) {
+        if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
+            /*
+             * Reached end of Smalltalk activations on Truffle frames. From here, tracing should
+             * continue to walk senders via ContextObjects.
+             */
+            return rcrn.getActiveContext(); // break
+        } else {
+            return null; // skip
+        }
+    }
+
     @TruffleBoundary
     public static MaterializedFrame findFrameForMarker(final FrameMarker frameMarker) {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a marker...");
-        final Frame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
+        final Object frameOrResumingContextObject = Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!isTruffleSqueakFrame(current)) {
-                if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
-                    /*
-                     * Reached end of Smalltalk activations on Truffle frames.
-                     */
-                    final ContextObject context = rcrn.getActiveContext();
-                    assert context.getFrameMarker() == frameMarker : "Failed to find frameMarker in ResumeContextRootNode";
-                    return context.getTruffleFrame();
-                } else {
-                    return null;
-                }
+                return FrameAccess.getResumingContextObjectOrSkip(frameInstance);
             }
             LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
             if (frameMarker == getMarker(current)) {
-                return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE).materialize();
+            } else {
+                return null; // continue with next frame
             }
-            return null;
         });
-        if (frame == null) {
-            throw SqueakException.create("Could not find frame for:", frameMarker);
-        } else {
-            return frame.materialize();
+        if (frameOrResumingContextObject instanceof final MaterializedFrame materializedFrame) {
+            return materializedFrame;
+        } else if (frameOrResumingContextObject instanceof final ContextObject resumingContextObject) {
+            ContextObject currentContext = resumingContextObject;
+            while (true) {
+                if (currentContext.getFrameMarker() == frameMarker) {
+                    return currentContext.getTruffleFrame(); // success
+                }
+                final AbstractSqueakObject sender = currentContext.getMaterializedSender();
+                if (sender instanceof final ContextObject senderContext) {
+                    currentContext = senderContext;
+                } else { // end of chain
+                    assert sender == NilObject.SINGLETON;
+                    break; // fail
+                }
+            }
         }
+        throw SqueakException.create("Could not find frame for:", frameMarker);
     }
 }
