@@ -612,22 +612,12 @@ public final class ObjectGraphUtils {
         }
 
         public boolean isMarked(final AbstractSqueakObjectWithClassAndHash object) {
-            if (currentMarkingFlag) {
-                return object.isMarkedTrue();
-            } else {
-                return object.isMarkedFalse();
-            }
+            return object.isMarkedWith(currentMarkingFlag);
         }
 
         public void addIfUnmarked(final Object object) {
-            if (currentMarkingFlag) {
-                if ((object instanceof final AbstractSqueakObjectWithClassAndHash o) && o.tryToMarkTrue()) {
-                    workStack.addFirst(o);
-                }
-            } else {
-                if ((object instanceof final AbstractSqueakObjectWithClassAndHash o) && o.tryToMarkFalse()) {
-                    workStack.addFirst(o);
-                }
+            if ((object instanceof final AbstractSqueakObjectWithClassAndHash o) && o.tryToMarkWith(currentMarkingFlag)) {
+                workStack.addFirst(o);
             }
         }
 
@@ -646,20 +636,11 @@ public final class ObjectGraphUtils {
          * Unmark all objects remaining in the object graph traversal AND in the argument.
          */
         private void unmarkAll(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects) {
-            if (currentMarkingFlag) {
-                for (final AbstractSqueakObjectWithClassAndHash object : workStack) {
-                    object.unmarkTrue();
-                }
-                for (final AbstractSqueakObjectWithClassAndHash object : objects) {
-                    object.unmarkTrue();
-                }
-            } else {
-                for (final AbstractSqueakObjectWithClassAndHash object : workStack) {
-                    object.unmarkFalse();
-                }
-                for (final AbstractSqueakObjectWithClassAndHash object : objects) {
-                    object.unmarkFalse();
-                }
+            for (final AbstractSqueakObjectWithClassAndHash object : workStack) {
+                object.unmarkWith(currentMarkingFlag);
+            }
+            for (final AbstractSqueakObjectWithClassAndHash object : objects) {
+                object.unmarkWith(currentMarkingFlag);
             }
         }
     }

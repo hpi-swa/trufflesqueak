@@ -6,10 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
@@ -25,9 +28,6 @@ import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
-
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
     private static final int MARK_BIT = 1 << 24;
@@ -49,12 +49,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     /**
      * Support for atomically accessing the flags contained within squeakHashAndBits.
      */
-    private static final VarHandle FLAGS_HANDLE;
+    private static final VarHandle HASH_AND_BITS_HANDLE;
 
     static {
         try {
-            // Lookup a VarHandle for the 'flag' squeakHashAndBits
-            FLAGS_HANDLE = MethodHandles.lookup().findVarHandle(AbstractSqueakObjectWithClassAndHash.class, "squeakHashAndBits", int.class);
+            HASH_AND_BITS_HANDLE = MethodHandles.lookup().findVarHandle(AbstractSqueakObjectWithClassAndHash.class, "squeakHashAndBits", int.class);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw CompilerDirectives.shouldNotReachHere("Unable to find a VarHandle for squeakHashAndBits", e);
         }
@@ -79,7 +78,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits = AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED;
         squeakClass = klass;
         if (markingFlag) {
-            initMarkTrue();
+            squeakHashAndBits |= MARK_BIT; // set MARK_BIT
         }
     }
 
@@ -150,24 +149,12 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits = (squeakHashAndBits & ~SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) + newHash;
     }
 
-    /*
-     * Marking flag manipulations. The True/False suffix indicates the state of the MARK_BIT that
-     * corresponds to the object being in the marked state. All operations are thread safe.
-     */
-
-    private void initMarkTrue() {
-        squeakHashAndBits |= MARK_BIT;
-    }
-
     /**
-     * @return <tt>true</tt> if marked, <tt>false</tt> otherwise; thread safe
+     * @return <tt>true</tt> if marked with <tt>currentMarkingFlag</tt>, <tt>false</tt> otherwise;
+     *         thread safe
      */
-    public final boolean isMarkedTrue() {
-        return ((int) FLAGS_HANDLE.getAcquire(this) & MARK_BIT) != 0;
-    }
-
-    public final boolean isMarkedFalse() {
-        return ((int) FLAGS_HANDLE.getAcquire(this) & MARK_BIT) == 0;
+    public final boolean isMarkedWith(final boolean currentMarkingFlag) {
+        return (((int) HASH_AND_BITS_HANDLE.getAcquire(this) & MARK_BIT) != 0) == currentMarkingFlag;
     }
 
     /**
@@ -175,45 +162,27 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
      *
      * @return <tt>false</tt> if already marked, <tt>true</tt> otherwise
      */
-    public final boolean tryToMarkTrue() {
+    public final boolean tryToMarkWith(final boolean currentMarkingFlag) {
         int oldValue, newValue;
-        // Atomically set the new value with release semantics.
-        // If another thread modified 'flags' since our getAcquire, CAS will fail and we retry.
+        /*
+         * Atomically set the new value with release semantics. If another thread modified 'flags'
+         * since our getAcquire, CAS will fail and we retry.
+         */
         do {
-            oldValue = (int) FLAGS_HANDLE.getAcquire(this);
-            if ((oldValue & MARK_BIT) != 0) {
+            oldValue = (int) HASH_AND_BITS_HANDLE.getAcquire(this);
+            if (((oldValue & MARK_BIT) != 0) == currentMarkingFlag) {
                 return false; // Already marked
             }
-            newValue = oldValue | MARK_BIT;
-        } while (!FLAGS_HANDLE.compareAndSet(this, oldValue, newValue));
-
-        return true; // Successfully marked
-    }
-
-    public final boolean tryToMarkFalse() {
-        int oldValue, newValue;
-        // Atomically set the new value with release semantics.
-        // If another thread modified 'flags' since our getAcquire, CAS will fail and we retry.
-        do {
-            oldValue = (int) FLAGS_HANDLE.getAcquire(this);
-            if ((oldValue & MARK_BIT) == 0) {
-                return false; // Already marked
-            }
-            newValue = oldValue & ~MARK_BIT;
-        } while (!FLAGS_HANDLE.compareAndSet(this, oldValue, newValue));
-
+            newValue = oldValue ^ MARK_BIT; // Flip MARK_BIT
+        } while (!HASH_AND_BITS_HANDLE.compareAndSet(this, oldValue, newValue));
         return true; // Successfully marked
     }
 
     /**
      * Unmark this object; thread safe.
      */
-    public final void unmarkTrue() {
-        tryToMarkFalse();
-    }
-
-    public final void unmarkFalse() {
-        tryToMarkTrue();
+    public final void unmarkWith(final boolean currentMarkingFlag) {
+        tryToMarkWith(!currentMarkingFlag);
     }
 
     @Override
