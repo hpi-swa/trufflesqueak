@@ -71,7 +71,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDisplayString")
     protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode implements Primitive6WithFallback {
 
-        @Specialization(guards = {"startIndex >= 1", "stopIndex > 0", "aString.isByteType()", "aString.getByteLength() > 0", "stopIndex <= aString.getByteLength()"})
+        @Specialization(guards = {"startIndex >= 1", "stopIndex > 0", "aString.isTruffleStringType()", "aString.getTruffleStringLength() > 0", "stopIndex <= aString.getTruffleStringLength()"})
         protected final PointersObject doDisplayString(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
                         final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta) {
             if (!glyphMap.isLongType()) {
@@ -104,7 +104,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"aString.isByteType()", "aString.getByteLength() == 0 || stopIndex == 0"})
+        @Specialization(guards = {"aString.isTruffleStringType()", "aString.getTruffleStringLength() == 0 || stopIndex == 0"})
         protected static final Object doNothing(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
                         final ArrayObject xTable, final long kernDelta) {
             return receiver;

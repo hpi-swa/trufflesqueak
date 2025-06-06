@@ -30,6 +30,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
@@ -141,8 +142,8 @@ public final class SqueakImageContext {
     private String imagePath;
     @CompilationFinal public int imageFormat;
     private final TruffleFile homePath;
-    @CompilationFinal(dimensions = 1) private byte[] resourcesDirectoryBytes;
-    @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
+    private String resourcesDirectoryBytes;
+    private String resourcesPath;
     private final boolean isHeadless;
     public final SqueakContextOptions options;
     private final SqueakSystemAttributes systemAttributes = new SqueakSystemAttributes(this);
@@ -571,12 +572,12 @@ public final class SqueakImageContext {
 
     public NativeObject getResourcesDirectory() {
         ensureResourcesDirectoryAndPathInitialized();
-        return NativeObject.newNativeBytes(this, byteStringClass, resourcesDirectoryBytes.clone());
+        return NativeObject.newNativeByteString(this, resourcesDirectoryBytes);
     }
 
     public NativeObject getResourcesPath() {
         ensureResourcesDirectoryAndPathInitialized();
-        return NativeObject.newNativeBytes(this, byteStringClass, resourcesPathBytes.clone());
+        return NativeObject.newNativeByteString(this, resourcesPath);
     }
 
     private void ensureResourcesDirectoryAndPathInitialized() {
@@ -592,8 +593,8 @@ public final class SqueakImageContext {
                     throw SqueakException.create("`parent` should not be `null`.");
                 }
             }
-            resourcesDirectoryBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath());
-            resourcesPathBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath() + env.getFileNameSeparator());
+            resourcesDirectoryBytes = path.getAbsoluteFile().getPath();
+            resourcesPath = path.getAbsoluteFile().getPath() + env.getFileNameSeparator();
         }
     }
 
@@ -1025,16 +1026,28 @@ public final class SqueakImageContext {
         return NativeObject.newNativeByteString(this, value);
     }
 
+    public NativeObject asByteString(final TruffleString value) {
+        return NativeObject.newNativeByteString(this, value);
+    }
+
     public NativeObject asByteSymbol(final String value) {
         CompilerAsserts.neverPartOfCompilation();
         return (NativeObject) asByteString(value).send(this, "asSymbol");
     }
 
     public NativeObject asWideString(final String value) {
-        return NativeObject.newNativeWideString(this, value);
+        return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
+    }
+
+    public NativeObject asWideString(final TruffleString value) {
+        return NativeObject.newNativeInts(this, getWideStringClass(),MiscUtils.stringToCodePointsArray(value.toJavaStringUncached()));
     }
 
     public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node) {
+        return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
+    }
+
+    public NativeObject asString(final TruffleString value, final InlinedConditionProfile wideStringProfile, final Node node) {
         return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
     }
 

@@ -57,6 +57,11 @@ public final class NativeObjectNodes {
                 return LargeIntegerObject.toUnsigned(getContext(node), value);
             }
         }
+
+        @Specialization(guards = "obj.isByteStringType()")
+        protected static final long doNativeByteString(final Node node, final NativeObject obj, final long index) {
+            return Integer.toUnsignedLong(obj.readByteUncached((int) index));
+        }
     }
 
     @GenerateInline
@@ -85,6 +90,11 @@ public final class NativeObjectNodes {
         @Specialization(guards = {"obj.isLongType()", "value >= 0"})
         protected static final void doNativeLongs(final NativeObject obj, final long index, final long value) {
             obj.setLong(index, value);
+        }
+
+        @Specialization(guards = {"obj.isByteStringType()", "value >= 0", "value <= BYTE_MAX"})
+        protected static final void doNativeByteString(NativeObject obj, long index, final long value) {
+            obj.writeByteUncached((int) index, (byte) value);
         }
 
         protected static final boolean inByteRange(final char value) {
@@ -125,6 +135,11 @@ public final class NativeObjectNodes {
             doNativeLongs(obj, index, value.getValue());
         }
 
+        @Specialization(guards = {"obj.isByteStringType()", "inByteRange(value)"})
+        protected static final void doNativeByteStringChar(NativeObject obj, long index, final char value) {
+            doNativeByteString(obj, index, value);
+        }
+
         @Specialization(guards = {"obj.isByteType()", "value.inRange(0, BYTE_MAX)"})
         protected static final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
             doNativeBytes(obj, index, value.longValue());
@@ -143,6 +158,11 @@ public final class NativeObjectNodes {
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "value.fitsIntoLong()"})
         protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
             doNativeLongs(obj, index, value.longValue());
+        }
+
+        @Specialization(guards = {"obj.isByteStringType()", "value.inRange(0, BYTE_MAX)"})
+        protected static final void doNativeByteStringLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+            doNativeByteString(obj, index, value.longValue());
         }
 
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "!value.fitsIntoLong()", "value.lessThanOneShiftedBy64()"})
@@ -191,6 +211,11 @@ public final class NativeObjectNodes {
         protected static final int doNativeLongs(final NativeObject obj) {
             return obj.getLongLength();
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final int doNativeTruffleString(final NativeObject obj) {
+            return obj.getTruffleStringLength();
+        }
     }
 
     @GenerateInline
@@ -217,6 +242,11 @@ public final class NativeObjectNodes {
         @Specialization(guards = "obj.isLongType()")
         protected static final int doNativeLongs(final NativeObject obj) {
             return obj.getLongLength() * Long.BYTES;
+        }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final int doNativeTruffleString(final NativeObject obj) {
+            return obj.getTruffleStringByteLength();
         }
     }
 
@@ -245,6 +275,11 @@ public final class NativeObjectNodes {
         protected static final byte[] doNativeLongs(final NativeObject obj) {
             return UnsafeUtils.toBytes(obj.getLongStorage());
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final byte[] toTruffleString(final NativeObject obj) {
+            return obj.getTruffleStringAsBytesCopy();
+        }
     }
 
     @GenerateInline
@@ -272,6 +307,11 @@ public final class NativeObjectNodes {
         protected static final short[] doNativeLongs(final NativeObject obj) {
             return UnsafeUtils.toShorts(obj.getLongStorage());
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final short[] toTruffleString(final NativeObject obj) {
+            return UnsafeUtils.toShorts(obj.getTruffleStringAsBytesCopy());
+        }
     }
 
     @GenerateInline
@@ -298,6 +338,11 @@ public final class NativeObjectNodes {
         @Specialization(guards = "obj.isLongType()")
         protected static final int[] doNativeLongs(final NativeObject obj) {
             return UnsafeUtils.toInts(obj.getLongStorage());
+        }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final int[] toTruffleString(final NativeObject obj) {
+            return UnsafeUtils.toInts(obj.getTruffleStringAsBytesCopy());
         }
     }
 
@@ -352,6 +397,11 @@ public final class NativeObjectNodes {
         @Specialization(guards = "obj.isLongType()")
         protected static final NativeObject doNativeLongs(final NativeObject obj) {
             return obj.shallowCopy(obj.getLongStorage().clone());
+        }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final NativeObject doNativeTruffleString(final NativeObject obj) {
+            return obj.shallowCopyTruffleString();
         }
     }
 }

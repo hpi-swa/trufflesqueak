@@ -18,6 +18,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
 import com.oracle.truffle.api.strings.AbstractTruffleString;
+import com.oracle.truffle.api.strings.InternalByteArray;
 import com.oracle.truffle.api.strings.MutableTruffleString;
 import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -114,7 +115,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, klass, shorts);
     }
 
-    public static NativeObject newNativeString(final SqueakImageChunk chunk) {
+    public static NativeObject newNativeByteString(final SqueakImageChunk chunk) {
         final ClassObject klass = chunk.getSqueakClass();
         final byte[] bytes = chunk.getBytes();
         final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
@@ -128,29 +129,17 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, img.byteStringClass, truffleString);
     }
 
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final int size) {
+        final TruffleString.Encoding encoding = getTruffleStringEncoding(img.byteStringClass);
+        final byte[] bytes = new byte[size];
+        final MutableTruffleString truffleString = MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false);
+        return new NativeObject(img, img.byteStringClass, truffleString);
+    }
+
     public static NativeObject newNativeByteString(final SqueakImageContext img, final TruffleString string) {
         final TruffleString.Encoding encoding = getTruffleStringEncoding(img.byteStringClass);
         return new NativeObject(img, img.byteStringClass, string.asMutableTruffleStringUncached(encoding));
     }
-
-    public static NativeObject newNativeWideString(final SqueakImageContext img, final String string) {
-        final ClassObject wideStringClass = img.getWideStringClass();
-        final TruffleString.Encoding encoding = getTruffleStringEncoding(wideStringClass);
-        final TruffleString immuntableString = TruffleString.fromJavaStringUncached(string, encoding);
-        return newNativeWideString(img, immuntableString);
-    }
-
-    public static NativeObject newNativeWideString(final SqueakImageContext img, final TruffleString string) {
-        final ClassObject wideStringClass = img.getWideStringClass();
-        final TruffleString.Encoding encoding = getTruffleStringEncoding(wideStringClass);
-        return new NativeObject(img, wideStringClass, string.asMutableTruffleStringUncached(encoding));
-    }
-
-    public static NativeObject newNativeString(final SqueakImageContext img, final ClassObject klass, final MutableTruffleString string) {
-        return new NativeObject(img, klass, string);
-    }
-
-
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
@@ -283,47 +272,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return (int[]) storage;
     }
 
-    public MutableTruffleString getTruffleStringStorage() {
-        assert isTruffleStringType();
-        return (MutableTruffleString) storage;
-    }
-
-    public void setTruffleStringStorage(final MutableTruffleString string) {
-        assert isTruffleStringType();
-        setStorage(string);
-    }
-
-    public TruffleString getImmutableTruffleStringStorage() {
-        return getTruffleStringStorage().asTruffleStringUncached(getTruffleStringEncoding());
-    }
-
-    public int getTruffleStringLength() {
-        return getTruffleStringStorage().byteLength(getTruffleStringEncoding());
-    }
-
-    public byte[] getTruffleStringAsBytes() {
-        assert isTruffleStringType();
-        return getTruffleStringStorage().copyToByteArrayUncached(getTruffleStringEncoding());
-    }
-
-
-    private static TruffleString.Encoding getTruffleStringEncoding(final ClassObject squeakClass) {
-        final SqueakImageContext image = squeakClass.getImage();
-        if (squeakClass == image.byteStringClass) {
-            return TruffleString.Encoding.UTF_8;
-        } else if (squeakClass == image.getWideStringClass()) {
-            return TruffleString.Encoding.UTF_32;
-        } else {
-            throw SqueakException.create("Unexpected string class");
-        }
-    }
-
-    public TruffleString.Encoding getTruffleStringEncoding() {
-        assert isTruffleStringType();
-        final ClassObject squeakClass = getSqueakClass();
-        return getTruffleStringEncoding(squeakClass);
-    }
-
     public long getLong(final long index) {
         assert isLongType();
         return UnsafeUtils.getLong((long[]) storage, index);
@@ -370,10 +318,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return storage instanceof int[];
     }
 
-    public boolean isTruffleStringType() {
-        return storage instanceof MutableTruffleString;
-    }
-
     public boolean isLongType() {
         return storage instanceof long[];
     }
@@ -385,6 +329,89 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public void setStorage(final Object storage) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.storage = storage;
+    }
+
+    // TRUFFLE STRING
+    public boolean isTruffleStringType() {
+        return storage instanceof MutableTruffleString;
+    }
+
+    public boolean isWideStringType() {
+        return isTruffleStringType() && getSqueakClass().getImage().isWideStringClass(getSqueakClass());
+    }
+
+    public boolean isByteStringType() {
+        return isTruffleStringType() && getSqueakClass().getImage().byteStringClass == getSqueakClass();
+    }
+
+    public MutableTruffleString getTruffleStringStorage() {
+        assert isTruffleStringType();
+        return (MutableTruffleString) storage;
+    }
+
+    public void setTruffleStringStorage(final MutableTruffleString string) {
+        assert isTruffleStringType();
+        setStorage(string);
+    }
+
+    public int getTruffleStringLength() {
+        return getTruffleStringStorage().codePointLengthUncached(getTruffleStringEncoding());
+    }
+
+    public int getTruffleStringByteLength() {
+        return getTruffleStringStorage().byteLength(getTruffleStringEncoding());
+    }
+
+    public InternalByteArray getTruffleStringAsBytes() {
+        assert isTruffleStringType();
+        return getTruffleStringStorage().getInternalByteArrayUncached(getTruffleStringEncoding());
+    }
+
+    public byte[] getTruffleStringAsBytesCopy() {
+        assert isTruffleStringType();
+        return getTruffleStringStorage().copyToByteArrayUncached(getTruffleStringEncoding());
+    }
+
+    private static TruffleString.Encoding getTruffleStringEncoding(final ClassObject squeakClass) {
+        return TruffleString.Encoding.UTF_8;
+    }
+
+    public TruffleString.Encoding getTruffleStringEncoding() {
+        assert isTruffleStringType();
+        final ClassObject squeakClass = getSqueakClass();
+        return getTruffleStringEncoding(squeakClass);
+    }
+
+    public long compareBytesUncached(final NativeObject other) {
+        assert other.isTruffleStringType() : "Cannot compare non-truffle-string NativeObjects";
+        return getTruffleStringStorage().compareBytesUncached(other.getTruffleStringStorage(), getTruffleStringEncoding());
+    }
+
+    public int readByteUncached(int index) {
+        return getTruffleStringStorage().readByteUncached(index, getTruffleStringEncoding());
+    }
+
+    public int codePointIndexToByteIndexUncached(int index) {
+        return getTruffleStringStorage().codePointIndexToByteIndexUncached(0, index, getTruffleStringEncoding());
+    }
+
+    public int indexOfCodePointUncached(int codePoint, int startIndex) {
+        return getTruffleStringStorage().indexOfCodePointUncached(codePoint, startIndex, getTruffleStringLength(), getTruffleStringEncoding());
+    }
+
+    public int codePointAtIndexUncached(int index) {
+        return getTruffleStringStorage().codePointAtIndexUncached(index, getTruffleStringEncoding());
+    }
+
+    public void writeByteUncached(int index, byte value) {
+        getTruffleStringStorage().writeByteUncached(index, value, getTruffleStringEncoding());
+    }
+
+    public NativeObject shallowCopyTruffleString() {
+        assert isTruffleStringType();
+        TruffleString.Encoding encoding = getTruffleStringEncoding();
+        byte[] bytes = getTruffleStringStorage().copyToByteArrayUncached(getTruffleStringEncoding());
+        return new NativeObject(this, MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false));
     }
 
     @TruffleBoundary

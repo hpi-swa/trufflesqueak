@@ -444,7 +444,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSetBitBltPlugin")
     protected abstract static class PrimSetBitBltPluginNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = {"pluginName.isByteType()"})
+        @Specialization(guards = {"pluginName.isTruffleStringType()"})
         protected static final ClassObject doSet(final ClassObject receiver, final NativeObject pluginName) {
             return B2D.primitiveSetBitBltPlugin(receiver, pluginName);
         }

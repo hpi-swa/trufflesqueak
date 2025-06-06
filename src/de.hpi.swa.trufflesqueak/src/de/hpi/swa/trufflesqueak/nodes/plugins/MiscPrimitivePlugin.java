@@ -22,6 +22,9 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.AbstractTruffleString;
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
@@ -65,26 +68,31 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final long compareAsciiOrder(final NativeObject string1, final NativeObject string2) {
-            final int len1 = string1.getByteLength();
-            final int len2 = string2.getByteLength();
-            final int min = Math.min(len1, len2);
-            for (int i = 0; i < min; i++) {
-                final byte c1 = string1.getByte(i);
-                final byte c2 = string2.getByte(i);
-                if (c1 != c2) {
-                    return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
-                }
-            }
-            return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
+            AbstractTruffleString truffleString1 = string1.isByteType() ? TruffleString.fromByteArrayUncached(string1.getByteStorage(), TruffleString.Encoding.UTF_8) : string1.getTruffleStringStorage();
+            AbstractTruffleString truffleString2 = string2.isByteType() ? TruffleString.fromByteArrayUncached(string2.getByteStorage(), TruffleString.Encoding.UTF_8) : string2.getTruffleStringStorage();
+            return compareAsciiOrder(truffleString1, truffleString2);
+        }
+
+        protected static final long compareAsciiOrder(final AbstractTruffleString string1, final AbstractTruffleString string2) {
+            long compare = string1.compareBytesUncached(string2, TruffleString.Encoding.UTF_8);
+            return compare == 0L ? 0L : compare < 0L ? -1L : 1L;
         }
 
         protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
-            final int len1 = string1.getByteLength();
-            final int len2 = string2.getByteLength();
+            AbstractTruffleString truffleString1 = string1.isByteType() ? TruffleString.fromByteArrayUncached(string1.getByteStorage(), TruffleString.Encoding.UTF_8) : string1.getTruffleStringStorage();
+            AbstractTruffleString truffleString2 = string2.isByteType() ? TruffleString.fromByteArrayUncached(string2.getByteStorage(), TruffleString.Encoding.UTF_8) : string2.getTruffleStringStorage();
+            return compare(truffleString1, truffleString2, orderValue);
+        }
+
+        protected static final long compare(final AbstractTruffleString string1, final AbstractTruffleString string2, final NativeObject orderValue) {
+            final int len1 = string1.byteLength(TruffleString.Encoding.UTF_8);
+            final int len2 = string2.byteLength(TruffleString.Encoding.UTF_8);
             final int min = Math.min(len1, len2);
             for (int i = 0; i < min; i++) {
-                final byte c1 = orderValue.getByte(string1.getByteUnsigned(i));
-                final byte c2 = orderValue.getByte(string2.getByteUnsigned(i));
+                final long l1 = Integer.toUnsignedLong(string1.readByteUncached(i, TruffleString.Encoding.UTF_8));
+                final long l2 = Integer.toUnsignedLong(string2.readByteUncached(i, TruffleString.Encoding.UTF_8));
+                final byte c1 = orderValue.getByte(l1);
+                final byte c2 = orderValue.getByte(l2);
                 if (c1 != c2) {
                     return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
                 }
@@ -96,22 +104,22 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCompareString")
     public abstract static class PrimCompareStringNode extends AbstractPrimCompareStringNode implements Primitive3 {
-
-        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
+        // TODO improve performance by specialization
+        @Specialization(guards = {"string1.isTruffleStringType() || string1.isByteType()", "string2.isTruffleStringType() || string2.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
         protected static final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
                         @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
             return compareAsciiOrder(string1, string2) + 2L;
         }
 
-        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedOrder"}, limit = "1")
+        @Specialization(guards = {"string1.isTruffleStringType() || string1.isByteType()", "string2.isTruffleStringType() || string2.isByteType()", "orderValue == cachedOrder"}, limit = "1")
         protected static final long doCompareCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
                         @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
             return compare(string1, string2, cachedOrder) + 2L;
         }
 
-        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
+        @Specialization(guards = {"string1.isTruffleStringType() || string1.isByteType()", "string2.isTruffleStringType() || string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
         protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         final NativeObject orderValue) {
@@ -326,7 +334,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFindFirstInString")
     public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements Primitive3 {
 
-        @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
+        @Specialization(guards = {"start > 0", "string.isByteStringType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
         protected static final long doFindCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
                         final long start,
                         @Bind final Node node,
@@ -339,13 +347,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return inclusionMap.isByteType() && inclusionMap.getByteLength() == 256 ? inclusionMap : null;
         }
 
-        @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindCached")
+        @Specialization(guards = {"start > 0", "string.isByteStringType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindCached")
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
                         @Bind final Node node,
-                        @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
-            final int stringSize = string.getByteLength();
+                        @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile
+        ) {
             long index = start - 1;
-            while (index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0) {
+            final long stringSize = string.getTruffleStringByteLength();
+            while (index < stringSize && inclusionMap.getByte(Byte.toUnsignedInt((byte) string.readByteUncached((int) index))) == 0) {
                 index++;
             }
             return notFoundProfile.profile(node, index >= stringSize) ? 0L : index + 1;
@@ -363,23 +372,23 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
         @Specialization
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
-                        final NativeObject matchTable,
-                        @Bind final Node node,
-                        @Cached final InlinedConditionProfile quickReturnProfile,
-                        @Cached final InlinedBranchProfile foundProfile,
-                        @Cached final InlinedBranchProfile notFoundProfile) {
-            if (!key.isByteType() || !body.isByteType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
+                                           final NativeObject matchTable,
+                                           @Bind final Node node,
+                                           @Cached final InlinedConditionProfile quickReturnProfile,
+                                           @Cached final InlinedBranchProfile foundProfile,
+                                           @Cached final InlinedBranchProfile notFoundProfile){
+            if (!key.isByteStringType() || !body.isByteStringType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
-            final int keyLength = key.getByteLength();
+            final int keyLength = key.getTruffleStringByteLength();
             if (quickReturnProfile.profile(node, keyLength == 0)) {
                 return 0L;
             } else {
-                final int bodyLength = body.getByteLength();
+                final int bodyLength = body.getTruffleStringByteLength();
                 for (long startIndex = Math.max(start - 1, 0); startIndex <= bodyLength - keyLength; startIndex++) {
                     int index = 0;
-                    while (matchTable.getByte(body.getByteUnsigned(startIndex + index)) == matchTable.getByte(key.getByteUnsigned(index))) {
+                    while (matchTable.getByte(Integer.toUnsignedLong(body.readByteUncached((int) startIndex + index))) == matchTable.getByte(key.readByteUncached(index))) {
                         if (index == keyLength - 1) {
                             foundProfile.enter(node);
                             return startIndex + 1;
@@ -398,20 +407,20 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIndexOfAsciiInString")
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
 
-        @Specialization(guards = {"start >= 0", "string.isByteType()"})
+        @Specialization(guards = {"start >= 0", "string.isByteStringType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile foundProfile,
                         @Cached final InlinedBranchProfile notFoundProfile) {
-            final byte valueByte = (byte) value;
-            for (long i = start - 1; i < string.getByteLength(); i++) {
-                if (string.getByte(i) == valueByte) {
-                    foundProfile.enter(node);
-                    return i + 1;
-                }
+            final int valueInt = (int) value;
+            final int foundIndex = string.indexOfCodePointUncached(valueInt, (int) start - 1);
+            if (foundIndex >= 0) {
+                foundProfile.enter(node);
+                return foundIndex + 1; // Convert to 1-based index
+            } else {
+                notFoundProfile.enter(node);
+                return 0L;
             }
-            notFoundProfile.enter(node);
-            return 0L;
         }
     }
 
@@ -520,6 +529,84 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table == cachedTable"}, limit = "1")
+        protected static final Object doNativeObjectTruffleStringTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
+                                                                   @SuppressWarnings("unused") final NativeObject table,
+                                                                   @Cached("truffleTableOrNull(table)") final NativeObject cachedTable) {
+            return doNativeObjectTruffleStringTable(receiver, string, start, stop, cachedTable);
+        }
+
+        protected static final NativeObject truffleTableOrNull(final NativeObject table) {
+            return table.isTruffleStringType() && table.getTruffleStringLength() >= 256 ? table : null;
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isTruffleStringType()", "table.getTruffleStringLength() >= 256"}, replaces = "doNativeObjectTruffleStringTableCached")
+        protected static final Object doNativeObjectTruffleStringTable(final Object receiver, final NativeObject string, final long start, final long stop,
+                                                             final NativeObject table) {
+            final MutableTruffleString tableStorage = table.getTruffleStringStorage();
+            for (long i = start - 1; i < stop; i++) {
+                int originalValue = string.getByteUnsigned(i);
+                byte newValue = tableStorage.getInternalByteArrayUncached(TruffleString.Encoding.UTF_8).get(originalValue);
+                string.setByte(i, newValue);
+            }
+            return receiver;
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table == cachedTable"}, limit = "1")
+        protected static final Object doTruffleStringCachedTable(final Object receiver, final NativeObject string, final long start, final long stop,
+                                                                @SuppressWarnings("unused") final NativeObject table,
+                                                                @Cached("byteTableOrNull(table)") final NativeObject cachedTable) {
+            return doTruffleString(receiver, string, start, stop, cachedTable);
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table.isByteType()", "table.getByteLength() >= 256"}, replaces = "doTruffleStringCachedTable")
+        protected static final Object doTruffleString(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+            for (int i = Math.toIntExact(start - 1); i < stop; i++) {
+                int originalValue = string.getTruffleStringStorage().readByteUncached(i, TruffleString.Encoding.UTF_8);
+                int newValue = table.getByte(originalValue);
+                string.getTruffleStringStorage().writeByteUncached(i, (byte) newValue, TruffleString.Encoding.UTF_8);
+            }
+            return receiver;
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table == cachedTable"}, limit = "1")
+        protected static final Object doTruffleStringIntTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
+                                                                   @SuppressWarnings("unused") final NativeObject table,
+                                                                   @Cached("intTableOrNull(table)") final NativeObject cachedTable) {
+            return doTruffleStringIntTable(receiver, string, start, stop, cachedTable);
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table.isIntType()", "table.getIntLength() >= 256"}, replaces = "doTruffleStringIntTableCached")
+        protected static final Object doTruffleStringIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
+                                                             final NativeObject table) {
+            for (int i = Math.toIntExact(start - 1); i < stop; i++) {
+                int originalValue = string.getTruffleStringStorage().readByteUncached(i, TruffleString.Encoding.UTF_8);
+                int newValue = table.getInt(originalValue);
+                string.getTruffleStringStorage().writeByteUncached(i, (byte) newValue, TruffleString.Encoding.UTF_8);
+            }
+            return receiver;
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table == cachedTable"}, limit = "1")
+        protected static final Object doTruffleStringTruffleStringTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
+                                                                             @SuppressWarnings("unused") final NativeObject table,
+                                                                             @Cached("truffleTableOrNull(table)") final NativeObject cachedTable) {
+            return doNTruffleStringTruffleStringTable(receiver, string, start, stop, cachedTable);
+        }
+
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table.isTruffleStringType()", "table.getTruffleStringLength() >= 256"}, replaces = "doTruffleStringTruffleStringTableCached")
+        protected static final Object doNTruffleStringTruffleStringTable(final Object receiver, final NativeObject string, final long start, final long stop,
+                                                                       final NativeObject table) {
+            final MutableTruffleString stringStorage = string.getTruffleStringStorage();
+            final MutableTruffleString tableStorage = table.getTruffleStringStorage();
+            for (int i = Math.toIntExact(start - 1); i < stop; i++) {
+                int originalValue = stringStorage.readByteUncached(i, TruffleString.Encoding.UTF_8);
+                byte newValue = tableStorage.getInternalByteArrayUncached(TruffleString.Encoding.UTF_8).get(originalValue);
+                stringStorage.writeByteUncached(i, newValue, TruffleString.Encoding.UTF_8);
+            }
+            return receiver;
+        }
+
         @SuppressWarnings("unused")
         @Specialization(guards = {"hasBadIndex(string, start, stop)"})
         protected static final AbstractSqueakObject doFailBadIndex(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
@@ -531,3 +618,4 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 }
+

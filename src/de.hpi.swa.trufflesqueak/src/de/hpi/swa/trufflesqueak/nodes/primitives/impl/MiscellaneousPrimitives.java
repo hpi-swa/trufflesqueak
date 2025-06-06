@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -26,6 +27,9 @@ import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.AbstractTruffleString;
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -262,7 +266,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)
     protected abstract static class PrimImageName2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "newName.isByteType()")
+        @Specialization(guards = "newName.isByteType() || newName.isTruffleStringType()")
         protected final NativeObject doSetName(@SuppressWarnings("unused") final Object receiver, final NativeObject newName) {
             getContext().setImagePath(newName.asStringUnsafe());
             return newName;
@@ -577,6 +581,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             ArrayUtils.fill(receiver.getLongStorage(), value.longValueExact());
             return receiver;
         }
+
+        @Specialization(guards = { "receiver.isTruffleStringType()" })
+        protected static final NativeObject doTruffleStrings(final NativeObject receiver, final MutableTruffleString value) {
+            receiver.setTruffleStringStorage(value);
+            return receiver;
+        }
     }
 
     @GenerateNodeFactory
@@ -611,29 +621,33 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 158)
     public abstract static class PrimCompareString2Node extends AbstractPrimCompareStringNode implements Primitive1WithFallback {
-        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()"})
-        protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other) {
-            return compareAsciiOrder(receiver, other) - 2L;
+        // TODO improve performance by specialization
+        @Specialization(guards = {"receiver.isByteType() || receiver.isTruffleStringType()", "other.isTruffleStringType() || other.isByteType()"})
+        protected static final long doCompareAsciiOrderOneByte(final NativeObject receiver, final NativeObject other) {
+            AbstractTruffleString receiverString = receiver.isByteType() ? TruffleString.fromByteArrayUncached(receiver.getByteStorage(), TruffleString.Encoding.UTF_8) : receiver.getTruffleStringStorage();
+            AbstractTruffleString otherString = other.isByteType() ? TruffleString.fromByteArrayUncached(other.getByteStorage(), TruffleString.Encoding.UTF_8) : other.getTruffleStringStorage();
+            return compareAsciiOrder(receiverString, otherString);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 158)
     public abstract static class PrimCompareString3Node extends AbstractPrimCompareStringNode implements Primitive2WithFallback {
-        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
+        // TODO improve performance by specialization
+        @Specialization(guards = {"receiver.isTruffleStringType() || receiver.isByteType()", "other.isTruffleStringType() || other.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
         protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
                         @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
             return compareAsciiOrder(receiver, other);
         }
 
-        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedOrder"}, limit = "1")
+        @Specialization(guards = {"receiver.isTruffleStringType() || receiver.isByteType()", "other.isTruffleStringType() || other.isByteType()", "orderValue == cachedOrder"}, limit = "1")
         protected static final long doCompareCached(final NativeObject receiver, final NativeObject other,
                         @SuppressWarnings("unused") final NativeObject orderValue,
                         @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
             return compare(receiver, other, cachedOrder);
         }
 
-        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
+        @Specialization(guards = {"receiver.isTruffleStringType() || receiver.isByteType()", "other.isTruffleStringType() || other.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
         protected static final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue) {
             return compare(receiver, other, orderValue);

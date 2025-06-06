@@ -5315,8 +5315,8 @@ public final class B2D {
     /* BalloonEngineBase>>#primitiveSetBitBltPlugin */
     public static ClassObject primitiveSetBitBltPlugin(final ClassObject receiver, final NativeObject pluginName) {
         /* Must be string to work */
-        assert pluginName.isByteType();
-        final int length = pluginName.getByteLength();
+        assert pluginName.isTruffleStringType();
+        final int length = pluginName.getTruffleStringByteLength();
         if (length >= 256) {
             throw PrimitiveFailed.andTransferToInterpreter();
         }

@@ -117,7 +117,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsPolyglotEvalAllowed")
     protected abstract static class PrimIsPolyglotEvalAllowedNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @TruffleBoundary
-        @Specialization(guards = "languageId.isByteType()")
+        @Specialization(guards = "languageId.isTruffleStringType()")
         protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
             final TruffleLanguage.Env env = getContext().env;
             return BooleanObject.wrap(env.isPolyglotEvalAllowed(env.getPublicLanguages().get(languageId.asStringUnsafe())));
@@ -153,7 +153,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveEvalString")
     protected abstract static class PrimEvalStringNode extends AbstractEvalStringPrimitiveNode implements Primitive2WithFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
+        @Specialization(guards = {"languageIdOrMimeTypeObj.isTruffleStringType()", "sourceObject.isByteType() || sourceObject.isTruffleStringType()"})
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode) {
@@ -165,7 +165,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveEvalStringWithArguments")
     protected abstract static class PrimEvalStringWithArgumentsNode extends AbstractEvalStringPrimitiveNode implements Primitive4WithFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()", "sizeNode.execute(node, argumentNames) == sizeNode.execute(node, argumentValues)"}, limit = "1")
+        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType() || sourceObject.isTruffleStringType()", "sizeNode.execute(node, argumentNames) == sizeNode.execute(node, argumentValues)"}, limit = "1")
         protected static final Object doEvalWithArguments(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         final ArrayObject argumentNames, final ArrayObject argumentValues,
                         @Bind final Node node,
@@ -191,7 +191,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveEvalStringInInnerContext")
     protected abstract static class PrimEvalStringInInnerContextNode extends AbstractEvalStringPrimitiveNode implements Primitive2WithFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
+        @Specialization(guards = {"languageIdOrMimeTypeObj.isTruffleStringType()", "sourceObject.isTruffleStringType() || sourceObject.isByteType()"})
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         @Bind final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
@@ -229,7 +229,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveEvalFile")
     protected abstract static class PrimEvalFileNode extends AbstractEvalFilePrimitiveNode implements Primitive2WithFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
+        @Specialization(guards = {"languageIdOrMimeTypeObj.isTruffleStringType()", "path.isTruffleStringType()"})
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
                         @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode) {
@@ -241,7 +241,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveEvalFileInInnerContext")
     protected abstract static class PrimEvalFileInInnerContextNode extends AbstractEvalFilePrimitiveNode implements Primitive2WithFallback {
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
+        @Specialization(guards = {"languageIdOrMimeTypeObj.isTruffleStringType()", "path.isTruffleStringType()"})
         protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
                         @Bind final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
@@ -280,7 +280,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetPublicLanguageInfo")
     protected abstract static class PrimGetPublicLanguageInfoNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @TruffleBoundary
-        @Specialization(guards = "languageId.isByteType()")
+        @Specialization(guards = "languageId.isTruffleStringType()")
         protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
             return JavaObjectWrapper.wrap(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe()));
         }
@@ -307,7 +307,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetInternalLanguageInfo")
     protected abstract static class PrimGetInternalLanguageInfoNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @TruffleBoundary
-        @Specialization(guards = "languageId.isByteType()")
+        @Specialization(guards = "languageId.isTruffleStringType()")
         protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
             return JavaObjectWrapper.wrap(getContext().env.getInternalLanguages().get(languageId.asStringUnsafe()));
         }
@@ -343,7 +343,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveImport")
     protected abstract static class PrimImportNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "name.isByteType()")
+        @Specialization(guards = "name.isTruffleStringType()")
         @TruffleBoundary
         public final Object importSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name) {
             try {
@@ -357,7 +357,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveExport")
     protected abstract static class PrimExportNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = "name.isByteType()")
+        @Specialization(guards = "name.isByteType() || name.isTruffleStringType()")
         @TruffleBoundary
         public final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value) {
             try {
@@ -2255,14 +2255,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveToJavaString")
     protected abstract static class PrimToJavaStringNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "target.isByteType()")
-        protected static final String bytesToString(@SuppressWarnings("unused") final Object receiver, final NativeObject target) {
-            return target.asStringUnsafe();
-        }
 
-        @Specialization(guards = "target.isIntType()")
-        protected static final String intsToString(@SuppressWarnings("unused") final Object receiver, final NativeObject target) {
-            return target.asStringFromWideString();
+        @Specialization(guards = "target.isTruffleStringType()")
+        protected static final String truffleStringToString(@SuppressWarnings("unused") final Object receiver, final NativeObject target) {
+            return target.asStringUnsafe();
         }
     }
 
