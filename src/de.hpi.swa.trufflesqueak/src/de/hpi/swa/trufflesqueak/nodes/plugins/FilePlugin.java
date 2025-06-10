@@ -682,6 +682,19 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return fileWriteFromAt(fd, count, bytes, startIndex, 1);
         }
 
+        @Specialization(guards = {"isStdoutFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
+        protected final long doWriteTruffleStringToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
+            writeToOutputStream(getContext().env.out(), content.getTruffleStringAsBytesCopy(), (int) (startIndex - 1), (int) count);
+            return count;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isStderrFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
+        protected final long doWriteTruffleStringToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
+            writeToOutputStream(getContext().env.err(), content.getTruffleStringAsBytesCopy(), (int) (startIndex - 1), (int) count);
+            return count;
+        }
+
         private static long fileWriteFromAt(final PointersObject fd, final long count, final byte[] bytes, final long startIndex, final int elementSize) {
             final int offset = (int) (startIndex - 1) * elementSize;
             final int length = (int) count * elementSize;
