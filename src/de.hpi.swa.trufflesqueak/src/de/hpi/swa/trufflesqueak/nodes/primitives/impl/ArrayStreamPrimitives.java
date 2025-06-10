@@ -18,6 +18,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -165,9 +166,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return (char) (obj.getByte(index - 1) & 0xFF);
         }
 
-        @Specialization(guards = {"obj.isByteStringType()", "inBounds1(index, obj.getTruffleStringLength())"})
+        @Specialization(guards = {"obj.isByteStringType()", "inBounds1(index, obj.getTruffleStringByteLength())"})
         protected static final char doNativeObjectByteString(final NativeObject obj, final long index) {
-            final int codepoint = obj.codePointAtIndexUncached((int) index - 1);
+            final MutableTruffleString storage = obj.getTruffleStringStorage();
+            final int codepoint = storage.getInternalByteArrayUncached(obj.getTruffleStringEncoding()).get((int) index -1);
             return (char) (codepoint & 0xFF);
         }
 
