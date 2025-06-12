@@ -476,7 +476,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             if (selectorObj != null) {
                 selector = selectorObj.asStringUnsafe();
             }
-            return className + ">>#" + selector;
+            return className + "#" + selector;
         }
     }
 
