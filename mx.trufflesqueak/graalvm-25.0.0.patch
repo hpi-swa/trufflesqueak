@@ -1,8 +1,8 @@
 diff --git a/sdk/mx.sdk/suite.py b/sdk/mx.sdk/suite.py
-index 9906251a7d6..319984255fb 100644
+index cc30ee75be4..c05ae0f0369 100644
 --- a/sdk/mx.sdk/suite.py
 +++ b/sdk/mx.sdk/suite.py
-@@ -461,6 +461,8 @@ suite = {
+@@ -506,6 +506,8 @@ suite = {
        "javaCompliance" : "17+",
        "workingSets" : "Truffle,Tools",
        "checkstyle" : "org.graalvm.word",
@@ -12,19 +12,19 @@ index 9906251a7d6..319984255fb 100644
      },
      "org.graalvm.launcher.test" : {
 diff --git a/sdk/src/org.graalvm.launcher.native/src/launcher.cc b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
-index c344340439b..028a38702f0 100644
+index 5710bae01d7..099ed448588 100644
 --- a/sdk/src/org.graalvm.launcher.native/src/launcher.cc
 +++ b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
-@@ -263,7 +263,7 @@ static void *load_jli_lib(std::string exeDir) {
+@@ -300,7 +300,7 @@ static void *load_jli_lib(std::string exeDir) {
  
  /* load the language library (either native library or libjvm) and return a
-  * pointer to the JNI_CreateJavaVM function */
--static CreateJVM load_vm_lib(std::string liblangPath) {
-+static CreateJVM load_vm_lib(bool jvmMode, std::string liblangPath) {
+  * pointer to it */
+-void* load_vm_lib(std::string liblangPath) {
++void* load_vm_lib(bool jvmMode, std::string liblangPath) {
      if (debug) {
          std::cout << "Loading library " << liblangPath << std::endl;
      }
-@@ -277,6 +277,14 @@ static CreateJVM load_vm_lib(std::string liblangPath) {
+@@ -314,6 +314,14 @@ void* load_vm_lib(std::string liblangPath) {
              std::cerr << "Error while loading " << liblangPath << ":" << std::endl << errorString << std::endl;
          }
  #else
@@ -38,15 +38,15 @@ index c344340439b..028a38702f0 100644
 +        }
          HMODULE jvmHandle = LoadLibraryA(liblangPath.c_str());
          if (jvmHandle != NULL) {
-             return (CreateJVM) GetProcAddress(jvmHandle, "JNI_CreateJavaVM");
-@@ -711,7 +719,7 @@ static int jvm_main_thread(int argc, char *argv[], std::string exeDir, bool jvmM
+             return (void*) jvmHandle;
+@@ -969,7 +977,7 @@ static int jvm_main_thread(struct MainThreadArgs& parsedArgs) {
  
      /* load VM library - after parsing arguments s.t. NMT
-      * tracking variable is already set */
--    CreateJVM createVM = load_vm_lib(libPath);
-+    CreateJVM createVM = load_vm_lib(jvmMode, libPath);
-     if (!createVM) {
-         std::cerr << "Could not load JVM." << std::endl;
+      * tracking environment variables are already set */
+-    void* library = load_vm_lib(libPath);
++    void* library = load_vm_lib(jvmMode, libPath);
+     if (!library) {
+         std::cerr << "Could not load VM library from " << libPath << "." << std::endl;
          return -1;
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
 index 10b976c323e..18e3fd6a8a8 100644
