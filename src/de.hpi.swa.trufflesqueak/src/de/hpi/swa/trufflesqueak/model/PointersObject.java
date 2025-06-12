@@ -155,7 +155,12 @@ public final class PointersObject extends AbstractPointersObject {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         final ClassObject classObject = getSqueakClass();
-        if (SqueakImageContext.getSlow().isPointClass(classObject)) {
+        /*
+         * This may be accessed from outside a context (when Truffle accesses sources), so we cannot
+         * look up the context here.
+         */
+        final SqueakImageContext image = classObject.getImage();
+        if (image.isPointClass(classObject)) {
             return readNode.execute(null, this, POINT.X) + "@" + readNode.execute(null, this, POINT.Y);
         }
         final String squeakClassName = classObject.getClassName();
