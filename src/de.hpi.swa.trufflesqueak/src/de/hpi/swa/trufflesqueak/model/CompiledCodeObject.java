@@ -154,7 +154,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private ExecutionData getExecutionData() {
         if (!hasExecutionData()) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             executionData = new ExecutionData();
         }
         return executionData;
@@ -214,7 +214,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public RootCallTarget getCallTarget() {
         if (getExecutionData().callTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
             assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
             executionData.callTarget = new StartContextRootNode(language, this).getCallTarget();
@@ -240,7 +240,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private CyclicAssumption callTargetStable() {
         if (getExecutionData().callTargetStable == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             executionData.callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
         }
         return executionData.callTargetStable;
@@ -252,7 +252,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public Assumption getDoesNotNeedSenderAssumption() {
         if (getExecutionData().doesNotNeedSender == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             executionData.doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
         }
         return executionData.doesNotNeedSender;
@@ -261,7 +261,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
         if (getExecutionData().resumptionCallTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             executionData.resumptionCallTarget = ResumeContextRootNode.create(SqueakImageContext.getSlow().getLanguage(), context).getCallTarget();
         } else {
             final ResumeContextRootNode resumeNode = (ResumeContextRootNode) executionData.resumptionCallTarget.getRootNode();
@@ -278,7 +278,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public FrameDescriptor getFrameDescriptor() {
         if (getExecutionData().frameDescriptor == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             /* Never let synthetic compiled block escape, use outer method instead. */
             final CompiledCodeObject exposedMethod = executionData.outerMethod != null ? executionData.outerMethod : this;
             executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod);
@@ -326,7 +326,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
+        CompilerAsserts.neverPartOfCompilation();
         // header is a tagged small integer
         final long headerWord = (chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS);
         header = CompiledCodeHeaderUtils.toInt(headerWord);
@@ -418,7 +418,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Idempotent
     public DispatchPrimitiveNode getPrimitiveNodeOrNull() {
         if (primitiveNodeOrNull == UNINITIALIZED_PRIMITIVE_NODE) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            CompilerDirectives.transferToInterpreter();
             if (hasPrimitive()) {
                 final AbstractPrimitiveNode nodeOrNull = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
                 if (nodeOrNull != null) {
