@@ -308,7 +308,11 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         final ClassObject squeakClass = getSqueakClass();
-        final SqueakImageContext image = SqueakImageContext.getSlow();
+        /*
+         * This may be accessed from outside a context (when Truffle accesses sources), so we cannot
+         * look up the context here.
+         */
+        final SqueakImageContext image = squeakClass.getImage();
         if (isByteType()) {
             if (image.isByteStringClass(squeakClass)) {
                 final String fullString = asStringUnsafe();
