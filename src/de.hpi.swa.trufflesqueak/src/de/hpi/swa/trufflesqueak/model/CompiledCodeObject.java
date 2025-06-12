@@ -70,7 +70,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @CompilationFinal private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
 
-    @CompilationFinal private ExecutionData executionData;
+    private ExecutionData executionData;
 
     /**
      * Additional metadata that is only needed when the CompiledCodeObject is actually executed.
@@ -79,7 +79,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      */
     static final class ExecutionData {
         // frame info
-        @CompilationFinal private FrameDescriptor frameDescriptor;
+        private FrameDescriptor frameDescriptor;
 
         /*
          * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
@@ -90,14 +90,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          * activations.
          */
         private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
-        @CompilationFinal private CompiledCodeObject outerMethod;
+        private CompiledCodeObject outerMethod;
 
         private Source source;
 
-        @CompilationFinal private RootCallTarget callTarget;
-        @CompilationFinal private CyclicAssumption callTargetStable;
-        @CompilationFinal private Assumption doesNotNeedSender;
-        @CompilationFinal private RootCallTarget resumptionCallTarget;
+        private RootCallTarget callTarget;
+        private CyclicAssumption callTargetStable;
+        private Assumption doesNotNeedSender;
+        private RootCallTarget resumptionCallTarget;
     }
 
     @TruffleBoundary
@@ -214,12 +214,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public RootCallTarget getCallTarget() {
         if (getExecutionData().callTarget == null) {
-            CompilerDirectives.transferToInterpreter();
-            final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
-            assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
-            executionData.callTarget = new StartContextRootNode(language, this).getCallTarget();
+            executionData.callTarget = createNewCallTarget();
         }
         return executionData.callTarget;
+    }
+
+    @TruffleBoundary
+    private RootCallTarget createNewCallTarget() {
+        final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
+        assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
+        return new StartContextRootNode(language, this).getCallTarget();
     }
 
     private void invalidateCallTarget() {
