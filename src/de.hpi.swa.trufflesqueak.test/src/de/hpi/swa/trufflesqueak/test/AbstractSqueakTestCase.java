@@ -110,8 +110,9 @@ public abstract class AbstractSqueakTestCase {
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.TESTING, "true");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.RESOURCE_SUMMARY, Boolean.toString(spec.showStatistics));
         if (IS_GRAAL_RUNTIME) {
-            contextBuilder.option("engine.CompilationStatistics", Boolean.toString(spec.showStatistics));
             contextBuilder.option("compiler.TreatPerformanceWarningsAsErrors", "call,instanceof,store,trivial");
+            contextBuilder.option("compiler.NodeSourcePositions", "true");
+            contextBuilder.option("engine.CompilationStatistics", Boolean.toString(spec.showStatistics));
             contextBuilder.option("engine.CompilationFailureAction", "ExitVM");
         }
 
