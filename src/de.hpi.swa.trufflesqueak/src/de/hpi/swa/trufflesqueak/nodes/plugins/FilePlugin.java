@@ -230,7 +230,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDirectoryLookup")
     protected abstract static class PrimDirectoryLookupNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"longIndex > 0", "nativePathName.isByteStringType()", "nativePathName.getTruffleStringLength() == 0"})
+        @Specialization(guards = {"longIndex > 0", "nativePathName.isTruffleStringType()", "nativePathName.getTruffleStringByteLength() == 0"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doLookupEmptyString(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
             assert OS.isWindows() : "Unexpected empty path on a non-Windows system.";
@@ -250,7 +250,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(guards = {"index > 0", "nativePathName.isByteStringType()", "nativePathName.getTruffleStringLength() > 0"})
+        @Specialization(guards = {"index > 0", "nativePathName.isTruffleStringType()", "nativePathName.getTruffleStringByteLength() > 0"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doLookup(@SuppressWarnings("unused") final Object receiver, final NativeObject nativePathName, final long index) {
             String pathName = nativePathName.asStringUnsafe();
@@ -443,7 +443,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileOpen")
     protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = "nativeFileName.isByteStringType()")
+        @Specialization(guards = "nativeFileName.isTruffleStringType() || nativeFileName.isByteType()")
         protected final Object doOpen(@SuppressWarnings("unused") final Object receiver, final NativeObject nativeFileName, final boolean writableFlag) {
             return createFileHandleOrPrimFail(getContext(), asPublicTruffleFile(nativeFileName), writableFlag);
         }
@@ -455,7 +455,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isTruffleStringType()", "inBounds(startIndex, count, target.getTruffleStringByteLength())"})
         protected static final long doReadTruffleString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count) {
-            final long read = readFrom(getChannelOrPrimFail(fd), target.getTruffleStringAsBytes().getArray(), (int) startIndex - 1, (int) count);
+            final long read = readFrom(getChannelOrPrimFail(fd), target.getTruffleStringAsReadonlyBytes(), (int) startIndex - 1, (int) count);
             return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
         }
 

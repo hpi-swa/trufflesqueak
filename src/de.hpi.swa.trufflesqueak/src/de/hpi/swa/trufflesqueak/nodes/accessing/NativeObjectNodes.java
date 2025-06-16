@@ -58,9 +58,15 @@ public final class NativeObjectNodes {
             }
         }
 
-        @Specialization(guards = "obj.isByteStringType()")
-        protected static final long doNativeByteString(final Node node, final NativeObject obj, final long index) {
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final long doNativeTruffleString(final Node node, final NativeObject obj, final long index) {
             return Integer.toUnsignedLong(obj.readByteUncached((int) index));
+        }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        protected static final long doPrimitiveFail2(final Node node, final NativeObject obj, final long index) {
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 
@@ -92,7 +98,7 @@ public final class NativeObjectNodes {
             obj.setLong(index, value);
         }
 
-        @Specialization(guards = {"obj.isByteStringType()", "value >= 0", "value <= BYTE_MAX"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "value >= 0", "value <= BYTE_MAX"})
         protected static final void doNativeByteString(NativeObject obj, long index, final long value) {
             obj.writeByteUncached((int) index, (byte) value);
         }
@@ -135,7 +141,7 @@ public final class NativeObjectNodes {
             doNativeLongs(obj, index, value.getValue());
         }
 
-        @Specialization(guards = {"obj.isByteStringType()", "inByteRange(value)"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "inByteRange(value)"})
         protected static final void doNativeByteStringChar(NativeObject obj, long index, final char value) {
             doNativeByteString(obj, index, value);
         }
@@ -160,7 +166,7 @@ public final class NativeObjectNodes {
             doNativeLongs(obj, index, value.longValue());
         }
 
-        @Specialization(guards = {"obj.isByteStringType()", "value.inRange(0, BYTE_MAX)"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "value.inRange(0, BYTE_MAX)"})
         protected static final void doNativeByteStringLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
             doNativeByteString(obj, index, value.longValue());
         }

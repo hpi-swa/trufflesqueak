@@ -334,27 +334,48 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFindFirstInString")
     public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements Primitive3 {
 
-        @Specialization(guards = {"start > 0", "string.isByteStringType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
-        protected static final long doFindCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
+        @Specialization(guards = {"start > 0", "string.isTruffleStringType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
+        protected static final long doFindTruffleStringCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
                         final long start,
                         @Bind final Node node,
                         @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
                         @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
-            return doFind(receiver, string, cachedInclusionMap, start, node, notFoundProfile);
+            return doFindTruffleString(receiver, string, cachedInclusionMap, start, node, notFoundProfile);
+        }
+
+        @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
+        protected static final long doFindByteCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
+                                                 final long start,
+                                                 @Bind final Node node,
+                                                 @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
+                                                 @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
+            return doFindByte(receiver, string, cachedInclusionMap, start, node, notFoundProfile);
         }
 
         protected static final NativeObject validInclusionMapOrNull(final NativeObject inclusionMap) {
             return inclusionMap.isByteType() && inclusionMap.getByteLength() == 256 ? inclusionMap : null;
         }
 
-        @Specialization(guards = {"start > 0", "string.isByteStringType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindCached")
-        protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
+        @Specialization(guards = {"start > 0", "string.isTruffleStringType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindTruffleStringCached")
+        protected static final long doFindTruffleString(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
                         @Bind final Node node,
                         @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile
         ) {
             long index = start - 1;
             final long stringSize = string.getTruffleStringByteLength();
             while (index < stringSize && inclusionMap.getByte(Byte.toUnsignedInt((byte) string.readByteUncached((int) index))) == 0) {
+                index++;
+            }
+            return notFoundProfile.profile(node, index >= stringSize) ? 0L : index + 1;
+        }
+
+        @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindByteCached")
+        protected static final long doFindByte(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
+                                           @Bind final Node node,
+                                           @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
+            final int stringSize = string.getByteLength();
+            long index = start - 1;
+            while (index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0) {
                 index++;
             }
             return notFoundProfile.profile(node, index >= stringSize) ? 0L : index + 1;
@@ -377,7 +398,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                                            @Cached final InlinedConditionProfile quickReturnProfile,
                                            @Cached final InlinedBranchProfile foundProfile,
                                            @Cached final InlinedBranchProfile notFoundProfile){
-            if (!key.isByteStringType() || !body.isByteStringType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
+            if (!key.isTruffleStringType() || !body.isTruffleStringType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
@@ -407,13 +428,13 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIndexOfAsciiInString")
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
 
-        @Specialization(guards = {"start >= 0", "string.isByteStringType()"})
+        @Specialization(guards = {"start >= 0", "string.isTruffleStringType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile foundProfile,
                         @Cached final InlinedBranchProfile notFoundProfile) {
-            final int valueInt = (int) value;
-            final int foundIndex = string.indexOfCodePointUncached(valueInt, (int) start - 1);
+            final byte byteValue = (byte) value;
+            final int foundIndex = string.getTruffleStringStorage().byteIndexOfAnyByteUncached((int) start - 1, string.getTruffleStringByteLength(), new byte[]{byteValue}, TruffleString.Encoding.UTF_8);
             if (foundIndex >= 0) {
                 foundProfile.enter(node);
                 return foundIndex + 1; // Convert to 1-based index

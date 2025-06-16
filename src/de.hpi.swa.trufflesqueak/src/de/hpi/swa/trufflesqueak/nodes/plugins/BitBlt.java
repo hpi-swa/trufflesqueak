@@ -2439,7 +2439,7 @@ public final class BitBlt {
             }
         }
         final int left = destX;
-        final byte[] sourceStringBytes = sourceString.getTruffleStringAsBytes().getArray();
+        final byte[] sourceStringBytes = sourceString.getTruffleStringAsReadonlyBytes();
         for (int charIndex = (int) startIndex; charIndex <= stopIndex; charIndex++) {
             final int ascii = Byte.toUnsignedInt(sourceStringBytes[charIndex - 1]);
             final int glyphIndex = (int) glyphMap[ascii];

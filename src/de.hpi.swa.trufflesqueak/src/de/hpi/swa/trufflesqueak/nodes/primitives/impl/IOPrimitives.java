@@ -665,7 +665,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     TruffleString.Encoding encoding = repl.getTruffleStringEncoding();
                     int length = Math.toIntExact(1 + stop - start);
                     for(int i = 0; i < length; i++) {
-                        rcvrString.writeByteUncached(Math.toIntExact(start - 1 + i), repl.getTruffleStringAsBytes().get(Math.toIntExact(replStart - 1 + i)), encoding);
+                        rcvrString.writeByteUncached(Math.toIntExact(start - 1 + i), (byte) repl.readByteUncached(Math.toIntExact(replStart - 1 + i)), encoding);
                     }
                 } else {
                     errorProfile.enter(node);

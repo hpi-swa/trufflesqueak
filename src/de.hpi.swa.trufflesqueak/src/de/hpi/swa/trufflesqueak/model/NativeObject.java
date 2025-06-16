@@ -18,7 +18,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
 import com.oracle.truffle.api.strings.AbstractTruffleString;
-import com.oracle.truffle.api.strings.InternalByteArray;
 import com.oracle.truffle.api.strings.MutableTruffleString;
 import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -136,7 +135,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, img.byteStringClass, truffleString);
     }
 
-    public static NativeObject newNativeByteString(final SqueakImageContext img, final TruffleString string) {
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final AbstractTruffleString string) {
         final TruffleString.Encoding encoding = getTruffleStringEncoding(img.byteStringClass);
         return new NativeObject(img, img.byteStringClass, string.asMutableTruffleStringUncached(encoding));
     }
@@ -336,10 +335,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return storage instanceof MutableTruffleString;
     }
 
-    public boolean isWideStringType() {
-        return isTruffleStringType() && getSqueakClass().getImage().isWideStringClass(getSqueakClass());
-    }
-
     public boolean isByteStringType() {
         return isTruffleStringType() && getSqueakClass().getImage().byteStringClass == getSqueakClass();
     }
@@ -362,9 +357,9 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return getTruffleStringStorage().byteLength(getTruffleStringEncoding());
     }
 
-    public InternalByteArray getTruffleStringAsBytes() {
+    public byte[] getTruffleStringAsReadonlyBytes() {
         assert isTruffleStringType();
-        return getTruffleStringStorage().getInternalByteArrayUncached(getTruffleStringEncoding());
+        return getTruffleStringStorage().getInternalByteArrayUncached(getTruffleStringEncoding()).getArray();
     }
 
     public byte[] getTruffleStringAsBytesCopy() {
@@ -425,8 +420,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public String asStringFromWideString() {
-        final MutableTruffleString string = getTruffleStringStorage();
-        return string.toJavaStringUncached();
+        final int[] ints = getIntStorage();
+        return new String(ints, 0, ints.length);
     }
 
     @Override
@@ -443,7 +438,11 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         } else if (isShortType()) {
             return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
-            return "int[" + getIntLength() + "]";
+            if (image.isWideStringClass(squeakClass)) {
+                return asStringFromWideString();
+            } else {
+                return "int[" + getIntLength() + "]";
+            }
         } else if (isLongType()) {
             return "long[" + getLongLength() + "]";
         } else if (isTruffleStringType()) {
@@ -497,7 +496,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return false;
     }
 
-    public static boolean needsWideString(final TruffleString s) {
+    public static boolean needsWideString(final AbstractTruffleString s) {
         return needsWideString(s.toJavaStringUncached());
     }
 

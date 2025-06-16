@@ -30,6 +30,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
+import com.oracle.truffle.api.strings.AbstractTruffleString;
 import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -1026,7 +1027,7 @@ public final class SqueakImageContext {
         return NativeObject.newNativeByteString(this, value);
     }
 
-    public NativeObject asByteString(final TruffleString value) {
+    public NativeObject asByteString(final AbstractTruffleString value) {
         return NativeObject.newNativeByteString(this, value);
     }
 
@@ -1039,7 +1040,7 @@ public final class SqueakImageContext {
         return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
 
-    public NativeObject asWideString(final TruffleString value) {
+    public NativeObject asWideString(final AbstractTruffleString value) {
         return NativeObject.newNativeInts(this, getWideStringClass(),MiscUtils.stringToCodePointsArray(value.toJavaStringUncached()));
     }
 
@@ -1047,7 +1048,7 @@ public final class SqueakImageContext {
         return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
     }
 
-    public NativeObject asString(final TruffleString value, final InlinedConditionProfile wideStringProfile, final Node node) {
+    public NativeObject asString(final AbstractTruffleString value, final InlinedConditionProfile wideStringProfile, final Node node) {
         return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
     }
 
