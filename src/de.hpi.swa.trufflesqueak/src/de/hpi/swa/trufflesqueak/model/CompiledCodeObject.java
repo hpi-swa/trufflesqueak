@@ -212,6 +212,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    @TruffleBoundary
     public RootCallTarget getCallTarget() {
         if (getExecutionData().callTarget == null) {
             CompilerDirectives.transferToInterpreter();
