@@ -129,89 +129,97 @@ jobs:
         if-no-files-found: ignore
         retention-days: 5
 
-  # build-standalone:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
-  #       type: [native, jvm]
-  #   env:
-  #     JAVA_VERSION: "25"
-  #     JDK_IDENTIFIER: "latest"
-  #     MX_ENV: "trufflesqueak-${{ matrix.type }}"
-  #     VERBOSE_GRAALVM_LAUNCHERS: true
-  #   name: ${{ matrix.type }} ${{ matrix.os }}
-  #   timeout-minutes: 30
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #   - name: Clone TruffleSqueak repository
-  #     uses: actions/checkout@v4
-  #   - name: Set up Oracle GraalVM
-  #     uses: graalvm/setup-graalvm@v1
-  #     with:
-  #       java-version: '${{ env.JAVA_VERSION }}-ea'
-  #       distribution: 'graalvm'
-  #       github-token: ${{ secrets.GITHUB_TOKEN }}
-  #     if: ${{ matrix.type == 'native' }}
-  #   - name: Enable Oracle GraalVM
-  #     shell: bash
-  #     run: |
-  #       echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
-  #       cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
-  #     if: ${{ matrix.type == 'native' }}
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: '3.12.0'
-  #   - name: Set up dependencies
-  #     shell: bash
-  #     run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} ${{ env.JDK_IDENTIFIER }}
-  #   - name: Build TruffleSqueak standalone
-  #     run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
-  #     if: ${{ runner.os != 'Windows' }}
-  #   # Workaround for https://github.com/actions/runner-images/issues/10001:
-  #   - name: Upgrade LLVM
-  #     run: choco upgrade llvm
-  #     if: ${{ runner.os == 'Windows' }}
-  #   - name: Build TruffleSqueak standalone via cmd.exe
-  #     shell: cmd
-  #     run: |
-  #       call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-  #       if ${{ matrix.type }}==native (set "DEPENDENCY_NAME=SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") else (set "DEPENDENCY_NAME=SMALLTALK_JAVA_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") 
-  #       call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies %DEPENDENCY_NAME%
-  #       call mx --env ${{ env.MX_ENV }} standalone-home --type ${{ matrix.type }} smalltalk > standalone-home-with-forward-slashes.txt
-  #       set /p STANDALONE_HOME=<standalone-home-with-forward-slashes.txt
-  #       setlocal enabledelayedexpansion
-  #       set "STANDALONE_HOME=%STANDALONE_HOME:/=\%"
-  #       echo %STANDALONE_HOME%\bin>>%GITHUB_PATH%
-  #       echo [%STANDALONE_HOME%\bin added to $PATH]
-  #       call mx --env ${{ env.MX_ENV }} paths %DEPENDENCY_NAME% > standalone-path-with-forward-slashes.txt
-  #       set /p STANDALONE_PATH=<standalone-path-with-forward-slashes.txt
-  #       setlocal enabledelayedexpansion
-  #       set "STANDALONE_PATH=%STANDALONE_PATH:/=\%"
-  #       copy %STANDALONE_PATH% ${{ env.STANDALONE_TARGET }}
-  #     if: ${{ runner.os == 'Windows' }}
-  #   - name: Run SystemReporter on TruffleSqueak standalone
-  #     run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-  #   - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
-  #     run: |
-  #       trufflesqueak-polyglot-get -v 24.2.1 -a js
-  #       trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-  #     if: ${{ matrix.type == 'jvm' }}
-  #   - name: Upload TruffleSqueak standalone
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
-  #       path: ${{ env.STANDALONE_TARGET }}
-  #       retention-days: 7
-  #   - name: Deploy TruffleSqueak standalone
-  #     shell: bash
-  #     run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-  #     # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
-  #     if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
-  #   - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
-  #     run: |
-  #       mx.trufflesqueak/utils.sh download-cuis-test-image
-  #       trufflesqueak --vm.ea --vm.esa --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.NodeSourcePositions=true --engine.CompilationFailureAction=ExitVM --engine.CompilationStatistics images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
-  #     timeout-minutes: 10
-  #     if: ${{ matrix.os == 'ubuntu-22.04' }}
+  build-standalone:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04] # only run Cuis jobs (, ubuntu-22.04-arm, windows-2022, macos-13, macos-14])
+        type: [native, jvm]
+    env:
+      JAVA_VERSION: "25"
+      JDK_IDENTIFIER: "latest"
+      MX_ENV: "trufflesqueak-${{ matrix.type }}"
+      VERBOSE_GRAALVM_LAUNCHERS: true
+    name: ${{ matrix.type }} ${{ matrix.os }}
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v4
+    - name: Set up Oracle GraalVM
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: '${{ env.JAVA_VERSION }}-ea'
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ matrix.type == 'native' }}
+    - name: Enable Oracle GraalVM
+      shell: bash
+      run: |
+        echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
+        cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
+      if: ${{ matrix.type == 'native' }}
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12.0'
+    - name: Set up dependencies
+      shell: bash
+      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} ${{ env.JDK_IDENTIFIER }}
+    - name: Build TruffleSqueak standalone
+      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
+      if: ${{ runner.os != 'Windows' }}
+    # Workaround for https://github.com/actions/runner-images/issues/10001:
+    - name: Upgrade LLVM
+      run: choco upgrade llvm
+      if: ${{ runner.os == 'Windows' }}
+    - name: Build TruffleSqueak standalone via cmd.exe
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        if ${{ matrix.type }}==native (set "DEPENDENCY_NAME=SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") else (set "DEPENDENCY_NAME=SMALLTALK_JAVA_STANDALONE_SVM_JAVA${{ env.JAVA_VERSION }}") 
+        call mx --env ${{ env.MX_ENV }} --no-download-progress build --dependencies %DEPENDENCY_NAME%
+        call mx --env ${{ env.MX_ENV }} standalone-home --type ${{ matrix.type }} smalltalk > standalone-home-with-forward-slashes.txt
+        set /p STANDALONE_HOME=<standalone-home-with-forward-slashes.txt
+        setlocal enabledelayedexpansion
+        set "STANDALONE_HOME=%STANDALONE_HOME:/=\%"
+        echo %STANDALONE_HOME%\bin>>%GITHUB_PATH%
+        echo [%STANDALONE_HOME%\bin added to $PATH]
+        call mx --env ${{ env.MX_ENV }} paths %DEPENDENCY_NAME% > standalone-path-with-forward-slashes.txt
+        set /p STANDALONE_PATH=<standalone-path-with-forward-slashes.txt
+        setlocal enabledelayedexpansion
+        set "STANDALONE_PATH=%STANDALONE_PATH:/=\%"
+        copy %STANDALONE_PATH% ${{ env.STANDALONE_TARGET }}
+      if: ${{ runner.os == 'Windows' }}
+    - name: Run SystemReporter on TruffleSqueak standalone
+      run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
+    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
+      run: |
+        trufflesqueak-polyglot-get -v 24.2.1 -a js
+        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
+      if: ${{ matrix.type == 'jvm' }}
+    - name: Upload TruffleSqueak standalone
+      uses: actions/upload-artifact@v4
+      with:
+        name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
+        path: ${{ env.STANDALONE_TARGET }}
+        retention-days: 7
+    - name: Deploy TruffleSqueak standalone
+      shell: bash
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
+      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
+    - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
+      run: |
+        mx.trufflesqueak/utils.sh download-cuis-test-image
+        trufflesqueak --vm.ea --vm.esa --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.NodeSourcePositions=true --engine.CompilationFailureAction=ExitVM --engine.CompilationStatistics images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+      timeout-minutes: 10
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
+    - name: Upload Graal compiler dumps
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: graal_dumps-${{ matrix.os }}
+        path: graal_dumps/
+        if-no-files-found: ignore
+        retention-days: 5
