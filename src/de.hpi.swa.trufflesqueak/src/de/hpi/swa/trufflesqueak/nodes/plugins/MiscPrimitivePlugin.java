@@ -339,8 +339,9 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         final long start,
                         @Bind final Node node,
                         @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
-                        @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
-            return doFindTruffleString(receiver, string, cachedInclusionMap, start, node, notFoundProfile);
+                        @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile,
+                        @Shared("truffleString") @Cached TruffleString.ReadByteNode readByteNode) {
+            return doFindTruffleString(receiver, string, cachedInclusionMap, start, node, notFoundProfile, readByteNode);
         }
 
         @Specialization(guards = {"start > 0", "string.isByteType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
@@ -359,11 +360,12 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"start > 0", "string.isTruffleStringType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindTruffleStringCached")
         protected static final long doFindTruffleString(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
                         @Bind final Node node,
-                        @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile
+                        @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile,
+                        @Shared("truffleString") @Cached TruffleString.ReadByteNode readByteNode
         ) {
             long index = start - 1;
             final long stringSize = string.getTruffleStringByteLength();
-            while (index < stringSize && inclusionMap.getByte(Byte.toUnsignedInt((byte) string.readByteUncached((int) index))) == 0) {
+            while (index < stringSize && inclusionMap.getByte(Byte.toUnsignedInt((byte) string.readByteTruffleString((int) index, readByteNode))) == 0) {
                 index++;
             }
             return notFoundProfile.profile(node, index >= stringSize) ? 0L : index + 1;
@@ -397,7 +399,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                                            @Bind final Node node,
                                            @Cached final InlinedConditionProfile quickReturnProfile,
                                            @Cached final InlinedBranchProfile foundProfile,
-                                           @Cached final InlinedBranchProfile notFoundProfile){
+                                           @Cached final InlinedBranchProfile notFoundProfile,
+                                           @Cached TruffleString.ReadByteNode readByteNode) {
             if (!key.isTruffleStringType() || !body.isTruffleStringType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -409,7 +412,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final int bodyLength = body.getTruffleStringByteLength();
                 for (long startIndex = Math.max(start - 1, 0); startIndex <= bodyLength - keyLength; startIndex++) {
                     int index = 0;
-                    while (matchTable.getByte(Integer.toUnsignedLong(body.readByteUncached((int) startIndex + index))) == matchTable.getByte(key.readByteUncached(index))) {
+                    while (matchTable.getByte(Integer.toUnsignedLong(body.readByteTruffleString((int) startIndex + index, readByteNode))) == matchTable.getByte(key.readByteTruffleString(index, readByteNode))) {
                         if (index == keyLength - 1) {
                             foundProfile.enter(node);
                             return startIndex + 1;
@@ -558,10 +561,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final NativeObject truffleTableOrNull(final NativeObject table) {
-            return table.isTruffleStringType() && table.getTruffleStringLength() >= 256 ? table : null;
+            return table.isTruffleStringType() && table.getTruffleStringLengthUncached() >= 256 ? table : null;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isTruffleStringType()", "table.getTruffleStringLength() >= 256"}, replaces = "doNativeObjectTruffleStringTableCached")
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isTruffleStringType()", "table.getTruffleStringLengthUncached() >= 256"}, replaces = "doNativeObjectTruffleStringTableCached")
         protected static final Object doNativeObjectTruffleStringTable(final Object receiver, final NativeObject string, final long start, final long stop,
                                                              final NativeObject table) {
             final MutableTruffleString tableStorage = table.getTruffleStringStorage();
@@ -573,14 +576,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table == cachedTable"}, limit = "1")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table == cachedTable"}, limit = "1")
         protected static final Object doTruffleStringCachedTable(final Object receiver, final NativeObject string, final long start, final long stop,
                                                                 @SuppressWarnings("unused") final NativeObject table,
                                                                 @Cached("byteTableOrNull(table)") final NativeObject cachedTable) {
             return doTruffleString(receiver, string, start, stop, cachedTable);
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table.isByteType()", "table.getByteLength() >= 256"}, replaces = "doTruffleStringCachedTable")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table.isByteType()", "table.getByteLength() >= 256"}, replaces = "doTruffleStringCachedTable")
         protected static final Object doTruffleString(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             for (int i = Math.toIntExact(start - 1); i < stop; i++) {
                 int originalValue = string.getTruffleStringStorage().readByteUncached(i, TruffleString.Encoding.UTF_8);
@@ -590,14 +593,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table == cachedTable"}, limit = "1")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table == cachedTable"}, limit = "1")
         protected static final Object doTruffleStringIntTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
                                                                    @SuppressWarnings("unused") final NativeObject table,
                                                                    @Cached("intTableOrNull(table)") final NativeObject cachedTable) {
             return doTruffleStringIntTable(receiver, string, start, stop, cachedTable);
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table.isIntType()", "table.getIntLength() >= 256"}, replaces = "doTruffleStringIntTableCached")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table.isIntType()", "table.getIntLength() >= 256"}, replaces = "doTruffleStringIntTableCached")
         protected static final Object doTruffleStringIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
                                                              final NativeObject table) {
             for (int i = Math.toIntExact(start - 1); i < stop; i++) {
@@ -608,14 +611,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table == cachedTable"}, limit = "1")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table == cachedTable"}, limit = "1")
         protected static final Object doTruffleStringTruffleStringTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
                                                                              @SuppressWarnings("unused") final NativeObject table,
                                                                              @Cached("truffleTableOrNull(table)") final NativeObject cachedTable) {
             return doNTruffleStringTruffleStringTable(receiver, string, start, stop, cachedTable);
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLength()", "table.isTruffleStringType()", "table.getTruffleStringLength() >= 256"}, replaces = "doTruffleStringTruffleStringTableCached")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table.isTruffleStringType()", "table.getTruffleStringLengthUncached() >= 256"}, replaces = "doTruffleStringTruffleStringTableCached")
         protected static final Object doNTruffleStringTruffleStringTable(final Object receiver, final NativeObject string, final long start, final long stop,
                                                                        final NativeObject table) {
             final MutableTruffleString stringStorage = string.getTruffleStringStorage();

@@ -16,6 +16,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
@@ -59,8 +61,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final long doNativeTruffleString(final Node node, final NativeObject obj, final long index) {
-            return Integer.toUnsignedLong(obj.readByteUncached((int) index));
+        protected static final long doNativeTruffleString(final Node node, final NativeObject obj, final long index, @Cached TruffleString.ReadByteNode readByteNode) {
+            return Integer.toUnsignedLong(obj.readByteTruffleString((int) index, readByteNode));
         }
 
         @Fallback
@@ -99,8 +101,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "value >= 0", "value <= BYTE_MAX"})
-        protected static final void doNativeByteString(NativeObject obj, long index, final long value) {
-            obj.writeByteUncached((int) index, (byte) value);
+        protected static final void doNativeByteString(NativeObject obj, long index, final long value, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            obj.writeByteTruffleString((int) index, (byte) value, writeByteNode);
         }
 
         protected static final boolean inByteRange(final char value) {
@@ -142,8 +144,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "inByteRange(value)"})
-        protected static final void doNativeByteStringChar(NativeObject obj, long index, final char value) {
-            doNativeByteString(obj, index, value);
+        protected static final void doNativeByteStringChar(NativeObject obj, long index, final char value, @Cached.Shared("truffleString") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            doNativeByteString(obj, index, value, writeByteNode);
         }
 
         @Specialization(guards = {"obj.isByteType()", "value.inRange(0, BYTE_MAX)"})
@@ -167,8 +169,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "value.inRange(0, BYTE_MAX)"})
-        protected static final void doNativeByteStringLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            doNativeByteString(obj, index, value.longValue());
+        protected static final void doNativeByteStringLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value, @Cached.Shared("truffleString") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            doNativeByteString(obj, index, value.longValue(), writeByteNode);
         }
 
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "!value.fitsIntoLong()", "value.lessThanOneShiftedBy64()"})
@@ -219,8 +221,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final int doNativeTruffleString(final NativeObject obj) {
-            return obj.getTruffleStringLength();
+        protected static final int doNativeTruffleString(final NativeObject obj, @Cached TruffleString.CodePointLengthNode node) {
+            return obj.getTruffleStringLength(node);
         }
     }
 
@@ -283,8 +285,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final byte[] toTruffleString(final NativeObject obj) {
-            return obj.getTruffleStringAsBytesCopy();
+        protected static final byte[] toTruffleString(final NativeObject obj, @Cached TruffleString.CopyToByteArrayNode node) {
+            return obj.getTruffleStringAsBytesCopy(node);
         }
     }
 
@@ -315,8 +317,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final short[] toTruffleString(final NativeObject obj) {
-            return UnsafeUtils.toShorts(obj.getTruffleStringAsBytesCopy());
+        protected static final short[] toTruffleString(final NativeObject obj, @Cached TruffleString.CopyToByteArrayNode node) {
+            return UnsafeUtils.toShorts(obj.getTruffleStringAsBytesCopy(node));
         }
     }
 
@@ -347,8 +349,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final int[] toTruffleString(final NativeObject obj) {
-            return UnsafeUtils.toInts(obj.getTruffleStringAsBytesCopy());
+        protected static final int[] toTruffleString(final NativeObject obj, @Cached TruffleString.CopyToByteArrayNode node) {
+            return UnsafeUtils.toInts(obj.getTruffleStringAsBytesCopy(node));
         }
     }
 
@@ -407,7 +409,7 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = "obj.isTruffleStringType()")
         protected static final NativeObject doNativeTruffleString(final NativeObject obj) {
-            return obj.shallowCopyTruffleString();
+            return obj.shallowCopyTruffleStringUncached();
         }
     }
 }

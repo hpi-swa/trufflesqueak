@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
 import com.oracle.truffle.api.strings.AbstractTruffleString;
+import com.oracle.truffle.api.strings.MutableTruffleString;
 import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -573,12 +574,12 @@ public final class SqueakImageContext {
 
     public NativeObject getResourcesDirectory() {
         ensureResourcesDirectoryAndPathInitialized();
-        return NativeObject.newNativeByteString(this, resourcesDirectoryBytes);
+        return NativeObject.newNativeByteStringUncached(this, resourcesDirectoryBytes);
     }
 
     public NativeObject getResourcesPath() {
         ensureResourcesDirectoryAndPathInitialized();
-        return NativeObject.newNativeByteString(this, resourcesPath);
+        return NativeObject.newNativeByteStringUncached(this, resourcesPath);
     }
 
     private void ensureResourcesDirectoryAndPathInitialized() {
@@ -1024,11 +1025,19 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asByteString(final String value) {
-        return NativeObject.newNativeByteString(this, value);
+        return NativeObject.newNativeByteStringUncached(this, value);
+    }
+
+    public NativeObject asByteString(final String value, TruffleString.FromJavaStringNode javaStringNode, MutableTruffleString.AsMutableTruffleStringNode mutableTruffleStringNode) {
+        return NativeObject.newNativeByteString(this, value, javaStringNode, mutableTruffleStringNode);
     }
 
     public NativeObject asByteString(final AbstractTruffleString value) {
-        return NativeObject.newNativeByteString(this, value);
+        return NativeObject.newNativeByteStringUncached(this, value);
+    }
+
+    public NativeObject asByteString(final AbstractTruffleString value, MutableTruffleString.AsMutableTruffleStringNode node) {
+        return NativeObject.newNativeByteString(this, value, node);
     }
 
     public NativeObject asByteSymbol(final String value) {
@@ -1050,6 +1059,14 @@ public final class SqueakImageContext {
 
     public NativeObject asString(final AbstractTruffleString value, final InlinedConditionProfile wideStringProfile, final Node node) {
         return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
+    }
+
+    public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node, TruffleString.FromJavaStringNode javaStringNode, MutableTruffleString.AsMutableTruffleStringNode mutableTruffleStringNode) {
+        return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value, javaStringNode, mutableTruffleStringNode);
+    }
+
+    public NativeObject asString(final AbstractTruffleString value, final InlinedConditionProfile wideStringProfile, final Node node, MutableTruffleString.AsMutableTruffleStringNode truffleStringNode) {
+        return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value, truffleStringNode);
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final Object xPos, final Object yPos) {

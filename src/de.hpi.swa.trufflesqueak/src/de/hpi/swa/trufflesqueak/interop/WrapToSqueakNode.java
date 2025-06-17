@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
+import com.oracle.truffle.api.strings.MutableTruffleString;
 import com.oracle.truffle.api.strings.TruffleString;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -82,14 +83,14 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final NativeObject doString(final Node node, final String value,
-                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile) {
-        return getContext(node).asString(value, wideStringProfile, node);
+                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile, @Cached TruffleString.FromJavaStringNode fromJavaStringNode, @Shared("truffleString") @Cached MutableTruffleString.AsMutableTruffleStringNode asMutableTruffleStringNode) {
+        return getContext(node).asString(value, wideStringProfile, node, fromJavaStringNode, asMutableTruffleStringNode);
     }
 
     @Specialization
     protected static final NativeObject doTruffleString(final Node node, final TruffleString value,
-                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile) {
-        return getContext(node).asString(value, wideStringProfile, node);
+                                                        @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile, @Shared("truffleString") @Cached MutableTruffleString.AsMutableTruffleStringNode asMutableTruffleStringNode) {
+        return getContext(node).asString(value, wideStringProfile, node, asMutableTruffleStringNode);
     }
 
     @Specialization

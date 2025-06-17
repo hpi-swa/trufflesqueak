@@ -19,6 +19,7 @@ import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -191,10 +192,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringLength())", "inByteRange(value)"})
-        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, final char value) {
-            final int byteIndex = obj.codePointIndexToByteIndexUncached((int) index - 1);
-            obj.writeByteUncached(byteIndex, (byte) value);
+        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringLengthUncached())", "inByteRange(value)"})
+        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, final char value,
+                     @Cached TruffleString.CodePointIndexToByteIndexNode codePointIndexToByteIndexNode,
+                     @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            final int byteIndex = obj.codePointIndexToByteIndexTruffleString((int) index - 1, codePointIndexToByteIndexNode);
+            obj.writeByteTruffleString(byteIndex, (byte) value, writeByteNode);
             return value;
         }
 
