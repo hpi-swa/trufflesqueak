@@ -67,30 +67,30 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return orderValue.isByteType() && orderValue.getByteLength() >= 256 ? orderValue : null;
         }
 
-        protected static final long compareAsciiOrder(final NativeObject string1, final NativeObject string2) {
-            AbstractTruffleString truffleString1 = string1.isByteType() ? TruffleString.fromByteArrayUncached(string1.getByteStorage(), TruffleString.Encoding.UTF_8) : string1.getTruffleStringStorage();
-            AbstractTruffleString truffleString2 = string2.isByteType() ? TruffleString.fromByteArrayUncached(string2.getByteStorage(), TruffleString.Encoding.UTF_8) : string2.getTruffleStringStorage();
-            return compareAsciiOrder(truffleString1, truffleString2);
+        protected static final long compareAsciiOrder(final NativeObject string1, final NativeObject string2, final TruffleString.FromByteArrayNode fromByteArrayNode, final TruffleString.CompareBytesNode stringCompareNode) {
+            AbstractTruffleString truffleString1 = string1.isByteType() ? fromByteArrayNode.execute(string1.getByteStorage(), TruffleString.Encoding.UTF_8) : string1.getTruffleStringStorage();
+            AbstractTruffleString truffleString2 = string2.isByteType() ? fromByteArrayNode.execute(string2.getByteStorage(), TruffleString.Encoding.UTF_8) : string2.getTruffleStringStorage();
+            return compareAsciiOrder(truffleString1, truffleString2, stringCompareNode);
         }
 
-        protected static final long compareAsciiOrder(final AbstractTruffleString string1, final AbstractTruffleString string2) {
-            long compare = string1.compareBytesUncached(string2, TruffleString.Encoding.UTF_8);
+        protected static final long compareAsciiOrder(final AbstractTruffleString string1, final AbstractTruffleString string2, final TruffleString.CompareBytesNode stringCompareNode) {
+            long compare = stringCompareNode.execute(string1, string2, TruffleString.Encoding.UTF_8);
             return compare == 0L ? 0L : compare < 0L ? -1L : 1L;
         }
 
-        protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
-            AbstractTruffleString truffleString1 = string1.isByteType() ? TruffleString.fromByteArrayUncached(string1.getByteStorage(), TruffleString.Encoding.UTF_8) : string1.getTruffleStringStorage();
-            AbstractTruffleString truffleString2 = string2.isByteType() ? TruffleString.fromByteArrayUncached(string2.getByteStorage(), TruffleString.Encoding.UTF_8) : string2.getTruffleStringStorage();
-            return compare(truffleString1, truffleString2, orderValue);
+        protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue, final TruffleString.ReadByteNode readByteNode, TruffleString.FromByteArrayNode fromByteArrayNode) {
+            AbstractTruffleString truffleString1 = string1.isByteType() ? fromByteArrayNode.execute(string1.getByteStorage(), TruffleString.Encoding.UTF_8) : string1.getTruffleStringStorage();
+            AbstractTruffleString truffleString2 = string2.isByteType() ? fromByteArrayNode.execute(string2.getByteStorage(), TruffleString.Encoding.UTF_8) : string2.getTruffleStringStorage();
+            return compare(truffleString1, truffleString2, orderValue, readByteNode);
         }
 
-        protected static final long compare(final AbstractTruffleString string1, final AbstractTruffleString string2, final NativeObject orderValue) {
+        protected static final long compare(final AbstractTruffleString string1, final AbstractTruffleString string2, final NativeObject orderValue, final TruffleString.ReadByteNode readByteNode) {
             final int len1 = string1.byteLength(TruffleString.Encoding.UTF_8);
             final int len2 = string2.byteLength(TruffleString.Encoding.UTF_8);
             final int min = Math.min(len1, len2);
             for (int i = 0; i < min; i++) {
-                final long l1 = Integer.toUnsignedLong(string1.readByteUncached(i, TruffleString.Encoding.UTF_8));
-                final long l2 = Integer.toUnsignedLong(string2.readByteUncached(i, TruffleString.Encoding.UTF_8));
+                final long l1 = Integer.toUnsignedLong(readByteNode.execute(string1, i, TruffleString.Encoding.UTF_8));
+                final long l2 = Integer.toUnsignedLong(readByteNode.execute(string2, i, TruffleString.Encoding.UTF_8));
                 final byte c1 = orderValue.getByte(l1);
                 final byte c2 = orderValue.getByte(l2);
                 if (c1 != c2) {
@@ -104,26 +104,49 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCompareString")
     public abstract static class PrimCompareStringNode extends AbstractPrimCompareStringNode implements Primitive3 {
-        // TODO improve performance by specialization
-        @Specialization(guards = {"string1.isTruffleStringType() || string1.isByteType()", "string2.isTruffleStringType() || string2.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
-        protected static final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
-                        @SuppressWarnings("unused") final NativeObject orderValue,
-                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
-            return compareAsciiOrder(string1, string2) + 2L;
+
+        @Specialization(guards = {"string1.isTruffleStringType()", "string2.isTruffleStringType()", "orderValue == cachedAsciiOrder"}, limit = "1")
+        protected static final long doCompareAsciiOrderTruffleString(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+                                                        @SuppressWarnings("unused") final NativeObject orderValue,
+                                                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder,
+                                                                 @Cached TruffleString.CompareBytesNode stringCompareNode
+        ) {
+            return compareAsciiOrder(string1.getTruffleStringStorage(), string2.getTruffleStringStorage(), stringCompareNode) + 2L;
         }
 
-        @Specialization(guards = {"string1.isTruffleStringType() || string1.isByteType()", "string2.isTruffleStringType() || string2.isByteType()", "orderValue == cachedOrder"}, limit = "1")
+        @Specialization(guards = {"string1.isTruffleStringType() || string1.isByteType()", "string2.isTruffleStringType() || string2.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1", replaces = "doCompareAsciiOrderTruffleString")
+        protected static final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+                        @SuppressWarnings("unused") final NativeObject orderValue,
+                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder,
+                                @Cached TruffleString.FromByteArrayNode fromByteArrayNode,
+                                @Cached TruffleString.CompareBytesNode stringCompareNode) {
+            return compareAsciiOrder(string1, string2, fromByteArrayNode, stringCompareNode) + 2L;
+        }
+
+        @Specialization(guards = {"string1.isTruffleStringType()", "string2.isTruffleStringType()", "orderValue == cachedOrder"}, limit = "1")
+        protected static final long doCompareCachedTruffleString(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
+                                                    @SuppressWarnings("unused") final NativeObject orderValue,
+                                                    @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder,
+                                                    @Cached TruffleString.ReadByteNode readByteNode) {
+            return compare(string1.getTruffleStringStorage(), string2.getTruffleStringStorage(), cachedOrder, readByteNode) + 2L;
+        }
+
+        @Specialization(guards = {"string1.isTruffleStringType() || string1.isByteType()", "string2.isTruffleStringType() || string2.isByteType()", "orderValue == cachedOrder"}, limit = "1", replaces = "doCompareCachedTruffleString")
         protected static final long doCompareCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
-                        @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
-            return compare(string1, string2, cachedOrder) + 2L;
+                        @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder,
+                        @Cached TruffleString.ReadByteNode readByteNode,
+                        @Cached TruffleString.FromByteArrayNode fromByteArrayNode) {
+            return compare(string1, string2, cachedOrder, readByteNode, fromByteArrayNode) + 2L;
         }
 
         @Specialization(guards = {"string1.isTruffleStringType() || string1.isByteType()", "string2.isTruffleStringType() || string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
         protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
-                        final NativeObject orderValue) {
-            return compare(string1, string2, orderValue) + 2L;
+                        final NativeObject orderValue,
+                        @Cached TruffleString.ReadByteNode readByteNode,
+                        @Cached TruffleString.FromByteArrayNode fromByteArrayNode) {
+            return compare(string1, string2, orderValue, readByteNode, fromByteArrayNode) + 2L;
         }
 
         @SuppressWarnings("unused")
