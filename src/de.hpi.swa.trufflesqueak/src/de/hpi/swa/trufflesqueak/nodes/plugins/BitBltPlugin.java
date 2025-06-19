@@ -104,7 +104,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"aString.isTruffleStringType()", "aString.getTruffleStringLengthUncached() == 0 || stopIndex == 0"})
+        @Specialization(guards = {"aString.isTruffleStringType()", "aString.getTruffleStringByteLength() == 0 || stopIndex == 0"})
         protected static final Object doNothing(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
                         final ArrayObject xTable, final long kernDelta) {
             return receiver;

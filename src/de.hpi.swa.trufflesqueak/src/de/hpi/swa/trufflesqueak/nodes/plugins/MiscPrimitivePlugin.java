@@ -458,9 +458,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile foundProfile,
-                        @Cached final InlinedBranchProfile notFoundProfile) {
+                        @Cached final InlinedBranchProfile notFoundProfile,
+                                                   @Cached TruffleString.ByteIndexOfAnyByteNode byteIndexOfAnyByteNode) {
             final byte byteValue = (byte) value;
-            final int foundIndex = string.getTruffleStringStorage().byteIndexOfAnyByteUncached((int) start - 1, string.getTruffleStringByteLength(), new byte[]{byteValue}, TruffleString.Encoding.UTF_8);
+            final int foundIndex = string.byteIndexOfAnyByteTruffleString((int) start - 1, new byte[]{byteValue}, byteIndexOfAnyByteNode);
             if (foundIndex >= 0) {
                 foundProfile.enter(node);
                 return foundIndex + 1; // Convert to 1-based index
@@ -579,77 +580,74 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table == cachedTable"}, limit = "1")
         protected static final Object doNativeObjectTruffleStringTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
                                                                    @SuppressWarnings("unused") final NativeObject table,
-                                                                   @Cached("truffleTableOrNull(table)") final NativeObject cachedTable) {
-            return doNativeObjectTruffleStringTable(receiver, string, start, stop, cachedTable);
+                                                                   @Cached("truffleTableOrNull(table)") final NativeObject cachedTable, @Cached TruffleString.ReadByteNode readByteNode) {
+            return doNativeObjectTruffleStringTable(receiver, string, start, stop, cachedTable, readByteNode);
         }
 
         protected static final NativeObject truffleTableOrNull(final NativeObject table) {
-            return table.isTruffleStringType() && table.getTruffleStringLengthUncached() >= 256 ? table : null;
+            return table.isTruffleStringType() && table.getTruffleStringByteLength() >= 256 ? table : null;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isTruffleStringType()", "table.getTruffleStringLengthUncached() >= 256"}, replaces = "doNativeObjectTruffleStringTableCached")
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isTruffleStringType()", "table.getTruffleStringByteLength() >= 256"}, replaces = "doNativeObjectTruffleStringTableCached")
         protected static final Object doNativeObjectTruffleStringTable(final Object receiver, final NativeObject string, final long start, final long stop,
-                                                             final NativeObject table) {
-            final MutableTruffleString tableStorage = table.getTruffleStringStorage();
+                                                             final NativeObject table, @Cached TruffleString.ReadByteNode readByteNode) {
             for (long i = start - 1; i < stop; i++) {
                 int originalValue = string.getByteUnsigned(i);
-                byte newValue = tableStorage.getInternalByteArrayUncached(TruffleString.Encoding.UTF_8).get(originalValue);
+                byte newValue = (byte) table.readByteTruffleString(originalValue, readByteNode);
                 string.setByte(i, newValue);
             }
             return receiver;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table == cachedTable"}, limit = "1")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringByteLength()", "table == cachedTable"}, limit = "1")
         protected static final Object doTruffleStringCachedTable(final Object receiver, final NativeObject string, final long start, final long stop,
                                                                 @SuppressWarnings("unused") final NativeObject table,
-                                                                @Cached("byteTableOrNull(table)") final NativeObject cachedTable) {
-            return doTruffleString(receiver, string, start, stop, cachedTable);
+                                                                @Cached("byteTableOrNull(table)") final NativeObject cachedTable, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            return doTruffleString(receiver, string, start, stop, cachedTable, readByteNode, writeByteNode);
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table.isByteType()", "table.getByteLength() >= 256"}, replaces = "doTruffleStringCachedTable")
-        protected static final Object doTruffleString(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringByteLength()", "table.isByteType()", "table.getByteLength() >= 256"}, replaces = "doTruffleStringCachedTable")
+        protected static final Object doTruffleString(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             for (int i = Math.toIntExact(start - 1); i < stop; i++) {
-                int originalValue = string.getTruffleStringStorage().readByteUncached(i, TruffleString.Encoding.UTF_8);
+                int originalValue = string.readByteTruffleString(i, readByteNode);
                 int newValue = table.getByte(originalValue);
-                string.getTruffleStringStorage().writeByteUncached(i, (byte) newValue, TruffleString.Encoding.UTF_8);
+                string.writeByteTruffleString(i, (byte) newValue, writeByteNode);
             }
             return receiver;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table == cachedTable"}, limit = "1")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringByteLength()", "table == cachedTable"}, limit = "1")
         protected static final Object doTruffleStringIntTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
                                                                    @SuppressWarnings("unused") final NativeObject table,
-                                                                   @Cached("intTableOrNull(table)") final NativeObject cachedTable) {
-            return doTruffleStringIntTable(receiver, string, start, stop, cachedTable);
+                                                                   @Cached("intTableOrNull(table)") final NativeObject cachedTable, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            return doTruffleStringIntTable(receiver, string, start, stop, cachedTable, readByteNode, writeByteNode);
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table.isIntType()", "table.getIntLength() >= 256"}, replaces = "doTruffleStringIntTableCached")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringByteLength()", "table.isIntType()", "table.getIntLength() >= 256"}, replaces = "doTruffleStringIntTableCached")
         protected static final Object doTruffleStringIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
-                                                             final NativeObject table) {
+                                                             final NativeObject table, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             for (int i = Math.toIntExact(start - 1); i < stop; i++) {
-                int originalValue = string.getTruffleStringStorage().readByteUncached(i, TruffleString.Encoding.UTF_8);
+                int originalValue = string.readByteTruffleString(i, readByteNode);
                 int newValue = table.getInt(originalValue);
-                string.getTruffleStringStorage().writeByteUncached(i, (byte) newValue, TruffleString.Encoding.UTF_8);
+                string.writeByteTruffleString(i, (byte) newValue, writeByteNode);
             }
             return receiver;
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table == cachedTable"}, limit = "1")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringByteLength()", "table == cachedTable"}, limit = "1")
         protected static final Object doTruffleStringTruffleStringTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
                                                                              @SuppressWarnings("unused") final NativeObject table,
-                                                                             @Cached("truffleTableOrNull(table)") final NativeObject cachedTable) {
-            return doNTruffleStringTruffleStringTable(receiver, string, start, stop, cachedTable);
+                                                                             @Cached("truffleTableOrNull(table)") final NativeObject cachedTable, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            return doNTruffleStringTruffleStringTable(receiver, string, start, stop, cachedTable, readByteNode, writeByteNode);
         }
 
-        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringLengthUncached()", "table.isTruffleStringType()", "table.getTruffleStringLengthUncached() >= 256"}, replaces = "doTruffleStringTruffleStringTableCached")
+        @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getTruffleStringByteLength()", "table.isTruffleStringType()", "table.getTruffleStringByteLength() >= 256"}, replaces = "doTruffleStringTruffleStringTableCached")
         protected static final Object doNTruffleStringTruffleStringTable(final Object receiver, final NativeObject string, final long start, final long stop,
-                                                                       final NativeObject table) {
-            final MutableTruffleString stringStorage = string.getTruffleStringStorage();
-            final MutableTruffleString tableStorage = table.getTruffleStringStorage();
+                                                                       final NativeObject table, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             for (int i = Math.toIntExact(start - 1); i < stop; i++) {
-                int originalValue = stringStorage.readByteUncached(i, TruffleString.Encoding.UTF_8);
-                byte newValue = tableStorage.getInternalByteArrayUncached(TruffleString.Encoding.UTF_8).get(originalValue);
-                stringStorage.writeByteUncached(i, newValue, TruffleString.Encoding.UTF_8);
+                int originalValue = string.readByteTruffleString(i, readByteNode);
+                byte newValue = (byte) table.readByteTruffleString(originalValue, readByteNode);
+                string.writeByteTruffleString(i, newValue, writeByteNode);
             }
             return receiver;
         }

@@ -221,8 +221,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final int doNativeTruffleString(final NativeObject obj, @Cached TruffleString.CodePointLengthNode node) {
-            return obj.getTruffleStringLength(node);
+        protected static final int doNativeTruffleString(final NativeObject obj) {
+            return obj.getTruffleStringByteLength();
         }
     }
 
@@ -408,8 +408,8 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final NativeObject doNativeTruffleString(final NativeObject obj) {
-            return obj.shallowCopyTruffleStringUncached();
+        protected static final NativeObject doNativeTruffleString(final NativeObject obj, @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+            return obj.shallowCopyTruffleString(copyToByteArrayNode, fromByteArrayNode);
         }
     }
 }

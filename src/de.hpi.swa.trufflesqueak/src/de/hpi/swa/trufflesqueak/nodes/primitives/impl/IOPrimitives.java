@@ -659,13 +659,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isTruffleStringType()", "repl.isTruffleStringType()"})
             protected static final void doNativeTruffleString(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                                                      @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile, @Cached TruffleString.CodePointLengthNode codePointLengthNode, @Cached TruffleString.ReadByteNode readByteNode) {
-                if (inBounds(rcvr.getTruffleStringLength(codePointLengthNode), start, stop, repl.getTruffleStringByteLength(), replStart)) {
-                    MutableTruffleString rcvrString = rcvr.getTruffleStringStorage();
-                    TruffleString.Encoding encoding = repl.getTruffleStringEncoding();
+                                                      @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+                if (inBounds(rcvr.getTruffleStringByteLength(), start, stop, repl.getTruffleStringByteLength(), replStart)) {
                     int length = Math.toIntExact(1 + stop - start);
                     for(int i = 0; i < length; i++) {
-                        rcvrString.writeByteUncached(Math.toIntExact(start - 1 + i), (byte) repl.readByteTruffleString(Math.toIntExact(replStart - 1 + i), readByteNode), encoding);
+                        rcvr.writeByteTruffleString(Math.toIntExact(start - 1 + i), (byte) repl.readByteTruffleString(Math.toIntExact(replStart - 1 + i), readByteNode), writeByteNode);
                     }
                 } else {
                     errorProfile.enter(node);

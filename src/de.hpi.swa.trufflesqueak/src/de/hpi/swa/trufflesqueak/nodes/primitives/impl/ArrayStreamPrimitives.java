@@ -168,9 +168,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())"})
-        protected static final char doNativeObjectByteString(final NativeObject obj, final long index) {
-            final MutableTruffleString storage = obj.getTruffleStringStorage();
-            final int codepoint = storage.getInternalByteArrayUncached(obj.getTruffleStringEncoding()).get((int) index -1);
+        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, @Cached TruffleString.ReadByteNode readByteNode) {
+            final int codepoint = obj.readByteTruffleString((int) index - 1, readByteNode);
             return (char) (codepoint & 0xFF);
         }
 
@@ -192,7 +191,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringLengthUncached())", "inByteRange(value)"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())", "inByteRange(value)"})
         protected static final char doNativeObjectByteString(final NativeObject obj, final long index, final char value,
                      @Cached TruffleString.CodePointIndexToByteIndexNode codePointIndexToByteIndexNode,
                      @Cached MutableTruffleString.WriteByteNode writeByteNode) {
