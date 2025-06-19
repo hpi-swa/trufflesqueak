@@ -208,7 +208,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         assert classObject.getBasicInstanceSize() == 0;
         return NativeObject.newNativeByteString(image, extraSize, node);
     }
-    @Specialization(guards = {"classObject.isBytes()", "!image.isLargeIntegerClass(classObject)"})
+    @Specialization(guards = {"classObject.isBytes()", "!image.isLargeIntegerClass(classObject)", "!image.isByteStringClass(classObject)"})
     protected static final NativeObject doNativeBytes(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() == 0;
         return NativeObject.newNativeBytes(image, classObject, extraSize);
