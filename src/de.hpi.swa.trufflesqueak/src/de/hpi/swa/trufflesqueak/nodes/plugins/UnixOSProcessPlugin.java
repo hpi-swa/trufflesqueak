@@ -165,7 +165,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileProtectionMask")
     protected abstract static class PrimFileProtectionMaskNode extends AbstractFilePrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "pathString.isByteType()")
+        @Specialization(guards = "pathString.isTruffleStringType()")
         protected final ArrayObject doFileProtectionMask(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
@@ -183,7 +183,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileStat")
     protected abstract static class PrimFileStatNode extends AbstractFilePrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "pathString.isByteType()")
+        @Specialization(guards = "pathString.isTruffleStringType()")
         protected final ArrayObject doFileStat(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
@@ -355,7 +355,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRealpath")
     protected abstract static class PrimRealpathNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "pathString.isByteType()")
+        @Specialization(guards = "pathString.isTruffleStringType()")
         protected final NativeObject doRealpath(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {

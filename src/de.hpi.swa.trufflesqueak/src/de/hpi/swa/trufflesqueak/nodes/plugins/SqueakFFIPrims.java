@@ -285,7 +285,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveLoadSymbolFromModule")
     protected abstract static class PrimLoadSymbolFromModuleNode extends AbstractFFIPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = {"moduleSymbol.isByteType()", "module.isByteType()"})
+        @Specialization(guards = {"moduleSymbol.isByteType()", "module.isTruffleStringType()"})
         protected final NativeObject doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             final SqueakImageContext image = getContext();

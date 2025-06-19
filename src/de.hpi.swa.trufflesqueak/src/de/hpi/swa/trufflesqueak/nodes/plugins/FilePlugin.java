@@ -25,11 +25,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleFile.AttributeDescriptor;
 import com.oracle.truffle.api.TruffleFile.Attributes;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -157,7 +159,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDirectoryCreate")
     protected abstract static class PrimDirectoryCreateNode extends AbstractFilePluginPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "fullPath.isByteType()")
+        @Specialization(guards = "fullPath.isTruffleStringType()")
         protected final Object doCreate(final Object receiver, final NativeObject fullPath) {
             try {
                 asPublicTruffleFile(fullPath).createDirectory();
@@ -173,7 +175,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDirectoryDelete")
     protected abstract static class PrimDirectoryDeleteNode extends AbstractFilePluginPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "fullPath.isByteType()")
+        @Specialization(guards = "fullPath.isTruffleStringType()")
         protected final Object doDelete(final Object receiver, final NativeObject fullPath) {
             try {
                 asPublicTruffleFile(fullPath).delete();
@@ -200,7 +202,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"fullPath.isByteType()", "fName.isByteType()"})
+        @Specialization(guards = {"fullPath.isTruffleStringType()", "fName.isTruffleStringType()"})
         protected final Object doEntry(@SuppressWarnings("unused") final Object receiver, final NativeObject fullPath, final NativeObject fName) {
             final String pathName = fullPath.asStringUnsafe();
             final String fileName = fName.asStringUnsafe();
@@ -230,7 +232,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDirectoryLookup")
     protected abstract static class PrimDirectoryLookupNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"longIndex > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() == 0"})
+        @Specialization(guards = {"longIndex > 0", "nativePathName.isTruffleStringType()", "nativePathName.getTruffleStringByteLength() == 0"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doLookupEmptyString(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
             assert OS.isWindows() : "Unexpected empty path on a non-Windows system.";
@@ -250,7 +252,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(guards = {"index > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() > 0"})
+        @Specialization(guards = {"index > 0", "nativePathName.isTruffleStringType()", "nativePathName.getTruffleStringByteLength() > 0"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doLookup(@SuppressWarnings("unused") final Object receiver, final NativeObject nativePathName, final long index) {
             String pathName = nativePathName.asStringUnsafe();
@@ -371,7 +373,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileDelete")
     protected abstract static class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "nativeFileName.isByteType()")
+        @Specialization(guards = "nativeFileName.isTruffleStringType()")
         protected final Object doDelete(final Object receiver, final NativeObject nativeFileName) {
             try {
                 asPublicTruffleFile(nativeFileName).delete();
@@ -443,7 +445,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileOpen")
     protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = "nativeFileName.isByteType()")
+        @Specialization(guards = "nativeFileName.isTruffleStringType() || nativeFileName.isByteType()")
         protected final Object doOpen(@SuppressWarnings("unused") final Object receiver, final NativeObject nativeFileName, final boolean writableFlag) {
             return createFileHandleOrPrimFail(getContext(), asPublicTruffleFile(nativeFileName), writableFlag);
         }
@@ -452,6 +454,12 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileRead")
     protected abstract static class PrimFileReadNode extends AbstractFilePluginPrimitiveNode implements Primitive4WithFallback {
+
+        @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isTruffleStringType()", "inBounds(startIndex, count, target.getTruffleStringByteLength())"})
+        protected static final long doReadTruffleString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count, @Cached TruffleString.GetInternalByteArrayNode internalByteArrayNode) {
+            final long read = readFrom(getChannelOrPrimFail(fd), target.getTruffleStringAsReadonlyBytes(internalByteArrayNode), (int) startIndex - 1, (int) count);
+            return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
+        }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isByteType()", "inBounds(startIndex, count, target.getByteLength())"})
         protected static final long doReadBytes(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count) {
@@ -514,7 +522,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileRename")
     protected abstract static class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"oldName.isByteType()", "newName.isByteType()"})
+        @Specialization(guards = {"oldName.isByteType() || oldName.isTruffleStringType()", "newName.isByteType() || newName.isTruffleStringType()"})
         protected final Object doRename(final Object receiver, final NativeObject oldName, final NativeObject newName) {
             try {
                 asPublicTruffleFile(oldName).move(asPublicTruffleFile(newName));
@@ -668,6 +676,25 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "inBounds(startIndex, count, WORD_LENGTH)"})
         protected static final long doWriteFloatObject(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final FloatObject content, final long startIndex, final long count) {
             return fileWriteFromAt(fd, count, content.getBytes(), startIndex, 8);
+        }
+
+        @Specialization(guards = {"!isStdioFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
+        protected static long doWriteByteString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+            final byte[] bytes = content.getTruffleStringAsBytesCopy(copyToByteArrayNode);
+            return fileWriteFromAt(fd, count, bytes, startIndex, 1);
+        }
+
+        @Specialization(guards = {"isStdoutFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
+        protected final long doWriteTruffleStringToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+            writeToOutputStream(getContext().env.out(), content.getTruffleStringAsBytesCopy(copyToByteArrayNode), (int) (startIndex - 1), (int) count);
+            return count;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isStderrFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
+        protected final long doWriteTruffleStringToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+            writeToOutputStream(getContext().env.err(), content.getTruffleStringAsBytesCopy(copyToByteArrayNode), (int) (startIndex - 1), (int) count);
+            return count;
         }
 
         private static long fileWriteFromAt(final PointersObject fd, final long count, final byte[] bytes, final long startIndex, final int elementSize) {

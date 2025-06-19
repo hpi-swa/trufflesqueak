@@ -203,7 +203,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static TestResult extractFailuresAndErrorsFromTestResult(final SqueakTest test) {
         final Object result = evaluate(testCommand(test));
-        if (!(result instanceof final NativeObject no) || !no.isByteType()) {
+        if (!(result instanceof final NativeObject no) || !no.isTruffleStringType()) {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
         final String testResult = no.asStringUnsafe();

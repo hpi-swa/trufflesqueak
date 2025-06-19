@@ -106,7 +106,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * asynchronous. To get the results, wait for it to complete or time out and then use
          * primNameLookupResult.
          */
-        @Specialization(guards = "hostName.isByteType()")
+        @Specialization(guards = "hostName.isTruffleStringType()")
         protected static final Object doWork(final Object receiver, final NativeObject hostName) {
             try {
                 LogUtils.SOCKET.finer(() -> "Starting lookup for host name " + hostName);

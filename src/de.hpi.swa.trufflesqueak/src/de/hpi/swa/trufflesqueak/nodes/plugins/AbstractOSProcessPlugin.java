@@ -109,7 +109,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
     @SqueakPrimitive(names = "primitiveChdir")
     protected abstract static class PrimChdirNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "pathString.isByteType()")
+        @Specialization(guards = "pathString.isTruffleStringType()")
         protected final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
