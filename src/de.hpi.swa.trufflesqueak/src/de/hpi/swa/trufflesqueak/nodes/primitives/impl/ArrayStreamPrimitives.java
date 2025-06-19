@@ -167,7 +167,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return (char) (obj.getByte(index - 1) & 0xFF);
         }
 
-        @Specialization(guards = {"obj.isByteStringType()", "inBounds1(index, obj.getTruffleStringByteLength())"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())"})
         protected static final char doNativeObjectByteString(final NativeObject obj, final long index) {
             final MutableTruffleString storage = obj.getTruffleStringStorage();
             final int codepoint = storage.getInternalByteArrayUncached(obj.getTruffleStringEncoding()).get((int) index -1);

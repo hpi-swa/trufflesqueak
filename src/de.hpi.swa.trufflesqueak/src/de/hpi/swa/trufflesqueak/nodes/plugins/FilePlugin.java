@@ -202,7 +202,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"fullPath.isByteStringType()", "fName.isByteStringType()"})
+        @Specialization(guards = {"fullPath.isTruffleStringType()", "fName.isTruffleStringType()"})
         protected final Object doEntry(@SuppressWarnings("unused") final Object receiver, final NativeObject fullPath, final NativeObject fName) {
             final String pathName = fullPath.asStringUnsafe();
             final String fileName = fName.asStringUnsafe();
@@ -373,7 +373,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileDelete")
     protected abstract static class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "nativeFileName.isByteStringType()")
+        @Specialization(guards = "nativeFileName.isTruffleStringType()")
         protected final Object doDelete(final Object receiver, final NativeObject nativeFileName) {
             try {
                 asPublicTruffleFile(nativeFileName).delete();
