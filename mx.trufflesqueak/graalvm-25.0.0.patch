@@ -48,6 +48,42 @@ index 5710bae01d7..099ed448588 100644
      if (!library) {
          std::cerr << "Could not load VM library from " << libPath << "." << std::endl;
          return -1;
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/TruffleLogger.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/TruffleLogger.java
+index 7554f2fbefd..5db824a3bf8 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/TruffleLogger.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/TruffleLogger.java
+@@ -60,6 +60,7 @@ import java.util.function.Supplier;
+ import java.util.logging.Handler;
+ import java.util.logging.Level;
+ import java.util.logging.LogRecord;
++
+ import org.graalvm.polyglot.Context;
+ 
+ /**
+@@ -93,8 +94,8 @@ public final class TruffleLogger {
+ 
+     private final String name;
+     private final LoggerCache loggerCache;
+-    @CompilerDirectives.CompilationFinal private volatile int levelNum;
+-    @CompilerDirectives.CompilationFinal private volatile Assumption levelNumStable;
++    private volatile int levelNum;
++    private volatile Assumption levelNumStable;
+     private volatile Level levelObj;
+     private volatile TruffleLogger parent;
+     private Collection<ChildLoggerRef> children;
+@@ -833,9 +834,9 @@ public final class TruffleLogger {
+     }
+ 
+     private int getLevelNum() {
+-        if (!levelNumStable.isValid()) {
+-            CompilerDirectives.transferToInterpreterAndInvalidate();
+-        }
++        // if (!levelNumStable.isValid()) {
++        // CompilerDirectives.transferToInterpreterAndInvalidate();
++        // }
+         return levelNum;
+     }
+ 
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
 index 10b976c323e..18e3fd6a8a8 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
