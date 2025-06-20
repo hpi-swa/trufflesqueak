@@ -55,14 +55,13 @@ build-graalvm() {
 
 build-standalone() {
   local type=$1
-  local java_version=$2
   local component_name=""
   case "${type}" in
     "native")
-      component_name="SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${java_version}"
+      component_name="TRUFFLESQUEAK_NATIVE_STANDALONE"
       ;;
     "jvm")
-      component_name="SMALLTALK_JAVA_STANDALONE_SVM_JAVA${java_version}"
+      component_name="TRUFFLESQUEAK_JVM_STANDALONE"
       ;;
     *)
       echo "Unexpected standalone type: ${type}"
@@ -71,10 +70,9 @@ build-standalone() {
   esac
   local env_name="trufflesqueak-${type}"
 
-  mx --env "${env_name}" --no-download-progress build --dependencies "${component_name}"
-  cp "$(mx --env "${env_name}" paths "${component_name}")" "${STANDALONE_TARGET}"
-
-  local standalone_home="$(mx --env "${env_name}" standalone-home --type "${type}" smalltalk)"
+  mx --env "${env_name}" --no-download-progress build
+  local standalone_home="${BASE_DIRECTORY}/mxbuild/${OS_NAME}-${OS_ARCH}/${component_name}"
+  set-env "STANDALONE_HOME" "$(resolve-path "${standalone_home}")"
   add-path "${standalone_home}/bin"
   echo "[${standalone_home}/bin added to \$PATH]"
 }
@@ -245,11 +243,10 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
-  set-up-labsjdk "${java_version}"
-  download-trufflesqueak-test-image
-  if [[ "${kind}" != "jar" ]]; then
-    set-env "STANDALONE_TARGET" "$(filename-standalone "${kind}")"
+  if [[ "${java_version}" != "skip" ]]; then
+    set-up-labsjdk "${java_version}"
   fi
+  download-trufflesqueak-test-image
 }
 
 set-up-labsjdk() {

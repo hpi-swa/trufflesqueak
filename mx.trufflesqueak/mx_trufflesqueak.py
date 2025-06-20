@@ -19,6 +19,13 @@ import mx_truffle
 
 # re-export custom mx project classes so they can be used from suite.py
 from mx_cmake import CMakeNinjaProject  # pylint: disable=unused-import
+from mx_sdk_vm_ng import (
+    StandaloneLicenses,  # pylint: disable=unused-import
+    ThinLauncherProject,  # pylint: disable=unused-import
+    LanguageLibraryProject,  # pylint: disable=unused-import
+    DynamicPOMDistribution,  # pylint: disable=unused-import
+    DeliverableStandaloneArchive,  # pylint: disable=unused-import
+)
 
 _SUITE = mx.suite("trufflesqueak")
 _COMPILER = mx.suite("compiler", fatalIfMissing=False)
@@ -38,6 +45,20 @@ if _COMPILER:
     # Tweak GraalVM Engine
     VM_ARGS_TESTING.append("-Dpolyglot.engine.Mode=latency")
     VM_ARGS_TESTING.append("-Dpolyglot.engine.CompilationFailureAction=Diagnose")
+
+
+# Called from suite.py
+def trufflesqueak_standalone_deps():
+    return mx_truffle.resolve_truffle_dist_names(use_optimized_runtime=True)
+
+
+# Called from suite.py
+def libsmalltalkvm_build_args():
+    is_oracle_graalvm = "-community" not in os.getenv("JAVA_HOME")
+    if is_oracle_graalvm and mx.get_os() == "linux":
+        return ["--gc=G1"]
+    else:
+        return []
 
 
 def _trufflesqueak_gate_runner(args, tasks):
@@ -165,70 +186,6 @@ def _enable_local_compression():
 _enable_local_compression()
 
 
-def _patch_svm_support_native_image():
-    native_image_original = mx_sdk_vm_impl.SvmSupport.native_image
-
-    def patched_native_image(self, build_args, output_file, out=None, err=None):
-        if "smalltalkvm" not in output_file:
-            return native_image_original(self, build_args, output_file, out, err)
-        is_oracle_graalvm = False
-        extra_graalvm_home = os.getenv("EXTRA_GRAALVM_HOME")
-        if extra_graalvm_home:
-            native_image_bin = os.path.join(
-                extra_graalvm_home, "bin", mx.cmd_suffix("native-image")
-            )
-            is_oracle_graalvm = "-community" not in extra_graalvm_home
-        else:
-            stage1 = mx_sdk_vm_impl.get_stage1_graalvm_distribution()
-            native_image_project_name = (
-                mx_sdk_vm_impl.GraalVmLauncher.launcher_project_name(
-                    mx_sdk.LauncherConfig(mx.exe_suffix("native-image"), [], "", []),
-                    stage1=True,
-                )
-            )
-            native_image_bin = os.path.join(
-                stage1.output,
-                stage1.find_single_source_location(
-                    "dependency:" + native_image_project_name
-                ),
-            )
-        build_args.remove("--macro:smalltalkvm-library")
-        dist_names = (
-            [
-                "TRUFFLESQUEAK",
-                "TRUFFLESQUEAK_LAUNCHER",
-                "TRUFFLE_NFI_LIBFFI",
-                "SDK-NATIVEBRIDGE",
-            ]
-            + (["TRUFFLE-ENTERPRISE"] if is_oracle_graalvm else [])
-            + mx_truffle.resolve_truffle_dist_names(
-                use_optimized_runtime=True, use_enterprise=True
-            )
-        )
-        selected_gc = "G1" if is_oracle_graalvm and mx.is_linux() else "serial"
-        build_command = (
-            [native_image_bin]
-            + build_args
-            + mx.get_runtime_jvm_args(names=dist_names)
-            + [
-                "-o",
-                os.path.splitext(output_file)[0],
-                "--shared",
-                "--gc=" + selected_gc,
-                "--module",
-                "de.hpi.swa.trufflesqueak.launcher/%s.launcher.TruffleSqueakLauncher"
-                % PACKAGE_NAME,
-            ]
-        )
-        mx.log("Running {} ...".format(" ".join(build_command)))
-        return mx.run(build_command)
-
-    mx_sdk_vm_impl.SvmSupport.native_image = patched_native_image
-
-
-_patch_svm_support_native_image()
-
-
 mx_sdk_vm.register_vm_config(
     "trufflesqueak-jar",
     [
@@ -253,67 +210,6 @@ mx_sdk_vm.register_vm_config(
     ],
     _SUITE,
     env_file="trufflesqueak-jar",
-)
-mx_sdk_vm.register_vm_config(
-    "trufflesqueak-jvm",
-    [
-        "ssmalltalkvm",
-        "sdk",
-        "sdkc",
-        "sdkni",
-        "ins",
-        "cov",
-        "dap",
-        "lsp",
-        "sdkl",
-        "pro",
-        "cmp",
-        "insight",
-        "insightheap",
-        "lg",
-        "svm",
-        "svmsl",
-        "tfl",
-        "tfla",
-        "tflc",
-        "truffle-json",
-        "nfi",
-        "nfi-libffi",
-        "svmt",
-        "st",
-    ],
-    _SUITE,
-    env_file="trufflesqueak-jvm",
-)
-mx_sdk_vm.register_vm_config(
-    "trufflesqueak-native",
-    [
-        "sdk",
-        "sdkc",
-        "sdkni",
-        "ins",
-        "cov",
-        "dap",
-        "lsp",
-        "sdkl",
-        "pro",
-        "cmp",
-        "insight",
-        "insightheap",
-        "svm",
-        "svmsl",
-        "tfl",
-        "tfla",
-        "tflc",
-        "truffle-json",
-        "tflm",
-        "nfi",
-        "nfi-libffi",
-        "svmt",
-        "st",
-    ],
-    _SUITE,
-    env_file="trufflesqueak-native",
 )
 
 

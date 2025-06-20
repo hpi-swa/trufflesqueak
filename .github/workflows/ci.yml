@@ -152,22 +152,19 @@ jobs:
         java-version: '${{ env.JAVA_VERSION }}-ea'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ matrix.type == 'native' }}
-    - name: Enable Oracle GraalVM
+    - name: Adopt Oracle GraalVM license
       shell: bash
       run: |
-        echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
         cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
-      if: ${{ matrix.type == 'native' }}
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12.0'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} ${{ env.JDK_IDENTIFIER }}
+      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} skip
     - name: Build TruffleSqueak standalone
-      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
+      run: JVMCI_VERSION_CHECK=ignore mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
       if: ${{ runner.os != 'Windows' }}
     # Workaround for https://github.com/actions/runner-images/issues/10001:
     - name: Upgrade LLVM
@@ -193,16 +190,17 @@ jobs:
       if: ${{ runner.os == 'Windows' }}
     - name: Run SystemReporter on TruffleSqueak standalone
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
-      run: |
-        trufflesqueak-polyglot-get -v 24.2.1 -a js
-        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-      if: ${{ matrix.type == 'jvm' }}
+    # Re-enable when 25.0 is out: 
+    # - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
+    #   run: |
+    #     trufflesqueak-polyglot-get -v 24.2.1 -a js
+    #     trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
+    #   if: ${{ matrix.type == 'jvm' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@v4
       with:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
-        path: ${{ env.STANDALONE_TARGET }}
+        path: ${{ env.STANDALONE_HOME }}
         retention-days: 7
     - name: Deploy TruffleSqueak standalone
       shell: bash
