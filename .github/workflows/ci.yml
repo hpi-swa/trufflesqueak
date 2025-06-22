@@ -149,7 +149,7 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@v1
       with:
-        java-version: '${{ env.JAVA_VERSION }}'
+        java-version: '${{ env.JAVA_VERSION }}.0.1'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'native' }}
@@ -195,7 +195,7 @@ jobs:
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
-        trufflesqueak-polyglot-get -v 24.2.0 -a js
+        trufflesqueak-polyglot-get -v 24.2.1 -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' }}
     - name: Upload TruffleSqueak standalone
