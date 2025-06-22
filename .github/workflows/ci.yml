@@ -91,14 +91,6 @@ jobs:
         echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
         echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
       if: ${{ runner.os == 'Windows' }}
-    # - name: Publish TruffleSqueak packages to GitHub Packages
-    #   shell: bash
-    #   run: |
-    #     sed "s/{USERNAME}/${GITHUB_ACTOR}/g; s/{TOKEN}/${{ secrets.GITHUB_TOKEN }}/g" mx.trufflesqueak/mvn-settings.xml.template > mx.trufflesqueak/mvn-settings.xml
-    #     mx.trufflesqueak/utils.sh conditional-deploy \
-    #       mx --env trufflesqueak-jar build --dependencies SMALLTALK,SMALLTALK_COMMUNITY && \
-    #       mx --env trufflesqueak-jar maven-deploy --settings mx.trufflesqueak/mvn-settings.xml --version-string ${{ github.ref_name }} --validate full --licenses MIT --suppress-javadoc github https://maven.pkg.github.com/hpi-swa/trufflesqueak
-    #   if: ${{ matrix.os == 'ubuntu-22.04' && github.ref_type == 'tag' }}
     - name: Run SystemReporter on TruffleSqueak
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Run gate with Graal compiler
