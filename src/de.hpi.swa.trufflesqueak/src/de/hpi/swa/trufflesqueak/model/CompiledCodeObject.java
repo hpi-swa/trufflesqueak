@@ -12,7 +12,6 @@ import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -68,9 +67,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal(dimensions = 1) private Object[] literals;
     @CompilationFinal(dimensions = 1) private byte[] bytes;
 
-    @CompilationFinal private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+    private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
 
-    @CompilationFinal private ExecutionData executionData;
+    private ExecutionData executionData;
 
     /**
      * Additional metadata that is only needed when the CompiledCodeObject is actually executed.
@@ -79,7 +78,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      */
     static final class ExecutionData {
         // frame info
-        @CompilationFinal private FrameDescriptor frameDescriptor;
+        private FrameDescriptor frameDescriptor;
 
         /*
          * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
@@ -90,14 +89,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          * activations.
          */
         private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
-        @CompilationFinal private CompiledCodeObject outerMethod;
+        private CompiledCodeObject outerMethod;
 
         private Source source;
 
-        @CompilationFinal private RootCallTarget callTarget;
-        @CompilationFinal private CyclicAssumption callTargetStable;
-        @CompilationFinal private Assumption doesNotNeedSender;
-        @CompilationFinal private RootCallTarget resumptionCallTarget;
+        private RootCallTarget callTarget;
+        private CyclicAssumption callTargetStable;
+        private Assumption doesNotNeedSender;
+        private RootCallTarget resumptionCallTarget;
     }
 
     @TruffleBoundary
@@ -154,7 +153,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private ExecutionData getExecutionData() {
         if (!hasExecutionData()) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             executionData = new ExecutionData();
         }
         return executionData;
@@ -181,7 +179,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         this.header = header;
         this.literals = literals;
         this.bytes = bytes;
-        callTargetStable().invalidate();
+        invalidateCallTargetStable();
     }
 
     public Source getSource() {
@@ -214,12 +212,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public RootCallTarget getCallTarget() {
         if (getExecutionData().callTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
-            assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
-            executionData.callTarget = new StartContextRootNode(language, this).getCallTarget();
+            initializeCallTarget();
         }
         return executionData.callTarget;
+    }
+
+    @TruffleBoundary
+    private void initializeCallTarget() {
+        final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
+        assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
+        executionData.callTarget = new StartContextRootNode(language, this).getCallTarget();
     }
 
     private void invalidateCallTarget() {
@@ -228,7 +230,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private void invalidateCallTarget(final String reason) {
         if (hasExecutionData()) {
-            callTargetStable().invalidate(reason);
+            if (executionData.callTargetStable != null) {
+                executionData.callTargetStable.invalidate(reason);
+            }
             executionData.callTarget = null;
         }
     }
@@ -240,10 +244,22 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private CyclicAssumption callTargetStable() {
         if (getExecutionData().callTargetStable == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            executionData.callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
+            initializeCallTargetStable();
         }
         return executionData.callTargetStable;
+    }
+
+    @TruffleBoundary
+    private void initializeCallTargetStable() {
+        executionData.callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
+    }
+
+    private void invalidateCallTargetStable() {
+        if (hasExecutionData()) {
+            if (executionData.callTargetStable != null) {
+                executionData.callTargetStable.invalidate();
+            }
+        }
     }
 
     public Assumption getCallTargetStable() {
@@ -252,16 +268,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public Assumption getDoesNotNeedSenderAssumption() {
         if (getExecutionData().doesNotNeedSender == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            executionData.doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
+            initializeDoesNotNeedSenderAssumption();
         }
         return executionData.doesNotNeedSender;
     }
 
     @TruffleBoundary
+    private void initializeDoesNotNeedSenderAssumption() {
+        executionData.doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
+    }
+
+    @TruffleBoundary
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
         if (getExecutionData().resumptionCallTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             executionData.resumptionCallTarget = ResumeContextRootNode.create(SqueakImageContext.getSlow().getLanguage(), context).getCallTarget();
         } else {
             final ResumeContextRootNode resumeNode = (ResumeContextRootNode) executionData.resumptionCallTarget.getRootNode();
@@ -277,8 +296,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public FrameDescriptor getFrameDescriptor() {
+        CompilerAsserts.neverPartOfCompilation();
         if (getExecutionData().frameDescriptor == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             /* Never let synthetic compiled block escape, use outer method instead. */
             final CompiledCodeObject exposedMethod = executionData.outerMethod != null ? executionData.outerMethod : this;
             executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod);
@@ -326,7 +345,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
+        CompilerAsserts.neverPartOfCompilation();
         // header is a tagged small integer
         final long headerWord = (chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS);
         header = CompiledCodeHeaderUtils.toInt(headerWord);
@@ -359,7 +378,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             other.getExecutionData().shadowBlocks = executionData.shadowBlocks;
             other.executionData.outerMethod = executionData.outerMethod;
         }
-        other.callTargetStable().invalidate();
+        other.invalidateCallTargetStable();
         setLiteralsAndBytes(header2, literals2, bytes2);
         if (shadowBlocks2 != null || outerMethod2 != null) {
             getExecutionData().shadowBlocks = shadowBlocks2;
@@ -418,19 +437,23 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Idempotent
     public DispatchPrimitiveNode getPrimitiveNodeOrNull() {
         if (primitiveNodeOrNull == UNINITIALIZED_PRIMITIVE_NODE) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (hasPrimitive()) {
-                final AbstractPrimitiveNode nodeOrNull = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
-                if (nodeOrNull != null) {
-                    primitiveNodeOrNull = DispatchPrimitiveNode.create(nodeOrNull, getNumArgs());
-                } else {
-                    primitiveNodeOrNull = null;
-                }
+            initializePrimitiveNodeOrNull();
+        }
+        return primitiveNodeOrNull;
+    }
+
+    @TruffleBoundary
+    private void initializePrimitiveNodeOrNull() {
+        if (hasPrimitive()) {
+            final AbstractPrimitiveNode nodeOrNull = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
+            if (nodeOrNull != null) {
+                primitiveNodeOrNull = DispatchPrimitiveNode.create(nodeOrNull, getNumArgs());
             } else {
                 primitiveNodeOrNull = null;
             }
+        } else {
+            primitiveNodeOrNull = null;
         }
-        return primitiveNodeOrNull;
     }
 
     public boolean isUnwindMarked() {
