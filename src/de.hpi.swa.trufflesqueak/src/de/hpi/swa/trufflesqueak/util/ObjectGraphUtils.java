@@ -525,7 +525,7 @@ public final class ObjectGraphUtils {
 
     private static void runTasks(final Runnable[] tasks) {
         try {
-            final Future<?>[] futures = new Future[USABLE_THREAD_COUNT];
+            final Future<?>[] futures = new Future<?>[USABLE_THREAD_COUNT];
             for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
                 futures[i] = EXECUTOR.submit(tasks[i]);
             }
