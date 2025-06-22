@@ -214,12 +214,11 @@ jobs:
         mx.trufflesqueak/utils.sh download-cuis-test-image
         trufflesqueak --vm.ea --vm.esa --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=ExitVM --engine.MaximumCompilations=-1 --engine.CompilationStatistics images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
       timeout-minutes: 10
-      if: ${{ matrix.os == 'ubuntu-22.04' }}
     - name: Upload Graal compiler dumps
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: graal_dumps-${{ matrix.os }}
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
-      if: ${{ matrix.os == 'ubuntu-22.04' }}
