@@ -24,21 +24,31 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 public final class DispatchUtils {
     static Assumption[] createAssumptions(final ClassObject startClass, final Object lookupResult) {
         final ClassObject targetClass;
+        final Assumption callTargetStable;
         if (lookupResult instanceof CompiledCodeObject method) {
             assert method.isCompiledMethod();
             targetClass = method.getMethodClassSlow();
+            callTargetStable = method.getCallTargetStable();
         } else {
             /* DNU or OAM, return assumptions for all superclasses. */
             targetClass = null;
+            callTargetStable = null;
         }
-        return createAssumptions(startClass, targetClass);
+        return createAssumptions(startClass, targetClass, callTargetStable);
     }
 
-    static Assumption[] createAssumptions(final ClassObject startClass, final ClassObject targetClass) {
+    static Assumption[] createAssumptions(final ClassObject startClass, final ClassObject targetClass, final Assumption callTargetStable) {
         if (startClass == targetClass) {
-            return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable()};
+            if (callTargetStable == null) {
+                return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable()};
+            } else {
+                return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable(), callTargetStable};
+            }
         } else {
             final ArrayList<Assumption> list = new ArrayList<>();
+            if (callTargetStable != null) {
+                list.add(callTargetStable);
+            }
             ClassObject currentClass = startClass;
             while (currentClass != null) {
                 list.add(currentClass.getClassHierarchyAndMethodDictStable());
