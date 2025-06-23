@@ -11,7 +11,6 @@ import static org.junit.Assert.assertNotEquals;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,8 +42,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int PRIORITY_10_LIST_INDEX = 9;
     protected static final String PASSED_VALUE = "passed";
     private static final String TEST_IMAGE_FILE_NAME = "test-64bit.image";
-
-    protected static final String[] TRUFFLESQUEAK_TEST_CASE_NAMES = truffleSqueakTestCaseNames();
 
     private static PointersObject idleProcess;
     // For now we are single-threaded, so the flag can be static.
@@ -245,17 +242,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         private static TestResult success() {
             return SUCCESS;
         }
-    }
-
-    private static String[] truffleSqueakTestCaseNames() {
-        final File[] srcDirectories = new File(getPathToInImageCode()).listFiles(File::isDirectory);
-        final ArrayList<String> testCaseNames = new ArrayList<>();
-        for (final File subDirectory : srcDirectories) {
-            for (final File classDirectories : subDirectory.listFiles(pathname -> pathname.isDirectory() && pathname.getName().endsWith("Test.class"))) {
-                testCaseNames.add(classDirectories.getName().substring(0, classDirectories.getName().lastIndexOf(".class")));
-            }
-        }
-        return testCaseNames.toArray(new String[0]);
     }
 
     protected static final String getPathToInImageCode() {

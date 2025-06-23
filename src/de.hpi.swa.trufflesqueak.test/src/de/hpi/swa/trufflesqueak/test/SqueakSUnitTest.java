@@ -68,7 +68,6 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     @Parameter public SqueakTest test;
 
-    private static boolean truffleSqueakPackagesLoaded;
     private static boolean stopRunningSuite;
 
     @Parameters(name = "{0} (#{index})")
@@ -87,6 +86,9 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     @BeforeClass
     public static void beforeClass() {
         printStatistics();
+        if (runsOnMXGate()) {
+            loadTruffleSqueakPackages();
+        }
     }
 
     private static void printStatistics() {
@@ -105,9 +107,6 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     @Test
     public void runSqueakTest() throws Throwable {
         checkTermination();
-        if (!truffleSqueakPackagesLoaded && (runsOnMXGate() || inTruffleSqueakPackage(test))) {
-            loadTruffleSqueakPackages();
-        }
 
         TestResult result;
         try {
@@ -178,17 +177,6 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
     }
 
-    private static boolean inTruffleSqueakPackage(final SqueakTest test) {
-        final String className = test.className();
-        for (final String testCaseName : TRUFFLESQUEAK_TEST_CASE_NAMES) {
-            if (testCaseName.equals(className)) {
-                println("\nLoading TruffleSqueak packages (required by " + test + "). This may take a while...");
-                return true;
-            }
-        }
-        return false;
-    }
-
     private static void loadTruffleSqueakPackages() {
         final long start = System.currentTimeMillis();
         final String loadTemplate = """
@@ -212,7 +200,6 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                         Smalltalk snapshot: true andQuit: false.
                         """;
         evaluate(String.format(loadTemplate, getPathToInImageCode()));
-        truffleSqueakPackagesLoaded = true;
         println("TruffleSqueak packages loaded and image saved in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
     }
 
