@@ -12,6 +12,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -29,6 +30,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -118,6 +120,7 @@ public final class SqueakImageContext {
     @CompilationFinal public ClassObject smallFloatClass;
     @CompilationFinal private ClassObject byteSymbolClass;
     @CompilationFinal private ClassObject foreignObjectClass;
+    private final CyclicAssumption foreignObjectClassStable = new CyclicAssumption("ForeignObjectClassStable assumption");
     @CompilationFinal private ClassObject linkedListClass;
 
     public final ArrayObject specialObjectsArray = new ArrayObject();
@@ -659,14 +662,14 @@ public final class SqueakImageContext {
         return foreignObjectClass;
     }
 
+    public Assumption getForeignObjectClassStableAssumption() {
+        return foreignObjectClassStable.getAssumption();
+    }
+
     public boolean setForeignObjectClass(final ClassObject classObject) {
-        if (foreignObjectClass == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreignObjectClass = classObject;
-            return true;
-        } else {
-            return false;
-        }
+        foreignObjectClassStable.invalidate("New foreign object class");
+        foreignObjectClass = classObject;
+        return true;
     }
 
     public ClassObject getLinkedListClass() {
