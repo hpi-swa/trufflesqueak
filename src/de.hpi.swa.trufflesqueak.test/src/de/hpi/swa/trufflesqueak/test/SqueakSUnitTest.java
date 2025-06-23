@@ -125,8 +125,8 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                 printlnErr("(no reason)");
             }
             try {
-                reloadImage();
                 if (test.type() == TestType.PASSING) {
+                    reloadImage();
                     println("Retrying test that is expected to pass...");
                     result = runTestCase(test);
                 }
