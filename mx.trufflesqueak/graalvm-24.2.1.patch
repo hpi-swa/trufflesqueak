@@ -1,5 +1,5 @@
 diff --git a/sdk/mx.sdk/suite.py b/sdk/mx.sdk/suite.py
-index 9906251a7d6..319984255fb 100644
+index 9906251a7d6..c2be27733b7 100644
 --- a/sdk/mx.sdk/suite.py
 +++ b/sdk/mx.sdk/suite.py
 @@ -461,6 +461,8 @@ suite = {
@@ -11,6 +11,34 @@ index 9906251a7d6..319984255fb 100644
        "graalCompilerSourceEdition": "ignore",
      },
      "org.graalvm.launcher.test" : {
+@@ -581,12 +583,12 @@ suite = {
+       "testProject" : True,
+       "graalCompilerSourceEdition": "ignore",
+     },
+-    "org.graalvm.toolchain.test" : {
+-      "class" : "ToolchainTestProject",
+-      "subDir" : "src",
+-      "buildDependencies" : ["LLVM_TOOLCHAIN"],
+-      "graalCompilerSourceEdition": "ignore",
+-    },
++    # "org.graalvm.toolchain.test" : {
++    #   "class" : "ToolchainTestProject",
++    #   "subDir" : "src",
++    #   "buildDependencies" : ["LLVM_TOOLCHAIN"],
++    #   "graalCompilerSourceEdition": "ignore",
++    # },
+     "org.graalvm.shadowed.org.jline": {
+       # shaded JLINE_*
+       "subDir": "src",
+@@ -1321,7 +1323,7 @@ LDFLAGS=
+       },
+       "dependencies": [
+         "LLVM_TOOLCHAIN",
+-        "org.graalvm.toolchain.test",
++        # "org.graalvm.toolchain.test",
+       ],
+       "graalCompilerSourceEdition": "ignore",
+     },
 diff --git a/sdk/src/org.graalvm.launcher.native/src/launcher.cc b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
 index c344340439b..028a38702f0 100644
 --- a/sdk/src/org.graalvm.launcher.native/src/launcher.cc
@@ -48,6 +76,28 @@ index c344340439b..028a38702f0 100644
      if (!createVM) {
          std::cerr << "Could not load JVM." << std::endl;
          return -1;
+diff --git a/truffle/mx.truffle/suite.py b/truffle/mx.truffle/suite.py
+index b69b2a88f44..ff0350e04cb 100644
+--- a/truffle/mx.truffle/suite.py
++++ b/truffle/mx.truffle/suite.py
+@@ -994,7 +994,7 @@ suite = {
+     "com.oracle.truffle.nfi.native" : {
+       "subDir" : "src",
+       "native" : "shared_lib",
+-      "toolchain" : "sdk:LLVM_NINJA_TOOLCHAIN",
++      # "toolchain" : "sdk:LLVM_NINJA_TOOLCHAIN",
+       "deliverable" : "trufflenfi",
+       "use_jdk_headers" : True,
+       "buildDependencies" : [
+@@ -1065,7 +1065,7 @@ suite = {
+     "com.oracle.truffle.nfi.test.native" : {
+       "subDir" : "src",
+       "native" : "shared_lib",
+-      "toolchain" : "sdk:LLVM_NINJA_TOOLCHAIN",
++      # "toolchain" : "sdk:LLVM_NINJA_TOOLCHAIN",
+       "deliverable" : "nativetest",
+       "buildDependencies" : [
+         "com.oracle.truffle.nfi.native",
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
 index 10b976c323e..18e3fd6a8a8 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
