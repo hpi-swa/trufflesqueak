@@ -26,6 +26,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.test.SqueakTests.SqueakTest;
 import de.hpi.swa.trufflesqueak.test.SqueakTests.TestType;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -185,6 +186,8 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     private static void loadTruffleSqueakPackages() {
         final long start = System.currentTimeMillis();
         final String loadTemplate = """
+                        | result |
+                        result := 'success'.
                         [[[ | mc |
                         mc := MCFileTreeRepository path: '%s'.
                         Installer monticello
@@ -200,12 +203,24 @@ public final class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                                             [[ e sendNotificationsTo: [ :min :max :current | "silence" ]]
                                                 on: ProgressNotification do: [ :notification | notification resume ]]]].
 
-                        (Smalltalk at: #TruffleSqueakUtilities) setUpAfterLoadingPackages.
+                        [
+                            (Smalltalk at: #Polyglot) initialize.
+                            (Smalltalk at: #TruffleSqueakUtilities) setUpAfterLoadingPackages.
+                        ] on: Error do: [ :e | result := e asString ].
 
                         Smalltalk snapshot: true andQuit: false.
+                        result
                         """;
-        evaluate(String.format(loadTemplate, getPathToInImageCode()));
-        println("TruffleSqueak packages loaded and image saved in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
+        final Object result = evaluate(String.format(loadTemplate, getPathToInImageCode()));
+        if (result instanceof final NativeObject nativeObject) {
+            if ("success".equals(nativeObject.asStringUnsafe())) {
+                println("TruffleSqueak packages loaded and image saved in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
+            } else {
+                throw new IllegalStateException("Failed to load TruffleSqueak packages: " + nativeObject.asStringUnsafe());
+            }
+        } else {
+            throw new IllegalStateException("Failed to load TruffleSqueak packages: " + result);
+        }
     }
 
     private static Map<TestType, Long> countByType(final Collection<SqueakTest> tests) {
