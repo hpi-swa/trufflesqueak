@@ -161,10 +161,6 @@ jobs:
     - name: Build TruffleSqueak standalone
       run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
       if: ${{ runner.os != 'Windows' }}
-    # Workaround for https://github.com/actions/runner-images/issues/10001:
-    - name: Upgrade LLVM
-      run: choco upgrade llvm
-      if: ${{ runner.os == 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
       run: |
