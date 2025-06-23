@@ -13,7 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -97,7 +97,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Cached("message") final Message cachedMessage,
                         @SuppressWarnings("unused") @Cached("lookupMethod(receiver, cachedMessage)") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                        @Exclusive @Cached final WrapToSqueakNode wrapNode,
                         @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
             final int numArgs = cachedMessage.getParameterCount() - 1;
             assert numArgs == rawArguments.length;
@@ -122,7 +122,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         protected static final Object doSendGeneric(final Node node, final AbstractSqueakObject receiver, final Message message, final Object[] rawArguments,
                         @Cached final LookupMethodNode lookupNode,
                         @Cached final SqueakObjectClassNode classNode,
-                        @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                        @Exclusive @Cached final WrapToSqueakNode wrapNode,
                         @Cached(inline = false) final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached(inline = false) final IndirectCallNode callNode) throws Exception {
             final SqueakImageContext image = SqueakImageContext.get(node);
