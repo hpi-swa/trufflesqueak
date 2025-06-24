@@ -204,12 +204,12 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     }
 
     @Specialization(guards = {"classObject.isBytes()" , "image.isByteStringClass(classObject)" })
-    protected static final NativeObject doNativeByteString(final SqueakImageContext image, final ClassObject classObject, final int extraSize, @Cached.Shared("truffle-string") @Cached MutableTruffleString.FromByteArrayNode node) {
+    protected static final NativeObject doNativeByteString(final SqueakImageContext image, final ClassObject classObject, final int extraSize, @Cached.Shared("fromByteArrayNode") @Cached MutableTruffleString.FromByteArrayNode node) {
         assert classObject.getBasicInstanceSize() == 0;
         return NativeObject.newNativeByteString(image, extraSize, node);
     }
     @Specialization(guards = {"classObject.isBytes()", "!image.isLargeIntegerClass(classObject)", "!image.isByteStringClass(classObject)"})
-    protected static final NativeObject doNativeBytes(final SqueakImageContext image, final ClassObject classObject, final int extraSize, @Cached.Shared("truffle-string") @Cached MutableTruffleString.FromByteArrayNode node) {
+    protected static final NativeObject doNativeBytes(final SqueakImageContext image, final ClassObject classObject, final int extraSize, @Cached.Shared("fromByteArrayNode") @Cached MutableTruffleString.FromByteArrayNode node) {
         assert classObject.getBasicInstanceSize() == 0;
         return NativeObject.newNativeBytes(image, classObject, extraSize, node);
     }

@@ -66,6 +66,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         storage = storageCopy;
     }
 
+    // TODO sometimes we want to create immutable TruffleString
     public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes, MutableTruffleString.FromByteArrayNode node) {
         final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
         final MutableTruffleString truffleString = node.execute(bytes, 0, bytes.length, encoding, false);
@@ -322,7 +323,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean isByteType() {
-        return storage instanceof byte[];
+        return false;
     }
 
     public boolean isIntType() {

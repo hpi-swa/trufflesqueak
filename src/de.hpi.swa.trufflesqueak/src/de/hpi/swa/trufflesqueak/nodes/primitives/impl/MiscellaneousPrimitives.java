@@ -623,13 +623,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public abstract static class PrimCompareString2Node extends AbstractPrimCompareStringNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()"})
-        protected static final long doCompareAsciiOrderOneByteTruffleString(final NativeObject receiver, final NativeObject other, @Cached TruffleString.CompareBytesNode compareBytesNode) {
-            return compareAsciiOrder(receiver.getTruffleStringStorage(), other.getTruffleStringStorage(), compareBytesNode);
-        }
-
-        @Specialization(guards = {"receiver.isByteType() || receiver.isTruffleStringType()", "other.isTruffleStringType() || other.isByteType()"}, limit = "1", replaces = "doCompareAsciiOrderOneByteTruffleString")
         protected static final long doCompareAsciiOrderOneByte(final NativeObject receiver, final NativeObject other, @Cached TruffleString.CompareBytesNode compareBytesNode, @Cached TruffleString.FromByteArrayNode fromByteArrayNode) {
-            return compareAsciiOrder(receiver, other, fromByteArrayNode, compareBytesNode);
+            return compareAsciiOrder(receiver, other, compareBytesNode);
         }
     }
 
@@ -637,44 +632,27 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 158)
     public abstract static class PrimCompareString3Node extends AbstractPrimCompareStringNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedAsciiOrder"}, limit = "1")
-        protected static final long doCompareAsciiOrderTruffleString(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
-                                                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder,
-                                                        @Cached TruffleString.CompareBytesNode compareBytesNode) {
-            return compareAsciiOrder(other.getTruffleStringStorage(), receiver.getTruffleStringStorage(), compareBytesNode);
-        }
-
-        @Specialization(guards = {"receiver.isTruffleStringType() || receiver.isByteType()", "other.isTruffleStringType() || other.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1", replaces = "doCompareAsciiOrderTruffleString")
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedAsciiOrder"})
         protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
                                                         @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder,
-                                                        @Cached TruffleString.FromByteArrayNode fromByteArrayNode,
                                                         @Cached TruffleString.CompareBytesNode compareBytesNode) {
-            return compareAsciiOrder(receiver, other, fromByteArrayNode, compareBytesNode);
+            return compareAsciiOrder(other, receiver, compareBytesNode);
         }
 
-        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedOrder"}, limit = "1")
-        protected static final long doCompareCachedTruffleString(final NativeObject receiver, final NativeObject other,
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedOrder"})
+        protected static final long doCompareCached(final NativeObject receiver, final NativeObject other,
                                                     @SuppressWarnings("unused") final NativeObject orderValue,
                                                     @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder,
                                                      @Cached TruffleString.ReadByteNode readByteNode) {
-            return compare(receiver.getTruffleStringStorage(), other.getTruffleStringStorage(), cachedOrder, readByteNode);
+            return compare(receiver, other, cachedOrder, readByteNode);
         }
 
-        @Specialization(guards = {"receiver.isTruffleStringType() || receiver.isByteType()", "other.isTruffleStringType() || other.isByteType()", "orderValue == cachedOrder"}, limit = "1", replaces = "doCompareCachedTruffleString")
-        protected static final long doCompareCached(final NativeObject receiver, final NativeObject other,
-                        @SuppressWarnings("unused") final NativeObject orderValue,
-                        @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder,
-                        @Cached TruffleString.FromByteArrayNode fromByteArrayNode,
-                        @Cached TruffleString.ReadByteNode readByteNode) {
-            return compare(receiver, other, cachedOrder, readByteNode, fromByteArrayNode);
-        }
-
-        @Specialization(guards = {"receiver.isTruffleStringType() || receiver.isByteType()", "other.isTruffleStringType() || other.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue.isTruffleStringType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
         protected static final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue,
                         @Cached TruffleString.FromByteArrayNode fromByteArrayNode,
                         @Cached TruffleString.ReadByteNode readByteNode) {
-            return compare(receiver, other, orderValue, readByteNode, fromByteArrayNode);
+            return compare(receiver, other, orderValue, readByteNode);
         }
     }
 
