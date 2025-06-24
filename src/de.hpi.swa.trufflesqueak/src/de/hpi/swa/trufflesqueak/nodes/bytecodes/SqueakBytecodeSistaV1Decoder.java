@@ -324,7 +324,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             offset += 2;
             b = Byte.toUnsignedInt(code.getBytes()[index + offset]);
         }
-        return offset + decodeNumBytes(code, index);
+        return offset + decodeNumBytes(code, index + offset);
     }
 
     /**
