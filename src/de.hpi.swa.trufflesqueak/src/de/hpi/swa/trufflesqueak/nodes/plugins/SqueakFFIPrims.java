@@ -36,6 +36,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
@@ -287,7 +288,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimLoadSymbolFromModuleNode extends AbstractFFIPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"moduleSymbol.isByteType()", "module.isTruffleStringType()"})
         protected final NativeObject doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+                                                  @CachedLibrary(limit = "2") final InteropLibrary lib, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             final SqueakImageContext image = getContext();
             final String moduleSymbolName = moduleSymbol.asStringUnsafe();
             final String moduleName = module.asStringUnsafe();
@@ -310,9 +311,9 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             } catch (final UnsupportedMessageException e) {
                 CompilerDirectives.transferToInterpreter();
                 e.printStackTrace();
-                return newExternalAddress(image, receiver, 0L);
+                return newExternalAddress(image, receiver, 0L, fromByteArrayNode);
             }
-            return newExternalAddress(image, receiver, pointer);
+            return newExternalAddress(image, receiver, pointer, fromByteArrayNode);
         }
 
         @TruffleBoundary
@@ -320,10 +321,10 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return Source.newBuilder("nfi", String.format("load \"%s\"", getPathOrFail(image, moduleName)), "native").build();
         }
 
-        private static NativeObject newExternalAddress(final SqueakImageContext image, final ClassObject externalAddressClass, final long pointer) {
+        private static NativeObject newExternalAddress(final SqueakImageContext image, final ClassObject externalAddressClass, final long pointer, MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             return NativeObject.newNativeBytes(image, externalAddressClass,
                             new byte[]{(byte) pointer, (byte) (pointer >> 8), (byte) (pointer >> 16), (byte) (pointer >> 24), (byte) (pointer >> 32), (byte) (pointer >> 40),
-                                            (byte) (pointer >> 48), (byte) (pointer >> 56)});
+                                            (byte) (pointer >> 48), (byte) (pointer >> 56)}, fromByteArrayNode);
         }
     }
 

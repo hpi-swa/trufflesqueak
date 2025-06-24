@@ -1020,8 +1020,8 @@ public final class SqueakImageContext {
         return numerator / denominator;
     }
 
-    public NativeObject asByteArray(final byte[] bytes) {
-        return NativeObject.newNativeBytes(this, byteArrayClass, bytes);
+    public NativeObject asByteArray(final byte[] bytes, final MutableTruffleString.FromByteArrayNode node) {
+        return NativeObject.newNativeBytes(this, byteArrayClass, bytes, node);
     }
 
     public NativeObject asByteString(final String value) {

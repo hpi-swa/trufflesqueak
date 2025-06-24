@@ -136,7 +136,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
     }
 
     private static NativeObject asByteSymbol(final String value) {
-        return NativeObject.newNativeBytes(image, image.getByteSymbolClass(), MiscUtils.stringToBytes(value));
+        return NativeObject.newNativeBytesUncached(image, image.getByteSymbolClass(), MiscUtils.stringToBytes(value));
     }
 
     @AfterClass

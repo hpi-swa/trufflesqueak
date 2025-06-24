@@ -64,12 +64,6 @@ public final class NativeObjectNodes {
         protected static final long doNativeTruffleString(final Node node, final NativeObject obj, final long index, @Cached TruffleString.ReadByteNode readByteNode) {
             return Integer.toUnsignedLong(obj.readByteTruffleString((int) index, readByteNode));
         }
-
-        @Fallback
-        @SuppressWarnings("unused")
-        protected static final long doPrimitiveFail2(final Node node, final NativeObject obj, final long index) {
-            throw PrimitiveFailed.GENERIC_ERROR;
-        }
     }
 
     @GenerateInline

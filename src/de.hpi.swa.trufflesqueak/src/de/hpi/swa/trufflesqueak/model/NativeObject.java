@@ -66,16 +66,27 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         storage = storageCopy;
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), chunk.getBytes());
+    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes, MutableTruffleString.FromByteArrayNode node) {
+        final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
+        final MutableTruffleString truffleString = node.execute(bytes, 0, bytes.length, encoding, false);
+        return new NativeObject(img, klass, truffleString);
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
-        return new NativeObject(img, klass, bytes);
+    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size, MutableTruffleString.FromByteArrayNode node) {
+        return newNativeBytes(img, klass, new byte[size], node);
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeBytes(img, klass, new byte[size]);
+    public static NativeObject newNativeBytesUncached(final SqueakImageChunk chunk) {
+        final ClassObject klass = chunk.getSqueakClass();
+        final byte[] bytes = chunk.getBytes();
+        final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
+        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false));
+    }
+
+    public static NativeObject newNativeBytesUncached(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
+        final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
+        final MutableTruffleString truffleString = MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false);
+        return new NativeObject(img, klass, truffleString);
     }
 
     public static NativeObject newNativeInts(final SqueakImageChunk chunk) {

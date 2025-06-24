@@ -22,6 +22,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -149,11 +150,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
-                        @Bind final Node node,
-                        @Cached final InlinedConditionProfile hasResultProfile) {
+                                                           @Bind final Node node,
+                                                           @Cached final InlinedConditionProfile hasResultProfile,
+                                                           @Cached final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
             LogUtils.SOCKET.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
-            return hasResultProfile.profile(node, lastNameLookup == null) ? NilObject.SINGLETON : getContext(node).asByteArray(lastNameLookup);
+            return hasResultProfile.profile(node, lastNameLookup == null) ? NilObject.SINGLETON : getContext(node).asByteArray(lastNameLookup, fromByteArrayNode);
         }
     }
 
@@ -176,10 +178,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveResolverLocalAddress")
     protected abstract static class PrimResolverLocalAddressNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver) {
+        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             final byte[] address = Resolver.getLoopbackAddress();
             LogUtils.SOCKET.finer(() -> "Local Address: " + Resolver.addressBytesToString(address));
-            return getContext().asByteArray(address);
+            return getContext().asByteArray(address, fromByteArrayNode);
         }
     }
 
@@ -362,9 +364,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketRemoteAddress")
     protected abstract static class PrimSocketRemoteAddressNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
+        protected final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             try {
-                return getContext().asByteArray(getRemoteAddress(sd));
+                return getContext().asByteArray(getRemoteAddress(sd), fromByteArrayNode);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Retrieving remote address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -447,9 +449,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketLocalAddress")
     protected abstract static class PrimSocketLocalAddressNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
+        protected final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             try {
-                return getContext().asByteArray(getLocalAddress(sd));
+                return getContext().asByteArray(getLocalAddress(sd), fromByteArrayNode);
             } catch (final IOException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Retrieving local address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
