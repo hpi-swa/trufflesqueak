@@ -128,7 +128,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * asynchronous. To get the results, wait for it to complete or time out and then use
          * primAddressLookupResult.
          */
-        @Specialization(guards = "address.isByteType()")
+        @Specialization(guards = "address.isTruffleStringType()")
         protected static final Object doWork(final Object receiver, final NativeObject address) {
             try {
                 LogUtils.SOCKET.finer(() -> "Starting lookup for address " + address);
@@ -189,7 +189,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(SocketPlugin.class)
     @SqueakPrimitive(names = "primitiveResolverHostNameResult")
     protected abstract static class PrimResolverHostNameResultNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"targetString.isByteType()", "targetString.getByteLength() >= LOCAL_HOST_NAME.length"})
+        @Specialization(guards = {"targetString.isTruffleStringType()", "targetString.getByteLength() >= LOCAL_HOST_NAME.length"})
         protected static final Object doResult(@SuppressWarnings("unused") final Object receiver, final NativeObject targetString) {
             UnsafeUtils.copyBytes(LOCAL_HOST_NAME, 0, targetString.getByteStorage(), 0, LOCAL_HOST_NAME.length);
             return receiver;
@@ -281,7 +281,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * Set up the socket to listen on the given port. Will be used in conjunction with #accept
          * only.
          */
-        @Specialization(guards = "interfaceAddress.isByteType()")
+        @Specialization(guards = "interfaceAddress.isTruffleStringType()")
         protected static final Object doListen(final Object receiver,
                         final PointersObject sd,
                         final long port,
@@ -305,7 +305,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketSetOptions")
     protected abstract static class PrimSocketSetOptionsNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = "option.isByteType()")
+        @Specialization(guards = "option.isTruffleStringType()")
         protected final ArrayObject doSet(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option, final NativeObject value) {
             try {
                 return setSocketOption(getContext(), getSocketOrPrimFail(sd), option.asStringUnsafe(), value.asStringUnsafe());
@@ -328,7 +328,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketConnectToPort")
     protected abstract static class PrimSocketConnectToPortNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = "hostAddress.isByteType()")
+        @Specialization(guards = "hostAddress.isTruffleStringType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doConnectToPort(
                         @SuppressWarnings("unused") final Object receiver, final PointersObject sd,
@@ -403,7 +403,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * SO_KEEPALIVE are valid options for example returns an array containing the error code and
          * the option value.
          */
-        @Specialization(guards = "option.isByteType()")
+        @Specialization(guards = "option.isTruffleStringType()")
         protected final Object doGetOption(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option) {
             final SqueakImageContext image = getContext();
             try {
@@ -475,7 +475,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * calls to transmit a large data array since the data is sent in send-buffer-sized chunks.
          * The size of the send buffer is determined when the socket is created.
          */
-        @Specialization(guards = "buffer.isByteType()")
+        @Specialization(guards = "buffer.isTruffleStringType()")
         protected static final long doCount(
                         @SuppressWarnings("unused") final Object receiver,
                         final PointersObject sd,
@@ -553,7 +553,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * Receive data from the given socket into the given array starting at the given index.
          * Return the number of bytes read or zero if no data is available.
          */
-        @Specialization(guards = "buffer.isByteType()")
+        @Specialization(guards = "buffer.isTruffleStringType()")
         protected static final long doCount(
                         @SuppressWarnings("unused") final Object receiver, final PointersObject sd,
                         final NativeObject buffer, final long startIndex, final long count) {

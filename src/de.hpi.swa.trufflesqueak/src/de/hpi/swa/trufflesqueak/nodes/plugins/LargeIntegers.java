@@ -679,7 +679,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
          * Left to support LargeIntegerObjects adapted from NativeObjects (see
          * SecureHashAlgorithmTest>>testEmptyInput).
          */
-        @Specialization(guards = {"receiver.isByteType()", "getContext().isLargeIntegerClass(receiver.getSqueakClass())"})
+        @Specialization(guards = {"receiver.isTruffleStringType()", "getContext().isLargeIntegerClass(receiver.getSqueakClass())"})
         protected final Object doNativeObject(final NativeObject receiver) {
             return new LargeIntegerObject(getContext(), receiver.getSqueakClass(), receiver.getByteStorage().clone()).reduceIfPossible();
         }

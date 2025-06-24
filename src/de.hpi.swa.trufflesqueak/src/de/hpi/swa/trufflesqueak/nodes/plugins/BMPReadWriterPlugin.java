@@ -29,7 +29,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRead24BmpLine")
     protected abstract static class PrimRead24BmpLineNode extends AbstractBMPPluginNode implements Primitive4WithFallback {
-        @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
+        @Specialization(guards = {"pixelLine.isTruffleStringType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
         protected static final Object doRead(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
             final byte[] bytes = pixelLine.getByteStorage();
             final int[] ints = formBits.getIntStorage();
@@ -46,7 +46,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWrite24BmpLine")
     protected abstract static class PrimWrite24BmpLineNode extends AbstractBMPPluginNode implements Primitive4WithFallback {
-        @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
+        @Specialization(guards = {"pixelLine.isTruffleStringType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
         protected static final Object doWrite(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
             final byte[] bytes = pixelLine.getByteStorage();
             final int[] ints = formBits.getIntStorage();

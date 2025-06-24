@@ -124,7 +124,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEnvironmentAtSymbol")
     protected abstract static class PrimEnvironmentAtSymbolNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "aSymbol.isByteType()")
+        @Specialization(guards = "aSymbol.isTruffleStringType()")
         protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol) {
             final SqueakImageContext image = getContext();
             final String key = aSymbol.asStringUnsafe();

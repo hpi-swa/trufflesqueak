@@ -27,7 +27,7 @@ public final class CroquetPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGatherEntropy")
     protected abstract static class PrimGatherEntropyNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "byteArray.isByteType()")
+        @Specialization(guards = "byteArray.isTruffleStringType()")
         protected static final boolean doGather(@SuppressWarnings("unused") final Object receiver, final NativeObject byteArray) {
             ArrayUtils.fillRandomly(byteArray.getByteStorage());
             return BooleanObject.TRUE;

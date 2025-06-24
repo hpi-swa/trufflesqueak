@@ -162,7 +162,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 63)
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getByteLength())"})
         protected static final char doNativeObjectBytes(final NativeObject obj, final long index) {
             return (char) (obj.getByte(index - 1) & 0xFF);
         }
@@ -185,7 +185,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 64)
     protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())", "inByteRange(value)"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getByteLength())", "inByteRange(value)"})
         protected static final char doNativeObjectBytes(final NativeObject obj, final long index, final char value) {
             obj.setByte(index - 1, (byte) value);
             return value;

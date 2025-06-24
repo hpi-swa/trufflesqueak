@@ -238,8 +238,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public byte getByte(final long index) {
-        assert isByteType();
-        return UnsafeUtils.getByte((byte[]) storage, (int) index);
+        assert isTruffleStringType();
+        return (byte) ((MutableTruffleString) storage).readByteUncached((int) index, getTruffleStringEncoding());
     }
 
     public int getByteUnsigned(final long index) {
@@ -247,8 +247,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setByte(final long index, final byte value) {
-        assert isByteType();
-        UnsafeUtils.putByte((byte[]) storage, (int) index, value);
+        assert isTruffleStringType();
+        ((MutableTruffleString) storage).writeByteUncached((int) index, value, getTruffleStringEncoding());
     }
 
     public void setByte(final long index, final int value) {
@@ -257,12 +257,12 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getByteLength() {
-        return getByteStorage().length;
+        return getTruffleStringByteLength();
     }
 
     public byte[] getByteStorage() {
-        assert isByteType();
-        return (byte[]) storage;
+        assert isTruffleStringType();
+        return getTruffleStringAsReadonlyBytesUncached();
     }
 
     public int getInt(final long index) {

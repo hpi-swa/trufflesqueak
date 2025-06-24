@@ -445,7 +445,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileOpen")
     protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = "nativeFileName.isTruffleStringType() || nativeFileName.isByteType()")
+        @Specialization(guards = "nativeFileName.isTruffleStringType() || nativeFileName.isTruffleStringType()")
         protected final Object doOpen(@SuppressWarnings("unused") final Object receiver, final NativeObject nativeFileName, final boolean writableFlag) {
             return createFileHandleOrPrimFail(getContext(), asPublicTruffleFile(nativeFileName), writableFlag);
         }
@@ -461,7 +461,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
         }
 
-        @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isByteType()", "inBounds(startIndex, count, target.getByteLength())"})
+        @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isTruffleStringType()", "inBounds(startIndex, count, target.getByteLength())"})
         protected static final long doReadBytes(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count) {
             final long read = readFrom(getChannelOrPrimFail(fd), target.getByteStorage(), (int) startIndex - 1, (int) count);
             return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
@@ -630,20 +630,20 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileWrite")
     protected abstract static class PrimFileWriteNode extends AbstractFilePluginPrimitiveNode implements Primitive4WithFallback {
 
-        @Specialization(guards = {"!isStdioFileDescriptor(fd)", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
+        @Specialization(guards = {"!isStdioFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getByteLength())"})
         protected static final long doWriteByte(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
             return fileWriteFromAt(fd, count, content.getByteStorage(), startIndex, 1);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"isStdoutFileDescriptor(fd)", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
+        @Specialization(guards = {"isStdoutFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getByteLength())"})
         protected final long doWriteByteToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
             writeToOutputStream(getContext().env.out(), content.getByteStorage(), (int) (startIndex - 1), (int) count);
             return count;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"isStderrFileDescriptor(fd)", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
+        @Specialization(guards = {"isStderrFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getByteLength())"})
         protected final long doWriteByteToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
             writeToOutputStream(getContext().env.err(), content.getByteStorage(), (int) (startIndex - 1), (int) count);
             return count;

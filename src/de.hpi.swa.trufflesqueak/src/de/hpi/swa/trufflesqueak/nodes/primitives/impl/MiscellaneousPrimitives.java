@@ -508,7 +508,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 141)
     protected abstract static class PrimClipboardText2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "value.isByteType()")
+        @Specialization(guards = "value.isTruffleStringType()")
         protected final NativeObject setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
@@ -534,7 +534,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 145)
     protected abstract static class PrimConstantFillNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "receiver.isByteType()")
+        @Specialization(guards = "receiver.isTruffleStringType()")
         protected static final NativeObject doNativeBytes(final NativeObject receiver, final long value) {
             ArrayUtils.fill(receiver.getByteStorage(), (byte) value);
             return receiver;
@@ -704,7 +704,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
-                        "receiver.isByteType()", "anotherObject.isByteType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
+                        "receiver.isTruffleStringType()", "anotherObject.isTruffleStringType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
         protected static final NativeObject doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
             final byte[] destStorage = receiver.getByteStorage();
             UnsafeUtils.copyBytes(anotherObject.getByteStorage(), 0L, destStorage, 0L, destStorage.length);
