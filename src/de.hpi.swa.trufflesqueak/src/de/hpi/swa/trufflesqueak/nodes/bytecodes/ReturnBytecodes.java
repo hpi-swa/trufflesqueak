@@ -63,6 +63,9 @@ public final class ReturnBytecodes {
     }
 
     private static final class ReturnFromMethodNode extends AbstractReturnKindNode {
+
+        /* Return to sender (never needs to unwind) */
+
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.create();
 
         @Override
@@ -78,6 +81,9 @@ public final class ReturnBytecodes {
     }
 
     private static final class ReturnFromClosureNode extends AbstractReturnKindNode {
+
+        /* Return to closure's home context's sender, executing unwind blocks */
+
         @Override
         protected Object execute(final VirtualFrame frame, final Object returnValue) {
             assert FrameAccess.hasClosure(frame);
@@ -158,6 +164,9 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class AbstractBlockReturnNode extends AbstractReturnNode {
+
+        /* Return to caller (never needs to unwind) */
+
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.create();
 
         protected AbstractBlockReturnNode(final CompiledCodeObject code, final int index) {
