@@ -209,14 +209,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public AbstractSqueakObject getSender() {
         final Object value = getFrameSender();
         if (value instanceof final FrameMarker f) {
-            return fillInSenderFromMaker(f);
+            return fillInSenderFromMarker(f);
         } else {
             return (AbstractSqueakObject) value;
         }
     }
 
     @TruffleBoundary
-    private AbstractSqueakObject fillInSenderFromMaker(final FrameMarker value) {
+    private AbstractSqueakObject fillInSenderFromMarker(final FrameMarker value) {
         final CompiledCodeObject methodOrBlock = getCodeObject();
         if (!methodOrBlock.hasPrimitive() || methodOrBlock.isUnwindMarked() || methodOrBlock.isExceptionHandlerMarked()) {
             /*
@@ -262,6 +262,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             hasModifiedSender = false;
         }
         FrameAccess.setSender(getOrCreateTruffleFrame(), NilObject.SINGLETON);
+    }
+
+    public void clearModifiedSender() {
+        if (hasModifiedSender) {
+            hasModifiedSender = false;
+        }
     }
 
     public Object getInstructionPointer(final InlinedConditionProfile nilProfile, final Node node) {
