@@ -143,10 +143,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             ContextObject currentContext = startContext;
             while (currentContext.hasMaterializedSender()) {
                 final AbstractSqueakObject sender = currentContext.getSender();
-                if (currentContext != startContext) {
-                    if (terminate) {
-                        currentContext.terminate();
-                    }
+                if (terminate && currentContext != startContext) {
+                    currentContext.terminate();
                 }
                 if (sender == NilObject.SINGLETON || sender == endContext) {
                     return sender == endContext;
@@ -209,10 +207,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             currentContext = result;
             while (true) {
                 final AbstractSqueakObject sender = currentContext.getSender();
-                if (currentContext != startContext) {
-                    if (terminate) {
-                        currentContext.terminate();
-                    }
+                if (terminate && currentContext != startContext) {
+                    currentContext.terminate();
                 }
                 if (sender == NilObject.SINGLETON || sender == endContext) {
                     return sender == endContext;
