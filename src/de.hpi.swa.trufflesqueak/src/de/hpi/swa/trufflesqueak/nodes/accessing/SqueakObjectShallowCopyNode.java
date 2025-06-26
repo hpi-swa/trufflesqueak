@@ -14,6 +14,8 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -57,7 +59,7 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
     @Specialization
     protected static final NativeObject doNative(final Node node, final NativeObject receiver,
-                    @Cached final NativeObjectShallowCopyNode copyNode) {
+                                                 @Cached final NativeObjectShallowCopyNode copyNode) {
         return copyNode.execute(node, receiver);
     }
 

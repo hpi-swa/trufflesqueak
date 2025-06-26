@@ -34,11 +34,6 @@ public final class NativeObjectNodes {
 
         public abstract Object execute(Node node, NativeObject obj, long index);
 
-        @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final long doNativeBytes(final NativeObject obj, final long index) {
-            return Byte.toUnsignedLong(obj.getByte(index));
-        }
-
         @Specialization(guards = "obj.isShortType()")
         protected static final long doNativeShorts(final NativeObject obj, final long index) {
             return Short.toUnsignedLong(obj.getShort(index));
@@ -74,11 +69,6 @@ public final class NativeObjectNodes {
 
         public abstract void execute(Node node, NativeObject obj, long index, Object value);
 
-        @Specialization(guards = {"obj.isTruffleStringType()", "value >= 0", "value <= BYTE_MAX"})
-        protected static final void doNativeBytes(final NativeObject obj, final long index, final long value) {
-            obj.setByte(index, (byte) value);
-        }
-
         @Specialization(guards = {"obj.isShortType()", "value >= 0", "value <= SHORT_MAX"})
         protected static final void doNativeShorts(final NativeObject obj, final long index, final long value) {
             obj.setShort(index, (short) value);
@@ -101,11 +91,6 @@ public final class NativeObjectNodes {
 
         protected static final boolean inByteRange(final char value) {
             return value <= NativeObject.BYTE_MAX;
-        }
-
-        @Specialization(guards = {"obj.isTruffleStringType()", "inByteRange(value)"})
-        protected static final void doNativeBytesChar(final NativeObject obj, final long index, final char value) {
-            doNativeBytes(obj, index, value);
         }
 
         @Specialization(guards = "obj.isShortType()") // char values fit into short
@@ -140,11 +125,6 @@ public final class NativeObjectNodes {
         @Specialization(guards = {"obj.isTruffleStringType()", "inByteRange(value)"})
         protected static final void doNativeByteStringChar(NativeObject obj, long index, final char value, @Cached.Shared("truffleString") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             doNativeByteString(obj, index, value, writeByteNode);
-        }
-
-        @Specialization(guards = {"obj.isTruffleStringType()", "value.inRange(0, BYTE_MAX)"})
-        protected static final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            doNativeBytes(obj, index, value.longValue());
         }
 
         @Specialization(guards = {"obj.isShortType()", "value.inRange(0, SHORT_MAX)"})
@@ -194,11 +174,6 @@ public final class NativeObjectNodes {
             return NativeObjectSizeNodeGen.getUncached().execute(null, obj);
         }
 
-        @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final int doNativeBytes(final NativeObject obj) {
-            return obj.getByteLength();
-        }
-
         @Specialization(guards = "obj.isShortType()")
         protected static final int doNativeShorts(final NativeObject obj) {
             return obj.getShortLength();
@@ -225,11 +200,6 @@ public final class NativeObjectNodes {
     public abstract static class NativeObjectByteSizeNode extends AbstractNode {
 
         public abstract int execute(Node node, NativeObject obj);
-
-        @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final int doNativeBytes(final NativeObject obj) {
-            return obj.getByteLength();
-        }
 
         @Specialization(guards = "obj.isShortType()")
         protected static final int doNativeShorts(final NativeObject obj) {
@@ -258,11 +228,6 @@ public final class NativeObjectNodes {
 
         public abstract byte[] execute(Node node, NativeObject obj);
 
-        @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final byte[] doNativeBytes(final NativeObject obj) {
-            return obj.getByteStorage();
-        }
-
         @Specialization(guards = "obj.isShortType()")
         protected static final byte[] doNativeShorts(final NativeObject obj) {
             return UnsafeUtils.toBytes(obj.getShortStorage());
@@ -290,11 +255,6 @@ public final class NativeObjectNodes {
 
         public abstract short[] execute(Node node, NativeObject obj);
 
-        @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final short[] doNativeBytes(final NativeObject obj) {
-            return UnsafeUtils.toShorts(obj.getByteStorage());
-        }
-
         @Specialization(guards = "obj.isShortType()")
         protected static final short[] doNativeShorts(final NativeObject obj) {
             return obj.getShortStorage();
@@ -321,11 +281,6 @@ public final class NativeObjectNodes {
     public abstract static class NativeGetIntsNode extends AbstractNode {
 
         public abstract int[] execute(Node node, NativeObject obj);
-
-        @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final int[] doNativeBytes(final NativeObject obj) {
-            return UnsafeUtils.toInts(obj.getByteStorage());
-        }
 
         @Specialization(guards = "obj.isShortType()")
         protected static final int[] doNativeShorts(final NativeObject obj) {
@@ -380,11 +335,6 @@ public final class NativeObjectNodes {
     public abstract static class NativeObjectShallowCopyNode extends AbstractNode {
 
         public abstract NativeObject execute(Node node, NativeObject obj);
-
-        @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final NativeObject doNativeBytes(final NativeObject obj) {
-            return obj.shallowCopy(obj.getByteStorage().clone());
-        }
 
         @Specialization(guards = "obj.isShortType()")
         protected static final NativeObject doNativeShorts(final NativeObject obj) {

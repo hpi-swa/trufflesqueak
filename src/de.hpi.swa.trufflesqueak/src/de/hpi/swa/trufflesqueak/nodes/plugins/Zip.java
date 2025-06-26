@@ -884,7 +884,7 @@ public final class Zip {
     }
 
     private static boolean isBytes(final Object object) {
-        return SqueakGuards.isNativeObject(object) && ((NativeObject) object).isByteType();
+        return SqueakGuards.isNativeObject(object) && ((NativeObject) object).isTruffleStringType();
     }
 
     private static int shl(final int a, final int b) {

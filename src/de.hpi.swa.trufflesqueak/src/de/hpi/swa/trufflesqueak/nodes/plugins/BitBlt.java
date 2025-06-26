@@ -3789,7 +3789,7 @@ public final class BitBlt {
     }
 
     private static boolean isBytes(final NativeObject object) {
-        return object.isByteType();
+        return object.isTruffleStringType();
     }
 
     private static boolean isWords(final NativeObject object) {

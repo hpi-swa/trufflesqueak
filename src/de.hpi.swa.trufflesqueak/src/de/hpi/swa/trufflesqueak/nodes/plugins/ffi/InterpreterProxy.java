@@ -497,7 +497,7 @@ public final class InterpreterProxy {
     }
 
     private long isBytes(final long oop) {
-        return nativeObjectCheck(oop, NativeObject::isByteType);
+        return nativeObjectCheck(oop, NativeObject::isTruffleStringType);
     }
 
     private long isIntegerObject(final long oop) {
@@ -524,7 +524,7 @@ public final class InterpreterProxy {
     }
 
     private long isWordsOrBytes(final long oop) {
-        return nativeObjectCheck(oop, no -> no.isIntType() || no.isByteType());
+        return nativeObjectCheck(oop, no -> no.isIntType() || no.isTruffleStringType());
     }
 
     private long majorVersion() {

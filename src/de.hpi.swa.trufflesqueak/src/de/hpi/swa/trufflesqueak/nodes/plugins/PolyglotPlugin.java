@@ -2256,11 +2256,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveToJavaString")
     protected abstract static class PrimToJavaStringNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "target.isTruffleStringType()")
-        protected static final String bytesToString(@SuppressWarnings("unused") final Object receiver, final NativeObject target) {
-            return target.asStringUnsafe();
-        }
-
         @Specialization(guards = "target.isIntType()")
         protected static final String intsToString(@SuppressWarnings("unused") final Object receiver, final NativeObject target) {
             return target.asStringFromWideString();

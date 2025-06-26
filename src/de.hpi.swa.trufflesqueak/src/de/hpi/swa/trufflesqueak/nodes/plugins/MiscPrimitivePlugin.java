@@ -50,7 +50,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     public abstract static class AbstractPrimCompareStringNode extends AbstractPrimitiveNode {
         protected static final NativeObject asciiOrderOrNull(final NativeObject orderValue) {
-            if (orderValue.isByteType() && orderValue.getByteLength() == 256) {
+            if (orderValue.isTruffleStringType() && orderValue.getByteLength() == 256) {
                 final byte[] bytes = orderValue.getByteStorage();
                 /* AsciiOrder is the identity function. */
                 for (int i = 0; i < bytes.length; i++) {
@@ -340,17 +340,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return doFindTruffleString(receiver, string, cachedInclusionMap, start, node, notFoundProfile, readByteNode);
         }
 
-        @Specialization(guards = {"start > 0", "string.isTruffleStringType()", "inclusionMap == cachedInclusionMap"}, limit = "1")
-        protected static final long doFindByteCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string, @SuppressWarnings("unused") final NativeObject inclusionMap,
-                                                 final long start,
-                                                 @Bind final Node node,
-                                                 @Cached("validInclusionMapOrNull(inclusionMap)") final NativeObject cachedInclusionMap,
-                                                 @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
-            return doFindByte(receiver, string, cachedInclusionMap, start, node, notFoundProfile);
-        }
-
         protected static final NativeObject validInclusionMapOrNull(final NativeObject inclusionMap) {
-            return inclusionMap.isByteType() && inclusionMap.getByteLength() == 256 ? inclusionMap : null;
+            return inclusionMap.isTruffleStringType() && inclusionMap.getByteLength() == 256 ? inclusionMap : null;
         }
 
         @Specialization(guards = {"start > 0", "string.isTruffleStringType()", "inclusionMap.isTruffleStringType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindTruffleStringCached")
@@ -362,18 +353,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             long index = start - 1;
             final long stringSize = string.getTruffleStringByteLength();
             while (index < stringSize && inclusionMap.getByte(Byte.toUnsignedInt((byte) string.readByteTruffleString((int) index, readByteNode))) == 0) {
-                index++;
-            }
-            return notFoundProfile.profile(node, index >= stringSize) ? 0L : index + 1;
-        }
-
-        @Specialization(guards = {"start > 0", "string.isTruffleStringType()", "inclusionMap.isTruffleStringType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindByteCached")
-        protected static final long doFindByte(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
-                                           @Bind final Node node,
-                                           @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile) {
-            final int stringSize = string.getByteLength();
-            long index = start - 1;
-            while (index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0) {
                 index++;
             }
             return notFoundProfile.profile(node, index >= stringSize) ? 0L : index + 1;
@@ -519,7 +498,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final NativeObject byteTableOrNull(final NativeObject table) {
-            return table.isByteType() && table.getByteLength() >= 256 ? table : null;
+            return table.isTruffleStringType() && table.getByteLength() >= 256 ? table : null;
         }
 
         @Specialization(guards = {"start >= 1", "string.isTruffleStringType()", "stop <= string.getByteLength()", "table.isTruffleStringType()", "table.getByteLength() >= 256"}, replaces = "doNativeObjectCachedTable")
@@ -632,7 +611,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean hasBadIndex(final NativeObject string, final long start, final long stop) {
-            return start < 1 || string.isByteType() && stop > string.getByteLength();
+            return start < 1 || string.isTruffleStringType() && stop > string.getByteLength();
         }
     }
 }

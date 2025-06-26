@@ -159,7 +159,7 @@ public final class SqueakExceptions {
         @TruffleBoundary
         public String getMessage() {
             final Object messageTextObject = squeakException.instVarAt0Slow(EXCEPTION.MESSAGE_TEXT);
-            if (messageTextObject instanceof final NativeObject messageText && messageText.isByteType()) {
+            if (messageTextObject instanceof final NativeObject messageText && messageText.isTruffleStringType()) {
                 return messageText.asStringUnsafe();
             } else {
                 return squeakException.getSqueakClassName();

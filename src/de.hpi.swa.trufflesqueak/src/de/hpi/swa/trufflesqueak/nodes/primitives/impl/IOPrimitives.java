@@ -602,17 +602,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected abstract static class NativeObjectReplaceNode extends AbstractNode {
             protected abstract void execute(Node node, NativeObject rcvr, long start, long stop, Object repl, long replStart);
 
-            @Specialization(guards = {"rcvr.isTruffleStringType()", "repl.isTruffleStringType()"})
-            protected static final void doNativeBytes(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
-                if (inBounds(rcvr.getByteLength(), start, stop, repl.getByteLength(), replStart)) {
-                    UnsafeUtils.copyBytes(repl.getByteStorage(), replStart - 1, rcvr.getByteStorage(), start - 1, 1 + stop - start);
-                } else {
-                    errorProfile.enter(node);
-                    throw PrimitiveFailed.BAD_INDEX;
-                }
-            }
-
             @Specialization(guards = {"rcvr.isShortType()", "repl.isShortType()"})
             protected static final void doNativeShorts(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
@@ -659,7 +648,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isTruffleStringType()", "repl.isTruffleStringType()"})
             protected static final void doNativeTruffleString(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                                                      @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile,
+                            @Cached final TruffleString.ReadByteNode readByteNode,
+                            @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
                 if (inBounds(rcvr.getTruffleStringByteLength(), start, stop, repl.getTruffleStringByteLength(), replStart)) {
                     int length = Math.toIntExact(1 + stop - start);
                     for(int i = 0; i < length; i++) {

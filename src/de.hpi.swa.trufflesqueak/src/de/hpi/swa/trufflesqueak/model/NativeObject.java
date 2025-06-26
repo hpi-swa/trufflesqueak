@@ -167,7 +167,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public void fillin(final SqueakImageChunk chunk) {
         if (storage == ArrayUtils.EMPTY_ARRAY) { /* Fill in special selectors. */
             setStorage(chunk.getBytes());
-        } else if (chunk.getImage().isHeadless() && isByteType()) {
+        } else if (chunk.getImage().isHeadless() && isTruffleStringType()) {
             final SqueakImageContext image = chunk.getImage();
             if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getByteStorage())) {
                 image.setDebugErrorSelector(this);
