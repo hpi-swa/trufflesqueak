@@ -157,9 +157,10 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             return hasSenderChainFromToFramesAndTerminateIf(startContext, endContext, currentContext, terminate);
         }
 
-        private static boolean hasSenderChainFromToFramesAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final ContextObject intermediateContext, final boolean terminate) {
-            // Traverse sender chain from startContext to endContext, continuing with the frame associated with
-            // intermediateContext (which has not been terminated).
+        private static boolean hasSenderChainFromToFramesAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final ContextObject intermediateContext,
+                        final boolean terminate) {
+            // Traverse sender chain from startContext to endContext, continuing with the frame
+            // associated with intermediateContext (which has not been terminated).
             final FrameMarker intermediateMarker = (FrameMarker) intermediateContext.getFrameSender();
             final ContextObject result = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<>() {
                 boolean foundMyself;
@@ -213,9 +214,10 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             return hasSenderChainFromToRemainingAndTerminateIf(startContext, endContext, result, terminate);
         }
 
-        private static boolean hasSenderChainFromToRemainingAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final ContextObject intermediateContext, final boolean terminate) {
-            // Traverse sender chain from startContext to endContext, continuing with the frame associated with
-            // intermediateContext (which has not been terminated).
+        private static boolean hasSenderChainFromToRemainingAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final ContextObject intermediateContext,
+                        final boolean terminate) {
+            // Traverse sender chain from startContext to endContext, continuing with the context
+            // associated with intermediateContext (which has not been terminated).
 
             // Terminate the remaining Contexts until finding either endContext or nil.
             ContextObject currentContext = intermediateContext;
