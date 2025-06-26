@@ -93,6 +93,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return context;
     }
 
+    @SuppressWarnings("JavadocReference")
     /**
      * {@link ContextObject}s are filled in at a later stage by a
      * {@link SqueakImageReader#fillInContextObjects}.

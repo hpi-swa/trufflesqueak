@@ -121,8 +121,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
              * Terminate all the Contexts between me and previousContext, if previousContext is on
              * my Context stack. Make previousContext my sender.
              */
-            if (hasSenderChainBetweenTerminatingIf(receiver, previousContext, false)) {
-                hasSenderChainBetweenTerminatingIf(receiver, previousContext, true);
+            if (hasSenderChainFromToAndTerminateIf(receiver, previousContext, false)) {
+                hasSenderChainFromToAndTerminateIf(receiver, previousContext, true);
             }
             receiver.setSender(previousContext);
             return receiver;
@@ -138,7 +138,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          * Returns true if endContext is found on the sender chain of startContext. If terminate is
          * true, terminate Contexts while following the sender chain.
          */
-        private static boolean hasSenderChainBetweenTerminatingIf(final ContextObject startContext, final ContextObject endContext, final boolean terminate) {
+        private static boolean hasSenderChainFromToAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final boolean terminate) {
             // First, terminate materialized Contexts.
             ContextObject currentContext = startContext;
             while (currentContext.hasMaterializedSender()) {
@@ -152,8 +152,14 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     currentContext = (ContextObject) sender;
                 }
             }
-            // Then terminate frames. intermediateContext has not been terminated.
-            final ContextObject intermediateContext = currentContext;
+            // Continue search from currentContext within frames on Truffle stack.
+            // currentContext has not been terminated.
+            return hasSenderChainFromToFramesAndTerminateIf(startContext, endContext, currentContext, terminate);
+        }
+
+        private static boolean hasSenderChainFromToFramesAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final ContextObject intermediateContext, final boolean terminate) {
+            // Traverse sender chain from startContext to endContext, continuing with the frame associated with
+            // intermediateContext (which has not been terminated).
             final FrameMarker intermediateMarker = (FrameMarker) intermediateContext.getFrameSender();
             final ContextObject result = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<>() {
                 boolean foundMyself;
@@ -204,7 +210,15 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 return false;
             }
             // Terminate the remaining Contexts until finding either endContext or nil.
-            currentContext = result;
+            return hasSenderChainFromToRemainingAndTerminateIf(startContext, endContext, result, terminate);
+        }
+
+        private static boolean hasSenderChainFromToRemainingAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final ContextObject intermediateContext, final boolean terminate) {
+            // Traverse sender chain from startContext to endContext, continuing with the frame associated with
+            // intermediateContext (which has not been terminated).
+
+            // Terminate the remaining Contexts until finding either endContext or nil.
+            ContextObject currentContext = intermediateContext;
             while (true) {
                 final AbstractSqueakObject sender = currentContext.getSender();
                 if (terminate && currentContext != startContext) {
