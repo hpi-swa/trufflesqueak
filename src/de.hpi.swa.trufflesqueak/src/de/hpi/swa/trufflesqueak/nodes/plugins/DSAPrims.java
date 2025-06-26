@@ -28,7 +28,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveExpandBlock")
     protected abstract static class PrimExpandBlockNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = {"buf.isByteType()", "expanded.isIntType()", "expanded.getIntLength() == 80", "buf.getByteLength() == 64"})
+        @Specialization(guards = {"buf.isTruffleStringType()", "expanded.isIntType()", "expanded.getIntLength() == 80", "buf.getByteLength() == 64"})
         protected static final Object doExpand(final Object receiver, final NativeObject buf, final NativeObject expanded) {
             final byte[] bytes = buf.getByteStorage();
             for (int i = 0; i <= 15; i++) {

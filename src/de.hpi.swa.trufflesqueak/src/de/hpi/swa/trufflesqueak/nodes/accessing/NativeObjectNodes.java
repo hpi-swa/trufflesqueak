@@ -16,6 +16,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
@@ -32,7 +34,7 @@ public final class NativeObjectNodes {
 
         public abstract Object execute(Node node, NativeObject obj, long index);
 
-        @Specialization(guards = "obj.isByteType()")
+        @Specialization(guards = "obj.isTruffleStringType()")
         protected static final long doNativeBytes(final NativeObject obj, final long index) {
             return Byte.toUnsignedLong(obj.getByte(index));
         }
@@ -57,6 +59,11 @@ public final class NativeObjectNodes {
                 return LargeIntegerObject.toUnsigned(getContext(node), value);
             }
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final long doNativeTruffleString(final Node node, final NativeObject obj, final long index, @Cached TruffleString.ReadByteNode readByteNode) {
+            return Integer.toUnsignedLong(obj.readByteTruffleString((int) index, readByteNode));
+        }
     }
 
     @GenerateInline
@@ -67,7 +74,7 @@ public final class NativeObjectNodes {
 
         public abstract void execute(Node node, NativeObject obj, long index, Object value);
 
-        @Specialization(guards = {"obj.isByteType()", "value >= 0", "value <= BYTE_MAX"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "value >= 0", "value <= BYTE_MAX"})
         protected static final void doNativeBytes(final NativeObject obj, final long index, final long value) {
             obj.setByte(index, (byte) value);
         }
@@ -87,11 +94,16 @@ public final class NativeObjectNodes {
             obj.setLong(index, value);
         }
 
+        @Specialization(guards = {"obj.isTruffleStringType()", "value >= 0", "value <= BYTE_MAX"})
+        protected static final void doNativeByteString(NativeObject obj, long index, final long value, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            obj.writeByteTruffleString((int) index, (byte) value, writeByteNode);
+        }
+
         protected static final boolean inByteRange(final char value) {
             return value <= NativeObject.BYTE_MAX;
         }
 
-        @Specialization(guards = {"obj.isByteType()", "inByteRange(value)"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "inByteRange(value)"})
         protected static final void doNativeBytesChar(final NativeObject obj, final long index, final char value) {
             doNativeBytes(obj, index, value);
         }
@@ -125,7 +137,12 @@ public final class NativeObjectNodes {
             doNativeLongs(obj, index, value.getValue());
         }
 
-        @Specialization(guards = {"obj.isByteType()", "value.inRange(0, BYTE_MAX)"})
+        @Specialization(guards = {"obj.isTruffleStringType()", "inByteRange(value)"})
+        protected static final void doNativeByteStringChar(NativeObject obj, long index, final char value, @Cached.Shared("truffleString") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            doNativeByteString(obj, index, value, writeByteNode);
+        }
+
+        @Specialization(guards = {"obj.isTruffleStringType()", "value.inRange(0, BYTE_MAX)"})
         protected static final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
             doNativeBytes(obj, index, value.longValue());
         }
@@ -143,6 +160,11 @@ public final class NativeObjectNodes {
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "value.fitsIntoLong()"})
         protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
             doNativeLongs(obj, index, value.longValue());
+        }
+
+        @Specialization(guards = {"obj.isTruffleStringType()", "value.inRange(0, BYTE_MAX)"})
+        protected static final void doNativeByteStringLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value, @Cached.Shared("truffleString") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            doNativeByteString(obj, index, value.longValue(), writeByteNode);
         }
 
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "!value.fitsIntoLong()", "value.lessThanOneShiftedBy64()"})
@@ -172,7 +194,7 @@ public final class NativeObjectNodes {
             return NativeObjectSizeNodeGen.getUncached().execute(null, obj);
         }
 
-        @Specialization(guards = "obj.isByteType()")
+        @Specialization(guards = "obj.isTruffleStringType()")
         protected static final int doNativeBytes(final NativeObject obj) {
             return obj.getByteLength();
         }
@@ -191,6 +213,11 @@ public final class NativeObjectNodes {
         protected static final int doNativeLongs(final NativeObject obj) {
             return obj.getLongLength();
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final int doNativeTruffleString(final NativeObject obj) {
+            return obj.getTruffleStringByteLength();
+        }
     }
 
     @GenerateInline
@@ -199,7 +226,7 @@ public final class NativeObjectNodes {
 
         public abstract int execute(Node node, NativeObject obj);
 
-        @Specialization(guards = "obj.isByteType()")
+        @Specialization(guards = "obj.isTruffleStringType()")
         protected static final int doNativeBytes(final NativeObject obj) {
             return obj.getByteLength();
         }
@@ -218,6 +245,11 @@ public final class NativeObjectNodes {
         protected static final int doNativeLongs(final NativeObject obj) {
             return obj.getLongLength() * Long.BYTES;
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final int doNativeTruffleString(final NativeObject obj) {
+            return obj.getTruffleStringByteLength();
+        }
     }
 
     @GenerateInline
@@ -226,7 +258,7 @@ public final class NativeObjectNodes {
 
         public abstract byte[] execute(Node node, NativeObject obj);
 
-        @Specialization(guards = "obj.isByteType()")
+        @Specialization(guards = "obj.isTruffleStringType()")
         protected static final byte[] doNativeBytes(final NativeObject obj) {
             return obj.getByteStorage();
         }
@@ -245,6 +277,11 @@ public final class NativeObjectNodes {
         protected static final byte[] doNativeLongs(final NativeObject obj) {
             return UnsafeUtils.toBytes(obj.getLongStorage());
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final byte[] toTruffleString(final NativeObject obj, @Cached TruffleString.CopyToByteArrayNode node) {
+            return obj.getTruffleStringAsBytesCopy(node);
+        }
     }
 
     @GenerateInline
@@ -253,7 +290,7 @@ public final class NativeObjectNodes {
 
         public abstract short[] execute(Node node, NativeObject obj);
 
-        @Specialization(guards = "obj.isByteType()")
+        @Specialization(guards = "obj.isTruffleStringType()")
         protected static final short[] doNativeBytes(final NativeObject obj) {
             return UnsafeUtils.toShorts(obj.getByteStorage());
         }
@@ -272,6 +309,11 @@ public final class NativeObjectNodes {
         protected static final short[] doNativeLongs(final NativeObject obj) {
             return UnsafeUtils.toShorts(obj.getLongStorage());
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final short[] toTruffleString(final NativeObject obj, @Cached TruffleString.CopyToByteArrayNode node) {
+            return UnsafeUtils.toShorts(obj.getTruffleStringAsBytesCopy(node));
+        }
     }
 
     @GenerateInline
@@ -280,7 +322,7 @@ public final class NativeObjectNodes {
 
         public abstract int[] execute(Node node, NativeObject obj);
 
-        @Specialization(guards = "obj.isByteType()")
+        @Specialization(guards = "obj.isTruffleStringType()")
         protected static final int[] doNativeBytes(final NativeObject obj) {
             return UnsafeUtils.toInts(obj.getByteStorage());
         }
@@ -299,6 +341,11 @@ public final class NativeObjectNodes {
         protected static final int[] doNativeLongs(final NativeObject obj) {
             return UnsafeUtils.toInts(obj.getLongStorage());
         }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final int[] toTruffleString(final NativeObject obj, @Cached TruffleString.CopyToByteArrayNode node) {
+            return UnsafeUtils.toInts(obj.getTruffleStringAsBytesCopy(node));
+        }
     }
 
     @GenerateInline
@@ -307,7 +354,7 @@ public final class NativeObjectNodes {
 
         public abstract long[] execute(Node node, NativeObject obj);
 
-        @Specialization(guards = "obj.isByteType()")
+        @Specialization(guards = "obj.isTruffleStringType()")
         protected static final long[] doNativeBytes(final NativeObject obj) {
             return UnsafeUtils.toLongs(obj.getByteStorage());
         }
@@ -334,7 +381,7 @@ public final class NativeObjectNodes {
 
         public abstract NativeObject execute(Node node, NativeObject obj);
 
-        @Specialization(guards = "obj.isByteType()")
+        @Specialization(guards = "obj.isTruffleStringType()")
         protected static final NativeObject doNativeBytes(final NativeObject obj) {
             return obj.shallowCopy(obj.getByteStorage().clone());
         }
@@ -352,6 +399,11 @@ public final class NativeObjectNodes {
         @Specialization(guards = "obj.isLongType()")
         protected static final NativeObject doNativeLongs(final NativeObject obj) {
             return obj.shallowCopy(obj.getLongStorage().clone());
+        }
+
+        @Specialization(guards = "obj.isTruffleStringType()")
+        protected static final NativeObject doNativeTruffleString(final NativeObject obj, @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+            return obj.shallowCopyTruffleString(copyToByteArrayNode, fromByteArrayNode);
         }
     }
 }

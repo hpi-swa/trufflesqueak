@@ -114,7 +114,7 @@ public final class SqueakSystemAttributes {
 
     /** Attribute #0. */
     private NativeObject getVMPath() {
-        return vmPath.shallowCopyBytes();
+        return vmPath.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1. */
@@ -123,7 +123,7 @@ public final class SqueakSystemAttributes {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             imagePath = asByteString(image.getImagePath());
         }
-        return imagePath.shallowCopyBytes();
+        return imagePath.shallowCopyTruffleStringUncached();
     }
 
     /** Attributes #2 to #1000. */
@@ -136,7 +136,7 @@ public final class SqueakSystemAttributes {
             }
         }
         if (index < cmdArguments.length) {
-            return cmdArguments[index].shallowCopyBytes();
+            return cmdArguments[index].shallowCopyTruffleStringUncached();
         } else {
             return NilObject.SINGLETON;
         }
@@ -144,67 +144,67 @@ public final class SqueakSystemAttributes {
 
     /** Attribute #1001. */
     private NativeObject getPlatformName() {
-        return platformName.shallowCopyBytes();
+        return platformName.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1002. */
     private NativeObject getOperatingSystemVersion() {
-        return operatingSystemVersion.shallowCopyBytes();
+        return operatingSystemVersion.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1003. */
     private NativeObject getPlatformProcessorType() {
-        return platformProcessorType.shallowCopyBytes();
+        return platformProcessorType.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1004. */
     private NativeObject getVMVersion() {
-        return vmVersion.shallowCopyBytes();
+        return vmVersion.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1005. */
     private NativeObject getWindowSystemName() {
-        return windowSystemName.shallowCopyBytes();
+        return windowSystemName.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1006. */
     private NativeObject getVmBuildId() {
-        return vmBuildId.shallowCopyBytes();
+        return vmBuildId.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1007: "Interpreter class (Cog VM only)". */
     private NativeObject getInterpreterClass() {
-        return interpreterClass.shallowCopyBytes();
+        return interpreterClass.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1008: "Cogit class (Cog VM only)". */
     private NativeObject getSystemProperties() {
-        return systemProperties.shallowCopyBytes();
+        return systemProperties.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1009: "Platform source version (Cog VM only?)". */
     private NativeObject getVMInformation() {
-        return vmInformation.shallowCopyBytes();
+        return vmInformation.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1201. */
     private NativeObject getMaxFilenameLength() {
-        return maxFilenameLength.shallowCopyBytes();
+        return maxFilenameLength.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #1202. */
     private NativeObject getFileLastError() {
-        return fileLastError.shallowCopyBytes();
+        return fileLastError.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #10001. */
     private NativeObject getHardwareDetails() {
-        return hardwareDetails.shallowCopyBytes();
+        return hardwareDetails.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #10002. */
     private NativeObject getOperatingSystemDetails() {
-        return operatingSystemDetails.shallowCopyBytes();
+        return operatingSystemDetails.shallowCopyTruffleStringUncached();
     }
 
     /** Attribute #10003. */

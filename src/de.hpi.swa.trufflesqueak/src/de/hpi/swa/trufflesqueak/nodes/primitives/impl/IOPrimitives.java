@@ -25,6 +25,8 @@ import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -254,7 +256,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final long END_OF_RUN = 257 - 1;
         private static final long CROSSED_X = 258 - 1;
 
-        @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isByteType()", "stopIndex <= sourceString.getByteLength()", "receiver.size() >= 4",
+        @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isTruffleStringType()", "stopIndex <= sourceString.getByteLength()", "receiver.size() >= 4",
                         "arraySizeNode.execute(node, stops) >= 258", "hasCorrectSlots(pointersReadNode, arraySizeNode, node, receiver)"}, limit = "1")
         protected static final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
                         final ArrayObject stops, final long kernData,
@@ -567,7 +569,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             }
 
-            @Specialization(guards = {"repl.isByteType()"})
+            @Specialization(guards = {"repl.isTruffleStringType()"})
             protected static final void doLargeIntegerNative(final Node node, final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile,
                             @Shared("fitsEntirelyProfile") @Cached final InlinedConditionProfile fitsEntirelyProfile) {
@@ -600,7 +602,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected abstract static class NativeObjectReplaceNode extends AbstractNode {
             protected abstract void execute(Node node, NativeObject rcvr, long start, long stop, Object repl, long replStart);
 
-            @Specialization(guards = {"rcvr.isByteType()", "repl.isByteType()"})
+            @Specialization(guards = {"rcvr.isTruffleStringType()", "repl.isTruffleStringType()"})
             protected static final void doNativeBytes(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getByteLength(), start, stop, repl.getByteLength(), replStart)) {
@@ -644,11 +646,25 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             }
 
-            @Specialization(guards = {"rcvr.isByteType()"})
+            @Specialization(guards = {"rcvr.isTruffleStringType()"})
             protected static final void doNativeLargeInteger(final Node node, final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getByteLength(), start, stop, repl.getBytes().length, replStart)) {
                     UnsafeUtils.copyBytes(repl.getBytes(), replStart - 1, rcvr.getByteStorage(), start - 1, 1 + stop - start);
+                } else {
+                    errorProfile.enter(node);
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
+            }
+
+            @Specialization(guards = {"rcvr.isTruffleStringType()", "repl.isTruffleStringType()"})
+            protected static final void doNativeTruffleString(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                                                      @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile, @Cached TruffleString.ReadByteNode readByteNode, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+                if (inBounds(rcvr.getTruffleStringByteLength(), start, stop, repl.getTruffleStringByteLength(), replStart)) {
+                    int length = Math.toIntExact(1 + stop - start);
+                    for(int i = 0; i < length; i++) {
+                        rcvr.writeByteTruffleString(Math.toIntExact(start - 1 + i), (byte) repl.readByteTruffleString(Math.toIntExact(replStart - 1 + i), readByteNode), writeByteNode);
+                    }
                 } else {
                     errorProfile.enter(node);
                     throw PrimitiveFailed.BAD_INDEX;

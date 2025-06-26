@@ -49,7 +49,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object printArgs(final Object receiver, final Object value) {
             final SqueakImageContext image = getContext();
-            if (value instanceof final NativeObject o && o.isByteType()) {
+            if (value instanceof final NativeObject o && (o.isTruffleStringType())) {
                 image.printToStdOut(o.asStringUnsafe());
             } else {
                 image.printToStdOut(value);
