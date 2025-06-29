@@ -205,6 +205,11 @@ def _patch_svm_support_native_image():
                 use_optimized_runtime=True, use_enterprise=True
             )
         )
+        selected_march = (
+            "x86-64-v2"
+            if mx.get_arch() == "amd64"
+            else ("armv8.1-a" if mx.get_arch() == "aarch64" else "compatibility")
+        )
         selected_gc = "G1" if is_oracle_graalvm and mx.is_linux() else "serial"
         build_command = (
             [native_image_bin]
@@ -214,6 +219,7 @@ def _patch_svm_support_native_image():
                 "-o",
                 os.path.splitext(output_file)[0],
                 "--shared",
+                "-march=" + selected_march,
                 "--gc=" + selected_gc,
                 "--module",
                 "de.hpi.swa.trufflesqueak.launcher/%s.launcher.TruffleSqueakLauncher"
