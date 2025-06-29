@@ -313,4 +313,16 @@ retries := 3.
     retries := retries - 1.
 ].
 
+FileStream stdout nextPutAll: 'Running failing TestCases...'; cr; flush.
+testSuite := TestSuite new.
+testSuite tests addAll: failingTests.
+result := testSuite run.
+FileStream stdout cr; nextPutAll: testSuite run asString; cr; flush.
+
+FileStream stdout nextPutAll: 'Running flaky TestCases...'; cr; flush.
+testSuite := TestSuite new.
+testSuite tests addAll: flakyTests.
+result := testSuite run.
+FileStream stdout cr; nextPutAll: testSuite run asString; cr; flush.
+
 Smalltalk quitPrimitive: exitCode
