@@ -140,7 +140,6 @@ ignoredTests := OrderedCollection new.
 
 isNative ifTrue: [
     {
-        ClassBuilderTest -> #(#testSubclass). "fails only on Ubuntu 22.04/amd64"
         FFIPluginConstructedTests -> FFIPluginConstructedTests allTestSelectors.
         FFIPluginLibraryTests -> FFIPluginLibraryTests allTestSelectors.
         FFIPluginTests -> FFIPluginTests allTestSelectors.
@@ -258,6 +257,7 @@ flakyTests := OrderedCollection new.
 {
     BasicInspectorTest -> #(#testExpressions).
     BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
+    ClassBuilderTest -> #(#testSubclass).
     ClassInspectorTest -> #(#testExpressions).
     CollectionInspectorTest -> #(#testExpressions).
     CompiledCodeInspectorTest -> #(#testExpressions).
