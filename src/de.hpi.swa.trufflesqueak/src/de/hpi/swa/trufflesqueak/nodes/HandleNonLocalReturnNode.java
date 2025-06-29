@@ -55,11 +55,11 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
                 throw SqueakExceptions.SqueakException.create("Nil resuming context in HandleNonLocalReturnNode");
             }
             final ContextObject newSender = FrameAccess.getSenderContext(frame);
-            FrameAccess.terminate(frame);
+            FrameAccess.terminateContextOrFrame(frame);
             // TODO: `target == newSender` may could use special handling?
             throw new NonVirtualReturn(nlr.getReturnValue(), targetContext, newSender);
         } else {
-            FrameAccess.terminate(frame);
+            FrameAccess.terminateContextOrFrame(frame);
             throw nlr;
         }
     }

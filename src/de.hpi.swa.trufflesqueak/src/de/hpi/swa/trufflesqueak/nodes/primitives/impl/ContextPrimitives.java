@@ -195,7 +195,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     // Terminate frame and any associated Context.
                     if (terminate) {
                         final Frame currentWritable = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-                        FrameAccess.terminate(currentWritable);
+                        FrameAccess.terminateContextOrFrame(currentWritable);
                     }
                     return null;
                 }

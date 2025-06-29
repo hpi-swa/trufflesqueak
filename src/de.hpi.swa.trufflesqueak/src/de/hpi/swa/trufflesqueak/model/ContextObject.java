@@ -265,12 +265,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         FrameAccess.setSender(getOrCreateTruffleFrame(), NilObject.SINGLETON);
     }
 
-    public void clearModifiedSender() {
-        if (hasModifiedSender) {
-            hasModifiedSender = false;
-        }
-    }
-
     public Object getInstructionPointer(final InlinedConditionProfile nilProfile, final Node node) {
         final int pc = FrameAccess.getInstructionPointer(getTruffleFrame());
         if (nilProfile.profile(node, pc == NIL_PC_VALUE)) {
@@ -388,6 +382,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public void terminate() {
         removeInstructionPointer();
         removeSender();
+        hasModifiedSender = false;
     }
 
     /* Context>>#isDead */

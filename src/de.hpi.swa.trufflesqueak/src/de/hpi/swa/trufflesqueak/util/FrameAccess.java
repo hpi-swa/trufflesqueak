@@ -322,11 +322,17 @@ public final class FrameAccess {
         return true;
     }
 
-    public static void terminate(final Frame frame) {
+    public static void terminateFrame(final Frame frame) {
         setInstructionPointer(frame, ContextObject.NIL_PC_VALUE);
         setSender(frame, NilObject.SINGLETON);
-        if (frame.getObject(SlotIndicies.THIS_CONTEXT.ordinal()) instanceof final ContextObject context) {
-            context.clearModifiedSender();
+    }
+
+    public static void terminateContextOrFrame(final Frame frame) {
+        final ContextObject context = getContext(frame);
+        if (context != null) {
+            context.terminate();
+        } else {
+            terminateFrame(frame);
         }
     }
 
