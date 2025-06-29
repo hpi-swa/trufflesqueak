@@ -190,13 +190,13 @@ public final class JavaObjectWrapper implements TruffleObject {
          */
         if (TruffleOptions.AOT) {
             for (final Class<?> cls : new Class<?>[]{
-                            // General classes
+                            // General types
                             boolean.class, byte.class, char.class, short.class, int.class, long.class, float.class, double.class,
                             Boolean.class, Byte.class, Character.class, Short.class, Integer.class, Long.class, Float.class, Double.class,
                             Class.class, Object.class, String.class,
                             // Common data structures
                             ArrayList.class, HashMap.class, HashSet.class, TreeSet.class,
-                            // Truffle classes exposed by PolyglotPlugin
+                            // Truffle types exposed by PolyglotPlugin
                             LanguageInfo.class, SourceSection.class,
                             // Non-abstract classes of TruffleSqueak model
                             ArrayObject.class, BlockClosureObject.class, BooleanObject.class, CharacterObject.class, ClassObject.class, CompiledCodeObject.class, ContextObject.class,
@@ -206,6 +206,12 @@ public final class JavaObjectWrapper implements TruffleObject {
                             StartContextRootNode.class, ExecuteBytecodeNode.class,
                             // TruffleSqueak's object layout
                             ObjectLayout.class,
+                            // Java types used by TruffleSqueak utilities
+                            java.awt.Color.class, java.awt.Frame.class, java.awt.image.DataBufferInt.class, java.awt.image.DirectColorModel.class, java.awt.image.Raster.class,
+                            java.awt.image.BufferedImage.class,
+                            // Java types used by interop
+                            java.time.Duration.class, java.time.LocalDate.class, java.time.LocalTime.class, java.time.Instant.class, java.time.ZoneId.class, java.time.format.TextStyle.class,
+                            java.util.Locale.class,
 
             }) {
                 CLASSES_TO_MEMBERS.get(cls);
