@@ -301,6 +301,9 @@ FileStream stdout cr; nextPutAll: result asString; cr; flush.
 
 exitCode := result hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
 
+"Reload image to persist and retry failures"
+Smalltalk snapshot: true andQuit: true.
+
 retries := 3.
 [ exitCode == 1 and: [ retries > 0 ] ] whileTrue: [
     FileStream stdout cr; nextPutAll: 'Retry failures or errors:'; cr; flush.

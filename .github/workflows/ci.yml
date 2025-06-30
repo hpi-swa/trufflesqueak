@@ -209,11 +209,13 @@ jobs:
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
       run: |
         trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\de.hpi.swa.trufflesqueak.test\src\de\hpi\swa\trufflesqueak\test\runSqueakTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image
       timeout-minutes: 15
       if: ${{ matrix.os == 'windows-2022' && matrix.type != 'native' }} # fails to load packages on native
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
       run: |
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image
       timeout-minutes: 15
       if: ${{ matrix.os != 'windows-2022' && matrix.os != 'macos-13' }} # tests fail on macos-13 and it is reaching EOL soon
     - name: Upload Graal compiler dumps
