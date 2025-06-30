@@ -7,13 +7,19 @@ Utilities
     authorName: 'TruffleSqueak';
     setAuthorInitials: 'TS'.
 
-FileStream stdout nextPutAll: 'Patch TestCase>>run: ...'; cr; flush.
+FileStream stdout nextPutAll: 'Patching TestCase ...'; cr; flush.
 TestCase compile: 'run: aResult
     FileStream stdout nextPutAll: self asString; nextPutAll: '' ... ''; flush.
     aResult runCase: self.
     FileStream stdout nextPutAll: ''('';
                       nextPutAll: ((aResult durations at: self) ifNil: [0]) asString;
                       nextPutAll: ''ms)''; cr; flush.'
+        classified: 'patched'.
+TestCase compile: 'isLogging
+    ^ true'
+        classified: 'patched'.
+TestCase compile: 'failureLog
+    ^ FileStream stdout'
         classified: 'patched'.
 
 isNative := [Java type: 'java.lang.System'. false] on: Error do: [true].
