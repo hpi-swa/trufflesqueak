@@ -92,6 +92,7 @@ ignoredTests := OrderedCollection new.
     GitRemoteTest.
     GitRemoteTest.
     GitRemoteTest.
+    ImageSegmentTest. "image segments not supported"
     InterpreterPrimitivesTest.
     IslandVMTweaksTestCase.
     MutexTest. "assertion errors"
@@ -126,6 +127,7 @@ ignoredTests := OrderedCollection new.
 
 {
     AllocationTest -> #(#testOutOfMemorySignal).
+    BitmapStreamTests -> #(#testMatrixTransform2x3WithImageSegment #testShortIntegerArrayWithImageSegment #testShortPointArrayWithImageSegment #testShortRunArrayWithImageSegment #testWordArrayWithImageSegment). "image segments not supported"
     BytecodeDecodingTests -> #(#testPCPreviousTo "fails with assertion error: Unexpected argument size, maybe dummy frame had wrong size?").
     ChangeHooksTest -> #(#testClassRecategorizedEvent2 #testClassRedefinition #testClassRemovalEvent #testClassRenamedEvent #testClassSuperChangedEvent #testDoItEvent1 #testDoItEvent2 #testInstanceVariableCreationEvent1 #testInstanceVariableCreationEvent2 #testInstanceVariableRemovedEvent1 #testInstanceVariableRemovedEvent2 #testInstanceVariableRenamedSilently #testMethodCreationEvent1 #testMethodCreationEvent2 #testMethodRecategorizationEvent #testMethodRemovedEvent1 #testMethodRemovedEvent2 "Ignoring rest of ChangeHooksTest (has side effects and slows down or breaks other tests).").
     FFIAllocateTests -> #(#test22ArrayForVoidPointers).
@@ -165,7 +167,6 @@ failingTests := OrderedCollection new.
     CoInterpreterTests. "broken"
     CompiledMethodComparisonTest. "not terminating"
     FormatNumberTests. "broken"
-    ImageSegmentTest. "failing"
     LangEnvBugs. "slowly passing"
     MCEnvironmentLoadTest. "slowly failing"
     MCFileInTest. "slowly passing"
@@ -185,7 +186,6 @@ failingTests := OrderedCollection new.
 
 {
     BitBltSimulationTest -> #(#testRgbMulDepth16 #testRgbMulDepth1to8). "broken"
-    BitmapStreamTests -> #(#testMatrixTransform2x3WithImageSegment #testShortIntegerArrayWithImageSegment #testShortPointArrayWithImageSegment #testShortRunArrayWithImageSegment #testWordArrayWithImageSegment). "slowly failing"
     ClassTraitTest -> #(#testChanges #testConflictsAliasesAndExclusions #testUsers). "slowly passing"
     ClosureCompilerTest -> #(#testDebuggerTempAccess #testInjectIntoDecompilations #testInjectIntoDecompiledDebugs). "expected failure"
     ColorTest -> #(#testColorsFromPixelValue32BitBlack). "expected failure"
