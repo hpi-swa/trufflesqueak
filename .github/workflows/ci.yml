@@ -218,6 +218,13 @@ jobs:
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image
       timeout-minutes: 15
       if: ${{ matrix.os != 'windows-2022' && matrix.os != 'macos-13' }} # tests fail on macos-13 and it is reaching EOL soon
+    - name: Upload test image on failure
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-image-${{ matrix.os }}
+        path: images/test-64bit.image
+        retention-days: 5
+      if: failure()
     - name: Upload Graal compiler dumps
       uses: actions/upload-artifact@v4
       with:
