@@ -216,6 +216,13 @@ jobs:
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' && matrix.os != 'macos-13' }} # tests fail on macos-13 and it is reaching EOL soon
+    - name: Upload test image on failure
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-image-${{ matrix.type }}-${{ matrix.os }}
+        path: images/test-64bit.*
+        retention-days: 5
+      if: failure()
     - name: Upload Graal compiler dumps
       uses: actions/upload-artifact@v4
       with:
