@@ -388,7 +388,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             final int numSlots = getNumSlots();
             final int formatOffset = numSlots * BYTE_TO_WORD - getByteLength();
             assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
-            if (writeHeader(writer, formatOffset)) {
+            if (writeHeader(writer, numSlots, formatOffset)) {
                 writer.writeBytes(getByteStorage());
                 writePaddingIfAny(writer, getByteLength());
             }
@@ -396,7 +396,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             final int numSlots = getNumSlots();
             final int formatOffset = numSlots * SHORT_TO_WORD - getShortLength();
             assert 0 <= formatOffset && formatOffset <= 3 : "too many odd bits (see instSpec)";
-            if (writeHeader(writer, formatOffset)) {
+            if (writeHeader(writer, numSlots, formatOffset)) {
                 for (final short value : getShortStorage()) {
                     writer.writeShort(value);
                 }
@@ -406,7 +406,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             final int numSlots = getNumSlots();
             final int formatOffset = numSlots * INTEGER_TO_WORD - getIntLength();
             assert 0 <= formatOffset && formatOffset <= 1 : "too many odd bits (see instSpec)";
-            if (writeHeader(writer, formatOffset)) {
+            if (writeHeader(writer, numSlots, formatOffset)) {
                 for (final int value : getIntStorage()) {
                     writer.writeInt(value);
                 }

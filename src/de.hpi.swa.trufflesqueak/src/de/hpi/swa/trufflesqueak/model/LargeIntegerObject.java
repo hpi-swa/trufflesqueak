@@ -228,9 +228,10 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void write(final SqueakImageWriter writer) {
-        final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
+        final int numSlots = getNumSlots();
+        final int formatOffset = numSlots * SqueakImageConstants.WORD_SIZE - size();
         assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
-        if (writeHeader(writer, formatOffset)) {
+        if (writeHeader(writer, numSlots, formatOffset)) {
             final byte[] bytes = getBytes();
             writer.writeBytes(bytes);
             final int offset = bytes.length % SqueakImageConstants.WORD_SIZE;
