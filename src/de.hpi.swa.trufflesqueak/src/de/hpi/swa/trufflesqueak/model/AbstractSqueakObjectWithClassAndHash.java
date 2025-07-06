@@ -234,11 +234,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     /* Returns true if more content is following. */
     protected final boolean writeHeader(final SqueakImageWriter writer) {
-        return writeHeader(writer, 0);
+        return writeHeader(writer, getNumSlots(), 0);
     }
 
-    protected final boolean writeHeader(final SqueakImageWriter writer, final int formatOffset) {
-        long numSlots = getNumSlots();
+    protected final boolean writeHeader(final SqueakImageWriter writer, final int thisNumSlots, final int formatOffset) {
+        long numSlots = thisNumSlots;
         if (numSlots >= SqueakImageConstants.OVERFLOW_SLOTS) {
             writer.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
             numSlots = SqueakImageConstants.OVERFLOW_SLOTS;
