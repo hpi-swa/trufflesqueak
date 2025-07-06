@@ -418,10 +418,10 @@ public final class SqueakImageReader {
         if (16 <= format && format <= 31) {
             return format & 7; /* 8-bit indexable and compiled methods: three odd bits */
         } else if (format == 11) {
-            return 4; /* 32-bit words with 1 word padding. */
+            return Integer.BYTES; /* 32-bit words with 1 word padding. */
         } else if (12 <= format && format <= 15) {
             // 16-bit words with 2, 4, or 6 bytes padding
-            return format & 3; /* 16-bit indexable: two odd bits */
+            return (format & 3) * Short.BYTES; /* 16-bit indexable: two odd bits */
         } else if (10 <= format) {
             return format & 1; /* 1 word padding */
         } else {
