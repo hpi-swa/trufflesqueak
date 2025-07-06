@@ -70,6 +70,10 @@ public final class PointersObject extends AbstractPointersObject {
         becomeLayout(other);
     }
 
+    public void becomeOneWay(final PointersObject other) {
+        becomeLayoutOneWay(other);
+    }
+
     @Override
     public int size() {
         return instsize();
@@ -175,5 +179,9 @@ public final class PointersObject extends AbstractPointersObject {
             return readNode.execute(null, this, BINDING.KEY) + " => " + readNode.execute(null, this, BINDING.VALUE);
         }
         return super.toString();
+    }
+
+    public boolean isIdenticalTo(final PointersObject other) {
+        return true; // tbd
     }
 }

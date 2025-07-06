@@ -477,6 +477,16 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         setOtherPointers(otherPointers);
     }
 
+    public void becomeOneWay(final ClassObject other) {
+        setSqueakClass(other.getSqueakClass());
+        setSuperclass(other.superclass);
+        setMethodDict(other.methodDict);
+        setFormat(other.format);
+        setInstanceVariables(other.instanceVariables);
+        setOrganization(other.organization);
+        setOtherPointers(other.pointers);
+    }
+
     private CyclicAssumption classHierarchyAndMethodDictStable() {
         if (classHierarchyAndMethodDictStable == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -595,5 +605,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         writer.writeObject(getInstanceVariables());
         writer.writeObject(getOrganization());
         writer.writeObjects(getOtherPointers());
+    }
+
+    public boolean isIdenticalTo(final ClassObject right) {
+        return pointers == right.pointers;
     }
 }

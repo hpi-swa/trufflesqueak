@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 
 public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
@@ -238,7 +239,13 @@ public final class ObjectGraphUtils {
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
         if (fromPointers.length == 1) {
-            pointersBecomeOneWaySinglePair(fromPointers[0], toPointers[0]);
+            if (fromPointers[0] instanceof final ClassObject fromCls && toPointers[0] instanceof final ClassObject toCls) {
+                fromCls.becomeOneWay(toCls);
+            } else if (fromPointers[0] instanceof final PointersObject fromPointer && toPointers[0] instanceof final PointersObject toPointer) {
+                fromPointer.becomeOneWay(toPointer);
+            } else {
+                pointersBecomeOneWaySinglePair(fromPointers[0], toPointers[0]);
+            }
         } else {
             pointersBecomeOneWayManyPairs(fromPointers, toPointers);
         }
