@@ -44,6 +44,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     @CompilationFinal private ObjectLayout layout;
 
+    public Object marker = new Object();
+
     public int primitiveUsedMap;
     public long primitive0;
     public long primitive1;
@@ -283,6 +285,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public final void becomeLayoutOneWay(final AbstractPointersObject other) {
         assert getClass() == other.getClass();
         setSqueakClass(other.getSqueakClass());
+
+        marker = other.marker; // FIXME
 
         layout = other.layout;
 

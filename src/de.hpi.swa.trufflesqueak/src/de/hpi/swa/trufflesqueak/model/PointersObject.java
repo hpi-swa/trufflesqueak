@@ -182,6 +182,6 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public boolean isIdenticalTo(final PointersObject other) {
-        return true; // tbd
+        return marker == other.marker; // tbd
     }
 }

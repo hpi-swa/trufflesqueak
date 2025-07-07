@@ -18,6 +18,8 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 @GenerateInline
@@ -66,6 +68,12 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     @Specialization(guards = "!isCharacterObject(left)")
     protected static final boolean doAbstractSqueakObject(final AbstractSqueakObject left, final Object right) {
+        if (left instanceof final PointersObject l && right instanceof final PointersObject r) {
+            return l.isIdenticalTo(r);
+        } else if (left instanceof final ClassObject l && right instanceof final ClassObject r) {
+            return l.isIdenticalTo(r);
+        }
+
         return BooleanObject.wrap(left == right);
     }
 
