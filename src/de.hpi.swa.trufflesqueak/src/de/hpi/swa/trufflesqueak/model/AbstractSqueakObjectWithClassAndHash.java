@@ -45,6 +45,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
      */
     private ClassObject squeakClass;
     private int squeakHashAndBits;
+    private AbstractSqueakObjectWithClassAndHash forwardingPointer;
 
     /**
      * Support for atomically accessing the flags contained within squeakHashAndBits.
@@ -212,6 +213,24 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         } else {
             throw SqueakExceptions.SqueakException.create("CompiledMethodObject expected, got: " + methodObject);
         }
+    }
+
+    public final void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+// assert this != pointer;
+        forwardingPointer = this == pointer ? null : pointer;
+    }
+
+    public final AbstractSqueakObjectWithClassAndHash followForwarded() {
+        return forwardingPointer == null ? this : forwardingPointer;
+    }
+
+    public static final Object followForwarded(final Object pointer) {
+        return pointer instanceof final AbstractSqueakObjectWithClassAndHash p ? p.followForwarded() : pointer;
+    }
+
+    public final boolean isIdenticalTo(final AbstractSqueakObjectWithClassAndHash other) {
+        assert other != null;
+        return this == other || forwardingPointer == other;
     }
 
     public void pointersBecomeOneWay(@SuppressWarnings("unused") final Object fromPointer, @SuppressWarnings("unused") final Object toPointer) {

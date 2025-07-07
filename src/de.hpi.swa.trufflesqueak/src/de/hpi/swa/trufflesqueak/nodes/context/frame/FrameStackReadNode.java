@@ -20,6 +20,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadNodeGen;
@@ -127,7 +128,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
             if (clearSlotAfterRead) {
                 frame.setObject(slotIndex, null);
             }
-            return value;
+            return AbstractSqueakObjectWithClassAndHash.followForwarded(value);
         }
     }
 
@@ -153,7 +154,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
 
         @Override
         public Object executeReadUnsafe(final VirtualFrame frame) {
-            return frame.getArguments()[index];
+            return AbstractSqueakObjectWithClassAndHash.followForwarded(frame.getArguments()[index]);
         }
 
         @Override
@@ -187,7 +188,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
             if (clearSlotAfterRead) {
                 frame.setAuxiliarySlot(auxiliarySlotIndex, null);
             }
-            return value;
+            return AbstractSqueakObjectWithClassAndHash.followForwarded(value);
         }
     }
 }

@@ -169,7 +169,8 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-            final ClassObject lookupClass = CompilerDirectives.castExact(directedClassNode.executeRead(frame), ClassObject.class).getSuperclassOrNull();
+            final ClassObject lookupClass = CompilerDirectives.castExact(
+                            CompilerDirectives.castExact(directedClassNode.executeRead(frame), ClassObject.class).followForwarded(), ClassObject.class).getSuperclassOrNull();
             assert lookupClass != null;
             return dispatchNode.execute(frame, lookupClass, receiver, arguments);
         }

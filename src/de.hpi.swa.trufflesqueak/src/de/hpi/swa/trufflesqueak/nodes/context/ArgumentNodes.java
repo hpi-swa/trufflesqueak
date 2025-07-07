@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -42,7 +43,7 @@ public final class ArgumentNodes {
                 final int stackPointer = FrameAccess.getStackPointer(frame);
                 readNode = insert(FrameStackReadNode.create(frame, stackPointer + argumentIndex, false));
             }
-            return readNode.executeRead(frame);
+            return AbstractSqueakObjectWithClassAndHash.followForwarded(readNode.executeRead(frame));
         }
     }
 
@@ -56,7 +57,7 @@ public final class ArgumentNodes {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return frame.getArguments()[argumentIndex];
+            return AbstractSqueakObjectWithClassAndHash.followForwarded(frame.getArguments()[argumentIndex]);
         }
     }
 }

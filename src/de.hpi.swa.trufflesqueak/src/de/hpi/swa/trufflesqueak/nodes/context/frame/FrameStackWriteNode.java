@@ -18,6 +18,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNodeFactory.FrameSlotWriteNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -77,7 +78,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
             /* Initialize type on first write. No-op if kind is already Object. */
             frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Object);
 
-            frame.setObject(slotIndex, value);
+            frame.setObject(slotIndex, AbstractSqueakObjectWithClassAndHash.followForwarded(value));
         }
 
         protected final boolean isBooleanOrIllegal(final VirtualFrame frame) {
@@ -118,7 +119,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
 
         @Override
         public void executeWrite(final VirtualFrame frame, final Object value) {
-            frame.getArguments()[index] = value;
+            frame.getArguments()[index] = AbstractSqueakObjectWithClassAndHash.followForwarded(value);
         }
 
         @Override
@@ -146,7 +147,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
 
         @Override
         public void executeWrite(final VirtualFrame frame, final Object value) {
-            frame.setAuxiliarySlot(auxiliarySlotIndex, value);
+            frame.setAuxiliarySlot(auxiliarySlotIndex, AbstractSqueakObjectWithClassAndHash.followForwarded(value));
         }
     }
 }

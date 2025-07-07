@@ -238,9 +238,27 @@ public final class ObjectGraphUtils {
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
         final long startTime = System.nanoTime();
         if (fromPointers.length == 1) {
-            pointersBecomeOneWaySinglePair(fromPointers[0], toPointers[0]);
+            final Object fromPointer = fromPointers[0];
+            final Object toPointer = toPointers[0];
+            if (fromPointer instanceof final AbstractSqueakObjectWithClassAndHash from && toPointer instanceof final AbstractSqueakObjectWithClassAndHash to) {
+                from.forwardTo(to);
+            } else {
+                pointersBecomeOneWaySinglePair(fromPointer, toPointer);
+            }
         } else {
-            pointersBecomeOneWayManyPairs(fromPointers, toPointers);
+            boolean doBulkMigration = false;
+            for (int i = 0; i < fromPointers.length; i++) {
+                final Object fromPointer = fromPointers[i];
+                final Object toPointer = toPointers[i];
+                if (fromPointer instanceof final AbstractSqueakObjectWithClassAndHash from && toPointer instanceof final AbstractSqueakObjectWithClassAndHash to) {
+                    from.forwardTo(to);
+                } else {
+                    doBulkMigration = true;
+                }
+            }
+            if (doBulkMigration) {
+                pointersBecomeOneWayManyPairs(fromPointers, toPointers);
+            }
         }
         if (trackOperations) {
             ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
