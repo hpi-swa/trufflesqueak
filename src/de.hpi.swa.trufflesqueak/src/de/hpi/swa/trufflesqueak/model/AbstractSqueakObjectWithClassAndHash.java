@@ -27,10 +27,12 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
     private static final int MARK_BIT = 1 << 24;
+    private static final int FORWARDED_BIT = 1 << 25;
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
     private static final int HASH_UNINITIALIZED = 0;
 
@@ -43,7 +45,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
      * et al.). The JVM and GraalVM Native Image compress pointers by default, so these two fields
      * can be represented by just one 64-bit word.
      */
-    private ClassObject squeakClass;
+    private AbstractSqueakObjectWithClassAndHash squeakClass;
     private int squeakHashAndBits;
 
     /**
@@ -65,9 +67,9 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final long header, final ClassObject klass) {
-        squeakHashAndBits = ObjectHeader.getHash(header);
         squeakClass = klass;
         // mark bit zero when loading image
+        squeakHashAndBits = ObjectHeader.getHash(header);
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final ClassObject klass) {
@@ -75,17 +77,18 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     private AbstractSqueakObjectWithClassAndHash(final boolean markingFlag, final ClassObject klass) {
-        squeakHashAndBits = AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED;
         squeakClass = klass;
+        squeakHashAndBits = AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED;
         if (markingFlag) {
             squeakHashAndBits |= MARK_BIT; // set MARK_BIT
         }
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash original) {
+        assert original.assertNotForwarded() && original.squeakClass.assertNotForwarded();
+        squeakClass = original.squeakClass;
         squeakHashAndBits = original.squeakHashAndBits;
         setSqueakHash(HASH_UNINITIALIZED);
-        squeakClass = original.squeakClass;
     }
 
     @Override
@@ -95,7 +98,8 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final ClassObject getSqueakClass() {
-        return squeakClass;
+        assert assertNotForwarded();
+        return (ClassObject) squeakClass;
     }
 
     public final boolean needsSqueakClass() {
@@ -103,16 +107,20 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final String getSqueakClassName() {
+        if (!isNotForwarded()) {
+            return "forward to " + getForwardingPointer().getSqueakClassName();
+        }
         return getSqueakClass().getClassName();
     }
 
     public final void setSqueakClass(final ClassObject newClass) {
+        assert assertNotForwarded();
         squeakClass = newClass;
     }
 
     public final void becomeOtherClass(final AbstractSqueakObjectWithClassAndHash other) {
-        final ClassObject otherSqClass = other.squeakClass;
-        other.setSqueakClass(squeakClass);
+        final ClassObject otherSqClass = other.getSqueakClass();
+        other.setSqueakClass(getSqueakClass());
         setSqueakClass(otherSqClass);
     }
 
@@ -137,6 +145,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public long getSqueakHash() {
+        assert assertNotForwarded();
         return squeakHashAndBits & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
     }
 
@@ -145,6 +154,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final void setSqueakHash(final int newHash) {
+        assert assertNotForwarded();
         assert newHash <= SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
         squeakHashAndBits = (squeakHashAndBits & ~SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) + newHash;
     }
@@ -214,16 +224,49 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
-    public void pointersBecomeOneWay(@SuppressWarnings("unused") final Object fromPointer, @SuppressWarnings("unused") final Object toPointer) {
-        // Do nothing by default.
+    public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+        assert this != pointer && pointer.isNotForwarded() : "Forwarding pointer should neither be the same nor a forwarded object itself (" + this + "->" + pointer + ")";
+        squeakHashAndBits |= FORWARDED_BIT;
+        squeakClass = pointer;
+    }
+
+    public final AbstractSqueakObjectWithClassAndHash resolveForwardingPointer() {
+        if (isNotForwarded()) {
+            return this;
+        } else {
+            CompilerDirectives.transferToInterpreter();
+            assert squeakClass.isNotForwarded() : "Forwarding pointer should not be a forwarded object (" + MiscUtils.toObjectString(this) + "->" + MiscUtils.toObjectString(squeakClass) + ")";
+            return squeakClass;
+        }
+    }
+
+    public final AbstractSqueakObjectWithClassAndHash getForwardingPointer() {
+        assert !isNotForwarded();
+        return squeakClass;
+    }
+
+    public static final Object resolveForwardingPointer(final Object pointer) {
+        return pointer instanceof final AbstractSqueakObjectWithClassAndHash p ? p.resolveForwardingPointer() : pointer;
+    }
+
+    public final boolean isNotForwarded() {
+        return (squeakHashAndBits & FORWARDED_BIT) == 0;
+    }
+
+    public final boolean assertNotForwarded() {
+        assert isNotForwarded() : MiscUtils.toObjectString(this) + " was unexpectedly forwarded to " + MiscUtils.toObjectString(getForwardingPointer());
+        return true;
     }
 
     public void pointersBecomeOneWay(@SuppressWarnings("unused") final UnmodifiableEconomicMap<Object, Object> fromToMap) {
-        // Do nothing by default.
+        final Object replacement = fromToMap.get(getSqueakClass());
+        if (replacement != null) {
+            setSqueakClass((ClassObject) replacement);
+        }
     }
 
-    public void tracePointers(@SuppressWarnings("unused") final ObjectTracer objectTracer) {
-        // Do nothing by default.
+    public void tracePointers(final ObjectTracer objectTracer) {
+        objectTracer.addIfUnmarked(getSqueakClass());
     }
 
     public void trace(final SqueakImageWriter writer) {

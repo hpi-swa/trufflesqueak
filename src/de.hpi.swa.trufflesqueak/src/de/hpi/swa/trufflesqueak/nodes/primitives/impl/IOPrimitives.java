@@ -134,14 +134,17 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         public final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
-            writeImage(getOrCreateContextNode.executeGet(frame, node));
+            writeImage(image, getOrCreateContextNode.executeGet(frame, node));
             /* Return false to signal that the image is not resuming. */
             return BooleanObject.FALSE;
         }
 
         @TruffleBoundary
-        private void writeImage(final ContextObject thisContext) {
+        private void writeImage(final SqueakImageContext image, final ContextObject thisContext) {
+            /* Ensure all forwarded objects are removed. */
+            image.objectGraphUtils.unfollow();
             /* Push true on stack for saved snapshot. */
             thisContext.push(BooleanObject.TRUE);
             SqueakImageWriter.write(getContext(), thisContext);

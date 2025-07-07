@@ -15,6 +15,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -42,7 +43,11 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWr
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
-    public abstract void execute(Node node, Object obj, long index, Object value);
+    public final void execute(final Node node, final Object obj, final long index, final Object value) {
+        executeSpecialized(node, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(obj), index, value);
+    }
+
+    protected abstract void executeSpecialized(Node node, Object obj, long index, Object value);
 
     @Specialization
     protected static final void doNative(final Node node, final NativeObject obj, final long index, final Object value,

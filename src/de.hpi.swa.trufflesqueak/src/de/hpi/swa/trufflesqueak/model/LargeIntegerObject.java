@@ -196,6 +196,9 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary(transferToInterpreterOnException = false)
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
+        if (!isNotForwarded()) {
+            return "forward to " + getForwardingPointer().toString();
+        }
         assert bitLength == integer.bitLength();
         if (bitLength < Long.SIZE) {
             return integer.longValue() + " - non-normalized " + getSqueakClass() + " of size " + exposedSize;

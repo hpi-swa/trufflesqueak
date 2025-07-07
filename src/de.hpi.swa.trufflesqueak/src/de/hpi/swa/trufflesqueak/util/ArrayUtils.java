@@ -9,6 +9,8 @@ package de.hpi.swa.trufflesqueak.util;
 import java.util.AbstractCollection;
 import java.util.Arrays;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -217,6 +219,15 @@ public final class ArrayUtils {
             }
         }
         return -1;
+    }
+
+    public static void replaceAll(final Object[] array, final UnmodifiableEconomicMap<Object, Object> objectsToReplacements) {
+        for (int i = 0; i < array.length; i++) {
+            final Object replacement = objectsToReplacements.get(array[i]);
+            if (replacement != null) {
+                array[i] = replacement;
+            }
+        }
     }
 
     public static byte[] swapOrderCopy(final byte[] bytes) {

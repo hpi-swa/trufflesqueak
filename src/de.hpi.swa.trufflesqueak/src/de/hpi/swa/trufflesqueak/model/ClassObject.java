@@ -69,6 +69,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         image = original.image;
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
+        assert superclass == null || superclass.assertNotForwarded();
         methodDict = original.methodDict.shallowCopy();
         format = original.format;
         instanceVariables = copiedInstanceVariablesOrNull;
@@ -115,6 +116,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public String getClassName() {
+        if (!isNotForwarded()) {
+            return "forward to " + getForwardingPointer().toString();
+        }
         if (image.isMetaClass(getSqueakClass())) {
             final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.SIZE];
             if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] instanceof final NativeObject metaClassName) {
@@ -142,7 +146,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     private boolean isAClassTrait() {
-        if (pointers.length <= CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE) {
+        if (pointers == null || pointers.length <= CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE) {
             return false;
         }
         final Object traitInstance = pointers[CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE];
@@ -332,11 +336,31 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public ClassObject getSuperclassOrNull() {
+        assert assertNotForwarded() && (superclass == null || superclass.assertNotForwarded());
         return superclass;
     }
 
+    public ClassObject getResolvedSuperclass() {
+        assert assertNotForwarded();
+        if (!superclass.isNotForwarded()) {
+            CompilerDirectives.transferToInterpreter();
+            setSuperclass((ClassObject) superclass.getForwardingPointer());
+        }
+        return getSuperclassOrNull();
+    }
+
     public VariablePointersObject getMethodDict() {
+        assert assertNotForwarded() && (methodDict == null || methodDict.assertNotForwarded());
         return methodDict;
+    }
+
+    private VariablePointersObject getResolvedMethodDict() {
+        assert assertNotForwarded();
+        if (!methodDict.isNotForwarded()) {
+            CompilerDirectives.transferToInterpreter();
+            setMethodDict((VariablePointersObject) methodDict.getForwardingPointer());
+        }
+        return getMethodDict();
     }
 
     public boolean hasInstanceVariables() {
@@ -380,11 +404,13 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setSuperclass(final ClassObject superclass) {
+        assert superclass == null || superclass.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption();
         this.superclass = superclass;
     }
 
     public void setMethodDict(final VariablePointersObject methodDict) {
+        assert methodDict == null || methodDict.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption();
         this.methodDict = methodDict;
     }
@@ -393,14 +419,22 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public Object lookupInMethodDictSlow(final NativeObject selector) {
         ClassObject lookupClass = this;
         while (lookupClass != null) {
-            final VariablePointersObject methodDictionary = lookupClass.getMethodDict();
+            assert lookupClass.assertNotForwarded();
+            final VariablePointersObject methodDictionary = lookupClass.getResolvedMethodDict();
             final Object[] methodDictVariablePart = methodDictionary.getVariablePart();
             for (int i = 0; i < methodDictVariablePart.length; i++) {
                 if (selector == methodDictVariablePart[i]) {
-                    return AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
+                    final Object[] methodDictValues = AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage();
+                    if (methodDictValues[i] instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isNotForwarded()) {
+                        methodDictValues[i] = o.getForwardingPointer();
+                    }
+                    return methodDictValues[i];
                 }
             }
-            lookupClass = lookupClass.getSuperclassOrNull();
+            if (lookupClass.getSuperclassOrNull() == null) {
+                break;
+            }
+            lookupClass = lookupClass.getResolvedSuperclass();
         }
         assert !selector.isDoesNotUnderstand(image) : "Could not find does not understand method";
         return null; /* Signals a doesNotUnderstand. */
@@ -408,6 +442,23 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public CompiledCodeObject lookupMethodInMethodDictSlow(final NativeObject selector) {
         return (CompiledCodeObject) lookupInMethodDictSlow(selector);
+    }
+
+    public void flushCachesForSelector(final NativeObject selector) {
+        final VariablePointersObject methodDictionary = getResolvedMethodDict();
+        if (methodDictionary == null) {
+            return;
+        }
+        final Object[] methodDictVariablePart = methodDictionary.getVariablePart();
+        for (int i = 0; i < methodDictVariablePart.length; i++) {
+            if (selector == methodDictVariablePart[i]) {
+                final Object lookupResult = AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
+                if (lookupResult instanceof final CompiledCodeObject codeObject) {
+                    codeObject.flushCacheBySelector();
+                }
+                return;
+            }
+        }
     }
 
     public int getBasicInstanceSize() {
@@ -518,55 +569,50 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
-        if (superclass == fromPointer && toPointer instanceof final ClassObject o) {
-            setSuperclass(o);
-        }
-        if (methodDict == fromPointer && toPointer instanceof final VariablePointersObject o && o != methodDict) {
-            // Only update methodDict if changed to avoid redundant invalidation.
-            setMethodDict(o);
-        }
-        if (instanceVariables == fromPointer && toPointer instanceof final ArrayObject o) {
-            setInstanceVariables(o);
-        }
-        if (organization == fromPointer && toPointer instanceof final PointersObject o) {
-            setOrganization(o);
-        }
-        for (int i = 0; i < pointers.length; i++) {
-            if (pointers[i] == fromPointer) {
-                pointers[i] = toPointer;
-            }
-        }
+    public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+        super.forwardTo(pointer);
+        invalidateClassHierarchyAndMethodDictStableAssumption();
+        invalidateClassFormatStableAssumption();
     }
 
     @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        super.pointersBecomeOneWay(fromToMap);
         if (superclass != null && fromToMap.get(superclass) instanceof final ClassObject o) {
-            setSuperclass(o);
-        }
-        if (methodDict != null && fromToMap.get(methodDict) instanceof final VariablePointersObject o && o != methodDict) {
-            // Only update methodDict if changed to avoid redundant invalidation.
-            setMethodDict(o);
-        }
-        if (instanceVariables != null && fromToMap.get(instanceVariables) instanceof final ArrayObject o) {
-            setInstanceVariables(o);
-        }
-        if (organization != null && fromToMap.get(organization) instanceof final PointersObject o) {
-            setOrganization(o);
-        }
-        for (int i = 0; i < pointers.length; i++) {
-            final Object pointer = pointers[i];
-            if (pointer != null) {
-                final Object migratedPointer = fromToMap.get(pointer);
-                if (migratedPointer != null) {
-                    pointers[i] = migratedPointer;
-                }
+            final Object replacement = fromToMap.get(superclass);
+            if (replacement != null) {
+                setSuperclass((ClassObject) replacement);
             }
+            assert superclass.assertNotForwarded();
         }
+        if (methodDict != null) {
+            final Object replacement = fromToMap.get(methodDict);
+            if (replacement != null) {
+                assert replacement != methodDict;
+                setMethodDict((VariablePointersObject) replacement);
+            }
+            assert methodDict.assertNotForwarded();
+        }
+        if (instanceVariables != null) {
+            final Object replacement = fromToMap.get(instanceVariables);
+            if (replacement != null) {
+                setInstanceVariables((ArrayObject) replacement);
+            }
+            assert instanceVariables.assertNotForwarded();
+        }
+        if (organization != null) {
+            final Object replacement = fromToMap.get(organization);
+            if (replacement != null) {
+                setOrganization((PointersObject) replacement);
+            }
+            assert organization.assertNotForwarded();
+        }
+        ArrayUtils.replaceAll(pointers, fromToMap);
     }
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
+        super.tracePointers(tracer);
         tracer.addIfUnmarked(superclass);
         tracer.addIfUnmarked(methodDict);
         tracer.addIfUnmarked(instanceVariables);

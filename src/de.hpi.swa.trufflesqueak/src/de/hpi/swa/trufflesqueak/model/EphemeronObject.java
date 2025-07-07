@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import org.graalvm.collections.UnmodifiableEconomicMap;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -147,16 +145,6 @@ public final class EphemeronObject extends AbstractPointersObject {
 
     public EphemeronObject shallowCopy() {
         return new EphemeronObject(this);
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
-        layoutBecomeOneWay(fromPointer, toPointer);
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
-        layoutBecomeOneWay(fromToMap);
     }
 
     @Override

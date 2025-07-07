@@ -740,10 +740,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 119)
-    protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
+    protected abstract static class PrimFlushCacheBySelectorNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected final NativeObject doFlush(final NativeObject receiver) {
-            getContext().flushMethodCacheForSelector(receiver);
+            getContext().flushCachesForSelector(receiver);
             return receiver;
         }
     }
@@ -771,13 +771,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
+            final SqueakImageContext image = getContext();
+            image.objectGraphUtils.unfollow();
             if (TruffleOptions.AOT) {
                 /* System.gc() triggers full GC by default in SVM (see https://git.io/JvY7g). */
                 MiscUtils.systemGC();
             } else {
                 forceFullGC();
             }
-            final SqueakImageContext image = getContext();
             final boolean hasPendingFinalizations = LogUtils.GC_IS_LOGGABLE_FINE ? hasPendingFinalizationsWithLogging(image) : hasPendingFinalizations(image);
             final boolean hasPendingEphemerons = image.containsEphemerons && image.objectGraphUtils.checkEphemerons();
             if (hasPendingFinalizations || hasPendingEphemerons) {

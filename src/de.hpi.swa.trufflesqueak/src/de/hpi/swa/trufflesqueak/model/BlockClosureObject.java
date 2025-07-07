@@ -273,25 +273,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
-        if (receiver == fromPointer) {
-            receiver = toPointer;
-        }
-        if (block == fromPointer && toPointer instanceof final CompiledCodeObject b) {
-            block = b;
-        }
-        if (outerContext == fromPointer && toPointer instanceof final ContextObject c && c != outerContext) {
-            setOuterContext(c);
-        }
-        for (int i = 0; i < copiedValues.length; i++) {
-            if (copiedValues[i] == fromPointer) {
-                copiedValues[i] = toPointer;
-            }
-        }
-    }
-
-    @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        super.pointersBecomeOneWay(fromToMap);
         if (receiver != null) {
             final Object toReceiver = fromToMap.get(receiver);
             if (toReceiver != null) {
@@ -304,19 +287,12 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         if (outerContext != null && fromToMap.get(outerContext) instanceof final ContextObject c && c != outerContext) {
             setOuterContext(c);
         }
-        for (int i = 0; i < copiedValues.length; i++) {
-            final Object copiedValue = copiedValues[i];
-            if (copiedValue != null) {
-                final Object migratedValue = fromToMap.get(copiedValue);
-                if (migratedValue != null) {
-                    copiedValues[i] = migratedValue;
-                }
-            }
-        }
+        ArrayUtils.replaceAll(copiedValues, fromToMap);
     }
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
+        super.tracePointers(tracer);
         tracer.addIfUnmarked(receiver);
         tracer.addIfUnmarked(block);
         tracer.addIfUnmarked(outerContext);

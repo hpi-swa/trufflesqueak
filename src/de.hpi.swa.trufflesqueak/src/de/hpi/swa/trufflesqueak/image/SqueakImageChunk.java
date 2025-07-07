@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakImageChunk {
@@ -114,7 +115,7 @@ public final class SqueakImageChunk {
     }
 
     public void setObject(final Object value) {
-        assert object == null;
+        assert object == null : "Cannot set object to " + MiscUtils.toObjectString(value) + " as it is already set to " + MiscUtils.toObjectString(object);
         object = value;
     }
 

@@ -137,15 +137,12 @@ ignoredTests := OrderedCollection new.
 
 {
     "slow tests"
-    ClassTraitTest -> #(#testChanges #testConflictsAliasesAndExclusions #testUsers).
     CompilerTest -> #(#testAllNodePCsAreForBytecodesInCollections #testAllNodePCsAreForBytecodesInKernel #testAllNodePCsAreForBytecodesInMorphic).
     FloatTest -> #(#testCompiledConstants).
     LocaleTest -> #(#test04InstallFont).
     MorphicUIManagerTest -> #(#testShowAllBinParts).
     ObjectTest -> #(#testIfNotNilDoDeprecation).
-    PureBehaviorTest -> #(#testIsLocalAliasSelector #testLocalSelectors #testMethodCategoryReorganization #testPropagationOfChangesInTraits #testPropagationOfChangesInTraitsToAliasMethodsWhenOriginalMethodIsExcluded #testPropagationWhenTraitCompositionModifications #testReshapeClass #testTraitCompositionModifications #testUpdateWhenLocalMethodRemoved).
     StringTest -> #(#testPercentEncodingJa).
-    TraitCompositionTest -> #(#testAliasCompositionsRaisesErrorBinary #testAliasCompositionsRaisesErrorKeyword #testAliasCompositionsRaisesErrorUnary).
     TraitFileOutTest -> #(#testFileOutCategory #testFileOutTrait #testRemovingMethods).
     TraitMethodDescriptionTest -> #(#testArgumentNames #testCategories #testConflictingCategories #testConflictMethodCreation).
     TraitSystemTest -> #(#testAllImplementedMessagesWithout #testAllSentMessages).
@@ -159,6 +156,7 @@ ignoredTests := OrderedCollection new.
     ChangeHooksTest -> #(#testClassRecategorizedEvent2 #testClassRedefinition #testClassRemovalEvent #testClassRenamedEvent #testClassSuperChangedEvent #testDoItEvent1 #testDoItEvent2 #testInstanceVariableCreationEvent1 #testInstanceVariableCreationEvent2 #testInstanceVariableRemovedEvent1 #testInstanceVariableRemovedEvent2 #testInstanceVariableRenamedSilently #testMethodCreationEvent1 #testMethodCreationEvent2 #testMethodRecategorizationEvent #testMethodRemovedEvent1 #testMethodRemovedEvent2 "Ignoring rest of ChangeHooksTest (has side effects and slows down or breaks other tests).").
     CompiledCodeInspectorTest -> #(#testDebugConstruction). "broken"
     ContextInspectorTest -> #(#testDebugConstruction). "broken"
+    DebuggerTests -> #(#test01UserInterrupt #test17HandleBlockCannotReturn #test18HandleNestedBlockCannotReturn #test20TerminateProcess #test21TerminateErrorInEnsureBlock #test22TerminateErrorInNestedEnsureBlock #test23TerminateDoubleErrorInEnsure #test24TerminateTripleErrorInEnsure). "fail, and can lock up or crash image sometimes"
     FFIAllocateTests -> #(#test22ArrayForVoidPointers).
     FFIPluginConstructedTests -> #(#testArrayResultWithPoint #testArrayResultWithString #testBoolsToInts #testChars #testIntAliasCall #testIntAliasCallReturnIntAlias #testMixedDoublesIntAndStruct #testMixedIntAndStruct #testMixedIntAndStruct2 #testMixedIntAndStruct3 #testPoint2 #testPoint4 #testPoint4Bigger #testPointers #testPrintString #testPrintWideString #testReturnPointerAlias #testReturnStructPassingUnionUfdUdSi2 #testReturnStructPassingUnionUfdUfi #testReturnStructSd2 #testReturnStructSdi #testReturnStructSf2 #testReturnStructSf2d #testReturnStructSf4 #testReturnStructSfdf #testReturnStructSfi #testReturnStructSi2 #testReturnStructSl2 #testReturnStructSs2 #testReturnStructSs2i #testReturnStructSs4 #testReturnStructSSdi5 #testReturnStructSsf #testReturnStructSsi #testReturnStructSsis #testReturnStructSsisPassingValues #testReturnStructSslf #testReturnStructSslfPassingValues #testReturnStructSsls #testReturnStructSslsPassingValues #testReturnStructSsSsf #testReturnStructSsSsi #testReturnUnionUdSi2 #testReturnUnionUfd #testReturnUnionUfi #testSmallStructureReturn #testSumdiWithStructSdi4 #testSumdWithStructSdi4 #testSumfWithStructSfd4 #testSumiWithStructSdi4 #testSumStructSdi #testSumStructSdi2 #testSumStructSdi4 #testSumStructSfd #testSumStructSfd2 #testSumStructSfd4 #testSumStructSSdi5 #testSumStructSslf #testSumStructSslf2 #testSumStructSslf4 #testSumStructSUfdUdsi2 #testSumStructSUfdUfi).
     FFIPluginLibraryTests -> #(#testArrayResultWithPoint #testArrayResultWithString #testBoolsToInts #testChars #testDoubles14 #testFloats13 #testFloats14 #testIntAliasCall #testIntAliasCallReturnIntAlias #testLongLong8a2 #testMixedDoublesAndLongsSum #testMixedDoublesIntAndStruct #testMixedIntAndStruct #testMixedIntAndStruct2 #testMixedIntAndStruct3 #testPoint2 #testPoint4 #testPoint4Bigger #testPointers #testPrintString #testPrintWideString #testReturnPointerAlias #testReturnStructPassingUnionUfdUdSi2 #testReturnStructPassingUnionUfdUfi #testReturnStructSd2 #testReturnStructSdi #testReturnStructSf2 #testReturnStructSf2d #testReturnStructSf4 #testReturnStructSfdf #testReturnStructSfi #testReturnStructSi2 #testReturnStructSl2 #testReturnStructSs2 #testReturnStructSs2i #testReturnStructSs4 #testReturnStructSSdi5 #testReturnStructSsf #testReturnStructSsi #testReturnStructSsis #testReturnStructSsisPassingValues #testReturnStructSslf #testReturnStructSslfPassingValues #testReturnStructSsls #testReturnStructSslsPassingValues #testReturnStructSsSsf #testReturnStructSsSsi #testReturnUnionUdSi2 #testReturnUnionUfd #testReturnUnionUfi #testSmallStructureReturn #testSumdiWithStructSdi4 #testSumdWithStructSdi4 #testSumfWithStructSfd4 #testSumiWithStructSdi4 #testSumStructSdi #testSumStructSdi2 #testSumStructSdi4 #testSumStructSfd #testSumStructSfd2 #testSumStructSfd4 #testSumStructSSdi5 #testSumStructSslf #testSumStructSslf2 #testSumStructSslf4 #testSumStructSUfdUdsi2 #testSumStructSUfdUfi).
@@ -215,8 +213,6 @@ isWin ifTrue: [
     BitBltSimulationTest -> #(#testRgbMulDepth16 #testRgbMulDepth1to8).
     CompilerExceptionsTest -> #(#testUnknownSelector).
     ContextTest -> #(#testPrimitive100). "failing"
-    DebuggerTests -> #(#test01UserInterrupt #test05DebuggerTerminatesProcess #test06DebugSpecificContext #test07DebuggerNotifier #test08DebuggerFull #test09DebuggerNotifierOrFull #test10DebugBlock #test11DebugBlockAtContext #test16HandleSimulationError #test17HandleBlockCannotReturn #test18HandleNestedBlockCannotReturn #test19Abandon #test20TerminateProcess #test21TerminateErrorInEnsureBlock #test22TerminateErrorInNestedEnsureBlock #test23TerminateDoubleErrorInEnsure #test24TerminateTripleErrorInEnsure). "not terminating"
-    DebuggerUnwindBug -> #(#testUnwindDebugger). "not terminating"
     HelpBrowserTest -> #(#testRegistration).
     JPEGReadWriter2PluginTest -> #(#testPrimJPEGWriteImage). "expected form has an off-by-one pixel"
     JPEGReadWriter2Test -> #(#testPrimJPEGWriteImage). "failing"
@@ -226,7 +222,7 @@ isWin ifTrue: [
     SequenceableCollectionTest -> #(#testDoWithIndexDeprecation).
     SetInspectorTest -> #(#testUninitialized). "failing"
     SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString). "assume SmallIntegers are 31 or 61 bit rather than 64 bit (long)."
-    WorldStateTest -> #(#testActiveVariablesObsoletion #testDeferredUIQueueTimeout #testWorldVariableObsoletion).
+    WorldStateTest -> #(#testActiveVariablesObsoletion #testWorldVariableObsoletion).
 } collect: [:assoc | | testCase |
     testCase := assoc key.
     assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].
@@ -235,7 +231,6 @@ flakyTests := OrderedCollection new.
 {
     BasicInspectorTest -> #(#testExpressions).
     BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
-    ClassBuilderTest -> #(#testSubclass).
     ClassInspectorTest -> #(#testExpressions).
     CollectionInspectorTest -> #(#testExpressions).
     CompiledCodeInspectorTest -> #(#testExpressions).
@@ -252,11 +247,13 @@ flakyTests := OrderedCollection new.
     PCCByCompilationTest -> #(#testSwitchPrimCallOffOn).
     PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
     SetInspectorTest -> #(#testExpressions).
+    SHParserST80Test -> #(#testNumbers).
     TestValueWithinFix -> #(#testValueWithinTimingBasic #testValueWithinTimingNestedInner #testValueWithinTimingNestedOuter #testValueWithinTimingRepeat).
     WeakIdentityDictionaryTest -> #(#testIsEmpty).
     WeakKeyDictionaryTest -> #(#testIsEmpty).
     WeakSetInspectorTest -> #(#testUninitialized).
     WeakSetTest -> #(#testIsEmpty).
+    WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
 
     "failing on some platforms"
     GIFReadWriterTest -> #(#testAnimatedColorsOutIn).

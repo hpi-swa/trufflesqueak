@@ -135,7 +135,7 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
 
         @Specialization(assumptions = {"methodClass.getClassHierarchyAndMethodDictStable()", "dispatchDirectNode.getAssumptions()"})
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2,
-                        @Cached("create(selector, methodClass.getSuperclassOrNull())") final DispatchDirect2Node dispatchDirectNode) {
+                        @Cached("create(selector, methodClass.getResolvedSuperclass())") final DispatchDirect2Node dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arg1, arg2);
         }
     }
@@ -152,7 +152,7 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
 
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
-            final ClassObject lookupClass = CompilerDirectives.castExact(directedClassNode.executeRead(frame), ClassObject.class).getSuperclassOrNull();
+            final ClassObject lookupClass = CompilerDirectives.castExact(directedClassNode.executeRead(frame), ClassObject.class).getResolvedSuperclass();
             assert lookupClass != null;
             return dispatchNode.execute(frame, lookupClass, receiver, arg1, arg2);
         }

@@ -311,6 +311,9 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
+        if (!isNotForwarded()) {
+            return "forward to " + getForwardingPointer().toString();
+        }
         final ClassObject squeakClass = getSqueakClass();
         /*
          * This may be accessed from outside a context (when Truffle accesses sources), so we cannot

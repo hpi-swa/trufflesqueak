@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import org.graalvm.collections.UnmodifiableEconomicMap;
-
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -69,26 +67,5 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
 
     public void putIntoVariablePart(final long index, final Object value) {
         UnsafeUtils.putObject(variablePart, index, value);
-    }
-
-    @Override
-    public final void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
-        layoutBecomeOneWay(fromPointer, toPointer);
-        for (int i = 0; i < variablePart.length; i++) {
-            if (variablePart[i] == fromPointer) {
-                variablePart[i] = toPointer;
-            }
-        }
-    }
-
-    @Override
-    public final void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
-        layoutBecomeOneWay(fromToMap);
-        for (int i = 0; i < variablePart.length; i++) {
-            final Object migratedPart = fromToMap.get(variablePart[i]);
-            if (migratedPart != null) {
-                variablePart[i] = migratedPart;
-            }
-        }
     }
 }

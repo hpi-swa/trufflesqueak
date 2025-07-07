@@ -318,26 +318,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return false;
     }
 
-    protected final void layoutBecomeOneWay(final Object fromPointer, final Object toPointer) {
-        if (object0 == fromPointer) {
-            object0 = toPointer;
-        }
-        if (object1 == fromPointer) {
-            object1 = toPointer;
-        }
-        if (object2 == fromPointer) {
-            object2 = toPointer;
-        }
-        if (objectExtension != null) {
-            for (int i = 0; i < objectExtension.length; i++) {
-                if (objectExtension[i] == fromPointer) {
-                    objectExtension[i] = toPointer;
-                }
-            }
-        }
-    }
-
-    protected final void layoutBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        super.pointersBecomeOneWay(fromToMap);
         final Object migratedObject0 = fromToMap.get(object0);
         if (migratedObject0 != null) {
             object0 = migratedObject0;
@@ -351,17 +334,13 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             object2 = migratedObject2;
         }
         if (objectExtension != null) {
-            for (int i = 0; i < objectExtension.length; i++) {
-                final Object migratedValue = fromToMap.get(objectExtension[i]);
-                if (migratedValue != null) {
-                    objectExtension[i] = migratedValue;
-                }
-            }
+            ArrayUtils.replaceAll(objectExtension, fromToMap);
         }
     }
 
     @Override
     public final void tracePointers(final ObjectTracer tracer) {
+        super.tracePointers(tracer);
         tracer.addIfUnmarked(object0);
         tracer.addIfUnmarked(object1);
         tracer.addIfUnmarked(object2);

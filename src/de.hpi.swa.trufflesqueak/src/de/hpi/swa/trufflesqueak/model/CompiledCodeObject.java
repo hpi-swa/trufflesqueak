@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Arrays;
 
 import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -36,6 +37,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
@@ -240,6 +242,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public void flushCache() {
         /* Invalidate callTargetStable assumption to ensure this method is released from caches. */
         invalidateCallTarget("primitive 116");
+    }
+
+    public void flushCacheBySelector() {
+        /* Invalidate callTargetStable assumption to ensure this method is released from caches. */
+        invalidateCallTarget("primitive 119");
     }
 
     private CyclicAssumption callTargetStable() {
@@ -518,15 +525,27 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return ArrayUtils.contains(getLiterals(), thang);
     }
 
-    /**
-     * This class traces through the literals but does not overwrite
-     * {@link AbstractSqueakObjectWithClassAndHash#pointersBecomeOneWay(Object, Object)} and
-     * {@link AbstractSqueakObjectWithClassAndHash#pointersBecomeOneWay(org.graalvm.collections.UnmodifiableEconomicMap)}}.
-     * Literals are cached in the AST and are not allowed to change (at least currently) because
-     * that would require invalidation. Do nothing for now until this really is needed.
-     */
+    @Override
+    public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+        super.forwardTo(pointer);
+        invalidateCallTargetStable();
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        super.pointersBecomeOneWay(fromToMap);
+        for (int i = 0; i < literals.length; i++) {
+            final Object replacement = fromToMap.get(literals[i]);
+            if (replacement != null) {
+                literals[i] = replacement;
+                invalidateCallTarget("Literal changed via becomeForward:");
+            }
+        }
+    }
+
     @Override
     public void tracePointers(final ObjectTracer tracer) {
+        super.tracePointers(tracer);
         tracer.addAllIfUnmarked(literals);
     }
 
@@ -619,7 +638,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         if (hasMethodClass(readNode, null)) {
-            return getMethodClass(readNode, null);
+            final ClassObject methodClass = getMethodClass(readNode, null);
+            if (methodClass.isNotForwarded()) {
+                return methodClass;
+            } else {
+                final ClassObject forwardedMethodClass = (ClassObject) methodClass.getForwardingPointer();
+                AbstractPointersObjectWriteNode.executeUncached((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE, forwardedMethodClass);
+                return forwardedMethodClass;
+            }
         }
         return null;
     }

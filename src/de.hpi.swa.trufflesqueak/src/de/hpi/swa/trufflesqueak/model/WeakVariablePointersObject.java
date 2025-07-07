@@ -9,6 +9,8 @@ package de.hpi.swa.trufflesqueak.model;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
@@ -102,6 +104,22 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
 
     public WeakVariablePointersObject shallowCopy() {
         return new WeakVariablePointersObject(this);
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        super.pointersBecomeOneWay(fromToMap);
+        for (int i = 0; i < variablePart.length; i++) {
+            if (variablePart[i] instanceof final WeakRef weakRef) {
+                final Object value = weakRef.get();
+                if (value instanceof final AbstractSqueakObjectWithClassAndHash o) {
+                    final Object replacement = fromToMap.get(o);
+                    if (replacement != null) {
+                        variablePart[i] = new WeakRef((AbstractSqueakObject) replacement, weakPointersQueue);
+                    }
+                }
+            }
+        }
     }
 
     @Override

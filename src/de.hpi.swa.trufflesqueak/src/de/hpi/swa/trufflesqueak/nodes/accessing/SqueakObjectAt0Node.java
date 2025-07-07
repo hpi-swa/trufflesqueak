@@ -15,6 +15,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -42,7 +43,11 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectRe
 @GenerateCached(false)
 public abstract class SqueakObjectAt0Node extends AbstractNode {
 
-    public abstract Object execute(Node node, Object obj, long index);
+    public final Object execute(final Node node, final Object obj, final long index) {
+        return executeSpecialized(node, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(obj), index);
+    }
+
+    protected abstract Object executeSpecialized(Node node, Object obj, long index);
 
     public static final Object executeUncached(final Object obj, final long index) {
         return SqueakObjectAt0NodeGen.getUncached().execute(null, obj, index);

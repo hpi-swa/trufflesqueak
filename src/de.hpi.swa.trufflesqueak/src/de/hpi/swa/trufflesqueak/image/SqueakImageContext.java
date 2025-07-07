@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -517,6 +519,7 @@ public final class SqueakImageContext {
     /* SpurMemoryManager>>#enterIntoClassTable: */
     @TruffleBoundary
     public void enterIntoClassTable(final ClassObject clazz) {
+        assert clazz.assertNotForwarded();
         int majorIndex = SqueakImageConstants.majorClassIndexOf(classTableIndex);
         final int initialMajorIndex = majorIndex;
         assert initialMajorIndex > 0 : "classTableIndex should never index the first page; it's reserved for known classes";
@@ -557,6 +560,79 @@ public final class SqueakImageContext {
             assert classTablePageOrNil == NilObject.SINGLETON;
             return NilObject.SINGLETON;
         }
+    }
+
+    /* SpurMemoryManager>>#purgeDuplicateClassTableEntriesFor: */
+    public void purgeDuplicateAndUnreachableClassTableEntriesFor(final ClassObject clazz, final UnmodifiableEconomicMap<Object, Object> becomeMap) {
+        final long expectedIndex = clazz != null ? clazz.getSqueakHash() : -1;
+        int majorIndex = SqueakImageConstants.majorClassIndexOf(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE);
+        while (majorIndex < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS) {
+            final Object classTablePageOrNil = hiddenRoots.getObject(majorIndex);
+            if (classTablePageOrNil instanceof final ArrayObject page) {
+                for (int minorIndex = 0; minorIndex < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; minorIndex++) {
+                    final int currentClassTableIndex = SqueakImageConstants.classTableIndexFor(majorIndex, minorIndex);
+                    Object entry = page.getObject(minorIndex);
+                    if (entry instanceof final ClassObject classObject && !classObject.isNotForwarded()) {
+                        entry = classObject.getForwardingPointer();
+                        page.setObject(minorIndex, entry);
+                    }
+                    final boolean isDuplicate = entry == clazz && currentClassTableIndex != expectedIndex && currentClassTableIndex > SqueakImageConstants.LAST_CLASS_INDEX_PUN;
+                    if (isDuplicate || isUnreachable(entry)) {
+                        page.setObject(minorIndex, NilObject.SINGLETON);
+                        if (currentClassTableIndex < classTableIndex) {
+                            classTableIndex = currentClassTableIndex;
+                        }
+                    } else if (entry instanceof final ClassObject classObject) {
+                        classObject.pointersBecomeOneWay(becomeMap);
+                    }
+                }
+            } else {
+                assert classTablePageOrNil == NilObject.SINGLETON;
+                break;
+            }
+            majorIndex = Math.max(majorIndex + 1 & SqueakImageConstants.CLASS_INDEX_MASK, 1);
+        }
+        assert classTableIndex >= SqueakImageConstants.CLASS_TABLE_PAGE_SIZE : "classTableIndex must never index the first page, which is reserved for classes known to the VM";
+    }
+
+    private boolean isUnreachable(final Object object) {
+        if (object instanceof final ClassObject classObject) {
+            /*
+             * Class is unreachable if it was not yet marked with the current marking flag by the
+             * last object graph traversal.
+             */
+            return classObject.tryToMarkWith(currentMarkingFlag);
+        } else {
+            assert object == NilObject.SINGLETON;
+            return false;
+        }
+    }
+
+    private void flushCachesForSelectorInClassTable(final NativeObject selector) {
+        for (final Object classTablePageOrNil : hiddenRoots.getObjectStorage()) {
+            if (classTablePageOrNil instanceof final ArrayObject page) {
+                final Object[] entries = page.getObjectStorage();
+                for (int i = 0; i < entries.length; i++) {
+                    final Object entry = entries[i];
+                    if (entry instanceof final ClassObject classObject) {
+                        if (!classObject.isNotForwarded()) {
+                            entries[i] = classObject.getForwardingPointer();
+                        }
+                        ((ClassObject) entries[i]).flushCachesForSelector(selector);
+                    } else {
+                        assert entry == NilObject.SINGLETON;
+                    }
+                }
+            } else {
+                assert classTablePageOrNil == NilObject.SINGLETON;
+                break;
+            }
+        }
+    }
+
+    public void flushCachesForSelector(final NativeObject selector) {
+        flushCachesForSelectorInClassTable(selector);
+        flushMethodCacheForSelector(selector);
     }
 
     public TruffleFile getHomePath() {
@@ -879,7 +955,7 @@ public final class SqueakImageContext {
     }
 
     /* Clear cache entries for selector (prim 119). */
-    public void flushMethodCacheForSelector(final NativeObject selector) {
+    private void flushMethodCacheForSelector(final NativeObject selector) {
         for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
             if (methodCache[i].getSelector() == selector) {
                 methodCache[i].freeAndRelease();

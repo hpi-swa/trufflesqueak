@@ -6,9 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class VariablePointersObject extends AbstractVariablePointersObject {
@@ -27,6 +30,12 @@ public final class VariablePointersObject extends AbstractVariablePointersObject
 
     public VariablePointersObject shallowCopy() {
         return new VariablePointersObject(this);
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        super.pointersBecomeOneWay(fromToMap);
+        ArrayUtils.replaceAll(variablePart, fromToMap);
     }
 
     @Override

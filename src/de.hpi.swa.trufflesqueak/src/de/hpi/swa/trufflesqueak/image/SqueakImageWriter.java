@@ -16,6 +16,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -75,7 +76,7 @@ public final class SqueakImageWriter {
         try {
             new SqueakImageWriter(image).run(thisContext);
         } catch (final IOException e) {
-            e.printStackTrace();
+            LogUtils.IMAGE.log(Level.WARNING, "Failed to write image", e);
         }
     }
 
@@ -83,7 +84,7 @@ public final class SqueakImageWriter {
         return image;
     }
 
-    private void run(final ContextObject thisContext) {
+    private void run(final ContextObject thisContext) throws IOException {
         final long start = MiscUtils.currentTimeMillis();
         nextChunk = image.flags.getOldBaseAddress();
         final PointersObject activeProcess = image.getActiveProcessSlow();
@@ -185,12 +186,14 @@ public final class SqueakImageWriter {
         AbstractSqueakObjectWithClassAndHash previousObject = image.getHiddenRoots();
         for (final AbstractSqueakObjectWithClassAndHash currentObject : allTracedObjects) {
             assert correctPosition(currentObject) : "Previous object was not written correctly: " + previousObject;
+            assert currentObject.assertNotForwarded();
             currentObject.write(this);
             previousObject = currentObject;
         }
         assert currentOop() == nextChunkAfterTracing;
         /* Write additional large integers and boxed floats. */
         for (final AbstractSqueakObjectWithClassAndHash value : additionalBoxedObjects) {
+            assert value.assertNotForwarded();
             value.write(this);
         }
         assert currentOop() == nextChunk;
@@ -208,20 +211,16 @@ public final class SqueakImageWriter {
      * Memory size and first fragment size (the same value in TruffleSqueak's case) are unknown when
      * the image header is written. This updates both values in the header accordingly.
      */
-    private void finalizeImageHeader() {
+    private void finalizeImageHeader() throws IOException {
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         assert truffleFile.exists();
-        try {
-            final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ);
-            try (SeekableByteChannel channel = truffleFile.newByteChannel(options)) {
-                VarHandleUtils.putLong(byteArrayBuffer, 0, position - SqueakImageConstants.IMAGE_HEADER_SIZE);
-                channel.position(SqueakImageConstants.IMAGE_HEADER_MEMORY_SIZE_POSITION);
-                channel.write(ByteBuffer.wrap(byteArrayBuffer));
-                channel.position(SqueakImageConstants.IMAGE_HEADER_FIRST_FRAGMENT_SIZE_POSITION);
-                channel.write(ByteBuffer.wrap(byteArrayBuffer));
-            }
-        } catch (final IOException e) {
-            e.printStackTrace();
+        final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ);
+        try (SeekableByteChannel channel = truffleFile.newByteChannel(options)) {
+            VarHandleUtils.putLong(byteArrayBuffer, 0, position - SqueakImageConstants.IMAGE_HEADER_SIZE);
+            channel.position(SqueakImageConstants.IMAGE_HEADER_MEMORY_SIZE_POSITION);
+            channel.write(ByteBuffer.wrap(byteArrayBuffer));
+            channel.position(SqueakImageConstants.IMAGE_HEADER_FIRST_FRAGMENT_SIZE_POSITION);
+            channel.write(ByteBuffer.wrap(byteArrayBuffer));
         }
     }
 
@@ -259,6 +258,7 @@ public final class SqueakImageWriter {
     }
 
     private long reserve(final AbstractSqueakObjectWithClassAndHash object) {
+        assert object.assertNotForwarded();
         final int numSlots = object.getNumSlots();
         final int headerSlots = numSlots < SqueakImageConstants.OVERFLOW_SLOTS ? 1 : 2;
         final int offset = (headerSlots - 1) * SqueakImageConstants.WORD_SIZE;
@@ -274,24 +274,19 @@ public final class SqueakImageWriter {
     }
 
     private long reserveLargeInteger(final long value) {
-        final LargeIntegerObject largeIntegerObject = new LargeIntegerObject(image, BigInteger.valueOf(value));
-        final long oop = nextChunk;
-        final int numSlots = largeIntegerObject.getNumSlots();
-        final int headerSlots = numSlots < 255 ? 1 : 2;
-        nextChunk += (headerSlots + numSlots) * SqueakImageConstants.WORD_SIZE /* No padding */;
-
-        additionalBoxedObjects.add(largeIntegerObject);
-        return oop;
+        return reserveBoxedObject(new LargeIntegerObject(image, BigInteger.valueOf(value)));
     }
 
     private long reserveBoxedFloat(final double value) {
-        final FloatObject floatObject = new FloatObject(image, value);
+        return reserveBoxedObject(new FloatObject(image, value));
+    }
+
+    private long reserveBoxedObject(final AbstractSqueakObjectWithClassAndHash object) {
         final long oop = nextChunk;
-        final int numSlots = floatObject.getNumSlots();
+        final int numSlots = object.getNumSlots();
         final int headerSlots = numSlots < 255 ? 1 : 2;
         nextChunk += (headerSlots + numSlots) * SqueakImageConstants.WORD_SIZE /* No padding */;
-
-        additionalBoxedObjects.add(floatObject);
+        additionalBoxedObjects.add(object);
         return oop;
     }
 

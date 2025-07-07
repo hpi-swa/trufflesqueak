@@ -54,7 +54,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -65,29 +64,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
-
-            final Object[] fromPointers = fromArray.getObjectStorage();
+            // Need to operate on copy of `fromPointers` because itself might also be changed.
+            final Object[] fromPointers = fromArray.getObjectStorage().clone();
             final Object[] toPointers = toArray.getObjectStorage();
-
-            if (copyHash) {
-                copyHash(fromPointers, toPointers);
-            }
             final SqueakImageContext image = getContext();
-            // Need to operate on copy of `fromPointers` because itself will also be changed.
-            final Object[] fromPointersClone = fromPointers.clone();
-            image.objectGraphUtils.pointersBecomeOneWay(fromPointersClone, toPointers);
+            image.objectGraphUtils.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
             image.flushMethodCacheAfterBecome();
             return fromArray;
-        }
-
-        private static void copyHash(final Object[] fromPointers, final Object[] toPointers) {
-            for (int i = 0; i < fromPointers.length; i++) {
-                final Object from = fromPointers[i];
-                final Object to = toPointers[i];
-                if (from instanceof final AbstractSqueakObjectWithClassAndHash f && to instanceof final AbstractSqueakObjectWithClassAndHash t) {
-                    t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash()));
-                }
-            }
         }
     }
 
@@ -281,6 +264,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final long doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash object,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile needsHashProfile) {
+            assert object.assertNotForwarded();
             return object.getOrCreateSqueakHash(needsHashProfile, node);
         }
     }

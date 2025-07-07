@@ -16,6 +16,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -25,6 +26,12 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     public abstract boolean execute(Node node, Object left, Object right);
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "left == right")
+    protected static final boolean doJavaIdenticalObject(final Object left, final Object right) {
+        return BooleanObject.TRUE;
+    }
 
     @Specialization
     protected static final boolean doBoolean(final boolean left, final boolean right) {
@@ -64,8 +71,10 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
         return BooleanObject.FALSE;
     }
 
-    @Specialization(guards = "!isCharacterObject(left)")
-    protected static final boolean doAbstractSqueakObject(final AbstractSqueakObject left, final Object right) {
+    @Specialization(guards = "!isCharacterObject(left)", replaces = {"doJavaIdenticalObject", "doAbstractSqueakObjectPrimitive"})
+    protected static final boolean doAbstractSqueakObjectGeneric(final AbstractSqueakObject left, final Object right) {
+        assert !(left instanceof final AbstractSqueakObjectWithClassAndHash l) || l.assertNotForwarded();
+        assert !(right instanceof final AbstractSqueakObjectWithClassAndHash r) || r.assertNotForwarded();
         return BooleanObject.wrap(left == right);
     }
 
@@ -83,15 +92,10 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
         }
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "isForeignObject(left)")
     protected static final boolean doForeignAbstractSqueakObject(final Object left, final AbstractSqueakObject right) {
-        return BooleanObject.wrap(left == right);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "left == right")
-    protected static final boolean doJavaIdenticalObject(final Object left, final Object right) {
-        return BooleanObject.TRUE;
+        return BooleanObject.FALSE;
     }
 
     /** (inspired by SimpleLanguage's {@code SLEqualNode}). */

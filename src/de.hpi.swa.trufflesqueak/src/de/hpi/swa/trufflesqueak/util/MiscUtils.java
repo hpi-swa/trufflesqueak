@@ -371,4 +371,9 @@ public final class MiscUtils {
     public static String toString(final Object value) {
         return value.toString();
     }
+
+    /** Copy of {@link Object#toString()}. */
+    public static String toObjectString(final Object value) {
+        return value == null ? "null" : value.getClass().getName() + "@" + Integer.toHexString(value.hashCode());
+    }
 }

@@ -340,32 +340,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
-        if (isObjectType()) {
-            final Object[] objectStorage = getObjectStorage();
-            for (int i = 0; i < objectStorage.length; i++) {
-                if (objectStorage[i] == fromPointer) {
-                    objectStorage[i] = toPointer;
-                }
-            }
-        }
-    }
-
-    @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        super.pointersBecomeOneWay(fromToMap);
         if (isObjectType()) {
-            final Object[] objectStorage = getObjectStorage();
-            for (int i = 0; i < objectStorage.length; i++) {
-                final Object migratedObject = fromToMap.get(objectStorage[i]);
-                if (migratedObject != null) {
-                    objectStorage[i] = migratedObject;
-                }
-            }
+            ArrayUtils.replaceAll(getObjectStorage(), fromToMap);
         }
     }
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
+        super.tracePointers(tracer);
         if (isObjectType()) {
             tracer.addAllIfUnmarked(getObjectStorage());
         }

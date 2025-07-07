@@ -536,33 +536,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
-        if (hasTruffleFrame()) {
-            if (FrameAccess.getCodeObject(truffleFrame) == fromPointer && toPointer instanceof final CompiledCodeObject o) {
-                setCodeObject(o);
-            }
-            if (FrameAccess.getSender(truffleFrame) == fromPointer && toPointer instanceof final ContextObject o) {
-                setSender(o);
-            }
-            if (FrameAccess.getClosure(truffleFrame) == fromPointer && toPointer instanceof final BlockClosureObject o) {
-                setClosure(o);
-            }
-            final Object[] arguments = truffleFrame.getArguments();
-            for (int i = FrameAccess.getReceiverStartIndex(); i < arguments.length; i++) {
-                if (arguments[i] == fromPointer) {
-                    arguments[i] = toPointer;
-                }
-            }
-            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
-                if (truffleFrame.isObject(slotIndex) && truffleFrame.getObject(slotIndex) == fromPointer) {
-                    truffleFrame.setObject(slotIndex, toPointer);
-                }
-            });
-        }
-    }
-
-    @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        super.pointersBecomeOneWay(fromToMap);
         if (hasTruffleFrame()) {
             final CompiledCodeObject compiledCodeObject = FrameAccess.getCodeObject(truffleFrame);
             if (compiledCodeObject != null && fromToMap.get(compiledCodeObject) instanceof final CompiledCodeObject o) {
@@ -602,6 +577,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
+        super.tracePointers(tracer);
         if (hasTruffleFrame()) {
             tracer.addIfUnmarked(FrameAccess.getCodeObject(truffleFrame));
             tracer.addAllIfUnmarked(truffleFrame.getArguments());
