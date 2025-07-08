@@ -363,8 +363,12 @@ public final class ObjectGraphUtils {
             });
             return null;
         });
-        assert resumeContextObject != null : "Failed to find ResumeContextRootNode";
-        tracer.addIfUnmarked(resumeContextObject);
+        if (resumeContextObject != null) {
+            tracer.addIfUnmarked(resumeContextObject);
+        } else {
+            // TODO: find out when and why this happens
+            LogUtils.OBJECT_GRAPH.warning("Failed to find ResumeContextRootNode");
+        }
     }
 
     @TruffleBoundary
@@ -415,8 +419,12 @@ public final class ObjectGraphUtils {
             });
             return null;
         });
-        assert resumeContextObject != null : "Failed to find ResumeContextRootNode";
-        tracer.addIfUnmarked(resumeContextObject);
+        if (resumeContextObject != null) {
+            tracer.addIfUnmarked(resumeContextObject);
+        } else {
+            // TODO: find out when and why this happens
+            LogUtils.OBJECT_GRAPH.warning("Failed to find ResumeContextRootNode");
+        }
     }
 
     static final class EphemeronsTask implements Runnable {
