@@ -190,7 +190,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(SocketPlugin.class)
     @SqueakPrimitive(names = "primitiveResolverHostNameResult")
     protected abstract static class PrimResolverHostNameResultNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"targetString.isTruffleStringType()", "targetString.getByteLength() >= LOCAL_HOST_NAME.length"})
+        @Specialization(guards = {"targetString.isTruffleStringType()", "targetString.getTruffleStringByteLength() >= LOCAL_HOST_NAME.length"})
         protected static final Object doResult(@SuppressWarnings("unused") final Object receiver, final NativeObject targetString) {
             UnsafeUtils.copyBytes(LOCAL_HOST_NAME, 0, targetString.getByteStorage(), 0, LOCAL_HOST_NAME.length);
             return receiver;

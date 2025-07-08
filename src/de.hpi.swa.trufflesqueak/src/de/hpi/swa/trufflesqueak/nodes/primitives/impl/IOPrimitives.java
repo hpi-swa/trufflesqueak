@@ -256,7 +256,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final long END_OF_RUN = 257 - 1;
         private static final long CROSSED_X = 258 - 1;
 
-        @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isTruffleStringType()", "stopIndex <= sourceString.getByteLength()", "receiver.size() >= 4",
+        @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isTruffleStringType()", "stopIndex <= sourceString.getTruffleStringByteLength()", "receiver.size() >= 4",
                         "arraySizeNode.execute(node, stops) >= 258", "hasCorrectSlots(pointersReadNode, arraySizeNode, node, receiver)"}, limit = "1")
         protected static final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
                         final ArrayObject stops, final long kernData,
@@ -574,10 +574,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected static final void doLargeIntegerNative(final Node node, final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile,
                             @Shared("fitsEntirelyProfile") @Cached final InlinedConditionProfile fitsEntirelyProfile) {
-                if (fitsEntirelyProfile.profile(node, inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart))) {
+                if (fitsEntirelyProfile.profile(node, inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getTruffleStringByteLength(), replStart))) {
                     rcvr.setBytes(getContext(node), repl.getByteStorage());
                 } else {
-                    if (inBounds(rcvr.size(), start, stop, repl.getByteLength(), replStart)) {
+                    if (inBounds(rcvr.size(), start, stop, repl.getTruffleStringByteLength(), replStart)) {
                         rcvr.setBytes(getContext(node), repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
                     } else {
                         errorProfile.enter(node);
@@ -639,7 +639,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Specialization(guards = {"rcvr.isTruffleStringType()"})
             protected static final void doNativeLargeInteger(final Node node, final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
-                if (inBounds(rcvr.getByteLength(), start, stop, repl.getBytes().length, replStart)) {
+                if (inBounds(rcvr.getTruffleStringByteLength(), start, stop, repl.getBytes().length, replStart)) {
                     UnsafeUtils.copyBytes(repl.getBytes(), replStart - 1, rcvr.getByteStorage(), start - 1, 1 + stop - start);
                 } else {
                     errorProfile.enter(node);

@@ -418,7 +418,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             }
 
             final ByteBuffer sourceOrNull;
-            if (sourceBuffer.getByteLength() > 0) {
+            if (sourceBuffer.getTruffleStringByteLength() > 0) {
                 sourceOrNull = asReadBuffer(sourceBuffer, start, length);
             } else {
                 sourceOrNull = null;
@@ -531,7 +531,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 return ReturnCode.INVALID_STATE.id();
             }
             final ByteBuffer sourceOrNull;
-            if (sourceBuffer.getByteLength() > 0) {
+            if (sourceBuffer.getTruffleStringByteLength() > 0) {
                 sourceOrNull = asReadBuffer(sourceBuffer, start, length);
             } else {
                 sourceOrNull = null;

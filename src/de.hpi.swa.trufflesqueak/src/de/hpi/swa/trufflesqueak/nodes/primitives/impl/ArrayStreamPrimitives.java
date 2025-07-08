@@ -162,13 +162,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 63)
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getByteLength())"})
-        protected static final char doNativeObjectBytes(final NativeObject obj, final long index, @Shared("truffleString") @Cached TruffleString.ReadByteNode readByteNode) {
-            return (char) (obj.readByteTruffleString((int) index - 1, readByteNode) & 0xFF);
-        }
-
         @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())"})
-        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, @Shared("truffleString") @Cached TruffleString.ReadByteNode readByteNode) {
+        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, @Cached TruffleString.ReadByteNode readByteNode) {
             final int codepoint = obj.readByteTruffleString((int) index - 1, readByteNode);
             return (char) (codepoint & 0xFF);
         }
@@ -185,16 +180,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 64)
     protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getByteLength())", "inByteRange(value)"})
-        protected static final char doNativeObjectBytes(final NativeObject obj, final long index, final char value, @Shared("truffleString")  @Cached MutableTruffleString.WriteByteNode writeByteNode) {
-            obj.writeByteTruffleString((int) index - 1, value, writeByteNode);
-            return value;
-        }
-
         @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())", "inByteRange(value)"})
         protected static final char doNativeObjectByteString(final NativeObject obj, final long index, final char value,
                      @Cached TruffleString.CodePointIndexToByteIndexNode codePointIndexToByteIndexNode,
-                     @Shared("truffleString") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+                     @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             final int byteIndex = obj.codePointIndexToByteIndexTruffleString((int) index - 1, codePointIndexToByteIndexNode);
             obj.writeByteTruffleString(byteIndex, (int) value, writeByteNode);
             return value;

@@ -241,7 +241,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"aByteArray.isTruffleStringType()", "aSoundBuffer.isIntType()", "aByteArrayLength > aSoundBuffer.getIntLength()"})
         protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer,
-                        @Bind("aByteArray.getByteLength()") final int aByteArrayLength, @Cached TruffleString.ReadByteNode readByteNode) {
+                        @Bind("aByteArray.getTruffleStringByteLength()") final int aByteArrayLength, @Cached TruffleString.ReadByteNode readByteNode) {
             for (int i = 0; i < aByteArrayLength; i++) {
                 final int wordIndex = i / 2;
                 final long value = (long) aByteArray.readUnsignedByteTruffleString(i, readByteNode) << 8;
@@ -342,10 +342,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final NativeObject validInclusionMapOrNull(final NativeObject inclusionMap) {
-            return inclusionMap.isTruffleStringType() && inclusionMap.getByteLength() == 256 ? inclusionMap : null;
+            return inclusionMap.isTruffleStringType() && inclusionMap.getTruffleStringByteLength() == 256 ? inclusionMap : null;
         }
 
-        @Specialization(guards = {"start > 0", "string.isTruffleStringType()", "inclusionMap.isTruffleStringType()", "inclusionMap.getByteLength() == 256"}, replaces = "doFindTruffleStringCached")
+        @Specialization(guards = {"start > 0", "string.isTruffleStringType()", "inclusionMap.isTruffleStringType()", "inclusionMap.getTruffleStringByteLength() == 256"}, replaces = "doFindTruffleStringCached")
         protected static final long doFindTruffleString(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
                         @Bind final Node node,
                         @Shared("notFoundProfile") @Cached final InlinedConditionProfile notFoundProfile,
@@ -554,7 +554,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean hasBadIndex(final NativeObject string, final long start, final long stop) {
-            return start < 1 || string.isTruffleStringType() && stop > string.getByteLength();
+            return start < 1 || string.isTruffleStringType() && stop > string.getTruffleStringByteLength();
         }
     }
 }

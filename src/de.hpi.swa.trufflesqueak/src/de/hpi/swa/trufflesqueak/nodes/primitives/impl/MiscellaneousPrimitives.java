@@ -647,7 +647,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return compare(receiver, other, cachedOrder, readByteNode);
         }
 
-        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue.isTruffleStringType()", "orderValue.getByteLength() >= 256"}, //
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue.isTruffleStringType()", "orderValue.getTruffleStringByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
         protected static final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue,
                         @Shared("truffleStringRead") @Cached TruffleString.ReadByteNode readByteNode) {
@@ -703,7 +703,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
-                        "receiver.isTruffleStringType()", "anotherObject.isTruffleStringType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
+                        "receiver.isTruffleStringType()", "anotherObject.isTruffleStringType()", "receiver.getTruffleStringByteLength() == anotherObject.getTruffleStringByteLength()"})
         protected static final NativeObject doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
             final byte[] destStorage = receiver.getByteStorage();
             UnsafeUtils.copyBytes(anotherObject.getByteStorage(), 0L, destStorage, 0L, destStorage.length);

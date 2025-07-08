@@ -25,7 +25,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractBMPPluginNode extends AbstractPrimitiveNode {
         protected static final boolean inBounds(final long formBitsIndex, final long width, final NativeObject formBits, final NativeObject pixelLine) {
-            return formBitsIndex + width <= formBits.getIntLength() && width * 3 <= pixelLine.getByteLength();
+            return formBitsIndex + width <= formBits.getIntLength() && width * 3 <= pixelLine.getTruffleStringByteLength();
         }
     }
 

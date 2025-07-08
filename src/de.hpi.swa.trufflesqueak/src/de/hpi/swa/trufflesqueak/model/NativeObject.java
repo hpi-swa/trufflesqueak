@@ -235,10 +235,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         setStorage(shorts);
     }
 
-    public int getByteLength() {
-        return getTruffleStringByteLength();
-    }
-
     public byte[] getByteStorage() {
         assert isTruffleStringType();
         return getTruffleStringAsReadonlyBytesUncached();

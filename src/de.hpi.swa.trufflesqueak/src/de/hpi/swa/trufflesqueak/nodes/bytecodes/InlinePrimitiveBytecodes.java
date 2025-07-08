@@ -130,7 +130,7 @@ public final class InlinePrimitiveBytecodes {
             if (receiver instanceof final CompiledCodeObject o) {
                 numBytes = o.getBytes().length;
             } else {
-                numBytes = ((NativeObject) receiver).getByteLength();
+                numBytes = ((NativeObject) receiver).getTruffleStringByteLength();
             }
             pushNode.execute(frame, numBytes);
         }
