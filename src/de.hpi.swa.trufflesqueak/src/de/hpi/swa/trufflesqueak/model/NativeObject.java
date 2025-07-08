@@ -235,16 +235,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         setStorage(shorts);
     }
 
-    public void setByte(final long index, final byte value) {
-        assert isTruffleStringType();
-        ((MutableTruffleString) storage).writeByteUncached((int) index, value, getTruffleStringEncoding());
-    }
-
-    public void setByte(final long index, final int value) {
-        assert value < 256;
-        setByte(index, (byte) value);
-    }
-
     public int getByteLength() {
         return getTruffleStringByteLength();
     }
@@ -393,6 +383,21 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void writeByteTruffleString(int index, byte value, MutableTruffleString.WriteByteNode node) {
         node.execute(getTruffleStringStorage(), index, value, getTruffleStringEncoding());
+    }
+
+    public void writeByteTruffleString(int index, int value, MutableTruffleString.WriteByteNode node) {
+        assert value < 256;
+        node.execute(getTruffleStringStorage(), index, (byte) value, getTruffleStringEncoding());
+    }
+
+    public void writeByteTruffleStringUncached(int index, byte value) {
+        assert isTruffleStringType();
+        getTruffleStringStorage().writeByteUncached(index, value, getTruffleStringEncoding());
+    }
+
+    public void writeByteTruffleStringUncached(int index, int value) {
+        assert value < 256;
+        writeByteTruffleStringUncached(index, (byte) value);
     }
 
     public NativeObject shallowCopyTruffleStringUncached() {

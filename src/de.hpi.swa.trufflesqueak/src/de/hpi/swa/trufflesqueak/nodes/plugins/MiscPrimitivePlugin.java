@@ -134,31 +134,31 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
-        private static int encodeBytesOf(final int anInt, final NativeObject ba, final int i) {
-            ba.setByte(i - 1, (byte) (anInt >> 24));
-            ba.setByte(i + 0, (byte) (anInt >> 16));
-            ba.setByte(i + 1, (byte) (anInt >> 8));
-            ba.setByte(i + 2, (byte) anInt);
+        private static int encodeBytesOf(final int anInt, final NativeObject ba, final int i, MutableTruffleString.WriteByteNode writeByteNode) {
+            ba.writeByteTruffleString(i - 1, (byte) (anInt >> 24), writeByteNode);
+            ba.writeByteTruffleString(i + 0, (byte) (anInt >> 16), writeByteNode);
+            ba.writeByteTruffleString(i + 1, (byte) (anInt >> 8), writeByteNode);
+            ba.writeByteTruffleString(i + 2, (byte) anInt, writeByteNode);
             return i + 4;
         }
 
         // expects i to be a 1-based (Squeak) index
-        private static int encodeInt(final int anInt, final NativeObject ba, final int i) {
+        private static int encodeInt(final int anInt, final NativeObject ba, final int i, MutableTruffleString.WriteByteNode writeByteNode) {
             if (anInt <= 223) {
-                ba.setByte(i - 1, anInt);
+                ba.writeByteTruffleString(i - 1, anInt, writeByteNode);
                 return i + 1;
             }
             if (anInt <= 7935) {
-                ba.setByte(i - 1, anInt / 256 + 224);
-                ba.setByte(i, anInt % 256);
+                ba.writeByteTruffleString(i - 1, anInt / 256 + 224, writeByteNode);
+                ba.writeByteTruffleString(i, anInt % 256, writeByteNode);
                 return i + 2;
             }
-            ba.setByte(i - 1, 255);
-            return encodeBytesOf(anInt, ba, i + 1);
+            ba.writeByteTruffleString(i - 1, 255, writeByteNode);
+            return encodeBytesOf(anInt, ba, i + 1, writeByteNode);
         }
 
         @Specialization(guards = {"bm.isIntType()", "ba.isTruffleStringType()"})
-        protected static final long doCompress(@SuppressWarnings("unused") final Object receiver, final NativeObject bm, final NativeObject ba) {
+        protected static final long doCompress(@SuppressWarnings("unused") final Object receiver, final NativeObject bm, final NativeObject ba, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             // "Store a run-coded compression of the receiver into the byteArray ba,
             // and return the last index stored into. ba is assumed to be large enough.
             // The encoding is as follows...
@@ -175,7 +175,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             // 224-254 (0-30)*256 + next byte (0-7935)
             // 255 next 4 bytes"
             final int size = bm.getIntLength();
-            int i = encodeInt(size, ba, 1);
+            int i = encodeInt(size, ba, 1, writeByteNode);
             int k = 0;
             while (k < size) {
                 final int word = bm.getInt(k);
@@ -192,20 +192,20 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     // We have two or more equal words, ending at j
                     if (eqBytes) {
                         // Actually words of equal bytes
-                        i = encodeInt(((j - k + 1) << 2) + 1, ba, i);
-                        ba.setByte(i - 1, lowByte);
+                        i = encodeInt(((j - k + 1) << 2) + 1, ba, i, writeByteNode);
+                        ba.writeByteTruffleString(i - 1, lowByte, writeByteNode);
                         i++;
                     } else {
-                        i = encodeInt(((j - k + 1) << 2) + 2, ba, i);
-                        i = encodeBytesOf(word, ba, i);
+                        i = encodeInt(((j - k + 1) << 2) + 2, ba, i, writeByteNode);
+                        i = encodeBytesOf(word, ba, i, writeByteNode);
                     }
                     k = j + 1;
                 } else {
                     // Check for word of 4 == bytes
                     if (eqBytes) {
                         // Note 1 word of 4 == bytes
-                        i = encodeInt((1 << 2) + 1, ba, i);
-                        ba.setByte(i - 1, lowByte);
+                        i = encodeInt((1 << 2) + 1, ba, i, writeByteNode);
+                        ba.writeByteTruffleString(i - 1, lowByte, writeByteNode);
                         i++;
                         k++;
                     } else {
@@ -218,9 +218,9 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                             j++;
                         }
                         // We have one or more unmatching words, ending at j-1
-                        i = encodeInt(((j - k) << 2) + 3, ba, i);
+                        i = encodeInt(((j - k) << 2) + 3, ba, i, writeByteNode);
                         for (int m = k; m < j; m++) {
-                            i = encodeBytesOf(bm.getInt(m), ba, i);
+                            i = encodeBytesOf(bm.getInt(m), ba, i, writeByteNode);
                         }
                         k = j;
                     }

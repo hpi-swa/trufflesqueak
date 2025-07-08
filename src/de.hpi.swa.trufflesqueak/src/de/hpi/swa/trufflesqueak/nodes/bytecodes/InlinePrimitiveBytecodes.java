@@ -523,9 +523,9 @@ public final class InlinePrimitiveBytecodes {
         @Override
         public void executeVoid(final VirtualFrame frame) {
             final long value = (long) pop3Node.execute(frame);
-            final long atIndex = (long) pop2Node.execute(frame);
+            final int atIndex = (int) pop2Node.execute(frame);
             final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            receiver.setByte(atIndex, (byte) value);
+            receiver.writeByteTruffleStringUncached(atIndex, (int) value);
         }
     }
 

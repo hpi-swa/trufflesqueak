@@ -456,14 +456,14 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFFIIntegerAtPutNode extends AbstractPrimitiveNode implements Primitive4WithFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isTruffleStringType()", "byteOffsetLong > 0", "byteSize == 1", "isSigned", "inSignedBounds(value, MAX_VALUE_SIGNED_1)"})
-        protected static final long doAtPut1Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            return doAtPut1Unsigned(byteArray, byteOffsetLong, value, byteSize, isSigned);
+        protected static final long doAtPut1Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned, @Cached.Shared("truffleStringWrite") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            return doAtPut1Unsigned(byteArray, byteOffsetLong, value, byteSize, isSigned, writeByteNode);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isTruffleStringType()", "byteOffsetLong > 0", "byteSize == 1", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_1)"})
-        protected static final long doAtPut1Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            return PrimUnsignedInt8AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
+        protected static final long doAtPut1Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned, @Cached.Shared("truffleStringWrite") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            return PrimUnsignedInt8AtPutNode.doAtPut(byteArray, byteOffsetLong, value, writeByteNode);
         }
 
         @SuppressWarnings("unused")
@@ -545,8 +545,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSignedInt8AtPut")
     protected abstract static class PrimSignedInt8AtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"byteArray.isTruffleStringType()", "byteOffset > 0", "inSignedBounds(value, MAX_VALUE_SIGNED_1)"})
-        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value) {
-            return PrimUnsignedInt8AtPutNode.doAtPut(byteArray, byteOffset, value);
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            return PrimUnsignedInt8AtPutNode.doAtPut(byteArray, byteOffset, value, writeByteNode);
         }
     }
 
@@ -649,8 +649,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveUnsignedInt8AtPut")
     protected abstract static class PrimUnsignedInt8AtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"byteArray.isTruffleStringType()", "byteOffset > 0", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_1)"})
-        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value) {
-            byteArray.setByte(byteOffset - 1, (byte) value);
+        protected static final long doAtPut(final NativeObject byteArray, final long byteOffset, final long value, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            byteArray.writeByteTruffleString((int) byteOffset - 1, (int) value, writeByteNode);
             return value;
         }
     }

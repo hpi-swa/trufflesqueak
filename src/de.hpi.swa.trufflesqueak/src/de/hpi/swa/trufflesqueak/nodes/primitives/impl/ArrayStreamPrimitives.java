@@ -186,17 +186,17 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getByteLength())", "inByteRange(value)"})
-        protected static final char doNativeObjectBytes(final NativeObject obj, final long index, final char value) {
-            obj.setByte(index - 1, (byte) value);
+        protected static final char doNativeObjectBytes(final NativeObject obj, final long index, final char value, @Shared("truffleString")  @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+            obj.writeByteTruffleString((int) index - 1, value, writeByteNode);
             return value;
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())", "inByteRange(value)"})
         protected static final char doNativeObjectByteString(final NativeObject obj, final long index, final char value,
                      @Cached TruffleString.CodePointIndexToByteIndexNode codePointIndexToByteIndexNode,
-                     @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+                     @Shared("truffleString") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             final int byteIndex = obj.codePointIndexToByteIndexTruffleString((int) index - 1, codePointIndexToByteIndexNode);
-            obj.writeByteTruffleString(byteIndex, (byte) value, writeByteNode);
+            obj.writeByteTruffleString(byteIndex, (int) value, writeByteNode);
             return value;
         }
 
