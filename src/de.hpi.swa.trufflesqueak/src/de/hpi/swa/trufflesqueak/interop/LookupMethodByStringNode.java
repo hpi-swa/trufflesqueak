@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
@@ -30,6 +31,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @GenerateInline
 @GenerateUncached
 @GenerateCached(false)
+@SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
 public abstract class LookupMethodByStringNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 3;
 
@@ -49,7 +51,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     }
 
     protected static final Object doUncachedSlow(final Node node, final ClassObject classObject, final String selector) {
-        return doUncached(node, classObject, selector, AbstractPointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached());
+        return doUncached(node, classObject, selector, AbstractPointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached(), TruffleString.GetInternalByteArrayNode.getUncached());
     }
 
     @ReportPolymorphism.Megamorphic
@@ -60,7 +62,8 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
                      * instance variable here.
                      */
                     @Cached final AbstractPointersObjectReadNode pointersReadValuesNode,
-                    @Cached final ArrayObjectReadNode arrayReadNode) {
+                    @Cached final ArrayObjectReadNode arrayReadNode,
+                    @Cached TruffleString.GetInternalByteArrayNode getInternalByteArrayNode) {
         final byte[] selectorBytes = MiscUtils.toBytes(selector);
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
@@ -68,7 +71,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
             final Object[] methodDictVariablePart = methodDict.getVariablePart();
             for (int i = 0; i < methodDictVariablePart.length; i++) {
                 final Object methodSelector = methodDictVariablePart[i];
-                if (methodSelector instanceof final NativeObject m && Arrays.equals(selectorBytes, m.getByteStorage())) {
+                if (methodSelector instanceof final NativeObject m && Arrays.equals(selectorBytes, m.getTruffleStringAsReadonlyBytes(getInternalByteArrayNode))) {
                     return arrayReadNode.execute(node, pointersReadValuesNode.executeArray(node, methodDict, METHOD_DICT.VALUES), i);
                 }
             }

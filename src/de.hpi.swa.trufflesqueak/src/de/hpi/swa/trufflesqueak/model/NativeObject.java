@@ -169,9 +169,9 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             setStorage(chunk.getBytes());
         } else if (chunk.getImage().isHeadless() && isTruffleStringType()) {
             final SqueakImageContext image = chunk.getImage();
-            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getByteStorage())) {
+            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getTruffleStringAsReadonlyBytesUncached())) {
                 image.setDebugErrorSelector(this);
-            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, getByteStorage())) {
+            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, getTruffleStringAsReadonlyBytesUncached())) {
                 image.setDebugSyntaxErrorSelector(this);
             }
         }
@@ -180,9 +180,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public int getNumSlots() {
         CompilerAsserts.neverPartOfCompilation();
-        if (isByteType()) {
-            return (int) Math.ceil((double) getByteLength() / BYTE_TO_WORD);
-        } else if (isShortType()) {
+        if (isShortType()) {
             return (int) Math.ceil((double) getShortLength() / SHORT_TO_WORD);
         } else if (isIntType()) {
             return (int) Math.ceil((double) getIntLength() / INTEGER_TO_WORD);
@@ -322,10 +320,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return (short[]) storage;
     }
 
-    public boolean isByteType() {
-        return false;
-    }
-
     public boolean isIntType() {
         return storage instanceof int[];
     }
@@ -435,13 +429,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         CompilerAsserts.neverPartOfCompilation();
         final ClassObject squeakClass = getSqueakClass();
         final SqueakImageContext image = squeakClass.getImage();
-        if (isByteType()) {
-            if (image.isByteSymbolClass(squeakClass)) {
-                return "#" + asStringUnsafe();
-            } else {
-                return "byte[" + getByteLength() + "]";
-            }
-        } else if (isShortType()) {
+        if (isShortType()) {
             return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
             if (image.isWideStringClass(squeakClass)) {
@@ -452,8 +440,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         } else if (isLongType()) {
             return "long[" + getLongLength() + "]";
         } else if (isTruffleStringType()) {
-            final MutableTruffleString truffleString = getTruffleStringStorage();
-            final String javaString  = truffleString.toJavaStringUncached();
+            if (image.isByteSymbolClass(squeakClass)) {
+                return "#" + asStringUnsafe();
+            }
+            final String javaString  = asStringUnsafe();
             final int length = javaString.length();
             if (length <= 40) {
                 return "'" + javaString + "'";
@@ -508,15 +498,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void write(final SqueakImageWriter writer) {
-        if (isByteType()) {
-            final int numSlots = getNumSlots();
-            final int formatOffset = numSlots * BYTE_TO_WORD - getByteLength();
-            assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
-            if (writeHeader(writer, formatOffset)) {
-                writer.writeBytes(getByteStorage());
-                writePaddingIfAny(writer, getByteLength());
-            }
-        } else if (isShortType()) {
+        if (isShortType()) {
             final int numSlots = getNumSlots();
             final int formatOffset = numSlots * SHORT_TO_WORD - getShortLength();
             assert 0 <= formatOffset && formatOffset <= 3 : "too many odd bits (see instSpec)";

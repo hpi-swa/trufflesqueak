@@ -19,7 +19,8 @@ public abstract class NativeObjectStorage implements TruffleObject {
     private boolean isAllocated;
 
     public static NativeObjectStorage from(final NativeObject object) {
-        if (object.isByteType()) {
+        if (object.isTruffleStringType()) {
+            // TODO handle TruffleString type
             return new ByteStorage(object.getByteStorage());
         } else if (object.isIntType()) {
             return new IntStorage(object.getIntStorage());

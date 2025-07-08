@@ -2535,7 +2535,7 @@ public final class BitBlt {
         if (isWords) {
             word = Integer.toUnsignedLong(bitmap.getIntStorage()[(int) index]);
         } else {
-            word = Integer.toUnsignedLong(VarHandleUtils.getInt(bitmap.getByteStorage(), (int) index));
+            word = Integer.toUnsignedLong(VarHandleUtils.getInt(bitmap.getTruffleStringAsReadonlyBytesUncached(), (int) index));
         }
         /* make a mask to isolate the pixel within that word */
         final long mask = shr(0xFFFFFFFFL, 32 - depth);

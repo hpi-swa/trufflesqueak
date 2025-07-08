@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @GenerateInline
 @GenerateUncached
 @GenerateCached(false)
+@SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
 public abstract class WrapToSqueakNode extends AbstractNode {
 
     public abstract Object executeWrap(Node node, Object value);

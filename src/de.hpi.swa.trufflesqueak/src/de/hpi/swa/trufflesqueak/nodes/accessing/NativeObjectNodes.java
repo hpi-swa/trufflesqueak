@@ -30,6 +30,7 @@ public final class NativeObjectNodes {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeObjectReadNode extends AbstractNode {
 
         public abstract Object execute(Node node, NativeObject obj, long index);
@@ -65,6 +66,7 @@ public final class NativeObjectNodes {
     @GenerateUncached
     @GenerateCached(false)
     @ImportStatic(NativeObject.class)
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeObjectWriteNode extends AbstractNode {
 
         public abstract void execute(Node node, NativeObject obj, long index, Object value);
@@ -85,7 +87,7 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "value >= 0", "value <= BYTE_MAX"})
-        protected static final void doNativeByteString(NativeObject obj, long index, final long value, @Cached MutableTruffleString.WriteByteNode writeByteNode) {
+        protected static final void doNativeByteString(NativeObject obj, long index, final long value, @Cached.Shared("truffleString") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             obj.writeByteTruffleString((int) index, (byte) value, writeByteNode);
         }
 
@@ -224,6 +226,7 @@ public final class NativeObjectNodes {
 
     @GenerateInline
     @GenerateCached(false)
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeGetBytesNode extends AbstractNode {
 
         public abstract byte[] execute(Node node, NativeObject obj);
@@ -251,6 +254,7 @@ public final class NativeObjectNodes {
 
     @GenerateInline
     @GenerateCached(false)
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeGetShortsNode extends AbstractNode {
 
         public abstract short[] execute(Node node, NativeObject obj);
@@ -278,6 +282,7 @@ public final class NativeObjectNodes {
 
     @GenerateInline
     @GenerateCached(false)
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeGetIntsNode extends AbstractNode {
 
         public abstract int[] execute(Node node, NativeObject obj);
@@ -305,13 +310,14 @@ public final class NativeObjectNodes {
 
     @GenerateInline
     @GenerateCached(false)
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeGetLongsNode extends AbstractNode {
 
         public abstract long[] execute(Node node, NativeObject obj);
 
         @Specialization(guards = "obj.isTruffleStringType()")
-        protected static final long[] doNativeBytes(final NativeObject obj) {
-            return UnsafeUtils.toLongs(obj.getByteStorage());
+        protected static final long[] doNativeBytes(final NativeObject obj, @Cached TruffleString.GetInternalByteArrayNode objGetInternalByteArrayNode) {
+            return UnsafeUtils.toLongs(obj.getTruffleStringAsReadonlyBytes(objGetInternalByteArrayNode));
         }
 
         @Specialization(guards = "obj.isShortType()")
@@ -332,6 +338,7 @@ public final class NativeObjectNodes {
 
     @GenerateInline
     @GenerateCached(false)
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeObjectShallowCopyNode extends AbstractNode {
 
         public abstract NativeObject execute(Node node, NativeObject obj);

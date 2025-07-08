@@ -26,6 +26,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -680,8 +681,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
          * SecureHashAlgorithmTest>>testEmptyInput).
          */
         @Specialization(guards = {"receiver.isTruffleStringType()", "getContext().isLargeIntegerClass(receiver.getSqueakClass())"})
-        protected final Object doNativeObject(final NativeObject receiver) {
-            return new LargeIntegerObject(getContext(), receiver.getSqueakClass(), receiver.getByteStorage().clone()).reduceIfPossible();
+        protected final Object doNativeObject(final NativeObject receiver, @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+            return new LargeIntegerObject(getContext(), receiver.getSqueakClass(), receiver.getTruffleStringAsBytesCopy(copyToByteArrayNode)).reduceIfPossible();
         }
     }
 

@@ -445,7 +445,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileOpen")
     protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = "nativeFileName.isTruffleStringType() || nativeFileName.isTruffleStringType()")
+        @Specialization(guards = "nativeFileName.isTruffleStringType()")
         protected final Object doOpen(@SuppressWarnings("unused") final Object receiver, final NativeObject nativeFileName, final boolean writableFlag) {
             return createFileHandleOrPrimFail(getContext(), asPublicTruffleFile(nativeFileName), writableFlag);
         }
@@ -453,17 +453,18 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileRead")
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     protected abstract static class PrimFileReadNode extends AbstractFilePluginPrimitiveNode implements Primitive4WithFallback {
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isTruffleStringType()", "inBounds(startIndex, count, target.getTruffleStringByteLength())"})
-        protected static final long doReadTruffleString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count, @Cached TruffleString.GetInternalByteArrayNode internalByteArrayNode) {
+        protected static final long doReadTruffleString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.GetInternalByteArrayNode internalByteArrayNode) {
             final long read = readFrom(getChannelOrPrimFail(fd), target.getTruffleStringAsReadonlyBytes(internalByteArrayNode), (int) startIndex - 1, (int) count);
             return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
         }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isTruffleStringType()", "inBounds(startIndex, count, target.getByteLength())"})
-        protected static final long doReadBytes(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count) {
-            final long read = readFrom(getChannelOrPrimFail(fd), target.getByteStorage(), (int) startIndex - 1, (int) count);
+        protected static final long doReadBytes(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.GetInternalByteArrayNode getBytesNode) {
+            final long read = readFrom(getChannelOrPrimFail(fd), target.getTruffleStringAsReadonlyBytes(getBytesNode), (int) startIndex - 1, (int) count);
             return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
         }
 
@@ -522,7 +523,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileRename")
     protected abstract static class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"oldName.isByteType() || oldName.isTruffleStringType()", "newName.isByteType() || newName.isTruffleStringType()"})
+        @Specialization(guards = {"oldName.isTruffleStringType()", "newName.isTruffleStringType()"})
         protected final Object doRename(final Object receiver, final NativeObject oldName, final NativeObject newName) {
             try {
                 asPublicTruffleFile(oldName).move(asPublicTruffleFile(newName));
@@ -628,6 +629,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic({FloatObject.class})
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileWrite")
+    @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     protected abstract static class PrimFileWriteNode extends AbstractFilePluginPrimitiveNode implements Primitive4WithFallback {
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getByteLength())"})
@@ -637,15 +639,15 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStdoutFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getByteLength())"})
-        protected final long doWriteByteToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
-            writeToOutputStream(getContext().env.out(), content.getByteStorage(), (int) (startIndex - 1), (int) count);
+        protected final long doWriteByteToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.GetInternalByteArrayNode getBytesNode) {
+            writeToOutputStream(getContext().env.out(), content.getTruffleStringAsReadonlyBytes(getBytesNode), (int) (startIndex - 1), (int) count);
             return count;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStderrFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getByteLength())"})
-        protected final long doWriteByteToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
-            writeToOutputStream(getContext().env.err(), content.getByteStorage(), (int) (startIndex - 1), (int) count);
+        protected final long doWriteByteToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.GetInternalByteArrayNode getBytesNode) {
+            writeToOutputStream(getContext().env.err(), content.getTruffleStringAsReadonlyBytes(getBytesNode), (int) (startIndex - 1), (int) count);
             return count;
         }
 
@@ -679,20 +681,20 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
-        protected static long doWriteByteString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+        protected static long doWriteByteString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
             final byte[] bytes = content.getTruffleStringAsBytesCopy(copyToByteArrayNode);
             return fileWriteFromAt(fd, count, bytes, startIndex, 1);
         }
 
         @Specialization(guards = {"isStdoutFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
-        protected final long doWriteTruffleStringToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+        protected final long doWriteTruffleStringToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
             writeToOutputStream(getContext().env.out(), content.getTruffleStringAsBytesCopy(copyToByteArrayNode), (int) (startIndex - 1), (int) count);
             return count;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStderrFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
-        protected final long doWriteTruffleStringToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleString") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+        protected final long doWriteTruffleStringToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
             writeToOutputStream(getContext().env.err(), content.getTruffleStringAsBytesCopy(copyToByteArrayNode), (int) (startIndex - 1), (int) count);
             return count;
         }

@@ -330,7 +330,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
      */
     @TruffleBoundary
     private static ByteBuffer asReadBuffer(final NativeObject buffer, final long start, final long length) {
-        return ByteBuffer.wrap(buffer.getByteStorage(), (int) start - 1, (int) length).asReadOnlyBuffer();
+        return ByteBuffer.wrap(buffer.getTruffleStringAsReadonlyBytesUncached(), (int) start - 1, (int) length).asReadOnlyBuffer();
     }
 
     /**

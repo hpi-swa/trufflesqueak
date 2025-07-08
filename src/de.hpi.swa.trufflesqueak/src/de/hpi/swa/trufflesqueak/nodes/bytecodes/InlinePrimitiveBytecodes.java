@@ -581,7 +581,7 @@ public final class InlinePrimitiveBytecodes {
             // TODO: Make use of `final long length = (long) pop3Node.execute(frame);`
             final NativeObject argument = (NativeObject) pop2Node.execute(frame);
             final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, BooleanObject.wrap(Arrays.equals(receiver.getByteStorage(), argument.getByteStorage())));
+            pushNode.execute(frame, BooleanObject.wrap(Arrays.equals(receiver.getTruffleStringAsReadonlyBytesUncached(), argument.getTruffleStringAsReadonlyBytesUncached())));
         }
     }
 

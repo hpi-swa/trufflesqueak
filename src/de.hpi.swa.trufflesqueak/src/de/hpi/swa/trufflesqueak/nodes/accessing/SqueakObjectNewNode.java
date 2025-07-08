@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 @GenerateInline
 @GenerateUncached
 @GenerateCached(false)
+@SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
 public abstract class SqueakObjectNewNode extends AbstractNode {
     public static final int NEW_CACHE_SIZE = 6;
 

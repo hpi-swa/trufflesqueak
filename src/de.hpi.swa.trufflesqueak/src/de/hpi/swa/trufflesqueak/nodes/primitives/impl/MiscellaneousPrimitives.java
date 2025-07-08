@@ -266,7 +266,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)
     protected abstract static class PrimImageName2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "newName.isByteType() || newName.isTruffleStringType()")
+        @Specialization(guards = "newName.isTruffleStringType()")
         protected final NativeObject doSetName(@SuppressWarnings("unused") final Object receiver, final NativeObject newName) {
             getContext().setImagePath(newName.asStringUnsafe());
             return newName;
@@ -632,26 +632,25 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 158)
     public abstract static class PrimCompareString3Node extends AbstractPrimCompareStringNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedAsciiOrder"})
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedAsciiOrder"}, limit = "1")
         protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
                                                         @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder,
                                                         @Cached TruffleString.CompareBytesNode compareBytesNode) {
             return compareAsciiOrder(other, receiver, compareBytesNode);
         }
 
-        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedOrder"})
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedOrder"}, limit = "1")
         protected static final long doCompareCached(final NativeObject receiver, final NativeObject other,
                                                     @SuppressWarnings("unused") final NativeObject orderValue,
                                                     @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder,
-                                                     @Cached TruffleString.ReadByteNode readByteNode) {
+                                                    @Shared("truffleStringRead")  @Cached TruffleString.ReadByteNode readByteNode) {
             return compare(receiver, other, cachedOrder, readByteNode);
         }
 
         @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue.isTruffleStringType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
         protected static final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue,
-                        @Cached TruffleString.FromByteArrayNode fromByteArrayNode,
-                        @Cached TruffleString.ReadByteNode readByteNode) {
+                        @Shared("truffleStringRead") @Cached TruffleString.ReadByteNode readByteNode) {
             return compare(receiver, other, orderValue, readByteNode);
         }
     }

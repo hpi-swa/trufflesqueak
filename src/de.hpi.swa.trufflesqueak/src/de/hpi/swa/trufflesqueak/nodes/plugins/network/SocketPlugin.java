@@ -23,6 +23,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -129,10 +130,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * primAddressLookupResult.
          */
         @Specialization(guards = "address.isTruffleStringType()")
-        protected static final Object doWork(final Object receiver, final NativeObject address) {
+        protected static final Object doWork(final Object receiver, final NativeObject address, @Cached TruffleString.GetInternalByteArrayNode getBytesNode) {
             try {
                 LogUtils.SOCKET.finer(() -> "Starting lookup for address " + address);
-                Resolver.startAddressLookUp(address.getByteStorage());
+                Resolver.startAddressLookUp(address.getTruffleStringAsReadonlyBytes(getBytesNode));
             } catch (final UnknownHostException e) {
                 LogUtils.SOCKET.log(Level.FINE, "Address lookup failed", e);
             }
