@@ -231,3 +231,81 @@ jobs:
         if-no-files-found: ignore
         retention-days: 5
       if: always()
+
+  run-benchmarks:
+    needs: build-standalone
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04-arm]
+        type: [native]
+        iterations: [300]
+    env:
+      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
+      EXEC: "/usr/bin/time -v"
+    name: run benchmarks
+    timeout-minutes: 60
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Download TruffleSqueak (${{ matrix.type }}-${{ matrix.os }})
+      uses: actions/download-artifact@v4
+      with:
+        name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
+    - name: Unpack TruffleSqueak standalone
+      run: |
+        tar -xf trufflesqueak-*.tar
+        echo $(cd trufflesqueak-*-linux*/bin && pwd) >> $GITHUB_PATH
+    - name: Run 'tinyBenchmarks'
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "1 tinyBenchmarks"
+    - name: Run 'Bounce' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Bounce' ${{ matrix.iterations}} 1500)"
+    - name: Run 'CD' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('CD' ${{ matrix.iterations}} 250)"
+    - name: Run 'DeltaBlue' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('DeltaBlue' ${{ matrix.iterations}} 12000)"
+    - name: Run 'Havlak' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Havlak' ${{ matrix.iterations}} 1500)"
+    - name: Run 'Json' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Json' ${{ matrix.iterations}} 100)"
+    - name: Run 'List' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('List' ${{ matrix.iterations}} 1500)"
+    - name: Run 'Mandelbrot' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Mandelbrot' ${{ matrix.iterations}} 500)"
+    - name: Run 'NBody' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('NBody' ${{ matrix.iterations}} 250000)"
+    - name: Run 'Queens' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Queens' ${{ matrix.iterations}} 1000)"
+    - name: Run 'Permute' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Permute' ${{ matrix.iterations}} 1000)"
+    - name: Run 'Richards' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Richards' ${{ matrix.iterations}} 100)"
+    - name: Run 'Sieve' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Sieve' ${{ matrix.iterations}} 3000)"
+    - name: Run 'Storage' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Storage' ${{ matrix.iterations}} 1000)"
+    - name: Run 'Towers' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Towers' ${{ matrix.iterations}} 1500)"
+    - name: Upload Graal compiler dumps
+      uses: actions/upload-artifact@v4
+      with:
+        name: graal_dumps-benchmarks-${{ matrix.os }}
+        path: graal_dumps/
+        if-no-files-found: ignore
+        retention-days: 5
+      if: always()
+  
