@@ -264,7 +264,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
                         @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                         @Cached final ArrayObjectSizeNode arraySizeNode,
-                        @Cached final ArrayObjectReadNode arrayReadNode) {
+                        @Cached final ArrayObjectReadNode arrayReadNode,
+                        @Cached final TruffleString.ReadByteNode readByteNode) {
             final ArrayObject scanXTable = pointersReadNode.executeArray(node, receiver, CHARACTER_SCANNER.XTABLE);
             final ArrayObject scanMap = pointersReadNode.executeArray(node, receiver, CHARACTER_SCANNER.MAP);
 
@@ -272,7 +273,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             long scanDestX = pointersReadNode.executeLong(node, receiver, CHARACTER_SCANNER.DEST_X);
             long scanLastIndex = startIndex;
             while (scanLastIndex <= stopIndex) {
-                final long ascii = sourceString.getByte(scanLastIndex - 1) & 0xFF;
+                final long ascii = sourceString.readByteTruffleString((int) scanLastIndex - 1, readByteNode) & 0xFF;
                 final Object stopReason = arrayReadNode.execute(node, stops, ascii);
                 if (stopReason != NilObject.SINGLETON) {
                     storeStateInReceiver(pointersWriteNode, node, receiver, scanDestX, scanLastIndex);

@@ -241,10 +241,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"aByteArray.isTruffleStringType()", "aSoundBuffer.isIntType()", "aByteArrayLength > aSoundBuffer.getIntLength()"})
         protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer,
-                        @Bind("aByteArray.getByteLength()") final int aByteArrayLength) {
+                        @Bind("aByteArray.getByteLength()") final int aByteArrayLength, @Cached TruffleString.ReadByteNode readByteNode) {
             for (int i = 0; i < aByteArrayLength; i++) {
                 final int wordIndex = i / 2;
-                final long value = (long) aByteArray.getByteUnsigned(i) << 8;
+                final long value = (long) aByteArray.readUnsignedByteTruffleString(i, readByteNode) << 8;
                 final int intValue;
                 if (i % 2 == 0) {
                     intValue = aSoundBuffer.getInt(wordIndex) & 0xffff0000 | (int) value & 0xffff;
@@ -261,7 +261,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = {"bm.isIntType()", "ba.isTruffleStringType()"})
-        protected static final Object doDecompress(final Object receiver, final NativeObject bm, final NativeObject ba, final long index) {
+        protected static final Object doDecompress(final Object receiver, final NativeObject bm, final NativeObject ba, final long index, @Cached TruffleString.ReadByteNode readByteNode) {
             /**
              * <pre>
                  Decompress the body of a byteArray encoded by compressToByteArray (qv)...
@@ -287,12 +287,12 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final int pastEnd = bm.getIntLength() + 1;
             while (i < end) {
                 // Decode next run start N
-                int anInt = ba.getByteUnsigned(i++);
+                int anInt = ba.readUnsignedByteTruffleString(i++, readByteNode);
                 if (anInt > 223) {
                     if (anInt <= 254) {
-                        anInt = ((anInt - 224) << 8) + ba.getByteUnsigned(i++);
+                        anInt = ((anInt - 224) << 8) + ba.readUnsignedByteTruffleString(i++, readByteNode);
                     } else {
-                        anInt = ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++);
+                        anInt = ba.readUnsignedByteTruffleString(i++, readByteNode) << 24 | ba.readUnsignedByteTruffleString(i++, readByteNode) << 16 | ba.readUnsignedByteTruffleString(i++, readByteNode) << 8 | ba.readUnsignedByteTruffleString(i++, readByteNode);
                     }
                 }
                 final long n = anInt >> 2;
@@ -304,20 +304,20 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     case 0 -> { // skip
                     }
                     case 1 -> { // n consecutive words of 4 bytes = the following byte
-                        final int data = ba.getByteUnsigned(i) << 24 | ba.getByteUnsigned(i) << 16 | ba.getByteUnsigned(i) << 8 | ba.getByteUnsigned(i++);
+                        final int data = ba.readUnsignedByteTruffleString(i, readByteNode) << 24 | ba.readUnsignedByteTruffleString(i, readByteNode) << 16 | ba.readUnsignedByteTruffleString(i, readByteNode) << 8 | ba.readUnsignedByteTruffleString(i++, readByteNode);
                         for (int j = 0; j < n; j++) {
                             bm.setInt(k++, data);
                         }
                     }
                     case 2 -> { // n consecutive words = 4 following bytes
-                        final int data = ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++);
+                        final int data = ba.readUnsignedByteTruffleString(i++, readByteNode) << 24 | ba.readUnsignedByteTruffleString(i++, readByteNode) << 16 | ba.readUnsignedByteTruffleString(i++, readByteNode) << 8 | ba.readUnsignedByteTruffleString(i++, readByteNode);
                         for (int j = 0; j < n; j++) {
                             bm.setInt(k++, data);
                         }
                     }
                     case 3 -> { // n consecutive words from the data
                         for (int m = 0; m < n; m++) {
-                            bm.setInt(k++, ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++));
+                            bm.setInt(k++, ba.readUnsignedByteTruffleString(i++, readByteNode) << 24 | ba.readUnsignedByteTruffleString(i++, readByteNode) << 16 | ba.readUnsignedByteTruffleString(i++, readByteNode) << 8 | ba.readUnsignedByteTruffleString(i++, readByteNode));
                         }
                     }
                     default -> CompilerDirectives.transferToInterpreter(); // cannot happen
@@ -353,7 +353,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         ) {
             long index = start - 1;
             final long stringSize = string.getTruffleStringByteLength();
-            while (index < stringSize && inclusionMap.getByte(Byte.toUnsignedInt((byte) string.readByteTruffleString((int) index, readByteNode))) == 0) {
+            while (index < stringSize && inclusionMap.readByteTruffleString(Byte.toUnsignedInt((byte) string.readByteTruffleString((int) index, readByteNode)), readByteNode) == 0) {
                 index++;
             }
             return notFoundProfile.profile(node, index >= stringSize) ? 0L : index + 1;
@@ -388,7 +388,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final int bodyLength = body.getTruffleStringByteLength();
                 for (long startIndex = Math.max(start - 1, 0); startIndex <= bodyLength - keyLength; startIndex++) {
                     int index = 0;
-                    while (matchTable.getByte(Integer.toUnsignedLong(body.readByteTruffleString((int) startIndex + index, readByteNode))) == matchTable.getByte(key.readByteTruffleString(index, readByteNode))) {
+                    while (matchTable.readByteTruffleString(body.readByteTruffleString((int) startIndex + index, readByteNode), readByteNode) == matchTable.readByteTruffleString(key.readByteTruffleString(index, readByteNode), readByteNode)) {
                         if (index == keyLength - 1) {
                             foundProfile.enter(node);
                             return startIndex + 1;
@@ -505,7 +505,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                                                                 @Cached("truffleTableOrNull(table)") final NativeObject cachedTable, @Shared("truffleStringRead") @Cached TruffleString.ReadByteNode readByteNode, @Shared("truffleStringWrite") @Cached MutableTruffleString.WriteByteNode writeByteNode) {
             for (int i = Math.toIntExact(start - 1); i < stop; i++) {
                 int originalValue = string.readByteTruffleString(i, readByteNode);
-                int newValue = cachedTable.getByte(originalValue);
+                int newValue = cachedTable.readByteTruffleString(originalValue, readByteNode);
                 string.writeByteTruffleString(i, (byte) newValue, writeByteNode);
             }
             return receiver;

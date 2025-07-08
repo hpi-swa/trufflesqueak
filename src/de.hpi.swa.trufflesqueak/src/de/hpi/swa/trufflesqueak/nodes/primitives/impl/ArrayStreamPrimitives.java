@@ -163,12 +163,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getByteLength())"})
-        protected static final char doNativeObjectBytes(final NativeObject obj, final long index) {
-            return (char) (obj.getByte(index - 1) & 0xFF);
+        protected static final char doNativeObjectBytes(final NativeObject obj, final long index, @Shared("truffleString") @Cached TruffleString.ReadByteNode readByteNode) {
+            return (char) (obj.readByteTruffleString((int) index - 1, readByteNode) & 0xFF);
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())"})
-        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, @Cached TruffleString.ReadByteNode readByteNode) {
+        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, @Shared("truffleString") @Cached TruffleString.ReadByteNode readByteNode) {
             final int codepoint = obj.readByteTruffleString((int) index - 1, readByteNode);
             return (char) (codepoint & 0xFF);
         }

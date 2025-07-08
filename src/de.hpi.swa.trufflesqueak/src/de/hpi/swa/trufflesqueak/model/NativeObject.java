@@ -235,15 +235,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         setStorage(shorts);
     }
 
-    public byte getByte(final long index) {
-        assert isTruffleStringType();
-        return (byte) ((MutableTruffleString) storage).readByteUncached((int) index, getTruffleStringEncoding());
-    }
-
-    public int getByteUnsigned(final long index) {
-        return Byte.toUnsignedInt(getByte(index));
-    }
-
     public void setByte(final long index, final byte value) {
         assert isTruffleStringType();
         ((MutableTruffleString) storage).writeByteUncached((int) index, value, getTruffleStringEncoding());
@@ -380,6 +371,15 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public int readByteTruffleString(int index, TruffleString.ReadByteNode node) {
         return node.execute(getTruffleStringStorage(), index, getTruffleStringEncoding());
+    }
+
+    public int readByteTruffleStringUncached(int index) {
+        assert isTruffleStringType();
+        return getTruffleStringStorage().readByteUncached(index, getTruffleStringEncoding());
+    }
+
+    public int readUnsignedByteTruffleString(int index, TruffleString.ReadByteNode node) {
+        return Byte.toUnsignedInt((byte) node.execute(getTruffleStringStorage(), index, getTruffleStringEncoding()));
     }
 
     public int byteIndexOfAnyByteTruffleString(int index, byte[] bytes, TruffleString.ByteIndexOfAnyByteNode node) {
