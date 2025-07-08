@@ -73,17 +73,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue, final TruffleString.ReadByteNode readByteNode) {
-            final MutableTruffleString string1Storage = string1.getTruffleStringStorage();
-            final MutableTruffleString string2Storage = string2.getTruffleStringStorage();
-            final MutableTruffleString orderStorage = orderValue.getTruffleStringStorage();
-            final int len1 = string1Storage.byteLength(TruffleString.Encoding.UTF_8);
-            final int len2 = string2Storage.byteLength(TruffleString.Encoding.UTF_8);
+            final int len1 = string1.getTruffleStringByteLength();
+            final int len2 = string1.getTruffleStringByteLength();
             final int min = Math.min(len1, len2);
             for (int i = 0; i < min; i++) {
-                final long l1 = Integer.toUnsignedLong(readByteNode.execute(string1Storage, i, TruffleString.Encoding.UTF_8));
-                final long l2 = Integer.toUnsignedLong(readByteNode.execute(string2Storage, i, TruffleString.Encoding.UTF_8));
-                final byte c1 = (byte) readByteNode.execute(orderStorage, (int) l1, TruffleString.Encoding.UTF_8);
-                final byte c2 = (byte) readByteNode.execute(orderStorage, (int) l2, TruffleString.Encoding.UTF_8);
+                final long l1 = Integer.toUnsignedLong(string1.readByteTruffleString(i, readByteNode));
+                final long l2 = Integer.toUnsignedLong(string2.readByteTruffleString(i, readByteNode));
+                final byte c1 = (byte) orderValue.readByteTruffleString((int) l1, readByteNode);
+                final byte c2 = (byte) orderValue.readByteTruffleString((int) l2, readByteNode);
                 if (c1 != c2) {
                     return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
                 }
@@ -282,7 +279,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
              */
 
             int i = (int) index - 1;
-            final int end = ba.getByteLength();
+            final int end = ba.getTruffleStringByteLength();
             int k = 0;
             final int pastEnd = bm.getIntLength() + 1;
             while (i < end) {
