@@ -215,13 +215,18 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
-    public final void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+    public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
 // assert this != pointer;
+        assert forwardingPointer == null && pointer.forwardingPointer == null;
         forwardingPointer = this == pointer ? null : pointer;
     }
 
+    public final boolean isForwarded() {
+        return forwardingPointer != null;
+    }
+
     public final AbstractSqueakObjectWithClassAndHash followForwarded() {
-        return forwardingPointer == null ? this : forwardingPointer;
+        return isForwarded() ? forwardingPointer : this;
     }
 
     public static final Object followForwarded(final Object pointer) {

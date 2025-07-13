@@ -518,6 +518,12 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return ArrayUtils.contains(getLiterals(), thang);
     }
 
+    @Override
+    public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+        super.forwardTo(pointer);
+        invalidateCallTargetStable();
+    }
+
     /**
      * This class traces through the literals but does not overwrite
      * {@link AbstractSqueakObjectWithClassAndHash#pointersBecomeOneWay(Object, Object)} and
@@ -619,7 +625,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         if (hasMethodClass(readNode, null)) {
-            return getMethodClass(readNode, null);
+            return getMethodClass(readNode, null).followForwardedClass();
         }
         return null;
     }

@@ -246,17 +246,18 @@ public final class ObjectGraphUtils {
                 pointersBecomeOneWaySinglePair(fromPointer, toPointer);
             }
         } else {
-            boolean doBulkMigration = false;
+            boolean migrateViaForwardingPointers = true;
             for (int i = 0; i < fromPointers.length; i++) {
-                final Object fromPointer = fromPointers[i];
-                final Object toPointer = toPointers[i];
-                if (fromPointer instanceof final AbstractSqueakObjectWithClassAndHash from && toPointer instanceof final AbstractSqueakObjectWithClassAndHash to) {
-                    from.forwardTo(to);
-                } else {
-                    doBulkMigration = true;
+                if (!(fromPointers[i] instanceof AbstractSqueakObjectWithClassAndHash && toPointers[i] instanceof AbstractSqueakObjectWithClassAndHash)) {
+                    migrateViaForwardingPointers = false;
+                    break;
                 }
             }
-            if (doBulkMigration) {
+            if (migrateViaForwardingPointers) {
+                for (int i = 0; i < fromPointers.length; i++) {
+                    ((AbstractSqueakObjectWithClassAndHash) fromPointers[i]).forwardTo((AbstractSqueakObjectWithClassAndHash) toPointers[i]);
+                }
+            } else {
                 pointersBecomeOneWayManyPairs(fromPointers, toPointers);
             }
         }

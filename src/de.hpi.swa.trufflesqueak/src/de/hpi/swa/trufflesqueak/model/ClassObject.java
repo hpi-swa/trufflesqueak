@@ -391,7 +391,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public Object lookupInMethodDictSlow(final NativeObject selector) {
-        ClassObject lookupClass = this;
+        ClassObject lookupClass = followForwardedClass();
         while (lookupClass != null) {
             final VariablePointersObject methodDictionary = lookupClass.getMethodDict();
             final Object[] methodDictVariablePart = methodDictionary.getVariablePart();
@@ -515,6 +515,17 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public String getClassComment() {
         return CLASS_DESCRIPTION.getClassComment(this);
+    }
+
+    public ClassObject followForwardedClass() {
+        return CompilerDirectives.castExact(followForwarded(), ClassObject.class);
+    }
+
+    @Override
+    public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+        super.forwardTo(pointer);
+        invalidateClassHierarchyAndMethodDictStableAssumption();
+        invalidateClassFormatStableAssumption();
     }
 
     @Override
