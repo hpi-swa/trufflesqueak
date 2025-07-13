@@ -276,7 +276,7 @@ public final class ObjectGraphUtils {
             }
         }
 
-        if (becomeOneWayCount > 10 || System.nanoTime() - lastBecomeOneWayEnd > 1_000_000) {
+        if (becomeOneWayCount > 64 || System.nanoTime() - lastBecomeOneWayEnd > 1_000_000_000_000L) {
             unfollow();
             becomeOneWayCount = 0;
         }
