@@ -225,7 +225,15 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final AbstractSqueakObjectWithClassAndHash followForwarded() {
-        return isForwarded() ? forwardingPointer : this;
+        /*
+         * FIXME: is this really necessary or is there a better way to pass
+         * #testClassRemovalAndRecompilationWontCreateDuplicateVariableBindings?
+         */
+        AbstractSqueakObjectWithClassAndHash current = this;
+        while (current.forwardingPointer != null) {
+            current = current.forwardingPointer;
+        }
+        return current;
     }
 
     public static final Object followForwarded(final Object pointer) {
