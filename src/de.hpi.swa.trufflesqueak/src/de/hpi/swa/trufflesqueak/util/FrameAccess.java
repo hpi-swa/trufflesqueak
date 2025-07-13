@@ -227,7 +227,6 @@ public final class FrameAccess {
 
     public static void setContext(final Frame frame, final ContextObject context) {
         assert getContext(frame) == null : "ContextObject already allocated";
-        frame.getFrameDescriptor().setSlotKind(SlotIndicies.THIS_CONTEXT.ordinal(), FrameSlotKind.Object);
         frame.setObject(SlotIndicies.THIS_CONTEXT.ordinal(), context);
     }
 
@@ -295,16 +294,12 @@ public final class FrameAccess {
             final FrameSlotKind frameSlotKind = frameDescriptor.getSlotKind(slotIndex);
             final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
             if (value instanceof final Boolean b && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
-                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Boolean);
                 frame.setBoolean(slotIndex, b);
             } else if (value instanceof final Long l && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
-                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Long);
                 frame.setLong(slotIndex, l);
             } else if (value instanceof final Double d && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
-                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
                 frame.setDouble(slotIndex, d);
             } else {
-                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
                 frame.setObject(slotIndex, value);
             }
         } else {

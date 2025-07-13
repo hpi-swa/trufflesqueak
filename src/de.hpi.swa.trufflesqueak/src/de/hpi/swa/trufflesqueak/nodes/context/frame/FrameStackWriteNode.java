@@ -50,33 +50,21 @@ public abstract class FrameStackWriteNode extends AbstractNode {
 
         @Specialization(guards = "isBooleanOrIllegal(frame)")
         protected final void writeBool(final VirtualFrame frame, final boolean value) {
-            /* Initialize type on first write. No-op if kind is already Boolean. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Boolean);
-
             frame.setBoolean(slotIndex, value);
         }
 
         @Specialization(guards = "isLongOrIllegal(frame)")
         protected final void writeLong(final VirtualFrame frame, final long value) {
-            /* Initialize type on first write. No-op if kind is already Long. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Long);
-
             frame.setLong(slotIndex, value);
         }
 
         @Specialization(guards = "isDoubleOrIllegal(frame)")
         protected final void writeDouble(final VirtualFrame frame, final double value) {
-            /* Initialize type on first write. No-op if kind is already Double. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Double);
-
             frame.setDouble(slotIndex, value);
         }
 
         @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
         protected final void writeObject(final VirtualFrame frame, final Object value) {
-            /* Initialize type on first write. No-op if kind is already Object. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Object);
-
             frame.setObject(slotIndex, value);
         }
 
