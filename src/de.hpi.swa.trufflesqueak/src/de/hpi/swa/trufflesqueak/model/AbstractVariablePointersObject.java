@@ -72,6 +72,14 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
     }
 
     @Override
+    public void unforward() {
+        layoutUnforward();
+        for (int i = 0; i < variablePart.length; i++) {
+            variablePart[i] = followForwarded(variablePart[i]);
+        }
+    }
+
+    @Override
     public final void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         layoutBecomeOneWay(fromPointer, toPointer);
         for (int i = 0; i < variablePart.length; i++) {

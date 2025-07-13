@@ -126,6 +126,11 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     @Override
+    public void unforward() {
+        layoutUnforward();
+    }
+
+    @Override
     public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         layoutBecomeOneWay(fromPointer, toPointer);
     }

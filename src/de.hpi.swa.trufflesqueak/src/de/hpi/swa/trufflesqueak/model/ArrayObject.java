@@ -340,6 +340,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
+    public void unforward() {
+        if (isObjectType()) {
+            final Object[] objectStorage = getObjectStorage();
+            for (int i = 0; i < objectStorage.length; i++) {
+                objectStorage[i] = followForwarded(objectStorage[i]);
+            }
+        }
+    }
+
+    @Override
     public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         if (isObjectType()) {
             final Object[] objectStorage = getObjectStorage();

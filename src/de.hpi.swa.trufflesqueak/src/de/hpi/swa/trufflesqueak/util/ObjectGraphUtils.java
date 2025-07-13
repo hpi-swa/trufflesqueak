@@ -234,15 +234,23 @@ public final class ObjectGraphUtils {
         return result;
     }
 
+    private int becomeOneWayCount;
+    private long lastBecomeOneWayEnd;
+
     @TruffleBoundary
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers) {
+        becomeOneWayCount++;
         final long startTime = System.nanoTime();
         if (fromPointers.length == 1) {
             final Object fromPointer = fromPointers[0];
             final Object toPointer = toPointers[0];
             if (fromPointer != toPointer) {
                 if (fromPointer instanceof final AbstractSqueakObjectWithClassAndHash from && toPointer instanceof final AbstractSqueakObjectWithClassAndHash to) {
-                    from.forwardTo(to);
+                    final AbstractSqueakObjectWithClassAndHash fromFollowed = from.followForwarded();
+                    final AbstractSqueakObjectWithClassAndHash toFollowed = to.followForwarded();
+                    if (fromFollowed != toFollowed) {
+                        fromFollowed.forwardTo(toFollowed);
+                    }
                 } else {
                     pointersBecomeOneWaySinglePair(fromPointer, toPointer);
                 }
@@ -257,8 +265,8 @@ public final class ObjectGraphUtils {
             }
             if (migrateViaForwardingPointers) {
                 for (int i = 0; i < fromPointers.length; i++) {
-                    final AbstractSqueakObjectWithClassAndHash fromPointer = (AbstractSqueakObjectWithClassAndHash) fromPointers[0];
-                    final AbstractSqueakObjectWithClassAndHash toPointer = (AbstractSqueakObjectWithClassAndHash) toPointers[0];
+                    final AbstractSqueakObjectWithClassAndHash fromPointer = ((AbstractSqueakObjectWithClassAndHash) fromPointers[0]).followForwarded();
+                    final AbstractSqueakObjectWithClassAndHash toPointer = ((AbstractSqueakObjectWithClassAndHash) toPointers[0]).followForwarded();
                     if (fromPointer != toPointer) {
                         fromPointer.forwardTo(toPointer);
                     }
@@ -267,8 +275,46 @@ public final class ObjectGraphUtils {
                 pointersBecomeOneWayManyPairs(fromPointers, toPointers);
             }
         }
+
+        if (becomeOneWayCount > 10 || System.nanoTime() - lastBecomeOneWayEnd > 1_000_000) {
+            unfollow();
+            becomeOneWayCount = 0;
+        }
+        lastBecomeOneWayEnd = System.nanoTime();
         if (trackOperations) {
-            ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
+            ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(lastBecomeOneWayEnd - startTime);
+        }
+    }
+
+    private void unfollow() {
+        final ObjectTracer roots = ObjectTracer.fromRoots(image, true);
+// for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
+// EXECUTOR.submit(new BecomeOneWayUnforwardTask(roots));
+// }
+        final Runnable[] tasks = new Runnable[USABLE_THREAD_COUNT];
+        for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
+            tasks[i] = new BecomeOneWayUnforwardTask(roots);
+        }
+        runTasks(tasks);
+    }
+
+    static final class BecomeOneWayUnforwardTask implements Runnable {
+        private final ObjectTracer roots;
+
+        BecomeOneWayUnforwardTask(final ObjectTracer theRoots) {
+            roots = theRoots;
+        }
+
+        public void run() {
+            final ObjectTracer tracer = roots.copyEmpty();
+            AbstractSqueakObjectWithClassAndHash root;
+            while ((root = roots.getNextWithLock()) != null) {
+                AbstractSqueakObjectWithClassAndHash currentObject = root;
+                do {
+                    currentObject.unforward();
+                    tracer.tracePointers(currentObject);
+                } while ((currentObject = tracer.getNext()) != null);
+            }
         }
     }
 

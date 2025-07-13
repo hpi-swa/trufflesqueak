@@ -237,6 +237,10 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return this == other || forwardingPointer == other;
     }
 
+    public void unforward() {
+        // Do nothing by default.
+    }
+
     public void pointersBecomeOneWay(@SuppressWarnings("unused") final Object fromPointer, @SuppressWarnings("unused") final Object toPointer) {
         // Do nothing by default.
     }

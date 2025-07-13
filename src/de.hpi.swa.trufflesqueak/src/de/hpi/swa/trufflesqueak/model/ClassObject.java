@@ -529,6 +529,25 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
+    public void unforward() {
+        if (superclass != null && superclass.isForwarded()) {
+            setSuperclass(superclass.followForwardedClass());
+        }
+        if (methodDict != null && methodDict.isForwarded()) {
+            setMethodDict((VariablePointersObject) methodDict.followForwarded());
+        }
+        if (instanceVariables != null && instanceVariables.isForwarded()) {
+            setInstanceVariables((ArrayObject) instanceVariables.followForwarded());
+        }
+        if (organization != null && organization.isForwarded()) {
+            setOrganization((PointersObject) organization.followForwarded());
+        }
+        for (int i = 0; i < pointers.length; i++) {
+            pointers[i] = followForwarded(pointers[i]);
+        }
+    }
+
+    @Override
     public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         if (superclass == fromPointer && toPointer instanceof final ClassObject o) {
             setSuperclass(o);

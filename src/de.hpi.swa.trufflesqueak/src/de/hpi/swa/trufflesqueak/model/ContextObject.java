@@ -536,6 +536,32 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
+    public void unforward() {
+        if (hasTruffleFrame()) {
+            final CompiledCodeObject codeObject = FrameAccess.getCodeObject(truffleFrame);
+            if (codeObject.isForwarded()) {
+                setCodeObject((CompiledCodeObject) codeObject.followForwarded());
+            }
+            if (FrameAccess.getSender(truffleFrame) instanceof final ContextObject o && o.isForwarded()) {
+                setSender((ContextObject) o.followForwarded());
+            }
+            final BlockClosureObject closure = FrameAccess.getClosure(truffleFrame);
+            if (closure != null && closure.isForwarded()) {
+                setClosure((BlockClosureObject) closure.followForwarded());
+            }
+            final Object[] arguments = truffleFrame.getArguments();
+            for (int i = FrameAccess.getReceiverStartIndex(); i < arguments.length; i++) {
+                arguments[i] = followForwarded(arguments[i]);
+            }
+            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
+                if (truffleFrame.isObject(slotIndex) && truffleFrame.getObject(slotIndex) instanceof final AbstractSqueakObjectWithClassAndHash o && o.isForwarded()) {
+                    truffleFrame.setObject(slotIndex, o.followForwarded());
+                }
+            });
+        }
+    }
+
+    @Override
     public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         if (hasTruffleFrame()) {
             if (FrameAccess.getCodeObject(truffleFrame) == fromPointer && toPointer instanceof final CompiledCodeObject o) {

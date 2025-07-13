@@ -318,6 +318,17 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return false;
     }
 
+    protected final void layoutUnforward() {
+        object0 = followForwarded(object0);
+        object1 = followForwarded(object1);
+        object2 = followForwarded(object2);
+        if (objectExtension != null) {
+            for (int i = 0; i < objectExtension.length; i++) {
+                objectExtension[i] = followForwarded(objectExtension[i]);
+            }
+        }
+    }
+
     protected final void layoutBecomeOneWay(final Object fromPointer, final Object toPointer) {
         if (object0 == fromPointer) {
             object0 = toPointer;

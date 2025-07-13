@@ -273,6 +273,18 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
+    public void unforward() {
+        receiver = followForwarded(receiver);
+        block = (CompiledCodeObject) followForwarded(block);
+        if (outerContext.isForwarded()) {
+            setOuterContext((ContextObject) outerContext.followForwarded());
+        }
+        for (int i = 0; i < copiedValues.length; i++) {
+            copiedValues[i] = followForwarded(copiedValues[i]);
+        }
+    }
+
+    @Override
     public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         if (receiver == fromPointer) {
             receiver = toPointer;

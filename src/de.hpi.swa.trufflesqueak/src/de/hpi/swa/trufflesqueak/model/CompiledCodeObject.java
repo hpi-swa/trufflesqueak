@@ -524,6 +524,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         invalidateCallTargetStable();
     }
 
+    @Override
+    public void unforward() {
+        for (int i = 0; i < literals.length; i++) {
+            literals[i] = followForwarded(literals[i]);
+        }
+    }
+
     /**
      * This class traces through the literals but does not overwrite
      * {@link AbstractSqueakObjectWithClassAndHash#pointersBecomeOneWay(Object, Object)} and

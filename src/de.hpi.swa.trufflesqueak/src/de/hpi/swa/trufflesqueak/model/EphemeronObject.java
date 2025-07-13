@@ -150,6 +150,11 @@ public final class EphemeronObject extends AbstractPointersObject {
     }
 
     @Override
+    public void unforward() {
+        layoutUnforward();
+    }
+
+    @Override
     public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         layoutBecomeOneWay(fromPointer, toPointer);
     }
