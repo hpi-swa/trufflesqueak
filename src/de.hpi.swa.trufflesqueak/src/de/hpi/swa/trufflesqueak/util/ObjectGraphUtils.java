@@ -240,10 +240,12 @@ public final class ObjectGraphUtils {
         if (fromPointers.length == 1) {
             final Object fromPointer = fromPointers[0];
             final Object toPointer = toPointers[0];
-            if (fromPointer instanceof final AbstractSqueakObjectWithClassAndHash from && toPointer instanceof final AbstractSqueakObjectWithClassAndHash to) {
-                from.forwardTo(to);
-            } else {
-                pointersBecomeOneWaySinglePair(fromPointer, toPointer);
+            if (fromPointer != toPointer) {
+                if (fromPointer instanceof final AbstractSqueakObjectWithClassAndHash from && toPointer instanceof final AbstractSqueakObjectWithClassAndHash to) {
+                    from.forwardTo(to);
+                } else {
+                    pointersBecomeOneWaySinglePair(fromPointer, toPointer);
+                }
             }
         } else {
             boolean migrateViaForwardingPointers = true;
@@ -255,7 +257,11 @@ public final class ObjectGraphUtils {
             }
             if (migrateViaForwardingPointers) {
                 for (int i = 0; i < fromPointers.length; i++) {
-                    ((AbstractSqueakObjectWithClassAndHash) fromPointers[i]).forwardTo((AbstractSqueakObjectWithClassAndHash) toPointers[i]);
+                    final AbstractSqueakObjectWithClassAndHash fromPointer = (AbstractSqueakObjectWithClassAndHash) fromPointers[0];
+                    final AbstractSqueakObjectWithClassAndHash toPointer = (AbstractSqueakObjectWithClassAndHash) toPointers[0];
+                    if (fromPointer != toPointer) {
+                        fromPointer.forwardTo(toPointer);
+                    }
                 }
             } else {
                 pointersBecomeOneWayManyPairs(fromPointers, toPointers);
@@ -326,7 +332,11 @@ public final class ObjectGraphUtils {
     private void pointersBecomeOneWayManyPairs(final Object[] fromPointers, final Object[] toPointers) {
         final EconomicMap<Object, Object> fromToMap = EconomicMap.create(Equivalence.IDENTITY, fromPointers.length);
         for (int i = 0; i < fromPointers.length; i++) {
-            fromToMap.put(fromPointers[i], toPointers[i]);
+            final Object fromPointer = fromPointers[i];
+            final Object toPointer = toPointers[i];
+            if (fromPointer != toPointer) {
+                fromToMap.put(fromPointer, toPointer);
+            }
         }
 
         final ObjectTracer roots = ObjectTracer.fromRoots(image, false);
