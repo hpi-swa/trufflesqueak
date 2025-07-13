@@ -272,6 +272,9 @@ public final class ObjectGraphUtils {
     }
 
     private void pointersBecomeOneWaySinglePair(final Object fromPointer, final Object toPointer) {
+        if (fromPointer == toPointer) {
+            return; // nothing to do
+        }
         final ObjectTracer roots = ObjectTracer.fromRoots(image, false);
         pointersBecomeOneWayFrames(roots, fromPointer, toPointer);
 
@@ -307,7 +310,11 @@ public final class ObjectGraphUtils {
     private void pointersBecomeOneWayManyPairs(final Object[] fromPointers, final Object[] toPointers) {
         final EconomicMap<Object, Object> fromToMap = EconomicMap.create(Equivalence.IDENTITY, fromPointers.length);
         for (int i = 0; i < fromPointers.length; i++) {
-            fromToMap.put(fromPointers[i], toPointers[i]);
+            final Object fromPointer = fromPointers[i];
+            final Object toPointer = toPointers[i];
+            if (fromPointer != toPointer) {
+                fromToMap.put(fromPointer, toPointer);
+            }
         }
 
         final ObjectTracer roots = ObjectTracer.fromRoots(image, false);
