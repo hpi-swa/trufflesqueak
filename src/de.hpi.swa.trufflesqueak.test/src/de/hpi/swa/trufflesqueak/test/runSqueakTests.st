@@ -136,19 +136,13 @@ ignoredTests := OrderedCollection new.
 
 {
     "slow tests"
-    ClassTraitTest -> #(#testChanges #testConflictsAliasesAndExclusions #testUsers).
     CompilerTest -> #(#testAllNodePCsAreForBytecodesInCollections #testAllNodePCsAreForBytecodesInKernel #testAllNodePCsAreForBytecodesInMorphic).
     FloatTest -> #(#testCompiledConstants).
     LocaleTest -> #(#test04InstallFont).
     MorphicUIManagerTest -> #(#testShowAllBinParts).
     ObjectTest -> #(#testIfNotNilDoDeprecation).
-    PureBehaviorTest -> #(#testIsLocalAliasSelector #testLocalSelectors #testMethodCategoryReorganization #testPropagationOfChangesInTraits #testPropagationOfChangesInTraitsToAliasMethodsWhenOriginalMethodIsExcluded #testPropagationWhenTraitCompositionModifications #testReshapeClass #testTraitCompositionModifications #testUpdateWhenLocalMethodRemoved).
     StringTest -> #(#testPercentEncodingJa).
-    TraitCompositionTest -> #(#testAliasCompositionsRaisesErrorBinary #testAliasCompositionsRaisesErrorKeyword #testAliasCompositionsRaisesErrorUnary).
     TraitFileOutTest -> #(#testFileOutCategory #testFileOutTrait #testRemovingMethods).
-    TraitMethodDescriptionTest -> #(#testArgumentNames #testCategories #testConflictingCategories #testConflictMethodCreation).
-    TraitSystemTest -> #(#testAllImplementedMessagesWithout #testAllSentMessages).
-    TraitTest -> #(#testAddAndRemoveMethodsFromSubtraits #testMarkerMethods #testRequirement).
 
     "ignored tests"
     AllocationTest -> #(#testOutOfMemorySignal).
