@@ -134,7 +134,7 @@ jobs:
       VERBOSE_GRAALVM_LAUNCHERS: true
       VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
     name: ${{ matrix.type }} ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
@@ -244,7 +244,7 @@ jobs:
       VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
       EXEC: "/usr/bin/time -v"
     name: run benchmarks
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     steps:
     - name: Download TruffleSqueak (${{ matrix.type }}-${{ matrix.os }})
