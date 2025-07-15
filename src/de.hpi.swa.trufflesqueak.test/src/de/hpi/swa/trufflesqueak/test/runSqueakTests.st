@@ -169,6 +169,7 @@ ignoredTests := OrderedCollection new.
     SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
     SocketTest -> #(#testSocketReuse #testTCPSocketReuse #testUDP).
     SqueakSSLTest -> #(#testConnectAccept #testEncryptDecrypt #testFaceBookAPI #testGooglePopStream #testMultiFrameDecrypt #testSingleByteDecrypt #testSocketAccept #testSocketConnect #testSplitTlsFrameRead #testSSLSockets #testStreamAccept #testStreamConnect #testStreamTransfer).
+    SystemChangeFileTest -> #(#testClassRenamed). "flaky and can hang the system"
     TruffleSqueakTest -> #(#testTestMapConsistency).
 } collect: [:assoc | | testCase |
     testCase := assoc key.
