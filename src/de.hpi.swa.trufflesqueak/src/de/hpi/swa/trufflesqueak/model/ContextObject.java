@@ -405,6 +405,10 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         escaped = true;
     }
 
+    public void clearModifiedSender() {
+        hasModifiedSender = false;
+    }
+
     public boolean hasModifiedSender() {
         return hasModifiedSender;
     }
