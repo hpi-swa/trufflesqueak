@@ -322,7 +322,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return Source.newBuilder("nfi", String.format("load \"%s\"", getPathOrFail(image, moduleName)), "native").build();
         }
 
-        private static NativeObject newExternalAddress(final SqueakImageContext image, final ClassObject externalAddressClass, final long pointer, MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+        private static NativeObject newExternalAddress(final SqueakImageContext image, final ClassObject externalAddressClass, final long pointer, final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             return NativeObject.newNativeBytes(image, externalAddressClass,
                             new byte[]{(byte) pointer, (byte) (pointer >> 8), (byte) (pointer >> 16), (byte) (pointer >> 24), (byte) (pointer >> 32), (byte) (pointer >> 40),
                                             (byte) (pointer >> 48), (byte) (pointer >> 56)}, fromByteArrayNode);
@@ -558,7 +558,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return signedInt16At(byteArray, byteOffset, getBytesNode);
         }
 
-        private static short signedInt16At(final NativeObject byteArray, final long byteOffset, TruffleString.GetInternalByteArrayNode getBytesNode) {
+        private static short signedInt16At(final NativeObject byteArray, final long byteOffset, final TruffleString.GetInternalByteArrayNode getBytesNode) {
             return VarHandleUtils.getShortFromBytes(byteArray.getTruffleStringAsReadonlyBytes(getBytesNode), (int) byteOffset - 1);
         }
     }
@@ -581,7 +581,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return signedInt32At(byteArray, byteOffset, getBytesNode);
         }
 
-        private static int signedInt32At(final NativeObject byteArray, final long byteOffset, TruffleString.GetInternalByteArrayNode getBytesNode) {
+        private static int signedInt32At(final NativeObject byteArray, final long byteOffset, final TruffleString.GetInternalByteArrayNode getBytesNode) {
             return VarHandleUtils.getIntFromBytes(byteArray.getTruffleStringAsReadonlyBytes(getBytesNode), (int) byteOffset - 1);
         }
     }
@@ -610,7 +610,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return signedInt64At(byteArray, byteOffset, getBytesNode);
         }
 
-        private static long signedInt64At(final NativeObject byteArray, final long byteOffset, TruffleString.GetInternalByteArrayNode getBytesNode) {
+        private static long signedInt64At(final NativeObject byteArray, final long byteOffset, final TruffleString.GetInternalByteArrayNode getBytesNode) {
             return VarHandleUtils.getLongFromBytes(byteArray.getTruffleStringAsReadonlyBytes(getBytesNode), (int) byteOffset - 1);
         }
     }
@@ -719,7 +719,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return unsignedInt64At(getContext(), byteArray, byteOffset, positiveProfile, node, getBytesNode);
         }
 
-        private static Object unsignedInt64At(final SqueakImageContext image, final NativeObject byteArray, final long byteOffset, final InlinedConditionProfile positiveProfile, final Node node, TruffleString.GetInternalByteArrayNode getBytesNode) {
+        private static Object unsignedInt64At(final SqueakImageContext image, final NativeObject byteArray, final long byteOffset, final InlinedConditionProfile positiveProfile, final Node node, final TruffleString.GetInternalByteArrayNode getBytesNode) {
             final long signedLong = PrimSignedInt64AtNode.signedInt64At(byteArray, byteOffset, getBytesNode);
             if (positiveProfile.profile(node, signedLong >= 0)) {
                 return signedLong;
@@ -749,7 +749,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     }
 
     @ExplodeLoop
-    private static void atPutNativeLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, MutableTruffleString.WriteByteNode writeByteNode) {
+    private static void atPutNativeLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final MutableTruffleString.WriteByteNode writeByteNode) {
         final int byteOffset = (int) byteOffsetLong - 1;
         final byte[] sourceBytes = value.getBytes();
         final int numSourceBytes = sourceBytes.length;

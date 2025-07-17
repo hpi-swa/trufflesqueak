@@ -1032,7 +1032,7 @@ public final class SqueakImageContext {
         return NativeObject.newNativeByteStringUncached(this, value);
     }
 
-    public NativeObject asByteString(final String value, TruffleString.FromJavaStringNode javaStringNode, MutableTruffleString.AsMutableTruffleStringNode mutableTruffleStringNode) {
+    public NativeObject asByteString(final String value, final TruffleString.FromJavaStringNode javaStringNode, final MutableTruffleString.AsMutableTruffleStringNode mutableTruffleStringNode) {
         return NativeObject.newNativeByteString(this, value, javaStringNode, mutableTruffleStringNode);
     }
 
@@ -1040,7 +1040,7 @@ public final class SqueakImageContext {
         return NativeObject.newNativeByteStringUncached(this, value);
     }
 
-    public NativeObject asByteString(final AbstractTruffleString value, MutableTruffleString.AsMutableTruffleStringNode node) {
+    public NativeObject asByteString(final AbstractTruffleString value, final MutableTruffleString.AsMutableTruffleStringNode node) {
         return NativeObject.newNativeByteString(this, value, node);
     }
 
@@ -1065,11 +1065,11 @@ public final class SqueakImageContext {
         return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
     }
 
-    public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node, TruffleString.FromJavaStringNode javaStringNode, MutableTruffleString.AsMutableTruffleStringNode mutableTruffleStringNode) {
+    public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node, final TruffleString.FromJavaStringNode javaStringNode, final MutableTruffleString.AsMutableTruffleStringNode mutableTruffleStringNode) {
         return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value, javaStringNode, mutableTruffleStringNode);
     }
 
-    public NativeObject asString(final AbstractTruffleString value, final InlinedConditionProfile wideStringProfile, final Node node, MutableTruffleString.AsMutableTruffleStringNode truffleStringNode) {
+    public NativeObject asString(final AbstractTruffleString value, final InlinedConditionProfile wideStringProfile, final Node node, final MutableTruffleString.AsMutableTruffleStringNode truffleStringNode) {
         return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value, truffleStringNode);
     }
 

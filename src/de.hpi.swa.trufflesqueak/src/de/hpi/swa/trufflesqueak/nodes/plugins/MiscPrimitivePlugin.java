@@ -131,7 +131,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
-        private static int encodeBytesOf(final int anInt, final NativeObject ba, final int i, MutableTruffleString.WriteByteNode writeByteNode) {
+        private static int encodeBytesOf(final int anInt, final NativeObject ba, final int i, final MutableTruffleString.WriteByteNode writeByteNode) {
             ba.writeByteTruffleString(i - 1, (byte) (anInt >> 24), writeByteNode);
             ba.writeByteTruffleString(i + 0, (byte) (anInt >> 16), writeByteNode);
             ba.writeByteTruffleString(i + 1, (byte) (anInt >> 8), writeByteNode);
@@ -140,7 +140,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // expects i to be a 1-based (Squeak) index
-        private static int encodeInt(final int anInt, final NativeObject ba, final int i, MutableTruffleString.WriteByteNode writeByteNode) {
+        private static int encodeInt(final int anInt, final NativeObject ba, final int i, final MutableTruffleString.WriteByteNode writeByteNode) {
             if (anInt <= 223) {
                 ba.writeByteTruffleString(i - 1, anInt, writeByteNode);
                 return i + 1;

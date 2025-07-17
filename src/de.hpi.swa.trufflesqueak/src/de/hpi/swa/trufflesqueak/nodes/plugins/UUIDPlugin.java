@@ -37,7 +37,7 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doUUID(final NativeObject receiver, @Cached final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             // TODO prevent allocation of a new byte array, use truffle string storage directly
             byte[] uuidBytes = new byte[16];
-            TruffleString.Encoding encoding = receiver.getTruffleStringEncoding();
+            final TruffleString.Encoding encoding = receiver.getTruffleStringEncoding();
             ArrayUtils.fillRandomly(uuidBytes);
             // Version 4
             uuidBytes[6] = (byte) (uuidBytes[6] & 0x0F | 0x40); // Set version to 4

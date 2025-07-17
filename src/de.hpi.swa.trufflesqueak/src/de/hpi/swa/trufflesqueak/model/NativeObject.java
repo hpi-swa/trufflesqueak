@@ -67,13 +67,13 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     // TODO sometimes we want to create immutable TruffleString
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes, MutableTruffleString.FromByteArrayNode node) {
+    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes, final MutableTruffleString.FromByteArrayNode node) {
         final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
         final MutableTruffleString truffleString = node.execute(bytes, 0, bytes.length, encoding, false);
         return new NativeObject(img, klass, truffleString);
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size, MutableTruffleString.FromByteArrayNode node) {
+    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size, final MutableTruffleString.FromByteArrayNode node) {
         return newNativeBytes(img, klass, new byte[size], node);
     }
 
@@ -81,7 +81,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         final ClassObject klass = chunk.getSqueakClass();
         final byte[] bytes = chunk.getBytes();
         final TruffleString.Encoding encoding = getTruffleStringEncoding(klass);
-        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false));
+        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(),  MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false));
     }
 
     public static NativeObject newNativeBytesUncached(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
@@ -140,13 +140,13 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, img.byteStringClass, truffleString);
     }
 
-    public static NativeObject newNativeByteString(final SqueakImageContext img, final String string, TruffleString.FromJavaStringNode javaNode, MutableTruffleString.AsMutableTruffleStringNode mutableNode) {
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final String string, final TruffleString.FromJavaStringNode javaNode, MutableTruffleString.AsMutableTruffleStringNode mutableNode) {
         final TruffleString.Encoding encoding = getTruffleStringEncoding(img.byteStringClass);
         final MutableTruffleString truffleString = mutableNode.execute(javaNode.execute(string, encoding), encoding);
         return new NativeObject(img, img.byteStringClass, truffleString);
     }
 
-    public static NativeObject newNativeByteString(final SqueakImageContext img, final int size, MutableTruffleString.FromByteArrayNode node) {
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final int size, final MutableTruffleString.FromByteArrayNode node) {
         final TruffleString.Encoding encoding = getTruffleStringEncoding(img.byteStringClass);
         final byte[] bytes = new byte[size];
         final MutableTruffleString truffleString = node.execute(bytes, 0, bytes.length, encoding, false);
@@ -158,7 +158,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, img.byteStringClass, string.asMutableTruffleStringUncached(encoding));
     }
 
-    public static NativeObject newNativeByteString(final SqueakImageContext img, final AbstractTruffleString string, MutableTruffleString.AsMutableTruffleStringNode node) {
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final AbstractTruffleString string, final MutableTruffleString.AsMutableTruffleStringNode node) {
         final TruffleString.Encoding encoding = getTruffleStringEncoding(img.byteStringClass);
         return new NativeObject(img, img.byteStringClass, node.execute(string, encoding));
     }
@@ -345,7 +345,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return node.execute(getTruffleStringStorage(), getTruffleStringEncoding()).getArray();
     }
 
-    public byte[] getTruffleStringAsBytesCopy(TruffleString.CopyToByteArrayNode node) {
+    public byte[] getTruffleStringAsBytesCopy(final TruffleString.CopyToByteArrayNode node) {
         return node.execute(getTruffleStringStorage(), getTruffleStringEncoding());
     }
 
@@ -359,7 +359,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return getTruffleStringEncoding(squeakClass);
     }
 
-    public int readByteTruffleString(int index, TruffleString.ReadByteNode node) {
+    public int readByteTruffleString(int index, final TruffleString.ReadByteNode node) {
         return node.execute(getTruffleStringStorage(), index, getTruffleStringEncoding());
     }
 
@@ -368,24 +368,24 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return getTruffleStringStorage().readByteUncached(index, getTruffleStringEncoding());
     }
 
-    public int readUnsignedByteTruffleString(int index, TruffleString.ReadByteNode node) {
+    public int readUnsignedByteTruffleString(int index, final TruffleString.ReadByteNode node) {
         return Byte.toUnsignedInt((byte) node.execute(getTruffleStringStorage(), index, getTruffleStringEncoding()));
     }
 
-    public int byteIndexOfAnyByteTruffleString(int index, byte[] bytes, TruffleString.ByteIndexOfAnyByteNode node) {
+    public int byteIndexOfAnyByteTruffleString(int index, byte[] bytes, final TruffleString.ByteIndexOfAnyByteNode node) {
         assert isTruffleStringType();
         return node.execute(getTruffleStringStorage(), index, getTruffleStringByteLength(), bytes, getTruffleStringEncoding());
     }
 
-    public int codePointIndexToByteIndexTruffleString(int index, TruffleString.CodePointIndexToByteIndexNode node) {
+    public int codePointIndexToByteIndexTruffleString(int index, final TruffleString.CodePointIndexToByteIndexNode node) {
         return node.execute(getTruffleStringStorage(), 0, index, getTruffleStringEncoding());
     }
 
-    public void writeByteTruffleString(int index, byte value, MutableTruffleString.WriteByteNode node) {
+    public void writeByteTruffleString(int index, byte value, final MutableTruffleString.WriteByteNode node) {
         node.execute(getTruffleStringStorage(), index, value, getTruffleStringEncoding());
     }
 
-    public void writeByteTruffleString(int index, int value, MutableTruffleString.WriteByteNode node) {
+    public void writeByteTruffleString(int index, int value, final MutableTruffleString.WriteByteNode node) {
         assert value < 256;
         node.execute(getTruffleStringStorage(), index, (byte) value, getTruffleStringEncoding());
     }
@@ -402,14 +402,14 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public NativeObject shallowCopyTruffleStringUncached() {
         assert isTruffleStringType();
-        TruffleString.Encoding encoding = getTruffleStringEncoding();
+        final TruffleString.Encoding encoding = getTruffleStringEncoding();
         byte[] bytes = getTruffleStringStorage().copyToByteArrayUncached(getTruffleStringEncoding());
         return new NativeObject(this, MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false));
     }
 
-    public NativeObject shallowCopyTruffleString(TruffleString.CopyToByteArrayNode copyToByteArrayNode, MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+    public NativeObject shallowCopyTruffleString(final TruffleString.CopyToByteArrayNode copyToByteArrayNode, final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
         assert isTruffleStringType();
-        TruffleString.Encoding encoding = getTruffleStringEncoding();
+        final TruffleString.Encoding encoding = getTruffleStringEncoding();
         byte[] bytes = copyToByteArrayNode.execute(getTruffleStringStorage(), encoding);
         return new NativeObject(this, fromByteArrayNode.execute(bytes, 0, bytes.length, encoding, false));
     }
