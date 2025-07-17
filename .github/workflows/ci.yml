@@ -190,6 +190,7 @@ jobs:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
         path: ${{ env.STANDALONE_TARGET }}
         retention-days: 7
+      if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Deploy TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
