@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.launcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
@@ -93,7 +94,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         System.exit(execute(contextBuilder));
     }
 
-    protected int execute(final Context.Builder contextBuilder) {
+    private int execute(final Context.Builder contextBuilder) {
         imagePath = SqueakImageLocator.findImage(imagePath, quiet);
         if (printImagePath) {
             println(imagePath);
@@ -205,8 +206,13 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         }
     }
 
+    /** See LanguageLauncherBase#getTempEngine(). */
     private static String getRuntimeName() {
-        try (Engine engine = Engine.create()) {
+        try (Engine engine = Engine.newBuilder().useSystemProperties(false).//
+                        out(OutputStream.nullOutputStream()).//
+                        err(OutputStream.nullOutputStream()).//
+                        option("engine.WarnInterpreterOnly", "false").//
+                        build()) {
             return engine.getImplementationName();
         }
     }

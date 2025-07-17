@@ -19,7 +19,10 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
@@ -31,6 +34,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
+    @CompilationFinal private boolean needsContextObject;
 
     @CompilationFinal private final SqueakImageContext image;
 
@@ -43,7 +47,7 @@ public final class StartContextRootNode extends AbstractRootNode {
     public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code);
         image = code.getSqueakClass().getImage();
-        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(image, code);
+        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
         executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
 
@@ -53,7 +57,10 @@ public final class StartContextRootNode extends AbstractRootNode {
         try {
             if (image.enteringContextExceedsDepth()) {
                 CompilerDirectives.transferToInterpreter();
-                throw ProcessSwitch.create(GetOrCreateContextNode.getOrCreateUncached(frame));
+                // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
+                final ContextObject activeContext = GetOrCreateContextNode.getOrCreateUncached(frame);
+                AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
+                throw ProcessSwitch.SINGLETON;
             }
             interruptHandlerNode.execute(frame);
             return executeBytecodeNode.execute(frame, initialPC);
@@ -72,8 +79,9 @@ public final class StartContextRootNode extends AbstractRootNode {
         if (writeTempNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final int numArgs = FrameAccess.getNumArguments(frame);
+            final CompiledCodeObject code = getCode();
+            needsContextObject = code.isExceptionHandlerMarked() || code.isUnwindMarked();
             if (!FrameAccess.hasClosure(frame)) {
-                final CompiledCodeObject code = getCode();
                 initialPC = code.getInitialPC();
                 initialSP = code.getNumTemps();
                 assert numArgs == code.getNumArgs();
@@ -88,6 +96,9 @@ public final class StartContextRootNode extends AbstractRootNode {
                 writeTempNodes[i] = insert(FrameStackWriteNode.create(frame, numArgs + i));
                 assert writeTempNodes[i] instanceof FrameSlotWriteNode;
             }
+        }
+        if (needsContextObject) {
+            getGetOrCreateContextNode().executeGet(frame);
         }
         FrameAccess.setInstructionPointer(frame, initialPC);
         FrameAccess.setStackPointer(frame, initialSP);

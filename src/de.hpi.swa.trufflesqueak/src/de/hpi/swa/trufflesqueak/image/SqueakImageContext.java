@@ -83,6 +83,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 @DefaultExpression("get($node)")
 public final class SqueakImageContext {
@@ -153,6 +154,7 @@ public final class SqueakImageContext {
     /* System */
     public NativeObject clipboardTextHeadless = asByteString("");
     private boolean currentMarkingFlag;
+    public final ObjectGraphUtils objectGraphUtils;
     private ArrayObject hiddenRoots;
     // first page of classTable is special
     public int classTableIndex = SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
@@ -217,6 +219,7 @@ public final class SqueakImageContext {
         isHeadless = options.isHeadless();
         maxContextStackDepth = options.maxContextStackDepth();
         interrupt = new CheckForInterruptsState(this);
+        objectGraphUtils = new ObjectGraphUtils(this);
         allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
         final String truffleLanguageHome = language.getTruffleLanguageHome();
@@ -264,7 +267,7 @@ public final class SqueakImageContext {
                             "Set author information."
                             Utilities
                                 authorName: 'TruffleSqueak';
-                                setAuthorInitials: 'TruffleSqueak'.
+                                setAuthorInitials: 'TS'.
                             """.formatted(Boolean.toString(options.isTesting()));
             try {
                 evaluate(prepareHeadlessImageScript);
@@ -630,6 +633,10 @@ public final class SqueakImageContext {
         byteSymbolClass = classObject;
     }
 
+    public ClassObject getWideStringClassOrNull() {
+        return wideStringClass;
+    }
+
     public ClassObject getWideStringClass() {
         if (wideStringClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -741,12 +748,10 @@ public final class SqueakImageContext {
             throw stackOverflowError; // continue further up the sender chain
         } else {
             final Object lowSpaceSemaphoreOrNil = getSpecialObject(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE);
-            try {
-                SignalSemaphoreNodeGen.executeUncached(frame, this, lowSpaceSemaphoreOrNil);
-            } catch (final ProcessSwitch ps) {
+            if (SignalSemaphoreNodeGen.executeUncached(frame, this, lowSpaceSemaphoreOrNil)) {
                 // success! reset counter and continue in new process
                 lowSpaceSkippedSendsCount = 0;
-                throw ps;
+                throw ProcessSwitch.SINGLETON;
             }
             throw CompilerDirectives.shouldNotReachHere("Failed to signal low space semaphore.", stackOverflowError);
         }
@@ -960,10 +965,6 @@ public final class SqueakImageContext {
         return object == semaphoreClass;
     }
 
-    public boolean isWideStringClass(final ClassObject object) {
-        return object == getWideStringClass();
-    }
-
     /*
      * INSTANCE CREATION
      */
@@ -1045,7 +1046,7 @@ public final class SqueakImageContext {
         return (NativeObject) asByteString(value).send(this, "asSymbol");
     }
 
-    public NativeObject asWideString(final String value) {
+    private NativeObject asWideString(final String value) {
         return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
 

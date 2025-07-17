@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -116,9 +118,9 @@ public final class EphemeronObject extends AbstractPointersObject {
         hasBeenSignaled = true;
     }
 
-    public boolean keyHasBeenMarked(final boolean currentMarkingFlag) {
+    public boolean keyHasBeenMarked(final ObjectTracer tracer) {
         if (instVarAt0Slow(ObjectLayouts.EPHEMERON.KEY) instanceof final AbstractSqueakObjectWithClassAndHash key) {
-            return key.isMarked(currentMarkingFlag);
+            return tracer.isMarked(key);
         } else {
             return true;
         }
@@ -148,8 +150,13 @@ public final class EphemeronObject extends AbstractPointersObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        layoutValuesBecomeOneWay(from, to);
+    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
+        layoutBecomeOneWay(fromPointer, toPointer);
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        layoutBecomeOneWay(fromToMap);
     }
 
     @Override

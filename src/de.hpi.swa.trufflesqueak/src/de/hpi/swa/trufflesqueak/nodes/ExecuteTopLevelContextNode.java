@@ -30,18 +30,22 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
+import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.DebugUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 @NodeInfo(language = SqueakLanguageConfig.ID)
 public final class ExecuteTopLevelContextNode extends RootNode {
     private static final FrameDescriptor TOP_LEVEL_FRAME_DESCRIPTOR = new FrameDescriptor();
+
     private final SqueakImageContext image;
     private final boolean isImageResuming;
     private ContextObject initialContext;
 
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
+    @Child private GetNextActiveContextNode getNextActiveContextNode = GetNextActiveContextNode.create();
     @Child private Dispatch1Node sendCannotReturnNode;
     @Child private Dispatch2Node sendAboutToReturnNode;
 
@@ -92,20 +96,22 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             final AbstractSqueakObject sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
-                image.lastSeenContext = null;  // Reset materialization mechanism.
-                image.resetContextStackDepth();
-                final Object result = callNode.call(activeContext.getCallTarget());
-                activeContext = returnTo(activeContext, sender, result);
-                LogUtils.SCHEDULING.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
+                try {
+                    image.lastSeenContext = null;  // Reset materialization mechanism.
+                    image.resetContextStackDepth();
+                    final Object result = callNode.call(activeContext.getCallTarget());
+                    activeContext = returnTo(activeContext, sender, result);
+                    LogUtils.SCHEDULING.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
+                } catch (final NonLocalReturn nlr) {
+                    activeContext = commonNLReturn(sender, nlr);
+                    LogUtils.SCHEDULING.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
+                } catch (final NonVirtualReturn nvr) {
+                    activeContext = commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                    LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
+                }
             } catch (final ProcessSwitch ps) {
-                activeContext = ps.getNewContext();
+                activeContext = getNextActiveContextNode.execute();
                 LogUtils.SCHEDULING.log(Level.FINE, "Process Switch: {0}", activeContext);
-            } catch (final NonLocalReturn nlr) {
-                activeContext = commonNLReturn(sender, nlr);
-                LogUtils.SCHEDULING.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
-            } catch (final NonVirtualReturn nvr) {
-                activeContext = commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
-                LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
         }
     }
@@ -209,36 +215,30 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     private static TopLevelReturn returnToTopLevel(final ContextObject targetContext, final Object returnValue) {
-        assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe()) : targetContext;
+        assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe()) : DebugUtils.getSqStackTrace(targetContext);
         throw new TopLevelReturn(returnValue);
     }
 
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {
-        try {
-            sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
-        } catch (final ProcessSwitch ps) {
-            return ps.getNewContext();
-        }
-        throw CompilerDirectives.shouldNotReachHere();
+        sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
+        throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch");
     }
 
     private ContextObject sendAboutToReturn(final ContextObject startContext, final Object returnValue, final ContextObject context) {
         try {
             sendAboutToReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue, context);
-        } catch (final ProcessSwitch ps) {
-            return ps.getNewContext();
         } catch (final NonVirtualReturn nvr) {
             return commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
         }
-        throw CompilerDirectives.shouldNotReachHere();
+        throw CompilerDirectives.shouldNotReachHere("aboutToReturn should trigger a ProcessSwitch or a NonVirtualReturn");
     }
 
     private static void ensureCachedContextCanRunAgain(final ContextObject activeContext) {
         if (activeContext.getInstructionPointerForBytecodeLoop() != 0) {
-            /**
-             * Reset instruction pointer and stack pointer of the context (see
-             * {@link EnterCodeNode#initializeSlots}) in case it has previously been executed and
-             * needs to run again, for example because the Source has been cached.
+            /*
+             * Reset instruction pointer and stack pointer of the context (see {@link
+             * EnterCodeNode#initializeSlots}) in case it has previously been executed and needs to
+             * run again, for example because the Source has been cached.
              */
             assert !activeContext.hasClosure() : "activeContext is expected to have no closure";
             final CompiledCodeObject method = activeContext.getCodeObject();

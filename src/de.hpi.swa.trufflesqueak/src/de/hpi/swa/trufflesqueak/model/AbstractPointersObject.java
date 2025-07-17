@@ -8,6 +8,8 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -316,24 +318,43 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return false;
     }
 
-    protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to) {
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            if (object0 == fromPointer) {
-                object0 = to[i];
+    protected final void layoutBecomeOneWay(final Object fromPointer, final Object toPointer) {
+        if (object0 == fromPointer) {
+            object0 = toPointer;
+        }
+        if (object1 == fromPointer) {
+            object1 = toPointer;
+        }
+        if (object2 == fromPointer) {
+            object2 = toPointer;
+        }
+        if (objectExtension != null) {
+            for (int i = 0; i < objectExtension.length; i++) {
+                if (objectExtension[i] == fromPointer) {
+                    objectExtension[i] = toPointer;
+                }
             }
-            if (object1 == fromPointer) {
-                object1 = to[i];
-            }
-            if (object2 == fromPointer) {
-                object2 = to[i];
-            }
-            if (objectExtension != null) {
-                for (int j = 0; j < objectExtension.length; j++) {
-                    final Object object = objectExtension[j];
-                    if (object == fromPointer) {
-                        objectExtension[j] = to[i];
-                    }
+        }
+    }
+
+    protected final void layoutBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        final Object migratedObject0 = fromToMap.get(object0);
+        if (migratedObject0 != null) {
+            object0 = migratedObject0;
+        }
+        final Object migratedObject1 = fromToMap.get(object1);
+        if (migratedObject1 != null) {
+            object1 = migratedObject1;
+        }
+        final Object migratedObject2 = fromToMap.get(object2);
+        if (migratedObject2 != null) {
+            object2 = migratedObject2;
+        }
+        if (objectExtension != null) {
+            for (int i = 0; i < objectExtension.length; i++) {
+                final Object migratedValue = fromToMap.get(objectExtension[i]);
+                if (migratedValue != null) {
+                    objectExtension[i] = migratedValue;
                 }
             }
         }
@@ -345,9 +366,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         tracer.addIfUnmarked(object1);
         tracer.addIfUnmarked(object2);
         if (objectExtension != null) {
-            for (final Object object : objectExtension) {
-                tracer.addIfUnmarked(object);
-            }
+            tracer.addAllIfUnmarked(objectExtension);
         }
         traceVariablePart(tracer);
     }

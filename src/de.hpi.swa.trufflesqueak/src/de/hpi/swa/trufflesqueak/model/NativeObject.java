@@ -433,7 +433,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         if (isShortType()) {
             return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
-            if (image.isWideStringClass(squeakClass)) {
+            /* Avoid lazy-loading of wideStringClass to avoid endless recursions. */
+            if (image.getWideStringClassOrNull() == squeakClass) {
                 return asStringFromWideString();
             } else {
                 return "int[" + getIntLength() + "]";

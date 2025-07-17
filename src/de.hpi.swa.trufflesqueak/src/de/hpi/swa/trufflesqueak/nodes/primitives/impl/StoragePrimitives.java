@@ -6,12 +6,9 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
@@ -22,8 +19,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
@@ -41,7 +36,6 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -60,17 +54,13 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
         protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
-            final SqueakImageContext image = getContext();
             if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -82,10 +72,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             if (copyHash) {
                 copyHash(fromPointers, toPointers);
             }
+            final SqueakImageContext image = getContext();
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            ObjectGraphUtils.pointersBecomeOneWay(image, fromPointersClone, toPointers);
-            patchTruffleFrames(fromPointersClone, toPointers);
+            image.objectGraphUtils.pointersBecomeOneWay(fromPointersClone, toPointers);
             image.flushMethodCacheAfterBecome();
             return fromArray;
         }
@@ -98,65 +88,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash()));
                 }
             }
-        }
-
-        @TruffleBoundary
-        private static void patchTruffleFrames(final Object[] fromPointers, final Object[] toPointers) {
-            final int fromPointersLength = fromPointers.length;
-
-            Truffle.getRuntime().iterateFrames((frameInstance) -> {
-                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-                if (!FrameAccess.isTruffleSqueakFrame(current)) {
-                    return null;
-                }
-                final Object[] arguments = current.getArguments();
-                for (int i = 0; i < arguments.length; i++) {
-                    final Object argument = arguments[i];
-                    for (int j = 0; j < fromPointersLength; j++) {
-                        final Object fromPointer = fromPointers[j];
-                        if (argument == fromPointer) {
-                            final Object toPointer = toPointers[j];
-                            arguments[i] = toPointer;
-                        } else if (argument instanceof final AbstractSqueakObjectWithClassAndHash o) {
-                            o.pointersBecomeOneWay(fromPointers, toPointers);
-                        }
-                    }
-                }
-
-                final ContextObject context = FrameAccess.getContext(current);
-                if (context != null) {
-                    for (int j = 0; j < fromPointersLength; j++) {
-                        final Object fromPointer = fromPointers[j];
-                        if (context == fromPointer) {
-                            final Object toPointer = toPointers[j];
-                            FrameAccess.setContext(current, (ContextObject) toPointer);
-                        } else {
-                            context.pointersBecomeOneWay(fromPointers, toPointers);
-                        }
-                    }
-                }
-
-                /*
-                 * Iterate over all stack slots here instead of stackPointer because in rare cases,
-                 * the stack is accessed behind the stackPointer.
-                 */
-                FrameAccess.iterateStackSlots(current, slotIndex -> {
-                    if (current.isObject(slotIndex)) {
-                        final Object stackObject = current.getObject(slotIndex);
-                        for (int j = 0; j < fromPointersLength; j++) {
-                            final Object fromPointer = fromPointers[j];
-                            if (stackObject == fromPointer) {
-                                final Object toPointer = toPointers[j];
-                                assert toPointer != null : "Unexpected `null` value";
-                                current.setObject(slotIndex, toPointer);
-                            } else if (stackObject instanceof final AbstractSqueakObjectWithClassAndHash o) {
-                                o.pointersBecomeOneWay(fromPointers, toPointers);
-                            }
-                        }
-                    }
-                });
-                return null;
-            });
         }
     }
 
@@ -445,23 +376,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 139)
     protected abstract static class PrimNextObjectNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-
         @Specialization
         protected final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver) {
-            return getNext(receiver, ObjectGraphUtils.allInstances(getContext()));
-        }
-
-        @TruffleBoundary
-        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final Collection<AbstractSqueakObjectWithClassAndHash> allInstances) {
-            boolean foundMyself = false;
-            for (final AbstractSqueakObjectWithClassAndHash instance : allInstances) {
-                if (instance == receiver) {
-                    foundMyself = true;
-                } else if (foundMyself) {
-                    return instance;
-                }
-            }
-            return allInstances.iterator().next(); // first
+            return getContext().objectGraphUtils.nextObject(receiver);
         }
     }
 
@@ -596,7 +513,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver) {
             final SqueakImageContext image = getContext();
-            return image.asArrayOfObjects(ArrayUtils.toArray(ObjectGraphUtils.allInstances(image)));
+            return image.asArrayOfObjects(image.objectGraphUtils.allInstances());
         }
     }
 

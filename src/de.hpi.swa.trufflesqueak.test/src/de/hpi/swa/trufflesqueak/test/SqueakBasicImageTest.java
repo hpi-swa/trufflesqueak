@@ -22,6 +22,7 @@ import org.junit.runners.MethodSorters;
 import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 
@@ -62,9 +63,9 @@ public final class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage 
 
     @Test
     public void test05OnError() {
-        final Object result = compilerEvaluate("[[self error: 'foobar'] on: Error do: [:err| ^ err messageText]]value");
-        assertEquals("'foobar'", result.toString());
-        assertEquals("'foobar'", compilerEvaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]").toString());
+        final NativeObject result = (NativeObject) compilerEvaluate("[[self error: 'foobar'] on: Error do: [:err| ^ err messageText]]value");
+        assertEquals("foobar", result.asStringUnsafe());
+        assertEquals("foobar", ((NativeObject) compilerEvaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]")).asStringUnsafe());
         assertEquals(BooleanObject.TRUE, compilerEvaluate("[[self error: 'foobar'] on: ZeroDivide do: [:e|]] on: Error do: [:err| ^ true]"));
         assertEquals(BooleanObject.TRUE, compilerEvaluate("[self error: 'foobar'. false] on: Error do: [:err| ^ err return: true]"));
     }
@@ -121,20 +122,20 @@ public final class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage 
 
     @Test
     public void test12CannotReturnAtStart() {
-        assertEquals("'bla2'", evaluate("""
+        assertEquals("bla2", ((NativeObject) evaluate("""
                         | result |
                         [ result := [^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork.
                         Processor yield.
-                        result""").toString());
+                        result""")).asStringUnsafe());
     }
 
     @Test
     public void test13CannotReturnInTheMiddle() {
-        assertEquals("'bla2'", evaluate("""
+        assertEquals("bla2", ((NativeObject) evaluate("""
                         | result |
                         [ result := [thisContext yourself. ^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork.
                         Processor yield.
-                        result""").toString());
+                        result""")).asStringUnsafe());
     }
 
     @Test

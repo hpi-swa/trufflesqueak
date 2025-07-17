@@ -32,8 +32,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObject
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -78,7 +78,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         @Specialization(guards = "!receiver.hasMaterializedSender()")
-        protected final AbstractSqueakObject doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext) {
+        protected static final AbstractSqueakObject doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext) {
             // Sender is not materialized, so avoid materialization by walking Truffle frames.
             final boolean[] foundMyself = {false};
             final AbstractSqueakObject result = Truffle.getRuntime().iterateFrames((frameInstance) -> {
@@ -96,11 +96,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return NilObject.SINGLETON;
                     }
                     if (!FrameAccess.hasClosure(current) && FrameAccess.getCodeObject(current).isUnwindMarked()) {
-                        if (context != null) {
-                            return context;
-                        } else {
-                            return ContextObject.create(getContext(), frameInstance);
-                        }
+                        assert context != null : "Contexts are always created for methods marked for unwind";
+                        return context;
                     }
                 }
                 return null;
@@ -119,7 +116,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 196)
     protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final ContextObject doUnwindAndTerminate(final ContextObject receiver, final ContextObject previousContext) {
+        protected static final ContextObject doUnwindAndTerminate(final ContextObject receiver, final ContextObject previousContext) {
             /*
              * Terminate all the Contexts between me and previousContext, if previousContext is on
              * my Context stack. Make previousContext my sender.
@@ -135,7 +132,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        private void terminateBetween(final ContextObject start, final ContextObject end) {
+        private static void terminateBetween(final ContextObject start, final ContextObject end) {
             ContextObject current = start;
             while (current.hasMaterializedSender()) {
                 final AbstractSqueakObject sender = current.getSender();
@@ -152,7 +149,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private void terminateBetween(final FrameMarker start, final ContextObject end) {
+        private static void terminateBetween(final FrameMarker start, final ContextObject end) {
             assert start != null : "Unexpected `null` value";
             final ContextObject[] bottomContextOnTruffleStack = new ContextObject[1];
             final ContextObject result = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<>() {
@@ -188,7 +185,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private void terminateBetweenRecursively(final ContextObject start, final ContextObject end) {
+        private static void terminateBetweenRecursively(final ContextObject start, final ContextObject end) {
             terminateBetween(start, end);
         }
     }
@@ -243,11 +240,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     }
                 } else {
                     if (FrameAccess.getCodeObject(current).isExceptionHandlerMarked()) {
-                        if (context != null) {
-                            return context;
-                        } else {
-                            return ContextObject.create(getContext(), frameInstance);
-                        }
+                        assert context != null : "Contexts are always created for methods marked as exception handler";
+                        return context;
                     } else {
                         lastSender[0] = FrameAccess.getSender(current);
                     }

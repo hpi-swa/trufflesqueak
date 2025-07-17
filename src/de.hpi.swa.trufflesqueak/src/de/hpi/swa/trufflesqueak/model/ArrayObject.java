@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -338,18 +340,34 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
         if (isObjectType()) {
-            pointersBecomeOneWay(getObjectStorage(), from, to);
+            final Object[] objectStorage = getObjectStorage();
+            for (int i = 0; i < objectStorage.length; i++) {
+                if (objectStorage[i] == fromPointer) {
+                    objectStorage[i] = toPointer;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        if (isObjectType()) {
+            final Object[] objectStorage = getObjectStorage();
+            for (int i = 0; i < objectStorage.length; i++) {
+                final Object migratedObject = fromToMap.get(objectStorage[i]);
+                if (migratedObject != null) {
+                    objectStorage[i] = migratedObject;
+                }
+            }
         }
     }
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
         if (isObjectType()) {
-            for (final Object value : getObjectStorage()) {
-                tracer.addIfUnmarked(value);
-            }
+            tracer.addAllIfUnmarked(getObjectStorage());
         }
     }
 

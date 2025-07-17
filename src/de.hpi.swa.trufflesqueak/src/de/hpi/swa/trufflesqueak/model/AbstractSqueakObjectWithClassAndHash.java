@@ -6,7 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
@@ -40,6 +46,19 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     private ClassObject squeakClass;
     private int squeakHashAndBits;
 
+    /**
+     * Support for atomically accessing the flags contained within squeakHashAndBits.
+     */
+    private static final VarHandle HASH_AND_BITS_HANDLE;
+
+    static {
+        try {
+            HASH_AND_BITS_HANDLE = MethodHandles.lookup().findVarHandle(AbstractSqueakObjectWithClassAndHash.class, "squeakHashAndBits", int.class);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw CompilerDirectives.shouldNotReachHere("Unable to find a VarHandle for squeakHashAndBits", e);
+        }
+    }
+
     // For special/well-known objects only.
     protected AbstractSqueakObjectWithClassAndHash() {
         this(HASH_UNINITIALIZED, null);
@@ -59,7 +78,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits = AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED;
         squeakClass = klass;
         if (markingFlag) {
-            toggleMarkingFlag();
+            squeakHashAndBits |= MARK_BIT; // set MARK_BIT
         }
     }
 
@@ -130,16 +149,40 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHashAndBits = (squeakHashAndBits & ~SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) + newHash;
     }
 
-    public final boolean getMarkingFlag() {
-        return (squeakHashAndBits & MARK_BIT) != 0;
+    /**
+     * @return <tt>true</tt> if marked with <tt>currentMarkingFlag</tt>, <tt>false</tt> otherwise;
+     *         thread safe
+     */
+    public final boolean isMarkedWith(final boolean currentMarkingFlag) {
+        return (((int) HASH_AND_BITS_HANDLE.getAcquire(this) & MARK_BIT) != 0) == currentMarkingFlag;
     }
 
-    private void toggleMarkingFlag() {
-        squeakHashAndBits ^= MARK_BIT;
+    /**
+     * Mark this object; thread safe.
+     *
+     * @return <tt>false</tt> if already marked, <tt>true</tt> otherwise
+     */
+    public final boolean tryToMarkWith(final boolean currentMarkingFlag) {
+        int oldValue, newValue;
+        /*
+         * Atomically set the new value with release semantics. If another thread modified 'flags'
+         * since our getAcquire, CAS will fail and we retry.
+         */
+        do {
+            oldValue = (int) HASH_AND_BITS_HANDLE.getAcquire(this);
+            if (((oldValue & MARK_BIT) != 0) == currentMarkingFlag) {
+                return false; // Already marked
+            }
+            newValue = oldValue ^ MARK_BIT; // Flip MARK_BIT
+        } while (!HASH_AND_BITS_HANDLE.compareAndSet(this, oldValue, newValue));
+        return true; // Successfully marked
     }
 
-    public final boolean isMarked(final boolean currentMarkingFlag) {
-        return getMarkingFlag() == currentMarkingFlag;
+    /**
+     * Unmark this object; thread safe.
+     */
+    public final void unmarkWith(final boolean currentMarkingFlag) {
+        tryToMarkWith(!currentMarkingFlag);
     }
 
     @Override
@@ -171,43 +214,16 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
-    /**
-     * @return <tt>false</tt> if already marked, <tt>true</tt> otherwise
-     */
-    public final boolean tryToMark(final boolean currentMarkingFlag) {
-        if (getMarkingFlag() == currentMarkingFlag) {
-            return false;
-        } else {
-            toggleMarkingFlag();
-            return true;
-        }
-    }
-
-    public final void unmark(final boolean currentMarkingFlag) {
-        assert getMarkingFlag() == currentMarkingFlag : "Object not marked with currentMarkingFlag: " + currentMarkingFlag;
-        toggleMarkingFlag();
-    }
-
-    @SuppressWarnings("unused")
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+    public void pointersBecomeOneWay(@SuppressWarnings("unused") final Object fromPointer, @SuppressWarnings("unused") final Object toPointer) {
         // Do nothing by default.
     }
 
-    protected static final void pointersBecomeOneWay(final Object[] target, final Object[] from, final Object[] to) {
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            for (int j = 0; j < target.length; j++) {
-                final Object newPointer = target[j];
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    target[j] = toPointer;
-                }
-            }
-        }
+    public void pointersBecomeOneWay(@SuppressWarnings("unused") final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        // Do nothing by default.
     }
 
     public void tracePointers(@SuppressWarnings("unused") final ObjectTracer objectTracer) {
-        // Nothing to trace by default.
+        // Do nothing by default.
     }
 
     public void trace(final SqueakImageWriter writer) {

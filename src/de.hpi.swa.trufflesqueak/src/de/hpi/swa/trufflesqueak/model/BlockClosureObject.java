@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -271,22 +273,43 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            if (receiver == fromPointer) {
-                receiver = to[i];
+    public void pointersBecomeOneWay(final Object fromPointer, final Object toPointer) {
+        if (receiver == fromPointer) {
+            receiver = toPointer;
+        }
+        if (block == fromPointer && toPointer instanceof final CompiledCodeObject b) {
+            block = b;
+        }
+        if (outerContext == fromPointer && toPointer instanceof final ContextObject c && c != outerContext) {
+            setOuterContext(c);
+        }
+        for (int i = 0; i < copiedValues.length; i++) {
+            if (copiedValues[i] == fromPointer) {
+                copiedValues[i] = toPointer;
             }
-            if (block == fromPointer && to[i] instanceof final CompiledCodeObject b) {
-                block = b;
+        }
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        if (receiver != null) {
+            final Object toReceiver = fromToMap.get(receiver);
+            if (toReceiver != null) {
+                receiver = toReceiver;
             }
-            if (outerContext == fromPointer && fromPointer != to[i] && to[i] instanceof final ContextObject c) {
-                setOuterContext(c);
-            }
-            for (int j = 0; j < copiedValues.length; j++) {
-                final Object copiedValue = copiedValues[j];
-                if (copiedValue == fromPointer) {
-                    copiedValues[j] = to[i];
+        }
+        if (block != null && fromToMap.get(block) instanceof final CompiledCodeObject b) {
+            block = b;
+        }
+        if (outerContext != null && fromToMap.get(outerContext) instanceof final ContextObject c && c != outerContext) {
+            setOuterContext(c);
+        }
+        for (int i = 0; i < copiedValues.length; i++) {
+            final Object copiedValue = copiedValues[i];
+            if (copiedValue != null) {
+                final Object migratedValue = fromToMap.get(copiedValue);
+                if (migratedValue != null) {
+                    copiedValues[i] = migratedValue;
                 }
             }
         }
@@ -294,17 +317,17 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
-        tracer.addIfUnmarked(getOuterContext());
-        for (final Object value : getCopiedValues()) {
-            tracer.addIfUnmarked(value);
-        }
+        tracer.addIfUnmarked(receiver);
+        tracer.addIfUnmarked(block);
+        tracer.addIfUnmarked(outerContext);
+        tracer.addAllIfUnmarked(copiedValues);
     }
 
     @Override
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
         writer.traceIfNecessary(outerContext);
-        writer.traceAllIfNecessary(getCopiedValues());
+        writer.traceAllIfNecessary(copiedValues);
     }
 
     @Override

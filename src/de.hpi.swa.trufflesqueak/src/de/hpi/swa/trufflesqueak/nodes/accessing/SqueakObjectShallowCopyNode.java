@@ -112,7 +112,7 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     @Specialization(guards = "receiver.hasInstanceVariables()")
     protected static final ClassObject doClass(final Node node, final ClassObject receiver,
                     @Exclusive @Cached final ArrayObjectShallowCopyNode arrayCopyNode) {
-        return receiver.shallowCopy(arrayCopyNode.execute(node, receiver.getInstanceVariablesOrNull()));
+        return receiver.shallowCopy(node, arrayCopyNode);
     }
 
     @Specialization

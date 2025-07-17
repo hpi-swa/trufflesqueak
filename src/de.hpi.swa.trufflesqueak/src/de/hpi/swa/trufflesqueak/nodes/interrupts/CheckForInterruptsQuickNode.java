@@ -12,6 +12,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -22,13 +23,14 @@ import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 public abstract class CheckForInterruptsQuickNode extends AbstractNode {
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
-    public static final CheckForInterruptsQuickNode createForSend(final SqueakImageContext image, final CompiledCodeObject code) {
+    public static final CheckForInterruptsQuickNode createForSend(final CompiledCodeObject code) {
         /*
          * Only check for interrupts if method is relatively large. Avoid check if primitive method
          * or if a closure is activated (effectively what #primitiveClosureValueNoContextSwitch is
          * for).
          */
-        if (image.interruptHandlerDisabled() || code.hasPrimitive() || //
+
+        if (SqueakImageContext.getSlow().interruptHandlerDisabled() || code.hasPrimitive() || //
                         code.getBytes().length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS || //
                         /* FullBlockClosure or normal closure */
                         code.isCompiledBlock() || code.hasOuterMethod()) {
@@ -91,14 +93,15 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
             /* Exclude interrupts case from compilation. */
             CompilerDirectives.transferToInterpreter();
             final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
+            boolean switchToNewProcess = false;
             if (istate.tryInterruptPending()) {
-                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+                switchToNewProcess |= SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
             }
             if (istate.tryWakeUpTickTrigger()) {
-                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+                switchToNewProcess |= SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
             }
             if (istate.tryPendingFinalizations()) {
-                SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+                switchToNewProcess |= SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
             }
             if (istate.trySemaphoresToSignal()) {
                 final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
@@ -106,9 +109,17 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
                     final Object[] semaphores = externalObjects.getObjectStorage();
                     Integer semaIndex;
                     while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                        SignalSemaphoreNode.executeUncached(frame, image, semaphores[semaIndex - 1]);
+                        switchToNewProcess |= SignalSemaphoreNode.executeUncached(frame, image, semaphores[semaIndex - 1]);
                     }
                 }
+            }
+            /*
+             * OpenSmalltalk VM signals all semaphores and switches to the highest priority process.
+             * If we do not do this, small Delays in a loop in the image will prevent the code after
+             * the wake-up-tick handler from getting executed (finalizations, for example).
+             */
+            if (switchToNewProcess) {
+                throw ProcessSwitch.SINGLETON;
             }
         }
 

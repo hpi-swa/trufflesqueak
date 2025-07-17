@@ -79,7 +79,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 import sun.misc.Unsafe;
 
@@ -115,7 +114,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
                 return NilObject.SINGLETON; // Class has not been instantiated yet
             }
-            return ObjectGraphUtils.someInstanceOf(getContext(), classObject);
+            return getContext().objectGraphUtils.someInstanceOf(classObject);
         }
     }
 
@@ -789,7 +788,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
                     return getContext().newEmptyArray(); // Class has not been instantiated yet
                 } else {
-                    return image.asArrayOfObjects(ObjectGraphUtils.allInstancesOf(image, classObject));
+                    return image.asArrayOfObjects(image.objectGraphUtils.allInstancesOf(classObject));
                 }
             }
         }

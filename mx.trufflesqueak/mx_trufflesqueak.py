@@ -365,10 +365,3 @@ mx_sdk.register_graalvm_component(
 
 
 mx_gate.add_gate_runner(_SUITE, _trufflesqueak_gate_runner)
-
-mx.update_commands(
-    "mx",
-    {
-        "spotbugs": [lambda x: 0, ""],  # spotbugs temporarily disabled
-    },
-)
