@@ -536,9 +536,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             /* Padding not required. */
         } else if (isTruffleStringType()) {
             final int numSlots = getNumSlots();
-            final int formatOffset = numSlots * BYTE_TO_WORD - getTruffleStringByteLength();
             // TODO unsure if this is correct
-            if (writeHeader(writer, formatOffset)) {
+            if (writeHeader(writer)) {
                 final MutableTruffleString string = getTruffleStringStorage();
                 final TruffleString.Encoding encoding = getTruffleStringEncoding();
                 writer.writeBytes(string.copyToByteArrayUncached(encoding));
