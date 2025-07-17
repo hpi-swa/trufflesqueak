@@ -130,7 +130,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * primAddressLookupResult.
          */
         @Specialization(guards = "address.isTruffleStringType()")
-        protected static final Object doWork(final Object receiver, final NativeObject address, @Cached TruffleString.GetInternalByteArrayNode getBytesNode) {
+        protected static final Object doWork(final Object receiver, final NativeObject address, @Cached final TruffleString.GetInternalByteArrayNode getBytesNode) {
             try {
                 LogUtils.SOCKET.finer(() -> "Starting lookup for address " + address);
                 Resolver.startAddressLookUp(address.getTruffleStringAsReadonlyBytes(getBytesNode));
@@ -179,7 +179,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveResolverLocalAddress")
     protected abstract static class PrimResolverLocalAddressNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver, @Cached final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             final byte[] address = Resolver.getLoopbackAddress();
             LogUtils.SOCKET.finer(() -> "Local Address: " + Resolver.addressBytesToString(address));
             return getContext().asByteArray(address, fromByteArrayNode);
@@ -365,7 +365,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketRemoteAddress")
     protected abstract static class PrimSocketRemoteAddressNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+        protected final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, @Cached final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             try {
                 return getContext().asByteArray(getRemoteAddress(sd), fromByteArrayNode);
             } catch (final IOException e) {
@@ -450,7 +450,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketLocalAddress")
     protected abstract static class PrimSocketLocalAddressNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+        protected final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, @Cached final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             try {
                 return getContext().asByteArray(getLocalAddress(sd), fromByteArrayNode);
             } catch (final IOException e) {

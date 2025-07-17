@@ -84,13 +84,13 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final NativeObject doString(final Node node, final String value,
-                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile, @Cached TruffleString.FromJavaStringNode fromJavaStringNode, @Shared("truffleString") @Cached MutableTruffleString.AsMutableTruffleStringNode asMutableTruffleStringNode) {
+                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile, @Cached final TruffleString.FromJavaStringNode fromJavaStringNode, @Shared("truffleString") @Cached final MutableTruffleString.AsMutableTruffleStringNode asMutableTruffleStringNode) {
         return getContext(node).asString(value, wideStringProfile, node, fromJavaStringNode, asMutableTruffleStringNode);
     }
 
     @Specialization
     protected static final NativeObject doTruffleString(final Node node, final TruffleString value,
-                                                        @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile, @Shared("truffleString") @Cached MutableTruffleString.AsMutableTruffleStringNode asMutableTruffleStringNode) {
+                                                        @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile, @Shared("truffleString") @Cached final MutableTruffleString.AsMutableTruffleStringNode asMutableTruffleStringNode) {
         return getContext(node).asString(value, wideStringProfile, node, asMutableTruffleStringNode);
     }
 

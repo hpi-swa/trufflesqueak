@@ -151,7 +151,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         @CompilationFinal private NativeObject sessionByteArray;
 
         @Specialization
-        protected final NativeObject doSession(@SuppressWarnings("unused") final Object receiver, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+        protected final NativeObject doSession(@SuppressWarnings("unused") final Object receiver, @Cached final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             if (sessionByteArray == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final byte[] bytes = new byte[4];

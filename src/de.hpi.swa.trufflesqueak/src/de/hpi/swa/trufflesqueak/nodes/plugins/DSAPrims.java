@@ -32,7 +32,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveExpandBlock")
     protected abstract static class PrimExpandBlockNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"buf.isTruffleStringType()", "expanded.isIntType()", "expanded.getIntLength() == 80", "buf.getTruffleStringByteLength() == 64"})
-        protected static final Object doExpand(final Object receiver, final NativeObject buf, final NativeObject expanded, @Cached TruffleString.GetInternalByteArrayNode getBytesNode) {
+        protected static final Object doExpand(final Object receiver, final NativeObject buf, final NativeObject expanded, @Cached final TruffleString.GetInternalByteArrayNode getBytesNode) {
             final byte[] bytes = buf.getTruffleStringAsReadonlyBytes(getBytesNode);
             for (int i = 0; i <= 15; i++) {
                 expanded.setInt(i, VarHandleUtils.getIntReversed(bytes, i));

@@ -34,7 +34,7 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveMakeUUID")
     protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = {"receiver.isTruffleStringType()", "receiver.getTruffleStringByteLength() == 16"})
-        protected static final Object doUUID(final NativeObject receiver, @Cached MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+        protected static final Object doUUID(final NativeObject receiver, @Cached final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             // TODO prevent allocation of a new byte array, use truffle string storage directly
             byte[] uuidBytes = new byte[16];
             TruffleString.Encoding encoding = receiver.getTruffleStringEncoding();

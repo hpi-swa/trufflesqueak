@@ -681,7 +681,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
          * SecureHashAlgorithmTest>>testEmptyInput).
          */
         @Specialization(guards = {"receiver.isTruffleStringType()", "getContext().isLargeIntegerClass(receiver.getSqueakClass())"})
-        protected final Object doNativeObject(final NativeObject receiver, @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+        protected final Object doNativeObject(final NativeObject receiver, @Cached final TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
             return new LargeIntegerObject(getContext(), receiver.getSqueakClass(), receiver.getTruffleStringAsBytesCopy(copyToByteArrayNode)).reduceIfPossible();
         }
     }

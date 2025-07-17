@@ -47,7 +47,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(names = "primImageHeight")
     protected abstract static class PrimImageHeightNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "aJPEGDecompressStruct.isTruffleStringType()")
-        protected static final long doHeight(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct, @Cached TruffleString.GetInternalByteArrayNode getBytesNode) {
+        protected static final long doHeight(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct, @Cached final TruffleString.GetInternalByteArrayNode getBytesNode) {
             return VarHandleUtils.getLong(aJPEGDecompressStruct.getTruffleStringAsReadonlyBytes(getBytesNode), 0);
         }
     }
@@ -66,7 +66,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(names = "primImageWidth")
     protected abstract static class PrimImageWidthNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "aJPEGDecompressStruct.isTruffleStringType()")
-        protected static final long doWidth(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct, @Cached TruffleString.GetInternalByteArrayNode getBytesNode) {
+        protected static final long doWidth(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct, @Cached final TruffleString.GetInternalByteArrayNode getBytesNode) {
             return VarHandleUtils.getLong(aJPEGDecompressStruct.getTruffleStringAsReadonlyBytes(getBytesNode), 1);
         }
     }

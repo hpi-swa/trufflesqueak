@@ -457,7 +457,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFileReadNode extends AbstractFilePluginPrimitiveNode implements Primitive4WithFallback {
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isTruffleStringType()", "inBounds(startIndex, count, target.getTruffleStringByteLength())"})
-        protected static final long doReadTruffleString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count,@Cached TruffleString.GetInternalByteArrayNode internalByteArrayNode) {
+        protected static final long doReadTruffleString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count,@Cached final TruffleString.GetInternalByteArrayNode internalByteArrayNode) {
             final long read = readFrom(getChannelOrPrimFail(fd), target.getTruffleStringAsReadonlyBytes(internalByteArrayNode), (int) startIndex - 1, (int) count);
             return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
         }
@@ -656,20 +656,20 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
-        protected static long doWriteByteString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+        protected static long doWriteByteString(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached final TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
             final byte[] bytes = content.getTruffleStringAsBytesCopy(copyToByteArrayNode);
             return fileWriteFromAt(fd, count, bytes, startIndex, 1);
         }
 
         @Specialization(guards = {"isStdoutFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
-        protected final long doWriteTruffleStringToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+        protected final long doWriteTruffleStringToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached final TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
             writeToOutputStream(getContext().env.out(), content.getTruffleStringAsBytesCopy(copyToByteArrayNode), (int) (startIndex - 1), (int) count);
             return count;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStderrFileDescriptor(fd)", "content.isTruffleStringType()", "inBounds(startIndex, count, content.getTruffleStringByteLength())"})
-        protected final long doWriteTruffleStringToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
+        protected final long doWriteTruffleStringToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count, @Cached.Shared("truffleStringCopy") @Cached final TruffleString.CopyToByteArrayNode copyToByteArrayNode) {
             writeToOutputStream(getContext().env.err(), content.getTruffleStringAsBytesCopy(copyToByteArrayNode), (int) (startIndex - 1), (int) count);
             return count;
         }

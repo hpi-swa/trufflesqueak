@@ -63,7 +63,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
                      */
                     @Cached final AbstractPointersObjectReadNode pointersReadValuesNode,
                     @Cached final ArrayObjectReadNode arrayReadNode,
-                    @Cached TruffleString.GetInternalByteArrayNode getInternalByteArrayNode) {
+                    @Cached final TruffleString.GetInternalByteArrayNode getInternalByteArrayNode) {
         final byte[] selectorBytes = MiscUtils.toBytes(selector);
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
