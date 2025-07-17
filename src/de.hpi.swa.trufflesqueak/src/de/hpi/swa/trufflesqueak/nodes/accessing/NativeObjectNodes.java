@@ -33,7 +33,7 @@ public final class NativeObjectNodes {
     @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeObjectReadNode extends AbstractNode {
 
-        public abstract Object execute(Node node, NativeObject obj, long index);
+        public abstract Object execute(Node node, NativeObject obj, final long index);
 
         @Specialization(guards = "obj.isShortType()")
         protected static final long doNativeShorts(final NativeObject obj, final long index) {
@@ -69,7 +69,7 @@ public final class NativeObjectNodes {
     @SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
     public abstract static class NativeObjectWriteNode extends AbstractNode {
 
-        public abstract void execute(Node node, NativeObject obj, long index, Object value);
+        public abstract void execute(Node node, NativeObject obj, final long index, Object value);
 
         @Specialization(guards = {"obj.isShortType()", "value >= 0", "value <= SHORT_MAX"})
         protected static final void doNativeShorts(final NativeObject obj, final long index, final long value) {
@@ -87,7 +87,7 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "value >= 0", "value <= BYTE_MAX"})
-        protected static final void doNativeByteString(NativeObject obj, long index, final long value, @Cached.Shared("truffleString") @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
+        protected static final void doNativeByteString(NativeObject obj, final long index, final long value, @Cached.Shared("truffleString") @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
             obj.writeByteTruffleString((int) index, (byte) value, writeByteNode);
         }
 
@@ -125,7 +125,7 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "inByteRange(value)"})
-        protected static final void doNativeByteStringChar(NativeObject obj, long index, final char value, @Cached.Shared("truffleString") @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
+        protected static final void doNativeByteStringChar(NativeObject obj, final long index, final char value, @Cached.Shared("truffleString") @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
             doNativeByteString(obj, index, value, writeByteNode);
         }
 
