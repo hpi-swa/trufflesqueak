@@ -236,6 +236,10 @@ public final class FrameAccess {
         return frame.getIntStatic(SlotIndicies.INSTRUCTION_POINTER.ordinal());
     }
 
+    public static boolean isDead(final Frame frame) {
+        return getInstructionPointer(frame) < 0;
+    }
+
     public static void setInstructionPointer(final Frame frame, final int value) {
         frame.setIntStatic(SlotIndicies.INSTRUCTION_POINTER.ordinal(), value);
     }

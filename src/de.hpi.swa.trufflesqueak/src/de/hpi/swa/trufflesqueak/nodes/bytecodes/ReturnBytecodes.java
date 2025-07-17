@@ -12,6 +12,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -72,8 +73,10 @@ public final class ReturnBytecodes {
         protected Object execute(final VirtualFrame frame, final Object returnValue) {
             assert !FrameAccess.hasClosure(frame);
             if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
+                // ToDo: It may be that the sender is always materialized, but it is not a
+                // requirement at this time.
                 assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
-                throw new NonLocalReturn(returnValue, FrameAccess.getSender(frame));
+                throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame), null);
             } else {
                 return returnValue;
             }
@@ -90,7 +93,7 @@ public final class ReturnBytecodes {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             if (homeContext.canBeReturnedTo()) {
-                throw new NonLocalReturn(returnValue, homeContext.getFrameSender());
+                throw new NonLocalReturn(returnValue, homeContext);
             } else {
                 CompilerDirectives.transferToInterpreter();
                 final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
@@ -176,17 +179,7 @@ public final class ReturnBytecodes {
         @Override
         public final Object executeReturnSpecialized(final VirtualFrame frame) {
             if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
-                // Target is sender of closure's home context.
-                final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-                if (homeContext.canBeReturnedTo()) {
-                    throw new NonLocalReturn(getReturnValue(frame), homeContext.getFrameSender());
-                } else {
-                    CompilerDirectives.transferToInterpreter();
-                    final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
-                    final SqueakImageContext image = getContext();
-                    image.cannotReturn.executeAsSymbolSlow(image, frame, contextObject, getReturnValue(frame));
-                    throw CompilerDirectives.shouldNotReachHere();
-                }
+                throw new NonVirtualReturn(getReturnValue(frame), FrameAccess.getSender(frame), null);
             } else {
                 return getReturnValue(frame);
             }

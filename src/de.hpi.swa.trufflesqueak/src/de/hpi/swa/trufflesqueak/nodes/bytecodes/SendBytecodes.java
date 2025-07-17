@@ -141,7 +141,7 @@ public final class SendBytecodes {
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.getTargetContext() == FrameAccess.getContext(frame))) {
+                if (nvrProfile.profile(nvr.getTargetContextMarkerOrNil() == FrameAccess.getMarker(frame) || nvr.getTargetContextMarkerOrNil() == FrameAccess.getContext(frame))) {
                     result = nvr.getReturnValue();
                 } else {
                     throw nvr;

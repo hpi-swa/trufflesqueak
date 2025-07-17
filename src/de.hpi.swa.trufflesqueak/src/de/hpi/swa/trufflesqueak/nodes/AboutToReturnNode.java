@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AboutToReturnNodeFactory.AboutToReturnImplNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
@@ -76,8 +77,18 @@ public abstract class AboutToReturnNode extends AbstractNode {
         @Specialization(guards = {"hasModifiedSender(frame)"})
         protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
                         @Cached("createAboutToReturnSend()") final Dispatch2Node sendAboutToReturnNode) {
-            assert nlr.getTargetContextOrMarker() instanceof ContextObject;
-            sendAboutToReturnNode.execute(frame, FrameAccess.getContext(frame), nlr.getReturnValue(), nlr.getTargetContextOrMarker());
+            // @formatter:off
+            /*
+             *  aboutToReturn: result through: firstUnwindContext
+             *      "Called from VM when an unwindBlock is found between self and its home.
+             *      Return to home's sender, executing unwind blocks on the way."
+             *
+             *      self methodReturnContext return: result through: firstUnwindContext
+             */
+            // @formatter:on
+            // Message receiver should be home Context to return from.
+            // Last argument should be the first unwind-marked Context or nil.
+            sendAboutToReturnNode.execute(frame, nlr.getHomeContext(), nlr.getReturnValue(), NilObject.SINGLETON);
         }
     }
 
