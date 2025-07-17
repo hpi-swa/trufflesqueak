@@ -181,9 +181,9 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public int getNumSlots() {
         CompilerAsserts.neverPartOfCompilation();
         if (isShortType()) {
-            return (int) Math.ceil((double) getShortLength() / SHORT_TO_WORD);
+            return getNumSlots(getShortLength(), SHORT_TO_WORD);
         } else if (isIntType()) {
-            return (int) Math.ceil((double) getIntLength() / INTEGER_TO_WORD);
+            return getNumSlots(getIntLength(), INTEGER_TO_WORD);
         } else if (isLongType()) {
             return getLongLength();
         } else if (isTruffleStringType()){
@@ -191,6 +191,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         } else {
             throw SqueakException.create("Unexpected NativeObject");
         }
+    }
+
+    private static int getNumSlots(final int length, final int size) {
+        return length / size + (length % size == 0 ? 0 : 1);
     }
 
     @Override
@@ -501,24 +505,26 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void write(final SqueakImageWriter writer) {
         if (isShortType()) {
-            final int numSlots = getNumSlots();
-            final int formatOffset = numSlots * SHORT_TO_WORD - getShortLength();
+            final int shortLength = getShortLength();
+            final int numSlots = getNumSlots(shortLength, SHORT_TO_WORD);
+            final int formatOffset = numSlots * SHORT_TO_WORD - shortLength;
             assert 0 <= formatOffset && formatOffset <= 3 : "too many odd bits (see instSpec)";
-            if (writeHeader(writer, formatOffset)) {
+            if (writeHeader(writer, numSlots, formatOffset)) {
                 for (final short value : getShortStorage()) {
                     writer.writeShort(value);
                 }
-                writePaddingIfAny(writer, getShortLength() * Short.BYTES);
+                writePaddingIfAny(writer, shortLength * Short.BYTES);
             }
         } else if (isIntType()) {
-            final int numSlots = getNumSlots();
-            final int formatOffset = numSlots * INTEGER_TO_WORD - getIntLength();
+            final int intLength = getIntLength();
+            final int numSlots = getNumSlots(intLength, INTEGER_TO_WORD);
+            final int formatOffset = numSlots * INTEGER_TO_WORD - intLength;
             assert 0 <= formatOffset && formatOffset <= 1 : "too many odd bits (see instSpec)";
-            if (writeHeader(writer, formatOffset)) {
+            if (writeHeader(writer, numSlots, formatOffset)) {
                 for (final int value : getIntStorage()) {
                     writer.writeInt(value);
                 }
-                writePaddingIfAny(writer, getIntLength() * Integer.BYTES);
+                writePaddingIfAny(writer, intLength * Integer.BYTES);
             }
         } else if (isLongType()) {
             if (!writeHeader(writer)) {

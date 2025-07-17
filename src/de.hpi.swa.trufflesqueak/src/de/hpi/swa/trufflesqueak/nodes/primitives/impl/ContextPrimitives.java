@@ -121,7 +121,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
              * Terminate all the Contexts between me and previousContext, if previousContext is on
              * my Context stack. Make previousContext my sender.
              */
-            terminateBetween(receiver, previousContext);
+            if (hasSenderChainFromToAndTerminateIf(receiver, previousContext, false)) {
+                hasSenderChainFromToAndTerminateIf(receiver, previousContext, true);
+            }
             receiver.setSender(previousContext);
             return receiver;
         }
@@ -132,61 +134,104 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        private static void terminateBetween(final ContextObject start, final ContextObject end) {
-            ContextObject current = start;
-            while (current.hasMaterializedSender()) {
-                final AbstractSqueakObject sender = current.getSender();
-                if (current != start) {
-                    current.terminate();
+        /**
+         * Returns true if endContext is found on the sender chain of startContext. If terminate is
+         * true, terminate Contexts while following the sender chain.
+         */
+        private static boolean hasSenderChainFromToAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final boolean terminate) {
+            // First, terminate materialized Contexts.
+            ContextObject currentContext = startContext;
+            while (currentContext.hasMaterializedSender()) {
+                final AbstractSqueakObject sender = currentContext.getSender();
+                if (terminate && currentContext != startContext) {
+                    currentContext.terminate();
                 }
-                if (sender == NilObject.SINGLETON || sender == end) {
-                    return;
+                if (sender == NilObject.SINGLETON || sender == endContext) {
+                    return sender == endContext;
                 } else {
-                    current = (ContextObject) sender;
+                    currentContext = (ContextObject) sender;
                 }
             }
-            terminateBetween((FrameMarker) current.getFrameSender(), end);
+            // Continue search from currentContext within frames on Truffle stack.
+            // currentContext has not been terminated.
+            return hasSenderChainFromToFramesAndTerminateIf(startContext, endContext, currentContext, terminate);
         }
 
-        @TruffleBoundary
-        private static void terminateBetween(final FrameMarker start, final ContextObject end) {
-            assert start != null : "Unexpected `null` value";
-            final ContextObject[] bottomContextOnTruffleStack = new ContextObject[1];
+        private static boolean hasSenderChainFromToFramesAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final ContextObject intermediateContext,
+                        final boolean terminate) {
+            // Traverse sender chain from startContext to endContext, continuing with the frame
+            // associated with intermediateContext (which has not been terminated).
+            final FrameMarker intermediateMarker = (FrameMarker) intermediateContext.getFrameSender();
             final ContextObject result = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<>() {
                 boolean foundMyself;
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    if (!FrameAccess.isTruffleSqueakFrame(current)) {
-                        return null;
+                    final Frame currentFrame = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    // Exit on ResumingContextObject
+                    if (!FrameAccess.isTruffleSqueakFrame(currentFrame)) {
+                        if (foundMyself) {
+                            return FrameAccess.getResumingContextObjectOrSkip(frameInstance);
+                        } else {
+                            if (FrameAccess.getResumingContextObjectOrSkip(frameInstance) == null) {
+                                return null;
+                            } else {
+                                return intermediateContext;
+                            }
+                        }
                     }
+                    // Only examine frames after finding intermediateContext.
                     if (!foundMyself) {
-                        if (start == FrameAccess.getMarker(current)) {
+                        if (intermediateMarker == FrameAccess.getMarker(currentFrame)) {
                             foundMyself = true;
                         }
-                    } else {
-                        final ContextObject context = FrameAccess.getContext(current);
-                        if (context == end) {
-                            return end;
-                        }
-                        bottomContextOnTruffleStack[0] = context;
+                        return null;
+                    }
+                    // Exit if we find the ending Context.
+                    final ContextObject context = FrameAccess.getContext(currentFrame);
+                    if (context == endContext) {
+                        return endContext;
+                    }
+                    // Terminate frame and any associated Context.
+                    if (terminate) {
                         final Frame currentWritable = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-                        // Terminate frame
-                        FrameAccess.setInstructionPointer(currentWritable, -1);
-                        FrameAccess.setSender(currentWritable, NilObject.SINGLETON);
+                        FrameAccess.terminateContextOrFrame(currentWritable);
                     }
                     return null;
                 }
             });
-            if (result == null && bottomContextOnTruffleStack[0] != null) {
-                terminateBetweenRecursively(bottomContextOnTruffleStack[0], end);
+            // result is endContext (if found), intermediateContext (if not found in the frames),
+            // resumingContext (at end of frames), or null (if something went wrong?).
+            if (result == endContext) {
+                return true;
             }
+            if (result == null) {
+                // Some of the Cuis process tests end up with Contexts with FrameMarker senders
+                // that are not found on the Truffle stack.
+                return false;
+            }
+            // Terminate the remaining Contexts until finding either endContext or nil.
+            return hasSenderChainFromToRemainingAndTerminateIf(startContext, endContext, result, terminate);
         }
 
-        @TruffleBoundary
-        private static void terminateBetweenRecursively(final ContextObject start, final ContextObject end) {
-            terminateBetween(start, end);
+        private static boolean hasSenderChainFromToRemainingAndTerminateIf(final ContextObject startContext, final ContextObject endContext, final ContextObject intermediateContext,
+                        final boolean terminate) {
+            // Traverse sender chain from startContext to endContext, continuing with the context
+            // associated with intermediateContext (which has not been terminated).
+
+            // Terminate the remaining Contexts until finding either endContext or nil.
+            ContextObject currentContext = intermediateContext;
+            while (true) {
+                final AbstractSqueakObject sender = currentContext.getSender();
+                if (terminate && currentContext != startContext) {
+                    currentContext.terminate();
+                }
+                if (sender == NilObject.SINGLETON || sender == endContext) {
+                    return sender == endContext;
+                } else {
+                    currentContext = (ContextObject) sender;
+                }
+            }
         }
     }
 

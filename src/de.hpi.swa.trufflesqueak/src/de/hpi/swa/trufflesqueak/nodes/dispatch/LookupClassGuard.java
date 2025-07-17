@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -194,7 +195,11 @@ public abstract class LookupClassGuard {
 
         @Override
         protected ClassObject getSqueakClassInternal(final Node node) {
-            return SqueakImageContext.get(node).getForeignObjectClass();
+            final SqueakImageContext image = SqueakImageContext.get(node);
+            if (!image.getForeignObjectClassStableAssumption().isValid()) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+            }
+            return image.getForeignObjectClass();
         }
     }
 }

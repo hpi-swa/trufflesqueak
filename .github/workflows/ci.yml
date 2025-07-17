@@ -91,14 +91,6 @@ jobs:
         echo GRAALVM_HOME=%GRAALVM_HOME%>>%GITHUB_ENV%
         echo [%GRAALVM_HOME% set as $GRAALVM_HOME]
       if: ${{ runner.os == 'Windows' }}
-    # - name: Publish TruffleSqueak packages to GitHub Packages
-    #   shell: bash
-    #   run: |
-    #     sed "s/{USERNAME}/${GITHUB_ACTOR}/g; s/{TOKEN}/${{ secrets.GITHUB_TOKEN }}/g" mx.trufflesqueak/mvn-settings.xml.template > mx.trufflesqueak/mvn-settings.xml
-    #     mx.trufflesqueak/utils.sh conditional-deploy \
-    #       mx --env trufflesqueak-jar build --dependencies SMALLTALK,SMALLTALK_COMMUNITY && \
-    #       mx --env trufflesqueak-jar maven-deploy --settings mx.trufflesqueak/mvn-settings.xml --version-string ${{ github.ref_name }} --validate full --licenses MIT --suppress-javadoc github https://maven.pkg.github.com/hpi-swa/trufflesqueak
-    #   if: ${{ matrix.os == 'ubuntu-22.04' && github.ref_type == 'tag' }}
     - name: Run SystemReporter on TruffleSqueak
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Run gate with Graal compiler
@@ -124,7 +116,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: graal_dumps-${{ matrix.runs-on }}
+        name: graal_dumps-${{ matrix.os }}
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
@@ -140,16 +132,19 @@ jobs:
       JDK_IDENTIFIER: "latest"
       MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
+      VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
     name: ${{ matrix.type }} ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v4
+      with:
+        submodules: true
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@v1
       with:
-        java-version: '${{ env.JAVA_VERSION }}'
+        java-version: '${{ env.JAVA_VERSION }}.0.1'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'native' }}
@@ -169,10 +164,6 @@ jobs:
     - name: Build TruffleSqueak standalone
       run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
       if: ${{ runner.os != 'Windows' }}
-    # Workaround for https://github.com/actions/runner-images/issues/10001:
-    - name: Upgrade LLVM
-      run: choco upgrade llvm
-      if: ${{ runner.os == 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
       run: |
@@ -193,25 +184,139 @@ jobs:
       if: ${{ runner.os == 'Windows' }}
     - name: Run SystemReporter on TruffleSqueak standalone
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
-      run: |
-        trufflesqueak-polyglot-get -v 24.2.0 -a js
-        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-      if: ${{ matrix.type == 'jvm' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@v4
       with:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
         path: ${{ env.STANDALONE_TARGET }}
         retention-days: 7
+      if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Deploy TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
       # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
+    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
+      run: |
+        trufflesqueak-polyglot-get -v 24.2.1 -a js
+        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
+      if: ${{ matrix.type == 'jvm' }}
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
-        trufflesqueak --vm.ea --vm.esa --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=ExitVM --engine.MaximumCompilations=-1 --engine.CompilationStatistics images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
+    - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
+      run: |
+        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\de.hpi.swa.trufflesqueak.test\src\de\hpi\swa\trufflesqueak\test\runSqueakTests.st
+      timeout-minutes: 30
+      if: ${{ matrix.os == 'windows-2022' && matrix.type != 'native' }} # fails to load packages on native
+    - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
+      run: |
+        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
+      timeout-minutes: 30
+      if: ${{ matrix.os != 'windows-2022' && matrix.os != 'macos-13' }} # tests fail on macos-13 and it is reaching EOL soon
+    - name: Upload test image on failure
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-image-${{ matrix.type }}-${{ matrix.os }}
+        path: images/test-64bit.*
+        retention-days: 5
+      if: failure()
+    - name: Upload Graal compiler dumps
+      uses: actions/upload-artifact@v4
+      with:
+        name: graal_dumps-${{ matrix.os }}
+        path: graal_dumps/
+        if-no-files-found: ignore
+        retention-days: 5
+      if: always()
+
+  run-benchmarks:
+    needs: build-standalone
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04-arm]
+        type: [native]
+        iterations: [300]
+    env:
+      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
+      EXEC: "/usr/bin/time -v"
+    name: run benchmarks
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v4
+    - name: Download TruffleSqueak (${{ matrix.type }}-${{ matrix.os }})
+      uses: actions/download-artifact@v4
+      with:
+        name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
+    - name: Unpack TruffleSqueak standalone
+      run: |
+        tar -xf trufflesqueak-*.tar
+        echo $(cd trufflesqueak-*-linux*/bin && pwd) >> $GITHUB_PATH
+    - name: Run 'tinyBenchmarks'
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "1 tinyBenchmarks"
+    - name: Run 'Bounce' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Bounce' ${{ matrix.iterations}} 1500)" 2>&1 | tee Bounce.log
+    - name: Run 'CD' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('CD' ${{ matrix.iterations}} 250)" 2>&1 | tee CD.log
+    - name: Run 'DeltaBlue' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('DeltaBlue' ${{ matrix.iterations}} 12000)" 2>&1 | tee DeltaBlue.log
+    - name: Run 'Havlak' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Havlak' ${{ matrix.iterations}} 1500)" 2>&1 | tee Havlak.log
+    - name: Run 'Json' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Json' ${{ matrix.iterations}} 100)" 2>&1 | tee Json.log
+    - name: Run 'List' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('List' ${{ matrix.iterations}} 1500)" 2>&1 | tee List.log
+    - name: Run 'Mandelbrot' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Mandelbrot' ${{ matrix.iterations}} 500)" 2>&1 | tee Mandelbrot.log
+    - name: Run 'NBody' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('NBody' ${{ matrix.iterations}} 250000)" 2>&1 | tee NBody.log
+    - name: Run 'Queens' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Queens' ${{ matrix.iterations}} 1000)" 2>&1 | tee Queens.log
+    - name: Run 'Permute' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Permute' ${{ matrix.iterations}} 1000)" 2>&1 | tee Permute.log
+    - name: Run 'Richards' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Richards' ${{ matrix.iterations}} 100)" 2>&1 | tee Richards.log
+    - name: Run 'Sieve' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Sieve' ${{ matrix.iterations}} 3000)" 2>&1 | tee Sieve.log
+    - name: Run 'Storage' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Storage' ${{ matrix.iterations}} 1000)" 2>&1 | tee Storage.log
+    - name: Run 'Towers' benchmark
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Towers' ${{ matrix.iterations}} 1500)" 2>&1 | tee Towers.log
+    - name: Analyze benchmark results
+      run: |
+        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py)" '{ body: $body }' |\
+        curl -sL -X POST -d @- \
+          -H "Content-Type: application/json" \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
+    - name: Upload Graal compiler dumps
+      uses: actions/upload-artifact@v4
+      with:
+        name: graal_dumps-benchmarks-${{ matrix.os }}
+        path: graal_dumps/
+        if-no-files-found: ignore
+        retention-days: 5
+      if: always()
+  

@@ -322,9 +322,18 @@ public final class FrameAccess {
         return true;
     }
 
-    public static void terminate(final Frame frame) {
+    public static void terminateFrame(final Frame frame) {
         setInstructionPointer(frame, ContextObject.NIL_PC_VALUE);
         setSender(frame, NilObject.SINGLETON);
+    }
+
+    public static void terminateContextOrFrame(final Frame frame) {
+        final ContextObject context = getContext(frame);
+        if (context != null) {
+            context.terminate();
+        } else {
+            terminateFrame(frame);
+        }
     }
 
     public static boolean isTruffleSqueakFrame(final Frame frame) {

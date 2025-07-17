@@ -93,6 +93,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return context;
     }
 
+    @SuppressWarnings("JavadocReference")
     /**
      * {@link ContextObject}s are filled in at a later stage by a
      * {@link SqueakImageReader#fillInContextObjects}.
@@ -209,14 +210,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public AbstractSqueakObject getSender() {
         final Object value = getFrameSender();
         if (value instanceof final FrameMarker f) {
-            return fillInSenderFromMaker(f);
+            return fillInSenderFromMarker(f);
         } else {
             return (AbstractSqueakObject) value;
         }
     }
 
     @TruffleBoundary
-    private AbstractSqueakObject fillInSenderFromMaker(final FrameMarker value) {
+    private AbstractSqueakObject fillInSenderFromMarker(final FrameMarker value) {
         final CompiledCodeObject methodOrBlock = getCodeObject();
         if (!methodOrBlock.hasPrimitive() || methodOrBlock.isUnwindMarked() || methodOrBlock.isExceptionHandlerMarked()) {
             /*
@@ -381,6 +382,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public void terminate() {
         removeInstructionPointer();
         removeSender();
+        hasModifiedSender = false;
     }
 
     /* Context>>#isDead */

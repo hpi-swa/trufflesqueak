@@ -39,12 +39,12 @@ exitCode := result hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
 retries := 3.
 [ exitCode == 1 and: [ retries > 0 ] ] whileTrue: [
     StdIOWriteStream stdout newLine; nextPutAll: 'Retry failures or errors:'; newLine; flush.
-    testSuiteRetry := TestSuite new.
-    testSuiteRetry tests addAll: result failures.
-    testSuiteRetry tests addAll: result errors.
-    resultRetry := testSuiteRetry run.
-    resultRetry printReport.
-    exitCode := resultRetry hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
+    testSuite := TestSuite new.
+    testSuite tests addAll: result failures.
+    testSuite tests addAll: result errors.
+    result := testSuite run.
+    result printReport.
+    exitCode := result hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
     retries := retries - 1.
 ].
 

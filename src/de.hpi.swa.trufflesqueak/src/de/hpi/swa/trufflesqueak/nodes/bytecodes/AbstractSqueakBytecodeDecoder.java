@@ -67,6 +67,9 @@ public abstract class AbstractSqueakBytecodeDecoder {
     }
 
     public final int findLineNumber(final CompiledCodeObject code, final int successorIndex) {
+        if (successorIndex == 0) { // handle backjumps to startPC
+            return 1;
+        }
         final int trailerPosition = trailerPosition(code);
         assert 0 <= successorIndex && successorIndex <= trailerPosition : successorIndex + " not between 0 and " + trailerPosition;
         int index = 0;

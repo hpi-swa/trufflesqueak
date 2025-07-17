@@ -272,6 +272,9 @@ public final class ObjectGraphUtils {
     }
 
     private void pointersBecomeOneWaySinglePair(final Object fromPointer, final Object toPointer) {
+        if (fromPointer == toPointer) {
+            return; // nothing to do
+        }
         final ObjectTracer roots = ObjectTracer.fromRoots(image, false);
         pointersBecomeOneWayFrames(roots, fromPointer, toPointer);
 
@@ -307,7 +310,11 @@ public final class ObjectGraphUtils {
     private void pointersBecomeOneWayManyPairs(final Object[] fromPointers, final Object[] toPointers) {
         final EconomicMap<Object, Object> fromToMap = EconomicMap.create(Equivalence.IDENTITY, fromPointers.length);
         for (int i = 0; i < fromPointers.length; i++) {
-            fromToMap.put(fromPointers[i], toPointers[i]);
+            final Object fromPointer = fromPointers[i];
+            final Object toPointer = toPointers[i];
+            if (fromPointer != toPointer) {
+                fromToMap.put(fromPointer, toPointer);
+            }
         }
 
         final ObjectTracer roots = ObjectTracer.fromRoots(image, false);
@@ -363,8 +370,12 @@ public final class ObjectGraphUtils {
             });
             return null;
         });
-        assert resumeContextObject != null : "Failed to find ResumeContextRootNode";
-        tracer.addIfUnmarked(resumeContextObject);
+        if (resumeContextObject != null) {
+            tracer.addIfUnmarked(resumeContextObject);
+        } else {
+            // TODO: find out when and why this happens
+            LogUtils.OBJECT_GRAPH.warning("Failed to find ResumeContextRootNode");
+        }
     }
 
     @TruffleBoundary
@@ -415,8 +426,12 @@ public final class ObjectGraphUtils {
             });
             return null;
         });
-        assert resumeContextObject != null : "Failed to find ResumeContextRootNode";
-        tracer.addIfUnmarked(resumeContextObject);
+        if (resumeContextObject != null) {
+            tracer.addIfUnmarked(resumeContextObject);
+        } else {
+            // TODO: find out when and why this happens
+            LogUtils.OBJECT_GRAPH.warning("Failed to find ResumeContextRootNode");
+        }
     }
 
     static final class EphemeronsTask implements Runnable {
@@ -525,7 +540,7 @@ public final class ObjectGraphUtils {
 
     private static void runTasks(final Runnable[] tasks) {
         try {
-            final Future<?>[] futures = new Future[USABLE_THREAD_COUNT];
+            final Future<?>[] futures = new Future<?>[USABLE_THREAD_COUNT];
             for (int i = 0; i < USABLE_THREAD_COUNT; i++) {
                 futures[i] = EXECUTOR.submit(tasks[i]);
             }

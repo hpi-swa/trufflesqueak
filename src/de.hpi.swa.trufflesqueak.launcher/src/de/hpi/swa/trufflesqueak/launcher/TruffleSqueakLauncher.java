@@ -65,8 +65,10 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             final String arg = arguments.get(i);
             if (isExistingImageFile(arg)) {
                 imagePath = Paths.get(arg).toAbsolutePath().toString();
-                final List<String> remainingArguments = arguments.subList(i + 1, arguments.size());
-                imageArguments = remainingArguments.toArray(new String[0]);
+                imageArguments = getRemainingArguments(arguments, i);
+                break;
+            } else if ("--".equals(arg)) {
+                imageArguments = getRemainingArguments(arguments, i);
                 break;
             } else if (SqueakLanguageOptions.CODE_FLAG.equals(arg) || SqueakLanguageOptions.CODE_FLAG_SHORT.equals(arg)) {
                 sourceCode = arguments.get(++i);
@@ -87,6 +89,10 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             }
         }
         return unrecognized;
+    }
+
+    private static String[] getRemainingArguments(final List<String> arguments, final int index) {
+        return arguments.subList(index + 1, arguments.size()).toArray(new String[0]);
     }
 
     @Override

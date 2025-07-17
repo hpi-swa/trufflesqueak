@@ -127,7 +127,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             }
         }
         assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
-        FrameAccess.terminate(frame);
+        FrameAccess.terminateFrame(frame);
         // only report non-zero counters to reduce interpreter overhead
         if (CompilerDirectives.hasNextTier() && backJumpCounter.value != 0) {
             LoopNode.reportLoopCount(this, backJumpCounter.value > 0 ? backJumpCounter.value : Integer.MAX_VALUE);
