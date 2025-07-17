@@ -12,7 +12,7 @@ suite = {
     "name": "trufflesqueak",
     "mxversion": "7.38.1",
     "versionConflictResolution": "latest",
-    "version": "24.2.1",
+    "version": "24.2.2",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-7.3-7036.zip",
         "cuis_test_image_tag": "24.1.2",
@@ -47,7 +47,7 @@ suite = {
             {
                 "name": "truffle",
                 "subdir": True,
-                "version": "vm-24.2.1",
+                "version": "vm-24.2.2",
                 "urls": [{"url": "https://github.com/oracle/graal", "kind": "git"}],
             }
         ],
@@ -109,62 +109,62 @@ suite = {
             },
         },
         "GRAALJS_LANGUAGE": {
-            "digest": "sha512:dcef69a4d37acbcc25f1f955663fb7f327cbb5754eb9659bacfafa7db11eafa5c15c410e501319ef476fc9128e9402767f0981fef4c638a315863bf1966cf48e",
+            "digest": "sha512:0aa2eac9b820f3d95a0c3ed092be0a9a31c32f0cae8a5ba2539cfb84580dff56fae696d2c87e194bf81867bc72374e12392c49088e9290eb0088b30caf3469d5",
             "maven": {
                 "groupId": "org.graalvm.js",
                 "artifactId": "js-language",
-                "version": "24.2.1",
+                "version": "24.2.2",
             },
             "dependencies": ["REGEX_LANGUAGE", "SHADOWED_ICU4J"],
             "useModulePath": True,
             "licence": "UPL",
         },
         "REGEX_LANGUAGE": {
-            "digest": "sha512:134259ec2d9b4cebd102a2cc43212618e4a625a9ea60fe66bd59f36d2b98f5c4de457012a468fe2bb6c959538858914c3a2b063d64a6f8290d33fecdc1f73a24",
+            "digest": "sha512:8a64e0ec61965e6c1a961a806d4242a69d739392a36d74653ac57f20f8b3a948910d8cb501765462449c3396fe10345c14f94e9c659d850c94f6f93507a0bbff",
             "maven": {
                 "groupId": "org.graalvm.regex",
                 "artifactId": "regex",
-                "version": "24.2.1",
+                "version": "24.2.2",
             },
             "dependencies": ["SHADOWED_ICU4J"],
             "useModulePath": True,
             "licence": "UPL",
         },
         "SHADOWED_ICU4J": {
-            "digest": "sha512:62582f311da42267afcba99713d28df2006f7180b3520c3599d8e1643c5ec5b26e49d1f87a86e0ed4fdfd080a446a38abd17a563d9ad6257c0c7bce38141680c",
+            "digest": "sha512:739e16b2ad0ac0d3a5bbab956c22bc9b316478d3be601059bc233bb996eff4a967972646d9c5f66423a8fa8cd0cf0e5c90635bda6ead25c0213b5b60b83e4b53",
             "maven": {
                 "groupId": "org.graalvm.shadowed",
                 "artifactId": "icu4j",
-                "version": "24.2.1",
+                "version": "24.2.2",
             },
             "dependencies": ["SHADOWED_XZ"],
             "useModulePath": True,
         },
         "SHADOWED_XZ": {
-            "digest": "sha512:0c4bfba4ffaa4bbd192cdf3d0ec6b1eee343efca42b9548d954dd47fbd11f147771625f8b5d2a1bb32895de282972f73627ecea95a595b883c46a060eff6b406",
+            "digest": "sha512:c38d48ef37f3264b08a898f5f884704530019ce8b89a4cb25b0b7c6229f4ccf603107c4a44be9cc3311641f9d35c261f24c2fed7dba11fd6ea0dbb4517e44b66",
             "maven": {
                 "groupId": "org.graalvm.shadowed",
                 "artifactId": "xz",
-                "version": "24.2.1",
+                "version": "24.2.2",
             },
             "useModulePath": True,
         },
         "TRUFFLE-ENTERPRISE": {
-            "digest": "sha512:8cae7474addc0aee32e4599e4b624978502d5672e39d570a5f84047a0bcaddfb16ef8e8609e8fb57f3e9ad1c83fb0ba000003428fb677e23f64019943be9ce9c",
+            "digest": "sha512:8470d6f2d33f4f6b33263343125e03d34ee1716d1c17ca0e7cea868d7b008c31f93c323cb3b982bf437f48ea7cd054394a1ee95660dba3ae734e9989c92cf7ba",
             "maven": {
                 "groupId": "org.graalvm.truffle",
                 "artifactId": "truffle-enterprise",
-                "version": "24.2.1",
+                "version": "24.2.2",
             },
             "useModulePath": True,
             "licence": "GFTC",
         },
         "SDK-NATIVEBRIDGE": {
-            "digest": "sha512:7b1eb5fa9d79c9d5926f86b71f250415d00f132c1035f4e59999d7836b3ea0c6437b292944fcb01a05f465f794fa2272d2bfbb68e5c3e64e91e749f8fb9d0b2d",
+            "digest": "sha512:eb433421d0be6b62e54261ee9aecb3a11b5e4bfd3c3cfd2de41e2266f81788cfa33e0d72ae7c507701936a8b3ff259e6e295537581b543115ec0d437af3072f1",
             "maven": {
                 "groupId": "org.graalvm.sdk",
                 "artifactId": "nativebridge",
-                "version": "24.2.1",
+                "version": "24.2.2",
             },
             "useModulePath": True,
         },
