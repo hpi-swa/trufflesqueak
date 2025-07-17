@@ -87,7 +87,7 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "value >= 0", "value <= BYTE_MAX"})
-        protected static final void doNativeByteString(NativeObject obj, final long index, final long value, @Cached.Shared("truffleString") @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
+        protected static final void doNativeByteString(final NativeObject obj, final long index, final long value, @Cached.Shared("truffleString") @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
             obj.writeByteTruffleString((int) index, (byte) value, writeByteNode);
         }
 
@@ -125,7 +125,7 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = {"obj.isTruffleStringType()", "inByteRange(value)"})
-        protected static final void doNativeByteStringChar(NativeObject obj, final long index, final char value, @Cached.Shared("truffleString") @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
+        protected static final void doNativeByteStringChar(final NativeObject obj, final long index, final char value, @Cached.Shared("truffleString") @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
             doNativeByteString(obj, index, value, writeByteNode);
         }
 

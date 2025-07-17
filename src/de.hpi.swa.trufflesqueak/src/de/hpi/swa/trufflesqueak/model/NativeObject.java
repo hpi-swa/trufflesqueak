@@ -78,7 +78,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static NativeObject newNativeBytesUncached(final SqueakImageChunk chunk) {
-        final ClassObject klass = chunk.getSqueakClass();
         final byte[] bytes = chunk.getBytes();
         final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
         return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(),  MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false));
@@ -140,7 +139,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, img.byteStringClass, truffleString);
     }
 
-    public static NativeObject newNativeByteString(final SqueakImageContext img, final String string, final TruffleString.FromJavaStringNode javaNode, MutableTruffleString.AsMutableTruffleStringNode mutableNode) {
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final String string, final TruffleString.FromJavaStringNode javaNode, final MutableTruffleString.AsMutableTruffleStringNode mutableNode) {
         final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
         final MutableTruffleString truffleString = mutableNode.execute(javaNode.execute(string, encoding), encoding);
         return new NativeObject(img, img.byteStringClass, truffleString);
@@ -390,7 +389,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         getTruffleStringStorage().writeByteUncached(index, value, getTruffleStringEncoding());
     }
 
-    public void writeByteTruffleStringUncached(int index, int value) {
+    public void writeByteTruffleStringUncached(final int index, final int value) {
         assert value < 256;
         writeByteTruffleStringUncached(index, (byte) value);
     }
