@@ -12,14 +12,14 @@ suite = {
     "name": "trufflesqueak",
     "mxversion": "7.38.1",
     "versionConflictResolution": "latest",
-    "version": "24.2.2",
+    "version": "25.0.0",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-7.3-7036.zip",
         "cuis_test_image_tag": "24.1.2",
         "test_image": "TruffleSqueakTestImage-6.0-22104-64bit.zip",
         "test_image_tag": "22.3.0",
     },
-    "release": True,
+    "release": False,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
     "developer": {
