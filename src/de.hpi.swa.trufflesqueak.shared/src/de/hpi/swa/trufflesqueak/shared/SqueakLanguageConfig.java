@@ -15,7 +15,7 @@ public final class SqueakLanguageConfig {
     public static final String ST_MIME_TYPE = "text/x-smalltalk";
     public static final String VERSION = "24.2.2"; // sync with Truffle import
     public static final String WEBSITE = "https://github.com/hpi-swa/trufflesqueak";
-    private static final String IMAGE_VERSION = "24.1.2"; // on release: `VERSION;`
+    private static final String IMAGE_VERSION = VERSION; // on release: `VERSION;`
 
     public static final String[][] SUPPORTED_IMAGES = {
                     {"TruffleSqueak image (" + IMAGE_VERSION + ") (recommended)",

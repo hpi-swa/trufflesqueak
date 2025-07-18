@@ -19,7 +19,7 @@ suite = {
         "test_image": "TruffleSqueakTestImage-6.0-22104-64bit.zip",
         "test_image_tag": "22.3.0",
     },
-    "release": False,
+    "release": True,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
     "developer": {
