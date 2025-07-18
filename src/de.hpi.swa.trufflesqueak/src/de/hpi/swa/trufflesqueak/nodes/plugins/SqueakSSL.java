@@ -330,7 +330,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
      */
     @TruffleBoundary
     private static ByteBuffer asReadBuffer(final NativeObject buffer, final long start, final long length) {
-        return ByteBuffer.wrap(buffer.getByteStorage(), (int) start - 1, (int) length).asReadOnlyBuffer();
+        return ByteBuffer.wrap(buffer.getTruffleStringAsReadonlyBytesUncached(), (int) start - 1, (int) length).asReadOnlyBuffer();
     }
 
     /**
@@ -404,7 +404,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return see numeric return type convention from plugin Javadoc
          */
 
-        @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
+        @Specialization(guards = {"sourceBuffer.isTruffleStringType()", "targetBuffer.isTruffleStringType()"})
         protected final long doAccept(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
@@ -418,7 +418,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             }
 
             final ByteBuffer sourceOrNull;
-            if (sourceBuffer.getByteLength() > 0) {
+            if (sourceBuffer.getTruffleStringByteLength() > 0) {
                 sourceOrNull = asReadBuffer(sourceBuffer, start, length);
             } else {
                 sourceOrNull = null;
@@ -518,7 +518,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @param targetBuffer the target buffer; contains data to be sent to the server
          * @return see numeric return type convention from plugin Javadoc
          */
-        @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
+        @Specialization(guards = {"sourceBuffer.isTruffleStringType()", "targetBuffer.isTruffleStringType()"})
         protected final long doConnect(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
@@ -531,7 +531,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 return ReturnCode.INVALID_STATE.id();
             }
             final ByteBuffer sourceOrNull;
-            if (sourceBuffer.getByteLength() > 0) {
+            if (sourceBuffer.getTruffleStringByteLength() > 0) {
                 sourceOrNull = asReadBuffer(sourceBuffer, start, length);
             } else {
                 sourceOrNull = null;
@@ -698,7 +698,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the number of bytes produced in the output buffer
          */
         @TruffleBoundary
-        @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
+        @Specialization(guards = {"sourceBuffer.isTruffleStringType()", "targetBuffer.isTruffleStringType()"})
         protected final long doDecrypt(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
@@ -771,7 +771,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @param targetBuffer the target buffer, will contain encrypted data
          * @return the number of bytes produced as a result
          */
-        @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
+        @Specialization(guards = {"sourceBuffer.isTruffleStringType()", "targetBuffer.isTruffleStringType()"})
         protected final long doEncrypt(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
@@ -911,7 +911,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @param aString the property value to set
          * @return despite return code convention, non-zero if successful
          */
-        @Specialization(guards = "aString.isByteType()")
+        @Specialization(guards = "aString.isTruffleStringType()")
         protected static final long doSet(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final long propertyId,

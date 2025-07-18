@@ -17,6 +17,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
+import com.oracle.truffle.api.strings.AbstractTruffleString;
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -63,16 +66,27 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         storage = storageCopy;
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), chunk.getBytes());
+    // TODO sometimes we want to create immutable TruffleString
+    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes, final MutableTruffleString.FromByteArrayNode node) {
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        final MutableTruffleString truffleString = node.execute(bytes, 0, bytes.length, encoding, false);
+        return new NativeObject(img, klass, truffleString);
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
-        return new NativeObject(img, klass, bytes);
+    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size, final MutableTruffleString.FromByteArrayNode node) {
+        return newNativeBytes(img, klass, new byte[size], node);
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeBytes(img, klass, new byte[size]);
+    public static NativeObject newNativeBytesUncached(final SqueakImageChunk chunk) {
+        final byte[] bytes = chunk.getBytes();
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(),  MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false));
+    }
+
+    public static NativeObject newNativeBytesUncached(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        final MutableTruffleString truffleString = MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false);
+        return new NativeObject(img, klass, truffleString);
     }
 
     public static NativeObject newNativeInts(final SqueakImageChunk chunk) {
@@ -111,15 +125,52 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(img, klass, shorts);
     }
 
+    public static NativeObject newNativeByteStringUncached(final SqueakImageChunk chunk) {
+        final ClassObject klass = chunk.getSqueakClass();
+        final byte[] bytes = chunk.getBytes();
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        return new NativeObject(chunk.getHeader(), klass, MutableTruffleString.fromByteArrayUncached(bytes,0, bytes.length, encoding, false));
+    }
+
+    public static NativeObject newNativeByteStringUncached(final SqueakImageContext img, final String string) {
+        final byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        final MutableTruffleString truffleString = MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false);
+        return new NativeObject(img, img.byteStringClass, truffleString);
+    }
+
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final String string, final TruffleString.FromJavaStringNode javaNode, final MutableTruffleString.AsMutableTruffleStringNode mutableNode) {
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        final MutableTruffleString truffleString = mutableNode.execute(javaNode.execute(string, encoding), encoding);
+        return new NativeObject(img, img.byteStringClass, truffleString);
+    }
+
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final int size, final MutableTruffleString.FromByteArrayNode node) {
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        final byte[] bytes = new byte[size];
+        final MutableTruffleString truffleString = node.execute(bytes, 0, bytes.length, encoding, false);
+        return new NativeObject(img, img.byteStringClass, truffleString);
+    }
+
+    public static NativeObject newNativeByteStringUncached(final SqueakImageContext img, final AbstractTruffleString string) {
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        return new NativeObject(img, img.byteStringClass, string.asMutableTruffleStringUncached(encoding));
+    }
+
+    public static NativeObject newNativeByteString(final SqueakImageContext img, final AbstractTruffleString string, final MutableTruffleString.AsMutableTruffleStringNode node) {
+        final TruffleString.Encoding encoding = TruffleString.Encoding.UTF_8;
+        return new NativeObject(img, img.byteStringClass, node.execute(string, encoding));
+    }
+
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         if (storage == ArrayUtils.EMPTY_ARRAY) { /* Fill in special selectors. */
             setStorage(chunk.getBytes());
-        } else if (chunk.getImage().isHeadless() && isByteType()) {
+        } else if (chunk.getImage().isHeadless() && isTruffleStringType()) {
             final SqueakImageContext image = chunk.getImage();
-            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getByteStorage())) {
+            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getTruffleStringAsReadonlyBytesUncached())) {
                 image.setDebugErrorSelector(this);
-            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, getByteStorage())) {
+            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, getTruffleStringAsReadonlyBytesUncached())) {
                 image.setDebugSyntaxErrorSelector(this);
             }
         }
@@ -128,14 +179,14 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public int getNumSlots() {
         CompilerAsserts.neverPartOfCompilation();
-        if (isByteType()) {
-            return getNumSlots(getByteLength(), BYTE_TO_WORD);
-        } else if (isShortType()) {
+        if (isShortType()) {
             return getNumSlots(getShortLength(), SHORT_TO_WORD);
         } else if (isIntType()) {
             return getNumSlots(getIntLength(), INTEGER_TO_WORD);
         } else if (isLongType()) {
             return getLongLength();
+        } else if (isTruffleStringType()){
+            return (int) Math.ceil((double) getTruffleStringByteLength() / BYTE_TO_WORD);
         } else {
             throw SqueakException.create("Unexpected NativeObject");
         }
@@ -167,10 +218,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(this, storageCopy);
     }
 
-    public NativeObject shallowCopyBytes() {
-        return new NativeObject(this, getByteStorage());
-    }
-
     public void convertToBytesStorage(final byte[] bytes) {
         assert storage.getClass() != byte[].class : "Converting storage of same type unnecessary";
         setStorage(bytes);
@@ -191,32 +238,9 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         setStorage(shorts);
     }
 
-    public byte getByte(final long index) {
-        assert isByteType();
-        return UnsafeUtils.getByte((byte[]) storage, (int) index);
-    }
-
-    public int getByteUnsigned(final long index) {
-        return Byte.toUnsignedInt(getByte(index));
-    }
-
-    public void setByte(final long index, final byte value) {
-        assert isByteType();
-        UnsafeUtils.putByte((byte[]) storage, (int) index, value);
-    }
-
-    public void setByte(final long index, final int value) {
-        assert value < 256;
-        setByte(index, (byte) value);
-    }
-
-    public int getByteLength() {
-        return getByteStorage().length;
-    }
-
     public byte[] getByteStorage() {
-        assert isByteType();
-        return (byte[]) storage;
+        assert isTruffleStringType();
+        return getTruffleStringAsReadonlyBytesUncached();
     }
 
     public int getInt(final long index) {
@@ -276,10 +300,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return (short[]) storage;
     }
 
-    public boolean isByteType() {
-        return storage instanceof byte[];
-    }
-
     public boolean isIntType() {
         return storage instanceof int[];
     }
@@ -297,9 +317,104 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
+    public boolean isTruffleStringType() {
+        return storage instanceof MutableTruffleString;
+    }
+
+    public MutableTruffleString getTruffleStringStorage() {
+        assert isTruffleStringType();
+        return (MutableTruffleString) storage;
+    }
+
+    public void setTruffleStringStorage(final MutableTruffleString string) {
+        assert isTruffleStringType();
+        setStorage(string);
+    }
+
+    public int getTruffleStringByteLength() {
+        return getTruffleStringStorage().byteLength(getTruffleStringEncoding());
+    }
+
+
+    public byte[] getTruffleStringAsReadonlyBytesUncached() {
+        return getTruffleStringStorage().getInternalByteArrayUncached(getTruffleStringEncoding()).getArray();
+    }
+
+    public byte[] getTruffleStringAsReadonlyBytes(final TruffleString.GetInternalByteArrayNode node) {
+        return node.execute(getTruffleStringStorage(), getTruffleStringEncoding()).getArray();
+    }
+
+    public byte[] getTruffleStringAsBytesCopy(final TruffleString.CopyToByteArrayNode node) {
+        return node.execute(getTruffleStringStorage(), getTruffleStringEncoding());
+    }
+
+    public TruffleString.Encoding getTruffleStringEncoding() {
+        assert isTruffleStringType();
+        return TruffleString.Encoding.UTF_8;
+    }
+
+    public int readByteTruffleString(final int index, final TruffleString.ReadByteNode node) {
+        return node.execute(getTruffleStringStorage(), index, getTruffleStringEncoding());
+    }
+
+    public int readByteTruffleStringUncached(final int index) {
+        assert isTruffleStringType();
+        return getTruffleStringStorage().readByteUncached(index, getTruffleStringEncoding());
+    }
+
+    public int readUnsignedByteTruffleString(final int index, final TruffleString.ReadByteNode node) {
+        return Byte.toUnsignedInt((byte) node.execute(getTruffleStringStorage(), index, getTruffleStringEncoding()));
+    }
+
+    public int byteIndexOfAnyByteTruffleString(final int index, final byte[] bytes, final TruffleString.ByteIndexOfAnyByteNode node) {
+        assert isTruffleStringType();
+        return node.execute(getTruffleStringStorage(), index, getTruffleStringByteLength(), bytes, getTruffleStringEncoding());
+    }
+
+    public int codePointIndexToByteIndexTruffleString(final int index, final TruffleString.CodePointIndexToByteIndexNode node) {
+        return node.execute(getTruffleStringStorage(), 0, index, getTruffleStringEncoding());
+    }
+
+    public void writeByteTruffleString(final int index, final byte value, final MutableTruffleString.WriteByteNode node) {
+        node.execute(getTruffleStringStorage(), index, value, getTruffleStringEncoding());
+    }
+
+    public void writeByteTruffleString(final int index, final int value, final MutableTruffleString.WriteByteNode node) {
+        assert value < 256;
+        node.execute(getTruffleStringStorage(), index, (byte) value, getTruffleStringEncoding());
+    }
+
+    public void writeByteTruffleStringUncached(final int index, final byte value) {
+        assert isTruffleStringType();
+        getTruffleStringStorage().writeByteUncached(index, value, getTruffleStringEncoding());
+    }
+
+    public void writeByteTruffleStringUncached(final int index, final int value) {
+        assert value < 256;
+        writeByteTruffleStringUncached(index, (byte) value);
+    }
+
+    public NativeObject shallowCopyTruffleStringUncached() {
+        assert isTruffleStringType();
+        final TruffleString.Encoding encoding = getTruffleStringEncoding();
+        byte[] bytes = getTruffleStringStorage().copyToByteArrayUncached(getTruffleStringEncoding());
+        return new NativeObject(this, MutableTruffleString.fromByteArrayUncached(bytes, 0, bytes.length, encoding, false));
+    }
+
+    public NativeObject shallowCopyTruffleString(final TruffleString.CopyToByteArrayNode copyToByteArrayNode, final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
+        assert isTruffleStringType();
+        final TruffleString.Encoding encoding = getTruffleStringEncoding();
+        byte[] bytes = copyToByteArrayNode.execute(getTruffleStringStorage(), encoding);
+        return new NativeObject(this, fromByteArrayNode.execute(bytes, 0, bytes.length, encoding, false));
+    }
+
     @TruffleBoundary
     public String asStringUnsafe() {
-        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap((byte[]) storage)).toString();
+        if(isTruffleStringType()) {
+            return ((AbstractTruffleString) storage).toJavaStringUncached();
+        } else {
+            return StandardCharsets.UTF_8.decode(ByteBuffer.wrap((byte[]) storage)).toString();
+        }
     }
 
     @TruffleBoundary
@@ -312,28 +427,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         final ClassObject squeakClass = getSqueakClass();
-        /*
-         * This may be accessed from outside a context (when Truffle accesses sources), so we cannot
-         * look up the context here.
-         */
         final SqueakImageContext image = squeakClass.getImage();
-        if (isByteType()) {
-            if (image.isByteStringClass(squeakClass)) {
-                final String fullString = asStringUnsafe();
-                final int fullLength = fullString.length();
-                /* Split at first non-printable character. */
-                final String displayString = fullString.split("[^\\p{Print}]", 2)[0];
-                if (fullLength <= 40 && fullLength == displayString.length()) {
-                    /* fullString is short and has printable characters only. */
-                    return "'" + fullString + "'";
-                }
-                return String.format("'%.30s...' (string length: %s)", displayString, fullLength);
-            } else if (image.isByteSymbolClass(squeakClass)) {
-                return "#" + asStringUnsafe();
-            } else {
-                return "byte[" + getByteLength() + "]";
-            }
-        } else if (isShortType()) {
+        if (isShortType()) {
             return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
             /* Avoid lazy-loading of wideStringClass to avoid endless recursions. */
@@ -344,6 +439,17 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             }
         } else if (isLongType()) {
             return "long[" + getLongLength() + "]";
+        } else if (isTruffleStringType()) {
+            if (image.isByteSymbolClass(squeakClass)) {
+                return "#" + asStringUnsafe();
+            }
+            final String javaString  = asStringUnsafe();
+            final int length = javaString.length();
+            if (length <= 40) {
+                return "'" + javaString + "'";
+            } else {
+                return String.format("'%.30s...' (string length: %s)", javaString, length);
+            }
         } else {
             throw SqueakException.create("Unexpected native object type");
         }
@@ -386,18 +492,13 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return false;
     }
 
+    public static boolean needsWideString(final AbstractTruffleString s) {
+        return needsWideString(s.toJavaStringUncached());
+    }
+
     @Override
     public void write(final SqueakImageWriter writer) {
-        if (isByteType()) {
-            final int byteLength = getByteLength();
-            final int numSlots = getNumSlots(byteLength, BYTE_TO_WORD);
-            final int formatOffset = numSlots * BYTE_TO_WORD - byteLength;
-            assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
-            if (writeHeader(writer, numSlots, formatOffset)) {
-                writer.writeBytes(getByteStorage());
-                writePaddingIfAny(writer, byteLength);
-            }
-        } else if (isShortType()) {
+        if (isShortType()) {
             final int shortLength = getShortLength();
             final int numSlots = getNumSlots(shortLength, SHORT_TO_WORD);
             final int formatOffset = numSlots * SHORT_TO_WORD - shortLength;
@@ -427,6 +528,14 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
                 writer.writeLong(value);
             }
             /* Padding not required. */
+        } else if (isTruffleStringType()) {
+            // TODO unsure if this is correct
+            if (writeHeader(writer)) {
+                final MutableTruffleString string = getTruffleStringStorage();
+                final TruffleString.Encoding encoding = getTruffleStringEncoding();
+                writer.writeBytes(string.copyToByteArrayUncached(encoding));
+                writePaddingIfAny(writer, string.byteLength(encoding));
+            }
         } else {
             throw SqueakException.create("Unexpected object");
         }

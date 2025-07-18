@@ -294,9 +294,9 @@ public final class SendBytecodes {
                     return 18;
                 }
 
-                @Specialization(guards = "receiver.isByteType()")
+                @Specialization(guards = "receiver.isTruffleStringType()")
                 protected static final long doNativeObjectByte(final NativeObject receiver) {
-                    return receiver.getByteLength();
+                    return receiver.getTruffleStringByteLength();
                 }
 
                 @Specialization

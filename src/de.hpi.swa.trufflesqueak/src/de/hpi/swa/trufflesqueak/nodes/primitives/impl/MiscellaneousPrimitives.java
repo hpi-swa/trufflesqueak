@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -26,6 +27,9 @@ import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.AbstractTruffleString;
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -261,7 +265,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)
     protected abstract static class PrimImageName2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "newName.isByteType()")
+        @Specialization(guards = "newName.isTruffleStringType()")
         protected final NativeObject doSetName(@SuppressWarnings("unused") final Object receiver, final NativeObject newName) {
             getContext().setImagePath(newName.asStringUnsafe());
             return newName;
@@ -503,7 +507,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 141)
     protected abstract static class PrimClipboardText2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "value.isByteType()")
+        @Specialization(guards = "value.isTruffleStringType()")
         protected final NativeObject setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
@@ -529,7 +533,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 145)
     protected abstract static class PrimConstantFillNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "receiver.isByteType()")
+        @Specialization(guards = "receiver.isTruffleStringType()")
         protected static final NativeObject doNativeBytes(final NativeObject receiver, final long value) {
             ArrayUtils.fill(receiver.getByteStorage(), (byte) value);
             return receiver;
@@ -576,6 +580,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             ArrayUtils.fill(receiver.getLongStorage(), value.longValueExact());
             return receiver;
         }
+
+        @Specialization(guards = { "receiver.isTruffleStringType()" })
+        protected static final NativeObject doTruffleStrings(final NativeObject receiver, final MutableTruffleString value) {
+            receiver.setTruffleStringStorage(value);
+            return receiver;
+        }
     }
 
     @GenerateNodeFactory
@@ -610,32 +620,37 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 158)
     public abstract static class PrimCompareString2Node extends AbstractPrimCompareStringNode implements Primitive1WithFallback {
-        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()"})
-        protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other) {
-            return compareAsciiOrder(receiver, other) - 2L;
+
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()"})
+        protected static final long doCompareAsciiOrderOneByte(final NativeObject receiver, final NativeObject other, @Cached final TruffleString.CompareBytesNode compareBytesNode, @Cached final TruffleString.FromByteArrayNode fromByteArrayNode) {
+            return compareAsciiOrder(receiver, other, compareBytesNode);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 158)
     public abstract static class PrimCompareString3Node extends AbstractPrimCompareStringNode implements Primitive2WithFallback {
-        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
+
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedAsciiOrder"}, limit = "1")
         protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other, @SuppressWarnings("unused") final NativeObject orderValue,
-                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
-            return compareAsciiOrder(receiver, other);
+                                                        @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder,
+                                                        @Cached final TruffleString.CompareBytesNode compareBytesNode) {
+            return compareAsciiOrder(other, receiver, compareBytesNode);
         }
 
-        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue == cachedOrder"}, limit = "1")
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue == cachedOrder"}, limit = "1")
         protected static final long doCompareCached(final NativeObject receiver, final NativeObject other,
-                        @SuppressWarnings("unused") final NativeObject orderValue,
-                        @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
-            return compare(receiver, other, cachedOrder);
+                                                    @SuppressWarnings("unused") final NativeObject orderValue,
+                                                    @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder,
+                                                    @Shared("truffleStringRead")  @Cached final TruffleString.ReadByteNode readByteNode) {
+            return compare(receiver, other, cachedOrder, readByteNode);
         }
 
-        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
+        @Specialization(guards = {"receiver.isTruffleStringType()", "other.isTruffleStringType()", "orderValue.isTruffleStringType()", "orderValue.getTruffleStringByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
-        protected static final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue) {
-            return compare(receiver, other, orderValue);
+        protected static final long doCompare(final NativeObject receiver, final NativeObject other, final NativeObject orderValue,
+                        @Shared("truffleStringRead") @Cached final TruffleString.ReadByteNode readByteNode) {
+            return compare(receiver, other, orderValue, readByteNode);
         }
     }
 
@@ -687,7 +702,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
-                        "receiver.isByteType()", "anotherObject.isByteType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
+                        "receiver.isTruffleStringType()", "anotherObject.isTruffleStringType()", "receiver.getTruffleStringByteLength() == anotherObject.getTruffleStringByteLength()"})
         protected static final NativeObject doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
             final byte[] destStorage = receiver.getByteStorage();
             UnsafeUtils.copyBytes(anotherObject.getByteStorage(), 0L, destStorage, 0L, destStorage.length);

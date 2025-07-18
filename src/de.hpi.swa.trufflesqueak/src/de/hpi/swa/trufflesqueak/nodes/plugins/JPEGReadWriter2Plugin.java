@@ -23,6 +23,8 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -44,9 +46,9 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primImageHeight")
     protected abstract static class PrimImageHeightNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "aJPEGDecompressStruct.isByteType()")
-        protected static final long doHeight(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct) {
-            return VarHandleUtils.getLong(aJPEGDecompressStruct.getByteStorage(), 0);
+        @Specialization(guards = "aJPEGDecompressStruct.isTruffleStringType()")
+        protected static final long doHeight(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct, @Cached final TruffleString.GetInternalByteArrayNode getBytesNode) {
+            return VarHandleUtils.getLong(aJPEGDecompressStruct.getTruffleStringAsReadonlyBytes(getBytesNode), 0);
         }
     }
 
@@ -54,7 +56,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(names = "primImageNumComponents")
     protected abstract static class PrimImageNumComponentsNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = "aJPEGDecompressStruct.isByteType()")
+        @Specialization(guards = "aJPEGDecompressStruct.isTruffleStringType()")
         protected static final long doNum(final Object receiver, final NativeObject aJPEGDecompressStruct) {
             return 3L; /* MiscUtils.COLOR_MODEL_32BIT.getNumComponents() */
         }
@@ -63,9 +65,9 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primImageWidth")
     protected abstract static class PrimImageWidthNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "aJPEGDecompressStruct.isByteType()")
-        protected static final long doWidth(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct) {
-            return VarHandleUtils.getLong(aJPEGDecompressStruct.getByteStorage(), 1);
+        @Specialization(guards = "aJPEGDecompressStruct.isTruffleStringType()")
+        protected static final long doWidth(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct, @Cached final TruffleString.GetInternalByteArrayNode getBytesNode) {
+            return VarHandleUtils.getLong(aJPEGDecompressStruct.getTruffleStringAsReadonlyBytes(getBytesNode), 1);
         }
     }
 
@@ -108,7 +110,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGReadHeaderfromByteArrayerrorMgr")
     protected abstract static class PrimJPEGReadHeaderfromByteArrayerrorMgrNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
+        @Specialization(guards = {"aJPEGDecompressStruct.isTruffleStringType()", "source.isTruffleStringType()"})
         protected static final Object doReadHeader(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source,
                         @SuppressWarnings("unused") final NativeObject aJPEGErrorMgr2Struct) {
             if (TruffleOptions.AOT) { /* ImageIO not yet working properly when AOT-compiled. */
@@ -123,7 +125,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         @TruffleBoundary
         private static BufferedImage readImageOrPrimFail(final NativeObject source) {
             try {
-                return ImageIO.read(new ByteArrayInputStream(source.getByteStorage()));
+                return ImageIO.read(new ByteArrayInputStream(source.getTruffleStringAsReadonlyBytesUncached()));
             } catch (final IOException e) {
                 e.printStackTrace();
                 throw PrimitiveFailed.GENERIC_ERROR;
@@ -135,7 +137,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(names = "primJPEGReadImagefromByteArrayonFormdoDitheringerrorMgr")
     protected abstract static class PrimJPEGReadImagefromByteArrayonFormdoDitheringerrorMgrNode extends AbstractPrimitiveNode implements Primitive5WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
+        @Specialization(guards = {"aJPEGDecompressStruct.isTruffleStringType()", "source.isTruffleStringType()"})
         protected static final Object doRead(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source, final PointersObject form,
                         final boolean ditherFlag, final NativeObject aJPEGErrorMgr2Struct,
                         @Bind final Node node,
@@ -157,7 +159,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         @TruffleBoundary
         private static void readImageOrPrimFail(final NativeObject source, final NativeObject bits, final int width, final int height) {
             try {
-                final BufferedImage image = ImageIO.read(new ByteArrayInputStream(source.getByteStorage()));
+                final BufferedImage image = ImageIO.read(new ByteArrayInputStream(source.getTruffleStringAsReadonlyBytesUncached()));
                 image.getRGB(0, 0, width, height, bits.getIntStorage(), 0, width);
             } catch (final IOException e) {
                 e.printStackTrace();
@@ -170,7 +172,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(names = "primJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgr")
     protected abstract static class PrimJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgrNode extends AbstractPrimitiveNode implements Primitive6WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"aJPEGCompressStruct.isByteType()", "destination.isByteType()"})
+        @Specialization(guards = {"aJPEGCompressStruct.isTruffleStringType()", "destination.isTruffleStringType()"})
         protected static final long doWrite(final Object receiver, final NativeObject aJPEGCompressStruct, final NativeObject destination, final PointersObject form,
                         final long quality, final boolean progressiveFlag, final NativeObject aJPEGErrorMgr2Struct,
                         @Bind final Node node,

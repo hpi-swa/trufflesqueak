@@ -665,7 +665,7 @@ public final class JPEGReader {
     }
 
     private static boolean isBytes(final Object object) {
-        return SqueakGuards.isNativeObject(object) && ((NativeObject) object).isByteType();
+        return SqueakGuards.isNativeObject(object) && ((NativeObject) object).isTruffleStringType();
     }
 
     private static boolean isWords(final Object object) {

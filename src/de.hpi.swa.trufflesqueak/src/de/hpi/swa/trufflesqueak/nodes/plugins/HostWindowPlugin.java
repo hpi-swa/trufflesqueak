@@ -75,7 +75,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveHostWindowTitle")
     protected abstract static class PrimHostWindowTitleNode extends AbstractHostWindowPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"id == DEFAULT_HOST_WINDOW_ID", "title.isByteType()"})
+        @Specialization(guards = {"id == DEFAULT_HOST_WINDOW_ID", "title.isTruffleStringType()"})
         protected final Object doTitle(final Object receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {

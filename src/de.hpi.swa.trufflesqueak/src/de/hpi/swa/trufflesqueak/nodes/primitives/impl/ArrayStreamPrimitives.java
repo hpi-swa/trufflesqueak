@@ -18,6 +18,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
+import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -160,9 +162,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 63)
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())"})
-        protected static final char doNativeObjectBytes(final NativeObject obj, final long index) {
-            return (char) (obj.getByte(index - 1) & 0xFF);
+        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())"})
+        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, @Cached final TruffleString.ReadByteNode readByteNode) {
+            final int codepoint = obj.readByteTruffleString((int) index - 1, readByteNode);
+            return (char) (codepoint & 0xFF);
         }
 
         @Specialization(guards = {"obj.isIntType()", "inBounds1(index, obj.getIntLength())"})
@@ -177,9 +180,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 64)
     protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
-        @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())", "inByteRange(value)"})
-        protected static final char doNativeObjectBytes(final NativeObject obj, final long index, final char value) {
-            obj.setByte(index - 1, (byte) value);
+        @Specialization(guards = {"obj.isTruffleStringType()", "inBounds1(index, obj.getTruffleStringByteLength())", "inByteRange(value)"})
+        protected static final char doNativeObjectByteString(final NativeObject obj, final long index, final char value,
+                     @Cached final TruffleString.CodePointIndexToByteIndexNode codePointIndexToByteIndexNode,
+                     @Cached final MutableTruffleString.WriteByteNode writeByteNode) {
+            final int byteIndex = obj.codePointIndexToByteIndexTruffleString((int) index - 1, codePointIndexToByteIndexNode);
+            obj.writeByteTruffleString(byteIndex, (int) value, writeByteNode);
             return value;
         }
 

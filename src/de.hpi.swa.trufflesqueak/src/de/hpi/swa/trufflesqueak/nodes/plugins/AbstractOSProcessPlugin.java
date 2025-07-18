@@ -21,6 +21,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.strings.MutableTruffleString;
 import com.oracle.truffle.nfi.api.SignatureLibrary;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -109,7 +110,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
     @SqueakPrimitive(names = "primitiveChdir")
     protected abstract static class PrimChdirNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "pathString.isByteType()")
+        @Specialization(guards = "pathString.isTruffleStringType()")
         protected final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile errorProfile) {
@@ -150,12 +151,12 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         @CompilationFinal private NativeObject sessionByteArray;
 
         @Specialization
-        protected final NativeObject doSession(@SuppressWarnings("unused") final Object receiver) {
+        protected final NativeObject doSession(@SuppressWarnings("unused") final Object receiver, @Cached final MutableTruffleString.FromByteArrayNode fromByteArrayNode) {
             if (sessionByteArray == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final byte[] bytes = new byte[4];
                 ArrayUtils.fillRandomly(bytes);
-                sessionByteArray = getContext().asByteArray(bytes);
+                sessionByteArray = getContext().asByteArray(bytes, fromByteArrayNode);
             }
             return sessionByteArray;
         }

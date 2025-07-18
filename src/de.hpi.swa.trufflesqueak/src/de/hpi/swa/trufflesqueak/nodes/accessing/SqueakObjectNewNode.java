@@ -14,6 +14,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import com.oracle.truffle.api.strings.MutableTruffleString;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -37,6 +38,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 @GenerateInline
 @GenerateUncached
 @GenerateCached(false)
+@SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
 public abstract class SqueakObjectNewNode extends AbstractNode {
     public static final int NEW_CACHE_SIZE = 6;
 
@@ -202,10 +204,15 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new LargeIntegerObject(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isBytes()", "!image.isLargeIntegerClass(classObject)"})
-    protected static final NativeObject doNativeBytes(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+    @Specialization(guards = {"classObject.isBytes()" , "image.isByteStringClass(classObject)" })
+    protected static final NativeObject doNativeByteString(final SqueakImageContext image, final ClassObject classObject, final int extraSize, @Cached.Shared("fromByteArrayNode") @Cached final MutableTruffleString.FromByteArrayNode node) {
         assert classObject.getBasicInstanceSize() == 0;
-        return NativeObject.newNativeBytes(image, classObject, extraSize);
+        return NativeObject.newNativeByteString(image, extraSize, node);
+    }
+    @Specialization(guards = {"classObject.isBytes()", "!image.isLargeIntegerClass(classObject)", "!image.isByteStringClass(classObject)"})
+    protected static final NativeObject doNativeBytes(final SqueakImageContext image, final ClassObject classObject, final int extraSize, @Cached.Shared("fromByteArrayNode") @Cached final MutableTruffleString.FromByteArrayNode node) {
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeBytes(image, classObject, extraSize, node);
     }
 
     @Specialization(guards = {"classObject.isCompiledMethodClassType()"})

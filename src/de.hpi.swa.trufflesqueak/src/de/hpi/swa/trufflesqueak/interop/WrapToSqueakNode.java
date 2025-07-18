@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
+import com.oracle.truffle.api.strings.MutableTruffleString;
 import com.oracle.truffle.api.strings.TruffleString;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -27,6 +28,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @GenerateInline
 @GenerateUncached
 @GenerateCached(false)
+@SuppressWarnings("truffle-inlining") // inline = false is default for @Cached
 public abstract class WrapToSqueakNode extends AbstractNode {
 
     public abstract Object executeWrap(Node node, Object value);
@@ -82,15 +84,14 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final NativeObject doString(final Node node, final String value,
-                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile) {
-        return getContext(node).asString(value, wideStringProfile, node);
+                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile, @Cached final TruffleString.FromJavaStringNode fromJavaStringNode, @Shared("truffleString") @Cached final MutableTruffleString.AsMutableTruffleStringNode asMutableTruffleStringNode) {
+        return getContext(node).asString(value, wideStringProfile, node, fromJavaStringNode, asMutableTruffleStringNode);
     }
 
     @Specialization
     protected static final NativeObject doTruffleString(final Node node, final TruffleString value,
-                    @Cached(inline = false) final TruffleString.ToJavaStringNode toJavaString,
-                    @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile) {
-        return doString(node, toJavaString.execute(value), wideStringProfile);
+                                                        @Shared("wideStringProfile") @Cached final InlinedConditionProfile wideStringProfile, @Shared("truffleString") @Cached final MutableTruffleString.AsMutableTruffleStringNode asMutableTruffleStringNode) {
+        return getContext(node).asString(value, wideStringProfile, node, asMutableTruffleStringNode);
     }
 
     @Specialization

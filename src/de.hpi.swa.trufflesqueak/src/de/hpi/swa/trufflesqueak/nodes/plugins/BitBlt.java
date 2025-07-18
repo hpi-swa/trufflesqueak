@@ -1633,7 +1633,7 @@ public final class BitBlt {
             destBitsIndexScale = Unsafe.ARRAY_INT_INDEX_SCALE;
         } else {
             destBits = destBitsNative.getByteStorage();
-            destBitsSize = destBitsNative.getByteLength();
+            destBitsSize = destBitsNative.getTruffleStringByteLength();
             destBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
             destBitsIndexScale = Unsafe.ARRAY_BYTE_INDEX_SCALE * Integer.BYTES;
         }
@@ -2409,7 +2409,7 @@ public final class BitBlt {
          *
          * <pre>
          * if (!(slotSizeOf(glyphMap) == 256 && isBytes(sourceString) && startIndex > 0 && stopIndex >= 0 &&
-         *              stopIndex <= sourceString.getByteLength() && loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
+         *              stopIndex <= sourceString.getTruffleStringByteLength() && loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
          * </pre>
          */
         if (!(loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
@@ -2439,7 +2439,7 @@ public final class BitBlt {
             }
         }
         final int left = destX;
-        final byte[] sourceStringBytes = sourceString.getByteStorage();
+        final byte[] sourceStringBytes = sourceString.getTruffleStringAsReadonlyBytesUncached();
         for (int charIndex = (int) startIndex; charIndex <= stopIndex; charIndex++) {
             final int ascii = Byte.toUnsignedInt(sourceStringBytes[charIndex - 1]);
             final int glyphIndex = (int) glyphMap[ascii];
@@ -2523,7 +2523,7 @@ public final class BitBlt {
         if (isWords) {
             bitsSize = bitmap.getIntLength() * Integer.SIZE;
         } else {
-            bitsSize = bitmap.getByteLength();
+            bitsSize = bitmap.getTruffleStringByteLength();
         }
         if (bitsSize < stride * height * 4) {
             /* bytes per word */
@@ -2535,7 +2535,7 @@ public final class BitBlt {
         if (isWords) {
             word = Integer.toUnsignedLong(bitmap.getIntStorage()[(int) index]);
         } else {
-            word = Integer.toUnsignedLong(VarHandleUtils.getInt(bitmap.getByteStorage(), (int) index));
+            word = Integer.toUnsignedLong(VarHandleUtils.getInt(bitmap.getTruffleStringAsReadonlyBytesUncached(), (int) index));
         }
         /* make a mask to isolate the pixel within that word */
         final long mask = shr(0xFFFFFFFFL, 32 - depth);
@@ -3789,7 +3789,7 @@ public final class BitBlt {
     }
 
     private static boolean isBytes(final NativeObject object) {
-        return object.isByteType();
+        return object.isTruffleStringType();
     }
 
     private static boolean isWords(final NativeObject object) {

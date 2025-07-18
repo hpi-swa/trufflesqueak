@@ -130,7 +130,7 @@ public final class InlinePrimitiveBytecodes {
             if (receiver instanceof final CompiledCodeObject o) {
                 numBytes = o.getBytes().length;
             } else {
-                numBytes = ((NativeObject) receiver).getByteLength();
+                numBytes = ((NativeObject) receiver).getTruffleStringByteLength();
             }
             pushNode.execute(frame, numBytes);
         }
@@ -470,9 +470,9 @@ public final class InlinePrimitiveBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long atIndex = (long) pop2Node.execute(frame);
+            final int atIndex = (int) pop2Node.execute(frame);
             final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, (long) receiver.getByte(atIndex));
+            pushNode.execute(frame, (long) receiver.readByteTruffleStringUncached(atIndex));
         }
     }
 
@@ -523,9 +523,9 @@ public final class InlinePrimitiveBytecodes {
         @Override
         public void executeVoid(final VirtualFrame frame) {
             final long value = (long) pop3Node.execute(frame);
-            final long atIndex = (long) pop2Node.execute(frame);
+            final int atIndex = (int) pop2Node.execute(frame);
             final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            receiver.setByte(atIndex, (byte) value);
+            receiver.writeByteTruffleStringUncached(atIndex, (int) value);
         }
     }
 
@@ -581,7 +581,7 @@ public final class InlinePrimitiveBytecodes {
             // TODO: Make use of `final long length = (long) pop3Node.execute(frame);`
             final NativeObject argument = (NativeObject) pop2Node.execute(frame);
             final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, BooleanObject.wrap(Arrays.equals(receiver.getByteStorage(), argument.getByteStorage())));
+            pushNode.execute(frame, BooleanObject.wrap(Arrays.equals(receiver.getTruffleStringAsReadonlyBytesUncached(), argument.getTruffleStringAsReadonlyBytesUncached())));
         }
     }
 
