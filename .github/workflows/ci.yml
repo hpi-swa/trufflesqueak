@@ -120,13 +120,18 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
+        coverage: [false]
+        include:
+          - os: ubuntu-22.04
+            type: jvm
+            coverage: true
     env:
       JAVA_VERSION: "24"
       JDK_IDENTIFIER: "latest"
       MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
-      VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
-    name: ${{ matrix.type }} ${{ matrix.os }}
+      VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.MaximumCompilations=-1 --engine.CompilationStatistics ${{ matrix.coverage && '--engine.Compilation=false' || '' }}"
+    name: ${{ matrix.type }} ${{ matrix.os }} ${{ matrix.coverage }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
     steps:
@@ -180,7 +185,7 @@ jobs:
         mx build --dependencies=JACOCOAGENT_0.8.10 # download JaCoCo agent
         JACOCO_JAR=$(mx paths JACOCOAGENT_0.8.10)
         echo "JAVA_TOOL_OPTIONS=\"-javaagent:${JACOCO_JAR}=append=true,includes=de.hpi.swa.trufflesqueak.*,destfile=jacoco.xml\"" >> "${GITHUB_ENV}"
-      if: ${{ matrix.type == 'jvm' }}
+      if: ${{ matrix.coverage }}
     - name: Run SystemReporter on TruffleSqueak standalone
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Upload TruffleSqueak standalone
@@ -221,7 +226,7 @@ jobs:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
         JAVA_TOOL_OPTIONS: '' # ensure empty
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
-      if: ${{ env.RUN_WITH_COVERAGE == 'true' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
+      if: ${{ matrix.coverage && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
     - name: Upload test image on failure
       uses: actions/upload-artifact@v4
       with:
