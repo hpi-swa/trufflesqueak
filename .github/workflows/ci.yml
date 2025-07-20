@@ -57,7 +57,7 @@ jobs:
         java: [24]
         jdk_identifier: [latest]
     env:
-      RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-22.04' }}"
+      RUN_WITH_COVERAGE: "false"
       MX_ENV: "trufflesqueak-jar"
       
     name: jar ${{ matrix.os }} + JDK${{ matrix.java }}
@@ -105,11 +105,6 @@ jobs:
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-polyglot --dy /compiler gate ${{ env.MX_GATE_OPTS }} --tags build,test
       if: ${{ runner.os == 'Windows' }}
-    - name: Report code coverage
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
-      if: ${{ env.RUN_WITH_COVERAGE == 'true' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
     - name: Upload Graal compiler dumps
       if: always()
       uses: actions/upload-artifact@v4
@@ -180,6 +175,12 @@ jobs:
         set "STANDALONE_PATH=%STANDALONE_PATH:/=\%"
         copy %STANDALONE_PATH% ${{ env.STANDALONE_TARGET }}
       if: ${{ runner.os == 'Windows' }}
+    - name: Enable coverage tracking via JaCoCo
+      run: |
+        mx build --dependencies=JACOCOAGENT_0.8.10 # download JaCoCo agent
+        JACOCO_JAR=$(mx paths JACOCOAGENT_0.8.10)
+        echo "JAVA_TOOL_OPTIONS=\"-javaagent:${JACOCO_JAR}=append=true,includes=de.hpi.swa.trufflesqueak.*,destfile=jacoco.xml\"" >> "${GITHUB_ENV}"
+      if: ${{ matrix.type == 'jvm' }}
     - name: Run SystemReporter on TruffleSqueak standalone
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
     - name: Upload TruffleSqueak standalone
@@ -215,6 +216,12 @@ jobs:
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' && matrix.os != 'macos-13' }} # tests fail on macos-13 and it is reaching EOL soon
+    - name: Report code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        JAVA_TOOL_OPTIONS: '' # ensure empty
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
+      if: ${{ env.RUN_WITH_COVERAGE == 'true' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
     - name: Upload test image on failure
       uses: actions/upload-artifact@v4
       with:
