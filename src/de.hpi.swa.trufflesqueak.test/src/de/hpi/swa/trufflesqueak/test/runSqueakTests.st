@@ -1,4 +1,4 @@
-| repoPath isNative alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
+| repoPath isNative isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
 
 ToolSet default: CommandLineToolSet.
 
@@ -23,6 +23,8 @@ TestCase compile: 'failureLog
         classified: 'patched'.
 
 isNative := [Java type: 'java.lang.System'. false] on: Error do: [true].
+isMacOS := Smalltalk platformName = 'Mac OS'.
+isWin := Smalltalk platformName = 'Win32'.
 
 repoPath := (FileDirectory default containingDirectory / 'src' / 'image' / 'src') fullName.
 FileStream stdout nextPutAll: 'Loading TruffleSqueak packages from "', repoPath, '" ...'; cr; flush.
@@ -127,7 +129,6 @@ ignoredTests := OrderedCollection new.
     UnixProcessWin32FileLockingTestCase.
     WebClientServerTest. "some tests pass slowly"
     WebMessageTest.
-    Win32VMTest. "failing on Windows?"
     WriteBarrierTest. "requires supportsReadOnlyObjects"
     ZzzFileSystemGitAfterSuiteTest.
     ZzzGitAfterSuiteTest.
@@ -149,6 +150,7 @@ ignoredTests := OrderedCollection new.
     TraitMethodDescriptionTest -> #(#testArgumentNames #testCategories #testConflictingCategories #testConflictMethodCreation).
     TraitSystemTest -> #(#testAllImplementedMessagesWithout #testAllSentMessages).
     TraitTest -> #(#testAddAndRemoveMethodsFromSubtraits #testMarkerMethods #testRequirement).
+    WeakSetInspectorTest -> #(#testSymbolTableM6812).
 
     "ignored tests"
     AllocationTest -> #(#testOutOfMemorySignal).
@@ -202,6 +204,13 @@ failingTests := OrderedCollection new.
 } collect: [:testCase |
     testCase allTestSelectors do: [:sel | failingTests add: (testCase selector: sel) ]].
 
+isWin ifTrue: [
+    {
+        Win32VMTest.
+    } collect: [:testCase |
+        testCase allTestSelectors do: [:sel | failingTests add: (testCase selector: sel) ]].
+].
+
 {
     BitBltSimulationTest -> #(#testRgbMulDepth16 #testRgbMulDepth1to8).
     CompilerExceptionsTest -> #(#testUnknownSelector).
@@ -224,17 +233,6 @@ failingTests := OrderedCollection new.
 
 flakyTests := OrderedCollection new.
 {
-    WeakIdentityDictionaryTest.
-    WeakIdentityKeyDictionaryTest.
-    WeakKeyDictionaryTest.
-    WeakMessageSendTest.
-    WeakRegistryTest.
-    WeakSetInspectorTest.
-    WeakSetTest.
-} collect: [:testCase |
-    testCase allTestSelectors do: [:sel | flakyTests add: (testCase selector: sel) ]].
-
-{
     BasicInspectorTest -> #(#testExpressions).
     BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
     ClassBuilderTest -> #(#testSubclass).
@@ -245,20 +243,20 @@ flakyTests := OrderedCollection new.
     ContextVariablesInspectorTest -> #(#testExpressions).
     DebuggerTests -> #(#test02UnhandledException).
     DictionaryInspectorTest -> #(#testExpressions).
-    DurationTest -> #(#testBusyWait).
     FileList2ModalDialogsTest -> #(#testModalFolderSelector #testModalFolderSelectorForProjectLoad).
     FSFileHandleTest -> #(#testCloseWhenGarbageCollected).
-    FSFileHandleTest -> #(#testAt #testAtPut #testAtPutBinaryAscii #testAtWriteBinaryAscii #testClose #testCreatedOpen #testIO #testReadBufferTooLarge #testReadOnly #testReference #testSizeAfterGrow #testSizeNoGrow #testTruncate #testTruncateEmpty #testWriteStream). "flaky on Windows"
     InspectorTest -> #(#testExpressions).
     IntegerTest -> #(#testReciprocalModulo).
     MCDictionaryRepositoryTest -> #(#testIncludesName #testStoreAndLoad).
     MethodHighlightingTests -> #(#testMethodHighlighting).
     PCCByCompilationTest -> #(#testSwitchPrimCallOffOn).
     PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
-    PNGReadWriterTest -> #(#testBlue16 #testBlue32 #testBlue8). "flaky on Windows"
     SetInspectorTest -> #(#testExpressions).
-    SUnitTest -> #(#testTestTimeoutPragma).
     TestValueWithinFix -> #(#testValueWithinTimingBasic #testValueWithinTimingNestedInner #testValueWithinTimingNestedOuter #testValueWithinTimingRepeat).
+    WeakIdentityDictionaryTest -> #(#testIsEmpty).
+    WeakKeyDictionaryTest -> #(#testIsEmpty).
+    WeakSetInspectorTest -> #(#testUninitialized).
+    WeakSetTest -> #(#testIsEmpty).
 
     "failing on some platforms"
     GIFReadWriterTest -> #(#testAnimatedColorsOutIn).
@@ -266,6 +264,15 @@ flakyTests := OrderedCollection new.
 } collect: [:assoc | | testCase |
     testCase := assoc key.
     assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
+
+isWin ifTrue: [
+    {
+        FSFileHandleTest -> #("May fail with 'FileDoesNotExist: plonk' on Windows" #testAt #testAtPut #testAtPutBinaryAscii #testAtWriteBinaryAscii #testClose #testCreatedOpen #testIO #testReadBufferTooLarge #testReadOnly #testReference #testSizeAfterGrow #testSizeNoGrow #testTruncate #testTruncateEmpty #testWriteStream).
+        PNGReadWriterTest -> #("May fail with FileDoesNotExistException on Windows" #testBlue16 #testBlue32 #testBlue8).
+    } collect: [:assoc | | testCase |
+        testCase := assoc key.
+        assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
+].
 
 testSuite := TestCase buildSuite.
 testSuite tests removeAllSuchThat: [:ea | ignoredTests anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
