@@ -108,9 +108,7 @@ jobs:
     - name: Report code coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: |
-        bash <(curl -s https://codecov.io/bash)
-        bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
       if: ${{ env.RUN_WITH_COVERAGE == 'true' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
     - name: Upload Graal compiler dumps
       if: always()
