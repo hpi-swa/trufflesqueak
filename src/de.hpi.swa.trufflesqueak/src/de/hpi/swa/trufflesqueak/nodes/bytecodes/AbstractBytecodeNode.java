@@ -44,8 +44,10 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
         if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
             return source.createUnavailableSection();
         } else {
-            final int lineNumber = code.findLineNumber(successorIndex - code.getInitialPC());
-            return source.createSection(lineNumber);
+            // TODO: re-enable:
+            // final int lineNumber = code.findLineNumber(successorIndex - code.getInitialPC());
+            // return source.createSection(lineNumber);
+            return source.createSection(1);
         }
     }
 }
