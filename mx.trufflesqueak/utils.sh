@@ -55,26 +55,12 @@ build-graalvm() {
 
 build-standalone() {
   local type=$1
-  local java_version=$2
-  local component_name=""
-  case "${type}" in
-    "native")
-      component_name="SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${java_version}"
-      ;;
-    "jvm")
-      component_name="SMALLTALK_JAVA_STANDALONE_SVM_JAVA${java_version}"
-      ;;
-    *)
-      echo "Unexpected standalone type: ${type}"
-      exit 1
-      ;;
-  esac
+  local component_name="TRUFFLESQUEAK_$(echo $type | tr a-z A-Z)_STANDALONE"
   local env_name="trufflesqueak-${type}"
 
-  mx --env "${env_name}" --no-download-progress build --dependencies "${component_name}"
-  cp "$(mx --env "${env_name}" paths "${component_name}")" "${STANDALONE_TARGET}"
-
-  local standalone_home="$(mx --env "${env_name}" standalone-home --type "${type}" smalltalk)"
+  mx --env "${env_name}" --no-download-progress build
+  local standalone_home="${BASE_DIRECTORY}/mxbuild/${OS_NAME}-${OS_ARCH}/${component_name}"
+  set-env "STANDALONE_HOME" "$(resolve-path "${standalone_home}")"
   add-path "${standalone_home}/bin"
   echo "[${standalone_home}/bin added to \$PATH]"
 }
@@ -196,15 +182,6 @@ download-cuis-test-image() {
   echo "[Cuis test image (${DEP_CUIS_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
-filename-standalone() {
-  local variant="" && [[ "$1" == "jvm" ]] && variant="-jvm"
-  local git_describe=$(git describe --tags --always)
-  local git_short_commit=$(git log -1 --format="%h")
-  local git_description="${git_describe:-${git_short_commit}}"
-  local file_extension="tar" && [[ "${OS_NAME}" == "windows" ]] && file_extension="zip"
-  echo "trufflesqueak${variant}-${git_description}-${OS_NAME}-${OS_ARCH}.${file_extension}"
-}
-
 format-native-image-config() {
   readonly NI_CONFIG_BASE="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/META-INF/native-image"
   for f in "${NI_CONFIG_BASE}/"*.json; do
@@ -245,11 +222,10 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
-  set-up-labsjdk "${java_version}"
-  download-trufflesqueak-test-image
-  if [[ "${kind}" != "jar" ]]; then
-    set-env "STANDALONE_TARGET" "$(filename-standalone "${kind}")"
+  if [[ "${java_version}" != "skip" ]]; then
+    set-up-labsjdk "${java_version}"
   fi
+  download-trufflesqueak-test-image
 }
 
 set-up-labsjdk() {
@@ -302,7 +278,7 @@ shallow-clone-graalvm-project() {
 shallow-clone-graal() {
   shallow-clone-graalvm-project https://github.com/oracle/graal.git "${GRAAL_VERSION}"
   echo "[graal repo (${GRAAL_VERSION}) cloned successfully]"
-  $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/graalvm-24.2.2.patch")
+  $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/graalvm-25.0.0.patch")
   echo "[graal repo patched successfully]"
 }
 

@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2022]
-        java: [24]
+        java: [25]
         jdk_identifier: [latest]
     env:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-22.04' }}"
@@ -126,11 +126,11 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
-      JAVA_VERSION: "24"
+      JAVA_VERSION: "25"
       JDK_IDENTIFIER: "latest"
       MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
-      VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
+      VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
     name: ${{ matrix.type }} ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
@@ -142,25 +142,24 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@v1
       with:
-        java-version: '${{ env.JAVA_VERSION }}.0.1'
+        java-version: '${{ env.JAVA_VERSION }}-ea'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'native' }}
     - name: Enable Oracle GraalVM
       shell: bash
       run: |
-        echo "EXTRA_GRAALVM_HOME=$JAVA_HOME" >> $GITHUB_ENV
+        echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
         cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
-      if: ${{ matrix.type == 'native' }}
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12.0'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} ${{ env.JDK_IDENTIFIER }}
+      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} skip
     - name: Build TruffleSqueak standalone
-      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }} ${{ env.JAVA_VERSION }}
+      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
       if: ${{ runner.os != 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
@@ -178,7 +177,7 @@ jobs:
         set /p STANDALONE_PATH=<standalone-path-with-forward-slashes.txt
         setlocal enabledelayedexpansion
         set "STANDALONE_PATH=%STANDALONE_PATH:/=\%"
-        copy %STANDALONE_PATH% ${{ env.STANDALONE_TARGET }}
+        copy %STANDALONE_PATH% ${{ env.STANDALONE_HOME }}
       if: ${{ runner.os == 'Windows' }}
     - name: Run SystemReporter on TruffleSqueak standalone
       run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
@@ -186,12 +185,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
-        path: ${{ env.STANDALONE_TARGET }}
+        path: ${{ env.STANDALONE_HOME }}
         retention-days: 7
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Deploy TruffleSqueak standalone
       shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_HOME }} ${{ secrets.GITHUB_TOKEN }}
       # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
@@ -240,7 +239,7 @@ jobs:
         type: [native]
         iterations: [300]
     env:
-      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
+      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics"
       EXEC: "/usr/bin/time -v"
     name: run benchmarks
     timeout-minutes: 30
