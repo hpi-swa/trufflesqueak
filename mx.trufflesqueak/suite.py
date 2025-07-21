@@ -276,7 +276,7 @@ suite = {
         "trufflesqueak_licenses": {
             "class": "StandaloneLicenses",
             "community_license_file": "LICENSE",
-            "community_3rd_party_license_file": "CITATION.bib",  # FIXME
+            "community_3rd_party_license_file": "LICENSE",
         },
         "trufflesqueak_thin_launcher": {
             "class": "ThinLauncherProject",
@@ -527,12 +527,7 @@ suite = {
             "platformDependent": True,
             "layout": {
                 "./": [
-                    # "file:CHANGELOG.md",
                     "file:README.md",
-                    # "file:mx.trufflesqueak/native-image.properties",
-                ],
-                "bin/": [
-                    # "file:exe/*",
                 ],
             },
             "maven": False,
@@ -590,13 +585,13 @@ suite = {
                     "dependency": "sdk:STANDALONE_JAVA_HOME",
                     "path": "*",
                     "exclude": [
-                        # Native Image-related
+                        # related to Native Image
                         "bin/native-image*",
                         "lib/static",
                         "lib/svm",
                         "lib/<lib:native-image-agent>",
                         "lib/<lib:native-image-diagnostics-agent>",
-                        # Unnecessary and big
+                        # unnecessary and big
                         "lib/src.zip",
                         # "jmods",
                     ],
@@ -609,20 +604,6 @@ suite = {
                     "classpath-dependencies:TRUFFLESQUEAK_STANDALONE_DEPENDENCIES",
                 ],
             },
-        },
-        "TRUFFLESQUEAK_NATIVE_STANDALONE_RELEASE_ARCHIVE": {
-            "class": "DeliverableStandaloneArchive",
-            "platformDependent": True,
-            "standalone_dist": "TRUFFLESQUEAK_NATIVE_STANDALONE",
-            "community_archive_name": "trufflesqueak-community",
-            "enterprise_archive_name": "trufflesqueak",
-        },
-        "TRUFFLESQUEAK_JVM_STANDALONE_RELEASE_ARCHIVE": {
-            "class": "DeliverableStandaloneArchive",
-            "platformDependent": True,
-            "standalone_dist": "TRUFFLESQUEAK_JVM_STANDALONE",
-            "community_archive_name": "trufflesqueak-community-jvm",
-            "enterprise_archive_name": "trufflesqueak-jvm",
         },
     },
 }

@@ -147,9 +147,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Enable Oracle GraalVM
       shell: bash
-      run: |
-        echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
-        cat "${JAVA_HOME}/LICENSE.txt" > "${GITHUB_WORKSPACE}/LICENSE"
+      run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -167,8 +165,10 @@ jobs:
         set "JVMCI_VERSION_CHECK=ignore"
         call mx --env ${{ env.MX_ENV }} --no-download-progress build
         if ${{ matrix.type }}==native (set "STANDALONE_NAME=TRUFFLESQUEAK_NATIVE_STANDALONE") else (set "STANDALONE_NAME=TRUFFLESQUEAK_JVM_STANDALONE") 
-        set "STANDALONE_HOME=%GITHUB_WORKSPACE%\mxbuild\windows-amd64\%STANDALONE_NAME%"
-        echo STANDALONE_HOME=%STANDALONE_HOME%>> %GITHUB_ENV%
+        call mx --env ${{ env.MX_ENV }} paths --output %STANDALONE_NAME% > standalone-home-with-forward-slashes.txt
+        set /p STANDALONE_HOME=<standalone-home-with-forward-slashes.txt
+        setlocal enabledelayedexpansion
+        set "STANDALONE_HOME=%STANDALONE_HOME:/=\%"
         echo %STANDALONE_HOME%\bin>>%GITHUB_PATH%
         echo [%STANDALONE_HOME%\bin added to $PATH]
       if: ${{ runner.os == 'Windows' }}
@@ -183,7 +183,7 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Deploy TruffleSqueak standalone
       shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_HOME }} ${{ secrets.GITHUB_TOKEN }}
+      run: mx.trufflesqueak/utils.sh deploy-standalone ${{ matrix.type }} ${{ env.STANDALONE_HOME }} ${{ secrets.GITHUB_TOKEN }}
       # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     # Enable when 25.0 is out:
@@ -245,10 +245,9 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
-    - name: Unpack TruffleSqueak standalone
+    - name: Add TruffleSqueak standalone to system path
       run: |
-        tar -xf trufflesqueak-*.tar
-        echo $(cd trufflesqueak-*-linux*/bin && pwd) >> $GITHUB_PATH
+        echo $(cd bin && pwd) >> $GITHUB_PATH
     - name: Run 'tinyBenchmarks'
       run: |
         ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "1 tinyBenchmarks"

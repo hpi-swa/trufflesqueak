@@ -173,26 +173,6 @@ def _get_path_to_test_image():
     mx.abort("Unable to locate test image.")
 
 
-def _enable_local_compression():
-    def patched_init(self, *args, **kw_args):
-        self._local_compress = kw_args.pop(
-            "localCompress", True
-        )  # Flip default to `True`
-        self._remote_compress = kw_args.pop("remoteCompress", True)
-        if self._local_compress and not self._remote_compress:
-            mx.abort(
-                "Incompatible local/remote compression settings: local compression requires remote compression"
-            )
-        super(mx.LayoutZIPDistribution, self).__init__(
-            *args, compress=self._local_compress, **kw_args
-        )
-
-    mx.LayoutZIPDistribution.__init__ = patched_init
-
-
-_enable_local_compression()
-
-
 mx_sdk_vm.register_vm_config(
     "trufflesqueak-jar",
     [

@@ -59,7 +59,7 @@ build-standalone() {
   local env_name="trufflesqueak-${type}"
 
   mx --env "${env_name}" --no-download-progress build
-  local standalone_home="${BASE_DIRECTORY}/mxbuild/${OS_NAME}-${OS_ARCH}/${component_name}"
+  local standalone_home="$(mx --env "${env_name}" paths --output "${component_name}")"
   set-env "STANDALONE_HOME" "$(resolve-path "${standalone_home}")"
   add-path "${standalone_home}/bin"
   echo "[${standalone_home}/bin added to \$PATH]"
@@ -81,16 +81,24 @@ conditional-deploy() {
   eval "$@"
 }
 
-deploy-asset() {
+deploy-standalone() {
   check-deploy
-  local filename=$1
-  if [[ "${filename}" == *.tar ]]; then
-    echo "Compressing tarball..."
-    gzip "${filename}"
-    filename="${filename}.gz"
-  fi
-  # zip files are always compressed because mx_trufflesqueak.py forces localCompress
+  local filename=$(filename-standalone $1)
+  local standalone_home=$2
+  local token=$3
 
+  # Archive standalone home
+  if [[ "${OS_NAME}" == "windows" ]]; then
+    zip -r "${filename}" "${standalone_home}"
+  else
+    tar czf "${filename}" "${standalone_home}"
+  fi
+
+  deploy-asset "${filename}" "${token}"
+}
+
+deploy-asset() {
+  local filename=$1
   local auth="Authorization: token $2"
   local git_tag=$(git tag --points-at HEAD)
   local release_id
@@ -181,6 +189,16 @@ download-cuis-test-image() {
 
   echo "[Cuis test image (${DEP_CUIS_TEST_IMAGE_TAG}) downloaded successfully]"
 }
+
+filename-standalone() {
+  local variant="" && [[ "$1" == "jvm" ]] && variant="-jvm"
+  local git_describe=$(git describe --tags --always)
+  local git_short_commit=$(git log -1 --format="%h")
+  local git_description="${git_describe:-${git_short_commit}}"
+  local file_extension="tar.gz" && [[ "${OS_NAME}" == "windows" ]] && file_extension="zip"
+  echo "trufflesqueak${variant}-${git_description}-${OS_NAME}-${OS_ARCH}.${file_extension}"
+}
+
 
 format-native-image-config() {
   readonly NI_CONFIG_BASE="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/META-INF/native-image"
