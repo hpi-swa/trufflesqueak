@@ -159,7 +159,7 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} skip
     - name: Build TruffleSqueak standalone
-      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
+      run: JVMCI_VERSION_CHECK=ignore mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
       if: ${{ runner.os != 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
