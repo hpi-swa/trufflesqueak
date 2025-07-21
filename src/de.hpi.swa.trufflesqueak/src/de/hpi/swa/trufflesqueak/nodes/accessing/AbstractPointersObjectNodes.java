@@ -72,7 +72,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "!object.getLayout().isValid()")
+        @Specialization(guards = "!object.getLayout().isValid()", excludeForUncached = true)
         protected static final Object doReadInvalid(final AbstractPointersObject object, final long index) {
             object.updateLayout(); // ensure layout is updated
             return doReadGeneric(object, index);
