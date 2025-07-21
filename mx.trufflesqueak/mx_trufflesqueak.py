@@ -1,3 +1,4 @@
+# pylint: disable=unused-import
 #
 # Copyright (c) 2017-2025 Software Architecture Group, Hasso Plattner Institute
 # Copyright (c) 2021-2025 Oracle and/or its affiliates
@@ -18,14 +19,14 @@ import mx_sdk_vm_impl
 import mx_truffle
 
 # re-export custom mx project classes so they can be used from suite.py
-from mx_cmake import CMakeNinjaProject  # pylint: disable=unused-import
+from mx_cmake import CMakeNinjaProject
 from mx_sdk_vm_ng import (
     StandaloneLicenses,
     ThinLauncherProject,
     LanguageLibraryProject,
     DynamicPOMDistribution,
     DeliverableStandaloneArchive,
-)  # pylint: disable=unused-import
+) 
 
 _SUITE = mx.suite("trufflesqueak")
 _COMPILER = mx.suite("compiler", fatalIfMissing=False)
