@@ -295,6 +295,10 @@ suite = {
                 "truffle.nfi.library": "../jvmlibs/<lib:trufflenfi>",
             },
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
+            "default_vm_args": [
+                "--vm.Xms512M",
+                "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
+            ],
         },
         "libsmalltalkvm": {
             "class": "LanguageLibraryProject",

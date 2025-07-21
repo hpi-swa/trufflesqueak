@@ -26,7 +26,7 @@ from mx_sdk_vm_ng import (
     LanguageLibraryProject,
     DynamicPOMDistribution,
     DeliverableStandaloneArchive,
-) 
+)
 
 _SUITE = mx.suite("trufflesqueak")
 _COMPILER = mx.suite("compiler", fatalIfMissing=False)
