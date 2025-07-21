@@ -145,7 +145,6 @@ jobs:
         java-version: '${{ env.JAVA_VERSION }}-ea'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ matrix.type == 'native' }}
     - name: Enable Oracle GraalVM
       shell: bash
       run: |
