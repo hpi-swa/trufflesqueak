@@ -20,12 +20,12 @@ import mx_truffle
 # re-export custom mx project classes so they can be used from suite.py
 from mx_cmake import CMakeNinjaProject  # pylint: disable=unused-import
 from mx_sdk_vm_ng import (
-    StandaloneLicenses,  # pylint: disable=unused-import
-    ThinLauncherProject,  # pylint: disable=unused-import
-    LanguageLibraryProject,  # pylint: disable=unused-import
-    DynamicPOMDistribution,  # pylint: disable=unused-import
-    DeliverableStandaloneArchive,  # pylint: disable=unused-import
-)
+    StandaloneLicenses,
+    ThinLauncherProject,
+    LanguageLibraryProject,
+    DynamicPOMDistribution,
+    DeliverableStandaloneArchive,
+)  # pylint: disable=unused-import
 
 _SUITE = mx.suite("trufflesqueak")
 _COMPILER = mx.suite("compiler", fatalIfMissing=False)
@@ -190,6 +190,33 @@ def _enable_local_compression():
 
 
 _enable_local_compression()
+
+
+mx_sdk_vm.register_vm_config(
+    "trufflesqueak-jar",
+    [
+        "sdk",
+        "sdkc",
+        "sdkni",
+        "ins",
+        "cov",
+        "dap",
+        "lsp",
+        "sdkl",
+        "pro",
+        "insight",
+        "insightheap",
+        "tfl",
+        "tfla",
+        "tflc",
+        "truffle-json",
+        "nfi",
+        "nfi-libffi",
+        "st",
+    ],
+    _SUITE,
+    env_file="trufflesqueak-jar",
+)
 
 
 mx_sdk.register_graalvm_component(
