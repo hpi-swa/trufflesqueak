@@ -31,6 +31,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
     private static final int LOCAL_RETURN_PC = -2;
+    private static final int BACKJUMP_THRESHOLD = 1 << 14;
 
     private final CompiledCodeObject code;
     private final int initialPC;
@@ -104,13 +105,15 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 final int successor = jumpNode.getSuccessorIndex();
                 if (successor <= pc) {
                     backJumpCounter.value++;
-                    if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this)) {
-                        returnValue = BytecodeOSRNode.tryOSR(this, successor, null, null, frame);
-                        if (returnValue != null) {
-                            break bytecode_loop;
+                    if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
+                        if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
+                            returnValue = BytecodeOSRNode.tryOSR(this, successor, null, null, frame);
+                            if (returnValue != null) {
+                                break bytecode_loop;
+                            }
+                        } else {
+                            jumpNode.executeCheck(frame);
                         }
-                    } else if (backJumpCounter.value % 10_000 == 0) {
-                        jumpNode.executeCheck(frame);
                     }
                 }
                 pc = successor;
