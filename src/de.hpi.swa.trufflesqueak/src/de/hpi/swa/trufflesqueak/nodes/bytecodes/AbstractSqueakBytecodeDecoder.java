@@ -73,11 +73,14 @@ public abstract class AbstractSqueakBytecodeDecoder {
         final int trailerPosition = trailerPosition(code);
         assert 0 <= successorIndex && successorIndex <= trailerPosition : successorIndex + " not between 0 and " + trailerPosition;
         int index = 0;
-        int lineNumber = 0;
-        do {
+        int lineNumber = 1;
+        while (index < trailerPosition) {
+            if (index == successorIndex) {
+                break;
+            }
             index += decodeNumBytes(code, index);
             lineNumber++;
-        } while (index != successorIndex);
+        }
         assert lineNumber <= trailerPosition;
         return lineNumber;
     }
