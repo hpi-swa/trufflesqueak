@@ -1,4 +1,3 @@
-# pylint: disable=unused-import
 #
 # Copyright (c) 2017-2025 Software Architecture Group, Hasso Plattner Institute
 # Copyright (c) 2021-2025 Oracle and/or its affiliates
@@ -19,8 +18,8 @@ import mx_sdk_vm_impl
 import mx_truffle
 
 # re-export custom mx project classes so they can be used from suite.py
-from mx_cmake import CMakeNinjaProject
-from mx_sdk_vm_ng import (
+from mx_cmake import CMakeNinjaProject  # pylint: disable=unused-import
+from mx_sdk_vm_ng import (  # pylint: disable=unused-import
     StandaloneLicenses,
     ThinLauncherProject,
     LanguageLibraryProject,
