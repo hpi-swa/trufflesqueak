@@ -51,7 +51,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     }
 
     protected static final Object doUncachedSlow(final Node node, final ClassObject classObject, final String selector) {
-        return doUncached(node, classObject, selector, AbstractPointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached(), final TruffleString.GetInternalByteArrayNode.getUncached());
+        return doUncached(node, classObject, selector, AbstractPointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached(), TruffleString.GetInternalByteArrayNode.getUncached());
     }
 
     @ReportPolymorphism.Megamorphic
