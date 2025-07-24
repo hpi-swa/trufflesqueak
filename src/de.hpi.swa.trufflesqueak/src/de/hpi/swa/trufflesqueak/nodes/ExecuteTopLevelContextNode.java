@@ -177,6 +177,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         /* "make sure we can return to the given context" */
         if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
             if (startContext == targetContext) {
+                image.printToStdErr("returnToTopLevel", startContext, "with return value:", returnValue);
                 throw returnToTopLevel(targetContext, returnValue);
             }
             return sendCannotReturn(startContext, returnValue);
