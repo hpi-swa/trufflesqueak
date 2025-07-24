@@ -45,6 +45,16 @@ public final class Returns {
             return (ContextObject) targetContextOrMarker;
         }
 
+        public ContextObject getOrCreateTargetContext() {
+            if (targetContextOrMarker instanceof final ContextObject targetContext) {
+                return targetContext;
+            } else if (targetContextOrMarker instanceof final FrameMarker frameMarker) {
+                return frameMarker.getMaterializedContext();
+            } else {
+                throw SqueakExceptions.SqueakException.create("Could not create Context for:", targetContextOrMarker);
+            }
+        }
+
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
