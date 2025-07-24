@@ -171,7 +171,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @TruffleBoundary
-    private ContextObject commonReturn(final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
+    private ContextObject commonReturn(final ContextObject startContextOrNull, final ContextObject targetContext, final Object returnValue) {
+        // Normal returns with modified senders end up here with a target but no start Context.
+        final ContextObject startContext = startContextOrNull == null ? targetContext : startContextOrNull;
         /* "make sure we can return to the given context" */
         if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
             if (startContext == targetContext) {
