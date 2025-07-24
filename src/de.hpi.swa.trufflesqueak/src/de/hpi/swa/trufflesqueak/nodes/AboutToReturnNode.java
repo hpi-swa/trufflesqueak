@@ -76,8 +76,8 @@ public abstract class AboutToReturnNode extends AbstractNode {
         @Specialization(guards = {"hasModifiedSender(frame)"})
         protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
                         @Cached("createAboutToReturnSend()") final Dispatch2Node sendAboutToReturnNode) {
-            assert nlr.getTargetContextOrMarker() instanceof ContextObject;
-            sendAboutToReturnNode.execute(frame, FrameAccess.getContext(frame), nlr.getReturnValue(), nlr.getTargetContextOrMarker());
+//            assert nlr.getTargetContextOrMarker() instanceof ContextObject;
+            sendAboutToReturnNode.execute(frame, FrameAccess.getContext(frame), nlr.getReturnValue(), nlr.getOrCreateTargetContext());
         }
     }
 
