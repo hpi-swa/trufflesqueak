@@ -54,18 +54,22 @@ public final class Returns {
 
     public static final class NonVirtualReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        private final transient ContextObject targetContext;
+        private final transient Object targetContextOrMarker;
         private final transient ContextObject currentContext;
 
-        public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
+        public NonVirtualReturn(final Object returnValue, final Object targetContextOrMarker, final ContextObject currentContext) {
             super(returnValue);
-            assert !targetContext.isDead() : "Cannot return to terminated context";
-            this.targetContext = targetContext;
+            assert targetContextOrMarker instanceof ContextObject || targetContextOrMarker instanceof FrameMarker;
+            this.targetContextOrMarker = targetContextOrMarker;
             this.currentContext = currentContext;
         }
 
+        public Object getTargetContextOrMarker() {
+            return targetContextOrMarker;
+        }
+
         public ContextObject getTargetContext() {
-            return targetContext;
+            return (ContextObject) targetContextOrMarker;
         }
 
         public ContextObject getCurrentContext() {
@@ -75,7 +79,7 @@ public final class Returns {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContext + ")";
+            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContextOrMarker + ")";
         }
     }
 
