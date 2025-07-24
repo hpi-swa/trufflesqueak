@@ -194,6 +194,44 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         // Evaluate unwind-marked blocks on sender chain.
         context = senderContext;
         while (context != targetContext) {
+            final AbstractSqueakObject currentSender = context.getSender();
+            if (currentSender instanceof final ContextObject o) {
+                context.terminate();
+                context = o;
+            } else { // TODO: this might need to be handled by a cannotReturn send.
+                LogUtils.SCHEDULING.warning("Unwind error: sender of " + context + " is nil, unwinding towards " + targetContext + " with return value: " + returnValue);
+                break;
+            }
+        }
+        targetContext.push(returnValue);
+        return targetContext;
+    }
+
+    @TruffleBoundary
+    private ContextObject commonReturn(final ContextObject startContextOrNull, final ContextObject targetContext, final Object returnValue) {
+        // Normal returns with modified senders end up here with a target but no start Context.
+        final ContextObject startContext = startContextOrNull == null ? targetContext : startContextOrNull;
+        /* "make sure we can return to the given context" */
+        if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
+            if (startContext == targetContext) {
+                throw returnToTopLevel(targetContext, returnValue);
+            }
+            return sendCannotReturn(startContext, returnValue);
+        }
+        /*
+         * "If this return is not to our immediate predecessor (i.e. from a method to its sender, or
+         * from a block to its caller), scan the stack for the first unwind marked context and
+         * inform this context and let it deal with it. This provides a chance for ensure unwinding
+         * to occur."
+         */
+        AbstractSqueakObject contextOrNil = startContext;
+        while (contextOrNil != targetContext) {
+            if (!(contextOrNil instanceof final ContextObject context)) {
+                /* "error: sender's instruction pointer or context is nil; cannot return" */
+                assert contextOrNil == NilObject.SINGLETON;
+                return sendCannotReturn(startContext, returnValue);
+            }
+            assert !context.isPrimitiveContext();
             if (context.getCodeObject().isUnwindMarked()) {
                 try {
                     // TODO: make this better. Clearing the modified sender permits virtualization
