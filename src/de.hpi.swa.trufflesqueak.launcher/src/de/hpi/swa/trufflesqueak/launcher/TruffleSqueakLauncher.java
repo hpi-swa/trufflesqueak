@@ -134,6 +134,9 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 println(String.format("[trufflesqueak] Running %s on %s%s...", new File(imagePath).getName(), runtimeName, engineModeSuffix));
             }
             if (sourceCode != null) {
+                if (!quiet) {
+                    println(String.format("[trufflesqueak] Evaluating '%s'...", sourceCode));
+                }
                 final Value result = context.eval(
                                 Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).cached(false).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
                 if (!quiet) {

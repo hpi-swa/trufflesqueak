@@ -40,8 +40,8 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
@@ -119,6 +119,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     private static SeekableByteChannel createChannelOrPrimFail(final SqueakImageContext image, final TruffleFile truffleFile, final boolean writableFlag) {
+        if (!writableFlag && !truffleFile.exists()) {
+            throw PrimitiveFailed.GENERIC_ERROR;
+        }
         try {
             final SeekableByteChannel channel = truffleFile.newByteChannel(writableFlag ? OPTIONS_WRITEABLE : OPTIONS_DEFAULT);
             image.env.registerOnDispose(channel);
@@ -150,7 +153,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     private static void log(final String message, final Throwable e) {
-        LogUtils.IO.log(Level.FINE, message, e);
+        LogUtils.IO.log(Level.WARNING, message, e);
     }
 
     @GenerateNodeFactory

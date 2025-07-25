@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
@@ -99,7 +100,7 @@ public final class SqueakImageWriter {
             finalizeImageHeader();
         }
         final double fileSize = Math.ceil((double) position / 1024 / 1024 * 100) / 100;
-        image.printToStdOut("Image saved in " + (MiscUtils.currentTimeMillis() - start) + "ms (" + fileSize + "MiB).");
+        LogUtils.IMAGE.fine(() -> "Image saved in " + (MiscUtils.currentTimeMillis() - start) + "ms (" + fileSize + "MiB).");
     }
 
     private void writeImageHeader() {
@@ -247,7 +248,7 @@ public final class SqueakImageWriter {
             if (oop != null) {
                 return oop;
             } else {
-                image.printToStdErr("Unreserved object detected: " + aso + ". Replacing with nil.");
+                LogUtils.IMAGE.warning(() -> "Unreserved object detected: " + aso + ". Replacing with nil.");
                 return nilOop;
             }
         } else {

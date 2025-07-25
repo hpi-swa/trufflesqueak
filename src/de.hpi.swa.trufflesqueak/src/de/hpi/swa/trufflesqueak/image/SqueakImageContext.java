@@ -6,11 +6,11 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
-import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -80,6 +80,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
@@ -168,8 +169,6 @@ public final class SqueakImageContext {
     @CompilationFinal public SqueakLanguage.Env env;
     private final SqueakLanguage language;
     private Source lastParseRequestSource;
-    @CompilationFinal private PrintWriter output;
-    @CompilationFinal private PrintWriter error;
     private final HashMap<Message, NativeObject> interopMessageToSelectorMap = new HashMap<>();
 
     @CompilationFinal private SqueakImage squeakImage;
@@ -214,10 +213,10 @@ public final class SqueakImageContext {
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
-        patch(environment);
-        options = SqueakContextOptions.create(env.getOptions());
+        options = SqueakContextOptions.create(environment.getOptions());
         isHeadless = options.isHeadless();
         maxContextStackDepth = options.maxContextStackDepth();
+        patch(environment);
         interrupt = new CheckForInterruptsState(this);
         objectGraphUtils = new ObjectGraphUtils(this);
         allocationReporter = env.lookup(AllocationReporter.class);
@@ -246,7 +245,7 @@ public final class SqueakImageContext {
             // Load image.
             SqueakImageReader.load(this);
             if (options.disableStartup()) {
-                printToStdOut("Skipping startup routine...");
+                LogUtils.IMAGE.info("Skipping startup routine...");
                 return;
             }
 
@@ -272,8 +271,7 @@ public final class SqueakImageContext {
             try {
                 evaluate(prepareHeadlessImageScript);
             } catch (final Exception e) {
-                printToStdErr("startUpList failed:");
-                printToStdErr(e);
+                LogUtils.IMAGE.log(Level.WARNING, "startUpList failed", e);
             } finally {
                 interrupt.clear();
             }
@@ -314,8 +312,6 @@ public final class SqueakImageContext {
     public boolean patch(final SqueakLanguage.Env newEnv) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         env = newEnv;
-        output = new PrintWriter(env.out(), true);
-        error = new PrintWriter(env.err(), true);
         return true;
     }
 
@@ -459,14 +455,6 @@ public final class SqueakImageContext {
     /*
      * ACCESSING
      */
-
-    public PrintWriter getOutput() {
-        return output;
-    }
-
-    public PrintWriter getError() {
-        return error;
-    }
 
     public SqueakLanguage getLanguage() {
         return language;
@@ -814,7 +802,7 @@ public final class SqueakImageContext {
 
     public void finalizeContext() {
         if (options.printResourceSummary()) {
-            MiscUtils.printResourceSummary(this);
+            MiscUtils.printResourceSummary();
         }
     }
 
@@ -1089,37 +1077,6 @@ public final class SqueakImageContext {
             }
             return asByteSymbol(libraryPrefix + messageCapitalized + suffix);
         });
-    }
-
-    /*
-     * PRINTING
-     */
-
-    @TruffleBoundary
-    public void printToStdOut(final String string) {
-        if (!options.isQuiet()) {
-            getOutput().println("[trufflesqueak] " + string);
-        }
-    }
-
-    @TruffleBoundary
-    public void printToStdOut(final Object... arguments) {
-        printToStdOut(ArrayUtils.toJoinedString(" ", arguments));
-    }
-
-    @TruffleBoundary
-    public void printToStdErr(final String string) {
-        getError().println("[trufflesqueak] " + string);
-    }
-
-    @TruffleBoundary
-    public void printToStdErr(final Exception e) {
-        e.printStackTrace(getError());
-    }
-
-    @TruffleBoundary
-    public void printToStdErr(final Object... arguments) {
-        printToStdErr(ArrayUtils.toJoinedString(" ", arguments));
     }
 
     /*

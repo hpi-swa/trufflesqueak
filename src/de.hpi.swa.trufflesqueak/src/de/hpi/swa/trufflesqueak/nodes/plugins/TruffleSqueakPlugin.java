@@ -22,7 +22,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -30,10 +29,11 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
@@ -47,12 +47,11 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "debugPrint")
     protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
-        protected final Object printArgs(final Object receiver, final Object value) {
-            final SqueakImageContext image = getContext();
+        protected static final Object printArgs(final Object receiver, final Object value) {
             if (value instanceof final NativeObject o && o.isByteType()) {
-                image.printToStdOut(o.asStringUnsafe());
+                LogUtils.DEBUG.info(o::asStringUnsafe);
             } else {
-                image.printToStdOut(value);
+                LogUtils.DEBUG.info(() -> String.valueOf(value));
             }
             return receiver;
         }

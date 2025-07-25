@@ -49,7 +49,7 @@ public final class CheckForInterruptsState {
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
         if (image.options.disableInterruptHandler()) {
-            image.printToStdOut("Interrupt handler disabled...");
+            LogUtils.INTERRUPTS.info("Interrupt handler disabled...");
         }
     }
 

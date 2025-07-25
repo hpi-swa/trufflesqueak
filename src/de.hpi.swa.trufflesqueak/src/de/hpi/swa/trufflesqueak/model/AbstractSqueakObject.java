@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.lang.reflect.Method;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -41,6 +42,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.Dispatch
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 @SuppressWarnings("static-method")
 @ExportLibrary(ReflectionLibrary.class)
@@ -73,7 +75,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         } catch (final ProcessSwitch ps) {
             CompilerDirectives.transferToInterpreter();
             if (image.options.isHeadless()) {
-                image.printToStdErr(ps);
+                LogUtils.IMAGE.log(Level.WARNING, "Unexpected ProcessSwitch in headless mode", ps);
                 throw new IllegalArgumentException();
             } else {
                 throw ps; // open debugger in interactive mode
@@ -143,7 +145,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         return callNode.call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, receiver, arguments));
                     }
                 } else {
-                    image.printToStdErr(selector, "method:", methodObject);
+                    LogUtils.INTEROP.warning(() -> "InteropSend failed for " + selector + ". Lookup result: " + methodObject);
                 }
             }
             CompilerDirectives.transferToInterpreter();

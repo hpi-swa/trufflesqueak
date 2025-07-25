@@ -80,7 +80,7 @@ public final class SqueakImageReader {
             throw SqueakException.create("Failed to read Smalltalk image:", e.getMessage());
         }
         initObjects();
-        image.printToStdOut("Image loaded in", MiscUtils.currentTimeMillis() - start + "ms.");
+        LogUtils.IMAGE.fine(() -> "Image loaded in " + (MiscUtils.currentTimeMillis() - start) + "ms.");
         image.setHiddenRoots((ArrayObject) hiddenRootsChunk.asObject());
         image.getSqueakImage();
     }

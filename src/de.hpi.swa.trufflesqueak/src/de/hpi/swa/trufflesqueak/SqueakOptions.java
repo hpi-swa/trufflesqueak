@@ -62,7 +62,7 @@ public final class SqueakOptions {
         return new SqueakOptionsOptionDescriptors();
     }
 
-    public record SqueakContextOptions(String imagePath, String[] imageArguments, boolean printResourceSummary, boolean isHeadless, boolean isQuiet, boolean disableInterruptHandler,
+    public record SqueakContextOptions(String imagePath, String[] imageArguments, boolean printResourceSummary, boolean isHeadless, boolean disableInterruptHandler,
                     int maxContextStackDepth, boolean disableStartup, boolean isTesting, boolean signalInputSemaphore) {
         public static SqueakContextOptions create(final OptionValues options) {
             return new SqueakContextOptions(
@@ -70,7 +70,6 @@ public final class SqueakOptions {
                             options.get(ImageArguments).isEmpty() ? ArrayUtils.EMPTY_STRINGS_ARRAY : options.get(ImageArguments).split(","),
                             options.get(ResourceSummary),
                             options.get(Headless),
-                            options.get(Quiet),
                             options.get(Interrupts),
                             Math.max(0, options.get(ContextStackDepth)),
                             options.get(Startup),

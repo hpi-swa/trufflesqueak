@@ -162,7 +162,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 context.terminate();
                 context = o;
             } else { // TODO: this might need to be handled by a cannotReturn send.
-                image.printToStdErr("Unwind error: sender of", context, "is nil, unwinding towards", targetContext, "with return value:", returnValue);
+                LogUtils.SCHEDULING.warning("Unwind error: sender of " + context + " is nil, unwinding towards " + targetContext + " with return value: " + returnValue);
                 break;
             }
         }
