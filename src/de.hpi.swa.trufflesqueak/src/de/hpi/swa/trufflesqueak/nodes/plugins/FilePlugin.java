@@ -162,8 +162,13 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "fullPath.isByteType()")
         protected final Object doCreate(final Object receiver, final NativeObject fullPath) {
+            final TruffleFile file = asPublicTruffleFile(fullPath);
+            final TruffleFile parent = file.getParent();
+            if (parent == null || !parent.exists()) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
             try {
-                asPublicTruffleFile(fullPath).createDirectory();
+                file.createDirectory();
             } catch (IOException | UnsupportedOperationException | SecurityException e) {
                 log("Failed to create directory", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -376,8 +381,12 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "nativeFileName.isByteType()")
         protected final Object doDelete(final Object receiver, final NativeObject nativeFileName) {
+            final TruffleFile file = asPublicTruffleFile(nativeFileName);
+            if (!file.exists()) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
             try {
-                asPublicTruffleFile(nativeFileName).delete();
+                file.delete();
             } catch (final IOException e) {
                 log("Failed to delete file", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -567,6 +576,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary(transferToInterpreterOnException = false)
         private static long getSize(final SeekableByteChannel channel) {
+            if (!channel.isOpen()) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
             try {
                 return channel.size();
             } catch (final IOException e) {
