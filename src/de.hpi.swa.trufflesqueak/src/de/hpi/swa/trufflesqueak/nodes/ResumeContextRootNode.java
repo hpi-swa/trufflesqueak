@@ -37,7 +37,7 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     public Object execute(final VirtualFrame frame) {
         try {
             assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
-//            activeContext.clearModifiedSender();
+            activeContext.clearModifiedSender();
             final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
             if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
                 return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
