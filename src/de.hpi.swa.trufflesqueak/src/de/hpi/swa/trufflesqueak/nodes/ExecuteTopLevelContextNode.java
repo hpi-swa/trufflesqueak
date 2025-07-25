@@ -194,14 +194,18 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         // Evaluate unwind-marked blocks on sender chain.
         context = senderContext;
         while (context != targetContext) {
-            final AbstractSqueakObject currentSender = context.getSender();
-            if (currentSender instanceof final ContextObject o) {
-                context.terminate();
-                context = o;
-            } else { // TODO: this might need to be handled by a cannotReturn send.
-                LogUtils.SCHEDULING.warning("Unwind error: sender of " + context + " is nil, unwinding towards " + targetContext + " with return value: " + returnValue);
-                break;
+            if (context.getCodeObject().isUnwindMarked()) {
+                try {
+                    // TODO: make this better. Clearing the modified sender permits virtualization of aboutToReturn
+                    context.clearModifiedSender();
+                    AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
+                } catch (NonVirtualReturn nvr) {
+                    return returnTo(context, nvr.getTargetContext(), nvr.getReturnValue());
+                }
             }
+            final ContextObject currentSender = (ContextObject) context.getSender();
+            context.terminate();
+            context = currentSender;
         }
         targetContext.push(returnValue);
         return targetContext;
@@ -213,7 +217,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         final ContextObject startContext = startContextOrNull == null ? targetContext : startContextOrNull;
         /* "make sure we can return to the given context" */
         if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
-            if (startContext == targetContext) {
+            if (startContext == targetContext && targetContext == initialContext) {
                 image.printToStdErr("returnToTopLevel", startContext, "with return value:", returnValue);
                 throw returnToTopLevel(targetContext, returnValue);
             }
