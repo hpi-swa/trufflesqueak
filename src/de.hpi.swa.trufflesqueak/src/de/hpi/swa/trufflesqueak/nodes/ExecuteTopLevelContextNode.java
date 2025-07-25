@@ -106,7 +106,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     activeContext = commonNLReturn(sender, nlr);
                     LogUtils.SCHEDULING.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
                 } catch (final NonVirtualReturn nvr) {
-                    activeContext = commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+//                    activeContext = commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                    activeContext = returnTo(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                     LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
                 }
             } catch (final ProcessSwitch ps) {
@@ -140,31 +141,31 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert sender == NilObject.SINGLETON;
             throw returnToTopLevel(targetContext, returnValue);
         }
+        // Make sure target is on sender chain.
         ContextObject context = senderContext;
+        while (context != targetContext) {
+            final AbstractSqueakObject currentSender = context.getSender();
+            if (currentSender instanceof final ContextObject o) {
+                context = o;
+            } else {
+                return sendCannotReturn(context, returnValue);
+            }
+        }
+        // Evaluate unwind-marked blocks on sender chain.
+        context = senderContext;
         while (context != targetContext) {
             if (context.getCodeObject().isUnwindMarked()) {
                 try {
-                    // TODO: make this better
+                    // TODO: make this better. Clearing the modified sender permits virtualization of aboutToReturn
+                    context.clearModifiedSender();
                     AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
                 } catch (NonVirtualReturn nvr) {
-                    return commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                    return returnTo(context, nvr.getTargetContext(), nvr.getReturnValue());
                 }
             }
-            final AbstractSqueakObject currentSender = context.getSender();
-            if (currentSender instanceof final ContextObject o) {
-                context = o;
-            }
-        }
-        context = senderContext;
-        while (context != targetContext) {
-            final AbstractSqueakObject currentSender = context.getSender();
-            if (currentSender instanceof final ContextObject o) {
-                context.terminate();
-                context = o;
-            } else { // TODO: this might need to be handled by a cannotReturn send.
-                LogUtils.SCHEDULING.warning("Unwind error: sender of " + context + " is nil, unwinding towards " + targetContext + " with return value: " + returnValue);
-                break;
-            }
+            final ContextObject currentSender = (ContextObject) context.getSender();
+            context.terminate();
+            context = currentSender;
         }
         targetContext.push(returnValue);
         return targetContext;
@@ -176,7 +177,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         final ContextObject startContext = startContextOrNull == null ? targetContext : startContextOrNull;
         /* "make sure we can return to the given context" */
         if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
-            if (startContext == targetContext) {
+            if (startContext == targetContext && targetContext == initialContext) {
                 image.printToStdErr("returnToTopLevel", startContext, "with return value:", returnValue);
                 throw returnToTopLevel(targetContext, returnValue);
             }
@@ -196,11 +197,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 return sendCannotReturn(startContext, returnValue);
             }
             assert !context.isPrimitiveContext();
-            if (context.getCodeObject().isUnwindMarked()) {
-                assert !context.hasClosure();
-                /* "context is marked; break out" */
-                return sendAboutToReturn(startContext, returnValue, context);
-            }
+//            if (context.getCodeObject().isUnwindMarked()) {
+//                assert !context.hasClosure();
+//                /* "context is marked; break out" */
+//                return sendAboutToReturn(startContext, returnValue, context);
+//            }
             contextOrNil = context.getSender();
         }
         /*
