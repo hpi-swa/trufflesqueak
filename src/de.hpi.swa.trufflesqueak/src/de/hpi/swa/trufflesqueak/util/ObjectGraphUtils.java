@@ -548,7 +548,7 @@ public final class ObjectGraphUtils {
                 future.get();
             }
         } catch (final ExecutionException | InterruptedException e) {
-            throw CompilerDirectives.shouldNotReachHere("runTasks was interrupted");
+            throw CompilerDirectives.shouldNotReachHere("runTasks was interrupted", e);
         }
     }
 
