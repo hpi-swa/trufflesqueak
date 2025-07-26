@@ -29,7 +29,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
@@ -47,7 +46,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
     @Child private GetNextActiveContextNode getNextActiveContextNode = GetNextActiveContextNode.create();
     @Child private Dispatch1Node sendCannotReturnNode;
-    @Child private Dispatch2Node sendAboutToReturnNode;
 
     private ExecuteTopLevelContextNode(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
         super(language, TOP_LEVEL_FRAME_DESCRIPTOR);
@@ -55,7 +53,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         initialContext = context;
         this.isImageResuming = isImageResuming;
         sendCannotReturnNode = Dispatch1Node.create(image.cannotReturn);
-        sendAboutToReturnNode = Dispatch2Node.create(image.aboutToReturnSelector);
     }
 
     public static ExecuteTopLevelContextNode create(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
@@ -103,11 +100,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     activeContext = returnTo(activeContext, sender, result);
                     LogUtils.SCHEDULING.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
                 } catch (final NonLocalReturn nlr) {
-                    activeContext = commonNLReturn(sender, nlr);
+                    activeContext = commonNLReturn(sender, activeContext, nlr);
                     LogUtils.SCHEDULING.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
                 } catch (final NonVirtualReturn nvr) {
-//                    activeContext = commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
-                    activeContext = returnTo(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                    activeContext = commonNVReturn(activeContext, nvr);
                     LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
                 }
             } catch (final ProcessSwitch ps) {
@@ -118,9 +114,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @TruffleBoundary
-    private static ContextObject returnTo(final ContextObject activeContext, final AbstractSqueakObject sender, final Object returnValue) {
+    private ContextObject returnTo(final ContextObject activeContext, final AbstractSqueakObject sender, final Object returnValue) {
         if (!(sender instanceof final ContextObject senderContext)) {
             assert sender == NilObject.SINGLETON;
+            image.printToStdErr("returnTo returnToTopLevel", activeContext, "with return value:", returnValue);
             throw returnToTopLevel(activeContext, returnValue);
         }
         final ContextObject context;
@@ -134,12 +131,50 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @TruffleBoundary
-    private ContextObject commonNLReturn(final AbstractSqueakObject sender, final NonLocalReturn nlr) {
+    private ContextObject commonNVReturn(final ContextObject activeContext, final NonVirtualReturn nvr) {
+        // Skip over primitive contexts.
+        final ContextObject possibleTargetContext = nvr.getTargetContext();
+        final ContextObject targetContext;
+        if (possibleTargetContext.isPrimitiveContext()) {
+            targetContext = (ContextObject) possibleTargetContext.getFrameSender();
+        } else {
+            targetContext = possibleTargetContext;
+        }
+        // Make sure that the targetContext can be returned to.
+        final Object returnValue = nvr.getReturnValue();
+        if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
+            // Exit the interpreter loop if the target is the context that started the loop.
+            if (targetContext == initialContext) {
+                image.printToStdErr("commonNVReturn returnToTopLevel", targetContext, "with return value:", returnValue);
+                throw returnToTopLevel(targetContext, returnValue);
+            }
+            // Normal returns with modified senders end up here with a target but no start Context.
+            final ContextObject startContextOrNull = nvr.getCurrentContext();
+            final ContextObject startContext;
+            if (startContextOrNull == null) {
+                startContext = activeContext;
+            } else {
+                startContext = startContextOrNull;
+            }
+            return sendCannotReturn(startContext, returnValue);
+        }
+        // Return to the target context with the return value.
+        targetContext.push(returnValue);
+        return targetContext;
+    }
+
+    @TruffleBoundary
+    private ContextObject commonNLReturn(final AbstractSqueakObject sender, final ContextObject activeContext, final NonLocalReturn nlr) {
         final ContextObject targetContext = nlr.getTargetContext();
         final Object returnValue = nlr.getReturnValue();
         if (!(sender instanceof final ContextObject senderContext)) {
             assert sender == NilObject.SINGLETON;
-            throw returnToTopLevel(targetContext, returnValue);
+            // Exit the interpreter loop if the target is the context that started the loop.
+            if (targetContext == initialContext) {
+                image.printToStdErr("commonNLReturn returnToTopLevel", targetContext, "with return value:", returnValue, "activeContext:", activeContext);
+                throw returnToTopLevel(targetContext, returnValue);
+            }
+            return sendCannotReturn(activeContext, returnValue);
         }
         // Make sure target is on sender chain.
         ContextObject context = senderContext;
@@ -148,7 +183,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             if (currentSender instanceof final ContextObject o) {
                 context = o;
             } else {
-                return sendCannotReturn(context, returnValue);
+                return sendCannotReturn(activeContext, returnValue);
             }
         }
         // Evaluate unwind-marked blocks on sender chain.
@@ -160,59 +195,12 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     context.clearModifiedSender();
                     AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
                 } catch (NonVirtualReturn nvr) {
-                    return returnTo(context, nvr.getTargetContext(), nvr.getReturnValue());
+                    return commonNVReturn(context, nvr);
                 }
             }
             final ContextObject currentSender = (ContextObject) context.getSender();
             context.terminate();
             context = currentSender;
-        }
-        targetContext.push(returnValue);
-        return targetContext;
-    }
-
-    @TruffleBoundary
-    private ContextObject commonReturn(final ContextObject startContextOrNull, final ContextObject targetContext, final Object returnValue) {
-        // Normal returns with modified senders end up here with a target but no start Context.
-        final ContextObject startContext = startContextOrNull == null ? targetContext : startContextOrNull;
-        /* "make sure we can return to the given context" */
-        if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
-            if (startContext == targetContext && targetContext == initialContext) {
-                image.printToStdErr("returnToTopLevel", startContext, "with return value:", returnValue);
-                throw returnToTopLevel(targetContext, returnValue);
-            }
-            return sendCannotReturn(startContext, returnValue);
-        }
-        /*
-         * "If this return is not to our immediate predecessor (i.e. from a method to its sender, or
-         * from a block to its caller), scan the stack for the first unwind marked context and
-         * inform this context and let it deal with it. This provides a chance for ensure unwinding
-         * to occur."
-         */
-        AbstractSqueakObject contextOrNil = startContext;
-        while (contextOrNil != targetContext) {
-            if (!(contextOrNil instanceof final ContextObject context)) {
-                /* "error: sender's instruction pointer or context is nil; cannot return" */
-                assert contextOrNil == NilObject.SINGLETON;
-                return sendCannotReturn(startContext, returnValue);
-            }
-            assert !context.isPrimitiveContext();
-//            if (context.getCodeObject().isUnwindMarked()) {
-//                assert !context.hasClosure();
-//                /* "context is marked; break out" */
-//                return sendAboutToReturn(startContext, returnValue, context);
-//            }
-            contextOrNil = context.getSender();
-        }
-        /*
-         * "If we get here there is no unwind to worry about. Simply terminate the stack up to the
-         * localCntx - often just the sender of the method"
-         */
-        ContextObject currentContext = startContext;
-        while (currentContext != targetContext) {
-            final ContextObject sender = (ContextObject) currentContext.getFrameSender();
-            currentContext.terminate();
-            currentContext = sender;
         }
         targetContext.push(returnValue);
         return targetContext;
@@ -226,15 +214,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {
         sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
         throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch");
-    }
-
-    private ContextObject sendAboutToReturn(final ContextObject startContext, final Object returnValue, final ContextObject context) {
-        try {
-            sendAboutToReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue, context);
-        } catch (final NonVirtualReturn nvr) {
-            return commonReturn(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
-        }
-        throw CompilerDirectives.shouldNotReachHere("aboutToReturn should trigger a ProcessSwitch or a NonVirtualReturn");
     }
 
     private static void ensureCachedContextCanRunAgain(final ContextObject activeContext) {
