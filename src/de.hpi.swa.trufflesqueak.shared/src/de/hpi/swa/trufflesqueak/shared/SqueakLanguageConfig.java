@@ -13,14 +13,14 @@ public final class SqueakLanguageConfig {
     public static final String MIME_TYPE = "application/x-smalltalk";
     public static final String NAME = "Squeak/Smalltalk";
     public static final String ST_MIME_TYPE = "text/x-smalltalk";
-    public static final String VERSION = "24.2.1"; // sync with Truffle import
+    public static final String VERSION = "24.2.2"; // sync with Truffle import
     public static final String WEBSITE = "https://github.com/hpi-swa/trufflesqueak";
-    private static final String IMAGE_VERSION = "24.1.2"; // on release: `VERSION;`
+    private static final String IMAGE_VERSION = "24.2.2"; // on release: `VERSION;`
 
     public static final String[][] SUPPORTED_IMAGES = {
                     {"TruffleSqueak image (" + IMAGE_VERSION + ") (recommended)",
                                     "https://github.com/hpi-swa/trufflesqueak/releases/download/" + IMAGE_VERSION + "/TruffleSqueakImage-" + IMAGE_VERSION + ".zip"},
-                    {"Squeak/Smalltalk (6.0-22104)", "https://files.squeak.org/6.0/Squeak6.0-22104-64bit/Squeak6.0-22104-64bit.zip"},
+                    {"Squeak/Smalltalk (6.0-22148)", "https://files.squeak.org/6.0/Squeak6.0-22148-64bit/Squeak6.0-22148-64bit.zip"},
                     {"TruffleSqueak test image (6.0-22104)", "https://github.com/hpi-swa/trufflesqueak/releases/download/22.3.0/TruffleSqueakTestImage-6.0-22104-64bit.zip"},
                     {"Cuis Smalltalk test image (7.3-7036)", "https://github.com/hpi-swa/trufflesqueak/releases/download/24.1.2/CuisTestImage-7.3-7036.zip"}};
 

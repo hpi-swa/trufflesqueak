@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
-import java.io.PrintWriter;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
@@ -15,6 +14,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
@@ -152,8 +152,8 @@ public final class DebugUtils {
         final boolean isCIBuild = System.getenv().containsKey("GITHUB_ACTIONS");
         final int[] depth = new int[1];
         final Object[] lastSender = {null};
-        final PrintWriter err = SqueakImageContext.getSlow().getError();
-        err.println("== Truffle stack trace ===========================================================");
+        final TruffleLogger log = LogUtils.DEBUG;
+        log.info("== Truffle stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(frameInstance -> {
             if (depth[0]++ > 50 && isCIBuild) {
                 return null;
@@ -168,24 +168,24 @@ public final class DebugUtils {
             final Object context = FrameAccess.getContext(current);
             final String prefix = FrameAccess.hasClosure(current) ? "[] in " : "";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
-            err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));
+            log.info(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));
             return null;
         });
         if (lastSender[0] instanceof final ContextObject c) {
-            err.println("== Squeak frames ================================================================");
+            log.info("== Squeak frames ================================================================");
             printSqStackTrace(c);
         }
     }
 
     public static void printSqStackTrace(final ContextObject context) {
-        SqueakImageContext.getSlow().getOutput().println(getSqStackTrace(context));
+        LogUtils.DEBUG.info(() -> getSqStackTrace(context));
     }
 
-    public static StringBuilder getSqStackTrace(final ContextObject context) {
+    public static String getSqStackTrace(final ContextObject context) {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final StringBuilder b = new StringBuilder();
         printSqMaterializedStackTraceOn(b, context);
-        return b;
+        return b.toString();
     }
 
     private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {

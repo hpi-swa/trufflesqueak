@@ -17,8 +17,13 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
  * is clear which loggers are available.
  */
 public final class LogUtils {
+
+    public static final TruffleLogger MAIN = TruffleLogger.getLogger(SqueakLanguageConfig.ID);
+
     public static final TruffleLogger ARRAY_STATEGIES = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "array-strategies");
+    public static final TruffleLogger DEBUG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "debug");
     public static final TruffleLogger GC = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "gc");
+    public static final TruffleLogger IMAGE = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "image");
     public static final TruffleLogger INTEROP = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interop");
     public static final TruffleLogger INTERRUPTS = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interrupts");
     public static final TruffleLogger IO = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "io");
@@ -28,6 +33,7 @@ public final class LogUtils {
     public static final TruffleLogger READER = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "reader");
     public static final TruffleLogger SCHEDULING = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "scheduling");
     public static final TruffleLogger SOCKET = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "socket");
+    public static final TruffleLogger SSL = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "ssl");
 
     public static final boolean GC_IS_LOGGABLE_FINE = GC.isLoggable(Level.FINE);
 }

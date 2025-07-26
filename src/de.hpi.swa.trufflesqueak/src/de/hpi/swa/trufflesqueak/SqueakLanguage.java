@@ -20,7 +20,6 @@ import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
 import de.hpi.swa.trufflesqueak.interop.SqueakLanguageView;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @TruffleLanguage.Registration(//
                 characterMimeTypes = {SqueakLanguageConfig.MIME_TYPE, SqueakLanguageConfig.ST_MIME_TYPE}, //
@@ -62,9 +61,6 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
             return image.getSqueakImage().asCallTarget();
         } else {
             image.ensureLoaded();
-            if (source.isInternal()) {
-                image.printToStdOut(MiscUtils.format("Evaluating '%s'...", imageOrSourcePath));
-            }
             return image.getDoItContextNode(request).getCallTarget();
         }
     }
