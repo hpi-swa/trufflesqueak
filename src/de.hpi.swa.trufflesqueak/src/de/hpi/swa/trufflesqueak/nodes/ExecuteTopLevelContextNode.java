@@ -241,22 +241,22 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 return sendCannotReturn(startContext, returnValue);
             }
             assert !context.isPrimitiveContext();
-            if (context.getCodeObject().isUnwindMarked()) {
-                try {
-                    // TODO: make this better. Clearing the modified sender permits virtualization
-                    // of aboutToReturn
-                    context.clearModifiedSender();
-                    AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
-                } catch (NonVirtualReturn nvr) {
-                    return commonNVReturn(context, nvr);
-                } catch (ProcessSwitch ps) {
-                    LogUtils.SCHEDULING.info("commonNLReturn: ProcessSwitch during AboutToReturn! ");
-                    throw ps;
-                }
-            }
-            final ContextObject currentSender = (ContextObject) context.getSender();
-            context.terminate();
-            context = currentSender;
+//            if (context.getCodeObject().isUnwindMarked()) {
+//                assert !context.hasClosure();
+//                /* "context is marked; break out" */
+//                return sendAboutToReturn(startContext, returnValue, context);
+//            }
+            contextOrNil = context.getSender();
+        }
+        /*
+         * "If we get here there is no unwind to worry about. Simply terminate the stack up to the
+         * localCntx - often just the sender of the method"
+         */
+        ContextObject currentContext = startContext;
+        while (currentContext != targetContext) {
+            final ContextObject sender = (ContextObject) currentContext.getFrameSender();
+            currentContext.terminate();
+            currentContext = sender;
         }
         targetContext.push(returnValue);
         return targetContext;
