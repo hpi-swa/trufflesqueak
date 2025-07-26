@@ -200,7 +200,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     context.clearModifiedSender();
                     AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
                 } catch (NonVirtualReturn nvr) {
-                    return returnTo(context, nvr.getTargetContext(), nvr.getReturnValue());
+                    return commonNVReturn(context, nvr);
                 }
             }
             final ContextObject currentSender = (ContextObject) context.getSender();
