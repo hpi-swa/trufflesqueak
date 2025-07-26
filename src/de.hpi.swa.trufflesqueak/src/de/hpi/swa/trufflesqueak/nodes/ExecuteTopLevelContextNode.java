@@ -191,7 +191,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (context != targetContext) {
             if (context.getCodeObject().isUnwindMarked()) {
                 try {
-                    // TODO: make this better. Clearing the modified sender permits virtualization of aboutToReturn
+                    // TODO: make this better. Clearing the modified sender permits virtualization
+                    // of aboutToReturn
                     context.clearModifiedSender();
                     AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
                 } catch (NonVirtualReturn nvr) {
