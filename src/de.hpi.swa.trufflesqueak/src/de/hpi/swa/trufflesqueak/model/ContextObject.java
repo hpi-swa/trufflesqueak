@@ -253,6 +253,16 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         setSenderUnsafe(value);
     }
 
+    public void setNilSender() {
+        if (truffleFrame != null) {
+            final Object sender = FrameAccess.getSender(getTruffleFrame());
+            if (!hasModifiedSender && sender != NilObject.SINGLETON) {
+                hasModifiedSender = true;
+            }
+        }
+        setSenderUnsafe(NilObject.SINGLETON);
+    }
+
     public void setSenderUnsafe(final AbstractSqueakObject value) {
         FrameAccess.setSender(getOrCreateTruffleFrame(), value);
     }
