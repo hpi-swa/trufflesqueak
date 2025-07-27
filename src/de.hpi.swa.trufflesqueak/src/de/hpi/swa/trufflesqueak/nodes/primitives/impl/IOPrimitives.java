@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -60,13 +62,13 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode.AbstractPrimitiveWithFrameNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -889,9 +891,20 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             if (image.hasDisplay()) {
                 SqueakDisplay.beep();
             } else {
-                image.printToStdOut((char) 7);
+                printBeepCharacter(image);
             }
             return receiver;
+        }
+
+        @TruffleBoundary
+        private static void printBeepCharacter(final SqueakImageContext image) {
+            final OutputStream out = image.env.out();
+            try {
+                out.write((char) 7);
+                out.flush();
+            } catch (IOException e) {
+                throw PrimitiveFailed.andTransferToInterpreterWithError(e);
+            }
         }
     }
 

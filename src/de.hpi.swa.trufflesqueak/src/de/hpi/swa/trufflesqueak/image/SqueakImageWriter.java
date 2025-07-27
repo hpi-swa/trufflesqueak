@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
@@ -99,7 +100,7 @@ public final class SqueakImageWriter {
             finalizeImageHeader();
         }
         final double fileSize = Math.ceil((double) position / 1024 / 1024 * 100) / 100;
-        image.printToStdOut("Image saved in " + (MiscUtils.currentTimeMillis() - start) + "ms (" + fileSize + "MiB).");
+        LogUtils.IMAGE.fine(() -> "Image saved in " + (MiscUtils.currentTimeMillis() - start) + "ms (" + fileSize + "MiB).");
     }
 
     private void writeImageHeader() {
@@ -247,7 +248,7 @@ public final class SqueakImageWriter {
             if (oop != null) {
                 return oop;
             } else {
-                image.printToStdErr("Unreserved object detected: " + aso + ". Replacing with nil.");
+                LogUtils.IMAGE.warning(() -> "Unreserved object detected: " + aso + ". Replacing with nil.");
                 return nilOop;
             }
         } else {
@@ -259,12 +260,10 @@ public final class SqueakImageWriter {
 
     private long reserve(final AbstractSqueakObjectWithClassAndHash object) {
         final int numSlots = object.getNumSlots();
-        final int padding = SqueakImageReader.calculateObjectPadding(object.getSqueakClass().getInstanceSpecification());
-
         final int headerSlots = numSlots < SqueakImageConstants.OVERFLOW_SLOTS ? 1 : 2;
         final int offset = (headerSlots - 1) * SqueakImageConstants.WORD_SIZE;
         final long oop = nextChunk + offset;
-        nextChunk += (headerSlots + Math.max(numSlots, 1 /* at least an alignment word */)) * SqueakImageConstants.WORD_SIZE + padding;
+        nextChunk += (headerSlots + Math.max(numSlots, 1 /* at least an alignment word */)) * SqueakImageConstants.WORD_SIZE;
 
         assert !oopMap.containsKey(object);
         oopMap.put(object, oop);

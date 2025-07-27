@@ -49,7 +49,7 @@ public final class CheckForInterruptsState {
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
         if (image.options.disableInterruptHandler()) {
-            image.printToStdOut("Interrupt handler disabled...");
+            LogUtils.INTERRUPTS.info("Interrupt handler disabled...");
         }
     }
 
@@ -71,19 +71,19 @@ public final class CheckForInterruptsState {
         @Override
         public void run() {
             while (true) {
+                // Check for interrupts
+                shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
                 if (nanosToWait > 0) {
                     /*
                      * An interrupt has triggered recently, so give it some time to do useful work
                      * before the next check may trigger another one.
                      */
-                    assert !shouldTrigger;
+                    shouldTrigger = false; // ensure disabled (in case enabled by the last check)
                     LockSupport.parkNanos(nanosToWait);
                     nanosToWait = 0;
+                } else {
+                    LockSupport.parkNanos(interruptCheckNanos);
                 }
-                // Check for interrupts
-                shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
-                // Park thread
-                LockSupport.parkNanos(interruptCheckNanos);
                 // Handle thread interrupts
                 if (Thread.interrupted()) {
                     break;

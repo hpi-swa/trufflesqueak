@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -25,6 +23,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakImageChunk {
@@ -189,7 +188,7 @@ public final class SqueakImageChunk {
             case SqueakImageConstants.OBJECT_TAG:
                 final SqueakImageChunk chunk = reader.chunkMap.get(ptr);
                 if (chunk == null) {
-                    logBogusPointer(ptr);
+                    LogUtils.IMAGE.warning(() -> "Bogus pointer: " + ptr + ". Treating as smallint.");
                     return ptr >>> SqueakImageConstants.NUM_TAG_BITS;
                 } else {
                     assert bytes != null : "Must not be an ignored object";
@@ -211,11 +210,6 @@ public final class SqueakImageChunk {
             default:
                 throw SqueakException.create("Unexpected pointer");
         }
-    }
-
-    @TruffleBoundary
-    private void logBogusPointer(final long ptr) {
-        getImage().getError().println("Bogus pointer: " + ptr + ". Treating as smallint.");
     }
 
     public int getClassIndex() {
