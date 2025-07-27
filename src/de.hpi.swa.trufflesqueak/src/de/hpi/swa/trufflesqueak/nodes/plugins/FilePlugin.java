@@ -269,7 +269,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 pathName += "\\"; // new File("C:") will fail, we need to add a trailing backslash.
             }
             final TruffleFile directory = asPublicTruffleFile(pathName);
-            if (!directory.isDirectory()) {
+            if (!(directory.isDirectory() && directory.isReadable())) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             long count = index;
