@@ -75,10 +75,6 @@ public final class Returns {
             this.currentContext = currentContext;
         }
 
-        public Object getTargetContextOrMarker() {
-            return targetContextOrMarker;
-        }
-
         public Object getTargetContextMarkerOrNil() {
             return targetContextMarkerOrNil;
         }
