@@ -163,6 +163,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "fullPath.isByteType()")
         protected final Object doCreate(final Object receiver, final NativeObject fullPath) {
             final TruffleFile file = asPublicTruffleFile(fullPath);
+            if (file.exists()) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
             final TruffleFile parent = file.getParent();
             if (parent == null || !parent.exists()) {
                 throw PrimitiveFailed.andTransferToInterpreter();
