@@ -114,11 +114,20 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @TruffleBoundary
+    private ContextObject sendCannotReturnOrReturnToTopLevel(final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
+        // Exit the interpreter loop if the target is the context that started the loop.
+        if (targetContext != null && targetContext == initialContext) {
+            LogUtils.SCHEDULING.info("sendCannotReturnOrReturnToTopLevel " + targetContext + " with return value: " + returnValue);
+            throw returnToTopLevel(targetContext, returnValue);
+        }
+        return sendCannotReturn(startContext, returnValue);
+    }
+
+    @TruffleBoundary
     private ContextObject returnTo(final ContextObject activeContext, final AbstractSqueakObject sender, final Object returnValue) {
         if (!(sender instanceof final ContextObject senderContext)) {
             assert sender == NilObject.SINGLETON;
-            image.printToStdErr("returnTo returnToTopLevel", activeContext, "with return value:", returnValue);
-            throw returnToTopLevel(activeContext, returnValue);
+            return sendCannotReturnOrReturnToTopLevel(activeContext, activeContext, returnValue);
         }
         final ContextObject context;
         if (senderContext.isPrimitiveContext()) {
@@ -132,8 +141,23 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @TruffleBoundary
     private ContextObject commonNVReturn(final ContextObject activeContext, final NonVirtualReturn nvr) {
+        // Normal returns with modified senders end up here with a target but no start Context.
+        final ContextObject startContextOrNull = nvr.getCurrentContext();
+        final ContextObject startContext;
+        if (startContextOrNull == null) {
+            startContext = activeContext;
+        } else {
+            startContext = startContextOrNull;
+        }
+        // Handle attempted return to a nil sender.
+        final Object targetContextMarkerOrNil = nvr.getTargetContextMarkerOrNil();
+        final Object returnValue = nvr.getReturnValue();
+        if (targetContextMarkerOrNil == NilObject.SINGLETON) {
+            return sendCannotReturnOrReturnToTopLevel(startContext, null, returnValue);
+        }
         // Skip over primitive contexts.
-        final ContextObject possibleTargetContext = nvr.getTargetContext();
+        assert targetContextMarkerOrNil instanceof ContextObject;
+        final ContextObject possibleTargetContext = (ContextObject) targetContextMarkerOrNil;
         final ContextObject targetContext;
         if (possibleTargetContext.isPrimitiveContext()) {
             targetContext = (ContextObject) possibleTargetContext.getFrameSender();
@@ -141,22 +165,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             targetContext = possibleTargetContext;
         }
         // Make sure that the targetContext can be returned to.
-        final Object returnValue = nvr.getReturnValue();
         if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
-            // Exit the interpreter loop if the target is the context that started the loop.
-            if (targetContext == initialContext) {
-                image.printToStdErr("commonNVReturn returnToTopLevel", targetContext, "with return value:", returnValue);
-                throw returnToTopLevel(targetContext, returnValue);
-            }
-            // Normal returns with modified senders end up here with a target but no start Context.
-            final ContextObject startContextOrNull = nvr.getCurrentContext();
-            final ContextObject startContext;
-            if (startContextOrNull == null) {
-                startContext = activeContext;
-            } else {
-                startContext = startContextOrNull;
-            }
-            return sendCannotReturn(startContext, returnValue);
+            return sendCannotReturnOrReturnToTopLevel(startContext, targetContext, returnValue);
         }
         // Return to the target context with the return value.
         targetContext.push(returnValue);
@@ -169,12 +179,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         final Object returnValue = nlr.getReturnValue();
         if (!(sender instanceof final ContextObject senderContext)) {
             assert sender == NilObject.SINGLETON;
-            // Exit the interpreter loop if the target is the context that started the loop.
-            if (targetContext == initialContext) {
-                image.printToStdErr("commonNLReturn returnToTopLevel", targetContext, "with return value:", returnValue, "activeContext:", activeContext);
-                throw returnToTopLevel(targetContext, returnValue);
-            }
-            return sendCannotReturn(activeContext, returnValue);
+            return sendCannotReturnOrReturnToTopLevel(activeContext, targetContext, returnValue);
         }
         // Make sure target is on sender chain.
         ContextObject context = senderContext;

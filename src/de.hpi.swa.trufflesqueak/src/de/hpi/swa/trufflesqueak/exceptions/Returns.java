@@ -11,6 +11,7 @@ import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 
 public final class Returns {
     private abstract static class AbstractReturn extends ControlFlowException {
@@ -64,22 +65,18 @@ public final class Returns {
 
     public static final class NonVirtualReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        private final transient Object targetContextOrMarker;
+        private final transient Object targetContextMarkerOrNil;
         private final transient ContextObject currentContext;
 
-        public NonVirtualReturn(final Object returnValue, final Object targetContextOrMarker, final ContextObject currentContext) {
+        public NonVirtualReturn(final Object returnValue, final Object targetContextMarkerOrNil, final ContextObject currentContext) {
             super(returnValue);
-            assert targetContextOrMarker instanceof ContextObject || targetContextOrMarker instanceof FrameMarker;
-            this.targetContextOrMarker = targetContextOrMarker;
+            assert targetContextMarkerOrNil instanceof ContextObject || targetContextMarkerOrNil instanceof FrameMarker || targetContextMarkerOrNil == NilObject.SINGLETON;
+            this.targetContextMarkerOrNil = targetContextMarkerOrNil;
             this.currentContext = currentContext;
         }
 
-        public Object getTargetContextOrMarker() {
-            return targetContextOrMarker;
-        }
-
-        public ContextObject getTargetContext() {
-            return (ContextObject) targetContextOrMarker;
+        public Object getTargetContextMarkerOrNil() {
+            return targetContextMarkerOrNil;
         }
 
         public ContextObject getCurrentContext() {
@@ -89,7 +86,7 @@ public final class Returns {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContextOrMarker + ")";
+            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContextMarkerOrNil + ")";
         }
     }
 
