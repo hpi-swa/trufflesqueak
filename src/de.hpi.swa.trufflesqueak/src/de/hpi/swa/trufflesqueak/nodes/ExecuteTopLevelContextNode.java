@@ -202,6 +202,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
                 } catch (NonVirtualReturn nvr) {
                     return commonNVReturn(context, nvr);
+                } catch (ProcessSwitch ps) {
+                    LogUtils.SCHEDULING.info("commonNLReturn: ProcessSwitch during AboutToReturn! ");
+                    throw ps;
                 }
             }
             final ContextObject currentSender = (ContextObject) context.getSender();
