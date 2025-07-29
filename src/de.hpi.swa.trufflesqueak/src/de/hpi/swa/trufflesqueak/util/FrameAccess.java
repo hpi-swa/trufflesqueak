@@ -21,6 +21,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -489,12 +490,23 @@ public final class FrameAccess {
     }
 
     public static ContextObject getResumingContextObjectOrSkip(final FrameInstance frameInstance) {
-        if (frameInstance.getCallTarget() instanceof final RootCallTarget rct && rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
-            /*
-             * Reached end of Smalltalk activations on Truffle frames. From here, tracing should
-             * continue to walk senders via ContextObjects.
-             */
-            return rcrn.getActiveContext(); // break
+        if (frameInstance.getCallTarget() instanceof final RootCallTarget rct) {
+            if (rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
+                /*
+                 * Reached end of Smalltalk activations on Truffle frames. From here, tracing should
+                 * continue to walk senders via ContextObjects.
+                 */
+                return rcrn.getActiveContext(); // break
+            }
+            /* Work around OSR bug. */
+            for (final Node child : rct.getRootNode().getChildren()) {
+                /* In case of OSR, the first child node is the actual root node */
+                if (child instanceof final ResumeContextRootNode rcrn) {
+                    LogUtils.ITERATE_FRAMES.warning("Workaround for OSR bug taken");
+                    return rcrn.getActiveContext();
+                }
+            }
+            return null; // skip
         } else {
             return null; // skip
         }
