@@ -14,7 +14,7 @@ TruffleSqueak.
 mkdir trufflesqueak-build
 cd trufflesqueak-build
 git clone https://github.com/graalvm/mx
-git clone https://github.com/hpi-swa/trufflesqueak
+git clone --recursive https://github.com/hpi-swa/trufflesqueak
 cd trufflesqueak
 echo "JAVA_HOME=/path/to/a/jvmci-enabled-JDK" > mx.trufflesqueak/env
 ../mx/mx --env trufflesqueak-jvm build
