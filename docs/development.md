@@ -32,32 +32,21 @@ TruffleSqueak checkout.
 Using the `trufflesqueak-jvm` environment file ensures that the Graal compiler
 is built with TruffleSqueak and enabled by default.
 For this, however, you must use a JVMCI-enabled JDK, such as the
-[JDK11-based LabsJDK][labsjdk].
-The environment file also instructs mx to build an installable component for the
-GraalVM Updater, which can be installed with:
-
-```bash
-$GRAALVM_HOME/bin/gu install -f -L \
-   "$(../mx/mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA11)"
-```
+[JDK11-based LabsJDK][labsjdk]. Use `mx fetch-sdk` to download the LabsJDK.
 
 ## Development With Other GraalVM Languages
 
-If you need access to other GraalVM languages during development, there are two options:
+If you need access to other GraalVM languages during development, there are one option:
 
-First, you can download the latest [GraalVM dev build][graalvm_dev_build] and install additional GraalVM languages and components using [`gu`][gu] (e.g., `gu install python`). To install TruffleSqueak, follow these steps:
-
-1. Build TruffleSqueak via `mx --env trufflesqueak-jvm build`
-2. Run `mx --env trufflesqueak-jvm paths SMALLTALK_INSTALLABLE_JAVA11` to find the path to the installable
-3. Install it via `$GRAALVM_HOME/bin/gu install -f -L path/to/the/trufflesqueak-installable.jar`
-4. Run `$GRAALVM_HOME/bin/trufflesqueak`
-
-Or second, you can build other languages from source. For this, please refer to the [instructions for building custom GraalVM distributions][graalvm_vm_readme]. As an example, here is how to build a GraalVM with the Graal compiler, TruffleSqueak, the GraalVM Updater, and GraalVM's Node.js runtime:
+You build TruffleSqueak and other languages from source. For this, please refer to the [instructions for building custom GraalVM distributions][graalvm_vm_readme]. As an example, here is how to build a GraalVM with the Graal compiler, TruffleSqueak and GraalVM's Node.js runtime:
 
 ```bash
-cd trufflesqueak/../graal/vm
+cd trufflesqueak-build/
+git clone git@github.com:oracle/graaljs.git # Clone graal language repository
+cd graal/vm # Change to the GraalVM folder
 mx --dy trufflesqueak,/graal-nodejs,/compiler build
-mx --dy trufflesqueak,/graal-nodejs,/compiler graalvm-home # print path to $GRAALVM_HOME
+export GRAALVM_HOME=$(mx --dy trufflesqueak,/graal-nodejs,/compiler graalvm-home)
+$GRAALVM_HOME/bin/trufflesqueak path/to/a/squeaksmalltalk.image
 ```
 
 ## Setting Up A New Development Environment
@@ -67,7 +56,7 @@ It is recommended to use [Eclipse][eclipse_downloads] with the
 supports IntelliJ and NetBeans.
 
 1. Run `mx eclipseinit` in TruffleSqueak's root directory to create all project
-   files for Eclipse.
+   files for Eclipse. You can also use `mx intellijinit` or any other IDE setup command in `mx`.
 2. Import all projects from the [graal] repository which `mx` should have
    already cloned into the parent directory of your TruffleSqueak checkout during
    the build process.
@@ -138,7 +127,6 @@ For additional help, feel free to join the `#trufflesqueak` channel on the
 [graalvm_dev_build]: https://github.com/graalvm/graalvm-ce-dev-builds/releases/latest
 [graalvm_slack]: https://www.graalvm.org/slack-invitation/
 [graalvm_vm_readme]: https://github.com/oracle/graal/blob/master/vm/README.md
-[gu]: https://github.com/oracle/graal/blob/master/docs/reference-manual/graalvm-updater.md
 [igv]: https://docs.oracle.com/en/graalvm/enterprise/20/guide/tools/ideal-graph-visualizer.html
 [labsjdk]: https://github.com/graalvm/labs-openjdk-11/releases
 [mx]: https://github.com/graalvm/mx
