@@ -7214,14 +7214,11 @@ public final class B2D {
     }
 
     private static int toInt(final Object value) {
-        if (value instanceof final Long longValue) {
-            return longValue.intValue();
-        } else if (value instanceof final Double doubleValue) {
-            return doubleValue.intValue();
-        } else if (value instanceof final FloatObject floatValue) {
-            return (int) floatValue.getValue();
-        } else {
-            throw PrimitiveFailed.andTransferToInterpreter();
-        }
+        return switch (value) {
+            case final Long longValue -> longValue.intValue();
+            case final Double doubleValue -> doubleValue.intValue();
+            case final FloatObject floatValue -> (int) floatValue.getValue();
+            case null, default -> throw PrimitiveFailed.andTransferToInterpreter();
+        };
     }
 }

@@ -236,7 +236,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         args.add(outputDir);
         args.add("-v");
         args.add(getPropertyOrFail("org.graalvm.version"));
-        if (arguments.size() == 1 && !arguments.get(0).startsWith("-")) {
+        if (arguments.size() == 1 && !arguments.getFirst().startsWith("-")) {
             args.add("-a");
         }
         args.addAll(arguments);

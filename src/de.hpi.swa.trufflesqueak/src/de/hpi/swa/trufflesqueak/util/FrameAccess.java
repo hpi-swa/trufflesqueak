@@ -294,18 +294,23 @@ public final class FrameAccess {
         if (slotIndex < numberOfSlots) {
             final FrameSlotKind frameSlotKind = frameDescriptor.getSlotKind(slotIndex);
             final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
-            if (value instanceof final Boolean b && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
-                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Boolean);
-                frame.setBoolean(slotIndex, b);
-            } else if (value instanceof final Long l && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
-                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Long);
-                frame.setLong(slotIndex, l);
-            } else if (value instanceof final Double d && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
-                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
-                frame.setDouble(slotIndex, d);
-            } else {
-                frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
-                frame.setObject(slotIndex, value);
+            switch (value) {
+                case final Boolean b when (isIllegal || frameSlotKind == FrameSlotKind.Boolean) -> {
+                    frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Boolean);
+                    frame.setBoolean(slotIndex, b);
+                }
+                case final Long l when (isIllegal || frameSlotKind == FrameSlotKind.Long) -> {
+                    frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Long);
+                    frame.setLong(slotIndex, l);
+                }
+                case final Double d when (isIllegal || frameSlotKind == FrameSlotKind.Double) -> {
+                    frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
+                    frame.setDouble(slotIndex, d);
+                }
+                case null, default -> {
+                    frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
+                    frame.setObject(slotIndex, value);
+                }
             }
         } else {
             final int auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);

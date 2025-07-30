@@ -47,33 +47,21 @@ public abstract class AbstractPrimitiveNode extends AbstractNode {
 
     public final int getNumArgumentsSlow() {
         CompilerAsserts.neverPartOfCompilation();
-        if (this instanceof Primitive0) {
-            return 0;
-        } else if (this instanceof Primitive1) {
-            return 1;
-        } else if (this instanceof Primitive2) {
-            return 2;
-        } else if (this instanceof Primitive3) {
-            return 3;
-        } else if (this instanceof Primitive4) {
-            return 4;
-        } else if (this instanceof Primitive5) {
-            return 5;
-        } else if (this instanceof Primitive6) {
-            return 6;
-        } else if (this instanceof Primitive7) {
-            return 7;
-        } else if (this instanceof Primitive8) {
-            return 8;
-        } else if (this instanceof Primitive9) {
-            return 9;
-        } else if (this instanceof Primitive10) {
-            return 10;
-        } else if (this instanceof Primitive11) {
-            return 11;
-        } else {
-            throw SqueakException.create(this + " has unexpected number of arguments");
-        }
+        return switch (this) {
+            case Primitive0 primitive0 -> 0;
+            case Primitive1 primitive1 -> 1;
+            case Primitive2 primitive2 -> 2;
+            case Primitive3 primitive3 -> 3;
+            case Primitive4 primitive4 -> 4;
+            case Primitive5 primitive5 -> 5;
+            case Primitive6 primitive6 -> 6;
+            case Primitive7 primitive7 -> 7;
+            case Primitive8 primitive8 -> 8;
+            case Primitive9 primitive9 -> 9;
+            case Primitive10 primitive10 -> 10;
+            case Primitive11 primitive11 -> 11;
+            default -> throw SqueakException.create(this + " has unexpected number of arguments");
+        };
     }
 
     public boolean acceptsMethod(@SuppressWarnings("unused") final CompiledCodeObject method) {

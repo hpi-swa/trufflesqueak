@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.logging.Level;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
@@ -22,6 +24,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.InteropArray;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 @ExportLibrary(InteropLibrary.class)
 @SuppressWarnings("static-method")
@@ -87,6 +90,7 @@ public final class ContextScope implements TruffleObject {
             final int numArgs = FrameAccess.getNumArguments(frame);
             return FrameAccess.getStackValue(frame, index, numArgs);
         } catch (final NumberFormatException e) {
+            LogUtils.INTEROP.log(Level.WARNING, "Invalid number format: " + member, e);
         }
         throw UnknownIdentifierException.create(member);
     }

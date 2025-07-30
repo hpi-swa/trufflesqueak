@@ -196,7 +196,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             try {
                 final Object value = calloutToLib(image, name, argumentsConverted, nfiCode);
                 assert value != null;
-                return WrapToSqueakNode.executeUncached(conversionNode.execute(headerWordList.get(0), value));
+                return WrapToSqueakNode.executeUncached(conversionNode.execute(headerWordList.getFirst(), value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
                 e.printStackTrace();
                 // TODO: return correct error code.
@@ -258,8 +258,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         private static String generateNfiCodeParamsString(final List<String> argumentList) {
             final StringBuilder nfiCodeParams = new StringBuilder(32);
             if (!argumentList.isEmpty()) {
-                final String returnType = argumentList.get(0);
-                argumentList.remove(0);
+                final String returnType = argumentList.getFirst();
+                argumentList.removeFirst();
                 if (!argumentList.isEmpty()) {
                     nfiCodeParams.append('(').append(String.join(",", argumentList)).append(')');
                 } else {

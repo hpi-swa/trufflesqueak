@@ -38,7 +38,7 @@ jobs:
       run: |
         # Download Eclipse SDK
         eclipse_tar_path="${RUNNER_TEMP}/eclipse.tar.gz"
-        wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.26-202211231800/eclipse-SDK-4.26-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
+        wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.36-202505281830/eclipse-SDK-4.36-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
         tar -xzf ${eclipse_tar_path} -C ${RUNNER_TEMP}
         echo "ECLIPSE_EXE=${RUNNER_TEMP}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
         # Set up mx, oracle/graal, and LabsJDK21

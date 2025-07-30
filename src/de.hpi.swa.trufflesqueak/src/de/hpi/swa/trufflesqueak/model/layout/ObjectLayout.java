@@ -52,16 +52,12 @@ public final class ObjectLayout {
         final SlotLocation[] newLocations = locations.clone();
         newLocations[index] = SlotLocation.UNINITIALIZED_LOCATION;
         if (oldLocation.isUninitialized()) {
-            if (value instanceof Boolean) {
-                assignPrimitiveLocation(newLocations, index, SlotLocation.BOOL_LOCATIONS);
-            } else if (value instanceof Character) {
-                assignPrimitiveLocation(newLocations, index, SlotLocation.CHAR_LOCATIONS);
-            } else if (value instanceof Long) {
-                assignPrimitiveLocation(newLocations, index, SlotLocation.LONG_LOCATIONS);
-            } else if (value instanceof Double) {
-                assignPrimitiveLocation(newLocations, index, SlotLocation.DOUBLE_LOCATIONS);
-            } else {
-                assignGenericLocation(newLocations, index);
+            switch (value) {
+                case Boolean b -> assignPrimitiveLocation(newLocations, index, SlotLocation.BOOL_LOCATIONS);
+                case Character c -> assignPrimitiveLocation(newLocations, index, SlotLocation.CHAR_LOCATIONS);
+                case Long l -> assignPrimitiveLocation(newLocations, index, SlotLocation.LONG_LOCATIONS);
+                case Double v -> assignPrimitiveLocation(newLocations, index, SlotLocation.DOUBLE_LOCATIONS);
+                case null, default -> assignGenericLocation(newLocations, index);
             }
         } else {
             assignGenericLocation(newLocations, index);
