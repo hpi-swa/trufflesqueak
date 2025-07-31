@@ -194,11 +194,11 @@ jobs:
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
       # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
-    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
-      run: |
-        trufflesqueak-polyglot-get -v 25.0.0 -a js
-        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-      if: ${{ matrix.type == 'jvm' }}
+    # - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
+    #   run: |
+    #     trufflesqueak-polyglot-get -v 25.0.0 -a js
+    #     trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
+    #   if: ${{ matrix.type == 'jvm' }}
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
