@@ -36,7 +36,7 @@ For this, however, you must use a JVMCI-enabled JDK, such as the
 
 ## Development With Other GraalVM Languages
 
-If you need access to other GraalVM languages during development, there are one option:
+If you need access to other GraalVM languages during development, there is currently only one option remaining as the prior available [GraalVM Updater `gu`](https://github.com/oracle/graal/blob/master/docs/reference-manual/graalvm-updater.md) was removed in the GraalVM Release for JDK21.
 
 You build TruffleSqueak and other languages from source. For this, please refer to the [instructions for building custom GraalVM distributions][graalvm_vm_readme]. As an example, here is how to build a GraalVM with the Graal compiler, TruffleSqueak and GraalVM's Node.js runtime:
 
