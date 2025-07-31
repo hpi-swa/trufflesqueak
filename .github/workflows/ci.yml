@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04, ubuntu-22.04-arm, macos-13, macos-14, windows-2022]
-        java: [24]
+        java: [25]
         jdk_identifier: [latest]
     env:
       RUN_WITH_COVERAGE: "${{ matrix.os == 'ubuntu-22.04' }}"
@@ -114,7 +114,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: graal_dumps-${{ matrix.os }}
+        name: graal_dumps-jar-${{ matrix.os }}
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
@@ -126,7 +126,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
-      JAVA_VERSION: "24"
+      JAVA_VERSION: "25"
       JDK_IDENTIFIER: "latest"
       MX_ENV: "trufflesqueak-${{ matrix.type }}"
       VERBOSE_GRAALVM_LAUNCHERS: true
@@ -142,7 +142,7 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@v1
       with:
-        java-version: '${{ env.JAVA_VERSION }}.0.1'
+        java-version: '${{ env.JAVA_VERSION }}-ea'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'native' }}
@@ -196,7 +196,7 @@ jobs:
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
-        trufflesqueak-polyglot-get -v 24.2.2 -a js
+        trufflesqueak-polyglot-get -v 25.0.0 -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' }}
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
@@ -225,7 +225,7 @@ jobs:
     - name: Upload Graal compiler dumps
       uses: actions/upload-artifact@v4
       with:
-        name: graal_dumps-${{ matrix.os }}
+        name: graal_dumps-${{ matrix.type }}-${{ matrix.os }}
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
@@ -240,7 +240,7 @@ jobs:
         type: [native]
         iterations: [300]
     env:
-      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.MaximumCompilations=-1 --engine.CompilationStatistics"
+      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics"
       EXEC: "/usr/bin/time -v"
     name: run benchmarks
     timeout-minutes: 30

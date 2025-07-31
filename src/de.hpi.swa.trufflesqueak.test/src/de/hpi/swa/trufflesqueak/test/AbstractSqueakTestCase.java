@@ -110,10 +110,9 @@ public abstract class AbstractSqueakTestCase {
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.TESTING, "true");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.RESOURCE_SUMMARY, Boolean.toString(spec.showStatistics));
         if (IS_GRAAL_RUNTIME) {
-            contextBuilder.option("engine.CompilationStatistics", Boolean.toString(spec.showStatistics));
             contextBuilder.option("compiler.TreatPerformanceWarningsAsErrors", "call,instanceof,store,trivial");
-            contextBuilder.option("engine.CompilationFailureAction", "ExitVM");
-            contextBuilder.option("engine.MaximumCompilations", "-1");
+            contextBuilder.option("engine.CompilationFailureAction", "Diagnose");
+            contextBuilder.option("engine.CompilationStatistics", Boolean.toString(spec.showStatistics));
         }
 
         final String logLevel = System.getProperty("log.level");
