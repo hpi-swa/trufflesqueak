@@ -1,0 +1,63 @@
+diff --git a/sdk/mx.sdk/suite.py b/sdk/mx.sdk/suite.py
+index d99ab6d014f..524b644db63 100644
+--- a/sdk/mx.sdk/suite.py
++++ b/sdk/mx.sdk/suite.py
+@@ -514,6 +514,8 @@ suite = {
+       "javaCompliance" : "17+",
+       "workingSets" : "Truffle,Tools",
+       "checkstyle" : "org.graalvm.word",
++      # disable SpotBugs due to incorrect lazy initialization
++      "spotbugs" : "false",
+       "graalCompilerSourceEdition": "ignore",
+     },
+     "org.graalvm.launcher.test" : {
+diff --git a/sdk/src/org.graalvm.launcher.native/src/launcher.cc b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
+index 5710bae01d7..099ed448588 100644
+--- a/sdk/src/org.graalvm.launcher.native/src/launcher.cc
++++ b/sdk/src/org.graalvm.launcher.native/src/launcher.cc
+@@ -300,7 +300,7 @@ static void *load_jli_lib(std::string exeDir) {
+ 
+ /* load the language library (either native library or libjvm) and return a
+  * pointer to it */
+-void* load_vm_lib(std::string liblangPath) {
++void* load_vm_lib(bool jvmMode, std::string liblangPath) {
+     if (debug) {
+         std::cout << "Loading library " << liblangPath << std::endl;
+     }
+@@ -314,6 +314,14 @@ void* load_vm_lib(std::string liblangPath) {
+             std::cerr << "Error while loading " << liblangPath << ":" << std::endl << errorString << std::endl;
+         }
+ #else
++        if (!jvmMode) {
++            std::string exeDir = exe_directory();
++            std::stringstream languageLibPath;
++            languageLibPath << exeDir << DIR_SEP_STR << ".." << DIR_SEP_STR << "lib";
++            if (SetDllDirectory(languageLibPath.str().c_str()) == 0) {
++                std::cerr << "Error adding dll search path: " << languageLibPath.str() << std::endl;
++            }
++        }
+         HMODULE jvmHandle = LoadLibraryA(liblangPath.c_str());
+         if (jvmHandle != NULL) {
+             return (void*) jvmHandle;
+@@ -969,7 +977,7 @@ static int jvm_main_thread(struct MainThreadArgs& parsedArgs) {
+ 
+     /* load VM library - after parsing arguments s.t. NMT
+      * tracking environment variables are already set */
+-    void* library = load_vm_lib(libPath);
++    void* library = load_vm_lib(jvmMode, libPath);
+     if (!library) {
+         std::cerr << "Could not load VM library from " << libPath << "." << std::endl;
+         return -1;
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
+index 10b976c323e..18e3fd6a8a8 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
+@@ -175,7 +175,7 @@ public final class NodeUtil {
+             current = current.getParent();
+         } while (current != null);
+ 
+-        if (!(prev instanceof ExecutableNode)) {
++        if (prev.isAdoptable() && !(prev instanceof ExecutableNode)) {
+             failNotAdopted(node, prev);
+         }
+         return true;
