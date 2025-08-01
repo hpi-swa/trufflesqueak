@@ -176,13 +176,8 @@ public final class SqueakGuards {
         return object instanceof PointersObject;
     }
 
-    public static boolean isPowerOfTwo(final long value) {
-        return value > 1 && (value & value - 1) == 0;
-    }
-
     public static boolean isUsedJavaPrimitive(final Object value) {
-        final Class<?> clazz = value.getClass();
-        return clazz == Boolean.class || clazz == Long.class || clazz == Double.class || clazz == Character.class;
+        return value instanceof Boolean || value instanceof Long || value instanceof Double || value instanceof Character;
     }
 
     public static boolean isZero(final double value) {
