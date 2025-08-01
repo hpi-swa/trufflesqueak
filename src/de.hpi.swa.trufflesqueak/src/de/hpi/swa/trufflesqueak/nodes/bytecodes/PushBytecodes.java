@@ -421,7 +421,7 @@ public final class PushBytecodes {
             protected final void doPushLiteralVariable(final VirtualFrame frame,
                             @Bind final Node node,
                             @Cached final SqueakObjectAt0Node at0Node,
-                            @Cached(value = "createIdentityProfile()", weak = true) final ValueProfile profile,
+                            @Cached("createIdentityProfile()") final ValueProfile profile,
                             @Cached final FrameStackPushNode pushNode) {
                 pushNode.execute(frame, profile.profile(at0Node.execute(node, literal, ASSOCIATION.VALUE)));
             }
