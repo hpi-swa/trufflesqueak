@@ -142,21 +142,22 @@ jobs:
         if ${{ matrix.type }}==native (set "STANDALONE_NAME=TRUFFLESQUEAK_NATIVE_STANDALONE") else (set "STANDALONE_NAME=TRUFFLESQUEAK_JVM_STANDALONE") 
         call mx --env ${{ env.MX_ENV }} paths --output %STANDALONE_NAME% > standalone-home-with-forward-slashes.txt
         set /p STANDALONE_HOME=<standalone-home-with-forward-slashes.txt
-        setlocal enabledelayedexpansion
-        set "STANDALONE_HOME=%STANDALONE_HOME:/=\%"
         echo STANDALONE_HOME=%STANDALONE_HOME%>>%GITHUB_ENV%
-        dir %STANDALONE_HOME%\bin
-        echo %STANDALONE_HOME%\bin>>%GITHUB_PATH%
-        echo [%STANDALONE_HOME%\bin added to $PATH]
+        echo %STANDALONE_HOME%/bin>>%GITHUB_PATH%
+        echo [%STANDALONE_HOME%/bin added to $PATH]
       if: ${{ runner.os == 'Windows' }}
     - name: Run SystemReporter on TruffleSqueak standalone
-      run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Archive TruffleSqueak standalone
       shell: bash
       run: |
-        mx.trufflesqueak/utils.sh archive-standalone ${{ matrix.type }} ${{ env.STANDALONE_HOME }}
-        mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_ARCHIVE }} ${{ secrets.GITHUB_TOKEN }}
+        trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
+    - name: Archive TruffleSqueak standalone
+      shell: bash
+      run: mx.trufflesqueak/utils.sh archive-standalone ${{ matrix.type }}
       # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
+      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
+    - name: Deploy TruffleSqueak standalone
+      shell: bash
+      run: mx.trufflesqueak/utils.sh deploy-asset '${{ env.STANDALONE_ARCHIVE }}' ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@v4
@@ -182,6 +183,7 @@ jobs:
       timeout-minutes: 30
       if: ${{ matrix.os == 'windows-2022' && matrix.type != 'native' }} # fails to load packages on native
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
+      shell: bash
       run: |
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
       timeout-minutes: 30

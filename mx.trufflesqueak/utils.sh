@@ -82,15 +82,18 @@ conditional-deploy() {
 }
 
 archive-standalone() {
-  local filename=$(filename-standalone $1)
-  local standalone_home=$2
+  local standalone_archive="$(pwd)/$(filename-standalone $1)"
+  local standalone_dir_name=$(basename "${STANDALONE_HOME}")
 
+  pushd "$(dirname "${STANDALONE_HOME}")" > /dev/null
   if [[ "${OS_NAME}" == "windows" ]]; then
-    zip -r "${filename}" "${standalone_home}"
+    zip -r "${standalone_archive}" "${standalone_dir_name}"
   else
-    tar czf "${filename}" "${standalone_home}"
+    tar czf "${standalone_archive}" "${standalone_dir_name}"
   fi
-  set-env "STANDALONE_ARCHIVE" "$(resolve-path "${filename}")"
+  popd > /dev/null
+  echo "Standalone archive created at ${standalone_archive}"
+  set-env "STANDALONE_ARCHIVE" "$(resolve-path "${standalone_archive}")"
 }
 
 deploy-asset() {
