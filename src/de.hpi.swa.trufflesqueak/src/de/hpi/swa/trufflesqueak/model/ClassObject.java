@@ -578,7 +578,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
         super.pointersBecomeOneWay(fromToMap);
-        if (superclass != null && fromToMap.get(superclass) instanceof final ClassObject o) {
+        if (superclass != null) {
             final Object replacement = fromToMap.get(superclass);
             if (replacement != null) {
                 setSuperclass((ClassObject) replacement);

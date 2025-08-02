@@ -84,6 +84,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
+    @SuppressWarnings("this-escape")
     protected AbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash original) {
         assert original.assertNotForwarded() && original.squeakClass.assertNotForwarded();
         squeakClass = original.squeakClass;
@@ -153,6 +154,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return getSqueakHash() == HASH_UNINITIALIZED;
     }
 
+    @SuppressWarnings("this-escape")
     public final void setSqueakHash(final int newHash) {
         assert assertNotForwarded();
         assert newHash <= SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
@@ -253,6 +255,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return (squeakHashAndBits & FORWARDED_BIT) == 0;
     }
 
+    @SuppressWarnings("this-escape")
     public final boolean assertNotForwarded() {
         assert isNotForwarded() : MiscUtils.toObjectString(this) + " was unexpectedly forwarded to " + MiscUtils.toObjectString(getForwardingPointer());
         return true;

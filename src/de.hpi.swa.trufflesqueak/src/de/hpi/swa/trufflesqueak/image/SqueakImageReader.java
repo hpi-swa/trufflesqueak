@@ -385,7 +385,7 @@ public final class SqueakImageReader {
         }
     }
 
-    private void fillInContextObjects() {
+    public void fillInContextObjects() {
         for (final SqueakImageChunk chunk : chunkMap.getChunks()) {
             if (chunk == null) {
                 continue;
