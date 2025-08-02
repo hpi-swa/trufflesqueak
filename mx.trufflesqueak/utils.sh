@@ -55,26 +55,12 @@ build-graalvm() {
 
 build-standalone() {
   local type=$1
-  local java_version=$2
-  local component_name=""
-  case "${type}" in
-    "native")
-      component_name="SMALLTALK_NATIVE_STANDALONE_SVM_JAVA${java_version}"
-      ;;
-    "jvm")
-      component_name="SMALLTALK_JAVA_STANDALONE_SVM_JAVA${java_version}"
-      ;;
-    *)
-      echo "Unexpected standalone type: ${type}"
-      exit 1
-      ;;
-  esac
+  local component_name="TRUFFLESQUEAK_$(echo $type | tr a-z A-Z)_STANDALONE"
   local env_name="trufflesqueak-${type}"
 
-  mx --env "${env_name}" --no-download-progress build --dependencies "${component_name}"
-  cp "$(mx --env "${env_name}" paths "${component_name}")" "${STANDALONE_TARGET}"
-
-  local standalone_home="$(mx --env "${env_name}" standalone-home --type "${type}" smalltalk)"
+  mx --env "${env_name}" --no-download-progress build
+  local standalone_home="$(mx --env "${env_name}" paths --output "${component_name}")"
+  set-env "STANDALONE_HOME" "$(resolve-path "${standalone_home}")"
   add-path "${standalone_home}/bin"
   echo "[${standalone_home}/bin added to \$PATH]"
 }
@@ -95,16 +81,29 @@ conditional-deploy() {
   eval "$@"
 }
 
+archive-standalone() {
+  local standalone_name="$(standalone-dirname $1)"
+  local standalone_archive="$(pwd)/${standalone_name}"
+  local standalone_home_name=$(basename "${STANDALONE_HOME}")
+
+  pushd "$(dirname "${STANDALONE_HOME}")" > /dev/null
+  mv "${standalone_home_name}" "${standalone_name}"
+  if [[ "${OS_NAME}" == "windows" ]]; then
+    standalone_archive="${standalone_archive}.zip"
+    zip -r "${standalone_archive}" "${standalone_name}"
+  else
+    standalone_archive="${standalone_archive}.tar.gz"
+    tar czf "${standalone_archive}" "${standalone_name}"
+  fi
+  mv "${standalone_name}" "${standalone_home_name}"
+  popd > /dev/null
+  echo "Standalone archive created at ${standalone_archive}"
+  set-env "STANDALONE_ARCHIVE" "$(resolve-path "${standalone_archive}")"
+}
+
 deploy-asset() {
   check-deploy
   local filename=$1
-  if [[ "${filename}" == *.tar ]]; then
-    echo "Compressing tarball..."
-    gzip "${filename}"
-    filename="${filename}.gz"
-  fi
-  # zip files are always compressed because mx_trufflesqueak.py forces localCompress
-
   local auth="Authorization: token $2"
   local git_tag=$(git tag --points-at HEAD)
   local release_id
@@ -196,13 +195,12 @@ download-cuis-test-image() {
   echo "[Cuis test image (${DEP_CUIS_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
-filename-standalone() {
+standalone-dirname() {
   local variant="" && [[ "$1" == "jvm" ]] && variant="-jvm"
   local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
-  local file_extension="tar" && [[ "${OS_NAME}" == "windows" ]] && file_extension="zip"
-  echo "trufflesqueak${variant}-${git_description}-${OS_NAME}-${OS_ARCH}.${file_extension}"
+  echo "trufflesqueak${variant}-${git_description}-${OS_NAME}-${OS_ARCH}"
 }
 
 format-native-image-config() {
@@ -245,10 +243,13 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
-  set-up-labsjdk "${java_version}"
+  if [[ "${java_version}" != "skip" ]]; then
+    set-up-labsjdk "${java_version}"
+  fi
   download-trufflesqueak-test-image
-  if [[ "${kind}" != "jar" ]]; then
-    set-env "STANDALONE_TARGET" "$(filename-standalone "${kind}")"
+
+  if [[ "${OS_NAME}" == "windows" ]]; then
+    choco install zip -y # zip needed to archive standalone
   fi
 }
 
