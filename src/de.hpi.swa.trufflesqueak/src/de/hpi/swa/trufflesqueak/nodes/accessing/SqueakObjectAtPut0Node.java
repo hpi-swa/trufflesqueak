@@ -43,8 +43,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWr
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
-    public final void execute(final Node node, final Object obj, final long index, final Object value) {
-        executeSpecialized(node, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(obj), index, value);
+    public final void execute(final Node node, final Object object, final long index, final Object value) {
+        assert !(object instanceof final AbstractSqueakObjectWithClassAndHash o) || o.assertNotForwarded();
+        executeSpecialized(node, object, index, value);
     }
 
     protected abstract void executeSpecialized(Node node, Object obj, long index, Object value);

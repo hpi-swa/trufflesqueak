@@ -41,7 +41,8 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
     public final Object execute(final Node node, final SqueakImageContext image, final Object object) {
         CompilerAsserts.partialEvaluationConstant(image);
-        return image.reportAllocation(executeAllocation(node, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(object)));
+        assert !(object instanceof final AbstractSqueakObjectWithClassAndHash o) || o.assertNotForwarded();
+        return image.reportAllocation(executeAllocation(node, object));
     }
 
     protected abstract Object executeAllocation(Node node, Object obj);
