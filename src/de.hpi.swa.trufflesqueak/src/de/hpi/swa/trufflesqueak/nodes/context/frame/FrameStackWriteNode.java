@@ -74,14 +74,6 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
 
         @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
-        protected final void writeAbstractSqueakObjectWithClassAndHash(final VirtualFrame frame, final AbstractSqueakObjectWithClassAndHash value) {
-            /* Initialize type on first write. No-op if kind is already Object. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Object);
-
-            frame.setObject(slotIndex, value.resolveForwardingPointer());
-        }
-
-        @Specialization(replaces = {"writeBool", "writeLong", "writeDouble", "writeAbstractSqueakObjectWithClassAndHash"})
         protected final void writeObject(final VirtualFrame frame, final Object value) {
             /* Initialize type on first write. No-op if kind is already Object. */
             frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Object);
