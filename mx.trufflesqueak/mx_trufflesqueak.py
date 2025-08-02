@@ -27,8 +27,8 @@ LANGUAGE_ID = "smalltalk"
 PACKAGE_NAME = "de.hpi.swa.trufflesqueak"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 VM_ARGS_TESTING = [
-    # Make ReflectionUtils work
-    "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED",
+    "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED",  # Make ReflectionUtils work
+    "--add-modules=jdk.incubator.vector",  # Vector API
     # Tweak GC for GitHub Actions
     "-Xms6G",  # Initial heap size
     "-XX:MetaspaceSize=32M",  # Initial size of Metaspaces
@@ -361,6 +361,7 @@ mx_sdk.register_graalvm_component(
                 default_vm_args=[
                     "--vm.Xms512M",
                     "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
+                    "--vm.-add-modules=jdk.incubator.vector",
                 ],
             )
         ],

@@ -192,6 +192,7 @@ suite = {
                 "java.desktop",
                 "java.logging",
                 "java.management",
+                "jdk.incubator.vector",  # Vector API
                 "jdk.management",
                 "jdk.unsupported",
             ],
@@ -201,6 +202,7 @@ suite = {
             "checkstyleVersion": "10.7.0",
             "jacoco": "include",
             "javaCompliance": "21+",
+            "javac.lint.overrides": "-incubating",  # Vector API
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
             "workingSets": "TruffleSqueak",
         },
@@ -288,6 +290,7 @@ suite = {
                 ],
                 "requires": [
                     "jdk.unsupported",  # sun.misc.Unsafe
+                    "jdk.incubator.vector",  # Vector API
                 ],
             },
             "useModulePath": True,

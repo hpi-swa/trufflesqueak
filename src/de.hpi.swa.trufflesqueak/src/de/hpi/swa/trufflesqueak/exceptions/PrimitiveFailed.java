@@ -47,4 +47,9 @@ public final class PrimitiveFailed extends ControlFlowException {
         t.printStackTrace();
         throw GENERIC_ERROR;
     }
+
+    public static PrimitiveFailed transferToInterpreterAndBadArgument() {
+        CompilerDirectives.transferToInterpreter();
+        throw BAD_ARGUMENT;
+    }
 }
