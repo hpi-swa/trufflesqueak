@@ -119,7 +119,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     private static SeekableByteChannel createChannelOrPrimFail(final SqueakImageContext image, final TruffleFile truffleFile, final boolean writableFlag) {
-        if (!writableFlag && !truffleFile.exists()) {
+        final TruffleFile parent = truffleFile.getParent();
+        if (parent == null || !parent.exists() || !writableFlag && !truffleFile.exists()) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
         try {
