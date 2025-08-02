@@ -273,6 +273,45 @@ suite = {
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
+        "trufflesqueak_thin_launcher": {
+            "class": "ThinLauncherProject",
+            "mainClass": "de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
+            "jar_distributions": ["trufflesqueak:TRUFFLESQUEAK_LAUNCHER"],
+            "option_vars": [
+                "TRUFFLESQUEAK_OPTIONS",
+            ],
+            "relative_home_paths": {
+                "smalltalk": "..",
+            },
+            "relative_jre_path": "../jvm",
+            "relative_module_path": "../modules",
+            "relative_extracted_lib_paths": {
+                "truffle.attach.library": "../jvmlibs/<lib:truffleattach>",
+                "truffle.nfi.library": "../jvmlibs/<lib:trufflenfi>",
+            },
+            "liblang_relpath": "../lib/<lib:smalltalkvm>",
+            "default_vm_args": [
+                "--vm.Xms512M",
+                "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
+            ],
+        },
+        "libsmalltalkvm": {
+            "class": "LanguageLibraryProject",
+            "dependencies": [
+                "TRUFFLESQUEAK_STANDALONE_DEPENDENCIES",
+            ],
+            "buildDependencies": [
+                "TRUFFLESQUEAK_STANDALONE_COMMON",
+            ],
+            "build_args": [
+                # From mx.trufflesmalltalk/native-image.properties
+                # "-Dpolyglot.image-build-time.PreinitializeContexts=smalltalk",
+                "-Dorg.graalvm.language.smalltalk.home=<path:TRUFFLESQUEAK_STANDALONE_COMMON>",
+                # Configure launcher
+                "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
+            ],
+            "dynamicBuildArgs": "libsmalltalkvm_build_args",
+        },
     },
     # ==========================================================================
     #  DISTRIBUTIONS
@@ -458,6 +497,108 @@ suite = {
             ],
             "testDistribution": True,
             "maven": False,
+        },
+        "TRUFFLESQUEAK_GRAALVM_SUPPORT_PLATFORM_SPECIFIC": {
+            "description": "Platform-specific TruffleSqueak home files",
+            "fileListPurpose": "native-image-resources",
+            "native": True,
+            "platformDependent": True,
+            "layout": {
+                "lib/": [
+                    "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                    {
+                        "source_type": "extracted-dependency",
+                        "dependency": "OSVM_PLUGINS",
+                        "path": "*",
+                    },
+                ],
+            },
+            "license": ["MIT"],
+            "maven": False,
+        },
+        "TRUFFLESQUEAK_GRAALVM_SUPPORT_NO_NI_RESOURCES": {
+            "description": "TruffleSqueak support distribution for the GraalVM, the contents is not included as native image resources.",
+            "native": True,
+            "platformDependent": True,
+            "layout": {
+                "./": [
+                    "file:LICENSE",
+                    "file:README.md",
+                ],
+            },
+            "maven": False,
+        },
+        "TRUFFLESQUEAK_STANDALONE_DEPENDENCIES": {
+            "description": "TruffleSqueak standalone dependencies",
+            "class": "DynamicPOMDistribution",
+            "distDependencies": [
+                "trufflesqueak:TRUFFLESQUEAK_LAUNCHER",
+                "trufflesqueak:TRUFFLESQUEAK",
+                "sdk:TOOLS_FOR_STANDALONE",
+            ],
+            "dynamicDistDependencies": "trufflesqueak_standalone_deps",
+            "maven": False,
+        },
+        "TRUFFLESQUEAK_STANDALONE_COMMON": {
+            "description": "Common layout for Native and JVM standalones",
+            "type": "dir",
+            "platformDependent": True,
+            "platforms": "local",
+            "layout": {
+                "./": [
+                    "extracted-dependency:TRUFFLESQUEAK_GRAALVM_SUPPORT_PLATFORM_SPECIFIC",
+                    "extracted-dependency:TRUFFLESQUEAK_GRAALVM_SUPPORT_NO_NI_RESOURCES",
+                ],
+                "bin/trufflesqueak": "dependency:trufflesqueak_thin_launcher",
+                "bin/trufflesqueak-polyglot-get": "dependency:trufflesqueak_thin_launcher",
+                "release": "dependency:sdk:STANDALONE_JAVA_HOME/release",
+            },
+        },
+        "TRUFFLESQUEAK_NATIVE_STANDALONE": {
+            "description": "TruffleSqueak Native standalone",
+            "type": "dir",
+            "platformDependent": True,
+            "platforms": "local",
+            "layout": {
+                "./": [
+                    "dependency:TRUFFLESQUEAK_STANDALONE_COMMON/*",
+                ],
+                "lib/": "dependency:libsmalltalkvm",
+            },
+        },
+        "TRUFFLESQUEAK_JVM_STANDALONE": {
+            "description": "TruffleSqueak JVM standalone",
+            "type": "dir",
+            "platformDependent": True,
+            "platforms": "local",
+            "layout": {
+                "./": [
+                    "dependency:TRUFFLESQUEAK_STANDALONE_COMMON/*",
+                ],
+                "jvm/": {
+                    "source_type": "dependency",
+                    "dependency": "sdk:STANDALONE_JAVA_HOME",
+                    "path": "*",
+                    "exclude": [
+                        # related to Native Image
+                        "bin/native-image*",
+                        "lib/static",
+                        "lib/svm",
+                        "lib/<lib:native-image-agent>",
+                        "lib/<lib:native-image-diagnostics-agent>",
+                        # unnecessary and big
+                        "lib/src.zip",
+                        # "jmods",
+                    ],
+                },
+                "jvmlibs/": [
+                    "extracted-dependency:truffle:TRUFFLE_ATTACH_GRAALVM_SUPPORT",
+                    "extracted-dependency:truffle:TRUFFLE_NFI_NATIVE_GRAALVM_SUPPORT",
+                ],
+                "modules/": [
+                    "classpath-dependencies:TRUFFLESQUEAK_STANDALONE_DEPENDENCIES",
+                ],
+            },
         },
     },
 }
