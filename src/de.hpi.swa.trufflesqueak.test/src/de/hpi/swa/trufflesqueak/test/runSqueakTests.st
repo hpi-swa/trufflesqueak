@@ -246,6 +246,7 @@ flakyTests := OrderedCollection new.
     MethodHighlightingTests -> #(#testMethodHighlighting).
     PCCByCompilationTest -> #(#testSwitchPrimCallOffOn).
     PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
+    SequenceableCollectionTest -> #(#testCollectWithIndexDeprecation).
     SetInspectorTest -> #(#testExpressions).
     SHParserST80Test -> #(#testNumbers).
     TestValueWithinFix -> #(#testValueWithinTimingBasic #testValueWithinTimingNestedInner #testValueWithinTimingNestedOuter #testValueWithinTimingRepeat).
