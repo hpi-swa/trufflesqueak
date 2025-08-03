@@ -49,47 +49,6 @@ jobs:
     - name: Check style and perform full build
       run: mx --java-home="${JAVA_HOME}" --tools-java-home="${JAVA_HOME}" gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
 
-  build-coverage:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04]
-        java: [25]
-    name: coverage ${{ matrix.os }}
-    timeout-minutes: 45
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12.0'
-    - name: Set up dependencies
-      shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies jar latest
-    - name: Build GraalVM with TruffleSqueak
-      run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
-    - name: Run SystemReporter on TruffleSqueak
-      run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Run gate with code coverage # do not use Graal compiler with JaCoCo code coverage
-      run: mx --disable-polyglot gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
-    - name: Report code coverage
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
-      if: ${{ env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
-    - name: Upload Graal compiler dumps
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: graal_dumps-coverage-${{ matrix.os }}
-        path: graal_dumps/
-        if-no-files-found: ignore
-        retention-days: 5
-
   build-standalone:
     strategy:
       fail-fast: false
