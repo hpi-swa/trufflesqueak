@@ -157,7 +157,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     @SuppressWarnings("this-escape")
     public final void setSqueakHash(final int newHash) {
         assert assertNotForwarded();
-        assert newHash <= SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
+        assert (newHash & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) == newHash;
         squeakHashAndBits = (squeakHashAndBits & ~SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) + newHash;
     }
 
