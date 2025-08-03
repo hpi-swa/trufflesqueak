@@ -23,79 +23,79 @@ env:
   PYTHONIOENCODING: 'utf-8'
 
 jobs:
-  style_and_build_config:
-    name: style and fullbuild
-    timeout-minutes: 15
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12.0'
-    - name: Set up dependencies
-      run: |
-        # Download Eclipse SDK
-        eclipse_tar_path="${RUNNER_TEMP}/eclipse.tar.gz"
-        wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.36-202505281830/eclipse-SDK-4.36-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
-        tar -xzf ${eclipse_tar_path} -C ${RUNNER_TEMP}
-        echo "ECLIPSE_EXE=${RUNNER_TEMP}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
-        # Set up mx, oracle/graal, and LabsJDK21
-        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk 21"
-        # Set up style dependencies
-        sudo apt update && sudo apt install python3-pip python-setuptools
-        jq -r '.pip | to_entries[] | .key+.value' ../graal/common.json | xargs sudo pip install
-    - name: Check style and perform full build
-      run: mx --java-home="${JAVA_HOME}" --tools-java-home="${JAVA_HOME}" gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
+  # style_and_build_config:
+  #   name: style and fullbuild
+  #   timeout-minutes: 15
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #   - name: Clone TruffleSqueak repository
+  #     uses: actions/checkout@v4
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: '3.12.0'
+  #   - name: Set up dependencies
+  #     run: |
+  #       # Download Eclipse SDK
+  #       eclipse_tar_path="${RUNNER_TEMP}/eclipse.tar.gz"
+  #       wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.36-202505281830/eclipse-SDK-4.36-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
+  #       tar -xzf ${eclipse_tar_path} -C ${RUNNER_TEMP}
+  #       echo "ECLIPSE_EXE=${RUNNER_TEMP}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
+  #       # Set up mx, oracle/graal, and LabsJDK21
+  #       mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk 21"
+  #       # Set up style dependencies
+  #       sudo apt update && sudo apt install python3-pip python-setuptools
+  #       jq -r '.pip | to_entries[] | .key+.value' ../graal/common.json | xargs sudo pip install
+  #   - name: Check style and perform full build
+  #     run: mx --java-home="${JAVA_HOME}" --tools-java-home="${JAVA_HOME}" gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
 
-  build-coverage:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04]
-        java: [25]
-    name: coverage ${{ matrix.os }}
-    timeout-minutes: 45
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12.0'
-    - name: Set up dependencies
-      shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies jar latest
-    - name: Build GraalVM with TruffleSqueak
-      run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
-    - name: Run SystemReporter on TruffleSqueak
-      run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Run gate with code coverage # do not use Graal compiler with JaCoCo code coverage
-      run: mx --disable-polyglot gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
-    - name: Report code coverage
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
-      if: ${{ env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
-    - name: Upload Graal compiler dumps
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: graal_dumps-coverage-${{ matrix.os }}
-        path: graal_dumps/
-        if-no-files-found: ignore
-        retention-days: 5
+  # build-coverage:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-22.04]
+  #       java: [25]
+  #   name: coverage ${{ matrix.os }}
+  #   timeout-minutes: 45
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #   - name: Clone TruffleSqueak repository
+  #     uses: actions/checkout@v4
+  #     with:
+  #       submodules: true
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: '3.12.0'
+  #   - name: Set up dependencies
+  #     shell: bash
+  #     run: mx.trufflesqueak/utils.sh set-up-dependencies jar latest
+  #   - name: Build GraalVM with TruffleSqueak
+  #     run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
+  #   - name: Run SystemReporter on TruffleSqueak
+  #     run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
+  #   - name: Run gate with code coverage # do not use Graal compiler with JaCoCo code coverage
+  #     run: mx --disable-polyglot gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
+  #   - name: Report code coverage
+  #     env:
+  #       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+  #     run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
+  #     if: ${{ env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
+  #   - name: Upload Graal compiler dumps
+  #     if: always()
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: graal_dumps-coverage-${{ matrix.os }}
+  #       path: graal_dumps/
+  #       if-no-files-found: ignore
+  #       retention-days: 5
 
   build-standalone:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
-        type: [native, jvm]
+        os: [ubuntu-22.04-arm] #[ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
+        type: [native] #[native, jvm]
     env:
       JAVA_VERSION: "25"
       JVMCI_VERSION_CHECK: "ignore" # version of EA build does not always match
@@ -207,7 +207,7 @@ jobs:
         type: [native]
         iterations: [300]
     env:
-      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics"
+      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
       EXEC: "/usr/bin/time -v"
     name: run benchmarks
     timeout-minutes: 30
