@@ -79,6 +79,19 @@ FileStream stdout cr; cr; nextPutAll: 'Running TestCases...'; cr; cr; flush.
 result := testSuite run.
 FileStream stdout cr; nextPutAll: result asString; cr; flush.
 
+result failures ifNotEmpty: [:failures |
+    FileStream stdout cr; nextPutAll: 'Failures:'; cr; flush.
+    failures do: [:testCase |
+        FileStream stdout cr; nextPutAll: testCase asString; flush.
+    ].
+].
+result errors ifNotEmpty: [:errors |
+    FileStream stdout cr; nextPutAll: 'Errors:'; cr; flush.
+    errors do: [:testCase |
+        FileStream stdout cr; nextPutAll: testCase asString; flush.
+    ].
+].
+
 exitCode := result hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
 
 Smalltalk quitPrimitive: 0
