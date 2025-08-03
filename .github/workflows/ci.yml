@@ -97,12 +97,14 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
+      NATIVE_IMAGE_OPTIONS: "-J-XX:MaxRAMPercentage=95"
       JAVA_VERSION: "25"
       JVMCI_VERSION_CHECK: "ignore" # version of EA build does not always match
       VERBOSE_GRAALVM_LAUNCHERS: true
+      PGO_FILE: "${{ github.workspace }}/trufflesqueak-${{ matrix.os }}.iprof"
+      PGO_LCOV_FILE: "${{ github.workspace }}/trufflesqueak-${{ matrix.os }}.lcov"
       VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
     name: ${{ matrix.type }} ${{ matrix.os }}
-    timeout-minutes: 45
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
@@ -125,8 +127,33 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} skip
+    - name: Cache profile
+      id: cache-profile
+      uses: actions/cache@v4
+      if: ${{ matrix.type == 'native' && runner.os != 'Windows' }}
+      with:
+        path: ${{ env.PGO_FILE }}
+        key: ${{ matrix.os }}-profile
+    - name: Build instrumented TruffleSqueak standalone
+      if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-prime.outputs.cache-hit != 'true' }}
+      run: |
+        export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo-instrument -H:+UnlockExperimentalVMOptions -H:+ProfilingLCOV -H:-UnlockExperimentalVMOptions"
+        mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
+      timeout-minutes: 30
+    - name: Collect profile
+      if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-prime.outputs.cache-hit != 'true' }}
+      run: |
+        trufflesqueak --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} -XX:ProfilesLCOVTraceFile=${{ env.PGO_LCOV_FILE }} images/test-64bit.image --evaluate "ClassBuilderTest buildSuite run. 1 tinyBenchmarks"
+      timeout-minutes: 30
+    - name: Report profiled code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE }}
+      if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-prime.outputs.cache-hit != 'true' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
     - name: Build TruffleSqueak standalone
-      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
+      run: |
+        export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo=${{ env.PGO_FILE }}"
+        mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
       if: ${{ runner.os != 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
