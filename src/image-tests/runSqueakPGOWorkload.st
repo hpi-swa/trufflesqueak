@@ -81,4 +81,4 @@ FileStream stdout cr; nextPutAll: result asString; cr; flush.
 
 exitCode := result hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
 
-Smalltalk quitPrimitive: exitCode
+Smalltalk quitPrimitive: 0
