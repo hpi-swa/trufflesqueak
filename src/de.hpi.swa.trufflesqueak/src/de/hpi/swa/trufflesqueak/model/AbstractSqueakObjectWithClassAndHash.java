@@ -261,6 +261,10 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return true;
     }
 
+    public static final boolean assertNotForwarded(final Object object) {
+        return !(object instanceof final AbstractSqueakObjectWithClassAndHash o) || o.assertNotForwarded();
+    }
+
     public void pointersBecomeOneWay(@SuppressWarnings("unused") final UnmodifiableEconomicMap<Object, Object> fromToMap) {
         final Object replacement = fromToMap.get(getSqueakClass());
         if (replacement != null) {

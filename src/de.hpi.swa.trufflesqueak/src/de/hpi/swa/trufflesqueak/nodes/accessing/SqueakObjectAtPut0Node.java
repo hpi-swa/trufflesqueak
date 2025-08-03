@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import static de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash.assertNotForwarded;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -15,7 +17,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -43,8 +44,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWr
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
-    public final void execute(final Node node, final Object obj, final long index, final Object value) {
-        executeSpecialized(node, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(obj), index, value);
+    public final void execute(final Node node, final Object object, final long index, final Object value) {
+        assert assertNotForwarded(object);
+        executeSpecialized(node, object, index, value);
     }
 
     protected abstract void executeSpecialized(Node node, Object obj, long index, Object value);

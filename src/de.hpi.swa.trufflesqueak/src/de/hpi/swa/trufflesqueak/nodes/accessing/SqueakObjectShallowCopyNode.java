@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import static de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash.assertNotForwarded;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
@@ -15,7 +17,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -41,7 +42,8 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
     public final Object execute(final Node node, final SqueakImageContext image, final Object object) {
         CompilerAsserts.partialEvaluationConstant(image);
-        return image.reportAllocation(executeAllocation(node, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(object)));
+        assert assertNotForwarded(object);
+        return image.reportAllocation(executeAllocation(node, object));
     }
 
     protected abstract Object executeAllocation(Node node, Object obj);
