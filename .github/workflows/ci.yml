@@ -143,7 +143,7 @@ jobs:
     - name: Collect profile
       if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-prime.outputs.cache-hit != 'true' }}
       run: |
-        trufflesqueak --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} -XX:ProfilesLCOVTraceFile=${{ env.PGO_LCOV_FILE }} images/test-64bit.image --evaluate "ClassBuilderTest buildSuite run. 1 tinyBenchmarks"
+        trufflesqueak --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} -XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakPGOWorkload.st
       timeout-minutes: 30
     - name: Report profiled code coverage
       env:
@@ -195,18 +195,18 @@ jobs:
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
-        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
       run: |
-        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\de.hpi.swa.trufflesqueak.test\src\de\hpi\swa\trufflesqueak\test\runSqueakTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\image-tests\runSqueakTests.st
       timeout-minutes: 30
       if: ${{ matrix.os == 'windows-2022' && matrix.type != 'native' }} # fails to load packages on native
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
       shell: bash
       run: |
-        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' && matrix.os != 'macos-13' }} # tests fail on macos-13 and it is reaching EOL soon
     - name: Upload test image on failure
