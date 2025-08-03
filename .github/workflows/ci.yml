@@ -59,7 +59,7 @@ jobs:
         coverage: [false]
         suffix: [""]
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-22.04-arm
             type: jvm
             vm-args: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --engine.CompilationStatistics"
             coverage: true
