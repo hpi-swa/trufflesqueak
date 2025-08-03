@@ -143,7 +143,7 @@ jobs:
     - name: Collect profile
       if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-prime.outputs.cache-hit != 'true' }}
       run: | # -XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE }}
-        trufflesqueak --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakPGOWorkload.st
+        trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakPGOWorkload.st
       timeout-minutes: 30
     # - name: Report profiled code coverage
     #   env:
