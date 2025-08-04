@@ -102,7 +102,7 @@ jobs:
       JVMCI_VERSION_CHECK: "ignore" # version of EA build does not always match
       VERBOSE_GRAALVM_LAUNCHERS: true
       PGO_FILE: "${{ github.workspace }}/trufflesqueak-${{ matrix.os }}.iprof"
-      PGO_LCOV_FILE: "${{ github.workspace }}/trufflesqueak-${{ matrix.os }}.lcov"
+      PGO_LCOV_FILE: "${{ github.workspace }}/lcov.info"
       VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
     name: ${{ matrix.type }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -135,22 +135,22 @@ jobs:
         path: ${{ env.PGO_FILE }}
         key: ${{ matrix.os }}-profile
     - name: Build instrumented TruffleSqueak standalone
-      if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-prime.outputs.cache-hit != 'true' }}
+      if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-profile.outputs.cache-hit != 'true' }}
       run: |
         export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo-instrument -H:+UnlockExperimentalVMOptions -H:+ProfilingLCOV -H:-UnlockExperimentalVMOptions"
         mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
       timeout-minutes: 30
     - name: Collect profile
-      if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-prime.outputs.cache-hit != 'true' }}
-      run: | # -XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE }}
-        trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakPGOWorkload.st
+      if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-profile.outputs.cache-hit != 'true' }}
+      run: |
+        trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakPGOWorkload.st
         rm -rf "${STANDALONE_HOME}"
       timeout-minutes: 30
-    # - name: Report profiled code coverage
-    #   env:
-    #     CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-    #   run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE }}
-    #   if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-prime.outputs.cache-hit != 'true' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
+    - name: Report profiled code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE }}
+      if: ${{ matrix.type == 'native' && runner.os != 'Windows' && steps.cache-profile.outputs.cache-hit != 'true' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
     - name: Build TruffleSqueak standalone
       run: |
         export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo=${{ env.PGO_FILE }}"
