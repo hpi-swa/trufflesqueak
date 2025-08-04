@@ -215,53 +215,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         return targetContext;
     }
 
-    @TruffleBoundary
-    private ContextObject commonReturn(final ContextObject startContextOrNull, final ContextObject targetContext, final Object returnValue) {
-        // Normal returns with modified senders end up here with a target but no start Context.
-        final ContextObject startContext = startContextOrNull == null ? targetContext : startContextOrNull;
-        /* "make sure we can return to the given context" */
-        if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
-            if (startContext == targetContext && targetContext == initialContext) {
-                image.printToStdErr("returnToTopLevel", startContext, "with return value:", returnValue);
-                throw returnToTopLevel(targetContext, returnValue);
-            }
-            return sendCannotReturn(startContext, returnValue);
-        }
-        /*
-         * "If this return is not to our immediate predecessor (i.e. from a method to its sender, or
-         * from a block to its caller), scan the stack for the first unwind marked context and
-         * inform this context and let it deal with it. This provides a chance for ensure unwinding
-         * to occur."
-         */
-        AbstractSqueakObject contextOrNil = startContext;
-        while (contextOrNil != targetContext) {
-            if (!(contextOrNil instanceof final ContextObject context)) {
-                /* "error: sender's instruction pointer or context is nil; cannot return" */
-                assert contextOrNil == NilObject.SINGLETON;
-                return sendCannotReturn(startContext, returnValue);
-            }
-            assert !context.isPrimitiveContext();
-//            if (context.getCodeObject().isUnwindMarked()) {
-//                assert !context.hasClosure();
-//                /* "context is marked; break out" */
-//                return sendAboutToReturn(startContext, returnValue, context);
-//            }
-            contextOrNil = context.getSender();
-        }
-        /*
-         * "If we get here there is no unwind to worry about. Simply terminate the stack up to the
-         * localCntx - often just the sender of the method"
-         */
-        ContextObject currentContext = startContext;
-        while (currentContext != targetContext) {
-            final ContextObject sender = (ContextObject) currentContext.getFrameSender();
-            currentContext.terminate();
-            currentContext = sender;
-        }
-        targetContext.push(returnValue);
-        return targetContext;
-    }
-
     private static TopLevelReturn returnToTopLevel(final ContextObject targetContext, final Object returnValue) {
         assert "DoIt".equals(targetContext.getCodeObject().getCompiledInSelector().asStringUnsafe()) : DebugUtils.getSqStackTrace(targetContext);
         throw new TopLevelReturn(returnValue);
