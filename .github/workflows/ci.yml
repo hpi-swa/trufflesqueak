@@ -56,21 +56,19 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
         vm-args: ["--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"]
-        coverage: [false]
-        suffix: [""]
+        kind: ["test"]
         include:
           - os: ubuntu-22.04-arm
             type: jvm
             vm-args: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --engine.CompilationStatistics"
-            coverage: true
-            suffix: "-coverage"
+            kind: "coverage"
     env:
       COVERAGE_FILE: "${{ github.workspace }}/jacoco.xml"
       JAVA_VERSION: "25"
       JVMCI_VERSION_CHECK: "ignore" # version of EA build does not always match
       VERBOSE_GRAALVM_LAUNCHERS: true
       VM_ARGS: "${{ matrix.vm-args }}"
-    name: ${{ matrix.type }}-${{ matrix.os }}${{ matrix.suffix }}
+    name: ${{ matrix.type }}-${{ matrix.os }}-${{ matrix.kind }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
     steps:
@@ -114,7 +112,7 @@ jobs:
         mx build --dependencies=JACOCOAGENT_0.8.10 # download JaCoCo agent
         JACOCO_JAR=$(mx paths JACOCOAGENT_0.8.10)
         echo "JAVA_TOOL_OPTIONS=\"-javaagent:${JACOCO_JAR}=append=true,includes=de.hpi.swa.trufflesqueak.*,destfile=${{ env.COVERAGE_FILE }}\"" >> "${GITHUB_ENV}"
-      if: ${{ matrix.coverage }}
+      if: ${{ matrix.kind == 'coverage' }}
     - name: Run SystemReporter on TruffleSqueak standalone
       shell: bash
       run: |
@@ -131,7 +129,7 @@ jobs:
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@v4
       with:
-        name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}${{ matrix.suffix }}
+        name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}-${{ matrix.kind }}
         path: ${{ env.STANDALONE_ARCHIVE }}
         retention-days: 7
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
@@ -143,18 +141,18 @@ jobs:
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
-        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st ${{ matrix.kind }}
       timeout-minutes: 10
-      if: ${{ matrix.os == 'ubuntu-22.04' && !matrix.coverage }}
+      if: ${{ matrix.os == 'ubuntu-22.04' && matrix.kind != 'coverage' }}
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
       run: |
-        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\de.hpi.swa.trufflesqueak.test\src\de\hpi\swa\trufflesqueak\test\runSqueakTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\de.hpi.swa.trufflesqueak.test\src\de\hpi\swa\trufflesqueak\test\runSqueakTests.st ${{ matrix.kind }}
       timeout-minutes: 30
       if: ${{ matrix.os == 'windows-2022' && matrix.type != 'native' }} # fails to load packages on native
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
       shell: bash
       run: |
-        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st ${{ matrix.kind }}
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' && matrix.os != 'macos-13' }} # tests fail on macos-13 and it is reaching EOL soon
     - name: Report code coverage
@@ -162,18 +160,18 @@ jobs:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
         JAVA_TOOL_OPTIONS: '' # ensure empty
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.COVERAGE_FILE }}
-      if: ${{ matrix.coverage && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
+      if: ${{ matrix.kind == 'coverage' && env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
     - name: Upload test image on failure
       uses: actions/upload-artifact@v4
       with:
-        name: test-image-${{ matrix.type }}-${{ matrix.os }}${{ matrix.suffix }}
+        name: test-image-${{ matrix.type }}-${{ matrix.os }}-${{ matrix.kind }}
         path: images/test-64bit.*
         retention-days: 5
       if: failure()
     - name: Upload Graal compiler dumps
       uses: actions/upload-artifact@v4
       with:
-        name: graal_dumps-${{ matrix.type }}-${{ matrix.os }}${{ matrix.suffix }}
+        name: graal_dumps-${{ matrix.type }}-${{ matrix.os }}-${{ matrix.kind }}
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5

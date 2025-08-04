@@ -1,6 +1,11 @@
-| repoPath isNative isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
+| isCoverage isNative isMacOS isWin repoPath alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
 
 ToolSet default: CommandLineToolSet.
+
+isCoverage := (Smalltalk argumentAt: 1) = 'coverage'.
+isNative := [Java type: 'java.lang.System'. false] on: Error do: [true].
+isMacOS := Smalltalk platformName = 'Mac OS'.
+isWin := Smalltalk platformName = 'Win32'.
 
 FileStream stdout nextPutAll: 'Setting author information for testing ...'; cr; flush.
 Utilities
@@ -21,10 +26,11 @@ TestCase compile: 'isLogging
 TestCase compile: 'failureLog
     ^ FileStream stdout'
         classified: 'patched'.
-
-isNative := [Java type: 'java.lang.System'. false] on: Error do: [true].
-isMacOS := Smalltalk platformName = 'Mac OS'.
-isWin := Smalltalk platformName = 'Win32'.
+isCoverage ifTrue: [
+    TestCase compile: 'defaultTimeout
+        ^ 20'
+            classified: 'patched'.
+].
 
 repoPath := (FileDirectory default containingDirectory / 'src' / 'image' / 'src') fullName.
 FileStream stdout nextPutAll: 'Loading TruffleSqueak packages from "', repoPath, '" ...'; cr; flush.
