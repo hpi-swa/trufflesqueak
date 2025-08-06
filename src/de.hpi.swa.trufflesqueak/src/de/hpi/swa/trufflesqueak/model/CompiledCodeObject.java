@@ -181,7 +181,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         this.header = header;
         this.literals = literals;
         this.bytes = bytes;
-        invalidateCallTargetStable();
+        invalidateCallTargetStable("new literals and bytes");
     }
 
     public Source getSource() {
@@ -261,10 +261,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         executionData.callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
     }
 
-    private void invalidateCallTargetStable() {
+    private void invalidateCallTargetStable(final String reason) {
         if (hasExecutionData()) {
             if (executionData.callTargetStable != null) {
-                executionData.callTargetStable.invalidate();
+                executionData.callTargetStable.invalidate(reason);
             }
         }
     }
@@ -385,7 +385,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             other.getExecutionData().shadowBlocks = executionData.shadowBlocks;
             other.executionData.outerMethod = executionData.outerMethod;
         }
-        other.invalidateCallTargetStable();
+        other.invalidateCallTargetStable("become");
         setLiteralsAndBytes(header2, literals2, bytes2);
         if (shadowBlocks2 != null || outerMethod2 != null) {
             getExecutionData().shadowBlocks = shadowBlocks2;
@@ -528,7 +528,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
         super.forwardTo(pointer);
-        invalidateCallTargetStable();
+        invalidateCallTargetStable("forwarded");
     }
 
     @Override

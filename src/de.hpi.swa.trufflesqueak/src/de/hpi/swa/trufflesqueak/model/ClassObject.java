@@ -289,7 +289,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setFormat(final long format) {
-        invalidateClassFormatStableAssumption();
+        invalidateClassFormatStableAssumption("new format");
         final int oldBasicInstanceSize = getBasicInstanceSize();
         this.format = format;
         if (oldBasicInstanceSize != getBasicInstanceSize()) {
@@ -405,13 +405,13 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setSuperclass(final ClassObject superclass) {
         assert superclass == null || superclass.assertNotForwarded();
-        invalidateClassHierarchyAndMethodDictStableAssumption();
+        invalidateClassHierarchyAndMethodDictStableAssumption("new superclass");
         this.superclass = superclass;
     }
 
     public void setMethodDict(final VariablePointersObject methodDict) {
         assert methodDict == null || methodDict.assertNotForwarded();
-        invalidateClassHierarchyAndMethodDictStableAssumption();
+        invalidateClassHierarchyAndMethodDictStableAssumption("new method dict");
         this.methodDict = methodDict;
     }
 
@@ -540,9 +540,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return classHierarchyAndMethodDictStable().getAssumption();
     }
 
-    public void invalidateClassHierarchyAndMethodDictStableAssumption() {
+    private void invalidateClassHierarchyAndMethodDictStableAssumption(final String reason) {
         if (classHierarchyAndMethodDictStable != null) {
-            classHierarchyAndMethodDictStable.invalidate();
+            classHierarchyAndMethodDictStable.invalidate(reason);
         }
     }
 
@@ -554,9 +554,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return classFormatStable;
     }
 
-    private void invalidateClassFormatStableAssumption() {
+    private void invalidateClassFormatStableAssumption(final String reason) {
         if (classFormatStable != null) {
-            classFormatStable.invalidate();
+            classFormatStable.invalidate(reason);
         }
     }
 
@@ -571,8 +571,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
         super.forwardTo(pointer);
-        invalidateClassHierarchyAndMethodDictStableAssumption();
-        invalidateClassFormatStableAssumption();
+        invalidateClassHierarchyAndMethodDictStableAssumption("forwarded");
+        invalidateClassFormatStableAssumption("forwarded");
     }
 
     @Override
