@@ -212,6 +212,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    @TruffleBoundary
     public RootCallTarget getCallTarget() {
         if (getExecutionData().callTarget == null) {
             initializeCallTarget();
@@ -249,6 +250,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         invalidateCallTarget("primitive 119");
     }
 
+    @TruffleBoundary
     private CyclicAssumption callTargetStable() {
         if (getExecutionData().callTargetStable == null) {
             initializeCallTargetStable();
@@ -273,6 +275,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return callTargetStable().getAssumption();
     }
 
+    @TruffleBoundary
     public Assumption getDoesNotNeedSenderAssumption() {
         if (getExecutionData().doesNotNeedSender == null) {
             initializeDoesNotNeedSenderAssumption();
@@ -442,6 +445,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Idempotent
+    @TruffleBoundary
     public DispatchPrimitiveNode getPrimitiveNodeOrNull() {
         if (primitiveNodeOrNull == UNINITIALIZED_PRIMITIVE_NODE) {
             initializePrimitiveNodeOrNull();
