@@ -428,10 +428,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             final int oldNumLiterals = getNumLiterals();
             header = CompiledCodeHeaderUtils.toInt((long) obj);
             assert getNumLiterals() == oldNumLiterals;
+            invalidateCallTarget();
         } else {
             literals[index - 1] = obj;
         }
-        invalidateCallTarget();
     }
 
     @Idempotent
