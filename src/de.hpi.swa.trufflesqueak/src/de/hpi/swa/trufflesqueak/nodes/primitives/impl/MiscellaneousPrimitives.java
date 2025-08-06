@@ -107,7 +107,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "!classObject.isImmediateClassType()")
         protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
-            if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+            if (classObject.getSqueakHashInt() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
                 return NilObject.SINGLETON; // Class has not been instantiated yet
             }
             return getContext().objectGraphUtils.someInstanceOf(classObject);
@@ -770,7 +770,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (isNilClass.profile(node, image.isNilClass(classObject))) {
                 return getContext().asArrayOfObjects(NilObject.SINGLETON);
             } else {
-                if (classObject.getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+                if (classObject.getSqueakHashInt() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
                     return getContext().newEmptyArray(); // Class has not been instantiated yet
                 } else {
                     return image.asArrayOfObjects(image.objectGraphUtils.allInstancesOf(classObject));

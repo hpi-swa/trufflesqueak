@@ -146,12 +146,16 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public long getSqueakHash() {
+        return getSqueakHashInt();
+    }
+
+    public int getSqueakHashInt() {
         assert assertNotForwarded();
         return squeakHashAndBits & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
     }
 
     public final boolean needsSqueakHash() {
-        return getSqueakHash() == HASH_UNINITIALIZED;
+        return getSqueakHashInt() == HASH_UNINITIALIZED;
     }
 
     @SuppressWarnings("this-escape")

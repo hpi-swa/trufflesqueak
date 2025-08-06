@@ -275,7 +275,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     /* see SpurMemoryManager>>#ensureBehaviorHash: */
     public void ensureBehaviorHash() {
-        if (getSqueakHash() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
+        if (getSqueakHashInt() == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN) {
             CompilerDirectives.transferToInterpreter();
             /* This happens only once for a class and should thus happen on the slow path. */
             image.enterIntoClassTable(this);
@@ -415,21 +415,22 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         this.methodDict = methodDict;
     }
 
+    /** See Interpreter#lookupMethodInClass:. */
     @TruffleBoundary
     public Object lookupInMethodDictSlow(final NativeObject selector) {
         ClassObject lookupClass = this;
         while (lookupClass != null) {
             assert lookupClass.assertNotForwarded();
-            final VariablePointersObject methodDictionary = lookupClass.getResolvedMethodDict();
-            final Object[] methodDictVariablePart = methodDictionary.getVariablePart();
-            for (int i = 0; i < methodDictVariablePart.length; i++) {
-                if (selector == methodDictVariablePart[i]) {
-                    final Object[] methodDictValues = AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage();
-                    if (methodDictValues[i] instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isNotForwarded()) {
-                        methodDictValues[i] = o.getForwardingPointer();
-                    }
-                    return methodDictValues[i];
-                }
+            if (lookupClass.methodDict == null) {
+                /*
+                 * "MethodDict pointer is nil (hopefully due a swapped out stub) -- raise exception
+                 * #cannotInterpret:."
+                 */
+                return getSuperclassOrNull().lookupInMethodDictSlow(image.cannotReturn);
+            }
+            final Object result = lookupMethodInDictionary(lookupClass.getResolvedMethodDict(), selector);
+            if (result != null) {
+                return result;
             }
             if (lookupClass.getSuperclassOrNull() == null) {
                 break;
@@ -438,6 +439,31 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         }
         assert !selector.isDoesNotUnderstand(image) : "Could not find does not understand method";
         return null; /* Signals a doesNotUnderstand. */
+    }
+
+    /** See Interpreter#lookupMethodInDictionary:. */
+    private static Object lookupMethodInDictionary(final VariablePointersObject methodDictionary, final NativeObject messageSelector) {
+        final Object[] methodDictSelectors = methodDictionary.getVariablePart();
+        final int length = methodDictSelectors.length;
+        int index = messageSelector.getSqueakHashInt() % length;
+        /*
+         * "It is assumed that there are some nils in this dictionary, and search will stop when one
+         * is encountered."
+         */
+        for (int j = 0; j < length; j++) {
+            final Object nextSelector = methodDictSelectors[index];
+            if (nextSelector == NilObject.SINGLETON) {
+                return null;
+            } else if (nextSelector == messageSelector) {
+                final Object[] methodDictValues = AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage();
+                if (methodDictValues[index] instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isNotForwarded()) {
+                    methodDictValues[index] = o.getForwardingPointer();
+                }
+                return methodDictValues[index];
+            }
+            index = ++index % length;
+        }
+        return null;
     }
 
     public CompiledCodeObject lookupMethodInMethodDictSlow(final NativeObject selector) {

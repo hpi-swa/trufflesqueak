@@ -564,7 +564,7 @@ public final class SqueakImageContext {
 
     /* SpurMemoryManager>>#purgeDuplicateClassTableEntriesFor: */
     public void purgeDuplicateAndUnreachableClassTableEntriesFor(final ClassObject clazz, final UnmodifiableEconomicMap<Object, Object> becomeMap) {
-        final long expectedIndex = clazz != null ? clazz.getSqueakHash() : -1;
+        final int expectedIndex = clazz != null ? clazz.getSqueakHashInt() : -1;
         int majorIndex = SqueakImageConstants.majorClassIndexOf(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE);
         while (majorIndex < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS) {
             final Object classTablePageOrNil = hiddenRoots.getObject(majorIndex);
