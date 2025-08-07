@@ -56,7 +56,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         } catch (final NonLocalReturn nlr) {
             /* {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             if (FrameAccess.isDead(frame)) {
-                LogUtils.SCHEDULING.info("ExecuteBytecodeNode: encountered dead frame during NLR");
+                LogUtils.SCHEDULING.fine("ExecuteBytecodeNode: encountered dead frame during NLR");
                 throw nlr;
             }
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);

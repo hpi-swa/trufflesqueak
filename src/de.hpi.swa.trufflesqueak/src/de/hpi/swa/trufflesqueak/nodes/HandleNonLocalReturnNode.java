@@ -41,7 +41,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
         try {
             aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
         } catch (ProcessSwitch ps) {
-            LogUtils.SCHEDULING.info("HandleNonLocalReturnNode: ProcessSwitch during AboutToReturn! ");
+            LogUtils.SCHEDULING.warning("HandleNonLocalReturnNode: ProcessSwitch during AboutToReturn! ");
             throw ps;
         }
         if (hasModifiedSenderProfile.profile(node, FrameAccess.hasModifiedSender(frame))) {
