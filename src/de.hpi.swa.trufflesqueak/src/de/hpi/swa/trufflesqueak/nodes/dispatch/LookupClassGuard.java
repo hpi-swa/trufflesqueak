@@ -15,8 +15,10 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
@@ -49,6 +51,37 @@ public abstract class LookupClassGuard {
             return FloatObjectGuard.SINGLETON;
         } else if (receiver instanceof final AbstractSqueakObjectWithClassAndHash o) {
             return new AbstractSqueakObjectWithClassAndHashGuard(o.resolveForwardingPointer());
+        } else {
+            assert !(receiver instanceof AbstractSqueakObject);
+            return ForeignObjectGuard.SINGLETON;
+        }
+    }
+
+    public static LookupClassGuard create(final Object receiver, final NativeObject selector) {
+        if (receiver == NilObject.SINGLETON) {
+            return NilGuard.SINGLETON;
+        } else if (receiver == Boolean.TRUE) {
+            return TrueGuard.SINGLETON;
+        } else if (receiver == Boolean.FALSE) {
+            return FalseGuard.SINGLETON;
+        } else if (receiver instanceof Long) {
+            return SmallIntegerGuard.SINGLETON;
+        } else if (receiver instanceof Character || receiver instanceof CharacterObject) {
+            return CharacterGuard.SINGLETON;
+        } else if (receiver instanceof Double) {
+            return DoubleGuard.SINGLETON;
+        } else if (receiver instanceof ContextObject) {
+            return ContextObjectGuard.SINGLETON;
+        } else if (receiver instanceof FloatObject) {
+            return FloatObjectGuard.SINGLETON;
+        } else if (receiver instanceof final AbstractSqueakObjectWithClassAndHash o) {
+            final AbstractSqueakObjectWithClassAndHash resolvedObject = o.resolveForwardingPointer();
+            final ClassObject resolvedObjectClassObject = resolvedObject.getSqueakClass();
+            final Object lookupResult = resolvedObjectClassObject.lookupInMethodDictSlow(selector);
+            if (lookupResult instanceof final CompiledCodeObject code && code.getMethodClassSlow() != resolvedObjectClassObject) {
+                return new AbstractSqueakObjectWithClassAndHashHierarchyGuard(selector, code.getMethodClassSlow());
+            }
+            return new AbstractSqueakObjectWithClassAndHashGuard(resolvedObject);
         } else {
             assert !(receiver instanceof AbstractSqueakObject);
             return ForeignObjectGuard.SINGLETON;
@@ -178,6 +211,41 @@ public abstract class LookupClassGuard {
         @Override
         public boolean check(final Object receiver) {
             return receiver instanceof final AbstractSqueakObjectWithClassAndHash o && o.getSqueakClass() == expectedClass;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return expectedClass;
+        }
+    }
+
+    private static final class AbstractSqueakObjectWithClassAndHashHierarchyGuard extends LookupClassGuard {
+        private final ClassObject expectedClass;
+        private final NativeObject selector;
+
+        private AbstractSqueakObjectWithClassAndHashHierarchyGuard(final NativeObject selector, final ClassObject expectedClass) {
+            this.expectedClass = expectedClass;
+            this.selector = selector;
+            assert expectedClass.assertNotForwarded();
+        }
+
+        @Override
+        public boolean check(final Object receiver) {
+            if (receiver instanceof final AbstractSqueakObjectWithClassAndHash o) {
+                ClassObject currentClass = o.getSqueakClass();
+                while (currentClass != null) {
+                    if (currentClass == expectedClass) {
+                        return true;
+                    }
+                    if (currentClass.lookupInMethodDictSlow(selector) != null) {
+                        return false;
+                    }
+                    currentClass = currentClass.getSuperclassOrNull();
+                }
+                return false;
+            } else {
+                return false;
+            }
         }
 
         @Override
