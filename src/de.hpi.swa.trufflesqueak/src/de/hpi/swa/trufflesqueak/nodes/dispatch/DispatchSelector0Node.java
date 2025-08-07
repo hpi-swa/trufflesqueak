@@ -216,7 +216,6 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
                     if (canPrimFail) {
                         return new DispatchDirectPrimitiveBadArguments0Node(assumptions);
                     } else {
-                        assert false : "Expected method with 1 arguments, got " + lookupMethod.getNumArgs();
                         return create(assumptions, lookupMethod);
                     }
                 }
@@ -233,7 +232,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
         }
 
         private static DispatchDirect0Node create(final Assumption[] assumptions, final CompiledCodeObject method) {
-            assert checkArgumentCount(method);
+            assert checkArgumentCount(method, 0);
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
                 if (primitiveNode instanceof final Primitive0 primitive0) {
@@ -469,10 +468,5 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
                 return FrameAccess.newOAMWith(senderNode.execute(frame, node, method), targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
             }
         }
-    }
-
-    private static boolean checkArgumentCount(final CompiledCodeObject method) {
-        assert method.getNumArgs() == 0 : "Expected method with 0 arguments, got " + method.getNumArgs();
-        return true;
     }
 }

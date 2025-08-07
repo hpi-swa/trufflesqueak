@@ -237,7 +237,7 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
         }
 
         private static DispatchDirect3Node create(final Assumption[] assumptions, final CompiledCodeObject method) {
-            assert method.getNumArgs() == 3 : "Expected method with 3 arguments, got " + method.getNumArgs();
+            assert checkArgumentCount(method, 3);
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
                 if (primitiveNode instanceof final Primitive3 primitive3) {

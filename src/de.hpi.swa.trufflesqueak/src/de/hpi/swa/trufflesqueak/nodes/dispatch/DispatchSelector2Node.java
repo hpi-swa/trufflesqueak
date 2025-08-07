@@ -218,7 +218,6 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
                     if (canPrimFail) {
                         return new DispatchDirectPrimitiveBadArguments2Node(assumptions);
                     } else {
-                        assert false : "Expected method with 2 arguments, got " + lookupMethod.getNumArgs();
                         return create(assumptions, lookupMethod);
                     }
                 }
@@ -235,7 +234,7 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
         }
 
         private static DispatchDirect2Node create(final Assumption[] assumptions, final CompiledCodeObject method) {
-            assert method.getNumArgs() == 2 : "Expected method with 2 arguments, got " + method.getNumArgs();
+            assert checkArgumentCount(method, 2);
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
                 if (primitiveNode instanceof Primitive2 primitive2) {

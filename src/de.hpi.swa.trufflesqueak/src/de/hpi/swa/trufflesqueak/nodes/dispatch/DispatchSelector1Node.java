@@ -232,7 +232,7 @@ public final class DispatchSelector1Node extends DispatchSelectorNode {
         }
 
         private static DispatchDirect1Node create(final Assumption[] assumptions, final CompiledCodeObject method) {
-            assert method.getNumArgs() == 1 : "Expected method with 1 arguments, got " + method.getNumArgs();
+            assert checkArgumentCount(method, 1);
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
                 if (primitiveNode instanceof final Primitive1 primitive1) {

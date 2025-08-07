@@ -242,7 +242,7 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
         }
 
         private static DispatchDirect5Node create(final Assumption[] assumptions, final CompiledCodeObject method) {
-            assert method.getNumArgs() == 5 : "Expected method with 5 arguments, got " + method.getNumArgs();
+            assert checkArgumentCount(method, 5);
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
                 if (primitiveNode instanceof final Primitive5 primitive5) {
@@ -482,8 +482,8 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
             protected static final Object[] doObjectAsMethod(final VirtualFrame frame, final Node node, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
-                            final Object arg4,
-                            final Object arg5, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject, final CompiledCodeObject method, final NativeObject selector,
+                            final Object arg4, final Object arg5,
+                            @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject, final CompiledCodeObject method, final NativeObject selector,
                             @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
                 final Object[] arguments = new Object[]{arg1, arg2, arg3, arg4, arg5};
                 return FrameAccess.newOAMWith(senderNode.execute(frame, node, method), targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);

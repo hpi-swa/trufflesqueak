@@ -239,7 +239,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
         }
 
         private static DispatchDirect4Node create(final Assumption[] assumptions, final CompiledCodeObject method) {
-            assert method.getNumArgs() == 4 : "Expected method with 4 arguments, got " + method.getNumArgs();
+            assert checkArgumentCount(method, 4);
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
                 if (primitiveNode instanceof final Primitive4 primitive4) {
@@ -377,8 +377,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
 
         @Specialization
         protected static final Object doIndirect(final VirtualFrame frame, final boolean canPrimFail, final NativeObject selector, final Object receiver, final Object arg1, final Object arg2,
-                        final Object arg3,
-                        final Object arg4,
+                        final Object arg3, final Object arg4,
                         @Bind final Node node,
                         @Cached final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
