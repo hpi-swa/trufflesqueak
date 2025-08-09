@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -121,6 +122,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
             final TruffleLanguage.Env env = getContext().env;
             return BooleanObject.wrap(env.isPolyglotEvalAllowed(env.getPublicLanguages().get(languageId.asStringUnsafe())));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsPolyglotEvalAllowed")
+    protected abstract static class PrimIsPolyglotEvalAllowedGenericNode extends AbstractPrimitiveNode implements Primitive0 {
+        @TruffleBoundary
+        @Specialization
+        protected final boolean doIsPolyglotEvalAllowedGeneric(@SuppressWarnings("unused") final Object receiver) {
+            final TruffleLanguage.Env env = getContext().env;
+            return BooleanObject.wrap(env.isPolyglotEvalAllowed(env.getPublicLanguages().get(SqueakLanguageConfig.ID)));
         }
     }
 

@@ -27,6 +27,9 @@ isMacOS := Smalltalk platformName = 'Mac OS'.
 isWin := Smalltalk platformName = 'Win32'.
 
 repoPath := (FileDirectory default containingDirectory / 'src' / 'image' / 'src') fullName.
+(FileDirectory default directoryExists: repoPath) ifFalse: [
+	FileStream stdout nextPutAll: 'TruffleSqueak packages not found at "', repoPath, '". EXITING'; cr; flush.
+	Smalltalk quitPrimitive: 1].
 FileStream stdout nextPutAll: 'Loading TruffleSqueak packages from "', repoPath, '" ...'; cr; flush.
 [[[ | mc |
     mc := MCFileTreeRepository path: repoPath.
