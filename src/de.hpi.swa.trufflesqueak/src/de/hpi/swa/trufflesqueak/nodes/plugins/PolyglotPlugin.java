@@ -19,7 +19,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.api.CompilerDirectives;
