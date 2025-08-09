@@ -125,17 +125,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsPolyglotEvalAllowed")
-    protected abstract static class PrimIsPolyglotEvalAllowedGenericNode extends AbstractPrimitiveNode implements Primitive0 {
-        @TruffleBoundary
-        @Specialization
-        protected final boolean doIsPolyglotEvalAllowedGeneric(@SuppressWarnings("unused") final Object receiver) {
-            final TruffleLanguage.Env env = getContext().env;
-            return BooleanObject.wrap(env.isPolyglotEvalAllowed(env.getPublicLanguages().get(SqueakLanguageConfig.ID)));
-        }
-    }
-
     protected abstract static class AbstractEvalStringPrimitiveNode extends AbstractPrimitiveNode {
         protected static final Object evalString(final Node node, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
             return evalString(node, languageIdOrMimeTypeObj, sourceObject, ArrayUtils.EMPTY_STRINGS_ARRAY, ArrayUtils.EMPTY_ARRAY);
