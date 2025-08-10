@@ -37,7 +37,6 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -337,14 +336,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final LargeIntegerObject doLarge(final LargeIntegerObject rcvr, final long start, final long stop, final Object repl, final long replStart,
-                        @Bind final Node node,
-                        @Cached final LargeIntegerObjectReplaceNode replaceNode) {
-            replaceNode.execute(node, rcvr, start, stop, repl, replStart);
-            return rcvr;
-        }
-
-        @Specialization
         protected static final PointersObject doPointers(final PointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
                         @Bind final Node node,
                         @Cached final PointersObjectReplaceNode replaceNode) {
@@ -537,71 +528,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @GenerateInline
         @GenerateCached(false)
-        protected abstract static class LargeIntegerObjectReplaceNode extends AbstractNode {
-            protected abstract void execute(Node node, LargeIntegerObject rcvr, long start, long stop, Object repl, long replStart);
-
-            @Specialization
-            protected static final void doLargeInteger(final Node node, final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile,
-                            @Shared("fitsEntirelyProfile") @Cached final InlinedConditionProfile fitsEntirelyProfile) {
-                if (fitsEntirelyProfile.profile(node, inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
-                    rcvr.replaceInternalValue(repl);
-                } else {
-                    if (inBounds(rcvr.size(), start, stop, repl.size(), replStart)) {
-                        rcvr.setBytes(getContext(node), repl, (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
-                    } else {
-                        errorProfile.enter(node);
-                        throw PrimitiveFailed.BAD_INDEX;
-                    }
-                }
-            }
-
-            @Specialization
-            protected static final void doLargeIntegerFloat(final Node node, final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile,
-                            @Shared("fitsEntirelyProfile") @Cached final InlinedConditionProfile fitsEntirelyProfile) {
-                if (fitsEntirelyProfile.profile(node, inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
-                    rcvr.setBytes(getContext(node), repl.getBytes());
-                } else {
-                    if (inBounds(rcvr.size(), start, stop, repl.size(), replStart)) {
-                        rcvr.setBytes(getContext(node), repl.getBytes(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
-                    } else {
-                        errorProfile.enter(node);
-                        throw PrimitiveFailed.BAD_INDEX;
-                    }
-                }
-            }
-
-            @Specialization(guards = {"repl.isByteType()"})
-            protected static final void doLargeIntegerNative(final Node node, final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile,
-                            @Shared("fitsEntirelyProfile") @Cached final InlinedConditionProfile fitsEntirelyProfile) {
-                if (fitsEntirelyProfile.profile(node, inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart))) {
-                    rcvr.setBytes(getContext(node), repl.getByteStorage());
-                } else {
-                    if (inBounds(rcvr.size(), start, stop, repl.getByteLength(), replStart)) {
-                        rcvr.setBytes(getContext(node), repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
-                    } else {
-                        errorProfile.enter(node);
-                        throw PrimitiveFailed.BAD_INDEX;
-                    }
-                }
-            }
-
-            @SuppressWarnings("unused")
-            @Fallback
-            protected static final void doFail(final LargeIntegerObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
-                throw PrimitiveFailed.GENERIC_ERROR;
-            }
-
-            /* For specializing Integer>>copy:to:. */
-            private static boolean inBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize, final long replStart) {
-                return start == 1 && replStart == 1 && stop == replSize + replInstSize && stop == rcvrSize + rcvrInstSize;
-            }
-        }
-
-        @GenerateInline
-        @GenerateCached(false)
         protected abstract static class NativeObjectReplaceNode extends AbstractNode {
             protected abstract void execute(Node node, NativeObject rcvr, long start, long stop, Object repl, long replStart);
 
@@ -643,17 +569,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getLongLength(), start, stop, repl.getLongLength(), replStart)) {
                     UnsafeUtils.copyLongs(repl.getLongStorage(), replStart - 1, rcvr.getLongStorage(), start - 1, 1 + stop - start);
-                } else {
-                    errorProfile.enter(node);
-                    throw PrimitiveFailed.BAD_INDEX;
-                }
-            }
-
-            @Specialization(guards = {"rcvr.isByteType()"})
-            protected static final void doNativeLargeInteger(final Node node, final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
-                if (inBounds(rcvr.getByteLength(), start, stop, repl.getBytes().length, replStart)) {
-                    UnsafeUtils.copyBytes(repl.getBytes(), replStart - 1, rcvr.getByteStorage(), start - 1, 1 + stop - start);
                 } else {
                     errorProfile.enter(node);
                     throw PrimitiveFailed.BAD_INDEX;

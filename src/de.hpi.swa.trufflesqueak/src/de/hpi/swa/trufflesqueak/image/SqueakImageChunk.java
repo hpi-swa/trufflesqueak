@@ -17,7 +17,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -102,11 +101,7 @@ public final class SqueakImageChunk {
             } else if (format <= 15) { // 16-bit integers
                 object = NativeObject.newNativeShorts(this);
             } else if (format <= 23) { // bytes
-                if (classObject == getImage().largePositiveIntegerClass || classObject == getImage().largeNegativeIntegerClass) {
-                    object = new LargeIntegerObject(getImage(), header, classObject, getBytes()).reduceIfPossible();
-                } else {
-                    object = NativeObject.newNativeBytes(this);
-                }
+                object = NativeObject.newNativeBytes(this);
             } else if (format <= 31) { // compiled methods
                 object = new CompiledCodeObject(header, classObject);
             }

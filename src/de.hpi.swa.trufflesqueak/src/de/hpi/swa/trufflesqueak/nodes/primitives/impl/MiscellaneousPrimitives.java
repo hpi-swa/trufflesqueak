@@ -39,7 +39,6 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -52,6 +51,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.MiscPrimitivePlugin.AbstractPrimCompareStringNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -548,14 +548,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.isIntType()"}, rewriteOn = ArithmeticException.class)
-        protected static final NativeObject doNativeInts(final NativeObject receiver, final LargeIntegerObject value) {
-            ArrayUtils.fill(receiver.getIntStorage(), value.intValueExact());
+        protected static final NativeObject doNativeInts(final NativeObject receiver, final NativeObject value,
+                        @Bind final SqueakImageContext image) {
+            ArrayUtils.fill(receiver.getIntStorage(), LargeIntegers.intValueExact(image, value));
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "value.lessThanOrEqualTo(INTEGER_MAX)"}, replaces = "doNativeInts")
-        protected static final NativeObject doNativeIntsFallback(final NativeObject receiver, final LargeIntegerObject value) {
-            ArrayUtils.fill(receiver.getIntStorage(), value.intValueExact());
+        @Specialization(guards = {"receiver.isIntType()", "lessThanOrEqualTo(image, value, INTEGER_MAX)"}, replaces = "doNativeInts")
+        protected static final NativeObject doNativeIntsFallback(final NativeObject receiver, final NativeObject value,
+                        @Bind final SqueakImageContext image) {
+            ArrayUtils.fill(receiver.getIntStorage(), LargeIntegers.intValue(image, value));
             return receiver;
         }
 
@@ -566,14 +568,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.isLongType()"}, rewriteOn = ArithmeticException.class)
-        protected static final NativeObject doNativeLongs(final NativeObject receiver, final LargeIntegerObject value) {
-            ArrayUtils.fill(receiver.getLongStorage(), value.longValueExact());
+        protected static final NativeObject doNativeLongs(final NativeObject receiver, final NativeObject value,
+                        @Bind final SqueakImageContext image) {
+            ArrayUtils.fill(receiver.getLongStorage(), LargeIntegers.longValueExact(image, value));
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.isLongType()", "value.fitsIntoLong()"}, replaces = "doNativeLongs")
-        protected static final NativeObject doNativeLongsFallback(final NativeObject receiver, final LargeIntegerObject value) {
-            ArrayUtils.fill(receiver.getLongStorage(), value.longValueExact());
+        @Specialization(guards = {"receiver.isLongType()", "fitsIntoLong(value)"}, replaces = "doNativeLongs")
+        protected static final NativeObject doNativeLongsFallback(final NativeObject receiver, final NativeObject value,
+                        @Bind final SqueakImageContext image) {
+            ArrayUtils.fill(receiver.getLongStorage(), LargeIntegers.longValue(image, value));
             return receiver;
         }
     }

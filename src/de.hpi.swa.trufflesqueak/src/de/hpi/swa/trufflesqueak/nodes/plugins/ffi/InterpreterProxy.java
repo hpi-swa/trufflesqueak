@@ -27,12 +27,12 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -513,8 +513,8 @@ public final class InterpreterProxy {
         if (object instanceof final Long integer) {
             return returnBoolean(integer >= 0L);
         }
-        if (object instanceof final LargeIntegerObject largeInteger) {
-            return returnBoolean(largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong());
+        if (object instanceof final NativeObject largeInteger) {
+            return returnBoolean(LargeIntegers.fitsIntoLong(largeInteger) && LargeIntegers.isZeroOrPositive(SqueakImageContext.getSlow(), largeInteger));
         }
         return returnBoolean(false);
     }

@@ -24,7 +24,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
@@ -196,13 +195,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return NativeObject.newNativeShorts(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isBytes()", "image.isLargeIntegerClass(classObject)"})
-    protected static final LargeIntegerObject doLargeIntegers(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert classObject.getBasicInstanceSize() == 0;
-        return new LargeIntegerObject(image, classObject, extraSize);
-    }
-
-    @Specialization(guards = {"classObject.isBytes()", "!image.isLargeIntegerClass(classObject)"})
+    @Specialization(guards = {"classObject.isBytes()"})
     protected static final NativeObject doNativeBytes(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() == 0;
         return NativeObject.newNativeBytes(image, classObject, extraSize);
