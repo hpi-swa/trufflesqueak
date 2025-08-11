@@ -32,6 +32,9 @@ public final class Returns {
         }
     }
 
+    /**
+     * NonLocalReturn represents a return to a targetContext that is on the sender chain.
+     */
     public static final class NonLocalReturn extends AbstractReturn {
         @Serial private static final long serialVersionUID = 1L;
         private final transient ContextObject homeContext;
@@ -65,6 +68,30 @@ public final class Returns {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "NLR (value: " + returnValue + ", target: " + targetContextOrMarker + ")";
+        }
+    }
+
+    /**
+     * CannotReturnToTarget represents a return to a targetContext that cannot be found on the
+     * sender chain.
+     */
+    public static final class CannotReturnToTarget extends AbstractReturn {
+        @Serial private static final long serialVersionUID = 1L;
+        private final transient ContextObject startingContext;
+
+        public CannotReturnToTarget(final Object returnValue, final ContextObject startingContext) {
+            super(returnValue);
+            this.startingContext = startingContext;
+        }
+
+        public ContextObject getStartingContext() {
+            return startingContext;
+        }
+
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "CR-NLR (value: " + returnValue + ", starting: " + startingContext + ")";
         }
     }
 
