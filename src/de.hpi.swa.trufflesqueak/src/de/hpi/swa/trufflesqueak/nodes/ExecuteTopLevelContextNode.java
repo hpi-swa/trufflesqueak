@@ -19,6 +19,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
@@ -108,6 +109,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 } catch (final NonVirtualReturn nvr) {
                     activeContext = commonNVReturn(activeContext, nvr);
                     LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
+                } catch (final CannotReturnToTarget cr) {
+                    activeContext = sendCannotReturn(cr.getStartingContext(), cr.getReturnValue());
+                    LogUtils.SCHEDULING.log(Level.FINE, "Cannot Return on top-level: {0}", activeContext);
                 }
             } catch (final ProcessSwitch ps) {
                 activeContext = getNextActiveContextNode.execute();
@@ -130,6 +134,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         if (!(sender instanceof final ContextObject senderContext)) {
             assert sender == NilObject.SINGLETON;
             return sendCannotReturnOrReturnToTopLevel(activeContext, activeContext, returnValue);
+        } else if (senderContext.isDead()) {
+            return sendCannotReturnOrReturnToTopLevel(activeContext, senderContext, returnValue);
         }
         final ContextObject context;
         if (senderContext.isPrimitiveContext()) {
@@ -218,17 +224,17 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {
-        sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
-        throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch");
+        try {
+            sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
+        } catch (final NonVirtualReturn nvr) {
+            return commonNVReturn(startContext, nvr);
+        }
+        throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch or a NonVirtualReturn");
     }
 
-    /**
-     * See {@link de.hpi.swa.trufflesqueak.nodes.AboutToReturnNode} for details.
-     *
-     */
-    private ContextObject sendAboutToReturn(final ContextObject homeContext, final Object returnValue, final ContextObject unwindMarkedContextOrNil, final ContextObject activeContext) {
+    private ContextObject sendAboutToReturn(final ContextObject homeContext, final Object returnValue, final ContextObject unwindMarkedContext, final ContextObject activeContext) {
         try {
-            sendAboutToReturnNode.execute(activeContext.getTruffleFrame(), homeContext, returnValue, unwindMarkedContextOrNil);
+            sendAboutToReturnNode.execute(activeContext.getTruffleFrame(), homeContext, returnValue, unwindMarkedContext);
         } catch (final NonVirtualReturn nvr) {
             return commonNVReturn(activeContext, nvr);
         }

@@ -15,6 +15,7 @@ import com.oracle.truffle.api.profiles.IntValueProfile;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class ResumeContextRootNode extends AbstractRootNode {
     private ContextObject activeContext;

@@ -137,8 +137,17 @@ public final class FrameAccess {
         return (ContextObject) getSender(frame);
     }
 
+    public static SenderChainLink getSenderChainLink(final Frame frame) {
+        return (SenderChainLink) getSender(frame);
+    }
+
     public static void setSender(final Frame frame, final AbstractSqueakObject value) {
         frame.getArguments()[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = value;
+        /* FrameMarker contains shadow copy */
+        final FrameMarker frameMarker = getMarker(frame);
+        if (frameMarker != null) {
+            frameMarker.setSender(value);
+        }
     }
 
     public static BlockClosureObject getClosure(final Frame frame) {
@@ -199,14 +208,30 @@ public final class FrameAccess {
         return (FrameMarker) frame.getObjectStatic(SlotIndicies.THIS_MARKER.ordinal());
     }
 
+    public static FrameMarker getMarkerNonNull(final Frame frame) {
+        final FrameMarker frameMarker = getMarker(frame);
+        if (frameMarker == null) {
+            return initializeMarker(frame);
+        } else {
+            return frameMarker;
+        }
+    }
+
     public static void setMarker(final Frame frame, final FrameMarker marker) {
         frame.setObjectStatic(SlotIndicies.THIS_MARKER.ordinal(), marker);
+        /* FrameMarker contains shadow copy */
+        marker.setSender(getSender(frame));
+        marker.setContext(getContext(frame));
     }
 
-    public static void initializeMarker(final Frame frame) {
-        setMarker(frame, new FrameMarker());
+    public static FrameMarker initializeMarker(final Frame frame) {
+        /* FrameMarker contains shadow copy */
+        final FrameMarker frameMarker = new FrameMarker(getSender(frame), getContext(frame));
+        frame.setObjectStatic(SlotIndicies.THIS_MARKER.ordinal(), frameMarker);
+        return frameMarker;
     }
 
+    @SuppressWarnings("unused")
     public static Object getContextOrMarkerSlow(final VirtualFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return GetContextOrMarkerNode.getNotProfiled(frame);
@@ -230,6 +255,11 @@ public final class FrameAccess {
         assert getContext(frame) == null : "ContextObject already allocated";
         frame.getFrameDescriptor().setSlotKind(SlotIndicies.THIS_CONTEXT.ordinal(), FrameSlotKind.Object);
         frame.setObject(SlotIndicies.THIS_CONTEXT.ordinal(), context);
+        /* FrameMarker contains shadow copy */
+        final FrameMarker frameMarker = getMarker(frame);
+        if (frameMarker != null) {
+            frameMarker.setContext(context);
+        }
     }
 
     public static int getInstructionPointer(final Frame frame) {
