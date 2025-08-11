@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -145,51 +146,32 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Bind final Node node,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
+                        @Cached final InlinedConditionProfile differentSignProfile) {
             return Math.addExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @Bind final Node node,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            return add(getContext(), lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
+        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return digitAdd(image, lhs, rhs);
         }
 
         @Specialization
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(node, differentSign(lhs, rhs))) {
-                return subtract(image, lhs, rhs);
-            } else {
-                return add(image, lhs, rhs);
-            }
+                        @Bind final SqueakImageContext image) {
+            return digitAdd(image, lhs, rhs);
         }
 
         @Specialization
         protected final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(node, differentSign(getContext(), rhs, lhs))) {
-                return subtract(image, lhs, rhs);
-            } else {
-                return add(image, rhs, lhs);
-            }
+                        @Bind final SqueakImageContext image) {
+            return digitAdd(image, rhs, lhs);
         }
 
         @Specialization
         protected final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(node, differentSign(getContext(), lhs, rhs))) {
-                return subtract(image, lhs, rhs);
-            } else {
-                return add(image, lhs, rhs);
-            }
+                        @Bind final SqueakImageContext image) {
+            return digitAdd(image, lhs, rhs);
         }
     }
 
@@ -757,6 +739,129 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return toNativeObject(image, BigInteger.valueOf(lhs).add(BigInteger.valueOf(rhs)));
     }
 
+    public static Object digitAdd(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
+        return digitAdd(image, lhs.getByteStorage(), rhs.getByteStorage(), image.isLargeNegativeIntegerObject(lhs));
+    }
+
+    public static Object digitAdd(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
+        return digitAdd(image, lhs.getByteStorage(), createLargeFromSmallInteger(rhs), image.isLargeNegativeIntegerObject(lhs));
+    }
+
+    public static Object digitAdd(final SqueakImageContext image, final long lhs, final long rhs) {
+        final long x = lhs;
+        final long y = differentSign(lhs, rhs) ? rhs : -rhs;
+        final long r = x + y;
+        // HD 2-12 Overflow iff both arguments have the opposite sign of the result
+        if (((x ^ r) & (y ^ r)) < 0) {
+            return digitAdd(image, createLargeFromSmallInteger(lhs), createLargeFromSmallInteger(rhs), lhs < 0);
+        }
+        return r;
+    }
+
+    private static byte[] createLargeFromSmallInteger(final long value) {
+        final int byteSize = byteSizeOfCSI(value);
+        final byte[] result = new byte[byteSize];
+        final long abs = Math.abs(value);
+        for (int i = 0; i < byteSize; i++) {
+            result[i] = (byte) (abs >> (i * 8));
+        }
+        return result;
+    }
+
+    private static int byteSizeOfCSI(final long csi) {
+        if (csi >= 0) {
+            if (csi < 256) {
+                return 1;
+            } else if (csi < 65536) {
+                return 2;
+            } else if (csi < 16777216) {
+                return 3;
+            } else if (csi < 4294967296L) {
+                return 4;
+            } else if (csi < 1099511627776L) {
+                return 5;
+            } else if (csi < 281474976710656L) {
+                return 6;
+            } else if (csi < 72057594037927936L) {
+                return 7;
+            } else {
+                return 8;
+            }
+        } else {
+            if (csi > -256) {
+                return 1;
+            } else if (csi > -65536) {
+                return 2;
+            } else if (csi > -16777216) {
+                return 3;
+            } else if (csi > -4294967296L) {
+                return 4;
+            } else if (csi > -1099511627776L) {
+                return 5;
+            } else if (csi > -281474976710656L) {
+                return 6;
+            } else if (csi > -72057594037927936L) {
+                return 7;
+            } else {
+                return 8;
+            }
+        }
+    }
+
+    private static Object digitAdd(final SqueakImageContext image, final byte[] lhsBytes, final byte[] rhsBytes, final boolean neg) {
+        final int lhsBytesLen = lhsBytes.length;
+        final int rhsBytesLen = rhsBytes.length;
+        final byte[] bigInt = ArrayUtils.swapOrderCopy(new BigInteger(1, ArrayUtils.swapOrderCopy(lhsBytes)).add(new BigInteger(1, ArrayUtils.swapOrderCopy(rhsBytes))).toByteArray());
+        final int firstDigitLen = (lhsBytesLen + 3) / 4;
+        final int secondDigitLen = (rhsBytesLen + 3) / 4;
+        final byte[] shortInt;
+        final int shortDigitLen;
+        final byte[] longInt;
+        final int longDigitLen;
+        if (firstDigitLen <= secondDigitLen) {
+            shortInt = lhsBytes;
+            shortDigitLen = firstDigitLen;
+            longInt = rhsBytes;
+            longDigitLen = secondDigitLen;
+        } else {
+            shortInt = rhsBytes;
+            shortDigitLen = secondDigitLen;
+            longInt = lhsBytes;
+            longDigitLen = firstDigitLen;
+        }
+        final int sumLen = longDigitLen * 4;
+        final NativeObject sum = NativeObject.newNativeBytes(image, neg ? image.largeNegativeIntegerClass : image.largePositiveIntegerClass, sumLen);
+        final int over = cDigitAddlenwithleninto(shortInt, shortDigitLen, longInt, longDigitLen, sum.getByteStorage());
+        if (over > 0) {
+            final byte[] newSum = new byte[sumLen + 1];
+            System.arraycopy(sum.getByteStorage(), 0, newSum, 0, sumLen);
+            newSum[longDigitLen * 4] = (byte) over;
+            // writeWordLE(newSum, longDigitLen, over);
+            sum.setStorage(newSum);
+            return sum;
+        } else {
+            final Object res = normalize(image, sum, !neg);
+            if (res instanceof NativeObject n) {
+                final int len = n.getByteLength();
+                assert Arrays.equals(n.getByteStorage(), 0, len, bigInt, 0, len);
+            }
+            return res;
+        }
+    }
+
+    private static int cDigitAddlenwithleninto(final byte[] shortInt, final int shortLen, final byte[] longInteger, final int longLen, final byte[] result) {
+        long accum = 0;
+        for (int i = 0; i < shortLen; i += 1) {
+            accum = (((accum) >> 32) + (readWordLE(shortInt, i) + (readWordLE(longInteger, i))));
+            writeWordLE(result, i, (int) (accum & 0xFFFFFFFFL));
+        }
+        for (int i = shortLen; i < longLen; i += 1) {
+            accum = ((accum) >> 32) + readWordLE(longInteger, i);
+            writeWordLE(result, i, (int) (accum & 0xFFFFFFFFL));
+        }
+        return (int) (accum >> 32 & 0xFFFFFFFFL);
+    }
+
     @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object subtract(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
         return normalize(image, toBigInteger(image, lhs).subtract(toBigInteger(image, rhs)));
@@ -932,6 +1037,14 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return false;
     }
 
+    private static void sameResult(final Object result, final Object result2) {
+        if (result instanceof NativeObject r) {
+            assert Arrays.equals(r.getByteStorage(), ((NativeObject) result2).getByteStorage());
+        } else {
+            assert (long) result == (long) result2;
+        }
+    }
+
     /*
      * Bit operations
      */
@@ -990,6 +1103,14 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     public static boolean differentSign(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
         return isNegative(image, lhs) ^ rhs < 0;
+    }
+
+    private static boolean differentSign(final long lhs, final long rhs) {
+        return lhs < 0 ^ rhs < 0;
+    }
+
+    public static long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final InlinedConditionProfile differentSignProfile, final Node node) {
+        return differentSignProfile.profile(node, differentSign(lhs, rhs)) ? -rhs : rhs;
     }
 
     public static boolean fitsIntoLong(final NativeObject value) {
@@ -1123,6 +1244,14 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         final long b2 = (base + 2 < bytes.length) ? (bytes[base + 2] & 0xFFL) : 0;
         final long b3 = (base + 3 < bytes.length) ? (bytes[base + 3] & 0xFFL) : 0;
         return (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) & 0xFFFFFFFFL;
+    }
+
+    static void writeWordLE(final byte[] bytes, final int wordIndex, final long value) {
+        final int base = wordIndex * 4;
+        bytes[base + 0] = (byte) value;
+        bytes[base + 1] = (byte) (value >> 8);
+        bytes[base + 2] = (byte) (value >> 16);
+        bytes[base + 3] = (byte) (value >> 24);
     }
 
     private static NativeObject largeIntGrowTo(final SqueakImageContext image, final NativeObject value, final int byteLen) {

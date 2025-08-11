@@ -555,8 +555,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 21)
+// @GenerateNodeFactory
+// @SqueakPrimitive(indices = 21)
     protected abstract static class PrimAddLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
@@ -1672,14 +1672,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean inSafeIntegerRange(final double d) {
             // The ends of the interval are also included, since they are powers of two
             return MIN_SAFE_INTEGER_LONG <= d && d <= MAX_SAFE_INTEGER_LONG;
-        }
-
-        protected static final long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final InlinedConditionProfile differentSignProfile, final Node node) {
-            return differentSignProfile.profile(node, differentSign(lhs, rhs)) ? -rhs : rhs;
-        }
-
-        private static boolean differentSign(final long lhs, final long rhs) {
-            return lhs < 0 ^ rhs < 0;
         }
     }
 

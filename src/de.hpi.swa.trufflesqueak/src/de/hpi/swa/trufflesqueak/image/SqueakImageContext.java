@@ -1009,6 +1009,10 @@ public final class SqueakImageContext {
         return object == largePositiveIntegerClass || object == largeNegativeIntegerClass;
     }
 
+    public boolean isLargeNegativeIntegerObject(final NativeObject object) {
+        return object.getSqueakClass() == largeNegativeIntegerClass;
+    }
+
     public boolean isMetaClass(final ClassObject object) {
         return object == metaClass;
     }
