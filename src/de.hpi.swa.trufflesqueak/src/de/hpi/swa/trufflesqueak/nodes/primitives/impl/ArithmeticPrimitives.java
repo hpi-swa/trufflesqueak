@@ -439,10 +439,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "image.isLargeInteger(arg)", rewriteOn = ArithmeticException.class)
         protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
-                        @Bind final SqueakImageContext image,
                         @Cached final InlinedConditionProfile positiveProfile) {
-            return receiver & (positiveProfile.profile(node, receiver >= 0) ? LargeIntegers.longValue(image, arg) : LargeIntegers.longValueExact(image, arg));
+            return receiver & (positiveProfile.profile(node, receiver >= 0) ? LargeIntegers.longValue(arg) : LargeIntegers.longValueExact(arg));
         }
 
         @Specialization(guards = "image.isLargeInteger(arg)", replaces = "doLongLargeQuick")
@@ -462,8 +462,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "image.isLargeInteger(arg)", rewriteOn = ArithmeticException.class)
         protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
-                        @Bind final SqueakImageContext image) {
-            return receiver | LargeIntegers.longValueExact(image, arg);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return receiver | LargeIntegers.longValueExact(arg);
         }
 
         @Specialization(guards = "image.isLargeInteger(arg)", replaces = "doLongLargeQuick")
@@ -483,8 +483,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "image.isLargeInteger(arg)", rewriteOn = ArithmeticException.class)
         protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
-                        @Bind final SqueakImageContext image) {
-            return receiver ^ LargeIntegers.longValueExact(image, arg);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return receiver ^ LargeIntegers.longValueExact(arg);
         }
 
         @Specialization(guards = "image.isLargeInteger(arg)", replaces = "doLongLargeQuick")
@@ -1222,9 +1222,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         public static final int HASH_MULTIPLY_MASK = 0xFFFFFFF;
 
         @Specialization
-        protected static final long doLargeInteger(final NativeObject receiver,
-                        @Bind final SqueakImageContext image) {
-            return doLong(LargeIntegers.longValue(image, receiver));
+        protected static final long doLargeInteger(final NativeObject receiver) {
+            return doLong(LargeIntegers.longValue(receiver));
         }
 
         @Specialization

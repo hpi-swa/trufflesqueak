@@ -105,9 +105,9 @@ public final class SqueakImageChunk {
                     object = NativeObject.newNativeShorts(this);
                 } else if (format <= 23) { // bytes
                     if (squeakClass == image.largePositiveIntegerClass) {
-                        object = LargeIntegers.normalize(image, getBytes(), true);
-                    } else if (squeakClass == image.largeNegativeIntegerClass) {
                         object = LargeIntegers.normalize(image, getBytes(), false);
+                    } else if (squeakClass == image.largeNegativeIntegerClass) {
+                        object = LargeIntegers.normalize(image, getBytes(), true);
                     } else {
                         object = NativeObject.newNativeBytes(this);
                     }

@@ -568,16 +568,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.isLongType()"}, rewriteOn = ArithmeticException.class)
-        protected static final NativeObject doNativeLongs(final NativeObject receiver, final NativeObject value,
-                        @Bind final SqueakImageContext image) {
-            ArrayUtils.fill(receiver.getLongStorage(), LargeIntegers.longValueExact(image, value));
+        protected static final NativeObject doNativeLongs(final NativeObject receiver, final NativeObject value) {
+            ArrayUtils.fill(receiver.getLongStorage(), LargeIntegers.longValueExact(value));
             return receiver;
         }
 
         @Specialization(guards = {"receiver.isLongType()", "fitsIntoLong(value)"}, replaces = "doNativeLongs")
-        protected static final NativeObject doNativeLongsFallback(final NativeObject receiver, final NativeObject value,
-                        @Bind final SqueakImageContext image) {
-            ArrayUtils.fill(receiver.getLongStorage(), LargeIntegers.longValue(image, value));
+        protected static final NativeObject doNativeLongsFallback(final NativeObject receiver, final NativeObject value) {
+            ArrayUtils.fill(receiver.getLongStorage(), LargeIntegers.longValue(value));
             return receiver;
         }
     }
