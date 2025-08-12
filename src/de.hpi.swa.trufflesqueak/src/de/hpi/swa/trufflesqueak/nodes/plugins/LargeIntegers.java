@@ -48,6 +48,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -58,7 +59,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     public static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
     @CompilationFinal(dimensions = 1) public static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = toByteArray(LONG_MIN_OVERFLOW_RESULT);
 
-    private static final ArithmeticException BIG_INTEGER_OUT_OF_LONG_RANGE = new ArithmeticException("BigInteger out of long range");
+    private static final ArithmeticException LARGE_INTEGER_OUT_OF_INT_RANGE = new ArithmeticException("Large integer out of int range");
+    private static final ArithmeticException LARGE_INTEGER_OUT_OF_LONG_RANGE = new ArithmeticException("Large integer out of long range");
     private static final String MODULE_NAME = "LargeIntegers v2.0 (TruffleSqueak)";
 
     @GenerateNodeFactory
@@ -194,14 +196,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(node, differentSign(lhs, rhs))) {
-                return add(image, lhs, rhs);
-            } else {
-                return subtract(image, lhs, rhs);
-            }
+                        @Bind final SqueakImageContext image) {
+            return digitSubtract(image, lhs, rhs);
         }
 
         @Specialization
@@ -209,7 +205,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Bind final SqueakImageContext image,
                         @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(node, differentSign(getContext(), rhs, lhs))) {
+            if (differentSignProfile.profile(node, differentSign(image, rhs, lhs))) {
                 return add(image, rhs, lhs);
             } else {
                 return subtract(image, lhs, rhs);
@@ -218,14 +214,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(node, differentSign(getContext(), lhs, rhs))) {
-                return add(image, lhs, rhs);
-            } else {
-                return subtract(image, lhs, rhs);
-            }
+                        @Bind final SqueakImageContext image) {
+            return digitSubtract(image, lhs, rhs);
         }
     }
 
@@ -249,9 +239,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs, @SuppressWarnings("unused") final boolean neg,
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs, final boolean neg,
                         @Bind final SqueakImageContext image) {
-            return multiply(image, lhs, rhs);
+            return digitMultiplyNegative(image, lhs, rhs.getByteStorage(), neg);
         }
 
         @Specialization
@@ -264,38 +254,26 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primDigitBitAnd")
     protected abstract static class PrimDigitBitAndNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final long doLong(final long receiver, final long arg) {
-            return receiver & arg;
+        protected static final long doLong(final long receiver, final long rhs) {
+            return receiver & rhs;
         }
 
-        @Specialization(guards = {"image.isLargePositiveInteger(receiver)", "image.isLargePositiveInteger(arg)"})
-        protected static final Object doLargeInteger(final NativeObject receiver, final NativeObject arg,
+        @Specialization(guards = {"image.isLargePositiveInteger(lhs)", "image.isLargePositiveInteger(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return digitAnd(image, receiver.getByteStorage(), arg.getByteStorage());
+            return digitAnd(image, lhs.getByteStorage(), rhs.getByteStorage());
         }
 
-        @Specialization
-        protected static final Object doLong(final long receiver, final NativeObject arg,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("positiveProfile") @Cached final InlinedConditionProfile positiveProfile) {
-            if (positiveProfile.profile(node, receiver >= 0)) {
-                return receiver & longValue(arg);
-            } else {
-                return and(image, arg, receiver);
-            }
+        @Specialization(guards = {"lhs >= 0", "image.isLargePositiveInteger(rhs)"})
+        protected static final Object doLong(final long lhs, final NativeObject rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return lhs & longValue(rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final NativeObject receiver, final long arg,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("positiveProfile") @Cached final InlinedConditionProfile positiveProfile) {
-            if (positiveProfile.profile(node, arg >= 0)) {
-                return longValue(receiver) & arg;
-            } else {
-                return and(image, receiver, arg);
-            }
+        @Specialization(guards = {"image.isLargePositiveInteger(lhs)", "rhs >= 0"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return longValue(lhs) & rhs;
         }
     }
 
@@ -303,26 +281,26 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primDigitBitOr")
     protected abstract static class PrimDigitBitOrNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final long bitOr(final long receiver, final long arg) {
-            return receiver | arg;
+        protected static final long bitOr(final long lhs, final long rhs) {
+            return lhs | rhs;
         }
 
-        @Specialization(guards = {"image.isLargePositiveInteger(receiver)", "image.isLargePositiveInteger(arg)"})
-        protected static final Object doLargeInteger(final NativeObject receiver, final NativeObject arg,
+        @Specialization(guards = {"image.isLargePositiveInteger(lhs)", "image.isLargePositiveInteger(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return digitOr(image, receiver.getByteStorage(), arg.getByteStorage());
+            return digitOr(image, lhs.getByteStorage(), rhs.getByteStorage());
         }
 
-        @Specialization
-        protected static final Object doLong(final long receiver, final NativeObject arg,
+        @Specialization(guards = {"lhs >= 0", "image.isLargePositiveInteger(rhs)"})
+        protected static final Object doLong(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return or(image, arg, receiver);
+            return digitOr(image, rhs.getByteStorage(), lhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final NativeObject receiver, final long arg,
+        @Specialization(guards = {"image.isLargePositiveInteger(lhs)", "rhs >= 0"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
-            return or(image, receiver, arg);
+            return digitOr(image, lhs.getByteStorage(), rhs);
         }
     }
 
@@ -330,9 +308,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primDigitBitShiftMagnitude")
     public abstract static class PrimDigitBitShiftMagnitudeNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final Object doLargeInteger(final NativeObject receiver, final long arg,
+        protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
-            return shiftLeft(image, receiver, (int) arg);
+            return digitBitShiftMagnitude(image, lhs, MiscUtils.toIntExact(rhs));
         }
     }
 
@@ -344,22 +322,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return lhs ^ rhs;
         }
 
-        @Specialization(guards = {"image.isLargePositiveInteger(receiver)", "image.isLargePositiveInteger(arg)"})
-        protected static final Object doLargeInteger(final NativeObject receiver, final NativeObject arg,
+        @Specialization(guards = {"image.isLargePositiveInteger(lhs)", "image.isLargePositiveInteger(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return digitXor(image, receiver.getByteStorage(), arg.getByteStorage());
+            return digitXor(image, lhs.getByteStorage(), rhs.getByteStorage());
         }
 
-        @Specialization
+        @Specialization(guards = {"lhs >= 0", "image.isLargePositiveInteger(rhs)"})
         protected static final Object doLong(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return xor(image, rhs, lhs);
+            return digitXor(image, rhs.getByteStorage(), lhs);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargePositiveInteger(lhs)", "rhs >= 0"})
         protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
-            return xor(image, lhs, rhs);
+            return digitXor(image, lhs.getByteStorage(), rhs);
         }
     }
 
@@ -380,10 +358,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final long doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return compareTo(image, lhs, rhs);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return digitCompare(lhs, rhs);
         }
 
         @Specialization
@@ -841,15 +819,74 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     private static int cDigitAddlenwithleninto(final byte[] shortInt, final int shortLen, final byte[] longInteger, final int longLen, final byte[] result) {
         long accum = 0;
-        for (int i = 0; i < shortLen; i += 1) {
+        for (int i = 0; i < shortLen; i++) {
             accum = (((accum) >> 32) + (readWordLE(shortInt, i) + (readWordLE(longInteger, i))));
             writeWordLE(result, i, (int) (accum & 0xFFFFFFFFL));
         }
-        for (int i = shortLen; i < longLen; i += 1) {
+        for (int i = shortLen; i < longLen; i++) {
             accum = ((accum) >> 32) + readWordLE(longInteger, i);
             writeWordLE(result, i, (int) (accum & 0xFFFFFFFFL));
         }
         return (int) (accum >> 32 & 0xFFFFFFFFL);
+    }
+
+    public static Object digitSubtract(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
+        return digitSubtract(image, lhs, createLargeFromSmallInteger(rhs));
+    }
+
+    public static Object digitSubtract(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhsBytes) {
+        return digitSubtract(image, lhs, rhsBytes.getByteStorage());
+    }
+
+    public static Object digitSubtract(final SqueakImageContext image, final NativeObject lhs, final byte[] rhsBytes) {
+        final byte[] lhsBytes = lhs.getByteStorage();
+        /* convert it to a not normalized LargeInteger */
+
+        /* begin digitSubLarge:with: */
+        final boolean firstNeg = image.isLargeNegativeInteger(lhs);
+        int firstDigitLen = (lhsBytes.length + 3) / 4;
+        int secondDigitLen = (rhsBytes.length + 3) / 4;
+        if (firstDigitLen == secondDigitLen) {
+            while ((firstDigitLen > 1) && readWordLE(lhsBytes, firstDigitLen - 1) == readWordLE(rhsBytes, firstDigitLen - 1)) {
+                firstDigitLen -= 1;
+            }
+            secondDigitLen = firstDigitLen;
+        }
+        final byte[] larger;
+        final int largeDigitLen;
+        final byte[] smaller;
+        final int smallerDigitLen;
+        final boolean neg;
+        if ((firstDigitLen < secondDigitLen) || ((firstDigitLen == secondDigitLen) && readWordLE(lhsBytes, firstDigitLen - 1) < readWordLE(rhsBytes, firstDigitLen - 1))) {
+            larger = rhsBytes;
+            largeDigitLen = secondDigitLen;
+            smaller = lhsBytes;
+            smallerDigitLen = firstDigitLen;
+            neg = !firstNeg;
+        } else {
+            larger = lhsBytes;
+            largeDigitLen = firstDigitLen;
+            smaller = rhsBytes;
+            smallerDigitLen = secondDigitLen;
+            neg = firstNeg;
+        }
+        final byte[] res = new byte[largeDigitLen * 4];
+        /* begin cDigitSub:len:with:len:into: */
+        long z = 0;
+        for (int i = 0; i < smallerDigitLen; i++) {
+            z = z + (readWordLE(larger, i) - readWordLE(smaller, i));
+            /* cDigitOf:at:put: */
+            writeWordLE(res, i, z & 0xFFFFFFFFL);
+            z = (z >> 0x3F);
+        }
+        for (int i = smallerDigitLen; i < largeDigitLen; i++) {
+            z += readWordLE(larger, i);
+            /* cDigitOf:at:put: */
+            writeWordLE(res, i, z & 0xFFFFFFFFL);
+            z = (z >> 0x3F);
+        }
+        return normalize(image, res, neg);
+        /* end digitSubLarge:with: */
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -881,6 +918,68 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object subtract(final SqueakImageContext image, final long lhs, final NativeObject rhs) {
         return normalize(image, BigInteger.valueOf(lhs).subtract(toBigInteger(image, rhs)));
+    }
+
+    public static Object digitMultiplyNegative(final SqueakImageContext image, final NativeObject lhs, final byte[] rhsBytes, final boolean neg) {
+        final byte[] lhsBytes = lhs.getByteStorage();
+        /* begin digitMultiplyLarge:with:negative: */
+        final int firstLen = lhsBytes.length;
+        final int secondLen = rhsBytes.length;
+        final byte[] shortInt;
+        final int shortLen;
+        final byte[] longInt;
+        final int longLen;
+
+        if (firstLen <= secondLen) {
+            shortInt = lhsBytes;
+            shortLen = firstLen;
+            longInt = rhsBytes;
+            longLen = secondLen;
+        } else {
+            shortInt = rhsBytes;
+            shortLen = secondLen;
+            longInt = lhsBytes;
+            longLen = firstLen;
+        }
+        final byte[] prod = new byte[longLen + shortLen];
+
+        /* begin cDigitMultiply:len:with:len:into:len: */
+        if ((((shortLen + 3) / 4) == 1) && readWordLE(shortInt, 0) == 0) {
+            return 0L;
+        }
+        if ((((longLen + 3) / 4) == 1) && readWordLE(longInt, 0) == 0) {
+            return 0L;
+        }
+
+        /* prod starts out all zero */
+        final int limitShort = ((shortLen + 3) / 4) - 1;
+        final int limitLong = ((longLen + 3) / 4) - 1;
+        for (int i = 0; i <= limitShort; i++) {
+            final long digit = readWordLE(shortInt, i);
+            if (digit != 0) {
+                int k = i;
+                long carry = 0;
+                /*
+                 * Loop invariant: 0<=carry<=16rFFFFFFFF, k=i+j-1 (ST) -> Loop invariant:
+                 * 0<=carry<=16rFFFFFFFF, k=i+j (C) (?)
+                 */
+                for (int j = 0; j <= limitLong; j++) {
+                    long ab = readWordLE(longInt, j);
+                    ab = ((ab * digit) + carry) + readWordLE(prod, k);
+                    carry = (ab >> 32) & 0xFFFFFFFFL;
+                    /* cDigitOf:at:put: */
+                    writeWordLE(prod, k, ab & 0xFFFFFFFFL);
+                    k++;
+                }
+                if (k < (((longLen + shortLen) + 3) / 4)) {
+                    /* cDigitOf:at:put: */
+                    writeWordLE(prod, k, carry);
+                }
+            }
+        }
+        /* end cDigitMultiply:len:with:len:into:len: */
+        return normalize(image, prod, neg);
+        /* end digitMultiplyLarge:with:negative: */
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -990,27 +1089,45 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
      * Comparison
      */
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static int compareTo(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
-        return toBigInteger(image, lhs).compareTo(toBigInteger(image, rhs));
+    public static int digitCompare(final NativeObject lhs, final NativeObject rhs) {
+        return digitCompare(lhs.getByteStorage(), rhs.getByteStorage());
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static int compareTo(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        final BigInteger integer = toBigInteger(image, lhs);
-        if (integer.bitLength() < Long.SIZE) {
-            return Long.compare(integer.longValue(), rhs);
-        } else {
-            return integer.signum();
+    private static int digitCompare(final byte[] lhsBytes, final byte[] rhsBytes) {
+        final int firstDigitLen = (lhsBytes.length + 3) / 4;
+        final int secondDigitLen = (rhsBytes.length + 3) / 4;
+        if (secondDigitLen != firstDigitLen) {
+            if (secondDigitLen > firstDigitLen) {
+                return -1;
+            } else {
+                return 1;
+            }
         }
+        return cDigitComparewithlen(lhsBytes, rhsBytes, firstDigitLen);
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static boolean lessThanOrEqualTo(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
+    private static int cDigitComparewithlen(final byte[] first, final byte[] second, final int len) {
+        long firstDigit;
+        long secondDigit;
+        int index = len - 1;
+        while (index >= 0) {
+            if ((secondDigit = readWordLE(second, index)) != (firstDigit = readWordLE(first, index))) {
+                if (secondDigit < firstDigit) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+            --index;
+        }
+        return 0;
+    }
+
+    public static int compareTo(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
         if (highBitOfLargeInt(lhs) < Long.SIZE) {
-            return longValue(lhs) <= rhs;
+            return Long.compare(longValue(lhs), rhs);
         } else {
-            return isNegative(image, lhs);
+            return image.isLargeNegativeInteger(lhs) ? -1 : 1;
         }
     }
 
@@ -1020,18 +1137,19 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public static boolean inRange(final NativeObject value, final long minValue, final long maxValue) {
-        if (highBitOfLargeInt(value) < Long.SIZE) {
+        if (fitsIntoLong(value)) {
             final long longValueExact = longValue(value);
             return minValue <= longValueExact && longValueExact <= maxValue;
+        } else {
+            return false;
         }
-        return false;
     }
 
     private static boolean sameResult(final Object result, final Object result2) {
         if (result instanceof NativeObject r) {
             assert result2 instanceof NativeObject r2 && Arrays.equals(r.getByteStorage(), r2.getByteStorage());
         } else {
-            assert (long) result == (long) result2;
+            assert result2 instanceof Long r2 && (long) result == r2;
         }
         return true;
     }
@@ -1039,16 +1157,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     /*
      * Bit operations
      */
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object and(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
-        return normalize(image, toBigInteger(image, lhs).and(toBigInteger(image, rhs)));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object and(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        return normalize(image, toBigInteger(image, lhs).and(BigInteger.valueOf(rhs)));
-    }
 
     public static Object digitAnd(final SqueakImageContext image, final byte[] lhsBytes, final byte[] rhsBytes) {
         final int firstLen = lhsBytes.length;
@@ -1070,21 +1178,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
         final byte[] result = new byte[longLen];
         final int shortLimit = ((shortLen + 3) / 4) - 1;
-        for (int i = 0; i <= shortLimit; i += 1) {
+        for (int i = 0; i <= shortLimit; i++) {
             writeWordLE(result, i, readWordLE(shortLarge, i) & readWordLE(longLarge, i));
         }
         /* array zero-initialized */
         return normalize(image, result, false);
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object or(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
-        return normalize(image, toBigInteger(image, lhs).or(toBigInteger(image, rhs)));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object or(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        return normalize(image, toBigInteger(image, lhs).or(BigInteger.valueOf(rhs)));
+    public static Object digitOr(final SqueakImageContext image, final byte[] lhsBytes, final long rhs) {
+        return digitOr(image, lhsBytes, createLargeFromSmallInteger(rhs));
     }
 
     public static Object digitOr(final SqueakImageContext image, final byte[] lhsBytes, final byte[] rhsBytes) {
@@ -1107,24 +1209,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
         final byte[] result = new byte[longLen];
         final int shortLimit = ((shortLen + 3) / 4) - 1;
-        for (int i = 0; i <= shortLimit; i += 1) {
+        for (int i = 0; i <= shortLimit; i++) {
             writeWordLE(result, i, readWordLE(shortLarge, i) | readWordLE(longLarge, i));
         }
         final int longLimit = ((longLen + 3) / 4) - 1;
-        for (int i = ((shortLen + 3) / 4); i <= longLimit; i += 1) {
+        for (int i = ((shortLen + 3) / 4); i <= longLimit; i++) {
             writeWordLE(result, i, readWordLE(longLarge, i));
         }
         return normalize(image, result, false);
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object xor(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
-        return normalize(image, toBigInteger(image, lhs).xor(toBigInteger(image, rhs)));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object xor(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        return normalize(image, toBigInteger(image, lhs).xor(BigInteger.valueOf(rhs)));
+    public static Object digitXor(final SqueakImageContext image, final byte[] lhsBytes, final long rhs) {
+        return digitXor(image, lhsBytes, createLargeFromSmallInteger(rhs));
     }
 
     public static Object digitXor(final SqueakImageContext image, final byte[] lhsBytes, final byte[] rhsBytes) {
@@ -1147,23 +1243,121 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
         final byte[] result = new byte[longLen];
         final int shortLimit = ((shortLen + 3) / 4) - 1;
-        for (int i = 0; i <= shortLimit; i += 1) {
+        for (int i = 0; i <= shortLimit; i++) {
             writeWordLE(result, i, readWordLE(shortLarge, i) ^ readWordLE(longLarge, i));
         }
         final int longLimit = ((longLen + 3) / 4) - 1;
-        for (int i = ((shortLen + 3) / 4); i <= longLimit; i += 1) {
+        for (int i = ((shortLen + 3) / 4); i <= longLimit; i++) {
             writeWordLE(result, i, readWordLE(longLarge, i));
         }
         return normalize(image, result, false);
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object shiftLeft(final SqueakImageContext image, final NativeObject lhs, final int rhs) {
-        final BigInteger integer = toBigInteger(image, lhs);
-        if (integer.signum() < 0 && rhs < 0) {
-            return normalize(image, integer.abs().shiftLeft(rhs).negate());
+    public static Object digitBitShiftMagnitude(final SqueakImageContext image, final NativeObject value, final int shiftCount) {
+        final byte[] valueBytes = value.getByteStorage();
+        final boolean neg = image.isLargeNegativeInteger(value);
+        /* convert it to a not normalized LargeInteger */
+        if (shiftCount >= 0) {
+            return NativeObject.newNativeBytes(image, neg ? image.largeNegativeIntegerClass : image.largePositiveIntegerClass, digitLshift(image, valueBytes, shiftCount));
         }
-        return normalize(image, integer.shiftLeft(rhs));
+        final int rShift = -shiftCount;
+        final byte[] aLargeInteger = digitRshiftlookfirst(valueBytes, rShift, (valueBytes.length + 3) / 4);
+        return normalize(image, aLargeInteger, neg);
+    }
+
+    private static byte[] digitLshift(final SqueakImageContext image, final byte[] valueBytes, final int shiftCount) {
+        final int oldDigitLen = (valueBytes.length + 3) / 4;
+        final int highBit = cDigitHighBitLen(valueBytes, oldDigitLen);
+        if (highBit == 0) {
+            return new byte[1];
+        }
+        final int newByteLen = ((highBit + shiftCount) + 7) / 8;
+        final byte[] newBytes = new byte[newByteLen];
+        final int newDigitLen = (newByteLen + 3) / 4;
+
+        /* begin cDigitLshift:from:len:to:len: */
+        final int digitShift = shiftCount / 32;
+        final int bitShift = shiftCount % 32;
+        final int limit = digitShift - 1;
+
+        /* Note: 0 is endian neutral, use direct access */
+        for (int i = 0; i <= limit; i++) {
+            writeWordLE(newBytes, i, 0);
+        }
+        if (bitShift == 0) {
+            /* begin cDigitReplace:from:to:with:startingAt: */
+            /* begin cDigitCopyFrom:to:len: */
+            for (int i = 0; i < (((newDigitLen - 1) - digitShift) + 1); i++) {
+                writeWordLE(newBytes, digitShift + i, readWordLE(valueBytes, i));
+            }
+            return newBytes;
+        }
+
+        /*
+         * Fast version for digit-aligned shifts C indexed! This implementation use at most 31 bits
+         * of carry. bitAnd: 16rFFFFFFFF is only for simulator, useless in C
+         */
+        final int rshift = 32 - bitShift;
+        long carry = 0;
+        final int limitOld = oldDigitLen - 1;
+        for (int i = 0; i <= limitOld; i++) {
+            final long digit = readWordLE(valueBytes, i);
+            /* cDigitOf:at:put: */
+            writeWordLE(newBytes, i + digitShift, (carry | (digit << bitShift)) & 0xFFFFFFFFL);
+            carry = digit >> rshift;
+        }
+        if (carry != 0) {
+            /* cDigitOf:at:put: */
+            writeWordLE(newBytes, newDigitLen - 1, carry);
+        }
+        /* end cDigitLshift:from:len:to:len: */
+        return newBytes;
+    }
+
+    private static byte[] digitRshiftlookfirst(final byte[] valueBytes, final int shiftCount, final int a) {
+        final int oldBitLen = cDigitHighBitLen(valueBytes, a);
+        final int oldDigitLen = (oldBitLen + 0x1F) / 32;
+        final int newBitLen = oldBitLen - shiftCount;
+        if (newBitLen <= 0) {
+            return new byte[0];
+        }
+        /* All bits lost */
+        final int newByteLen = (newBitLen + 7) / 8;
+        final int newDigitLen = (newByteLen + 3) / 4;
+
+        final byte[] newBytes = new byte[newByteLen];
+        /* begin cDigitRshift:from:len:to:len: */
+        final int digitShift = shiftCount / 32;
+        final int bitShift = shiftCount % 32;
+        if (bitShift == 0) {
+            /* begin cDigitReplace:from:to:with:startingAt: */
+            /* begin cDigitCopyFrom:to:len: */
+            for (int i = 0; i < (((newDigitLen - 1)) + 1); i++) {
+                writeWordLE(newBytes, i, readWordLE(valueBytes, digitShift + i));
+            }
+            return newBytes;
+        }
+
+        /*
+         * Fast version for digit-aligned shifts C indexed! This implementation use at most 31 bits
+         * of carry. bitAnd: 16rFFFFFFFF is only for simulator, useless in C
+         */
+        final int leftShift = 32 - bitShift;
+        long carry = readWordLE(valueBytes, digitShift) >> bitShift;
+        final int start = digitShift + 1;
+        final int limit = oldDigitLen - 1;
+        for (int j = start; j <= limit; j++) {
+            final long digit = readWordLE(valueBytes, j);
+            /* cDigitOf:at:put: */
+            writeWordLE(newBytes, j - start, (carry | (digit << leftShift)) & 0xFFFFFFFFL);
+            carry = digit >> bitShift;
+        }
+        if (carry != 0) {
+            /* cDigitOf:at:put: */
+            writeWordLE(newBytes, newDigitLen - 1, carry);
+        }
+        /* end cDigitRshift:from:len:to:len: */
+        return newBytes;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -1191,8 +1385,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return differentSignProfile.profile(node, differentSign(lhs, rhs)) ? -rhs : rhs;
     }
 
+    public static boolean fitsIntoInt(final NativeObject value) {
+        return highBitOfLargeInt(value) < Integer.SIZE;
+    }
+
     public static boolean fitsIntoLong(final NativeObject value) {
-        return value.getByteLength() < Long.BYTES;
+        return highBitOfLargeInt(value) < Long.SIZE;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -1360,10 +1558,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     public static int intValueExact(final SqueakImageContext image, final NativeObject value) {
-        if (value.getByteLength() <= Integer.BYTES) {
+        if (fitsIntoInt(value)) {
             return intValue(image, value);
         } else {
-            throw new ArithmeticException("BigInteger out of int range");
+            throw LARGE_INTEGER_OUT_OF_INT_RANGE;
         }
     }
 
@@ -1379,10 +1577,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     public static long longValueExact(final NativeObject value) {
-        if (highBitOfLargeInt(value) < Long.SIZE) {
+        if (fitsIntoLong(value)) {
             return longValue(value);
         } else {
-            throw BIG_INTEGER_OUT_OF_LONG_RANGE;
+            throw LARGE_INTEGER_OUT_OF_LONG_RANGE;
         }
     }
 

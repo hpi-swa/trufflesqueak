@@ -27,6 +27,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSi
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -333,6 +334,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
                 return String.format("'%.30s...' (string length: %s)", displayString, fullLength);
             } else if (image.isByteSymbolClass(squeakClass)) {
                 return "#" + asStringUnsafe();
+            } else if (image.isLargeIntegerClass(squeakClass)) {
+                return LargeIntegers.toBigInteger(image, this).toString();
             } else {
                 return "byte[" + getByteLength() + "]";
             }

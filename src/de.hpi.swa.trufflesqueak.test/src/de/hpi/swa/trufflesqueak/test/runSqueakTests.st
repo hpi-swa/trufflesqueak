@@ -118,7 +118,6 @@ ignoredTests := OrderedCollection new.
     SpurPlanningCompactorTests.
     ST80PackageDependencyTest.
     StackInterpreterSimulatorTests.
-    StackInterpreterTests.
     UIManagerTest.
     UnicodeTest. "Needs external resources"
     UnixFileDirectoryTests.
@@ -169,6 +168,7 @@ ignoredTests := OrderedCollection new.
     SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
     SocketTest -> #(#testSocketReuse #testTCPSocketReuse #testUDP).
     SqueakSSLTest -> #(#testConnectAccept #testEncryptDecrypt #testFaceBookAPI #testGooglePopStream #testMultiFrameDecrypt #testSingleByteDecrypt #testSocketAccept #testSocketConnect #testSplitTlsFrameRead #testSSLSockets #testStreamAccept #testStreamConnect #testStreamTransfer).
+    StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "broken"
     SystemChangeFileTest -> #(#testClassRenamed). "flaky and can hang the system"
     TruffleSqueakTest -> #(#testTestMapConsistency).
 } collect: [:assoc | | testCase |

@@ -437,18 +437,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver & arg;
         }
 
-        @Specialization(guards = "image.isLargeInteger(arg)", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = {"receiver >= 0", "image.isLargePositiveInteger(arg)"})
         protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
-                        @Bind final Node node,
-                        @Cached final InlinedConditionProfile positiveProfile) {
-            return receiver & (positiveProfile.profile(node, receiver >= 0) ? LargeIntegers.longValue(arg) : LargeIntegers.longValueExact(arg));
-        }
-
-        @Specialization(guards = "image.isLargeInteger(arg)", replaces = "doLongLargeQuick")
-        protected static final Object doLongLarge(final long receiver, final NativeObject arg,
-                        @Bind final SqueakImageContext image) {
-            return LargeIntegers.and(image, arg, receiver);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return receiver & LargeIntegers.longValue(arg);
         }
     }
 
@@ -460,16 +452,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver | arg;
         }
 
-        @Specialization(guards = "image.isLargeInteger(arg)", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = {"receiver >= 0", "image.isLargePositiveInteger(arg)"}, rewriteOn = ArithmeticException.class)
         protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
                         @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             return receiver | LargeIntegers.longValueExact(arg);
         }
 
-        @Specialization(guards = "image.isLargeInteger(arg)", replaces = "doLongLargeQuick")
+        @Specialization(guards = {"receiver >= 0", "image.isLargePositiveInteger(arg)"}, replaces = "doLongLargeQuick")
         protected static final Object doLongLarge(final long receiver, final NativeObject arg,
                         @Bind final SqueakImageContext image) {
-            return LargeIntegers.or(image, arg, receiver);
+            return LargeIntegers.digitOr(image, arg.getByteStorage(), receiver);
         }
     }
 
@@ -481,16 +473,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver ^ arg;
         }
 
-        @Specialization(guards = "image.isLargeInteger(arg)", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = {"receiver >= 0", "image.isLargePositiveInteger(arg)"}, rewriteOn = ArithmeticException.class)
         protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
                         @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             return receiver ^ LargeIntegers.longValueExact(arg);
         }
 
-        @Specialization(guards = "image.isLargeInteger(arg)", replaces = "doLongLargeQuick")
+        @Specialization(guards = {"receiver >= 0", "image.isLargePositiveInteger(arg)"}, replaces = "doLongLargeQuick")
         protected static final Object doLongLarge(final long receiver, final NativeObject arg,
                         @Bind final SqueakImageContext image) {
-            return LargeIntegers.xor(image, arg, receiver);
+            return LargeIntegers.digitXor(image, arg.getByteStorage(), receiver);
         }
     }
 
@@ -598,10 +590,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) < 0);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) < 0);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) < 0);
         }
     }
 
@@ -615,9 +607,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) > 0);
+        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs) {
+            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) > 0);
         }
     }
 
@@ -630,10 +621,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) <= 0);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) <= 0);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) <= 0);
         }
     }
 
@@ -646,10 +637,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) >= 0);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) >= 0);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) >= 0);
         }
     }
 
@@ -662,10 +653,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.FALSE;
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) == 0);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) == 0);
         }
 
         /** Quick return `false` if b is not a Number or Complex. */
@@ -685,10 +676,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.TRUE;
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) != 0);
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) != 0);
         }
 
         /** Quick return `true` if b is not a Number or Complex. */

@@ -554,7 +554,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "lessThanOrEqualTo(image, value, INTEGER_MAX)"}, replaces = "doNativeInts")
+        @Specialization(guards = {"receiver.isIntType()", "compareTo(image, value, INTEGER_MAX) <= 0"}, replaces = "doNativeInts")
         protected static final NativeObject doNativeIntsFallback(final NativeObject receiver, final NativeObject value,
                         @Bind final SqueakImageContext image) {
             ArrayUtils.fill(receiver.getIntStorage(), LargeIntegers.intValue(image, value));
