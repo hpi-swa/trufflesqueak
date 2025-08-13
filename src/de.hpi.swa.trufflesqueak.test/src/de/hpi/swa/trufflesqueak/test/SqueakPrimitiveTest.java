@@ -61,7 +61,7 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
             final Object wrappedValue0 = WrapToSqueakNode.executeUncached(values[0]);
             final Object wrappedValue1 = WrapToSqueakNode.executeUncached(values[1]);
             final Object wrappedValue2 = WrapToSqueakNode.executeUncached(values[2]);
-            assertEquals(wrappedValue2, runPrimitive(1, wrappedValue0, wrappedValue1));
+            assertEquals(String.valueOf(wrappedValue2), String.valueOf(runPrimitive(1, wrappedValue0, wrappedValue1)));
         }
     }
 
@@ -78,10 +78,10 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
             final Object wrappedValue0 = WrapToSqueakNode.executeUncached(values[0]);
             final Object wrappedValue1 = WrapToSqueakNode.executeUncached(values[1]);
             final Object wrappedValue2 = WrapToSqueakNode.executeUncached(values[2]);
-            assertEquals(wrappedValue2, runPrimitive(2, wrappedValue0, wrappedValue1));
+            assertEquals(String.valueOf(wrappedValue2), String.valueOf(runPrimitive(2, wrappedValue0, wrappedValue1)));
         }
-        assertEquals(WrapToSqueakNode.executeUncached(Long.MAX_VALUE),
-                        runPrimitive(22, WrapToSqueakNode.executeUncached(LargeIntegers.toNativeObject(image, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE))),
-                                        WrapToSqueakNode.executeUncached(1L)));
+        assertEquals(String.valueOf(WrapToSqueakNode.executeUncached(Long.MAX_VALUE)),
+                        String.valueOf(runPrimitive(22, WrapToSqueakNode.executeUncached(LargeIntegers.toNativeObject(image, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE))),
+                                        WrapToSqueakNode.executeUncached(1L))));
     }
 }

@@ -590,10 +590,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) < 0);
         }
 
-        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        @Specialization
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) < 0);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+                final int comparison = LargeIntegers.digitCompare(lhs, rhs);
+                return BooleanObject.wrap(image.isLargeNegativeInteger(lhs) ? comparison > 0 : comparison < 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(lhs));
+            }
         }
     }
 
@@ -607,8 +614,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs) {
-            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) > 0);
+        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+                final int comparison = LargeIntegers.digitCompare(lhs, rhs);
+                return BooleanObject.wrap(image.isLargeNegativeInteger(lhs) ? comparison < 0 : comparison > 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(rhs));
+            }
         }
     }
 
@@ -621,10 +636,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) <= 0);
         }
 
-        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        @Specialization
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) <= 0);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            final boolean lhsNeg = image.isLargeNegativeInteger(lhs);
+            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+                final int comparison = LargeIntegers.digitCompare(lhs, rhs);
+                return BooleanObject.wrap(lhsNeg ? comparison >= 0 : comparison <= 0);
+            } else {
+                return BooleanObject.wrap(lhsNeg);
+            }
         }
     }
 
@@ -637,10 +660,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) >= 0);
         }
 
-        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        @Specialization
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) >= 0);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+                final int comparison = LargeIntegers.digitCompare(lhs, rhs);
+                return BooleanObject.wrap(image.isLargeNegativeInteger(lhs) ? comparison <= 0 : comparison >= 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(rhs));
+            }
         }
     }
 
@@ -653,10 +683,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.FALSE;
         }
 
-        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        @Specialization
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) == 0);
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+                return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) == 0);
+            } else {
+                return BooleanObject.FALSE;
+            }
         }
 
         /** Quick return `false` if b is not a Number or Complex. */
@@ -676,10 +711,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.TRUE;
         }
 
-        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        @Specialization
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) != 0);
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            return !PrimEqualLargeIntegersNode.doLargeInteger(lhs, rhs, node, sameSignProfile);
         }
 
         /** Quick return `true` if b is not a Number or Complex. */
