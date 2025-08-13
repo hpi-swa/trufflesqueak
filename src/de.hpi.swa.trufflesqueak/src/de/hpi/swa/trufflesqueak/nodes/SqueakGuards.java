@@ -130,7 +130,7 @@ public final class SqueakGuards {
     }
 
     public static boolean isLargeIntegerObject(final SqueakImageContext image, final Object object) {
-        return object instanceof final NativeObject o && (o.getSqueakClass() == image.largePositiveIntegerClass || o.getSqueakClass() == image.largeNegativeIntegerClass);
+        return object instanceof final NativeObject o && image.isLargeInteger(o);
     }
 
     public static boolean isLessThanZero(final double value) {

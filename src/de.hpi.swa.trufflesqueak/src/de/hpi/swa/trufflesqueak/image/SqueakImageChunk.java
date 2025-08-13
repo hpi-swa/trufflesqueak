@@ -61,59 +61,57 @@ public final class SqueakImageChunk {
         if (object == null) {
             final int format = getFormat();
             final ClassObject classObject = getSqueakClass();
+            final SqueakImageContext image = getImage();
             if (format == 0) { // no fields
                 object = new EmptyObject(header, classObject);
-            } else {
-                final SqueakImageContext image = getImage();
-                if (format == 1) { // fixed pointers
-                    if (classObject.instancesAreClasses()) {
-                        /*
-                         * In rare cases, there are still some classes that are not in the class
-                         * table for some reason (e.g. not completely removed from the system yet).
-                         */
-                        object = new ClassObject(image, header, classObject);
-                    } else {
-                        // classes should already be instantiated at this point, check a bit
-                        assert classObject != image.metaClass && classObject.getSqueakClass() != image.metaClass;
-                        object = new PointersObject(header, classObject);
-                    }
-                } else if (format == 2) { // indexable fields
-                    object = new ArrayObject(header, classObject);
-                } else if (format == 3) { // fixed and indexable fields
-                    if (classObject == image.methodContextClass) {
-                        object = ContextObject.createWithHeader(image, header);
-                    } else if (image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)) {
-                        object = BlockClosureObject.createWithHeaderAndClass(header, classObject);
-                    } else {
-                        object = new VariablePointersObject(header, classObject);
-                    }
-                } else if (format == 4) { // indexable weak fields
-                    object = new WeakVariablePointersObject(image, header, classObject);
-                } else if (format == 5) { // fixed fields, special notification
-                    object = new EphemeronObject(image, header, classObject);
-                } else if (format <= 8) {
-                    assert false : "Should never happen (unused format)";
-                } else if (format == 9) { // 64-bit integers
-                    object = NativeObject.newNativeLongs(this);
-                } else if (format <= 11) { // 32-bit integers
-                    if (classObject == image.floatClass) {
-                        object = FloatObject.newFrom(this);
-                    } else {
-                        object = NativeObject.newNativeInts(this);
-                    }
-                } else if (format <= 15) { // 16-bit integers
-                    object = NativeObject.newNativeShorts(this);
-                } else if (format <= 23) { // bytes
-                    if (squeakClass == image.largePositiveIntegerClass) {
-                        object = LargeIntegers.normalize(image, getBytes(), false);
-                    } else if (squeakClass == image.largeNegativeIntegerClass) {
-                        object = LargeIntegers.normalize(image, getBytes(), true);
-                    } else {
-                        object = NativeObject.newNativeBytes(this);
-                    }
-                } else if (format <= 31) { // compiled methods
-                    object = new CompiledCodeObject(header, classObject);
+            } else if (format == 1) { // fixed pointers
+                if (classObject.instancesAreClasses()) {
+                    /*
+                     * In rare cases, there are still some classes that are not in the class table
+                     * for some reason (e.g. not completely removed from the system yet).
+                     */
+                    object = new ClassObject(image, header, classObject);
+                } else {
+                    // classes should already be instantiated at this point, check a bit
+                    assert classObject != image.metaClass && classObject.getSqueakClass() != image.metaClass;
+                    object = new PointersObject(header, classObject);
                 }
+            } else if (format == 2) { // indexable fields
+                object = new ArrayObject(header, classObject);
+            } else if (format == 3) { // fixed and indexable fields
+                if (classObject == image.methodContextClass) {
+                    object = ContextObject.createWithHeader(image, header);
+                } else if (image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)) {
+                    object = BlockClosureObject.createWithHeaderAndClass(header, classObject);
+                } else {
+                    object = new VariablePointersObject(header, classObject);
+                }
+            } else if (format == 4) { // indexable weak fields
+                object = new WeakVariablePointersObject(image, header, classObject);
+            } else if (format == 5) { // fixed fields, special notification
+                object = new EphemeronObject(image, header, classObject);
+            } else if (format <= 8) {
+                assert false : "Should never happen (unused format)";
+            } else if (format == 9) { // 64-bit integers
+                object = NativeObject.newNativeLongs(this);
+            } else if (format <= 11) { // 32-bit integers
+                if (classObject == image.floatClass) {
+                    object = FloatObject.newFrom(this);
+                } else {
+                    object = NativeObject.newNativeInts(this);
+                }
+            } else if (format <= 15) { // 16-bit integers
+                object = NativeObject.newNativeShorts(this);
+            } else if (format <= 23) { // bytes
+                if (squeakClass == image.largePositiveIntegerClass) {
+                    object = LargeIntegers.normalize(image, getBytes(), false);
+                } else if (squeakClass == image.largeNegativeIntegerClass) {
+                    object = LargeIntegers.normalize(image, getBytes(), true);
+                } else {
+                    object = NativeObject.newNativeBytes(this);
+                }
+            } else if (format <= 31) { // compiled methods
+                object = new CompiledCodeObject(header, classObject);
             }
         }
         return object;

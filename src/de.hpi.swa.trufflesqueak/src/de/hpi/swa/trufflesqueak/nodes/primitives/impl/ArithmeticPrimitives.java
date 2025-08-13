@@ -561,7 +561,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 21)
     protected abstract static class PrimAddLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "image.isLargeInteger(lhs)")
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
@@ -573,7 +573,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
@@ -589,7 +589,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 22)
     protected abstract static class PrimSubtractLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "image.isLargeInteger(lhs)")
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
@@ -601,7 +601,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
@@ -617,13 +617,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 23)
     protected abstract static class PrimLessThanLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "image.isLargeInteger(lhs)")
         protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) < 0);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
@@ -640,13 +640,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 24)
     protected abstract static class PrimGreaterThanLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "image.isLargeInteger(lhs)")
         protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) > 0);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
@@ -663,13 +663,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 25)
     protected abstract static class PrimLessOrEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "image.isLargeInteger(lhs)")
         protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) <= 0);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
@@ -687,13 +687,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 26)
     protected abstract static class PrimGreaterOrEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "image.isLargeInteger(lhs)")
         protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) >= 0);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
@@ -710,14 +710,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 27)
     protected abstract static class PrimEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final NativeObject lhs, @SuppressWarnings("unused") final long rhs) {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final boolean doLargeIntegerLong(final NativeObject lhs, @SuppressWarnings("unused") final long rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             assert !LargeIntegers.fitsIntoLong(lhs) : "non-reduced large integer!";
             return BooleanObject.FALSE;
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile sameSignProfile) {
             if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
@@ -738,17 +740,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 28)
     protected abstract static class PrimNotEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final NativeObject lhs, @SuppressWarnings("unused") final long rhs) {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final boolean doLargeIntegerLong(final NativeObject lhs, @SuppressWarnings("unused") final long rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             assert !LargeIntegers.fitsIntoLong(lhs) : "non-reduced large integer!";
             return BooleanObject.TRUE;
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile sameSignProfile) {
-            return !PrimEqualLargeIntegersNode.doLargeInteger(lhs, rhs, node, sameSignProfile);
+            return !PrimEqualLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
         }
 
         /** Quick return `true` if b is not a Number or Complex. */
@@ -762,13 +766,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 29)
     protected abstract static class PrimMultiplyLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "image.isLargeInteger(lhs)")
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.multiply(image, lhs, rhs);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.multiply(image, lhs, rhs);
@@ -778,13 +782,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 30)
     protected abstract static class PrimDivideLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"rhs != 0", "isIntegralWhenDividedBy(image, lhs, rhs)"})
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0", "isIntegralWhenDividedBy(image, lhs, rhs)"})
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.divide(image, lhs, rhs);
         }
 
-        @Specialization(guards = {"!isZero(rhs)", "isIntegralWhenDividedBy(image, lhs, rhs)"})
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)", "isIntegralWhenDividedBy(image, lhs, rhs)"})
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.divide(image, lhs, rhs);
@@ -794,13 +798,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 31)
     protected abstract static class PrimFloorModLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "image.isLargeInteger(lhs)")
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.floorMod(image, lhs, rhs);
         }
 
-        @Specialization
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.floorMod(image, lhs, rhs);
@@ -810,13 +814,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 32)
     protected abstract static class PrimFloorDivideLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "rhs != 0")
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.floorDivide(image, lhs, rhs);
         }
 
-        @Specialization(guards = "!isZero(rhs)")
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.floorDivide(image, lhs, rhs);
@@ -826,13 +830,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 33)
     protected abstract static class PrimQuoLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "rhs != 0")
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
         protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.divide(image, lhs, rhs);
         }
 
-        @Specialization(guards = "!isZero(rhs)")
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return LargeIntegers.divide(image, lhs, rhs);
@@ -1281,8 +1285,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         public static final int HASH_MULTIPLY_CONSTANT = 1664525;
         public static final int HASH_MULTIPLY_MASK = 0xFFFFFFF;
 
-        @Specialization
-        protected static final long doLargeInteger(final NativeObject receiver) {
+        @Specialization(guards = "image.isLargeInteger(receiver)")
+        protected static final long doLargeInteger(final NativeObject receiver,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             return doLong(LargeIntegers.longValue(receiver));
         }
 

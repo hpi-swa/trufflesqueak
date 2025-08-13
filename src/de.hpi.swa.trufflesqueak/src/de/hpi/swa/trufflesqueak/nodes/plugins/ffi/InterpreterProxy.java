@@ -514,7 +514,7 @@ public final class InterpreterProxy {
             return returnBoolean(integer >= 0L);
         }
         if (object instanceof final NativeObject largeInteger) {
-            return returnBoolean(LargeIntegers.fitsIntoLong(largeInteger) && LargeIntegers.isZeroOrPositive(SqueakImageContext.getSlow(), largeInteger));
+            return returnBoolean(LargeIntegers.isZeroOrPositive(SqueakImageContext.getSlow(), largeInteger) && LargeIntegers.fitsIntoLong(largeInteger));
         }
         return returnBoolean(false);
     }
