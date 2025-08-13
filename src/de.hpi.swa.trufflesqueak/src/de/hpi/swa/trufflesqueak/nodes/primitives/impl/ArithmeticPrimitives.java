@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.ExactMath;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -64,8 +65,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "image.isLargeInteger(rhs)")
         protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return LargeIntegers.add(image, rhs, lhs);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            return PrimAddLargeIntegersNode.doLargeIntegerLong(rhs, lhs, image, node, sameSignProfile);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -96,8 +99,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "image.isLargeInteger(rhs)")
         protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return LargeIntegers.subtract(image, lhs, rhs);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(image, rhs, lhs))) {
+                return LargeIntegers.digitSubtract(image, lhs, rhs);
+            } else {
+                return LargeIntegers.digitAdd(image, lhs, rhs); // Squeak has redundant #normalize
+            }
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -549,19 +558,31 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-// @GenerateNodeFactory
-// @SqueakPrimitive(indices = 21)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 21)
     protected abstract static class PrimAddLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
-                        @Bind final SqueakImageContext image) {
-            return LargeIntegers.add(image, lhs, rhs);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(image, lhs, rhs))) {
+                return LargeIntegers.digitAdd(image, lhs, rhs); // Squeak has redundant #normalize
+            } else {
+                return LargeIntegers.digitSubtract(image, lhs, rhs);
+            }
         }
 
         @Specialization
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return LargeIntegers.add(image, lhs, rhs);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+                return LargeIntegers.digitAdd(image, lhs, rhs); // Squeak has redundant #normalize
+            } else {
+                return LargeIntegers.digitSubtract(image, lhs, rhs);
+            }
         }
     }
 
@@ -570,14 +591,26 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSubtractLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
-                        @Bind final SqueakImageContext image) {
-            return LargeIntegers.subtract(image, lhs, rhs);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(image, lhs, rhs))) {
+                return LargeIntegers.digitSubtract(image, lhs, rhs);
+            } else {
+                return LargeIntegers.digitAdd(image, lhs, rhs); // Squeak has redundant #normalize
+            }
         }
 
         @Specialization
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return LargeIntegers.subtract(image, lhs, rhs);
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+                return LargeIntegers.digitSubtract(image, lhs, rhs);
+            } else {
+                return LargeIntegers.digitAdd(image, lhs, rhs); // Squeak has redundant #normalize
+            }
         }
     }
 

@@ -147,8 +147,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile differentSignProfile) {
-            return Math.addExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            return Math.addExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, sameSignProfile, node));
         }
 
         @Specialization(replaces = "doLong")
@@ -166,7 +166,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return digitAdd(image, rhs, lhs);
+            return digitAdd(image, lhs, rhs);
         }
 
         @Specialization
@@ -182,16 +182,16 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Bind final Node node,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            return Math.subtractExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
+                        @Shared("sameSignProfile") @Cached final InlinedConditionProfile sameSignProfile) {
+            return Math.subtractExact(lhs, rhsNegatedOnDifferentSign(lhs, rhs, sameSignProfile, node));
         }
 
         @Specialization(replaces = "doLong")
         protected static final Object doLongWithOverflow(final long lhs, final long rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            return subtract(image, lhs, rhsNegatedOnDifferentSign(lhs, rhs, differentSignProfile, node));
+                        @Shared("sameSignProfile") @Cached final InlinedConditionProfile sameSignProfile) {
+            return subtract(image, lhs, rhsNegatedOnDifferentSign(lhs, rhs, sameSignProfile, node));
         }
 
         @Specialization
@@ -202,14 +202,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image,
-                        @Bind final Node node,
-                        @Shared("differentSignProfile") @Cached final InlinedConditionProfile differentSignProfile) {
-            if (differentSignProfile.profile(node, differentSign(image, rhs, lhs))) {
-                return add(image, rhs, lhs);
-            } else {
-                return subtract(image, lhs, rhs);
-            }
+                        @Bind final SqueakImageContext image) {
+            return digitSubtract(image, lhs, rhs);
         }
 
         @Specialization
@@ -690,16 +684,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
      * Arithmetic Operations
      */
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object add(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
-        return normalize(image, toBigInteger(image, lhs).add(toBigInteger(image, rhs)));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object add(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        return normalize(image, toBigInteger(image, lhs).add(BigInteger.valueOf(rhs)));
-    }
-
     public static Object add(final SqueakImageContext image, final long lhs, final long rhs) {
         /* Inlined version of Math.addExact(x, y) with large integer fallback. */
         final long result = lhs + rhs;
@@ -710,9 +694,16 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return result;
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    private static NativeObject addLarge(final SqueakImageContext image, final long lhs, final long rhs) {
-        return toNativeObject(image, BigInteger.valueOf(lhs).add(BigInteger.valueOf(rhs)));
+    @TruffleBoundary
+    private static Object addLarge(final SqueakImageContext image, final long lhs, final long rhs) {
+        final byte[] lhsBytes = createLargeFromSmallInteger(lhs);
+        final byte[] rhsBytes = createLargeFromSmallInteger(rhs);
+        final boolean neg = lhs < 0;
+        if (sameSign(lhs, rhs)) {
+            return digitAdd(image, lhsBytes, rhsBytes, neg);
+        } else {
+            return digitSubtract(image, lhsBytes, rhsBytes, neg);
+        }
     }
 
     public static Object digitAdd(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
@@ -723,9 +714,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return digitAdd(image, lhs.getByteStorage(), createLargeFromSmallInteger(rhs), image.isLargeNegativeInteger(lhs));
     }
 
+    public static Object digitAdd(final SqueakImageContext image, final long lhs, final NativeObject rhs) {
+        return digitAdd(image, createLargeFromSmallInteger(lhs), rhs.getByteStorage(), lhs < 0);
+    }
+
     public static Object digitAdd(final SqueakImageContext image, final long lhs, final long rhs) {
         final long x = lhs;
-        final long y = differentSign(lhs, rhs) ? rhs : -rhs;
+        final long y = sameSign(lhs, rhs) ? -rhs : rhs;
         final long r = x + y;
         // HD 2-12 Overflow iff both arguments have the opposite sign of the result
         if (((x ^ r) & (y ^ r)) < 0) {
@@ -831,19 +826,19 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     public static Object digitSubtract(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        return digitSubtract(image, lhs, createLargeFromSmallInteger(rhs));
+        return digitSubtract(image, lhs.getByteStorage(), createLargeFromSmallInteger(rhs), image.isLargeNegativeInteger(lhs));
+    }
+
+    public static Object digitSubtract(final SqueakImageContext image, final long lhs, final NativeObject rhs) {
+        return digitSubtract(image, createLargeFromSmallInteger(lhs), rhs.getByteStorage(), lhs < 0);
     }
 
     public static Object digitSubtract(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhsBytes) {
-        return digitSubtract(image, lhs, rhsBytes.getByteStorage());
+        return digitSubtract(image, lhs.getByteStorage(), rhsBytes.getByteStorage(), image.isLargeNegativeInteger(lhs));
     }
 
-    public static Object digitSubtract(final SqueakImageContext image, final NativeObject lhs, final byte[] rhsBytes) {
-        final byte[] lhsBytes = lhs.getByteStorage();
-        /* convert it to a not normalized LargeInteger */
-
+    public static Object digitSubtract(final SqueakImageContext image, final byte[] lhsBytes, final byte[] rhsBytes, final boolean lhsNeg) {
         /* begin digitSubLarge:with: */
-        final boolean firstNeg = image.isLargeNegativeInteger(lhs);
         int firstDigitLen = (lhsBytes.length + 3) / 4;
         int secondDigitLen = (rhsBytes.length + 3) / 4;
         if (firstDigitLen == secondDigitLen) {
@@ -862,13 +857,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             largeDigitLen = secondDigitLen;
             smaller = lhsBytes;
             smallerDigitLen = firstDigitLen;
-            neg = !firstNeg;
+            neg = !lhsNeg;
         } else {
             larger = lhsBytes;
             largeDigitLen = firstDigitLen;
             smaller = rhsBytes;
             smallerDigitLen = secondDigitLen;
-            neg = firstNeg;
+            neg = lhsNeg;
         }
         final byte[] res = new byte[largeDigitLen * 4];
         /* begin cDigitSub:len:with:len:into: */
@@ -889,16 +884,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         /* end digitSubLarge:with: */
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object subtract(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
-        return normalize(image, toBigInteger(image, lhs).subtract(toBigInteger(image, rhs)));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object subtract(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        return normalize(image, toBigInteger(image, lhs).subtract(BigInteger.valueOf(rhs)));
-    }
-
     public static Object subtract(final SqueakImageContext image, final long lhs, final long rhs) {
         /* Inlined version of Math.subtractExact(x, y) with large integer fallback. */
         final long result = lhs - rhs;
@@ -910,14 +895,16 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return result;
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    private static NativeObject subtractLarge(final SqueakImageContext image, final long lhs, final long rhs) {
-        return toNativeObject(image, BigInteger.valueOf(lhs).subtract(BigInteger.valueOf(rhs)));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object subtract(final SqueakImageContext image, final long lhs, final NativeObject rhs) {
-        return normalize(image, BigInteger.valueOf(lhs).subtract(toBigInteger(image, rhs)));
+    @TruffleBoundary
+    private static Object subtractLarge(final SqueakImageContext image, final long lhs, final long rhs) {
+        final byte[] lhsBytes = createLargeFromSmallInteger(lhs);
+        final byte[] rhsBytes = createLargeFromSmallInteger(rhs);
+        final boolean neg = lhs < 0;
+        if (sameSign(lhs, rhs)) {
+            return digitSubtract(image, lhsBytes, rhsBytes, neg);
+        } else {
+            return digitAdd(image, lhsBytes, rhsBytes, neg);
+        }
     }
 
     public static Object digitMultiplyNegative(final SqueakImageContext image, final NativeObject lhs, final byte[] rhsBytes, final boolean neg) {
@@ -1361,16 +1348,16 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
      * Checks
      */
 
-    public static boolean differentSign(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        return isNegative(image, lhs) ^ rhs < 0;
+    public static boolean sameSign(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
+        return isPositive(image, lhs) == rhs >= 0;
     }
 
-    private static boolean differentSign(final long lhs, final long rhs) {
-        return lhs < 0 ^ rhs < 0;
+    public static boolean sameSign(final long lhs, final long rhs) {
+        return (lhs ^ rhs) >= 0;
     }
 
-    public static long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final InlinedConditionProfile differentSignProfile, final Node node) {
-        return differentSignProfile.profile(node, differentSign(lhs, rhs)) ? -rhs : rhs;
+    public static long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final InlinedConditionProfile sameSignProfile, final Node node) {
+        return sameSignProfile.profile(node, sameSign(lhs, rhs)) ? rhs : -rhs;
     }
 
     public static boolean fitsIntoInt(final NativeObject value) {
