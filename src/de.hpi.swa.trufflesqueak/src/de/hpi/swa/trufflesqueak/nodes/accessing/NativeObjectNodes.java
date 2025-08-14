@@ -127,27 +127,31 @@ public final class NativeObjectNodes {
             doNativeLongs(obj, index, value.getValue());
         }
 
-        @Specialization(guards = {"obj.isByteType()", "inRange(value, 0, BYTE_MAX)"})
-        protected static final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final NativeObject value) {
+        @Specialization(guards = {"obj.isByteType()", "image.isLargeInteger(value)", "inRange(value, 0, BYTE_MAX)"})
+        protected static final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final NativeObject value,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             doNativeBytes(obj, index, LargeIntegers.longValue(value));
         }
 
-        @Specialization(guards = {"obj.isShortType()", "inRange(value, 0, SHORT_MAX)"})
-        protected static final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final NativeObject value) {
+        @Specialization(guards = {"obj.isShortType()", "image.isLargeInteger(value)", "inRange(value, 0, SHORT_MAX)"})
+        protected static final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final NativeObject value,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             doNativeShorts(obj, index, LargeIntegers.longValue(value));
         }
 
-        @Specialization(guards = {"obj.isIntType()", "inRange(value, 0, INTEGER_MAX)"})
-        protected static final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final NativeObject value) {
+        @Specialization(guards = {"obj.isIntType()", "image.isLargeInteger(value)", "inRange(value, 0, INTEGER_MAX)"})
+        protected static final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final NativeObject value,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             doNativeInts(obj, index, LargeIntegers.longValue(value));
         }
 
-        @Specialization(guards = {"obj.isLongType()", "isZeroOrPositive(getContext(), value)", "fitsIntoLong(value)"})
-        protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final NativeObject value) {
+        @Specialization(guards = {"obj.isLongType()", "image.isLargeInteger(value)", "isZeroOrPositive(image, value)", "fitsIntoLong(value)"})
+        protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final NativeObject value,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             doNativeLongs(obj, index, LargeIntegers.longValue(value));
         }
 
-        @Specialization(guards = {"obj.isLongType()", "isZeroOrPositive(image, value)", "!fitsIntoLong(value)", "lessThanOneShiftedBy64(value)"})
+        @Specialization(guards = {"obj.isLongType()", "image.isLargeInteger(value)", "isZeroOrPositive(image, value)", "!fitsIntoLong(value)", "lessThanOneShiftedBy64(value)"})
         protected static final void doNativeLongsLargeIntegerSigned(final NativeObject obj, final long index, final NativeObject value,
                         @Bind final SqueakImageContext image) {
             doNativeLongs(obj, index, LargeIntegers.toSignedLong(image, value));

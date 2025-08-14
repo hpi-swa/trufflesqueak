@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -55,8 +56,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     private static final Field BIG_INTEGER_MAG_FIELD = ReflectionUtils.lookupField(BigInteger.class, "mag");
 
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
-    public static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
-    @CompilationFinal(dimensions = 1) public static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = toByteArray(LONG_MIN_OVERFLOW_RESULT);
+    @CompilationFinal(dimensions = 1) public static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = toByteArray(BigInteger.valueOf(Long.MIN_VALUE).abs());
 
     private static final ArithmeticException LARGE_INTEGER_OUT_OF_INT_RANGE = new ArithmeticException("Large integer out of int range");
     private static final ArithmeticException LARGE_INTEGER_OUT_OF_LONG_RANGE = new ArithmeticException("Large integer out of long range");
@@ -406,7 +406,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return image.asArrayOfLongs(divide, rcvr % arg);
         }
 
-        @TruffleBoundary
         private static ArrayObject createArrayWithLongMinOverflowResult(final SqueakImageContext image, final long rcvr, final long arg) {
             return image.asArrayOfObjects(createLongMinOverflowResult(image), rcvr % arg);
         }
@@ -665,7 +664,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primNormalizePositive")
     protected abstract static class PrimNormalizePositiveNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = {"receiver.isByteType()", "image.isLargePositiveInteger(receiver)"})
+        @Specialization(guards = {"image.isLargePositiveInteger(receiver)"})
         protected static final Object doNativeObject(final NativeObject receiver,
                         @Bind final SqueakImageContext image) {
             return normalize(image, receiver.getByteStorage(), false);
@@ -675,7 +674,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primNormalizeNegative")
     protected abstract static class PrimNormalizeNegativeNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = {"receiver.isByteType()", "image.isLargeNegativeInteger(receiver)"})
+        @Specialization(guards = {"image.isLargeNegativeInteger(receiver)"})
         protected static final Object doNativeObject(final NativeObject receiver,
                         @Bind final SqueakImageContext image) {
             return normalize(image, receiver.getByteStorage(), true);
@@ -976,12 +975,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         /* end digitMultiplyLarge:with:negative: */
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object multiply(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
         return normalize(image, toBigInteger(image, lhs).multiply(toBigInteger(image, rhs)));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object multiply(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
         if (rhs == 0) {
             return 0L;
@@ -989,7 +988,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return normalize(image, toBigInteger(image, lhs).multiply(BigInteger.valueOf(rhs)));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object multiply(final SqueakImageContext image, final long lhs, final long rhs) {
         /* Inlined version of Math.multiplyExact(x, y) with large integer fallback. */
         final long result = lhs * rhs;
@@ -1000,18 +998,23 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             // Check the result using the divide operator
             // and check for the special case of Long.MIN_VALUE * -1
             if (rhs != 0 && result / rhs != lhs || lhs == Long.MIN_VALUE && rhs == -1) {
-                return toNativeObject(image, BigInteger.valueOf(lhs).multiply(BigInteger.valueOf(rhs)));
+                return multiplyLarge(image, lhs, rhs);
             }
         }
         return result;
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
+    private static NativeObject multiplyLarge(final SqueakImageContext image, final long lhs, final long rhs) {
+        return toNativeObject(image, BigInteger.valueOf(lhs).multiply(BigInteger.valueOf(rhs)));
+    }
+
+    @TruffleBoundary
     public static Object divide(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
         return normalize(image, toBigInteger(image, lhs).divide(toBigInteger(image, rhs)));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object divide(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
         return normalize(image, toBigInteger(image, lhs).divide(BigInteger.valueOf(rhs)));
     }
@@ -1021,12 +1024,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return 0L;
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object floorDivide(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
         return normalize(image, floorDivide(toBigInteger(image, lhs), toBigInteger(image, rhs)));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object floorDivide(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
         return normalize(image, floorDivide(toBigInteger(image, lhs), BigInteger.valueOf(rhs)));
     }
@@ -1050,17 +1053,17 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object floorMod(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
         return floorMod(image, toBigInteger(image, lhs), toBigInteger(image, rhs));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object floorMod(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
         return floorMod(image, toBigInteger(image, lhs), BigInteger.valueOf(rhs));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object floorMod(final SqueakImageContext image, final long lhs, final NativeObject rhs) {
         return floorMod(image, BigInteger.valueOf(lhs), toBigInteger(image, rhs));
     }
@@ -1069,12 +1072,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return normalize(image, lhs.subtract(floorDivide(lhs, rhs).multiply(rhs)));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static long remainder(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
         return toBigInteger(image, lhs).remainder(BigInteger.valueOf(rhs)).longValue();
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object remainder(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
         return normalize(image, toBigInteger(image, lhs).remainder(toBigInteger(image, rhs)));
     }
@@ -1129,7 +1132,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return highBitOfLargeInt(value) <= Long.SIZE;
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
     public static boolean inRange(final NativeObject value, final long minValue, final long maxValue) {
         if (fitsIntoLong(value)) {
             final long longValueExact = longValue(value);
@@ -1345,7 +1347,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return newBytes;
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object shiftLeftPositive(final SqueakImageContext image, final long lhs, final int rhs) {
         assert rhs >= 0 : "This method must be used with a positive 'b' argument";
         return normalize(image, BigInteger.valueOf(lhs).shiftLeft(rhs));
@@ -1381,12 +1383,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return bytesLength < Long.BYTES || (bytesLength == Long.BYTES && (bytes[7] & 128) == 0);
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static boolean isIntegralWhenDividedBy(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
         return toBigInteger(image, lhs).remainder(toBigInteger(image, rhs)).signum() == 0;
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static boolean isIntegralWhenDividedBy(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
         return toBigInteger(image, lhs).remainder(BigInteger.valueOf(rhs)).signum() == 0;
     }
@@ -1410,9 +1412,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     /*
      * LargeInteger
      */
-    @TruffleBoundary
     public static NativeObject createLongMinOverflowResult(final SqueakImageContext image) {
-        return toNativeObject(image, LONG_MIN_OVERFLOW_RESULT);
+        return NativeObject.newNativeBytes(image, image.largePositiveIntegerClass, LONG_MIN_OVERFLOW_RESULT_BYTES.clone());
     }
 
     /* Utilities */
@@ -1441,7 +1442,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
      * BigInteger conversion
      */
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static Object truncateExact(final SqueakImageContext image, final double value) {
         return normalize(image, new BigDecimal(value).toBigInteger());
     }
@@ -1572,7 +1573,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static long toSignedLong(final SqueakImageContext image, final NativeObject value) {
         final int bitLength = highBitOfLargeInt(value);
         assert isPositive(SqueakImageContext.getSlow(), value) && bitLength <= Long.SIZE;
@@ -1583,7 +1584,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     public static NativeObject toUnsigned(final SqueakImageContext image, final long value) {
         assert value < 0;
         return toNativeObject(image, BigInteger.valueOf(value).add(ONE_SHIFTED_BY_64));
@@ -1598,7 +1599,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return NativeObject.newNativeBytes(image, result.signum() >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass, toByteArray(result));
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     private static byte[] toByteArray(final BigInteger value) {
         final int byteLen = (value.abs().bitLength() + 7) / 8;
         final byte[] byteArray = new byte[byteLen];
@@ -1623,7 +1624,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         try {
             return (int[]) BIG_INTEGER_MAG_FIELD.get(value);
         } catch (final IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw SqueakException.create("Error accessing magnitude", e);
         }
     }
 }
