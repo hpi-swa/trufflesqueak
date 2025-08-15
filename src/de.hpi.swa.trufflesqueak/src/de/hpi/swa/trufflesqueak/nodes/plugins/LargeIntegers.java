@@ -6,7 +6,9 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -47,7 +49,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -55,6 +56,7 @@ import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     private static final Field BIG_INTEGER_MAG_FIELD = ReflectionUtils.lookupField(BigInteger.class, "mag");
+    private static final Constructor<?> BIG_INTEGER_INT_ARRAY_INT_CTOR = ReflectionUtils.lookupConstructor(BigInteger.class, int[].class, int.class);
 
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     @CompilationFinal(dimensions = 1) public static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = toByteArray(BigInteger.valueOf(Long.MIN_VALUE).abs());
@@ -1591,7 +1593,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         final int digitLen = (bytes.length + 3) / 4;
         long result = cDigitOfAt(bytes, 0);
         if (digitLen > 1) {
-            result += (cDigitOfAt(bytes, 1) << 32);
+            result += cDigitOfAt(bytes, 1) << 32;
         }
         return result;
     }
@@ -1607,7 +1609,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @TruffleBoundary
     public static long toSignedLong(final SqueakImageContext image, final NativeObject value) {
         final int bitLength = highBitOfLargeInt(value);
-        assert isPositive(SqueakImageContext.getSlow(), value) && bitLength <= Long.SIZE;
+        assert isPositive(image, value) && bitLength <= Long.SIZE;
         if (bitLength == Long.SIZE) {
             return toBigInteger(image, value).subtract(ONE_SHIFTED_BY_64).longValue();
         } else {
@@ -1623,7 +1625,24 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @TruffleBoundary
     public static BigInteger toBigInteger(final SqueakImageContext image, final NativeObject value) {
-        return new BigInteger(image.largePositiveIntegerClass == value.getSqueakClass() ? 1 : -1, ArrayUtils.swapOrderCopy(value.getByteStorage()));
+        final int signum = image.isLargeNegativeInteger(value) ? -1 : 1;
+        final byte[] bytes = value.getByteStorage();
+        final int digitLen = (bytes.length + 3) / 4;
+        final int[] magnitude = new int[digitLen];
+        for (int i = 0; i < digitLen; i++) {
+            magnitude[digitLen - 1 - i] = (int) cDigitOfAt(bytes, i);
+        }
+        return toBigInteger(magnitude, signum);
+    }
+
+    private static BigInteger toBigInteger(final int[] magnitude, final int signum) {
+        try {
+            return (BigInteger) BIG_INTEGER_INT_ARRAY_INT_CTOR.newInstance(magnitude, signum);
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (final IllegalAccessException | InvocationTargetException e) {
+            throw SqueakException.create("Error constructing BigInteger", e);
+        }
     }
 
     public static NativeObject toNativeObject(final SqueakImageContext image, final BigInteger result) {

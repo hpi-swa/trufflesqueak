@@ -6,12 +6,24 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import jdk.internal.module.Modules;
 
 public final class ReflectionUtils {
+    public static Constructor<?> lookupConstructor(final Class<?> declaringClass, final Class<?>... parameterTypes) {
+        try {
+            final Constructor<?> result = declaringClass.getDeclaredConstructor(parameterTypes);
+            openModule(declaringClass);
+            result.setAccessible(true);
+            return result;
+        } catch (final ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static Field lookupField(final Class<?> declaringClass, final String fieldName) {
         try {
             final Field result = declaringClass.getDeclaredField(fieldName);
