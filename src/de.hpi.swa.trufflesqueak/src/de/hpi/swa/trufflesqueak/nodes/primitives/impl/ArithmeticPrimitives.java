@@ -578,7 +578,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
-            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
                 return LargeIntegers.digitAdd(image, lhs, rhs); // Squeak has redundant #normalize
             } else {
                 return LargeIntegers.digitSubtract(image, lhs, rhs);
@@ -606,7 +606,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
-            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
                 return LargeIntegers.digitSubtract(image, lhs, rhs);
             } else {
                 return LargeIntegers.digitAdd(image, lhs, rhs); // Squeak has redundant #normalize
@@ -628,7 +628,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile sameSignProfile) {
-            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
                 final int comparison = LargeIntegers.digitCompare(lhs, rhs);
                 return BooleanObject.wrap(image.isLargeNegativeInteger(lhs) ? comparison > 0 : comparison < 0);
             } else {
@@ -651,7 +651,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile sameSignProfile) {
-            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
                 final int comparison = LargeIntegers.digitCompare(lhs, rhs);
                 return BooleanObject.wrap(image.isLargeNegativeInteger(lhs) ? comparison < 0 : comparison > 0);
             } else {
@@ -675,7 +675,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile sameSignProfile) {
             final boolean lhsNeg = image.isLargeNegativeInteger(lhs);
-            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
                 final int comparison = LargeIntegers.digitCompare(lhs, rhs);
                 return BooleanObject.wrap(lhsNeg ? comparison >= 0 : comparison <= 0);
             } else {
@@ -698,7 +698,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile sameSignProfile) {
-            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
                 final int comparison = LargeIntegers.digitCompare(lhs, rhs);
                 return BooleanObject.wrap(image.isLargeNegativeInteger(lhs) ? comparison <= 0 : comparison >= 0);
             } else {
@@ -722,7 +722,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile sameSignProfile) {
-            if (sameSignProfile.profile(node, lhs.getSqueakClass() == rhs.getSqueakClass())) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
                 return BooleanObject.wrap(LargeIntegers.digitCompare(lhs, rhs) == 0);
             } else {
                 return BooleanObject.FALSE;
