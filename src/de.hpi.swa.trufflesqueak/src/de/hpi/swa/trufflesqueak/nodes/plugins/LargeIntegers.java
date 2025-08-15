@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -425,6 +426,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             } else {
                 result[1] = toNativeObject(image, divide[1]);
             }
+            final Object[] res = digitDivNegative2(image, rcvr.getByteStorage(), arg.getByteStorage(),
+            negative);
+            assert sameResult(result[0], res[0]);
+            assert sameResult(result[1], res[1]);
             return image.asArrayOfObjects(result);
         }
 
@@ -472,6 +477,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             return result;
         }
+    }
+
+    public static boolean sameResult(final Object result, final Object result2) {
+        if (result instanceof NativeObject r) {
+            assert result2 instanceof NativeObject r2 && r.getSqueakClass() == r2.getSqueakClass() && Arrays.equals(r.getByteStorage(), r2.getByteStorage());
+        } else {
+            assert result2 instanceof Long r2 && (long) result == r2;
+        }
+        return true;
     }
 
     @GenerateNodeFactory
@@ -915,6 +929,168 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    public static Object[] digitDivNegative2(final SqueakImageContext image, final byte[] lhsBytes, final byte[] rhsBytes, final boolean neg) {
+        final ClassObject lhsClass = neg ? image.largeNegativeIntegerClass : image.largePositiveIntegerClass;
+        /*
+         * check for zerodivide and convert to LargeInteger Avoid crashes in case of getting
+         * unnormalized args.
+         */
+
+        /* begin digitDivLarge:with:negative: */
+        final int firstDigitLen = (lhsBytes.length + 3) / 4;
+        final int secondDigitLen = (rhsBytes.length + 3) / 4;
+        final int quoDigitLen = (firstDigitLen - secondDigitLen) + 1;
+        if (quoDigitLen <= 0) {
+            return new Object[]{0L, NativeObject.newNativeBytes(image, lhsClass, lhsBytes)};
+        }
+
+        /*
+         * set rem and div to copies of firstInteger and secondInteger, respectively. However, to
+         * facilitate use of Knuth's algorithm, multiply rem and div by 2 (that is, shift) until the
+         * high word of div is >=16r80000000
+         */
+
+        final int d = 32 - cHighBit32(cDigitOfAt(rhsBytes, secondDigitLen - 1));
+
+        byte[] div = digitLshift(rhsBytes, d);
+        div = largeIntGrowTo(div, (((div.length + 3) / 4) + 1) * 4);
+
+        byte[] rem = digitLshift(lhsBytes, d);
+        if (((rem.length + 3) / 4) == firstDigitLen) {
+            rem = largeIntGrowTo(rem, (firstDigitLen + 1) * 4);
+        }
+
+        final byte[] quo = new byte[quoDigitLen * 4];
+
+        final int divLen = (div.length + 3) / 4;
+        final int remLen = (rem.length + 3) / 4;
+        final int quoLen = (quo.length + 3) / 4;
+
+        /* begin cDigitDiv:len:rem:len:quo:len: */
+        final int dl = divLen - 1;
+
+        /* Last actual byte of data (ST ix) */
+        final int ql = quoLen;
+        final int dh = (int) cDigitOfAt(div, dl - 1);
+        final int dnh;
+        if (dl == 1) {
+            dnh = 0;
+        } else {
+            dnh = (int) cDigitOfAt(div, dl - 2);
+        }
+        for (int k = 1; k <= ql; k++) {
+            final int j = (remLen + 1) - k;
+
+            long q;
+            /* r1 := rem digitAt: j. */
+            if (cDigitOfAt(rem, j - 1) == dh) {
+                q = 0xFFFFFFFFL;
+            } else {
+                long r1r2 = cDigitOfAt(rem, j - 1);
+                r1r2 = (r1r2 << 32) + cDigitOfAt(rem, j - 2);
+                final long t = r1r2 % dh;
+                q = r1r2 / dh;
+
+                /* Next compute (hi,lo) := q*dnh */
+                final long mul = q * dnh;
+                long hi = (mul) >> 32;
+                long lo = mul & 0xFFFFFFFFL;
+
+                /*
+                 * Correct overestimate of q. Max of 2 iterations through loop -- see Knuth vol. 2
+                 */
+                final long r3;
+                if (j < 3) {
+                    r3 = 0;
+                } else {
+                    r3 = cDigitOfAt(rem, j - 3);
+                }
+                while (true) {
+                    final boolean cond;
+                    if ((t < hi) || ((t == hi) && (r3 < lo))) {
+                        q--;
+                        if (hi > 0) {
+                            if (lo < dnh) {
+                                hi--;
+                                lo = (lo + 0x100000000L) - dnh;
+                            } else {
+                                lo -= dnh;
+                            }
+                            cond = hi >= dh;
+                        } else {
+                            cond = false;
+                        }
+                    } else {
+                        cond = false;
+                    }
+
+                    /* i.e. (t,r3) < (hi,lo) */
+                    if (!(cond))
+                        break;
+                    hi -= dh;
+                }
+            }
+
+            /*
+             * Compute q = (r1,r2)//dh, t = (r1,r2)\\dh. Note that r1,r2 are uint64, not uint32. r2
+             * := (rem digitAt: j - 2). Subtract q*div from rem
+             */
+            int l = j - dl;
+            long a = 0;
+            for (int i = 1; i <= divLen; i++) {
+                final long divI = cDigitOfAt(div, i - 1);
+                final long hi = divI * (q >> 32);
+                final long lo = divI * (q & 0xFFFFFFFFL);
+                long b = (cDigitOfAt(rem, l - 1) - a) - (lo & 0xFFFFFFFFL);
+                cDigitOfAtPut(rem, l - 1, b & 0xFFFFFFFFL);
+                /* simulate arithmetic shift (preserving sign of b) */
+                b = ((b) >> 32) | ((b >> 0x3F) & 0xFFFFFFFF00000000L);
+                a = (hi + ((lo) >> 32)) - b;
+                l++;
+            }
+            if (a > 0) {
+                q--;
+                l = j - dl;
+                a = 0;
+                for (int i = 1; i <= divLen; i++) {
+                    a = (a >> 32) + (cDigitOfAt(rem, l - 1) + cDigitOfAt(div, i - 1));
+                    cDigitOfAtPut(rem, l - 1, a & 0xFFFFFFFFL);
+                    l++;
+                }
+            }
+            /* Add div back into rem, decrease q by 1 */
+            cDigitOfAtPut(quo, quoLen - k, q);
+        }
+
+        /*
+         * maintain quo*arg+rem=self Estimate rem/div by dividing the leading two unint32 of rem by
+         * dh. The estimate is q = qhi*16r100000000+qlo, where qhi and qlo are uint32.
+         */
+
+        final NativeObject quoRes = NativeObject.newNativeBytes(image, lhsClass, quo);
+        final byte[] remBytes = digitRshiftlookfirst(rem, d, ((div.length + 3) / 4) - 1);
+        final NativeObject remRes = NativeObject.newNativeBytes(image, lhsClass, remBytes);
+
+        /* ^ Array with: quo with: rem */
+        return new Object[]{quoRes, remRes};
+        /* end digitDivLarge:with:negative: */
+    }
+
+    @TruffleBoundary
+    public static Object divide(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
+        return normalize(image, toBigInteger(image, lhs).divide(toBigInteger(image, rhs)));
+    }
+
+    @TruffleBoundary
+    public static Object divide(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
+        return normalize(image, toBigInteger(image, lhs).divide(BigInteger.valueOf(rhs)));
+    }
+
+    public static long divide(@SuppressWarnings("unused") final long lhs, final NativeObject rhs) {
+        assert !fitsIntoLong(rhs) : "non-reduced large integer!";
+        return 0L;
+    }
+
     public static Object digitMultiplyNegative(final SqueakImageContext image, final long lhs, final long rhs, final boolean neg) {
         /* Inlined version of Math.multiplyExact(x, y) with large integer fallback. */
         final long result = lhs * rhs;
@@ -1037,21 +1213,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @TruffleBoundary
     private static Object multiplyLarge(final SqueakImageContext image, final long lhs, final long rhs) {
         return digitMultiplyNegative(image, lhs, rhs, !sameSign(lhs, rhs));
-    }
-
-    @TruffleBoundary
-    public static Object divide(final SqueakImageContext image, final NativeObject lhs, final NativeObject rhs) {
-        return normalize(image, toBigInteger(image, lhs).divide(toBigInteger(image, rhs)));
-    }
-
-    @TruffleBoundary
-    public static Object divide(final SqueakImageContext image, final NativeObject lhs, final long rhs) {
-        return normalize(image, toBigInteger(image, lhs).divide(BigInteger.valueOf(rhs)));
-    }
-
-    public static long divide(@SuppressWarnings("unused") final long lhs, final NativeObject rhs) {
-        assert !fitsIntoLong(rhs) : "non-reduced large integer!";
-        return 0L;
     }
 
     @TruffleBoundary
