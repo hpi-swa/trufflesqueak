@@ -51,6 +51,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     private static final Field BIG_INTEGER_MAG_FIELD = ReflectionUtils.lookupField(BigInteger.class, "mag");
@@ -1525,25 +1526,33 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
      * significant 4 bytes.
      */
     private static long cDigitOfAt(final byte[] bytes, final int wordIndex) {
-        final int base = wordIndex * 4;
-        final int length = bytes.length;
-        final long b0 = (base + 0 < length) ? (bytes[base + 0] & 0xFFL) : 0;
-        final long b1 = (base + 1 < length) ? (bytes[base + 1] & 0xFFL) : 0;
-        final long b2 = (base + 2 < length) ? (bytes[base + 2] & 0xFFL) : 0;
-        final long b3 = (base + 3 < length) ? (bytes[base + 3] & 0xFFL) : 0;
-        return (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) & 0xFFFFFFFFL;
+        final int byteIndex = wordIndex * Integer.BYTES;
+        final int remainingBytes = bytes.length - byteIndex;
+        if (remainingBytes <= 0) {
+            return 0L;
+        } else if (remainingBytes >= Integer.BYTES) {
+            return VarHandleUtils.getInt(bytes, wordIndex) & 0xFFFFFFFFL;
+        } else if (remainingBytes == 1) {
+            return bytes[byteIndex] & 0xFFL;
+        } else if (remainingBytes == 2) {
+            return bytes[byteIndex] & 0xFFL | (bytes[byteIndex + 1] & 0xFFL) << 8;
+        } else {
+            return bytes[byteIndex] & 0xFFL | (bytes[byteIndex + 1] & 0xFFL) << 8 | (bytes[byteIndex + 2] & 0xFFL) << 16;
+        }
     }
 
     static void cDigitOfAtPut(final byte[] bytes, final int wordIndex, final long value) {
-        final int base = wordIndex * 4;
-        final int length = bytes.length;
-        bytes[base + 0] = (byte) value;
-        if (base + 1 < length) {
-            bytes[base + 1] = (byte) (value >> 8);
-            if (base + 2 < length) {
-                bytes[base + 2] = (byte) (value >> 16);
-                if (base + 3 < length) {
-                    bytes[base + 3] = (byte) (value >> 24);
+        final int byteIndex = wordIndex * Integer.BYTES;
+        final int remainingBytes = bytes.length - byteIndex;
+        assert remainingBytes > 0 : "cDigitOfAtPut requires at least one free byte slot";
+        if (remainingBytes >= Integer.BYTES) {
+            VarHandleUtils.putInt(bytes, wordIndex, (int) value);
+        } else {
+            bytes[byteIndex] = (byte) value;
+            if (remainingBytes > 1) {
+                bytes[byteIndex + 1] = (byte) (value >> 8);
+                if (remainingBytes == 3) {
+                    bytes[byteIndex + 2] = (byte) (value >> 16);
                 }
             }
         }
