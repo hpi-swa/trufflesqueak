@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.ExactMath;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -31,13 +32,14 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
@@ -58,12 +60,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.add(getContext(), lhs, rhs);
+            return LargeIntegers.add(getContext(), lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return rhs.add(lhs);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return PrimAddLargeIntegersNode.doLargeIntegerLong(rhs, lhs, image);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -89,12 +92,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.subtract(getContext(), lhs, rhs);
+            return LargeIntegers.subtract(getContext(), lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.subtract(lhs, rhs);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.subtract(image, lhs, rhs);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -118,9 +122,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs < rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) >= 0);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) >= 0);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -143,9 +148,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs > rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) <= 0);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) <= 0);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -168,9 +174,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs <= rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) > 0);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) > 0);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -193,9 +200,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs >= rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) < 0);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) < 0);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -218,9 +226,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs == rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) == 0);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) == 0);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -236,7 +245,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         /** Quick return `false` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(getContext(), rhs)", "!isPointersObject(rhs)"})
         protected static final boolean doQuickFalse(final long lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.FALSE;
         }
@@ -250,9 +259,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs != rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) != 0);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) != 0);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
@@ -268,7 +278,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         /** Quick return `true` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(getContext(), rhs)", "!isPointersObject(rhs)"})
         protected static final boolean doQuickTrue(final long lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.TRUE;
         }
@@ -284,12 +294,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.multiply(getContext(), lhs, rhs);
+            return LargeIntegers.multiply(getContext(), lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return rhs.multiply(lhs);
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.multiply(image, rhs, lhs);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()", rewriteOn = RespecializeException.class)
@@ -327,8 +338,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        protected final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(getContext());
+        protected final NativeObject doLongOverflow(final long lhs, final long rhs) {
+            return LargeIntegers.createLongMinOverflowResult(getContext());
         }
 
         @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, rewriteOn = RespecializeException.class)
@@ -361,9 +372,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(guards = "!rhs.isZero()")
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return rhs.floorModReverseOrder(lhs);
+        @Specialization(guards = {"!isZero(rhs)", "image.isLargeInteger(rhs)"})
+        protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorMod(image, lhs, rhs);
         }
     }
 
@@ -386,13 +398,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        protected final LargeIntegerObject doLongOverflowDivision(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(getContext());
+        protected final NativeObject doLongOverflowDivision(final long lhs, final long rhs) {
+            return LargeIntegers.createLongMinOverflowResult(getContext());
         }
 
-        @Specialization(guards = {"!rhs.isZero()"})
-        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.floorDivide(lhs, rhs);
+        @Specialization(guards = {"!isZero(rhs)", "image.isLargeInteger(rhs)"})
+        protected static final long doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorDivide(image, lhs, rhs);
         }
     }
 
@@ -406,13 +419,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        protected final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(getContext());
+        protected final NativeObject doLongOverflow(final long lhs, final long rhs) {
+            return LargeIntegers.createLongMinOverflowResult(getContext());
         }
 
-        @Specialization(guards = {"!rhs.isZero()"})
-        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.divide(lhs, rhs);
+        @Specialization(guards = {"!isZero(rhs)", "image.isLargeInteger(rhs)"})
+        protected static final long doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return LargeIntegers.divide(lhs, rhs);
         }
     }
 
@@ -424,16 +438,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver & arg;
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg,
-                        @Bind final Node node,
-                        @Cached final InlinedConditionProfile positiveProfile) {
-            return receiver & (positiveProfile.profile(node, receiver >= 0) ? arg.longValue() : arg.longValueExact());
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return doLong(receiver, LargeIntegers.longValueExact(arg));
         }
 
-        @Specialization(replaces = "doLongLargeQuick")
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return arg.and(receiver);
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
+        protected static final Object doLongLarge(final long receiver, final NativeObject arg,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.and(image, arg, receiver);
         }
     }
 
@@ -445,14 +459,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver | arg;
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg) {
-            return receiver | arg.longValueExact();
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return doLong(receiver, LargeIntegers.longValueExact(arg));
         }
 
-        @Specialization(replaces = "doLongLargeQuick")
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return arg.or(receiver);
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
+        protected static final Object doLongLarge(final long receiver, final NativeObject arg,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.or(image, receiver, arg);
         }
     }
 
@@ -464,20 +480,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver ^ arg;
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg) {
-            return receiver ^ arg.longValueExact();
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return doLong(receiver, LargeIntegers.longValueExact(arg));
         }
 
-        @Specialization(replaces = "doLongLargeQuick")
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return arg.xor(receiver);
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
+        protected static final Object doLongLarge(final long receiver, final NativeObject arg,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.xor(image, receiver, arg);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 17)
-    protected abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements Primitive1 {
         @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
         protected static final long doLongPositive(final long receiver, final long arg) {
             return receiver << arg;
@@ -489,7 +507,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
              * -1 in check needed, because we do not want to shift a positive long into negative
              * long (most significant bit indicates positive/negative).
              */
-            return LargeIntegerObject.shiftLeftPositive(getContext(), receiver, (int) arg);
+            return LargeIntegers.shiftLeftPositive(getContext(), receiver, (int) arg);
         }
 
         @Specialization(guards = {"arg < 0", "inLongSizeRange(arg)"})
@@ -509,6 +527,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean inLongSizeRange(final long arg) {
             return -Long.SIZE < arg;
         }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isLong(receiver)", "!isLong(arg)"})
+        protected static final Object doFallback(final Object receiver, final Object arg) {
+            throw PrimitiveFailed.GENERIC_ERROR;
+        }
     }
 
     @GenerateNodeFactory
@@ -525,119 +549,166 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 20)
     protected abstract static class PrimRemLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"rhs != 0"})
-        protected static final long doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.remainder(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+        protected static final long doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.remainder(image, lhs, rhs);
         }
 
-        @Specialization(guards = {"!rhs.isZero()"})
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.remainder(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.remainder(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 21)
     protected abstract static class PrimAddLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.add(rhs);
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.add(image, lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.add(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.add(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 22)
     protected abstract static class PrimSubtractLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.subtract(rhs);
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.subtract(image, lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.subtract(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.subtract(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 23)
     protected abstract static class PrimLessThanLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) < 0);
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) < 0);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) < 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) < 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(lhs));
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 24)
     protected abstract static class PrimGreaterThanLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) > 0);
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) > 0);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) > 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) > 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(rhs));
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 25)
     protected abstract static class PrimLessOrEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) <= 0);
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) <= 0);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) <= 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            final boolean lhsNeg = image.isLargeNegativeInteger(lhs);
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) <= 0);
+            } else {
+                return BooleanObject.wrap(lhsNeg);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 26)
     protected abstract static class PrimGreaterOrEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) >= 0);
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) >= 0);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) >= 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) >= 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(rhs));
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 27)
     protected abstract static class PrimEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
-            assert !lhs.fitsIntoLong() : "non-reduced large integer!";
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final boolean doLargeIntegerLong(final NativeObject lhs, @SuppressWarnings("unused") final long rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            assert !LargeIntegers.fitsIntoLong(lhs) : "non-reduced large integer!";
             return BooleanObject.FALSE;
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) == 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) == 0);
+            } else {
+                return BooleanObject.FALSE;
+            }
         }
 
         /** Quick return `false` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
-        protected static final boolean doQuickFalse(final LargeIntegerObject lhs, final AbstractSqueakObject rhs) {
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(getContext(), rhs)", "!isPointersObject(rhs)"})
+        protected static final boolean doQuickFalse(final NativeObject lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.FALSE;
         }
     }
@@ -645,20 +716,24 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 28)
     protected abstract static class PrimNotEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
-            assert !lhs.fitsIntoLong() : "non-reduced large integer!";
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final boolean doLargeIntegerLong(final NativeObject lhs, @SuppressWarnings("unused") final long rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            assert !LargeIntegers.fitsIntoLong(lhs) : "non-reduced large integer!";
             return BooleanObject.TRUE;
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) != 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            return !PrimEqualLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
         }
 
         /** Quick return `true` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(getContext(), rhs)", "!isPointersObject(rhs)"})
         protected static final boolean doQuickTrue(final Object lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.TRUE;
         }
@@ -667,70 +742,94 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 29)
     protected abstract static class PrimMultiplyLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.multiply(rhs);
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.multiply(image, lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.multiply(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.multiply(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 30)
     protected abstract static class PrimDivideLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"rhs != 0", "lhs.isIntegralWhenDividedBy(rhs)"})
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.divide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile successProfile) {
+            final Object[] result = LargeIntegers.divideAndRemainder(image, lhs, rhs);
+            if (successProfile.profile(node, result[1] instanceof final Long remainder && remainder == 0)) {
+                return result[0];
+            } else {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
         }
 
-        @Specialization(guards = {"!rhs.isZero()", "lhs.isIntegralWhenDividedBy(rhs)"})
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.divide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile successProfile) {
+            final Object[] result = LargeIntegers.divideAndRemainder(image, lhs, rhs);
+            if (successProfile.profile(node, result[1] instanceof final Long remainder && remainder == 0)) {
+                return result[0];
+            } else {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 31)
     protected abstract static class PrimFloorModLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.floorMod(rhs);
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorMod(image, lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.floorMod(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorMod(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 32)
     protected abstract static class PrimFloorDivideLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "rhs != 0")
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.floorDivide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorDivide(image, lhs, rhs);
         }
 
-        @Specialization(guards = "!rhs.isZero()")
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.floorDivide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorDivide(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 33)
     protected abstract static class PrimQuoLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "rhs != 0")
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.divide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.divide(image, lhs, rhs);
         }
 
-        @Specialization(guards = "!rhs.isZero()")
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.divide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.divide(image, lhs, rhs);
         }
     }
 
@@ -1014,7 +1113,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!inSafeIntegerRange(receiver.getValue())", "receiver.isFinite()"})
         protected final Object doFloatExact(final FloatObject receiver) {
-            return LargeIntegerObject.truncateExact(getContext(), receiver.getValue());
+            return LargeIntegers.truncateExact(getContext(), receiver.getValue());
         }
     }
 
@@ -1176,9 +1275,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         public static final int HASH_MULTIPLY_CONSTANT = 1664525;
         public static final int HASH_MULTIPLY_MASK = 0xFFFFFFF;
 
-        @Specialization
-        protected static final long doLargeInteger(final LargeIntegerObject receiver) {
-            return doLong(receiver.longValue());
+        @Specialization(guards = "image.isLargeInteger(receiver)")
+        protected static final long doLargeInteger(final NativeObject receiver,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return doLong(LargeIntegers.longValue(receiver));
         }
 
         @Specialization
@@ -1471,7 +1571,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!inSafeIntegerRange(receiver)")
         protected final Object doDoubleExact(final double receiver) {
-            return LargeIntegerObject.truncateExact(getContext(), receiver);
+            return LargeIntegers.truncateExact(getContext(), receiver);
         }
     }
 
@@ -1628,14 +1728,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean inSafeIntegerRange(final double d) {
             // The ends of the interval are also included, since they are powers of two
             return MIN_SAFE_INTEGER_LONG <= d && d <= MAX_SAFE_INTEGER_LONG;
-        }
-
-        protected static final long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final InlinedConditionProfile differentSignProfile, final Node node) {
-            return differentSignProfile.profile(node, differentSign(lhs, rhs)) ? -rhs : rhs;
-        }
-
-        private static boolean differentSign(final long lhs, final long rhs) {
-            return lhs < 0 ^ rhs < 0;
         }
     }
 

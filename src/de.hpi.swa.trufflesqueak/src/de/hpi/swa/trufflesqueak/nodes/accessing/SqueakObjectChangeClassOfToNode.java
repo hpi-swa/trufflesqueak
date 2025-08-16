@@ -20,7 +20,6 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
@@ -70,11 +69,6 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
                     @Cached final NativeGetLongsNode getLongsNode) {
         receiver.setSqueakClass(argument);
         receiver.convertToLongsStorage(getLongsNode.execute(node, receiver));
-    }
-
-    @Specialization(guards = {"argument.isBytes()"})
-    protected static final void doLargeInteger(final LargeIntegerObject receiver, final ClassObject argument) {
-        receiver.setSqueakClass(argument);
     }
 
     @Specialization(guards = {"receiver.hasFormatOf(argument)"})

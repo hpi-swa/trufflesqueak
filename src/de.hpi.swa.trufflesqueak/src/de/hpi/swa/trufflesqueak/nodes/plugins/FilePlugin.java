@@ -34,7 +34,6 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -671,12 +670,6 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 VarHandleUtils.putIntReversed(bytes, i, ints[i]);
             }
             return fileWriteFromAt(fd, count, bytes, startIndex, 4);
-        }
-
-        @Specialization(guards = {"!isStdioFileDescriptor(fd)", "inBounds(startIndex, count, content.size())"})
-        protected static final long doWriteLargeInteger(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final LargeIntegerObject content, final long startIndex,
-                        final long count) {
-            return fileWriteFromAt(fd, count, content.getBytes(), startIndex, 1);
         }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "inBounds(startIndex, count, WORD_LENGTH)"})

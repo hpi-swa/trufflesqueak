@@ -33,7 +33,6 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
@@ -70,6 +69,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -405,8 +405,9 @@ public final class SendBytecodes {
                 }
 
                 @Specialization(replaces = "doLong")
-                protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-                    return LargeIntegerObject.add(getContext(), lhs, rhs);
+                protected static final Object doLongWithOverflow(final long lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return LargeIntegers.add(image, lhs, rhs);
                 }
 
                 @Specialization
@@ -428,8 +429,9 @@ public final class SendBytecodes {
                 }
 
                 @Specialization(replaces = "doLong")
-                protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-                    return LargeIntegerObject.subtract(getContext(), lhs, rhs);
+                protected static final Object doLongWithOverflow(final long lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return LargeIntegers.subtract(image, lhs, rhs);
                 }
 
                 @Specialization
@@ -559,8 +561,9 @@ public final class SendBytecodes {
                 }
 
                 @Specialization(replaces = "doLong")
-                protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-                    return LargeIntegerObject.multiply(getContext(), lhs, rhs);
+                protected static final Object doLongWithOverflow(final long lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return LargeIntegers.multiply(image, lhs, rhs);
                 }
 
                 @Specialization(rewriteOn = RespecializeException.class)

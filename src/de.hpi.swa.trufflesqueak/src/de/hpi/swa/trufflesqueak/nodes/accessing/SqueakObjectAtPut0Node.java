@@ -24,7 +24,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
@@ -73,11 +72,6 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     protected static final void doVariablePointers(final Node node, final VariablePointersObject obj, final long index, final Object value,
                     @Cached final VariablePointersObjectWriteNode writeNode) {
         writeNode.execute(node, obj, (int) index, value);
-    }
-
-    @Specialization
-    protected final void doLargeInteger(final LargeIntegerObject receiver, final long index, final long value) {
-        receiver.setNativeAt0(getContext(), index, value);
     }
 
     @Specialization
