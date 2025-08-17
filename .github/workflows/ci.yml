@@ -100,7 +100,7 @@ jobs:
       JAVA_VERSION: "25"
       JVMCI_VERSION_CHECK: "ignore" # version of EA build does not always match
       VERBOSE_GRAALVM_LAUNCHERS: true
-      VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
+      VM_ARGS: "--vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
     name: ${{ matrix.type }} ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
