@@ -19,6 +19,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -80,6 +81,8 @@ public abstract class FrameStackReadNode extends AbstractNode {
     /* Unsafe as it may return `null` values. */
     public abstract Object executeReadUnsafe(VirtualFrame frame);
 
+    public abstract long executeReadLong(final VirtualFrame frame) throws UnexpectedResultException;
+
     protected abstract static class FrameSlotReadNode extends FrameStackReadNode {
         protected final byte slotIndex;
         protected final boolean clearSlotAfterRead;
@@ -105,7 +108,7 @@ public abstract class FrameStackReadNode extends AbstractNode {
             return frame.getDouble(slotIndex);
         }
 
-        @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
+        @Specialization(replaces = {"readBoolean", "readDouble"})
         protected final Object readObject(final VirtualFrame frame) {
             final Object value;
             if (!frame.isObject(slotIndex)) {
@@ -157,6 +160,16 @@ public abstract class FrameStackReadNode extends AbstractNode {
         }
 
         @Override
+        public long executeReadLong(final VirtualFrame frame) throws UnexpectedResultException {
+            final Object value = frame.getArguments()[index];
+            if (value instanceof final Long l) {
+                return l;
+            } else {
+                throw new UnexpectedResultException(value);
+            }
+        }
+
+        @Override
         public boolean isAdoptable() {
             return false;
         }
@@ -188,6 +201,19 @@ public abstract class FrameStackReadNode extends AbstractNode {
                 frame.setAuxiliarySlot(auxiliarySlotIndex, null);
             }
             return value;
+        }
+
+        @Override
+        public long executeReadLong(final VirtualFrame frame) throws UnexpectedResultException {
+            final Object value = frame.getAuxiliarySlot(auxiliarySlotIndex);
+            if (clearSlotAfterRead) {
+                frame.setAuxiliarySlot(auxiliarySlotIndex, null);
+            }
+            if (value instanceof final Long l) {
+                return l;
+            } else {
+                throw new UnexpectedResultException(value);
+            }
         }
     }
 }

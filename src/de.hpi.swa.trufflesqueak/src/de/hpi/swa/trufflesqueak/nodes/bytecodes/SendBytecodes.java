@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
@@ -20,6 +21,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
@@ -435,6 +437,7 @@ public final class SendBytecodes {
 
         protected static final class SendSpecial1Node extends SendSpecialNode {
             private final int newStackPointer;
+            @CompilationFinal private boolean tryLong = true;
             @Child private FrameStackReadNode receiverNode;
             @Child private FrameStackReadNode arg1Node;
             @Child private FrameStackWriteNode writeResultNode;
@@ -454,7 +457,19 @@ public final class SendBytecodes {
             @Override
             public void executeVoid(final VirtualFrame frame) {
                 try {
-                    final Object result = dispatchNode.execute(frame, receiverNode.executeRead(frame), arg1Node.executeRead(frame));
+                    final Object result;
+                    if (tryLong) {
+                        try {
+                            result = dispatchNode.executeLong(frame, receiverNode.executeReadLong(frame), arg1Node.executeReadLong(frame));
+                        } catch (final UnexpectedResultException e) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            tryLong = false;
+                            executeVoid(frame);
+                            return;
+                        }
+                    } else {
+                        result = dispatchNode.execute(frame, receiverNode.executeRead(frame), arg1Node.executeRead(frame));
+                    }
                     FrameAccess.setStackPointer(frame, newStackPointer);
                     writeResultNode.executeWrite(frame, result);
                 } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
@@ -469,6 +484,8 @@ public final class SendBytecodes {
             }
 
             abstract static class DispatchBytecodePrim1Node extends DispatchBytecodePrimNode {
+                abstract Object executeLong(VirtualFrame frame, long receiver, long arg1);
+
                 abstract Object execute(VirtualFrame frame, Object receiver, Object arg1);
             }
 
