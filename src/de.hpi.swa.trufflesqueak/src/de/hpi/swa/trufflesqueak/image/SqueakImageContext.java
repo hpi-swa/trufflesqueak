@@ -42,6 +42,7 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -1033,8 +1034,8 @@ public final class SqueakImageContext {
         return object == nilClass;
     }
 
-    public boolean isPointClass(final ClassObject object) {
-        return object == pointClass;
+    public boolean isPoint(final AbstractPointersObject object) {
+        return object.getSqueakClass() == pointClass;
     }
 
     public boolean isSemaphoreClass(final ClassObject object) {

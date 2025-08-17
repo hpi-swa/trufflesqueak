@@ -50,7 +50,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public Object getHiddenObject() {
-        assert SqueakImageContext.getSlow().isPointClass(getSqueakClass()) : "Object cannot be a handle with hidden object";
+        assert SqueakImageContext.getSlow().isPoint(this) : "Object cannot be a handle with hidden object";
         return object2;
     }
 
@@ -151,7 +151,7 @@ public final class PointersObject extends AbstractPointersObject {
          * look up the context here.
          */
         final SqueakImageContext image = classObject.getImage();
-        if (image.isPointClass(classObject)) {
+        if (image.isPoint(this)) {
             return readNode.execute(null, this, POINT.X) + "@" + readNode.execute(null, this, POINT.Y);
         }
         final String squeakClassName = classObject.getClassName();

@@ -253,21 +253,21 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitAnd")
-    protected abstract static class PrimDigitBitAndNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimDigitBitAndNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
-        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+        public static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return and(image, lhs, rhs);
         }
 
         @Specialization(guards = {"image.isLargeInteger(lhs)"})
-        protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
+        public static final Object doLargeInteger(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return and(image, lhs, rhs);
         }
 
         @Specialization(guards = {"image.isLargeInteger(rhs)"})
-        protected static final Object doLong(final long lhs, final NativeObject rhs,
+        public static final Object doLong(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return and(image, rhs, lhs);
         }
@@ -280,21 +280,21 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitOr")
-    protected abstract static class PrimDigitBitOrNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimDigitBitOrNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
-        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+        public static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return or(image, lhs, rhs);
         }
 
         @Specialization(guards = {"image.isLargeInteger(lhs)"})
-        protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
+        public static final Object doLargeInteger(final NativeObject lhs, final long rhs,
                         @Bind final SqueakImageContext image) {
             return or(image, rhs, lhs);
         }
 
         @Specialization(guards = {"image.isLargeInteger(rhs)"})
-        protected static final Object doLong(final long lhs, final NativeObject rhs,
+        public static final Object doLong(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return or(image, lhs, rhs);
         }

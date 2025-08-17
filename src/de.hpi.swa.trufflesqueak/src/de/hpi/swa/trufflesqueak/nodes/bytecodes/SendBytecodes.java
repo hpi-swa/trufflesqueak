@@ -6,13 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import static de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode.ensureFinite;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -24,16 +23,20 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
-import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -69,7 +72,44 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNode;
-import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers.PrimDigitBitAndNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers.PrimDigitBitOrNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimAddLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimAddNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitOrNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitShiftNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimDivideLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimDivideNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimEqualLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimFloorDivideNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimFloorModLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimFloorModNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimGreaterOrEqualLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimGreaterOrEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimGreaterThanLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimGreaterThanNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessOrEqualLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessOrEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessThanLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessThanNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimMakePointNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimMultiplyLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimMultiplyNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimNotEqualLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimNotEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatAddNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterOrEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterThanNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatLessOrEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatLessThanNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatMultiplyNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatNotEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatSubtractNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSubtractLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSubtractNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -272,7 +312,7 @@ public final class SendBytecodes {
             public void executeVoid(final VirtualFrame frame) {
                 try {
                     writeResultNode.executeWrite(frame, dispatchNode.execute(frame, receiverNode.executeRead(frame)));
-                } catch (final UnsupportedSpecializationException use) {
+                } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
                     rewriteToSend(frame, dispatchNode);
                 }
             }
@@ -287,6 +327,11 @@ public final class SendBytecodes {
                 abstract Object execute(VirtualFrame frame, Object receiver);
             }
 
+            /**
+             * Subset of {@link de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode} for
+             * classes that do not override #size. Returns long values. OpenSmalltalkVM always
+             * performs sends.
+             */
             @GenerateInline(false)
             abstract static class BytecodePrimSizeNode extends DispatchBytecodePrim0Node {
                 @Override
@@ -294,16 +339,51 @@ public final class SendBytecodes {
                     return 18;
                 }
 
-                @Specialization(guards = "receiver.isByteType()")
-                protected static final long doNativeObjectByte(final NativeObject receiver) {
-                    return receiver.getByteLength();
+                @Specialization
+                protected static final long doNilObject(final NilObject receiver) {
+                    return receiver.size();
                 }
 
+                /*
+                 * Cannot use specialization for NativeObject as Cuis has lots of conflicting
+                 * overrides, such as Float64Array#size.
+                 */
+
                 @Specialization
-                protected static final long doArray(final ArrayObject receiver,
+                protected static final long doArrayObject(final ArrayObject receiver,
                                 @Bind final Node node,
                                 @Cached final ArrayObjectSizeNode sizeNode) {
                     return sizeNode.execute(node, receiver);
+                }
+
+                @Specialization
+                protected static final long doClass(final ClassObject obj) {
+                    return obj.size();
+                }
+
+                @Specialization
+                protected static final long doContext(final ContextObject obj) {
+                    return obj.size();
+                }
+
+                /*
+                 * Cannot use specialization for BlockClosureObject due to FullBlockClosure#size
+                 * override.
+                 */
+
+                @Specialization
+                protected static final long doCode(final CompiledCodeObject obj) {
+                    return obj.size();
+                }
+
+                @Specialization
+                protected static final long doFloat(final FloatObject obj) {
+                    return obj.size();
+                }
+
+                @Specialization
+                protected static final long doCharacterObject(final CharacterObject obj) {
+                    return obj.size();
                 }
             }
 
@@ -329,7 +409,7 @@ public final class SendBytecodes {
                     return 30;
                 }
 
-                @Specialization(guards = "getContext(node).isPointClass(receiver.getSqueakClass())")
+                @Specialization(guards = "getContext(node).isPoint(receiver)")
                 protected static final Object doX(final AbstractPointersObject receiver,
                                 @Bind final Node node,
                                 @Cached final AbstractPointersObjectReadNode readNode) {
@@ -344,7 +424,7 @@ public final class SendBytecodes {
                     return 31;
                 }
 
-                @Specialization(guards = "getContext(node).isPointClass(receiver.getSqueakClass())")
+                @Specialization(guards = "getContext(node).isPoint(receiver)")
                 protected static final Object doY(final AbstractPointersObject receiver,
                                 @Bind final Node node,
                                 @Cached final AbstractPointersObjectReadNode readNode) {
@@ -377,7 +457,7 @@ public final class SendBytecodes {
                     final Object result = dispatchNode.execute(frame, receiverNode.executeRead(frame), arg1Node.executeRead(frame));
                     FrameAccess.setStackPointer(frame, newStackPointer);
                     writeResultNode.executeWrite(frame, result);
-                } catch (final UnsupportedSpecializationException use) {
+                } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
                     rewriteToSend(frame, dispatchNode);
                 }
             }
@@ -401,18 +481,46 @@ public final class SendBytecodes {
 
                 @Specialization(rewriteOn = ArithmeticException.class)
                 protected static final long doLong(final long lhs, final long rhs) {
-                    return Math.addExact(lhs, rhs);
+                    return PrimAddNode.doLong(lhs, rhs);
                 }
 
                 @Specialization(replaces = "doLong")
                 protected static final Object doLongWithOverflow(final long lhs, final long rhs,
                                 @Bind final SqueakImageContext image) {
-                    return LargeIntegers.add(image, lhs, rhs);
+                    return PrimAddNode.doLongWithOverflow(lhs, rhs, image);
                 }
 
                 @Specialization
                 protected static final double doDouble(final double lhs, final double rhs) {
-                    return lhs + rhs;
+                    return PrimSmallFloatAddNode.doDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final double doLongDouble(final long lhs, final double rhs) {
+                    return PrimAddNode.doLongDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final double doDoubleLong(final double lhs, final long rhs) {
+                    return PrimSmallFloatAddNode.doLong(lhs, rhs);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimAddLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimAddLargeIntegersNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimAddNode.doLongLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -425,18 +533,46 @@ public final class SendBytecodes {
 
                 @Specialization(rewriteOn = ArithmeticException.class)
                 protected static final long doLong(final long lhs, final long rhs) {
-                    return Math.subtractExact(lhs, rhs);
+                    return PrimSubtractNode.doLong(lhs, rhs);
                 }
 
                 @Specialization(replaces = "doLong")
                 protected static final Object doLongWithOverflow(final long lhs, final long rhs,
                                 @Bind final SqueakImageContext image) {
-                    return LargeIntegers.subtract(image, lhs, rhs);
+                    return PrimSubtractNode.doLongWithOverflow(lhs, rhs, image);
                 }
 
                 @Specialization
                 protected static final double doDouble(final double lhs, final double rhs) {
-                    return lhs - rhs;
+                    return PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final double doLongDouble(final long lhs, final double rhs) {
+                    return PrimSubtractNode.doLongDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final double doDoubleLong(final double lhs, final long rhs) {
+                    return PrimSmallFloatSubtractNode.doLong(lhs, rhs);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimSubtractLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimSubtractLargeIntegersNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimSubtractNode.doLongLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -449,12 +585,46 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final boolean doLong(final long lhs, final long rhs) {
-                    return BooleanObject.wrap(lhs < rhs);
+                    return PrimLessThanNode.doLong(lhs, rhs);
                 }
 
                 @Specialization
                 protected static final boolean doDouble(final double lhs, final double rhs) {
-                    return BooleanObject.wrap(lhs < rhs);
+                    return PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doLongDouble(final long lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimLessThanNode.doDouble(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doDoubleLong(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimSmallFloatLessThanNode.doLong(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimLessThanLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+                    return PrimLessThanLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimLessThanNode.doLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -467,12 +637,46 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final boolean doLong(final long lhs, final long rhs) {
-                    return BooleanObject.wrap(lhs > rhs);
+                    return PrimGreaterThanNode.doLong(lhs, rhs);
                 }
 
                 @Specialization
                 protected static final boolean doDouble(final double lhs, final double rhs) {
-                    return BooleanObject.wrap(lhs > rhs);
+                    return PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doLongDouble(final long lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimGreaterThanNode.doDouble(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doDoubleLong(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimSmallFloatGreaterThanNode.doLong(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimGreaterThanLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+                    return PrimGreaterThanLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimGreaterThanNode.doLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -485,12 +689,46 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final boolean doLong(final long lhs, final long rhs) {
-                    return BooleanObject.wrap(lhs <= rhs);
+                    return PrimLessOrEqualNode.doLong(lhs, rhs);
                 }
 
                 @Specialization
                 protected static final boolean doDouble(final double lhs, final double rhs) {
-                    return BooleanObject.wrap(lhs <= rhs);
+                    return PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doLongDouble(final long lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimLessOrEqualNode.doDouble(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doDoubleLong(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimSmallFloatLessOrEqualNode.doLong(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimLessOrEqualLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+                    return PrimLessOrEqualLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimLessOrEqualNode.doLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -503,12 +741,46 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final boolean doLong(final long lhs, final long rhs) {
-                    return BooleanObject.wrap(lhs >= rhs);
+                    return PrimGreaterOrEqualNode.doLong(lhs, rhs);
                 }
 
                 @Specialization
                 protected static final boolean doDouble(final double lhs, final double rhs) {
-                    return BooleanObject.wrap(lhs >= rhs);
+                    return PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doLongDouble(final long lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimGreaterOrEqualNode.doDouble(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doDoubleLong(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimSmallFloatGreaterOrEqualNode.doLong(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimGreaterOrEqualLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+                    return PrimGreaterOrEqualLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimGreaterOrEqualNode.doLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -521,12 +793,46 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final boolean doLong(final long lhs, final long rhs) {
-                    return BooleanObject.wrap(lhs == rhs);
+                    return PrimEqualNode.doLong(lhs, rhs);
                 }
 
                 @Specialization
                 protected static final boolean doDouble(final double lhs, final double rhs) {
-                    return BooleanObject.wrap(lhs == rhs);
+                    return PrimSmallFloatEqualNode.doDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doLongDouble(final long lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimEqualNode.doDouble(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doDoubleLong(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimSmallFloatEqualNode.doLong(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimEqualLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+                    return PrimEqualLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimEqualNode.doLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -539,12 +845,46 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final boolean doLong(final long lhs, final long rhs) {
-                    return BooleanObject.wrap(lhs != rhs);
+                    return PrimNotEqualNode.doLong(lhs, rhs);
                 }
 
                 @Specialization
                 protected static final boolean doDouble(final double lhs, final double rhs) {
-                    return BooleanObject.wrap(lhs != rhs);
+                    return PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doLongDouble(final long lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimNotEqualNode.doDouble(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
+                protected static final boolean doDoubleLong(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("isExactProfile") @Cached final InlinedConditionProfile isExactProfile) {
+                    return PrimSmallFloatNotEqualNode.doLong(lhs, rhs, node, isExactProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimNotEqualLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+                    return PrimNotEqualLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimNotEqualNode.doLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -557,25 +897,67 @@ public final class SendBytecodes {
 
                 @Specialization(rewriteOn = ArithmeticException.class)
                 protected static final long doLong(final long lhs, final long rhs) {
-                    return Math.multiplyExact(lhs, rhs);
+                    return PrimMultiplyNode.doLong(lhs, rhs);
                 }
 
                 @Specialization(replaces = "doLong")
                 protected static final Object doLongWithOverflow(final long lhs, final long rhs,
                                 @Bind final SqueakImageContext image) {
-                    return LargeIntegers.multiply(image, lhs, rhs);
+                    return PrimMultiplyNode.doLongWithOverflow(lhs, rhs, image);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()", rewriteOn = RespecializeException.class)
+                protected static final double doLongDoubleFinite(final long lhs, final double rhs) throws RespecializeException {
+                    return PrimMultiplyNode.doLongDoubleFinite(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()", replaces = "doLongDoubleFinite")
+                protected static final Object doLongDouble(final long lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                    return PrimMultiplyNode.doLongDouble(lhs, rhs, node, boxNode);
                 }
 
                 @Specialization(rewriteOn = RespecializeException.class)
                 protected static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
-                    return ensureFinite(lhs * rhs);
+                    return PrimSmallFloatMultiplyNode.doDoubleFinite(lhs, rhs);
                 }
 
                 @Specialization(replaces = "doDoubleFinite")
                 protected static final Object doDouble(final double lhs, final double rhs,
                                 @Bind final Node node,
-                                @Cached final AsFloatObjectIfNessaryNode boxNode) {
-                    return boxNode.execute(node, lhs * rhs);
+                                @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                    return PrimSmallFloatMultiplyNode.doDouble(lhs, rhs, node, boxNode);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()", rewriteOn = RespecializeException.class)
+                protected static final double doDoubleLongFinite(final double lhs, final long rhs) throws RespecializeException {
+                    return PrimSmallFloatMultiplyNode.doLongFinite(lhs, rhs);
+                }
+
+                @Specialization(guards = "isPrimitiveDoMixedArithmetic()", replaces = "doDoubleLongFinite")
+                protected static final Object doDoubleLong(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                    return PrimSmallFloatMultiplyNode.doLong(lhs, rhs, node, boxNode);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimMultiplyLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimMultiplyLargeIntegersNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimMultiplyNode.doLongLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -588,19 +970,45 @@ public final class SendBytecodes {
 
                 @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)", "isIntegralWhenDividedBy(lhs, rhs)"})
                 protected static final long doLong(final long lhs, final long rhs) {
-                    return lhs / rhs;
+                    return PrimDivideNode.doLong(lhs, rhs);
                 }
 
-                @Specialization(guards = "!isZero(rhs)", rewriteOn = RespecializeException.class)
-                protected static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
-                    return ensureFinite(lhs / rhs);
+                @Specialization(guards = {"rhs != 0"}, replaces = "doLong")
+                protected static final Object doLongFraction(final long lhs, final long rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile isOverflowProfile,
+                                @Exclusive @Cached final InlinedConditionProfile isIntegralProfile,
+                                @Cached final AbstractPointersObjectWriteNode writeNode) {
+                    return PrimDivideNode.doLongFraction(lhs, rhs, image, node, isOverflowProfile, isIntegralProfile, writeNode);
                 }
 
-                @Specialization(guards = "!isZero(rhs)", replaces = "doDoubleFinite")
-                protected static final Object doDouble(final double lhs, final double rhs,
+                @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, rewriteOn = RespecializeException.class)
+                protected static final double doLongDoubleFinite(final long lhs, final double rhs) throws RespecializeException {
+                    return PrimDivideNode.doLongDoubleFinite(lhs, rhs);
+                }
+
+                @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, replaces = "doLongDoubleFinite")
+                protected static final Object doLongDouble(final long lhs, final double rhs,
                                 @Bind final Node node,
                                 @Cached final AsFloatObjectIfNessaryNode boxNode) {
-                    return boxNode.execute(node, lhs / rhs);
+                    return PrimDivideNode.doLongDouble(lhs, rhs, node, boxNode);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+                protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile successProfile) {
+                    return PrimDivideLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image, node, successProfile);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+                protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile successProfile) {
+                    return PrimDivideLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, successProfile);
                 }
             }
 
@@ -611,18 +1019,23 @@ public final class SendBytecodes {
                     return 10;
                 }
 
-                /** Profiled version of {@link Math#floorMod(long, long)}. */
                 @Specialization(guards = "rhs != 0")
                 protected static final long doLong(final long lhs, final long rhs,
                                 @Bind final Node node,
                                 @Cached final InlinedConditionProfile profile) {
-                    final long r = lhs % rhs;
-                    // if the signs are different and modulo not zero, adjust result
-                    if (profile.profile(node, (lhs ^ rhs) < 0 && r != 0)) {
-                        return r + rhs;
-                    } else {
-                        return r;
-                    }
+                    return PrimFloorModNode.doLong(lhs, rhs, node, profile);
+                }
+
+                @Specialization(guards = "image.isLargeInteger(lhs)")
+                protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimFloorModLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimFloorModLargeIntegersNode.doLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -634,17 +1047,31 @@ public final class SendBytecodes {
                 }
 
                 @Specialization
-                protected static final PointersObject doLong(final long xPos, final long yPos,
+                protected static final PointersObject doLong(final long xPos, final Object yPos,
                                 @Bind final Node node,
                                 @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-                    return getContext(node).asPoint(writeNode, node, xPos, yPos);
+                    return PrimMakePointNode.doPoint(xPos, yPos, node, writeNode);
                 }
 
                 @Specialization
-                protected static final PointersObject doDouble(final double xPos, final double yPos,
+                protected static final PointersObject doDouble(final double xPos, final Object yPos,
                                 @Bind final Node node,
                                 @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-                    return getContext(node).asPoint(writeNode, node, xPos, yPos);
+                    return PrimMakePointNode.doPoint(xPos, yPos, node, writeNode);
+                }
+
+                @Specialization(guards = "getContext(node).isLargeInteger(xPos)")
+                protected static final PointersObject doLargeInteger(final NativeObject xPos, final Object yPos,
+                                @Bind final Node node,
+                                @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+                    return PrimMakePointNode.doPoint(xPos, yPos, node, writeNode);
+                }
+
+                @Specialization
+                protected static final PointersObject doFloat(final FloatObject xPos, final Object yPos,
+                                @Bind final Node node,
+                                @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+                    return PrimMakePointNode.doPoint(xPos, yPos, node, writeNode);
                 }
             }
 
@@ -655,9 +1082,18 @@ public final class SendBytecodes {
                     return 12;
                 }
 
-                @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
-                protected static final long doLongPositive(final long receiver, final long arg) {
-                    return receiver << arg;
+                @Specialization(guards = {"arg >= 0"})
+                protected static final Object doLongPositive(final long receiver, final long arg,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile isOverflowProfile) {
+                    return PrimBitShiftNode.doLongPositive(receiver, arg, node, isOverflowProfile);
+                }
+
+                @Specialization(guards = {"arg < 0"})
+                protected static final long doLongNegativeInLongSizeRange(final long receiver, final long arg,
+                                @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile inLongSizeRangeProfile) {
+                    return PrimBitShiftNode.doLongNegativeInLongSizeRange(receiver, arg, node, inLongSizeRangeProfile);
                 }
             }
 
@@ -668,18 +1104,17 @@ public final class SendBytecodes {
                     return 13;
                 }
 
-                /** Profiled version of {@link Math#floorDiv(long, long)}. */
                 @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
                 protected static final long doLong(final long lhs, final long rhs,
                                 @Bind final Node node,
                                 @Cached final InlinedConditionProfile profile) {
-                    final long q = lhs / rhs;
-                    // if the signs are different and modulo not zero, round down
-                    if (profile.profile(node, (lhs ^ rhs) < 0 && (q * rhs != lhs))) {
-                        return q - 1;
-                    } else {
-                        return q;
-                    }
+                    return PrimFloorDivideNode.doLong(lhs, rhs, node, profile);
+                }
+
+                @Specialization(guards = {"!isZero(rhs)", "image.isLargeInteger(rhs)"})
+                protected static final long doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimFloorDivideNode.doLongLargeInteger(lhs, rhs, image);
                 }
             }
 
@@ -692,7 +1127,37 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final long doLong(final long receiver, final long arg) {
-                    return receiver & arg;
+                    return PrimBitAndNode.doLong(receiver, arg);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
+                public static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                                @Bind final SqueakImageContext image) {
+                    return PrimBitAndNode.doLongLargeQuick(receiver, arg, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
+                public static final Object doLongLarge(final long receiver, final NativeObject arg,
+                                @Bind final SqueakImageContext image) {
+                    return PrimBitAndNode.doLongLarge(receiver, arg, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimDigitBitAndNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimDigitBitAndNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimDigitBitAndNode.doLong(lhs, rhs, image);
                 }
             }
 
@@ -705,7 +1170,37 @@ public final class SendBytecodes {
 
                 @Specialization
                 protected static final long doLong(final long receiver, final long arg) {
-                    return receiver | arg;
+                    return PrimBitOrNode.doLong(receiver, arg);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
+                public static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                                @Bind final SqueakImageContext image) {
+                    return PrimBitOrNode.doLongLargeQuick(receiver, arg, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
+                public static final Object doLongLarge(final long receiver, final NativeObject arg,
+                                @Bind final SqueakImageContext image) {
+                    return PrimBitOrNode.doLongLarge(receiver, arg, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
+                protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimDigitBitOrNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+                protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimDigitBitOrNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(rhs)"})
+                protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                                @Bind final SqueakImageContext image) {
+                    return PrimDigitBitOrNode.doLong(lhs, rhs, image);
                 }
             }
 
