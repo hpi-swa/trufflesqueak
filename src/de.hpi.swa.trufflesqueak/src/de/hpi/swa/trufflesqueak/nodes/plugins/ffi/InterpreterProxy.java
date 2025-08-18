@@ -182,10 +182,6 @@ public final class InterpreterProxy {
         return failed() == 0;
     }
 
-    private Object global(final String name) {
-        return context.lookup(name);
-    }
-
     /* OBJECT REGISTRY HELPERS */
 
     private Object objectRegistryGet(final long oop) {
@@ -343,7 +339,7 @@ public final class InterpreterProxy {
     }
 
     private long classAlien() {
-        return oopFor(global("Alien"));
+        return oopFor(context.getAlienClass());
     }
 
     private long classArray() {
@@ -363,31 +359,31 @@ public final class InterpreterProxy {
     }
 
     private long classDoubleByteArray() {
-        return oopFor(global("DoubleByteArray"));
+        return oopFor(context.getDoubleByteArrayClass());
     }
 
     private long classDoubleWordArray() {
-        return oopFor(global("DoubleWordArray"));
+        return oopFor(context.getDoubleWordArrayClass());
     }
 
     private long classExternalAddress() {
-        return oopFor(global("ExternalAddress"));
+        return oopFor(context.getExternalAddressClass());
     }
 
     private long classExternalData() {
-        return oopFor(global("ExternalData"));
+        return oopFor(context.getExternalDataClass());
     }
 
     private long classExternalFunction() {
-        return oopFor(global("ExternalFunction"));
+        return oopFor(context.getExternalFunctionClass());
     }
 
     private long classExternalLibrary() {
-        return oopFor(global("ExternalLibrary"));
+        return oopFor(context.getExternalLibraryClass());
     }
 
     private long classExternalStructure() {
-        return oopFor(global("ExternalStructure"));
+        return oopFor(context.getExternalStructureClass());
     }
 
     private long classFloat() {
@@ -395,11 +391,11 @@ public final class InterpreterProxy {
     }
 
     private long classFloat32Array() {
-        return oopFor(global("FloatArray"));
+        return oopFor(context.lookup("FloatArray"));
     }
 
     private long classFloat64Array() {
-        return oopFor(global("Float64Array"));
+        return oopFor(context.lookup("Float64Array"));
     }
 
     private long classLargeNegativeInteger() {
@@ -427,11 +423,11 @@ public final class InterpreterProxy {
     }
 
     private long classUnsafeAlien() {
-        return oopFor(global("UnsafeAlien"));
+        return oopFor(context.getUnsafeAlienClass());
     }
 
     private long classWordArray() {
-        return oopFor(global("WordArray"));
+        return oopFor(context.getWordArrayClass());
     }
 
     public long failed() {

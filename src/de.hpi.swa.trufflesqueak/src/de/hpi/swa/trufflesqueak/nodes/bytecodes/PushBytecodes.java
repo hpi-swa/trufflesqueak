@@ -160,7 +160,7 @@ public final class PushBytecodes {
 
         protected final BlockClosureObject createClosure(final Object[] copiedValues, final Object receiver, final ContextObject context) {
             final SqueakImageContext image = getContext();
-            return new BlockClosureObject(image, image.fullBlockClosureClass, block, blockInitialPC, blockNumArgs, copiedValues, receiver, context);
+            return new BlockClosureObject(image, image.getFullBlockClosureClass(), block, blockInitialPC, blockNumArgs, copiedValues, receiver, context);
         }
 
         @Override

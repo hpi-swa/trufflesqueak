@@ -30,7 +30,6 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -207,7 +206,7 @@ public final class SqueakImageReader {
         return bytes;
     }
 
-    protected static boolean ignoreObjectData(final long headerWord, final int classIndex, final int size) {
+    private static boolean ignoreObjectData(final long headerWord, final int classIndex, final int size) {
         return isFreeObject(classIndex) || isObjectStack(classIndex, size) || isHiddenObject(classIndex) && SqueakImageConstants.ObjectHeader.isPinned(headerWord);
     }
 
@@ -215,11 +214,11 @@ public final class SqueakImageReader {
         return classIndex <= SqueakImageConstants.LAST_CLASS_INDEX_PUN;
     }
 
-    protected static boolean isFreeObject(final int classIndex) {
+    private static boolean isFreeObject(final int classIndex) {
         return classIndex == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN;
     }
 
-    protected static boolean isObjectStack(final int classIndex, final int size) {
+    private static boolean isObjectStack(final int classIndex, final int size) {
         return classIndex == SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN && size == SqueakImageConstants.OBJ_STACK_PAGE_SLOTS;
     }
 
@@ -254,12 +253,15 @@ public final class SqueakImageReader {
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.TRUE_OBJECT, BooleanObject.TRUE);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SCHEDULER_ASSOCIATION, image.schedulerAssociation);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BITMAP, image.bitmapClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_SMALLINTEGER, image.smallIntegerClass);
+        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_SMALL_INTEGER, image.smallIntegerClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_STRING, image.byteStringClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_ARRAY, image.arrayClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SMALLTALK_DICTIONARY, image.smalltalk);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FLOAT, image.floatClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_METHOD_CONTEXT, image.methodContextClass);
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_WIDE_STRING).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_WIDE_STRING, image.initializeWideStringClass());
+        }
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_POINT, image.pointClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_POSITIVE_INTEGER, image.largePositiveIntegerClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_MESSAGE, image.messageClass);
@@ -268,19 +270,49 @@ public final class SqueakImageReader {
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_CHARACTER, image.characterClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_DOES_NOT_UNDERSTAND, image.doesNotUnderstand);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_CANNOT_RETURN, image.cannotReturn);
+        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SPECIAL_SELECTORS, image.specialSelectors);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_MUST_BE_BOOLEAN, image.mustBeBooleanSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BYTE_ARRAY, image.byteArrayClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_PROCESS, image.processClass);
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_DOUBLE_BYTE_ARRAY).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_DOUBLE_BYTE_ARRAY, image.initializeDoubleByteArrayClass());
+        }
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_WORD_ARRAY).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_WORD_ARRAY, image.initializeWordArrayClass());
+        }
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_DOUBLE_WORD_ARRAY).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_DOUBLE_WORD_ARRAY, image.initializeDoubleWordArrayClass());
+        }
+        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_CANNOT_INTERPRET, image.cannotInterpretSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BLOCK_CLOSURE, image.blockClosureClass);
         if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_FULL_BLOCK_CLOSURE).isNil()) {
-            image.fullBlockClosureClass = new ClassObject(image);
-            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FULL_BLOCK_CLOSURE, image.fullBlockClosureClass);
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FULL_BLOCK_CLOSURE, image.initializeFullBlockClosureClass());
         }
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_NEGATIVE_INTEGER, image.largeNegativeIntegerClass);
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_ADDRESS).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_ADDRESS, image.initializeExternalAddressClass());
+        }
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_STRUCTURE).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_STRUCTURE, image.initializeExternalStructureClass());
+        }
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_DATA).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_DATA, image.initializeExternalDataClass());
+        }
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION, image.initializeExternalFunctionClass());
+        }
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_LIBRARY).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_LIBRARY, image.initializeExternalLibraryClass());
+        }
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_ABOUT_TO_RETURN, image.aboutToReturnSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_RUN_WITHIN, image.runWithInSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.PRIM_ERR_TABLE_INDEX, image.primitiveErrorTable);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SPECIAL_SELECTORS, image.specialSelectors);
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_ALIEN).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_ALIEN, image.initializeAlienClass());
+        }
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_UNSAFE_ALIEN).isNil()) {
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_UNSAFE_ALIEN, image.initializeUnsafeAlienClass());
+        }
     }
 
     private void initObjects() {
@@ -400,9 +432,6 @@ public final class SqueakImageReader {
 
     private void fillInClassesFromCompactClassList() {
         image.smallFloatClass = lookupClassInCompactClassList(SqueakImageConstants.SMALL_FLOAT_TAG);
-        if (image.fullBlockClosureClass == null) {
-            image.fullBlockClosureClass = lookupClassInCompactClassList(SqueakImageConstants.CLASS_FULL_BLOCK_CLOSURE_COMPACT_INDEX);
-        }
     }
 
     private ClassObject lookupClassInCompactClassList(final int compactIndex) {

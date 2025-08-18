@@ -61,9 +61,6 @@ public final class SqueakImageConstants {
     /* Answer the number of slots for class table pages in the hidden root object. */
     public static final int CLASS_TABLE_ROOT_SLOTS = 1 << CLASS_INDEX_FIELD_WIDTH - CLASS_TABLE_MAJOR_INDEX_SHIFT;
 
-    /** CompactClassIndices. */
-    public static final int CLASS_FULL_BLOCK_CLOSURE_COMPACT_INDEX = 38;
-
     /** Hidden Objects. */
     /* Answer the number of extra root slots in the root of the hidden root object. */
     public static final int HIDDEN_ROOT_SLOTS = 8;

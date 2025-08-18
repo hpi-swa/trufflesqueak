@@ -6,18 +6,14 @@
  */
 package de.hpi.swa.trufflesqueak.model.layout;
 
-import java.util.HashMap;
-
 import com.oracle.truffle.api.CompilerAsserts;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 
 public final class ObjectLayouts {
@@ -37,24 +33,6 @@ public final class ObjectLayouts {
         public static final int VALUE = 1;
     }
 
-    public static final class BIT_BLT {
-        public static final int DEST_FORM = 0;
-        public static final int SOURCE_FORM = 1;
-        public static final int HALFTONE_FORM = 2;
-        public static final int COMBINATION_RULE = 3;
-        public static final int DEST_X = 4;
-        public static final int DEST_Y = 5;
-        public static final int WIDTH = 6;
-        public static final int HEIGHT = 7;
-        public static final int SOURCE_X = 8;
-        public static final int SOURCE_Y = 9;
-        public static final int CLIP_X = 10;
-        public static final int CLIP_Y = 11;
-        public static final int CLIP_WIDTH = 12;
-        public static final int CLIP_HEIGHT = 13;
-        public static final int COLOR_MAP = 14;
-    }
-
     public static final class BLOCK_CLOSURE {
         public static final int OUTER_CONTEXT = 0;
         public static final int START_PC_OR_METHOD = 1;
@@ -64,13 +42,6 @@ public final class ObjectLayouts {
         /* FullBlockClosure specifics */
         public static final int FULL_RECEIVER = 3;
         public static final int FULL_FIRST_COPIED_VALUE = 4;
-    }
-
-    public static final class BLOCK_CONTEXT { // only used by blockCopy primitive
-        public static final int CALLER = 0;
-        public static final int ARGUMENT_COUNT = 3;
-        public static final int INITIAL_PC = 4;
-        public static final int HOME = 5;
     }
 
     public static final class CHARACTER_SCANNER {
@@ -144,29 +115,6 @@ public final class ObjectLayouts {
         public static final int MAX_STACK_SIZE = LARGE_FRAMESIZE - TEMP_FRAME_START;
     }
 
-    public static final class DICTIONARY {
-        public static HashMap<String, Object> toJavaMap(final PointersObject dictionary) {
-            final ArrayObject classBindings = (ArrayObject) dictionary.instVarAt0Slow(HASHED_COLLECTION.ARRAY);
-            final HashMap<String, Object> keyValues = new HashMap<>();
-            for (final Object classBinding : classBindings.getObjectStorage()) {
-                if (classBinding != NilObject.SINGLETON) {
-                    final PointersObject classBindingPointer = (PointersObject) classBinding;
-                    keyValues.put(((NativeObject) classBindingPointer.instVarAt0Slow(CLASS_BINDING.KEY)).asStringUnsafe(), classBindingPointer.instVarAt0Slow(CLASS_BINDING.VALUE));
-                }
-            }
-            return keyValues;
-        }
-    }
-
-    public static final class ENVIRONMENT {
-        public static final int INFO = 0;
-        public static final int DECLARATIONS = 1;
-        public static final int BINDINGS = 2;
-        public static final int UNDECLARED = 3;
-        public static final int POLICIES = 4;
-        public static final int OBSERVERS = 5;
-    }
-
     public static final class EPHEMERON {
         public static final int KEY = 0;
         public static final int VALUE = 1;
@@ -237,11 +185,6 @@ public final class ObjectLayouts {
         public static final int DENOMINATOR = 1;
     }
 
-    public static final class HASHED_COLLECTION {
-        public static final int TALLY = 0;
-        public static final int ARRAY = 1;
-    }
-
     public static final class LINKED_LIST {
         public static final int FIRST_LINK = 0;
         public static final int LAST_LINK = 1;
@@ -294,23 +237,19 @@ public final class ObjectLayouts {
         public static final int EXCESS_SIGNALS = 2;
     }
 
-    public static final class SMALLTALK_IMAGE {
-        public static final int GLOBALS = 0;
-    }
-
     public static final class SPECIAL_OBJECT {
         public static final int NIL_OBJECT = 0;
         public static final int FALSE_OBJECT = 1;
         public static final int TRUE_OBJECT = 2;
         public static final int SCHEDULER_ASSOCIATION = 3;
         public static final int CLASS_BITMAP = 4;
-        public static final int CLASS_SMALLINTEGER = 5;
+        public static final int CLASS_SMALL_INTEGER = 5;
         public static final int CLASS_STRING = 6;
         public static final int CLASS_ARRAY = 7;
         public static final int SMALLTALK_DICTIONARY = 8;
         public static final int CLASS_FLOAT = 9;
         public static final int CLASS_METHOD_CONTEXT = 10;
-        public static final int CLASS_BLOCK_CONTEXT = 11;
+        public static final int CLASS_WIDE_STRING = 11;
         public static final int CLASS_POINT = 12;
         public static final int CLASS_LARGE_POSITIVE_INTEGER = 13;
         public static final int THE_DISPLAY = 14;
@@ -330,7 +269,9 @@ public final class ObjectLayouts {
         public static final int COMPACT_CLASSES = 28;
         public static final int THE_TIMER_SEMAPHORE = 29;
         public static final int THE_INTERRUPT_SEMAPHORE = 30;
-        public static final int FLOAT_PROTO = 31;
+        public static final int CLASS_DOUBLE_BYTE_ARRAY = 31;
+        public static final int CLASS_WORD_ARRAY = 32;
+        public static final int CLASS_DOUBLE_WORD_ARRAY = 33;
         public static final int SELECTOR_CANNOT_INTERPRET = 34;
         public static final int METHOD_CONTEXT_PROTO = 35;
         public static final int CLASS_BLOCK_CLOSURE = 36;
@@ -361,13 +302,6 @@ public final class ObjectLayouts {
         public static final int LOWCODE_NATIVE_CONTEXT_CLASS = 61;
     }
 
-    public static final class SPECIAL_OBJECT_TAG {
-        public static final int SMALL_INTEGER = 1;
-        public static final int CHARACTER = 2;
-        public static final int SMALL_INTEGER_TAG_BITS = 3;
-        public static final int SMALL_FLOAT = 4;
-    }
-
     public static final class SYNTAX_ERROR_NOTIFICATION {
         public static final int IN_CLASS = 5;
         public static final int CODE = 6;
@@ -375,34 +309,6 @@ public final class ObjectLayouts {
         public static final int ERROR_MESSAGE = 8;
         public static final int LOCATION = 9;
         public static final int NEW_SOURCE = 10;
-    }
-
-    public static final class TEST_RESULT {
-        public static final int FAILURES = 1;
-        public static final int ERRORS = 2;
-        public static final int PASSES = 3;
-    }
-
-    public static final class TEXT {
-        public static final int STRING = 0;
-        public static final int RUNS = 1;
-    }
-
-    public static final class TRAIT {
-        /**
-         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
-         */
-        public static final int USERS = 0;
-        public static final int NAME = 1;
-    }
-
-    public static final class WEAK_FINALIZATION_LIST {
-        public static final int FIRST = 0;
-    }
-
-    public static final class WEAK_FINALIZER_ITEM {
-        public static final int LIST = 0;
-        public static final int NEXT = 1;
     }
 
     private ObjectLayouts() {
