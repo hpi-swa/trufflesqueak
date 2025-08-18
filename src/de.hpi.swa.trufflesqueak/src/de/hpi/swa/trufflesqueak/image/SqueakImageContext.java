@@ -230,7 +230,7 @@ public final class SqueakImageContext {
         } else { /* Fall back to image directory if language home is not set. */
             homePath = env.getInternalTruffleFile(options.imagePath()).getParent();
         }
-        assert homePath.exists() : "Home directory does not exist: " + homePath;
+        assert homePath != null && homePath.exists() : "Home directory does not exist: " + homePath;
         initializeMethodCache();
     }
 
@@ -291,7 +291,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public Object evaluate(final String sourceCode) {
-        return getDoItContextNode(sourceCode, false).getCallTarget().call();
+        return getDoItContextNode(sourceCode).getCallTarget().call();
     }
 
     @TruffleBoundary
@@ -350,7 +350,7 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    private ExecuteTopLevelContextNode getDoItContextNode(final String source, final boolean isExternalRequest) {
+    private ExecuteTopLevelContextNode getDoItContextNode(final String source) {
         /*
          * (Parser new parse: '1 + 2 * 3' class: UndefinedObject noPattern: true notifying: nil
          * ifFail: [^nil]) generate
@@ -389,7 +389,7 @@ public final class SqueakImageContext {
         doItContext.setCodeObject(doItMethod);
         doItContext.setInstructionPointer(doItMethod.getInitialPC());
         doItContext.setStackPointer(doItMethod.getNumTemps());
-        doItContext.setSenderUnsafe(isExternalRequest ? getInteropExceptionThrowingContext() : NilObject.SINGLETON);
+        doItContext.setSenderUnsafe(NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(this, getLanguage(), doItContext, false);
     }
 
@@ -1148,7 +1148,6 @@ public final class SqueakImageContext {
         assert message.getLibraryClass() == InteropLibrary.class;
         return interopMessageToSelectorMap.computeIfAbsent(message, m -> {
             final String libraryName = message.getLibraryClass().getSimpleName();
-            assert libraryName.endsWith("Library");
             final String libraryPrefix = libraryName.substring(0, 1).toLowerCase() + libraryName.substring(1, libraryName.length() - 7);
             final String messageName = message.getSimpleName();
             final String messageCapitalized = messageName.substring(0, 1).toUpperCase() + messageName.substring(1);

@@ -399,7 +399,7 @@ public final class SqueakImageReader {
     }
 
     private void fillInClassesFromCompactClassList() {
-        image.smallFloatClass = lookupClassInCompactClassList(SPECIAL_OBJECT_TAG.SMALL_FLOAT);
+        image.smallFloatClass = lookupClassInCompactClassList(SqueakImageConstants.SMALL_FLOAT_TAG);
         if (image.fullBlockClosureClass == null) {
             image.fullBlockClosureClass = lookupClassInCompactClassList(SqueakImageConstants.CLASS_FULL_BLOCK_CLOSURE_COMPACT_INDEX);
         }
