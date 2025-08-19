@@ -219,12 +219,6 @@ public final class SqueakImageContext {
     public final JPEGReader jpegReader = new JPEGReader();
     public final Zip zip = new Zip();
 
-    /* Error detection for headless execution */
-    @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes();
-    @CompilationFinal private NativeObject debugErrorSelector;
-    @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
-    @CompilationFinal private NativeObject debugSyntaxErrorSelector;
-
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         options = SqueakContextOptions.create(environment.getOptions());
@@ -677,26 +671,6 @@ public final class SqueakImageContext {
             resourcesDirectoryBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath());
             resourcesPathBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath() + env.getFileNameSeparator());
         }
-    }
-
-    public NativeObject getDebugErrorSelector() {
-        return debugErrorSelector;
-    }
-
-    public void setDebugErrorSelector(final NativeObject nativeObject) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert debugErrorSelector == null;
-        debugErrorSelector = nativeObject;
-    }
-
-    public NativeObject getDebugSyntaxErrorSelector() {
-        return debugSyntaxErrorSelector;
-    }
-
-    public void setDebugSyntaxErrorSelector(final NativeObject nativeObject) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert debugSyntaxErrorSelector == null;
-        debugSyntaxErrorSelector = nativeObject;
     }
 
     public ClassObject getByteSymbolClass() {

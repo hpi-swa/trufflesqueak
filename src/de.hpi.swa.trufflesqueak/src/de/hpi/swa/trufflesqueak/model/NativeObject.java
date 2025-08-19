@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -116,13 +115,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public void fillin(final SqueakImageChunk chunk) {
         if (storage == ArrayUtils.EMPTY_ARRAY) { /* Fill in special selectors. */
             setStorage(chunk.getBytes());
-        } else if (chunk.getImage().isHeadless() && isByteType()) {
-            final SqueakImageContext image = chunk.getImage();
-            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getByteStorage())) {
-                image.setDebugErrorSelector(this);
-            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, getByteStorage())) {
-                image.setDebugSyntaxErrorSelector(this);
-            }
         }
     }
 
@@ -352,14 +344,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         } else {
             throw SqueakException.create("Unexpected native object type");
         }
-    }
-
-    public boolean isDebugErrorSelector(final SqueakImageContext image) {
-        return this == image.getDebugErrorSelector();
-    }
-
-    public boolean isDebugSyntaxErrorSelector(final SqueakImageContext image) {
-        return this == image.getDebugSyntaxErrorSelector();
     }
 
     public boolean isDoesNotUnderstand(final SqueakImageContext image) {

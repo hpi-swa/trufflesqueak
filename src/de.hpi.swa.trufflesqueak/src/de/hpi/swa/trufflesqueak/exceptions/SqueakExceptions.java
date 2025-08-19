@@ -19,11 +19,9 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.EXCEPTION;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SYNTAX_ERROR_NOTIFICATION;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
@@ -90,12 +88,6 @@ public final class SqueakExceptions {
     public static final class SqueakSyntaxError extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
         private final transient SourceSection sourceSection;
-
-        public SqueakSyntaxError(final PointersObject syntaxErrorNotification) {
-            super(((NativeObject) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.ERROR_MESSAGE)).asStringUnsafe());
-            final int sourceOffset = (int) ((long) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.LOCATION) - 1);
-            sourceSection = SqueakImageContext.getSlow().getLastParseRequestSource().createSection(Math.max(sourceOffset - 1, 0), 1);
-        }
 
         @TruffleBoundary
         public SqueakSyntaxError(final String message, final int position, final String source) {

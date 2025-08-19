@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -18,14 +17,6 @@ public abstract class DispatchSelectorNode extends AbstractNode {
     public abstract Object execute(VirtualFrame frame);
 
     public static final DispatchSelectorNode create(final VirtualFrame frame, final NativeObject selector, final int numArgs) {
-        final SqueakImageContext image = getContext(null);
-        if (image.isHeadless()) {
-            if (selector.isDebugErrorSelector(image)) {
-                return new DispatchSendHeadlessErrorNode(frame, selector, numArgs);
-            } else if (selector.isDebugSyntaxErrorSelector(image)) {
-                return new DispatchSendSyntaxErrorNode(frame, selector, numArgs);
-            }
-        }
         return switch (numArgs) {
             case 0 -> DispatchSelector0Node.create(frame, selector);
             case 1 -> DispatchSelector1Node.create(frame, selector);

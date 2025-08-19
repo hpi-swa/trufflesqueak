@@ -302,15 +302,6 @@ public final class ObjectLayouts {
         public static final int LOWCODE_NATIVE_CONTEXT_CLASS = 61;
     }
 
-    public static final class SYNTAX_ERROR_NOTIFICATION {
-        public static final int IN_CLASS = 5;
-        public static final int CODE = 6;
-        public static final int DOIT_FLAG = 7;
-        public static final int ERROR_MESSAGE = 8;
-        public static final int LOCATION = 9;
-        public static final int NEW_SOURCE = 10;
-    }
-
     private ObjectLayouts() {
     }
 }
