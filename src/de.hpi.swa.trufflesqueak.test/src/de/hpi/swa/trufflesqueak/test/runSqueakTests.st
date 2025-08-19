@@ -67,52 +67,17 @@
         CogX64CompilerTests.
         FFIAllocateExternalTests.
         FileSystemGitRepositoryRemoteTests.
-        FileSystemGitRepositoryTests.
         FileSystemGitTests.
         FloatMathPluginTests.
         FullSimulationTest.
-        GitCommitMergeBaseTests.
-        GitCommitTests.
-        GitDiffCreatorTests.
         GitDumbHTTPProtocolTest.
-        GitFetchSpecTests.
-        GitFilesystemUsageTests.
-        GitHashTests.
-        GitHistoryWalkerTest.
-        GitIndexTests.
-        GitLazyLoadingTests.
-        GitPackedNonDeltaTests.
-        GitPackedObjectTests.
-        GitPackedRefsTest.
-        GitProtocolReaderTest.
         GitProtocolTest.
-        GitProtocolWriterTest.
-        GitReferenceTests.
-        GitReflogTests.
-        GitRefSpecTests.
-        GitRemoteTest.
-        GitRepositoryConfigTests.
-        GitRepositoryTests.
         GitSmartHTTPProtocolTest.
-        GitStampTests.
-        GitStorableObjectTests.
-        GitTaglikeObjectTests.
-        GitTagTests.
-        GitTreeEntryTests.
-        GitTreeTests.
-        GitUnitOfWorkTest.
-        GitZLibTests.
-        GitRemoteTest.
-        GitRemoteTest.
-        GitRemoteTest.
         ImageSegmentTest. "image segments not supported"
         InterpreterPrimitivesTest.
         IslandVMTweaksTestCase.
         LangEnvBugs.
         MutexTest. "assertion errors"
-        PackFileCreatorTests.
-        PackIndexVersion1Tests.
-        PackIndexVersion2Tests.
         ReleaseTest.
         SlangBasicTypeInferenceTest. "many tests broken"
         SlangTypeForArithmeticTest.
@@ -120,7 +85,6 @@
         SoundTest.
         SpurImageSegmentTests.
         SpurPlanningCompactorTests.
-        ST80PackageDependencyTest.
         StackInterpreterSimulatorTests.
         UIManagerTest.
         UnicodeTest. "Needs external resources"
@@ -143,20 +107,13 @@
         CompilerTest -> #(#testAllNodePCsAreForBytecodesInCollections #testAllNodePCsAreForBytecodesInKernel #testAllNodePCsAreForBytecodesInMorphic).
         FloatTest -> #(#testCompiledConstants).
         LocaleTest -> #(#test04InstallFont).
-        MorphicUIManagerTest -> #(#testShowAllBinParts).
         ObjectTest -> #(#testIfNotNilDoDeprecation).
         StringTest -> #(#testPercentEncodingJa).
-        TraitFileOutTest -> #(#testFileOutCategory #testFileOutTrait #testRemovingMethods).
-        TraitMethodDescriptionTest -> #(#testArgumentNames #testCategories #testConflictingCategories #testConflictMethodCreation).
-        TraitSystemTest -> #(#testAllImplementedMessagesWithout #testAllSentMessages).
-        TraitTest -> #(#testAddAndRemoveMethodsFromSubtraits #testMarkerMethods #testRequirement).
-        WeakSetInspectorTest -> #(#testSymbolTableM6812).
 
         "ignored tests"
         AllocationTest -> #(#testOutOfMemorySignal).
         BitmapStreamTests -> #(#testMatrixTransform2x3WithImageSegment #testShortIntegerArrayWithImageSegment #testShortPointArrayWithImageSegment #testShortRunArrayWithImageSegment #testWordArrayWithImageSegment). "image segments not supported"
         BytecodeDecodingTests -> #(#testPCPreviousTo "fails with assertion error: Unexpected argument size, maybe dummy frame had wrong size?").
-        ChangeHooksTest -> #(#testClassRecategorizedEvent2 #testClassRedefinition #testClassRemovalEvent #testClassRenamedEvent #testClassSuperChangedEvent #testDoItEvent1 #testDoItEvent2 #testInstanceVariableCreationEvent1 #testInstanceVariableCreationEvent2 #testInstanceVariableRemovedEvent1 #testInstanceVariableRemovedEvent2 #testInstanceVariableRenamedSilently #testMethodCreationEvent1 #testMethodCreationEvent2 #testMethodRecategorizationEvent #testMethodRemovedEvent1 #testMethodRemovedEvent2 "Ignoring rest of ChangeHooksTest (has side effects and slows down or breaks other tests).").
         CompiledCodeInspectorTest -> #(#testDebugConstruction). "broken"
         ContextInspectorTest -> #(#testDebugConstruction). "broken"
         DebuggerTests -> #(#test01UserInterrupt #test17HandleBlockCannotReturn #test18HandleNestedBlockCannotReturn #test20TerminateProcess #test21TerminateErrorInEnsureBlock #test22TerminateErrorInNestedEnsureBlock #test23TerminateDoubleErrorInEnsure #test24TerminateTripleErrorInEnsure). "fail, and can lock up or crash image sometimes"
@@ -256,7 +213,7 @@
         TestValueWithinFix -> #(#testValueWithinTimingBasic #testValueWithinTimingNestedInner #testValueWithinTimingNestedOuter #testValueWithinTimingRepeat).
         WeakIdentityDictionaryTest -> #(#testIsEmpty).
         WeakKeyDictionaryTest -> #(#testIsEmpty).
-        WeakSetInspectorTest -> #(#testUninitialized).
+        WeakSetInspectorTest -> #(#testSymbolTableM6812 #testUninitialized).
         WeakSetTest -> #(#testIsEmpty).
         WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
 
