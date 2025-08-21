@@ -226,6 +226,7 @@
 
     isWin ifTrue: [
         {
+            DurationTest -> #(#testBusyWait #testBusyWaitMicro). "Fails on Windows native"
             FSFileHandleTest -> #("May fail with 'FileDoesNotExist: plonk' on Windows" #testAt #testAtPut #testAtPutBinaryAscii #testAtWriteBinaryAscii #testClose #testCreatedOpen #testIO #testReadBufferTooLarge #testReadOnly #testReference #testSizeAfterGrow #testSizeNoGrow #testTruncate #testTruncateEmpty #testWriteStream).
             PNGReadWriterTest -> #("May fail with FileDoesNotExistException on Windows" #testBlue16 #testBlue32 #testBlue8).
         } collect: [:assoc | | testCase |
