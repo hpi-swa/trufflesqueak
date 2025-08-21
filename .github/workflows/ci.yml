@@ -176,7 +176,7 @@ jobs:
       run: |
         trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\de.hpi.swa.trufflesqueak.test\src\de\hpi\swa\trufflesqueak\test\runSqueakTests.st
       timeout-minutes: 30
-      if: ${{ matrix.os == 'windows-2022' && matrix.type != 'native' }} # fails to load packages on native
+      if: ${{ matrix.os == 'windows-2022' }}
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
       shell: bash
       run: |
