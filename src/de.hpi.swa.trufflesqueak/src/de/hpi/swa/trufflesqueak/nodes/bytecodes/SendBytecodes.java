@@ -973,42 +973,48 @@ public final class SendBytecodes {
                     return PrimDivideNode.doLong(lhs, rhs);
                 }
 
-                @Specialization(guards = {"rhs != 0"}, replaces = "doLong")
+                @Specialization(replaces = "doLong")
                 protected static final Object doLongFraction(final long lhs, final long rhs,
                                 @Bind final SqueakImageContext image,
                                 @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                                 @Exclusive @Cached final InlinedConditionProfile isOverflowProfile,
                                 @Exclusive @Cached final InlinedConditionProfile isIntegralProfile,
                                 @Cached final AbstractPointersObjectWriteNode writeNode) {
-                    return PrimDivideNode.doLongFraction(lhs, rhs, image, node, isOverflowProfile, isIntegralProfile, writeNode);
+                    return PrimDivideNode.doLongFraction(lhs, rhs, image, node, isZeroProfile, isOverflowProfile, isIntegralProfile, writeNode);
                 }
 
-                @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, rewriteOn = RespecializeException.class)
-                protected static final double doLongDoubleFinite(final long lhs, final double rhs) throws RespecializeException {
-                    return PrimDivideNode.doLongDoubleFinite(lhs, rhs);
+                @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, rewriteOn = RespecializeException.class)
+                protected static final double doLongDoubleFinite(final long lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+                    return PrimDivideNode.doLongDoubleFinite(lhs, rhs, node, isZeroProfile);
                 }
 
-                @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, replaces = "doLongDoubleFinite")
+                @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, replaces = "doLongDoubleFinite")
                 protected static final Object doLongDouble(final long lhs, final double rhs,
                                 @Bind final Node node,
+                                @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
                                 @Cached final AsFloatObjectIfNessaryNode boxNode) {
-                    return PrimDivideNode.doLongDouble(lhs, rhs, node, boxNode);
+                    return PrimDivideNode.doLongDouble(lhs, rhs, node, isZeroProfile, boxNode);
                 }
 
                 @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
                 protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
                                 @Bind final SqueakImageContext image,
                                 @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                                 @Exclusive @Cached final InlinedConditionProfile successProfile) {
-                    return PrimDivideLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image, node, successProfile);
+                    return PrimDivideLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image, node, isZeroProfile, successProfile);
                 }
 
                 @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
                 protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                                 @Bind final SqueakImageContext image,
                                 @Bind final Node node,
+                                @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                                 @Exclusive @Cached final InlinedConditionProfile successProfile) {
-                    return PrimDivideLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, successProfile);
+                    return PrimDivideLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, isZeroProfile, successProfile);
                 }
             }
 
@@ -1019,11 +1025,12 @@ public final class SendBytecodes {
                     return 10;
                 }
 
-                @Specialization(guards = "rhs != 0")
+                @Specialization
                 protected static final long doLong(final long lhs, final long rhs,
                                 @Bind final Node node,
-                                @Cached final InlinedConditionProfile profile) {
-                    return PrimFloorModNode.doLong(lhs, rhs, node, profile);
+                                @Cached final InlinedConditionProfile isZeroProfile,
+                                @Cached final InlinedConditionProfile sameSignProfile) {
+                    return PrimFloorModNode.doLong(lhs, rhs, node, isZeroProfile, sameSignProfile);
                 }
 
                 @Specialization(guards = "image.isLargeInteger(lhs)")
@@ -1105,16 +1112,20 @@ public final class SendBytecodes {
                 }
 
                 @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
-                protected static final long doLong(final long lhs, final long rhs,
+                protected static final Object doLong(final long lhs, final long rhs,
                                 @Bind final Node node,
-                                @Cached final InlinedConditionProfile profile) {
-                    return PrimFloorDivideNode.doLong(lhs, rhs, node, profile);
+                                @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                                @Exclusive @Cached final InlinedConditionProfile isOverflowDivisionProfile,
+                                @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+                    return PrimFloorDivideNode.doLong(lhs, rhs, node, isZeroProfile, isOverflowDivisionProfile, sameSignProfile);
                 }
 
                 @Specialization(guards = {"!isZero(rhs)", "image.isLargeInteger(rhs)"})
                 protected static final long doLongLargeInteger(final long lhs, final NativeObject rhs,
-                                @Bind final SqueakImageContext image) {
-                    return PrimFloorDivideNode.doLongLargeInteger(lhs, rhs, image);
+                                @Bind final SqueakImageContext image,
+                                @Bind final Node node,
+                                @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) {
+                    return PrimFloorDivideNode.doLongLargeInteger(lhs, rhs, image, node, isZeroProfile);
                 }
             }
 

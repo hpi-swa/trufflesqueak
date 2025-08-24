@@ -1049,13 +1049,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     /*
-     * BigInteger conversion
+     * Large float operations
      */
 
     @TruffleBoundary
-    public static Object truncateExact(final SqueakImageContext image, final double value) {
+    public static Object truncated(final SqueakImageContext image, final double value) {
         return normalize(image, new BigDecimal(value).toBigInteger());
     }
+
+    @TruffleBoundary
+    public static double fractionPart(final double value) {
+        return value - new BigDecimal(value).toBigInteger().doubleValue();
+    }
+
+    /*
+     * BigInteger conversion
+     */
 
     public static Object normalize(final SqueakImageContext image, final BigInteger value) {
         if (value.bitLength() < Long.SIZE) {
