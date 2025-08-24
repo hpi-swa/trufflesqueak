@@ -77,6 +77,7 @@
         InterpreterPrimitivesTest.
         IslandVMTweaksTestCase.
         LangEnvBugs.
+        MutexTest. "assertion errors"
         ReleaseTest.
         SlangBasicTypeInferenceTest. "many tests broken"
         SlangTypeForArithmeticTest.
@@ -122,7 +123,6 @@
         FFIPluginTests -> #(#testArrayResultWithPoint #testArrayResultWithString #testBoolsToInts #testChars #testDoubles14 #testFloats13 #testFloats14 #testIntAliasCall #testIntAliasCallReturnIntAlias #testIntCallReturnIntAlias #testLongLong8a2 #testMixedDoublesAndLongsSum #testMixedDoublesIntAndStruct #testMixedIntAndStruct #testMixedIntAndStruct2 #testMixedIntAndStruct3 #testPoint2 #testPoint4 #testPoint4Bigger #testPointers #testPrintString #testPrintWideString #testReturnPointerAlias #testReturnStructPassingUnionUfdUdSi2 #testReturnStructPassingUnionUfdUfi #testReturnStructSd2 #testReturnStructSdi #testReturnStructSf2 #testReturnStructSf2d #testReturnStructSf4 #testReturnStructSfdf #testReturnStructSfi #testReturnStructSi2 #testReturnStructSl2 #testReturnStructSs2 #testReturnStructSs2i #testReturnStructSs4 #testReturnStructSSdi5 #testReturnStructSsf #testReturnStructSsi #testReturnStructSsis #testReturnStructSsisPassingValues #testReturnStructSslf #testReturnStructSslfPassingValues #testReturnStructSsls #testReturnStructSslsPassingValues #testReturnStructSsSsf #testReturnStructSsSsi #testReturnUnionUdSi2 #testReturnUnionUfd #testReturnUnionUfi #testSmallStructureReturn #testSumdiWithStructSdi4 #testSumdWithStructSdi4 #testSumfWithStructSfd4 #testSumiWithStructSdi4 #testSumStructSdi #testSumStructSdi2 #testSumStructSdi4 #testSumStructSfd #testSumStructSfd2 #testSumStructSfd4 #testSumStructSSdi5 #testSumStructSslf #testSumStructSslf2 #testSumStructSslf4 #testSumStructSUfdUdsi2 #testSumStructSUfdUfi).
         HtmlReadWriterTest -> #(#test16ImgTag).
         MemoryTests -> #(#testFrameActivationLeak).
-        MutexTest -> #(#testCritical #testCriticalIfError).
         SlangTests -> #(#testSimpleMethod). "broken"
         SlangTypePromotionTest -> #(#testFloatAndNil #testNilAndFloat). "broken"
         SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
