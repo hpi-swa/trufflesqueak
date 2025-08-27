@@ -26,7 +26,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -114,11 +113,6 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     protected static final ClassObject doClass(final Node node, final ClassObject receiver,
                     @Exclusive @Cached final ArrayObjectShallowCopyNode arrayCopyNode) {
         return receiver.shallowCopy(node, arrayCopyNode);
-    }
-
-    @Specialization
-    protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject receiver) {
-        return receiver.shallowCopy();
     }
 
     @Specialization

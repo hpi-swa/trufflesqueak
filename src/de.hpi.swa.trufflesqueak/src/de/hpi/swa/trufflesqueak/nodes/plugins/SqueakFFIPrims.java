@@ -42,7 +42,6 @@ import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -286,9 +285,9 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveLoadSymbolFromModule")
     protected abstract static class PrimLoadSymbolFromModuleNode extends AbstractFFIPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"moduleSymbol.isByteType()", "module.isByteType()"})
-        protected final NativeObject doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
+        protected static final NativeObject doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
+                        @Bind final SqueakImageContext image,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            final SqueakImageContext image = getContext();
             final String moduleSymbolName = moduleSymbol.asStringUnsafe();
             final String moduleName = module.asStringUnsafe();
             final CallTarget target = image.env.parseInternal(generateNFILoadSource(image, moduleName));
@@ -412,10 +411,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
-        protected final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
+        protected static final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
+                        @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile positiveProfile) {
-            return PrimUnsignedInt64AtNode.unsignedInt64At(getContext(), byteArray, byteOffsetLong, positiveProfile, node);
+            return PrimUnsignedInt64AtNode.unsignedInt64At(image, byteArray, byteOffsetLong, positiveProfile, node);
         }
     }
 
@@ -437,13 +437,14 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        protected static boolean inSignedBounds(final LargeIntegerObject value, final BigInteger max) {
-            return value.getBigInteger().compareTo(BigInteger.ZERO.subtract(max)) >= 0 && value.getBigInteger().compareTo(max) < 0;
+        protected static boolean inSignedBounds(final SqueakImageContext image, final NativeObject value, final BigInteger max) {
+            final BigInteger bigInteger = LargeIntegers.toBigInteger(image, value);
+            return bigInteger.compareTo(BigInteger.ZERO.subtract(max)) >= 0 && bigInteger.compareTo(max) < 0;
         }
 
         @TruffleBoundary
-        protected static boolean inUnsignedBounds(final LargeIntegerObject value) {
-            return value.isZeroOrPositive() && value.lessThanOneShiftedBy64();
+        protected static boolean inUnsignedBounds(final SqueakImageContext image, final NativeObject value) {
+            return LargeIntegers.isZeroOrPositive(image, value) && LargeIntegers.lessThanOneShiftedBy64(value);
         }
     }
 
@@ -487,18 +488,20 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return PrimUnsignedInt32AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "isSigned", "value.fitsIntoLong()", "inSignedBounds(value.longValueExact(), MAX_VALUE_SIGNED_4)"})
-        protected static final LargeIntegerObject doAtPut4SignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize,
-                        final boolean isSigned) {
-            return doAtPut4UnsignedLarge(byteArray, byteOffsetLong, value, byteSize, isSigned);
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "isSigned", "image.isLargeInteger(value)", "fitsIntoLong(value)",
+                        "inSignedBounds(longValueExact(value), MAX_VALUE_SIGNED_4)"})
+        protected static final NativeObject doAtPut4SignedLarge(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value, final long byteSize,
+                        final boolean isSigned,
+                        @Bind final SqueakImageContext image) {
+            return doAtPut4UnsignedLarge(byteArray, byteOffsetLong, value, byteSize, isSigned, image);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned", "value.fitsIntoLong()",
-                        "inUnsignedBounds(value.longValueExact(), MAX_VALUE_UNSIGNED_4)"})
-        protected static final LargeIntegerObject doAtPut4UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize,
-                        final boolean isSigned) {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned", "image.isLargeInteger(value)", "fitsIntoLong(value)",
+                        "inUnsignedBounds(longValueExact(value), MAX_VALUE_UNSIGNED_4)"})
+        protected static final NativeObject doAtPut4UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value, final long byteSize,
+                        final boolean isSigned,
+                        @Bind final SqueakImageContext image) {
             return PrimUnsignedInt32AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
 
@@ -515,16 +518,17 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "isSigned", "inSignedBounds(value, MAX_VALUE_SIGNED_8)"})
-        protected static final Object doAtPut8SignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
-            return doAtPut8UnsignedLarge(byteArray, byteOffsetLong, value, byteSize, isSigned);
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "isSigned", "image.isLargeInteger(value)", "inSignedBounds(image, value, MAX_VALUE_SIGNED_8)"})
+        protected static final Object doAtPut8SignedLarge(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value, final long byteSize, final boolean isSigned,
+                        @Bind final SqueakImageContext image) {
+            return doAtPut8UnsignedLarge(byteArray, byteOffsetLong, value, byteSize, isSigned, image);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned", "inUnsignedBounds(value)"})
-        @ExplodeLoop
-        protected static final Object doAtPut8UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
-            return PrimUnsignedInt64AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned", "image.isLargeInteger(value)", "inUnsignedBounds(image, value)"})
+        protected static final Object doAtPut8UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value, final long byteSize, final boolean isSigned,
+                        @Bind final SqueakImageContext image) {
+            return PrimUnsignedInt64AtPutNode.doAtPut(byteArray, byteOffsetLong, value, image);
         }
     }
 
@@ -592,9 +596,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return PrimUnsignedInt32AtPutNode.doAtPut(byteArray, byteOffset, value);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "value.fitsIntoLong()", "inSignedBounds(value.longValueExact(), MAX_VALUE_SIGNED_4)"})
-        protected static final LargeIntegerObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "fitsIntoLong(value)", "inSignedBounds(longValueExact(value), MAX_VALUE_SIGNED_4)"})
+        protected static final NativeObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value) {
             return PrimUnsignedInt32AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
     }
@@ -625,8 +628,9 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "inSignedBounds(value, MAX_VALUE_SIGNED_8)"})
-        protected static final LargeIntegerObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "image.isLargeInteger(value)", "inSignedBounds(image, value, MAX_VALUE_SIGNED_8)"})
+        protected static final NativeObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value,
+                        @Bind final SqueakImageContext image) {
             atPutNativeLarge(byteArray, byteOffsetLong, value);
             return value;
         }
@@ -692,12 +696,12 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "value.fitsIntoLong()", "inUnsignedBounds(value.longValueExact(), MAX_VALUE_UNSIGNED_4)"})
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "fitsIntoLong(value)", "inUnsignedBounds(longValueExact(value), MAX_VALUE_UNSIGNED_4)"})
         @ExplodeLoop
-        protected static final LargeIntegerObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+        protected static final NativeObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value) {
             final int byteOffset = (int) byteOffsetLong - 1;
             final byte[] targetBytes = byteArray.getByteStorage();
-            final byte[] sourceBytes = value.getBytes();
+            final byte[] sourceBytes = value.getByteStorage();
             final int numSourceBytes = sourceBytes.length;
             for (int i = 0; i < 4; i++) {
                 targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
@@ -710,10 +714,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveUnsignedInt64At")
     protected abstract static class PrimUnsignedInt64AtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"byteArray.isByteType()", "byteOffset > 0"})
-        protected final Object doAt(final NativeObject byteArray, final long byteOffset,
+        protected static final Object doAt(final NativeObject byteArray, final long byteOffset,
+                        @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile positiveProfile) {
-            return unsignedInt64At(getContext(), byteArray, byteOffset, positiveProfile, node);
+            return unsignedInt64At(image, byteArray, byteOffset, positiveProfile, node);
         }
 
         private static Object unsignedInt64At(final SqueakImageContext image, final NativeObject byteArray, final long byteOffset, final InlinedConditionProfile positiveProfile, final Node node) {
@@ -721,7 +726,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             if (positiveProfile.profile(node, signedLong >= 0)) {
                 return signedLong;
             } else {
-                return LargeIntegerObject.toUnsigned(image, signedLong);
+                return LargeIntegers.toUnsigned(image, signedLong);
             }
         }
     }
@@ -733,23 +738,23 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "value >= 0"})
         protected static final long doAtPut(final NativeObject byteArray, final long byteOffsetLong, final long value) {
-            VarHandleUtils.putLongIntoBytes(byteArray.getByteStorage(), (int) byteOffsetLong - 1, value);
-            return value;
+            return PrimSignedInt64AtPutNode.doAtPut(byteArray, byteOffsetLong, value);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "inUnsignedBounds(value)"})
-        protected static final LargeIntegerObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "image.isLargeInteger(value)", "inUnsignedBounds(image, value)"})
+        protected static final NativeObject doAtPut(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value,
+                        @Bind final SqueakImageContext image) {
             atPutNativeLarge(byteArray, byteOffsetLong, value);
             return value;
         }
     }
 
     @ExplodeLoop
-    private static void atPutNativeLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value) {
+    private static void atPutNativeLarge(final NativeObject byteArray, final long byteOffsetLong, final NativeObject value) {
         final int byteOffset = (int) byteOffsetLong - 1;
         final byte[] targetBytes = byteArray.getByteStorage();
-        final byte[] sourceBytes = value.getBytes();
+        final byte[] sourceBytes = value.getByteStorage();
         final int numSourceBytes = sourceBytes.length;
         for (int i = 0; i < 8; i++) {
             targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;

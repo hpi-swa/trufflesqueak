@@ -29,12 +29,12 @@ import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
@@ -274,7 +274,7 @@ public final class SqueakImageWriter {
     }
 
     private long reserveLargeInteger(final long value) {
-        return reserveBoxedObject(new LargeIntegerObject(image, BigInteger.valueOf(value)));
+        return reserveBoxedObject(LargeIntegers.toNativeObject(image, BigInteger.valueOf(value)));
     }
 
     private long reserveBoxedFloat(final double value) {

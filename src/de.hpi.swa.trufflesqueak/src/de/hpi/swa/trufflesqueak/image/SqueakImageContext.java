@@ -40,8 +40,8 @@ import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -92,8 +92,8 @@ public final class SqueakImageContext {
     private static final ContextReference<SqueakImageContext> REFERENCE = ContextReference.create(SqueakLanguage.class);
 
     /* Special objects */
-    public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
+    public final ClassObject trueClass = new ClassObject(this);
     public final PointersObject schedulerAssociation = new PointersObject();
     public final ClassObject bitmapClass = new ClassObject(this);
     public final ClassObject smallIntegerClass = new ClassObject(this);
@@ -102,6 +102,7 @@ public final class SqueakImageContext {
     public final PointersObject smalltalk = new PointersObject();
     public final ClassObject floatClass = new ClassObject(this);
     public final ClassObject methodContextClass = new ClassObject(this);
+    @CompilationFinal private ClassObject wideStringClass;
     public final ClassObject pointClass = new ClassObject(this);
     public final ClassObject largePositiveIntegerClass = new ClassObject(this);
     public final ClassObject messageClass = new ClassObject(this);
@@ -110,16 +111,28 @@ public final class SqueakImageContext {
     public final ClassObject characterClass = new ClassObject(this);
     public final NativeObject doesNotUnderstand = new NativeObject();
     public final NativeObject cannotReturn = new NativeObject();
+    public final ArrayObject specialSelectors = new ArrayObject();
     public final NativeObject mustBeBooleanSelector = new NativeObject();
     public final ClassObject byteArrayClass = new ClassObject(this);
     public final ClassObject processClass = new ClassObject(this);
+    @CompilationFinal private ClassObject doubleByteArrayClass;
+    @CompilationFinal private ClassObject wordArrayClass;
+    @CompilationFinal private ClassObject doubleWordArrayClass;
+    public final NativeObject cannotInterpretSelector = new NativeObject(); // TODO: use selector
     public final ClassObject blockClosureClass = new ClassObject(this);
+    @CompilationFinal private ClassObject fullBlockClosureClass;
     public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
+    @CompilationFinal private ClassObject externalAddressClass;
+    @CompilationFinal private ClassObject externalStructureClass;
+    @CompilationFinal private ClassObject externalDataClass;
+    @CompilationFinal private ClassObject externalFunctionClass;
+    @CompilationFinal private ClassObject externalLibraryClass;
     public final NativeObject aboutToReturnSelector = new NativeObject();
     public final NativeObject runWithInSelector = new NativeObject();
     public final ArrayObject primitiveErrorTable = new ArrayObject();
-    public final ArrayObject specialSelectors = new ArrayObject();
-    @CompilationFinal public ClassObject fullBlockClosureClass;
+    @CompilationFinal private ClassObject alienClass;
+    @CompilationFinal private ClassObject unsafeAlienClass;
+
     @CompilationFinal public ClassObject smallFloatClass;
     @CompilationFinal private ClassObject byteSymbolClass;
     @CompilationFinal private ClassObject foreignObjectClass;
@@ -196,7 +209,6 @@ public final class SqueakImageContext {
     private AbstractSqueakObject requestorSharedInstanceOrNil;
     @CompilationFinal private PointersObject scheduler;
     @CompilationFinal private Object smalltalkScope;
-    @CompilationFinal private ClassObject wideStringClass;
 
     /* Plugins */
     @CompilationFinal private InterpreterProxy interpreterProxy;
@@ -206,12 +218,6 @@ public final class SqueakImageContext {
     public String[] dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
     public final JPEGReader jpegReader = new JPEGReader();
     public final Zip zip = new Zip();
-
-    /* Error detection for headless execution */
-    @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes();
-    @CompilationFinal private NativeObject debugErrorSelector;
-    @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
-    @CompilationFinal private NativeObject debugSyntaxErrorSelector;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
@@ -229,7 +235,7 @@ public final class SqueakImageContext {
         } else { /* Fall back to image directory if language home is not set. */
             homePath = env.getInternalTruffleFile(options.imagePath()).getParent();
         }
-        assert homePath.exists() : "Home directory does not exist: " + homePath;
+        assert homePath != null && homePath.exists() : "Home directory does not exist: " + homePath;
         initializeMethodCache();
     }
 
@@ -290,7 +296,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public Object evaluate(final String sourceCode) {
-        return getDoItContextNode(sourceCode, false).getCallTarget().call();
+        return getDoItContextNode(sourceCode).getCallTarget().call();
     }
 
     @TruffleBoundary
@@ -349,7 +355,7 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    private ExecuteTopLevelContextNode getDoItContextNode(final String source, final boolean isExternalRequest) {
+    private ExecuteTopLevelContextNode getDoItContextNode(final String source) {
         /*
          * (Parser new parse: '1 + 2 * 3' class: UndefinedObject noPattern: true notifying: nil
          * ifFail: [^nil]) generate
@@ -388,7 +394,7 @@ public final class SqueakImageContext {
         doItContext.setCodeObject(doItMethod);
         doItContext.setInstructionPointer(doItMethod.getInitialPC());
         doItContext.setStackPointer(doItMethod.getNumTemps());
-        doItContext.setSenderUnsafe(isExternalRequest ? getInteropExceptionThrowingContext() : NilObject.SINGLETON);
+        doItContext.setSenderUnsafe(NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(this, getLanguage(), doItContext, false);
     }
 
@@ -667,26 +673,6 @@ public final class SqueakImageContext {
         }
     }
 
-    public NativeObject getDebugErrorSelector() {
-        return debugErrorSelector;
-    }
-
-    public void setDebugErrorSelector(final NativeObject nativeObject) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert debugErrorSelector == null;
-        debugErrorSelector = nativeObject;
-    }
-
-    public NativeObject getDebugSyntaxErrorSelector() {
-        return debugSyntaxErrorSelector;
-    }
-
-    public void setDebugSyntaxErrorSelector(final NativeObject nativeObject) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert debugSyntaxErrorSelector == null;
-        debugSyntaxErrorSelector = nativeObject;
-    }
-
     public ClassObject getByteSymbolClass() {
         return byteSymbolClass;
     }
@@ -697,28 +683,125 @@ public final class SqueakImageContext {
         byteSymbolClass = classObject;
     }
 
-    public ClassObject getWideStringClassOrNull() {
-        return wideStringClass;
+    public static void initializeBeforeLoadingImage() {
+        SlotLocation.initialize();
     }
 
     public ClassObject getWideStringClass() {
-        if (wideStringClass == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            // TODO: find a better way to find wideStringClass or do this on image side instead?
-            final CompiledCodeObject method = (CompiledCodeObject) LookupMethodByStringNode.executeUncached(byteArrayClass, "asWideString");
-            if (method != null) {
-                final PointersObject assoc = (PointersObject) method.getLiteral(1);
-                wideStringClass = (ClassObject) assoc.instVarAt0Slow(ASSOCIATION.VALUE);
-            } else {
-                /* Image only uses a single String class (e.g. Cuis 5.0). */
-                wideStringClass = byteStringClass;
-            }
-        }
+        assert wideStringClass != null;
         return wideStringClass;
     }
 
-    public static void initializeBeforeLoadingImage() {
-        SlotLocation.initialize();
+    public ClassObject initializeWideStringClass() {
+        assert wideStringClass == null;
+        return wideStringClass = new ClassObject(this);
+    }
+
+    public ClassObject getDoubleByteArrayClass() {
+        assert doubleByteArrayClass != null;
+        return doubleByteArrayClass;
+    }
+
+    public ClassObject initializeDoubleByteArrayClass() {
+        assert doubleByteArrayClass == null;
+        return doubleByteArrayClass = new ClassObject(this);
+    }
+
+    public ClassObject getWordArrayClass() {
+        assert wordArrayClass != null;
+        return wordArrayClass;
+    }
+
+    public ClassObject initializeWordArrayClass() {
+        assert wordArrayClass == null;
+        return wordArrayClass = new ClassObject(this);
+    }
+
+    public ClassObject getDoubleWordArrayClass() {
+        assert doubleWordArrayClass != null;
+        return doubleWordArrayClass;
+    }
+
+    public ClassObject initializeDoubleWordArrayClass() {
+        assert doubleWordArrayClass == null;
+        return doubleWordArrayClass = new ClassObject(this);
+    }
+
+    public ClassObject getFullBlockClosureClass() {
+        assert fullBlockClosureClass != null;
+        return fullBlockClosureClass;
+    }
+
+    public ClassObject initializeFullBlockClosureClass() {
+        assert fullBlockClosureClass == null;
+        return fullBlockClosureClass = new ClassObject(this);
+    }
+
+    public AbstractSqueakObject getExternalAddressClass() {
+        return NilObject.nullToNil(externalAddressClass);
+    }
+
+    public ClassObject initializeExternalAddressClass() {
+        assert externalAddressClass == null;
+        return externalAddressClass = new ClassObject(this);
+    }
+
+    public AbstractSqueakObject getExternalStructureClass() {
+        return NilObject.nullToNil(externalStructureClass);
+    }
+
+    public ClassObject initializeExternalStructureClass() {
+        assert externalStructureClass == null;
+        return externalStructureClass = new ClassObject(this);
+    }
+
+    public AbstractSqueakObject getExternalDataClass() {
+        return NilObject.nullToNil(externalDataClass);
+    }
+
+    public ClassObject initializeExternalDataClass() {
+        assert externalDataClass == null;
+        return externalDataClass = new ClassObject(this);
+    }
+
+    public ClassObject getExternalFunctionClassOrNull() {
+        return externalFunctionClass;
+    }
+
+    public AbstractSqueakObject getExternalFunctionClass() {
+        return NilObject.nullToNil(getExternalFunctionClassOrNull());
+    }
+
+    public ClassObject initializeExternalFunctionClass() {
+        assert externalFunctionClass == null;
+        return externalFunctionClass = new ClassObject(this);
+    }
+
+    public AbstractSqueakObject getExternalLibraryClass() {
+        return NilObject.nullToNil(externalLibraryClass);
+    }
+
+    public ClassObject initializeExternalLibraryClass() {
+        assert externalLibraryClass == null;
+        return externalLibraryClass = new ClassObject(this);
+    }
+
+    public AbstractSqueakObject getAlienClass() {
+        return NilObject.nullToNil(alienClass);
+    }
+
+    public ClassObject initializeAlienClass() {
+        assert alienClass == null;
+        return alienClass = new ClassObject(this);
+    }
+
+    public AbstractSqueakObject getUnsafeAlienClass() {
+        return NilObject.nullToNil(unsafeAlienClass);
+    }
+
+    public ClassObject initializeUnsafeAlienClass() {
+        assert unsafeAlienClass == null;
+        return unsafeAlienClass = new ClassObject(this);
     }
 
     public ClassObject getForeignObjectClass() {
@@ -1002,11 +1085,23 @@ public final class SqueakImageContext {
     }
 
     public boolean isFullBlockClosureClass(final ClassObject object) {
-        return object == fullBlockClosureClass;
+        return object == fullBlockClosureClass; /* may be null */
     }
 
     public boolean isLargeIntegerClass(final ClassObject object) {
         return object == largePositiveIntegerClass || object == largeNegativeIntegerClass;
+    }
+
+    public boolean isLargeInteger(final NativeObject object) {
+        return isLargeIntegerClass(object.getSqueakClass());
+    }
+
+    public boolean isLargePositiveInteger(final NativeObject object) {
+        return object.getSqueakClass() == largePositiveIntegerClass;
+    }
+
+    public boolean isLargeNegativeInteger(final NativeObject object) {
+        return object.getSqueakClass() == largeNegativeIntegerClass;
     }
 
     public boolean isMetaClass(final ClassObject object) {
@@ -1021,12 +1116,16 @@ public final class SqueakImageContext {
         return object == nilClass;
     }
 
-    public boolean isPointClass(final ClassObject object) {
-        return object == pointClass;
+    public boolean isPoint(final AbstractPointersObject object) {
+        return object.getSqueakClass() == pointClass;
     }
 
     public boolean isSemaphoreClass(final ClassObject object) {
         return object == semaphoreClass;
+    }
+
+    public boolean isWideStringClass(final ClassObject object) {
+        return object == getWideStringClass();
     }
 
     /*
@@ -1135,7 +1234,6 @@ public final class SqueakImageContext {
         assert message.getLibraryClass() == InteropLibrary.class;
         return interopMessageToSelectorMap.computeIfAbsent(message, m -> {
             final String libraryName = message.getLibraryClass().getSimpleName();
-            assert libraryName.endsWith("Library");
             final String libraryPrefix = libraryName.substring(0, 1).toLowerCase() + libraryName.substring(1, libraryName.length() - 7);
             final String messageName = message.getSimpleName();
             final String messageCapitalized = messageName.substring(0, 1).toUpperCase() + messageName.substring(1);

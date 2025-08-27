@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -27,6 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSi
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -115,13 +115,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public void fillin(final SqueakImageChunk chunk) {
         if (storage == ArrayUtils.EMPTY_ARRAY) { /* Fill in special selectors. */
             setStorage(chunk.getBytes());
-        } else if (chunk.getImage().isHeadless() && isByteType()) {
-            final SqueakImageContext image = chunk.getImage();
-            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getByteStorage())) {
-                image.setDebugErrorSelector(this);
-            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, getByteStorage())) {
-                image.setDebugSyntaxErrorSelector(this);
-            }
         }
     }
 
@@ -333,14 +326,15 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
                 return String.format("'%.30s...' (string length: %s)", displayString, fullLength);
             } else if (image.isByteSymbolClass(squeakClass)) {
                 return "#" + asStringUnsafe();
+            } else if (image.isLargeIntegerClass(squeakClass)) {
+                return LargeIntegers.toBigInteger(image, this).toString();
             } else {
                 return "byte[" + getByteLength() + "]";
             }
         } else if (isShortType()) {
             return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
-            /* Avoid lazy-loading of wideStringClass to avoid endless recursions. */
-            if (image.getWideStringClassOrNull() == squeakClass) {
+            if (image.isWideStringClass(squeakClass)) {
                 return asStringFromWideString();
             } else {
                 return "int[" + getIntLength() + "]";
@@ -350,14 +344,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         } else {
             throw SqueakException.create("Unexpected native object type");
         }
-    }
-
-    public boolean isDebugErrorSelector(final SqueakImageContext image) {
-        return this == image.getDebugErrorSelector();
-    }
-
-    public boolean isDebugSyntaxErrorSelector(final SqueakImageContext image) {
-        return this == image.getDebugSyntaxErrorSelector();
     }
 
     public boolean isDoesNotUnderstand(final SqueakImageContext image) {

@@ -24,16 +24,15 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -461,14 +460,9 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return value.getByteStorage();
         }
 
-        @Specialization
-        protected static final byte[] doLargeInteger(final LargeIntegerObject value) {
-            return value.getBytes();
-        }
-
         @Specialization(guards = {"isLongMinValue(value)"})
         protected static final byte[] doLongMinValue(@SuppressWarnings("unused") final long value) {
-            return LargeIntegerObject.getLongMinOverflowResultBytes();
+            return LargeIntegers.LONG_MIN_OVERFLOW_RESULT_BYTES;
         }
 
         @Fallback

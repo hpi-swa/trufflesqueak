@@ -14,11 +14,6 @@ import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
 
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
 import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -61,7 +56,6 @@ import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -69,10 +63,15 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSize
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -565,7 +564,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doAsDouble(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return new LargeIntegerObject(getContext(), lib.asBigInteger(object));
+                return LargeIntegers.toNativeObject(getContext(), lib.asBigInteger(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -2247,8 +2246,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveToJavaBigInteger")
     protected abstract static class PrimToJavaBigIntegerNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final BigInteger toJavaInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject value) {
-            return value.getBigInteger();
+        protected static final BigInteger toJavaInteger(@SuppressWarnings("unused") final Object receiver, final NativeObject value,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.toBigInteger(image, value);
         }
     }
 

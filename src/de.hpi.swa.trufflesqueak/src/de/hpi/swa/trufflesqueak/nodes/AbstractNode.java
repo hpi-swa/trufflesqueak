@@ -18,10 +18,11 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-@ImportStatic({BooleanObject.class, CacheLimits.class, FrameAccess.class, SqueakGuards.class})
+@ImportStatic({BooleanObject.class, CacheLimits.class, FrameAccess.class, SqueakGuards.class, LargeIntegers.class})
 @TypeSystemReference(SqueakTypes.class)
 @NodeInfo(language = SqueakLanguageConfig.ID)
 public abstract class AbstractNode extends Node {
@@ -47,7 +48,7 @@ public abstract class AbstractNode extends Node {
     }
 
     protected final boolean isPoint(final PointersObject object) {
-        return getContext().isPointClass(object.getSqueakClass());
+        return getContext().isPoint(object);
     }
 
     @Idempotent

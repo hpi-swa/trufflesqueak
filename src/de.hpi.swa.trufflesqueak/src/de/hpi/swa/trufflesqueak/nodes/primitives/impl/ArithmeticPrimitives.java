@@ -6,13 +6,15 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.math.BigDecimal;
+import static de.hpi.swa.trufflesqueak.nodes.SqueakGuards.isOverflowDivision;
+import static de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers.isZero;
+
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.ExactMath;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -31,13 +33,14 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
@@ -50,25 +53,27 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 1)
-    protected abstract static class PrimAddNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimAddNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
+        public static final long doLong(final long lhs, final long rhs) {
             return Math.addExact(lhs, rhs);
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.add(getContext(), lhs, rhs);
-        }
-
-        @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return rhs.add(lhs);
+        public static final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.add(image, lhs, rhs);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final double doLongDouble(final long lhs, final double rhs) {
+        public static final double doLongDouble(final long lhs, final double rhs) {
             return lhs + rhs;
+        }
+
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return PrimAddLargeIntegersNode.doLargeIntegerLong(rhs, lhs, image);
         }
 
         @Specialization
@@ -81,25 +86,27 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 2)
-    protected abstract static class PrimSubtractNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimSubtractNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
+        public static final long doLong(final long lhs, final long rhs) {
             return Math.subtractExact(lhs, rhs);
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.subtract(getContext(), lhs, rhs);
-        }
-
-        @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.subtract(lhs, rhs);
+        public static final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.subtract(image, lhs, rhs);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final double doLongDouble(final long lhs, final double rhs) {
+        public static final double doLongDouble(final long lhs, final double rhs) {
             return lhs - rhs;
+        }
+
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.subtract(image, lhs, rhs);
         }
 
         @Specialization
@@ -112,19 +119,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 3)
-    protected abstract static class PrimLessThanNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimLessThanNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final boolean doLong(final long lhs, final long rhs) {
+        public static final boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs < rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) >= 0);
-        }
-
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doDouble(final long lhs, final double rhs,
+        public static final boolean doDouble(final long lhs, final double rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -133,23 +135,24 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return BooleanObject.wrap(lhs < rhs);
             }
         }
+
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) >= 0);
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 4)
-    protected abstract static class PrimGreaterThanNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimGreaterThanNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final boolean doLong(final long lhs, final long rhs) {
+        public static final boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs > rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) <= 0);
-        }
-
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doDouble(final long lhs, final double rhs,
+        public static final boolean doDouble(final long lhs, final double rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -158,23 +161,24 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return BooleanObject.wrap(lhs > rhs);
             }
         }
+
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) <= 0);
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 5)
-    protected abstract static class PrimLessOrEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimLessOrEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final boolean doLong(final long lhs, final long rhs) {
+        public static final boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs <= rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) > 0);
-        }
-
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doDouble(final long lhs, final double rhs,
+        public static final boolean doDouble(final long lhs, final double rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -183,23 +187,24 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return BooleanObject.wrap(lhs <= rhs);
             }
         }
+
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) > 0);
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 6)
-    protected abstract static class PrimGreaterOrEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimGreaterOrEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final boolean doLong(final long lhs, final long rhs) {
+        public static final boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs >= rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) < 0);
-        }
-
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doDouble(final long lhs, final double rhs,
+        public static final boolean doDouble(final long lhs, final double rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -208,23 +213,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return BooleanObject.wrap(lhs >= rhs);
             }
         }
+
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) < 0);
+        }
+
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 7)
-    protected abstract static class PrimEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final boolean doLong(final long lhs, final long rhs) {
+        public static final boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs == rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) == 0);
-        }
-
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doDouble(final long lhs, final double rhs,
+        public static final boolean doDouble(final long lhs, final double rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -234,9 +241,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) == 0);
+        }
+
         /** Quick return `false` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(getContext(), rhs)", "!isPointersObject(rhs)"})
         protected static final boolean doQuickFalse(final long lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.FALSE;
         }
@@ -244,19 +257,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 8)
-    protected abstract static class PrimNotEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimNotEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final boolean doLong(final long lhs, final long rhs) {
+        public static final boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs != rhs);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(rhs.compareTo(lhs) != 0);
-        }
-
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doDouble(final long lhs, final double rhs,
+        public static final boolean doDouble(final long lhs, final double rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -266,9 +274,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) != 0);
+        }
+
         /** Quick return `true` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(getContext(), rhs)", "!isPointersObject(rhs)"})
         protected static final boolean doQuickTrue(final long lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.TRUE;
         }
@@ -276,183 +290,230 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 9)
-    protected abstract static class PrimMultiplyNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimMultiplyNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
+        public static final long doLong(final long lhs, final long rhs) {
             return Math.multiplyExact(lhs, rhs);
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.multiply(getContext(), lhs, rhs);
-        }
-
-        @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return rhs.multiply(lhs);
+        public static final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.multiply(image, lhs, rhs);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()", rewriteOn = RespecializeException.class)
-        protected static final double doLongDoubleFinite(final long lhs, final double rhs) throws RespecializeException {
+        public static final double doLongDoubleFinite(final long lhs, final double rhs) throws RespecializeException {
             return ensureFinite(lhs * rhs);
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()", replaces = "doLongDoubleFinite")
-        protected static final Object doLongDouble(final long lhs, final double rhs,
+        public static final Object doLongDouble(final long lhs, final double rhs,
                         @Bind final Node node,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(node, lhs * rhs);
+        }
+
+        @Specialization(guards = "image.isLargeInteger(rhs)")
+        public static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.multiply(image, rhs, lhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 10)
-    protected abstract static class PrimDivideNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimDivideNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)", "isIntegralWhenDividedBy(lhs, rhs)"})
-        protected static final long doLong(final long lhs, final long rhs) {
+        public static final long doLong(final long lhs, final long rhs) {
             return lhs / rhs;
         }
 
-        @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"}, replaces = "doLong")
-        protected final Object doLongFraction(final long lhs, final long rhs,
+        @Specialization(replaces = "doLong")
+        public static final Object doLongFraction(final long lhs, final long rhs,
+                        @Bind final SqueakImageContext image,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile fractionProfile,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isOverflowProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isIntegralProfile,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            if (fractionProfile.profile(node, SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
+            if (isZeroProfile.profile(node, rhs == 0)) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else if (isOverflowProfile.profile(node, SqueakGuards.isOverflowDivision(lhs, rhs))) {
+                return LargeIntegers.createLongMinOverflowResult(image);
+            } else if (isIntegralProfile.profile(node, SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
                 return lhs / rhs;
             } else {
-                return getContext().asFraction(lhs, rhs, writeNode, node);
+                return image.asFraction(lhs, rhs, writeNode, node);
             }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        protected final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(getContext());
-        }
-
-        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, rewriteOn = RespecializeException.class)
-        protected static final double doLongDoubleFinite(final long lhs, final double rhs) throws RespecializeException {
-            return ensureFinite(lhs / rhs);
-        }
-
-        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, replaces = "doLongDoubleFinite")
-        protected static final Object doLongDouble(final long lhs, final double rhs,
+        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, rewriteOn = RespecializeException.class)
+        public static final double doLongDoubleFinite(final long lhs, final double rhs,
                         @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+            if (isZeroProfile.profile(node, rhs == 0)) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else {
+                return ensureFinite(lhs / rhs);
+            }
+        }
+
+        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, replaces = "doLongDoubleFinite")
+        public static final Object doLongDouble(final long lhs, final double rhs,
+                        @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(node, lhs / rhs);
+            if (isZeroProfile.profile(node, rhs == 0)) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else {
+                return boxNode.execute(node, lhs / rhs);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 11)
-    protected abstract static class PrimFloorModNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimFloorModNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         /** Profiled version of {@link Math#floorMod(long, long)}. */
-        @Specialization(guards = "rhs != 0")
-        protected static final long doLong(final long lhs, final long rhs,
+        @Specialization
+        public static final long doLong(final long lhs, final long rhs,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile profile) {
-            final long r = lhs % rhs;
-            // if the signs are different and modulo not zero, adjust result
-            if (profile.profile(node, (lhs ^ rhs) < 0 && r != 0)) {
-                return r + rhs;
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+            if (isZeroProfile.profile(node, rhs == 0)) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
             } else {
-                return r;
+                final long r = lhs % rhs;
+                // if the signs are different and modulo not zero, adjust result
+                if (sameSignProfile.profile(node, (lhs ^ rhs) < 0 && r != 0)) {
+                    return r + rhs;
+                } else {
+                    return r;
+                }
             }
         }
 
-        @Specialization(guards = "!rhs.isZero()")
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return rhs.floorModReverseOrder(lhs);
+        @Specialization(guards = {"image.isLargeInteger(rhs)"})
+        protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) {
+            if (isZeroProfile.profile(node, isZero(rhs))) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else {
+                return LargeIntegers.floorMod(image, lhs, rhs);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 12)
-    protected abstract static class PrimFloorDivideNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimFloorDivideNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         /** Profiled version of {@link Math#floorDiv(long, long)}. */
-        @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
-        protected static final long doLong(final long lhs, final long rhs,
+        @Specialization
+        public static final Object doLong(final long lhs, final long rhs,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile profile) {
-            final long q = lhs / rhs;
-            // if the signs are different and modulo not zero, round down
-            if (profile.profile(node, (lhs ^ rhs) < 0 && (q * rhs != lhs))) {
-                return q - 1;
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isOverflowDivisionProfile,
+                        @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
+            if (isZeroProfile.profile(node, rhs == 0)) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else if (isOverflowDivisionProfile.profile(node, isOverflowDivision(lhs, rhs))) {
+                return LargeIntegers.createLongMinOverflowResult(getContext(node));
             } else {
-                return q;
+                final long q = lhs / rhs;
+                // if the signs are different and modulo not zero, round down
+                if (sameSignProfile.profile(node, (lhs ^ rhs) < 0 && (q * rhs != lhs))) {
+                    return q - 1;
+                } else {
+                    return q;
+                }
             }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        protected final LargeIntegerObject doLongOverflowDivision(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(getContext());
-        }
-
-        @Specialization(guards = {"!rhs.isZero()"})
-        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.floorDivide(lhs, rhs);
+        @Specialization(guards = {"image.isLargeInteger(rhs)"})
+        public static final long doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) {
+            if (isZeroProfile.profile(node, isZero(rhs))) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else {
+                return LargeIntegers.floorDivide(image, lhs, rhs);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 13)
     protected abstract static class PrimQuoNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
-        protected static final long doLong(final long lhs, final long rhs) {
-            return lhs / rhs;
+        @Specialization
+        protected static final Object doLong(final long lhs, final long rhs,
+                        @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isOverflowDivisionProfile) {
+            if (isZeroProfile.profile(node, rhs == 0)) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else if (isOverflowDivisionProfile.profile(node, isOverflowDivision(lhs, rhs))) {
+                return LargeIntegers.createLongMinOverflowResult(getContext(node));
+            } else {
+                return lhs / rhs;
+            }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-        protected final LargeIntegerObject doLongOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(getContext());
-        }
-
-        @Specialization(guards = {"!rhs.isZero()"})
-        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.divide(lhs, rhs);
+        @Specialization(guards = {"image.isLargeInteger(rhs)"})
+        protected static final long doLongLargeInteger(final long lhs, final NativeObject rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) {
+            if (isZeroProfile.profile(node, isZero(rhs))) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else {
+                return LargeIntegers.divide(lhs, rhs);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 14)
-    protected abstract static class PrimBitAndNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimBitAndNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final long doLong(final long receiver, final long arg) {
+        public static final long doLong(final long receiver, final long arg) {
             return receiver & arg;
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg,
-                        @Bind final Node node,
-                        @Cached final InlinedConditionProfile positiveProfile) {
-            return receiver & (positiveProfile.profile(node, receiver >= 0) ? arg.longValue() : arg.longValueExact());
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
+        public static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return doLong(receiver, LargeIntegers.longValueExact(arg));
         }
 
-        @Specialization(replaces = "doLongLargeQuick")
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return arg.and(receiver);
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
+        public static final Object doLongLarge(final long receiver, final NativeObject arg,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.and(image, arg, receiver);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 15)
-    protected abstract static class PrimBitOrNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimBitOrNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final long doLong(final long receiver, final long arg) {
+        public static final long doLong(final long receiver, final long arg) {
             return receiver | arg;
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg) {
-            return receiver | arg.longValueExact();
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
+        public static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return doLong(receiver, LargeIntegers.longValueExact(arg));
         }
 
-        @Specialization(replaces = "doLongLargeQuick")
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return arg.or(receiver);
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
+        public static final Object doLongLarge(final long receiver, final NativeObject arg,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.or(image, receiver, arg);
         }
     }
 
@@ -464,201 +525,262 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver ^ arg;
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg) {
-            return receiver ^ arg.longValueExact();
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeQuick(final long receiver, final NativeObject arg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return doLong(receiver, LargeIntegers.longValueExact(arg));
         }
 
-        @Specialization(replaces = "doLongLargeQuick")
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return arg.xor(receiver);
+        @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
+        protected static final Object doLongLarge(final long receiver, final NativeObject arg,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.xor(image, receiver, arg);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 17)
-    protected abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
-        protected static final long doLongPositive(final long receiver, final long arg) {
-            return receiver << arg;
+    public abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements Primitive1 {
+        @Specialization(guards = {"arg >= 0"})
+        public static final Object doLongPositive(final long receiver, final long arg,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile isOverflowProfile) {
+            if (isOverflowProfile.profile(node, SqueakGuards.isLShiftLongOverflow(receiver, arg))) {
+                /*
+                 * -1 in check needed, because we do not want to shift a positive long into negative
+                 * long (most significant bit indicates positive/negative).
+                 */
+                return LargeIntegers.shiftLeftPositive(getContext(node), receiver, (int) arg);
+            } else {
+                return receiver << arg;
+            }
         }
 
-        @Specialization(guards = {"arg >= 0", "isLShiftLongOverflow(receiver, arg)"})
-        protected final Object doLongPositiveOverflow(final long receiver, final long arg) {
-            /*
-             * -1 in check needed, because we do not want to shift a positive long into negative
-             * long (most significant bit indicates positive/negative).
-             */
-            return LargeIntegerObject.shiftLeftPositive(getContext(), receiver, (int) arg);
-        }
-
-        @Specialization(guards = {"arg < 0", "inLongSizeRange(arg)"})
-        protected static final long doLongNegativeInLongSizeRange(final long receiver, final long arg) {
-            /*
-             * The result of a right shift can only become smaller than the receiver and 0 or -1 at
-             * minimum, so no BigInteger needed here.
-             */
-            return receiver >> -arg;
-        }
-
-        @Specialization(guards = {"arg < 0", "!inLongSizeRange(arg)"})
-        protected static final long doLongNegative(final long receiver, @SuppressWarnings("unused") final long arg) {
-            return receiver >= 0 ? 0L : -1L;
+        @Specialization(guards = {"arg < 0"})
+        public static final long doLongNegativeInLongSizeRange(final long receiver, final long arg,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile inLongSizeRangeProfile) {
+            if (inLongSizeRangeProfile.profile(node, inLongSizeRange(arg))) {
+                /*
+                 * The result of a right shift can only become smaller than the receiver and 0 or -1
+                 * at minimum, so no BigInteger needed here.
+                 */
+                return receiver >> -arg;
+            } else {
+                return receiver >= 0 ? 0L : -1L;
+            }
         }
 
         protected static final boolean inLongSizeRange(final long arg) {
             return -Long.SIZE < arg;
         }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isLong(receiver)", "!isLong(arg)"})
+        protected static final Object doFallback(final Object receiver, final Object arg) {
+            throw PrimitiveFailed.GENERIC_ERROR;
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 18)
-    protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode implements Primitive1 {
+    public abstract static class PrimMakePointNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
-        protected final PointersObject doPoint(final Object xPos, final Object yPos,
+        public static final PointersObject doPoint(final Object xPos, final Object yPos,
                         @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, node, xPos, yPos);
+            return getContext(node).asPoint(writeNode, node, xPos, yPos);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 20)
     protected abstract static class PrimRemLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"rhs != 0"})
-        protected static final long doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.remainder(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+        protected static final long doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.remainder(image, lhs, rhs);
         }
 
-        @Specialization(guards = {"!rhs.isZero()"})
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.remainder(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.remainder(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 21)
-    protected abstract static class PrimAddLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.add(rhs);
+    public abstract static class PrimAddLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.add(image, lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.add(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.add(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 22)
-    protected abstract static class PrimSubtractLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.subtract(rhs);
+    public abstract static class PrimSubtractLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.subtract(image, lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.subtract(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.subtract(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 23)
-    protected abstract static class PrimLessThanLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) < 0);
+    public abstract static class PrimLessThanLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) < 0);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) < 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) < 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(lhs));
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 24)
-    protected abstract static class PrimGreaterThanLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) > 0);
+    public abstract static class PrimGreaterThanLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) > 0);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) > 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) > 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(rhs));
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 25)
-    protected abstract static class PrimLessOrEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) <= 0);
+    public abstract static class PrimLessOrEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) <= 0);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) <= 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            final boolean lhsNeg = image.isLargeNegativeInteger(lhs);
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) <= 0);
+            } else {
+                return BooleanObject.wrap(lhsNeg);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 26)
-    protected abstract static class PrimGreaterOrEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) >= 0);
+    public abstract static class PrimGreaterOrEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final boolean doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) >= 0);
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) >= 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) >= 0);
+            } else {
+                return BooleanObject.wrap(image.isLargeNegativeInteger(rhs));
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 27)
-    protected abstract static class PrimEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
-            assert !lhs.fitsIntoLong() : "non-reduced large integer!";
+    public abstract static class PrimEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final boolean doLargeIntegerLong(final NativeObject lhs, @SuppressWarnings("unused") final long rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            assert !LargeIntegers.fitsIntoLong(lhs) : "non-reduced large integer!";
             return BooleanObject.FALSE;
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) == 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(node, LargeIntegers.sameSign(lhs, rhs))) {
+                return BooleanObject.wrap(LargeIntegers.compareTo(image, lhs, rhs) == 0);
+            } else {
+                return BooleanObject.FALSE;
+            }
         }
 
         /** Quick return `false` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
-        protected static final boolean doQuickFalse(final LargeIntegerObject lhs, final AbstractSqueakObject rhs) {
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(getContext(), rhs)", "!isPointersObject(rhs)"})
+        protected static final boolean doQuickFalse(final NativeObject lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.FALSE;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 28)
-    protected abstract static class PrimNotEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
-            assert !lhs.fitsIntoLong() : "non-reduced large integer!";
+    public abstract static class PrimNotEqualLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final boolean doLargeIntegerLong(final NativeObject lhs, @SuppressWarnings("unused") final long rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            assert !LargeIntegers.fitsIntoLong(lhs) : "non-reduced large integer!";
             return BooleanObject.TRUE;
         }
 
-        @Specialization
-        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return BooleanObject.wrap(lhs.compareTo(rhs) != 0);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final boolean doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile sameSignProfile) {
+            return !PrimEqualLargeIntegersNode.doLargeInteger(lhs, rhs, image, node, sameSignProfile);
         }
 
         /** Quick return `true` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(getContext(), rhs)", "!isPointersObject(rhs)"})
         protected static final boolean doQuickTrue(final Object lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.TRUE;
         }
@@ -666,71 +788,103 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 29)
-    protected abstract static class PrimMultiplyLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.multiply(rhs);
+    public abstract static class PrimMultiplyLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.multiply(image, lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.multiply(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.multiply(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 30)
-    protected abstract static class PrimDivideLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"rhs != 0", "lhs.isIntegralWhenDividedBy(rhs)"})
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.divide(rhs);
+    public abstract static class PrimDivideLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = {"image.isLargeInteger(lhs)"})
+        public static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile successProfile) {
+            if (isZeroProfile.profile(node, rhs == 0)) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            }
+            final Object[] result = LargeIntegers.divideAndRemainder(image, lhs, rhs);
+            if (successProfile.profile(node, result[1] instanceof final Long remainder && remainder == 0)) {
+                return result[0];
+            } else {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
         }
 
-        @Specialization(guards = {"!rhs.isZero()", "lhs.isIntegralWhenDividedBy(rhs)"})
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.divide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile successProfile) {
+            if (isZeroProfile.profile(node, isZero(rhs))) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            }
+            final Object[] result = LargeIntegers.divideAndRemainder(image, lhs, rhs);
+            if (successProfile.profile(node, result[1] instanceof final Long remainder && remainder == 0)) {
+                return result[0];
+            } else {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 31)
-    protected abstract static class PrimFloorModLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.floorMod(rhs);
+    public abstract static class PrimFloorModLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "image.isLargeInteger(lhs)")
+        public static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorMod(image, lhs, rhs);
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.floorMod(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
+        public static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorMod(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 32)
     protected abstract static class PrimFloorDivideLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "rhs != 0")
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.floorDivide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorDivide(image, lhs, rhs);
         }
 
-        @Specialization(guards = "!rhs.isZero()")
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.floorDivide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.floorDivide(image, lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 33)
     protected abstract static class PrimQuoLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "rhs != 0")
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.divide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final long rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.divide(image, lhs, rhs);
         }
 
-        @Specialization(guards = "!rhs.isZero()")
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.divide(rhs);
+        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
+                        @Bind final SqueakImageContext image) {
+            return LargeIntegers.divide(image, lhs, rhs);
         }
     }
 
@@ -793,7 +947,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 41)
-    protected abstract static class PrimAddFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatAddNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doAdd(final FloatObject lhs, final Object rhs,
                         @Bind final Node node,
@@ -805,7 +959,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 42)
-    protected abstract static class PrimSubtractFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatSubtractNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doSubtract(final FloatObject lhs, final Object rhs,
                         @Bind final Node node,
@@ -817,7 +971,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 43)
-    protected abstract static class PrimLessThanFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatLessThanNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final boolean doDouble(final FloatObject lhs, final double rhs) {
             return BooleanObject.wrap(lhs.getValue() < rhs);
@@ -829,7 +983,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doLong(final FloatObject lhsObject, final long rhs,
+        public static final boolean doLong(final FloatObject lhsObject, final long rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             final double lhs = lhsObject.getValue();
@@ -843,7 +997,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 44)
-    protected abstract static class PrimGreaterThanFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatGreaterThanNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final boolean doDouble(final FloatObject lhs, final double rhs) {
             return BooleanObject.wrap(lhs.getValue() > rhs);
@@ -869,7 +1023,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 45)
-    protected abstract static class PrimLessOrEqualFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatLessOrEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final boolean doDouble(final FloatObject lhs, final double rhs) {
             return BooleanObject.wrap(lhs.getValue() <= rhs);
@@ -895,7 +1049,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 46)
-    protected abstract static class PrimGreaterOrEqualFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatGreaterOrEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final boolean doDouble(final FloatObject lhs, final double rhs) {
             return BooleanObject.wrap(lhs.getValue() >= rhs);
@@ -921,7 +1075,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 47)
-    protected abstract static class PrimEqualFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final boolean doDouble(final FloatObject lhs, final double rhs) {
             return BooleanObject.wrap(lhs.getValue() == rhs);
@@ -947,7 +1101,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 48)
-    protected abstract static class PrimNotEqualFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatNotEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final boolean doDouble(final FloatObject lhs, final double rhs) {
             return BooleanObject.wrap(lhs.getValue() != rhs);
@@ -973,7 +1127,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 49)
-    protected abstract static class PrimMultiplyFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatMultiplyNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doMultiply(final FloatObject lhs, final Object rhs,
                         @Bind final Node node,
@@ -985,7 +1139,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 50)
-    protected abstract static class PrimDivideFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    protected abstract static class PrimFloatDivideNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doDivide(final FloatObject lhs, final Object rhs,
                         @Bind final Node node,
@@ -1003,124 +1157,124 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 51)
-    protected abstract static class PrimFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
+    protected abstract static class PrimTruncatedNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
+        @Specialization
         protected static final long doFloat(final FloatObject receiver,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile isNegativeProfile) {
-            assert receiver.isFinite();
-            return truncate(node, isNegativeProfile, receiver.getValue());
-        }
-
-        @Specialization(guards = {"!inSafeIntegerRange(receiver.getValue())", "receiver.isFinite()"})
-        protected final Object doFloatExact(final FloatObject receiver) {
-            return LargeIntegerObject.truncateExact(getContext(), receiver.getValue());
+                        @Cached final InlinedConditionProfile inSafeIntegerRangeProfile) {
+            return PrimSmallFloatTruncatedNode.doDouble(receiver.getValue(), node, inSafeIntegerRangeProfile);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 52)
     protected abstract static class PrimFloatFractionPartNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
-        protected static final double doFloat(final FloatObject receiver) {
-            return receiver.getValue() - (long) receiver.getValue();
-        }
-
-        @TruffleBoundary
-        @Specialization(guards = {"!inSafeIntegerRange(receiver.getValue())", "receiver.isFinite()"})
-        protected static final double doFloatExact(final FloatObject receiver) {
-            return receiver.getValue() - new BigDecimal(receiver.getValue()).toBigInteger().doubleValue();
-        }
-
-        @Specialization(guards = "receiver.isNaN()")
-        protected static final FloatObject doFloatNaN(final FloatObject receiver) {
-            return receiver.shallowCopy();
-        }
-
-        @Specialization(guards = "receiver.isInfinite()")
-        protected static final double doFloatInfinite(@SuppressWarnings("unused") final FloatObject receiver,
+        @Specialization
+        protected static final Object doFloat(final FloatObject receiver,
                         @Bind final Node node,
+                        @Cached final InlinedConditionProfile isFiniteProfile,
+                        @Cached final InlinedConditionProfile isNanProfile,
+                        @Cached final InlinedConditionProfile inSafeIntegerRangeProfile,
                         @Cached final InlinedConditionProfile isNegativeInfinityProfile) {
-            return isNegativeInfinityProfile.profile(node, receiver.getValue() == Double.NEGATIVE_INFINITY) ? -0.0D : 0.0D;
+            if (isFiniteProfile.profile(node, receiver.isFinite())) {
+                return PrimSmallFloatFractionPartNode.doDouble(receiver.getValue(), node, inSafeIntegerRangeProfile);
+            } else if (isNanProfile.profile(node, receiver.isNaN())) {
+                return receiver.shallowCopy();
+            } else {
+                assert receiver.isInfinite();
+                return isNegativeInfinityProfile.profile(node, receiver.getValue() == Double.NEGATIVE_INFINITY) ? -0.0D : 0.0D;
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 53)
     protected abstract static class PrimFloatExponentNode extends AbstractFloatArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = "receiver.isZero()")
-        protected static final long doFloatZero(@SuppressWarnings("unused") final FloatObject receiver) {
-            return 0L;
-        }
-
-        @Specialization(guards = "!receiver.isZero()")
+        @Specialization
         protected static final long doFloat(final FloatObject receiver,
                         @Bind final Node node,
+                        @Cached final InlinedConditionProfile isZeroProfile,
                         @Cached final InlinedBranchProfile subnormalFloatProfile) {
-            return exponentNonZero(receiver.getValue(), subnormalFloatProfile, node);
+            if (isZeroProfile.profile(node, receiver.isZero())) {
+                return 0L;
+            } else {
+                return exponentNonZero(receiver.getValue(), subnormalFloatProfile, node);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 54)
     protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractFloatArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "matissa.isZero() || isZero(exponent)")
-        protected static final FloatObject doDoubleZero(final FloatObject matissa, @SuppressWarnings("unused") final long exponent) {
-            return matissa; /* Can be either 0.0 or -0.0. */
+        @Specialization(rewriteOn = RespecializeException.class)
+        protected static final Object doDoubleFinite(final FloatObject matissa, final long exponent,
+                        @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+            if (isZeroProfile.profile(node, matissa.isZero() || exponent == 0)) {
+                return matissa; /* Can be either 0.0 or -0.0. */
+            } else {
+                return ensureFinite(timesToPower(matissa.getValue(), exponent));
+            }
         }
 
-        @Specialization(guards = {"!matissa.isZero()", "!isZero(exponent)"}, rewriteOn = RespecializeException.class)
-        protected static final double doDoubleFinite(final FloatObject matissa, final long exponent) throws RespecializeException {
-            return ensureFinite(timesToPower(matissa.getValue(), exponent));
-        }
-
-        @Specialization(guards = {"!matissa.isZero()", "!isZero(exponent)"}, replaces = "doDoubleFinite")
+        @Specialization(replaces = "doDoubleFinite")
         protected static final Object doDouble(final FloatObject matissa, final long exponent,
                         @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(node, timesToPower(matissa.getValue(), exponent));
+            if (isZeroProfile.profile(node, matissa.isZero() || exponent == 0)) {
+                return matissa; /* Can be either 0.0 or -0.0. */
+            } else {
+                return boxNode.execute(node, timesToPower(matissa.getValue(), exponent));
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 55)
     protected abstract static class PrimSquareRootNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = {"receiver.isPositive()", "receiver.isFinite()"})
-        protected static final double doFloat(final FloatObject receiver) {
-            return Math.sqrt(receiver.getValue());
-        }
-
-        @Specialization(guards = {"receiver.isPositiveInfinity()"})
-        protected static final FloatObject doFloatPositiveInfinity(final FloatObject receiver) {
-            return receiver.shallowCopy();
+        @Specialization
+        protected static final Object doFloat(final FloatObject receiver,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile isPositiveFiniteProfile,
+                        @Cached final InlinedConditionProfile isPositiveInfinityProfile) {
+            if (isPositiveFiniteProfile.profile(node, receiver.isPositive() && receiver.isFinite())) {
+                return Math.sqrt(receiver.getValue());
+            } else if (isPositiveInfinityProfile.profile(node, receiver.isPositiveInfinity())) {
+                return receiver.shallowCopy();
+            } else {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 56)
     protected abstract static class PrimSinNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = {"receiver.isFinite()"})
-        protected static final double doFloat(final FloatObject receiver) {
-            return Math.sin(receiver.getValue());
-        }
-
-        @Specialization(guards = {"!receiver.isFinite()"})
-        protected final FloatObject doFloatNotFinite(@SuppressWarnings("unused") final FloatObject receiver) {
-            return FloatObject.valueOf(getContext(), Double.NaN);
+        @Specialization
+        protected static final Object doFloat(final FloatObject receiver,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile isFiniteProfile) {
+            if (isFiniteProfile.profile(node, receiver.isFinite())) {
+                return Math.sin(receiver.getValue());
+            } else {
+                return FloatObject.valueOf(getContext(node), Double.NaN);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 57)
     protected abstract static class PrimArcTanNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = {"!receiver.isNaN()"})
-        protected static final double doFloat(final FloatObject receiver) {
-            return Math.atan(receiver.getValue());
-        }
-
-        @Specialization(guards = {"receiver.isNaN()"})
-        protected static final FloatObject doFloatNaN(final FloatObject receiver) {
-            return receiver.shallowCopy();
+        @Specialization
+        protected static final Object doFloat(final FloatObject receiver,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile isNaNProfile) {
+            if (isNaNProfile.profile(node, receiver.isNaN())) {
+                return receiver.shallowCopy();
+            } else {
+                return Math.atan(receiver.getValue());
+            }
         }
     }
 
@@ -1128,45 +1282,46 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 58)
     protected abstract static class PrimLogNNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = {"receiver.isFinite()", "!receiver.isZero()"})
-        protected static final double doFloat(final FloatObject receiver) {
-            return Math.log(receiver.getValue());
-        }
-
-        @Specialization(guards = "receiver.isZero()")
-        protected final FloatObject doFloatZero(@SuppressWarnings("unused") final FloatObject receiver) {
-            return FloatObject.valueOf(getContext(), Double.NEGATIVE_INFINITY);
-        }
-
-        @Specialization(guards = "receiver.isPositiveInfinity()")
-        protected static final FloatObject doFloatPositiveInfinity(final FloatObject receiver) {
-            return receiver.shallowCopy();
-        }
-
-        @Specialization(guards = "receiver.isNegativeInfinity() || receiver.isNaN()")
-        protected final FloatObject doFloatOthers(@SuppressWarnings("unused") final FloatObject receiver) {
-            return FloatObject.valueOf(getContext(), Double.NaN);
+        @Specialization
+        protected static final Object doFloat(final FloatObject receiver,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile isZeroProfile,
+                        @Cached final InlinedConditionProfile isFiniteProfile,
+                        @Cached final InlinedConditionProfile isPositiveInfinityProfile,
+                        @Cached final InlinedConditionProfile isNegativeInfinityOrNaNProfile) {
+            if (isZeroProfile.profile(node, receiver.isZero())) {
+                return FloatObject.valueOf(getContext(node), Double.NEGATIVE_INFINITY);
+            } else if (isFiniteProfile.profile(node, receiver.isFinite())) {
+                return Math.log(receiver.getValue());
+            } else if (isPositiveInfinityProfile.profile(node, receiver.isPositiveInfinity())) {
+                return receiver.shallowCopy();
+            } else if (isNegativeInfinityOrNaNProfile.profile(node, receiver.isNegativeInfinity() || receiver.isNaN())) {
+                return FloatObject.valueOf(getContext(node), Double.NaN);
+            } else {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 59)
     protected abstract static class PrimExpNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = "receiver.isFinite()")
+        @Specialization
         protected static final Object doFloat(final FloatObject receiver,
                         @Bind final Node node,
+                        @Cached final InlinedConditionProfile isFiniteProfile,
+                        @Cached final InlinedConditionProfile isNegativeInfinityProfile,
+                        @Cached final InlinedConditionProfile isPositiveInfinityOrNaNProfile,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(node, Math.exp(receiver.getValue()));
-        }
-
-        @Specialization(guards = "receiver.isNegativeInfinity()")
-        protected static final double doFloatNegativeInfinity(@SuppressWarnings("unused") final FloatObject receiver) {
-            return 0.0;
-        }
-
-        @Specialization(guards = "receiver.isPositiveInfinity() || receiver.isNaN()")
-        protected static final FloatObject doFloatOthers(final FloatObject receiver) {
-            return receiver.shallowCopy();
+            if (isFiniteProfile.profile(node, receiver.isFinite())) {
+                return boxNode.execute(node, Math.exp(receiver.getValue()));
+            } else if (isNegativeInfinityProfile.profile(node, receiver.isNegativeInfinity())) {
+                return 0.0D;
+            } else if (isPositiveInfinityOrNaNProfile.profile(node, receiver.isPositiveInfinity() || receiver.isNaN())) {
+                return receiver.shallowCopy();
+            } else {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
         }
     }
 
@@ -1176,9 +1331,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         public static final int HASH_MULTIPLY_CONSTANT = 1664525;
         public static final int HASH_MULTIPLY_MASK = 0xFFFFFFF;
 
-        @Specialization
-        protected static final long doLargeInteger(final LargeIntegerObject receiver) {
-            return doLong(receiver.longValue());
+        @Specialization(guards = "image.isLargeInteger(receiver)")
+        protected static final long doLargeInteger(final NativeObject receiver,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+            return doLong(LargeIntegers.longValue(receiver));
         }
 
         @Specialization
@@ -1189,14 +1345,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 541)
-    protected abstract static class PrimSmallFloatAddFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimSmallFloatAddNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final double doDouble(final double lhs, final double rhs) {
+        public static final double doDouble(final double lhs, final double rhs) {
             return lhs + rhs;
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final double doLong(final double lhs, final long rhs) {
+        public static final double doLong(final double lhs, final long rhs) {
             return doDouble(lhs, rhs);
         }
 
@@ -1210,14 +1366,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 542)
-    protected abstract static class PrimSmallFloatSubtractFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimSmallFloatSubtractNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final double doDouble(final double lhs, final double rhs) {
+        public static final double doDouble(final double lhs, final double rhs) {
             return lhs - rhs;
         }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final double doLong(final double lhs, final long rhs) {
+        public static final double doLong(final double lhs, final long rhs) {
             return doDouble(lhs, rhs);
         }
 
@@ -1239,19 +1395,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 543)
-    protected abstract static class PrimSmallFloatLessThanFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimSmallFloatLessThanNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization
-        protected static final boolean doDouble(final double lhs, final double rhs) {
+        public static final boolean doDouble(final double lhs, final double rhs) {
             return BooleanObject.wrap(lhs < rhs);
         }
 
-        @Specialization
-        protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
-            return doDouble(lhs, rhs.getValue());
-        }
-
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doLong(final double lhs, final long rhs,
+        public static final boolean doLong(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1260,23 +1411,23 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return doDouble(lhs, rhs);
             }
         }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 544)
-    protected abstract static class PrimSmallFloatGreaterThanFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doDouble(final double lhs, final double rhs) {
-            return BooleanObject.wrap(lhs > rhs);
-        }
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
             return doDouble(lhs, rhs.getValue());
         }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 544)
+    public abstract static class PrimSmallFloatGreaterThanNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization
+        public static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs > rhs);
+        }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doLong(final double lhs, final long rhs,
+        public static final boolean doLong(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1285,23 +1436,23 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return doDouble(lhs, rhs);
             }
         }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 545)
-    protected abstract static class PrimSmallFloatLessOrEqualFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doDouble(final double lhs, final double rhs) {
-            return BooleanObject.wrap(lhs <= rhs);
-        }
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
             return doDouble(lhs, rhs.getValue());
         }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 545)
+    public abstract static class PrimSmallFloatLessOrEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization
+        public static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs <= rhs);
+        }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doLong(final double lhs, final long rhs,
+        public static final boolean doLong(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1310,23 +1461,23 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return doDouble(lhs, rhs);
             }
         }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 546)
-    protected abstract static class PrimSmallFloatGreaterOrEqualFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doDouble(final double lhs, final double rhs) {
-            return BooleanObject.wrap(lhs >= rhs);
-        }
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
             return doDouble(lhs, rhs.getValue());
         }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 546)
+    public abstract static class PrimSmallFloatGreaterOrEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization
+        public static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs >= rhs);
+        }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doLong(final double lhs, final long rhs,
+        public static final boolean doLong(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1335,23 +1486,23 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return doDouble(lhs, rhs);
             }
         }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 547)
-    protected abstract static class PrimSmallFloatEqualFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doDouble(final double lhs, final double rhs) {
-            return BooleanObject.wrap(lhs == rhs);
-        }
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
             return doDouble(lhs, rhs.getValue());
         }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 547)
+    public abstract static class PrimSmallFloatEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization
+        public static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs == rhs);
+        }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doLong(final double lhs, final long rhs,
+        public static final boolean doLong(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1360,23 +1511,23 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return BooleanObject.FALSE;
             }
         }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 548)
-    protected abstract static class PrimSmallFloatNotEqualFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final boolean doDouble(final double lhs, final double rhs) {
-            return BooleanObject.wrap(lhs != rhs);
-        }
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
             return doDouble(lhs, rhs.getValue());
         }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 548)
+    public abstract static class PrimSmallFloatNotEqualNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization
+        public static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs != rhs);
+        }
 
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final boolean doLong(final double lhs, final long rhs,
+        public static final boolean doLong(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1385,31 +1536,35 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return BooleanObject.TRUE;
             }
         }
+
+        @Specialization
+        protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
+            return doDouble(lhs, rhs.getValue());
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 549)
-    protected abstract static class PrimSmallFloatMultiplyFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-
+    public abstract static class PrimSmallFloatMultiplyNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(rewriteOn = RespecializeException.class)
-        protected static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
+        public static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
             return ensureFinite(lhs * rhs);
         }
 
-        @Specialization(guards = "isPrimitiveDoMixedArithmetic()", rewriteOn = RespecializeException.class)
-        protected static final double doLongFinite(final double lhs, final long rhs) throws RespecializeException {
-            return doDoubleFinite(lhs, rhs);
-        }
-
         @Specialization(replaces = "doDoubleFinite")
-        protected static final Object doDouble(final double lhs, final double rhs,
+        public static final Object doDouble(final double lhs, final double rhs,
                         @Bind final Node node,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(node, lhs * rhs);
         }
 
+        @Specialization(guards = "isPrimitiveDoMixedArithmetic()", rewriteOn = RespecializeException.class)
+        public static final double doLongFinite(final double lhs, final long rhs) throws RespecializeException {
+            return doDoubleFinite(lhs, rhs);
+        }
+
         @Specialization(guards = "isPrimitiveDoMixedArithmetic()", replaces = "doLongFinite")
-        protected static final Object doLong(final double lhs, final long rhs,
+        public static final Object doLong(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return doDouble(lhs, rhs, node, boxNode);
@@ -1425,84 +1580,97 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 550)
-    protected abstract static class PrimSmallFloatDivideFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-
-        @Specialization(guards = "!isZero(rhs)", rewriteOn = RespecializeException.class)
-        protected static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
-            return ensureFinite(lhs / rhs);
+    protected abstract static class PrimSmallFloatDivideNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(rewriteOn = RespecializeException.class)
+        protected static final double doDoubleFinite(final double lhs, final double rhs,
+                        @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+            if (isZeroProfile.profile(node, SqueakGuards.isZero(rhs))) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else {
+                return ensureFinite(lhs / rhs);
+            }
         }
 
-        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, rewriteOn = RespecializeException.class)
-        protected static final double doLongFinite(final double lhs, final long rhs) throws RespecializeException {
-            return doDoubleFinite(lhs, rhs);
-        }
-
-        @Specialization(guards = "!isZero(rhs)", replaces = "doDoubleFinite")
+        @Specialization(replaces = "doDoubleFinite")
         protected static final Object doDouble(final double lhs, final double rhs,
                         @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(node, lhs / rhs);
+            if (isZeroProfile.profile(node, SqueakGuards.isZero(rhs))) {
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            } else {
+                return boxNode.execute(node, lhs / rhs);
+            }
         }
 
-        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, replaces = "doLongFinite")
+        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, rewriteOn = RespecializeException.class)
+        protected static final double doLongFinite(final double lhs, final long rhs,
+                        @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+            return doDoubleFinite(lhs, rhs, node, isZeroProfile);
+        }
+
+        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, replaces = "doLongFinite")
         protected static final Object doLong(final double lhs, final long rhs,
                         @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return doDouble(lhs, rhs, node, boxNode);
+            return doDouble(lhs, rhs, node, isZeroProfile, boxNode);
         }
 
-        @Specialization(guards = "!rhs.isZero()")
+        @Specialization
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
                         @Bind final Node node,
+                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return doDouble(lhs, rhs.getValue(), node, boxNode);
+            return doDouble(lhs, rhs.getValue(), node, isZeroProfile, boxNode);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 551)
     protected abstract static class PrimSmallFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = "inSafeIntegerRange(receiver)")
+        @Specialization
         protected static final long doDouble(final double receiver,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile isNegativeProfile) {
-            return truncate(node, isNegativeProfile, receiver);
-        }
-
-        @Specialization(guards = "!inSafeIntegerRange(receiver)")
-        protected final Object doDoubleExact(final double receiver) {
-            return LargeIntegerObject.truncateExact(getContext(), receiver);
+                        @Cached final InlinedConditionProfile inSafeIntegerRangeProfile) {
+            if (inSafeIntegerRangeProfile.profile(node, inSafeIntegerRange(receiver))) {
+                return (long) ExactMath.truncate(receiver);
+            } else {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 552)
     protected abstract static class PrimSmallFloatFractionPartNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = "inSafeIntegerRange(receiver)")
-        protected static final double doDouble(final double receiver) {
-            return receiver - (long) receiver;
-        }
-
-        @TruffleBoundary
-        @Specialization(guards = "!inSafeIntegerRange(receiver)")
-        protected static final double doDoubleExact(final double receiver) {
-            return receiver - new BigDecimal(receiver).toBigInteger().doubleValue();
+        @Specialization
+        protected static final double doDouble(final double receiver,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile inSafeIntegerRangeProfile) {
+            if (inSafeIntegerRangeProfile.profile(node, inSafeIntegerRange(receiver))) {
+                return receiver - (long) receiver;
+            } else {
+                return LargeIntegers.fractionPart(receiver);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 553)
     protected abstract static class PrimSmallFloatExponentNode extends AbstractFloatArithmeticPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = "isZero(receiver)")
-        protected static final long doDoubleZero(@SuppressWarnings("unused") final double receiver) {
-            return 0L;
-        }
-
-        @Specialization(guards = "!isZero(receiver)")
+        @Specialization
         protected static final long doDouble(final double receiver,
                         @Bind final Node node,
+                        @Cached final InlinedConditionProfile isZeroProfile,
                         @Cached final InlinedBranchProfile subnormalFloatProfile) {
-            return exponentNonZero(receiver, subnormalFloatProfile, node);
+            if (isZeroProfile.profile(node, SqueakGuards.isZero(receiver))) {
+                return 0L;
+            } else {
+                return exponentNonZero(receiver, subnormalFloatProfile, node);
+            }
         }
     }
 
@@ -1529,7 +1697,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 555)
-    protected abstract static class PrimSquareRootSmallFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
+    protected abstract static class PrimSmallFloatSquareRootNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = {"isZeroOrGreater(receiver)"})
         protected static final double doDouble(final double receiver) {
             assert Double.isFinite(receiver);
@@ -1539,7 +1707,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 556)
-    protected abstract static class PrimSinSmallFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
+    protected abstract static class PrimSmallFloatSineNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final double doDouble(final double receiver) {
             assert Double.isFinite(receiver);
@@ -1549,7 +1717,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 557)
-    protected abstract static class PrimArcTanSmallFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
+    protected abstract static class PrimSmallFloatArctanNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final double doDouble(final double receiver) {
             assert Double.isFinite(receiver);
@@ -1560,7 +1728,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 558)
-    protected abstract static class PrimLogNSmallFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
+    protected abstract static class PrimSmallFloatLogNNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "isGreaterThanZero(receiver)")
         protected static final double doDouble(final double receiver) {
             assert Double.isFinite(receiver);
@@ -1580,7 +1748,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 559)
-    protected abstract static class PrimExpSmallFloatNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
+    protected abstract static class PrimSmallFloatExpNode extends AbstractArithmeticPrimitiveNode implements Primitive0WithFallback {
         @Specialization(rewriteOn = RespecializeException.class)
         protected static final double doDoubleFinite(final double receiver) throws RespecializeException {
             assert Double.isFinite(receiver);
@@ -1609,7 +1777,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(Double.class)
     public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
-        private static final long MAX_SAFE_INTEGER_LONG = (1L << FloatObject.PRECISION) - 1;
+        private static final long MAX_SAFE_INTEGER_LONG = 1L << FloatObject.PRECISION;
         private static final long MIN_SAFE_INTEGER_LONG = -MAX_SAFE_INTEGER_LONG;
 
         public static final double ensureFinite(final double value) throws RespecializeException {
@@ -1620,22 +1788,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        /** Profiled version of {@link ExactMath#truncate(double)}. */
-        protected static final long truncate(final Node node, final InlinedConditionProfile profile, final double value) {
-            return (long) (profile.profile(node, value < 0.0) ? Math.ceil(value) : Math.floor(value));
-        }
-
         protected static final boolean inSafeIntegerRange(final double d) {
             // The ends of the interval are also included, since they are powers of two
             return MIN_SAFE_INTEGER_LONG <= d && d <= MAX_SAFE_INTEGER_LONG;
-        }
-
-        protected static final long rhsNegatedOnDifferentSign(final long lhs, final long rhs, final InlinedConditionProfile differentSignProfile, final Node node) {
-            return differentSignProfile.profile(node, differentSign(lhs, rhs)) ? -rhs : rhs;
-        }
-
-        private static boolean differentSign(final long lhs, final long rhs) {
-            return lhs < 0 ^ rhs < 0;
         }
     }
 

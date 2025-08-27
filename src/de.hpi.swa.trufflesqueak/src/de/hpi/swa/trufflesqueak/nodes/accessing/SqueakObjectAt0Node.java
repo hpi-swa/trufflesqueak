@@ -23,7 +23,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
@@ -87,11 +86,6 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     protected static final Object doNative(final Node node, final NativeObject obj, final long index,
                     @Cached final NativeObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
-    }
-
-    @Specialization
-    protected static final Object doLargeInteger(final LargeIntegerObject obj, final long index) {
-        return obj.getNativeAt0(index);
     }
 
     @Specialization

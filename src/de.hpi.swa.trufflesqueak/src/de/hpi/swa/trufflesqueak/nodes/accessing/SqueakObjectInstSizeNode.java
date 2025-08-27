@@ -21,7 +21,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -81,11 +80,6 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
 
     @Specialization
     protected static final int doFloat(final FloatObject obj) {
-        return obj.instsize();
-    }
-
-    @Specialization
-    protected static final int doLarge(final LargeIntegerObject obj) {
         return obj.instsize();
     }
 

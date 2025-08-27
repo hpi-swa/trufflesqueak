@@ -22,7 +22,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -130,8 +129,8 @@ public final class SqueakGuards {
         return a % b == 0;
     }
 
-    public static boolean isLargeIntegerObject(final Object object) {
-        return object instanceof LargeIntegerObject;
+    public static boolean isLargeIntegerObject(final SqueakImageContext image, final Object object) {
+        return object instanceof final NativeObject o && image.isLargeInteger(o);
     }
 
     public static boolean isLessThanZero(final double value) {

@@ -27,12 +27,12 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -180,10 +180,6 @@ public final class InterpreterProxy {
 
     private boolean hasSucceeded() {
         return failed() == 0;
-    }
-
-    private Object global(final String name) {
-        return context.lookup(name);
     }
 
     /* OBJECT REGISTRY HELPERS */
@@ -343,7 +339,7 @@ public final class InterpreterProxy {
     }
 
     private long classAlien() {
-        return oopFor(global("Alien"));
+        return oopFor(context.getAlienClass());
     }
 
     private long classArray() {
@@ -363,31 +359,31 @@ public final class InterpreterProxy {
     }
 
     private long classDoubleByteArray() {
-        return oopFor(global("DoubleByteArray"));
+        return oopFor(context.getDoubleByteArrayClass());
     }
 
     private long classDoubleWordArray() {
-        return oopFor(global("DoubleWordArray"));
+        return oopFor(context.getDoubleWordArrayClass());
     }
 
     private long classExternalAddress() {
-        return oopFor(global("ExternalAddress"));
+        return oopFor(context.getExternalAddressClass());
     }
 
     private long classExternalData() {
-        return oopFor(global("ExternalData"));
+        return oopFor(context.getExternalDataClass());
     }
 
     private long classExternalFunction() {
-        return oopFor(global("ExternalFunction"));
+        return oopFor(context.getExternalFunctionClass());
     }
 
     private long classExternalLibrary() {
-        return oopFor(global("ExternalLibrary"));
+        return oopFor(context.getExternalLibraryClass());
     }
 
     private long classExternalStructure() {
-        return oopFor(global("ExternalStructure"));
+        return oopFor(context.getExternalStructureClass());
     }
 
     private long classFloat() {
@@ -395,11 +391,11 @@ public final class InterpreterProxy {
     }
 
     private long classFloat32Array() {
-        return oopFor(global("FloatArray"));
+        return oopFor(context.lookup("FloatArray"));
     }
 
     private long classFloat64Array() {
-        return oopFor(global("Float64Array"));
+        return oopFor(context.lookup("Float64Array"));
     }
 
     private long classLargeNegativeInteger() {
@@ -427,11 +423,11 @@ public final class InterpreterProxy {
     }
 
     private long classUnsafeAlien() {
-        return oopFor(global("UnsafeAlien"));
+        return oopFor(context.getUnsafeAlienClass());
     }
 
     private long classWordArray() {
-        return oopFor(global("WordArray"));
+        return oopFor(context.getWordArrayClass());
     }
 
     public long failed() {
@@ -513,8 +509,8 @@ public final class InterpreterProxy {
         if (object instanceof final Long integer) {
             return returnBoolean(integer >= 0L);
         }
-        if (object instanceof final LargeIntegerObject largeInteger) {
-            return returnBoolean(largeInteger.isZeroOrPositive() && largeInteger.fitsIntoLong());
+        if (object instanceof final NativeObject largeInteger) {
+            return returnBoolean(LargeIntegers.isZeroOrPositive(SqueakImageContext.getSlow(), largeInteger) && LargeIntegers.fitsIntoLong(largeInteger));
         }
         return returnBoolean(false);
     }

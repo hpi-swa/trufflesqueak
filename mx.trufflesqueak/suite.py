@@ -549,9 +549,36 @@ suite = {
                     "extracted-dependency:TRUFFLESQUEAK_GRAALVM_SUPPORT_PLATFORM_SPECIFIC",
                     "extracted-dependency:TRUFFLESQUEAK_GRAALVM_SUPPORT_NO_NI_RESOURCES",
                 ],
-                "bin/trufflesqueak": "dependency:trufflesqueak_thin_launcher",
-                "bin/trufflesqueak-polyglot-get": "dependency:trufflesqueak_thin_launcher",
+                "bin/<exe:trufflesqueak>": "dependency:trufflesqueak_thin_launcher",
+                "bin/<exe:trufflesqueak-polyglot-get>": "dependency:trufflesqueak_thin_launcher",
                 "release": "dependency:sdk:STANDALONE_JAVA_HOME/release",
+            },
+        },
+        "TRUFFLSQUEAK_NATIVE_STANDALONE_JDK_LIBRARIES": {
+            "description": "JDK libraries for TruffleSqueak Native standalone.",
+            "maven": False,
+            "native": True,
+            "platformDependent": True,
+            "platforms": "local",
+            "type": "dir",
+            "os_arch": {
+                "linux": {
+                    "<others>": {
+                        "layout": {
+                            "lib/": "dependency:libsmalltalkvm/jdk_libraries/*",
+                        },
+                    },
+                },
+                "windows": {
+                    "<others>": {
+                        "layout": {
+                            # JDK libraries need to be in bin/ on Windows
+                            "bin/": "dependency:libsmalltalkvm/jdk_libraries/*",
+                        },
+                    },
+                },
+                # AWT not supported on macOS yet, so no JDK libraries yet
+                "<others>": {"<others>": {"optional": True}},
             },
         },
         "TRUFFLESQUEAK_NATIVE_STANDALONE": {
@@ -562,6 +589,7 @@ suite = {
             "layout": {
                 "./": [
                     "dependency:TRUFFLESQUEAK_STANDALONE_COMMON/*",
+                    "dependency:TRUFFLSQUEAK_NATIVE_STANDALONE_JDK_LIBRARIES/*",
                 ],
                 "lib/": "dependency:libsmalltalkvm",
             },
