@@ -80,10 +80,10 @@ public abstract class AboutToReturnNode extends AbstractNode {
             // @formatter:off
             /*
              *  aboutToReturn: result through: firstUnwindContext
-	         *      "Called from VM when an unwindBlock is found between self and its home.
-	         *      Return to home's sender, executing unwind blocks on the way."
+             *      "Called from VM when an unwindBlock is found between self and its home.
+             *      Return to home's sender, executing unwind blocks on the way."
              *
-	         *      self methodReturnContext return: result through: firstUnwindContext
+             *      self methodReturnContext return: result through: firstUnwindContext
              */
             // @formatter:on
             // Message receiver should be home Context to return from.
