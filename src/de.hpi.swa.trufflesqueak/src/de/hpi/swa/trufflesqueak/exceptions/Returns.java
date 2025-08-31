@@ -30,12 +30,19 @@ public final class Returns {
 
     public static final class NonLocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
+        private final transient ContextObject homeContext;
         private final transient Object targetContextOrMarker;
 
-        public NonLocalReturn(final Object returnValue, final Object targetContextOrMarker) {
+        public NonLocalReturn(final Object returnValue, final ContextObject homeContext) {
             super(returnValue);
-            assert targetContextOrMarker instanceof ContextObject || targetContextOrMarker instanceof FrameMarker;
-            this.targetContextOrMarker = targetContextOrMarker;
+            final Object target = homeContext.getFrameSender();
+            assert target instanceof ContextObject || target instanceof FrameMarker;
+            this.homeContext = homeContext;
+            this.targetContextOrMarker = target;
+        }
+
+        public ContextObject getHomeContext() {
+            return homeContext;
         }
 
         public Object getTargetContextOrMarker() {

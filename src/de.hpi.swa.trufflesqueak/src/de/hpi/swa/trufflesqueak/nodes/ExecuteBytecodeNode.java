@@ -55,11 +55,12 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             return interpretBytecode(frame, startPC);
         } catch (final NonLocalReturn nlr) {
             /* {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
+            final HandleNonLocalReturnNode handleNode = getHandleNonLocalReturnNode();
             if (FrameAccess.isDead(frame)) {
                 LogUtils.SCHEDULING.fine("ExecuteBytecodeNode: encountered dead frame during NLR");
                 throw nlr;
             }
-            return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
+            return handleNode.executeHandle(frame, nlr);
         } catch (final StackOverflowError e) {
             CompilerDirectives.transferToInterpreter();
             throw getContext().tryToSignalLowSpace(frame, e);

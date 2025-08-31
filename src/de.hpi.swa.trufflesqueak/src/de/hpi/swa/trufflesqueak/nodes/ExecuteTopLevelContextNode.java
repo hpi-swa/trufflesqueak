@@ -29,6 +29,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
@@ -46,6 +47,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
     @Child private GetNextActiveContextNode getNextActiveContextNode = GetNextActiveContextNode.create();
     @Child private Dispatch1Node sendCannotReturnNode;
+    @Child private Dispatch2Node sendAboutToReturnNode;
 
     private ExecuteTopLevelContextNode(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
         super(language, TOP_LEVEL_FRAME_DESCRIPTOR);
@@ -53,6 +55,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         initialContext = context;
         this.isImageResuming = isImageResuming;
         sendCannotReturnNode = Dispatch1Node.create(image.cannotReturn);
+        sendAboutToReturnNode = Dispatch2Node.create(image.aboutToReturnSelector);
     }
 
     public static ExecuteTopLevelContextNode create(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
@@ -196,8 +199,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (context != targetContext) {
             if (context.getCodeObject().isUnwindMarked()) {
                 try {
-                    // TODO: make this better. Clearing the modified sender permits virtualization
-                    // of aboutToReturn
+                    /* TODO: Not sure whether we can mix the virtualized Context>>aboutToReturn:through:
+                     *  with sending the actual message. Clearing the modified sender forces the use
+                     *  of the virtualized implementation of aboutToReturn.
+                     */
                     context.clearModifiedSender();
                     AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
                 } catch (NonVirtualReturn nvr) {
@@ -223,6 +228,25 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {
         sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
         throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch");
+    }
+
+    private ContextObject sendAboutToReturn(final ContextObject startContext, final Object returnValue, final ContextObject context) {
+        // TODO: Perhaps use this when image does all aboutToReturn processing.
+        /*
+         *  aboutToReturn: result through: firstUnwindContext
+         *      "Called from VM when an unwindBlock is found between self and its home.
+         *      Return to home's sender, executing unwind blocks on the way."
+         *
+         *      self methodReturnContext return: result through: firstUnwindContext
+         */
+        // Message receiver should be home Context to return from.
+        // Last argument should be the first unwind-marked Context or nil.
+        try {
+            sendAboutToReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue, context);
+        } catch (final NonVirtualReturn nvr) {
+            return commonNVReturn(context, nvr);
+        }
+        throw CompilerDirectives.shouldNotReachHere("aboutToReturn should trigger a ProcessSwitch or a NonVirtualReturn");
     }
 
     private static void ensureCachedContextCanRunAgain(final ContextObject activeContext) {

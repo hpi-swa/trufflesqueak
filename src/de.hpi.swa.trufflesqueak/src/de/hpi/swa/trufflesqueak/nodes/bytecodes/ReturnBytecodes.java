@@ -93,7 +93,7 @@ public final class ReturnBytecodes {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             if (homeContext.canBeReturnedTo()) {
-                throw new NonLocalReturn(returnValue, homeContext.getFrameSender());
+                throw new NonLocalReturn(returnValue, homeContext);
             } else {
                 CompilerDirectives.transferToInterpreter();
                 final ContextObject contextObject = GetOrCreateContextNode.getOrCreateUncached(frame);
