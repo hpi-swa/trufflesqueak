@@ -196,7 +196,7 @@
         CompiledCodeInspectorTest -> #(#testExpressions).
         ContextInspectorTest -> #(#testExpressions).
         ContextVariablesInspectorTest -> #(#testExpressions).
-        DebuggerTests -> #(#test02UnhandledException).
+        DebuggerTests -> #(#test02UnhandledException #test19Abandon).
         DictionaryInspectorTest -> #(#testExpressions).
         FileList2ModalDialogsTest -> #(#testModalFolderSelector #testModalFolderSelectorForProjectLoad).
         FSFileHandleTest -> #(#testCloseWhenGarbageCollected).
@@ -225,7 +225,6 @@
 
     isWin ifTrue: [
         {
-            DebuggerTests -> #(#test19Abandon). "Flaky on Windows native"
             DurationTest -> #(#testBusyWait #testBusyWaitMicro). "Fails on Windows native"
             FSFileHandleTest -> #("May fail with 'FileDoesNotExist: plonk' on Windows" #testAt #testAtPut #testAtPutBinaryAscii #testAtWriteBinaryAscii #testClose #testCreatedOpen #testIO #testReadBufferTooLarge #testReadOnly #testReference #testSizeAfterGrow #testSizeNoGrow #testTruncate #testTruncateEmpty #testWriteStream).
             PNGReadWriterTest -> #("May fail with FileDoesNotExistException on Windows" #testBlue16 #testBlue32 #testBlue8).
