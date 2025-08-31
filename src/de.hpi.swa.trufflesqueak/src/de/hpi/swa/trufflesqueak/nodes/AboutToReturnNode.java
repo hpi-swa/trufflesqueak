@@ -77,6 +77,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         @Specialization(guards = {"hasModifiedSender(frame)"})
         protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
                         @Cached("createAboutToReturnSend()") final Dispatch2Node sendAboutToReturnNode) {
+            // @formatter:off
             /*
              *  aboutToReturn: result through: firstUnwindContext
 	         *      "Called from VM when an unwindBlock is found between self and its home.
@@ -84,6 +85,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
              *
 	         *      self methodReturnContext return: result through: firstUnwindContext
              */
+            // @formatter:on
             // Message receiver should be home Context to return from.
             // Last argument should be the first unwind-marked Context or nil.
             sendAboutToReturnNode.execute(frame, nlr.getHomeContext(), nlr.getReturnValue(), NilObject.SINGLETON);

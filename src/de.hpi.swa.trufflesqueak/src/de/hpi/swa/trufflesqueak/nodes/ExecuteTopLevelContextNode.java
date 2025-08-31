@@ -199,9 +199,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (context != targetContext) {
             if (context.getCodeObject().isUnwindMarked()) {
                 try {
-                    /* TODO: Not sure whether we can mix the virtualized Context>>aboutToReturn:through:
-                     *  with sending the actual message. Clearing the modified sender forces the use
-                     *  of the virtualized implementation of aboutToReturn.
+                    /*
+                     * TODO: Not sure whether we can mix the virtualized
+                     * Context>>aboutToReturn:through: with sending the actual message. Clearing the
+                     * modified sender forces the use of the virtualized implementation of
+                     * aboutToReturn.
                      */
                     context.clearModifiedSender();
                     AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
@@ -233,6 +235,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @SuppressWarnings("unused")
     private ContextObject sendAboutToReturn(final ContextObject startContext, final Object returnValue, final ContextObject context) {
         // TODO: Perhaps use this when image does all aboutToReturn processing.
+        // @formatter:off
         /*
          *  aboutToReturn: result through: firstUnwindContext
          *      "Called from VM when an unwindBlock is found between self and its home.
@@ -240,6 +243,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
          *
          *      self methodReturnContext return: result through: firstUnwindContext
          */
+        // @formatter:on
         // Message receiver should be home Context to return from.
         // Last argument should be the first unwind-marked Context or nil.
         try {
