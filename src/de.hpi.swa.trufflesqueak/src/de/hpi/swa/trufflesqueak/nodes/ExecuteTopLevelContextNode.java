@@ -230,6 +230,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch");
     }
 
+    @SuppressWarnings("unused")
     private ContextObject sendAboutToReturn(final ContextObject startContext, final Object returnValue, final ContextObject context) {
         // TODO: Perhaps use this when image does all aboutToReturn processing.
         /*
