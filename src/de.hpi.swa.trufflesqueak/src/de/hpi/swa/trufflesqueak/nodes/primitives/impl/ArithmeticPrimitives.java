@@ -139,7 +139,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "image.isLargeInteger(rhs)")
         public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) >= 0);
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) > 0);
         }
     }
 
@@ -165,7 +165,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "image.isLargeInteger(rhs)")
         public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) <= 0);
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) < 0);
         }
     }
 
@@ -191,7 +191,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "image.isLargeInteger(rhs)")
         public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) > 0);
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) >= 0);
         }
     }
 
@@ -217,7 +217,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "image.isLargeInteger(rhs)")
         public static final boolean doLargeInteger(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
-            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) < 0);
+            return BooleanObject.wrap(LargeIntegers.compareTo(image, rhs, lhs) <= 0);
         }
 
     }
