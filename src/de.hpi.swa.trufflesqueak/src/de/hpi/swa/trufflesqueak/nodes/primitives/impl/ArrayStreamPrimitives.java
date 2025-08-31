@@ -24,7 +24,7 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
-import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectInstSizeNode;
@@ -268,8 +268,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"}, replaces = "doAtIntFinite")
         protected static final Object doAtInt(final NativeObject receiver, final long index,
                         @Bind final Node node,
-                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(node, Float.intBitsToFloat(receiver.getInt(index - 1)));
+                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+            return normalizeNode.execute(node, Float.intBitsToFloat(receiver.getInt(index - 1)));
         }
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, rewriteOn = RespecializeException.class)
@@ -280,8 +280,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, replaces = "doAtLongFinite")
         protected static final Object doAtLong(final NativeObject receiver, final long index,
                         @Bind final Node node,
-                        @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(node, Double.longBitsToDouble(receiver.getLong(index - 1)));
+                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+            return normalizeNode.execute(node, Double.longBitsToDouble(receiver.getLong(index - 1)));
         }
     }
 

@@ -43,7 +43,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimClassNodeGen;
@@ -914,8 +914,8 @@ public final class SendBytecodes {
                 @Specialization(guards = "isPrimitiveDoMixedArithmetic()", replaces = "doLongDoubleFinite")
                 protected static final Object doLongDouble(final long lhs, final double rhs,
                                 @Bind final Node node,
-                                @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-                    return PrimMultiplyNode.doLongDouble(lhs, rhs, node, boxNode);
+                                @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                    return PrimMultiplyNode.doLongDouble(lhs, rhs, node, normalizeNode);
                 }
 
                 @Specialization(rewriteOn = RespecializeException.class)
@@ -926,8 +926,8 @@ public final class SendBytecodes {
                 @Specialization(replaces = "doDoubleFinite")
                 protected static final Object doDouble(final double lhs, final double rhs,
                                 @Bind final Node node,
-                                @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-                    return PrimSmallFloatMultiplyNode.doDouble(lhs, rhs, node, boxNode);
+                                @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                    return PrimSmallFloatMultiplyNode.doDouble(lhs, rhs, node, normalizeNode);
                 }
 
                 @Specialization(guards = "isPrimitiveDoMixedArithmetic()", rewriteOn = RespecializeException.class)
@@ -938,8 +938,8 @@ public final class SendBytecodes {
                 @Specialization(guards = "isPrimitiveDoMixedArithmetic()", replaces = "doDoubleLongFinite")
                 protected static final Object doDoubleLong(final double lhs, final long rhs,
                                 @Bind final Node node,
-                                @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-                    return PrimSmallFloatMultiplyNode.doLong(lhs, rhs, node, boxNode);
+                                @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                    return PrimSmallFloatMultiplyNode.doLong(lhs, rhs, node, normalizeNode);
                 }
 
                 @Specialization(guards = {"image.isLargeInteger(lhs)"})
@@ -995,8 +995,8 @@ public final class SendBytecodes {
                 protected static final Object doLongDouble(final long lhs, final double rhs,
                                 @Bind final Node node,
                                 @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
-                                @Cached final AsFloatObjectIfNessaryNode boxNode) {
-                    return PrimDivideNode.doLongDouble(lhs, rhs, node, isZeroProfile, boxNode);
+                                @Cached final FloatObjectNormalizeNode normalizeNode) {
+                    return PrimDivideNode.doLongDouble(lhs, rhs, node, isZeroProfile, normalizeNode);
                 }
 
                 @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})

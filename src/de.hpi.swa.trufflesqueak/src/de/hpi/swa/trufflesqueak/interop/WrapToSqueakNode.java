@@ -21,7 +21,7 @@ import com.oracle.truffle.api.strings.TruffleString;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @GenerateInline
@@ -70,14 +70,14 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final Object doFloat(final Node node, final float value,
-                    @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-        return boxNode.execute(node, value);
+                    @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+        return normalizeNode.execute(node, value);
     }
 
     @Specialization
     protected static final Object doDouble(final Node node, final double value,
-                    @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-        return boxNode.execute(node, value);
+                    @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+        return normalizeNode.execute(node, value);
     }
 
     @Specialization

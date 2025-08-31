@@ -15,7 +15,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodesFactory.AsFloatObjectIfNessaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodesFactory.FloatObjectNormalizeNodeGen;
 
 public final class FloatObjectNodes {
 
@@ -23,10 +23,10 @@ public final class FloatObjectNodes {
     @GenerateUncached
     @GenerateCached(false)
     @ImportStatic(Double.class)
-    public abstract static class AsFloatObjectIfNessaryNode extends AbstractNode {
+    public abstract static class FloatObjectNormalizeNode extends AbstractNode {
 
-        public static AsFloatObjectIfNessaryNode getUncached() {
-            return AsFloatObjectIfNessaryNodeGen.getUncached();
+        public static FloatObjectNormalizeNode getUncached() {
+            return FloatObjectNormalizeNodeGen.getUncached();
         }
 
         public abstract Object execute(Node node, double value);
