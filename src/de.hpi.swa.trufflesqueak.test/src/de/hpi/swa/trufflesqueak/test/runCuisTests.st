@@ -18,7 +18,6 @@ StdIOWriteStream stdout newLine; flush.
 
 failingTests := OrderedCollection new.
 {
-    #FinalizationRegistryTest -> #(#testAddGC #testFinalizationWithError). "first test fails when non-command line"
     #FloatTest -> #(#testIsDenormalized #testPrimTruncated).
     #ProcessorTest -> #("flaky" #testGrabProcessor #testGrabProcessorOnlyForNoTimeout #testGrabProcessorOnlyForTimeout #testValueUnpreemptively).
     #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString).
