@@ -7,11 +7,13 @@
 package de.hpi.swa.trufflesqueak.exceptions;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class Returns {
     private abstract static class AbstractReturn extends ControlFlowException {
@@ -45,22 +47,16 @@ public final class Returns {
             return homeContext;
         }
 
+        public boolean targetIsFrame(final Frame frame) {
+            return targetContextOrMarker == FrameAccess.getMarker(frame) || targetContextOrMarker == FrameAccess.getContext(frame);
+        }
+
         public Object getTargetContextOrMarker() {
             return targetContextOrMarker;
         }
 
         public ContextObject getTargetContext() {
             return (ContextObject) targetContextOrMarker;
-        }
-
-        public ContextObject getOrCreateTargetContext() {
-            if (targetContextOrMarker instanceof final ContextObject targetContext) {
-                return targetContext;
-            } else if (targetContextOrMarker instanceof final FrameMarker frameMarker) {
-                return frameMarker.getMaterializedContext();
-            } else {
-                throw SqueakExceptions.SqueakException.create("Could not create Context for:", targetContextOrMarker);
-            }
         }
 
         @Override
@@ -80,6 +76,10 @@ public final class Returns {
             assert targetContextMarkerOrNil instanceof ContextObject || targetContextMarkerOrNil instanceof FrameMarker || targetContextMarkerOrNil == NilObject.SINGLETON;
             this.targetContextMarkerOrNil = targetContextMarkerOrNil;
             this.currentContext = currentContext;
+        }
+
+        public boolean targetIsFrame(final Frame frame) {
+            return targetContextMarkerOrNil == FrameAccess.getMarker(frame) || targetContextMarkerOrNil == FrameAccess.getContext(frame);
         }
 
         public Object getTargetContextMarkerOrNil() {

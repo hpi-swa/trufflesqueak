@@ -38,12 +38,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
     protected final Object doHandle(final VirtualFrame frame, final NonLocalReturn nlr,
                     @Bind final Node node,
                     @Cached final InlinedConditionProfile hasModifiedSenderProfile) {
-        try {
-            aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
-        } catch (ProcessSwitch ps) {
-            LogUtils.SCHEDULING.warning("HandleNonLocalReturnNode: ProcessSwitch during AboutToReturn! ");
-            throw ps;
-        }
+        aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
         if (hasModifiedSenderProfile.profile(node, FrameAccess.hasModifiedSender(frame))) {
             // Sender might have changed.
             final Object targetContextOrMarker = nlr.getTargetContextOrMarker();

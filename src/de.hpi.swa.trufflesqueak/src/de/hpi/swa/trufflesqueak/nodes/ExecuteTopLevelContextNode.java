@@ -120,7 +120,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private ContextObject sendCannotReturnOrReturnToTopLevel(final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
         // Exit the interpreter loop if the target is the context that started the loop.
         if (targetContext != null && targetContext == initialContext) {
-            LogUtils.SCHEDULING.fine("sendCannotReturnOrReturnToTopLevel " + targetContext + " with return value: " + returnValue);
             throw returnToTopLevel(targetContext, returnValue);
         }
         return sendCannotReturn(startContext, returnValue);
@@ -185,8 +184,12 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             return sendCannotReturnOrReturnToTopLevel(activeContext, targetContext, returnValue);
         }
         // Make sure target is on sender chain.
+        ContextObject unwindMarkedContext = null;
         ContextObject context = senderContext;
         while (context != targetContext) {
+            if (context.getCodeObject().isUnwindMarked() && unwindMarkedContext == null) {
+                unwindMarkedContext = context;
+            }
             final AbstractSqueakObject currentSender = context.getSender();
             if (currentSender instanceof final ContextObject o) {
                 context = o;
@@ -194,26 +197,13 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 return sendCannotReturn(activeContext, returnValue);
             }
         }
-        // Evaluate unwind-marked blocks on sender chain.
+        // Send aboutToReturn if an unwind marked Context was found.
+        if (unwindMarkedContext != null) {
+            return sendAboutToReturn(nlr.getHomeContext(), returnValue, unwindMarkedContext, activeContext);
+        }
+        // Terminate the Contexts on sender chain.
         context = senderContext;
         while (context != targetContext) {
-            if (context.getCodeObject().isUnwindMarked()) {
-                try {
-                    /*
-                     * TODO: Not sure whether we can mix the virtualized
-                     * Context>>aboutToReturn:through: with sending the actual message. Clearing the
-                     * modified sender forces the use of the virtualized implementation of
-                     * aboutToReturn.
-                     */
-                    context.clearModifiedSender();
-                    AboutToReturnNode.create(context.getCodeObject()).executeAboutToReturn(context.getTruffleFrame(), nlr);
-                } catch (NonVirtualReturn nvr) {
-                    return commonNVReturn(context, nvr);
-                } catch (ProcessSwitch ps) {
-                    LogUtils.SCHEDULING.warning("commonNLReturn: ProcessSwitch during AboutToReturn!");
-                    throw ps;
-                }
-            }
             final ContextObject currentSender = (ContextObject) context.getSender();
             context.terminate();
             context = currentSender;
@@ -232,9 +222,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch");
     }
 
-    @SuppressWarnings("unused")
-    private ContextObject sendAboutToReturn(final ContextObject startContext, final Object returnValue, final ContextObject context) {
-        // TODO: Perhaps use this when image does all aboutToReturn processing.
+    private ContextObject sendAboutToReturn(final ContextObject homeContext, final Object returnValue, final ContextObject unwindMarkedContextOrNil, final ContextObject activeContext) {
         // @formatter:off
         /*
          *  aboutToReturn: result through: firstUnwindContext
@@ -247,9 +235,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         // Message receiver should be home Context to return from.
         // Last argument should be the first unwind-marked Context or nil.
         try {
-            sendAboutToReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue, context);
+            sendAboutToReturnNode.execute(activeContext.getTruffleFrame(), homeContext, returnValue, unwindMarkedContextOrNil);
         } catch (final NonVirtualReturn nvr) {
-            return commonNVReturn(context, nvr);
+            return commonNVReturn(activeContext, nvr);
         }
         throw CompilerDirectives.shouldNotReachHere("aboutToReturn should trigger a ProcessSwitch or a NonVirtualReturn");
     }

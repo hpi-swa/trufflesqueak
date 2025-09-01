@@ -135,13 +135,13 @@ public final class SendBytecodes {
             try {
                 result = dispatchNode.execute(frame);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.getTargetContextOrMarker() == FrameAccess.getMarker(frame) || nlr.getTargetContextOrMarker() == FrameAccess.getContext(frame))) {
+                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
                     result = nlr.getReturnValue();
                 } else {
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.getTargetContextMarkerOrNil() == FrameAccess.getMarker(frame) || nvr.getTargetContextMarkerOrNil() == FrameAccess.getContext(frame))) {
+                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
                     result = nvr.getReturnValue();
                 } else {
                     throw nvr;
