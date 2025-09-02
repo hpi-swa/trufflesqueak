@@ -28,7 +28,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNod
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
     private static final int LOCAL_RETURN_PC = -2;

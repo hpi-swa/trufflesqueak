@@ -396,7 +396,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     /* Context>>#isDead */
     public boolean isDead() {
-        return getInstructionPointerForBytecodeLoop() < 0;
+        return FrameAccess.isDead(getTruffleFrame());
     }
 
     public boolean canBeReturnedTo() {

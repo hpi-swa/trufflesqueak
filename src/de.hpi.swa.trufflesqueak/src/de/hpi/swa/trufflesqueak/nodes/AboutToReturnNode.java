@@ -28,8 +28,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchClosureNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
@@ -43,10 +43,22 @@ public abstract class AboutToReturnNode extends AbstractNode {
         }
     }
 
-    public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
+    public abstract void execute(VirtualFrame frame, NonLocalReturn nlr);
 
     @ImportStatic(FrameStackReadNode.class)
     protected abstract static class AboutToReturnImplNode extends AboutToReturnNode {
+
+        @Override
+        public final void execute(final VirtualFrame frame, final NonLocalReturn nlr) {
+            try {
+                executeSpecialized(frame, nlr);
+            } catch (ProcessSwitch ps) {
+                LogUtils.SCHEDULING.warning("AboutToReturnNode: ProcessSwitch during AboutToReturn!");
+                throw ps;
+            }
+        }
+
+        public abstract void executeSpecialized(VirtualFrame frame, NonLocalReturn nlr);
 
         /*
          * Virtualized version of Context>>aboutToReturn:through:, more specifically
@@ -65,12 +77,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
                         @Cached final DispatchClosureNode dispatchNode) {
             completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
             final BlockClosureObject closure = (BlockClosureObject) blockArgumentNode.executeRead(frame);
-            try {
-                dispatchNode.execute(node, closure, FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0));
-            } catch (ProcessSwitch ps) {
-                LogUtils.SCHEDULING.warning("AboutToReturnNode: ProcessSwitch during AboutToReturn! ");
-                throw ps;
-            }
+            dispatchNode.execute(node, closure, FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0));
         }
 
         @SuppressWarnings("unused")
@@ -80,20 +87,22 @@ public abstract class AboutToReturnNode extends AbstractNode {
             // Nothing to do.
         }
 
+        /**
+         * <pre>
+         *  aboutToReturn: result through: firstUnwindContext
+         *      "Called from VM when an unwindBlock is found between self and its home.
+         *      Return to home's sender, executing unwind blocks on the way."
+         *
+         *      self methodReturnContext return: result through: firstUnwindContext
+         * </pre>
+         */
         @Specialization(guards = {"hasModifiedSender(frame)"})
         protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
                         @Cached("createAboutToReturnSend()") final Dispatch2Node sendAboutToReturnNode) {
-            // @formatter:off
             /*
-             *  aboutToReturn: result through: firstUnwindContext
-             *      "Called from VM when an unwindBlock is found between self and its home.
-             *      Return to home's sender, executing unwind blocks on the way."
-             *
-             *      self methodReturnContext return: result through: firstUnwindContext
+             * Message receiver should be home Context to return from. Last argument should be the
+             * first unwind-marked Context or nil.
              */
-            // @formatter:on
-            // Message receiver should be home Context to return from.
-            // Last argument should be the first unwind-marked Context or nil.
             sendAboutToReturnNode.execute(frame, nlr.getHomeContext(), nlr.getReturnValue(), NilObject.SINGLETON);
         }
     }
@@ -103,7 +112,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         private static final AboutToReturnNoopNode SINGLETON = new AboutToReturnNoopNode();
 
         @Override
-        public void executeAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
+        public void execute(final VirtualFrame frame, final NonLocalReturn nlr) {
             // Nothing to do.
         }
 

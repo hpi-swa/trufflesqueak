@@ -6,8 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.exceptions;
 
+import java.io.Serial;
+
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -17,7 +19,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class Returns {
     private abstract static class AbstractReturn extends ControlFlowException {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected final transient Object returnValue;
 
         private AbstractReturn(final Object result) {
@@ -31,7 +33,7 @@ public final class Returns {
     }
 
     public static final class NonLocalReturn extends AbstractReturn {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         private final transient ContextObject homeContext;
         private final transient Object targetContextOrMarker;
 
@@ -47,7 +49,7 @@ public final class Returns {
             return homeContext;
         }
 
-        public boolean targetIsFrame(final Frame frame) {
+        public boolean targetIsFrame(final VirtualFrame frame) {
             return targetContextOrMarker == FrameAccess.getMarker(frame) || targetContextOrMarker == FrameAccess.getContext(frame);
         }
 
@@ -67,7 +69,7 @@ public final class Returns {
     }
 
     public static final class NonVirtualReturn extends AbstractReturn {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         private final transient Object targetContextMarkerOrNil;
         private final transient ContextObject currentContext;
 
@@ -78,7 +80,7 @@ public final class Returns {
             this.currentContext = currentContext;
         }
 
-        public boolean targetIsFrame(final Frame frame) {
+        public boolean targetIsFrame(final VirtualFrame frame) {
             return targetContextMarkerOrNil == FrameAccess.getMarker(frame) || targetContextMarkerOrNil == FrameAccess.getContext(frame);
         }
 
@@ -98,7 +100,7 @@ public final class Returns {
     }
 
     public static final class TopLevelReturn extends AbstractReturn {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public TopLevelReturn(final Object result) {
             super(result);

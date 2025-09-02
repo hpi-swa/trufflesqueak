@@ -222,20 +222,16 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch");
     }
 
+    /**
+     * See {@link de.hpi.swa.trufflesqueak.nodes.AboutToReturnNode} for details.
+     *
+     */
     private ContextObject sendAboutToReturn(final ContextObject homeContext, final Object returnValue, final ContextObject unwindMarkedContextOrNil, final ContextObject activeContext) {
-        // @formatter:off
-        /*
-         *  aboutToReturn: result through: firstUnwindContext
-         *      "Called from VM when an unwindBlock is found between self and its home.
-         *      Return to home's sender, executing unwind blocks on the way."
-         *
-         *      self methodReturnContext return: result through: firstUnwindContext
-         */
-        // @formatter:on
-        // Message receiver should be home Context to return from.
-        // Last argument should be the first unwind-marked Context or nil.
         try {
             sendAboutToReturnNode.execute(activeContext.getTruffleFrame(), homeContext, returnValue, unwindMarkedContextOrNil);
+        } catch (final ProcessSwitch ps) {
+            LogUtils.SCHEDULING.warning("ExecuteTopLevelContextNode: ProcessSwitch during AboutToReturn!");
+            throw ps;
         } catch (final NonVirtualReturn nvr) {
             return commonNVReturn(activeContext, nvr);
         }
