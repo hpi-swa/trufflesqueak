@@ -7,10 +7,13 @@
 package de.hpi.swa.trufflesqueak.exceptions;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class Returns {
     private abstract static class AbstractReturn extends ControlFlowException {
@@ -29,12 +32,23 @@ public final class Returns {
 
     public static final class NonLocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
+        private final transient ContextObject homeContext;
         private final transient Object targetContextOrMarker;
 
-        public NonLocalReturn(final Object returnValue, final Object targetContextOrMarker) {
+        public NonLocalReturn(final Object returnValue, final ContextObject homeContext) {
             super(returnValue);
-            assert targetContextOrMarker instanceof ContextObject || targetContextOrMarker instanceof FrameMarker;
-            this.targetContextOrMarker = targetContextOrMarker;
+            final Object target = homeContext.getFrameSender();
+            assert target instanceof ContextObject || target instanceof FrameMarker;
+            this.homeContext = homeContext;
+            this.targetContextOrMarker = target;
+        }
+
+        public ContextObject getHomeContext() {
+            return homeContext;
+        }
+
+        public boolean targetIsFrame(final Frame frame) {
+            return targetContextOrMarker == FrameAccess.getMarker(frame) || targetContextOrMarker == FrameAccess.getContext(frame);
         }
 
         public Object getTargetContextOrMarker() {
@@ -54,18 +68,22 @@ public final class Returns {
 
     public static final class NonVirtualReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        private final transient ContextObject targetContext;
+        private final transient Object targetContextMarkerOrNil;
         private final transient ContextObject currentContext;
 
-        public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
+        public NonVirtualReturn(final Object returnValue, final Object targetContextMarkerOrNil, final ContextObject currentContext) {
             super(returnValue);
-            assert !targetContext.isDead() : "Cannot return to terminated context";
-            this.targetContext = targetContext;
+            assert targetContextMarkerOrNil instanceof ContextObject || targetContextMarkerOrNil instanceof FrameMarker || targetContextMarkerOrNil == NilObject.SINGLETON;
+            this.targetContextMarkerOrNil = targetContextMarkerOrNil;
             this.currentContext = currentContext;
         }
 
-        public ContextObject getTargetContext() {
-            return targetContext;
+        public boolean targetIsFrame(final Frame frame) {
+            return targetContextMarkerOrNil == FrameAccess.getMarker(frame) || targetContextMarkerOrNil == FrameAccess.getContext(frame);
+        }
+
+        public Object getTargetContextMarkerOrNil() {
+            return targetContextMarkerOrNil;
         }
 
         public ContextObject getCurrentContext() {
@@ -75,7 +93,7 @@ public final class Returns {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContext + ")";
+            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContextMarkerOrNil + ")";
         }
     }
 
