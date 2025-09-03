@@ -31,12 +31,13 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
@@ -125,7 +126,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
             try {
                 return ImageIO.read(new ByteArrayInputStream(source.getByteStorage()));
             } catch (final IOException e) {
-                e.printStackTrace();
+                LogUtils.MAIN.warning("Failed to read JPEG image: " + e);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
@@ -147,7 +148,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
             final int width = readNode.executeInt(node, form, FORM.WIDTH);
             final int height = readNode.executeInt(node, form, FORM.HEIGHT);
             final long depth = Math.abs(readNode.executeLong(node, form, FORM.DEPTH));
-            if (!bits.isIntType() || depth != 32) {
+            if (!bits.isIntType() || depth != 32) { // TODO: add support for other depths
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             readImageOrPrimFail(source, bits, width, height);
@@ -159,8 +160,8 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
             try {
                 final BufferedImage image = ImageIO.read(new ByteArrayInputStream(source.getByteStorage()));
                 image.getRGB(0, 0, width, height, bits.getIntStorage(), 0, width);
-            } catch (final IOException e) {
-                e.printStackTrace();
+            } catch (final Exception e) {
+                LogUtils.MAIN.warning("Failed to read JPEG image: " + e);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
@@ -188,36 +189,44 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
             final WrappedByteArray output = new WrappedByteArray(destination.getByteStorage());
             final BufferedImage image = MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height, false);
             writeImage(output, image);
-            return output.count;
+            return output.pos;
         }
 
         @TruffleBoundary
         private static void writeImage(final WrappedByteArray output, final BufferedImage image) {
             try {
                 if (!ImageIO.write(image, "jpeg", output)) {
-                    output.count = 0;
+                    output.pos = 0;
                 }
             } catch (final IOException e) {
-                e.printStackTrace();
-                output.count = 0;
+                LogUtils.MAIN.warning("Failed to write JPEG image: " + e);
+                output.pos = 0;
             }
         }
 
         private static final class WrappedByteArray extends OutputStream {
-            private final byte[] buf;
-            private int count;
+            private final byte[] buffer;
+            private int pos = 0;
 
-            private WrappedByteArray(final byte[] buf) {
-                this.buf = buf;
+            private WrappedByteArray(final byte[] buffer) {
+                this.buffer = buffer;
             }
 
             @Override
             public void write(final int b) throws IOException {
-                if (count + 1 - buf.length > 0) {
-                    throw new IOException("Buffer too small");
+                if (pos >= buffer.length) {
+                    throw new IOException("Buffer overflow");
                 }
-                buf[count] = (byte) b;
-                count += 1;
+                buffer[pos++] = (byte) b;
+            }
+
+            @Override
+            public void write(final byte[] b, final int off, final int len) throws IOException {
+                if (pos + len > buffer.length) {
+                    throw new IOException("Buffer overflow");
+                }
+                System.arraycopy(b, off, buffer, pos, len);
+                pos += len;
             }
         }
     }
@@ -227,7 +236,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimSupports8BitGrayscaleJPEGsNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected static final boolean doSupports(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.FALSE;
+            return BooleanObject.FALSE; // TODO: implement support
         }
     }
 

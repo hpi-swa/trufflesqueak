@@ -174,10 +174,10 @@
         CompilerExceptionsTest -> #(#testUnknownSelector).
         ContextTest -> #(#testPrimitive100). "failing"
         HelpBrowserTest -> #(#testRegistration).
-        JPEGReadWriter2PluginTest -> #(#testPrimJPEGWriteImage). "expected form has an off-by-one pixel"
-        JPEGReadWriter2Test -> #(#testPrimJPEGWriteImage). "failing"
+        JPEGReadWriter2PluginTest -> #(#testPrimJPEGWriteImage). "expected form has an off-by-one pixel; using ImageIO"
+        JPEGReadWriter2Test -> #(#testPrimJPEGWriteImage). "expected form has an off-by-one pixel; using ImageIO"
         MorphicToolBuilderTests -> #(#testGetButtonColor).
-        ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent #testPinning). "expected or failing"
+        ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent "become EmptyObject->PointersObject not yet supported" #testPinning "not yet supported").
         PackageDependencyTest -> #(#testBalloon #testPreferenceBrowser #testSUnit).
         SequenceableCollectionTest -> #(#testDoWithIndexDeprecation).
         SetInspectorTest -> #(#testUninitialized). "failing"
