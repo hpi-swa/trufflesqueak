@@ -366,11 +366,15 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public static String getClipboardData() {
-        try {
-            return (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
-        } catch (UnsupportedFlavorException | IOException e) {
-            return "";
+        final Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+        if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            try {
+                return (String) contents.getTransferData(DataFlavor.stringFlavor);
+            } catch (final UnsupportedFlavorException | IOException e) {
+                throw CompilerDirectives.shouldNotReachHere(e);
+            }
         }
+        return "";
     }
 
     @TruffleBoundary
