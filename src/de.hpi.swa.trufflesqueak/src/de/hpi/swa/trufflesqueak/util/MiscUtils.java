@@ -22,7 +22,9 @@ import java.lang.management.MemoryUsage;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Properties;
@@ -169,9 +171,21 @@ public final class MiscUtils {
         /* SecureRandom must be initialized at (native image) runtime. */
         if (random == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            random = new SecureRandom();
+            random = getSecureRandomInstance();
         }
         return random;
+    }
+
+    private static SecureRandom getSecureRandomInstance() {
+        if (Security.getAlgorithms("SecureRandom").contains("NATIVEPRNGNONBLOCKING")) {
+            try {
+                return SecureRandom.getInstance("NATIVEPRNGNONBLOCKING");
+            } catch (NoSuchAlgorithmException e) {
+                throw CompilerDirectives.shouldNotReachHere(e);
+            }
+        } else {
+            return new SecureRandom();
+        }
     }
 
     @TruffleBoundary
