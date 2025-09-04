@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.Idempotent;
 
 public final class SqueakImageFlags {
     private static final int PRIMITIVE_DO_MIXED_ARITHMETIC = 0x100;
+    private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
 
     @CompilationFinal private long oldBaseAddress = -1;
     @CompilationFinal private long headerFlags;
@@ -60,5 +61,10 @@ public final class SqueakImageFlags {
     @Idempotent
     public boolean isPrimitiveDoMixedArithmetic() {
         return (headerFlags & PRIMITIVE_DO_MIXED_ARITHMETIC) == 0;
+    }
+
+    @Idempotent
+    public boolean preemptionYields() {
+        return (headerFlags & PREEMPTION_DOES_NOT_YIELD) == 0;
     }
 }

@@ -32,11 +32,11 @@ public abstract class ResumeProcessNode extends AbstractNode {
         final long activePriority = readNode.executeLong(null, activeProcess, PROCESS.PRIORITY);
         final long newPriority = readNode.executeLong(null, newProcess, PROCESS.PRIORITY);
         if (newPriority > activePriority) {
-            PutToSleepNode.executeUncached(image, activeProcess);
+            PutToSleepNode.executeUncached(image, activeProcess, image.flags.preemptionYields());
             TransferToNode.executeUncached(frame, newProcess);
             return true;
         } else {
-            PutToSleepNode.executeUncached(image, newProcess);
+            PutToSleepNode.executeUncached(image, newProcess, true);
             return false;
         }
     }
@@ -53,11 +53,11 @@ public abstract class ResumeProcessNode extends AbstractNode {
         final long activePriority = readNode.executeLong(node, activeProcess, PROCESS.PRIORITY);
         final long newPriority = readNode.executeLong(node, newProcess, PROCESS.PRIORITY);
         if (newPriority > activePriority) {
-            putToSleepNode.executePutToSleep(node, activeProcess);
+            putToSleepNode.executePutToSleep(node, activeProcess, getContext(node).flags.preemptionYields());
             transferToNode.execute(frame, node, newProcess);
             return true;
         } else {
-            putToSleepNode.executePutToSleep(node, newProcess);
+            putToSleepNode.executePutToSleep(node, newProcess, true);
             return false;
         }
     }
