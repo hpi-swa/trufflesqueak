@@ -62,6 +62,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     @Child private FrameStackReadNode receiverNode;
@@ -296,6 +297,22 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         public final boolean needsFrame() {
             return needsFrame;
+        }
+
+        public static final DispatchPrimitiveNode createOrNull(final long primitiveIndex, final int numArgs) {
+            return createOrNull(PrimitiveNodeFactory.getOrCreateIndexed(MiscUtils.toIntExact(primitiveIndex), 1 + numArgs), numArgs);
+        }
+
+        public static DispatchPrimitiveNode createOrNull(final CompiledCodeObject method) {
+            return createOrNull(PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method), method.getNumArgs());
+        }
+
+        private static DispatchPrimitiveNode createOrNull(final AbstractPrimitiveNode primitiveNode, final int numArgs) {
+            if (primitiveNode == null) {
+                return null;
+            } else {
+                return create(primitiveNode, numArgs);
+            }
         }
 
         public static DispatchPrimitiveNode create(final AbstractPrimitiveNode primitiveNode, final int numArgs) {
@@ -610,14 +627,14 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 return null;
             }
 
-            @Specialization(guards = {"method == cachedMethod", "primitiveNode != null"}, limit = "INDIRECT_PRIMITIVE_CACHE_LIMIT")
+            @Specialization(guards = {"method == cachedMethod", "dispatchPrimitiveNode != null"}, limit = "INDIRECT_PRIMITIVE_CACHE_LIMIT")
             protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object receiver, final Object[] arguments,
                             @Bind final Node node,
                             @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
-                            @Cached("getOrCreateIndexedOrNamed(cachedMethod)") final AbstractPrimitiveNode primitiveNode,
+                            @Cached(value = "createOrNull(cachedMethod)", adopt = false) final DispatchPrimitiveNode dispatchPrimitiveNode,
                             @Cached final InlinedBranchProfile primitiveFailedProfile) {
                 try {
-                    return primitiveNode.executeWithArguments(frame, receiver, arguments);
+                    return dispatchPrimitiveNode.execute(frame, receiver, arguments);
                 } catch (final PrimitiveFailed pf) {
                     primitiveFailedProfile.enter(node);
                     DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);

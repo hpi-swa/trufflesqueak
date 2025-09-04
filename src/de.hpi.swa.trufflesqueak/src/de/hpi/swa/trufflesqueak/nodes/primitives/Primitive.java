@@ -92,7 +92,7 @@ public interface Primitive extends NodeInterface {
     interface Primitive6WithFallback extends Primitive6 {
         @Fallback
         @SuppressWarnings("unused")
-        default Object doPrimitiveFail7(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
+        default Object doPrimitiveFail6(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
@@ -104,7 +104,7 @@ public interface Primitive extends NodeInterface {
     interface Primitive7WithFallback extends Primitive7 {
         @Fallback
         @SuppressWarnings("unused")
-        default Object doPrimitiveFail8(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7) {
+        default Object doPrimitiveFail7(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
@@ -116,7 +116,7 @@ public interface Primitive extends NodeInterface {
     interface Primitive8WithFallback extends Primitive8 {
         @Fallback
         @SuppressWarnings("unused")
-        default Object doPrimitiveFail9(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7,
+        default Object doPrimitiveFail8(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7,
                         final Object arg8) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
@@ -129,7 +129,7 @@ public interface Primitive extends NodeInterface {
     interface Primitive9WithFallback extends Primitive9 {
         @Fallback
         @SuppressWarnings("unused")
-        default Object doPrimitiveFail10(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7,
+        default Object doPrimitiveFail9(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7,
                         final Object arg8, final Object arg9) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
@@ -142,7 +142,7 @@ public interface Primitive extends NodeInterface {
     interface Primitive10WithFallback extends Primitive10 {
         @Fallback
         @SuppressWarnings("unused")
-        default Object doPrimitiveFail11(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7,
+        default Object doPrimitiveFail10(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7,
                         final Object arg8, final Object arg9, final Object arg10) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
@@ -156,7 +156,7 @@ public interface Primitive extends NodeInterface {
     interface Primitive11WithFallback extends Primitive11 {
         @Fallback
         @SuppressWarnings("unused")
-        default Object doPrimitiveFail12(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7,
+        default Object doPrimitiveFail11(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7,
                         final Object arg8, final Object arg9, final Object arg10, final Object arg11) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
