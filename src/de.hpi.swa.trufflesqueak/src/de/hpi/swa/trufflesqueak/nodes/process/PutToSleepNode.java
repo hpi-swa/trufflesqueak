@@ -28,23 +28,23 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 @GenerateCached(false)
 public abstract class PutToSleepNode extends AbstractNode {
 
-    public static final void executeUncached(final SqueakImageContext image, final PointersObject process) {
+    public static final void executeUncached(final SqueakImageContext image, final PointersObject process, final boolean addLast) {
         final long priority = (Long) process.instVarAt0Slow(PROCESS.PRIORITY);
         final ArrayObject processLists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject processList = (PointersObject) processLists.getObject(priority - 1);
-        AddLastLinkToListNode.executeUncached(process, processList);
+        AddLinkToListNode.executeUncached(process, processList, addLast);
     }
 
-    public abstract void executePutToSleep(Node node, PointersObject process);
+    public abstract void executePutToSleep(Node node, PointersObject process, boolean addLast);
 
     @Specialization
-    protected static final void putToSleep(final Node node, final PointersObject process,
+    protected static final void putToSleep(final Node node, final PointersObject process, final boolean addLast,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
-                    @Cached final AddLastLinkToListNode addLastLinkToListNode) {
+                    @Cached final AddLinkToListNode addLinkToListNode) {
         final long priority = pointersReadNode.executeLong(node, process, PROCESS.PRIORITY);
         final ArrayObject processLists = pointersReadNode.executeArray(node, getContext(node).getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject processList = (PointersObject) arrayReadNode.execute(node, processLists, priority - 1);
-        addLastLinkToListNode.execute(node, process, processList);
+        addLinkToListNode.execute(node, process, processList, addLast);
     }
 }

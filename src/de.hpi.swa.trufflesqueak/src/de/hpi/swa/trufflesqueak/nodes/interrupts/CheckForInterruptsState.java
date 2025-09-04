@@ -134,11 +134,11 @@ public final class CheckForInterruptsState {
         delayNextCheck(20 * interruptCheckNanos);
     }
 
-    private void delayNextCheck(final long delayNanos) {
+    private void delayNextCheck(@SuppressWarnings("unused") final long delayNanos) {
         // avoid any immediate triggers
         shouldTrigger = false;
         // let CheckForInterruptsThread wait before the next check
-        nanosToWait = delayNanos;
+// nanosToWait = delayNanos;
     }
 
     /* Enable / disable interrupts */
