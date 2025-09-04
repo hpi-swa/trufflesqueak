@@ -229,9 +229,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private ContextObject sendAboutToReturn(final ContextObject homeContext, final Object returnValue, final ContextObject unwindMarkedContextOrNil, final ContextObject activeContext) {
         try {
             sendAboutToReturnNode.execute(activeContext.getTruffleFrame(), homeContext, returnValue, unwindMarkedContextOrNil);
-        } catch (final ProcessSwitch ps) {
-            LogUtils.SCHEDULING.warning("ExecuteTopLevelContextNode: ProcessSwitch during AboutToReturn!");
-            throw ps;
         } catch (final NonVirtualReturn nvr) {
             return commonNVReturn(activeContext, nvr);
         }
