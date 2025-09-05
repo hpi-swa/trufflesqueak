@@ -172,7 +172,6 @@
     {
         BitBltSimulationTest -> #(#testRgbMulDepth16 #testRgbMulDepth1to8).
         CompilerExceptionsTest -> #(#testUnknownSelector).
-        ContextTest -> #(#testPrimitive100). "failing"
         HelpBrowserTest -> #(#testRegistration).
         JPEGReadWriter2PluginTest -> #(#testPrimJPEGWriteImage). "expected form has an off-by-one pixel; using ImageIO"
         JPEGReadWriter2Test -> #(#testPrimJPEGWriteImage). "expected form has an off-by-one pixel; using ImageIO"

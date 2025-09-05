@@ -86,7 +86,6 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.DispatchInd
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.DispatchDirect5Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.DispatchIndirect5Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectNaryNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectedSuperNaryNode.DirectedSuperDispatchNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.CreateFrameArgumentsForIndirectCallNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
@@ -259,7 +258,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 84)
-    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPrimitiveWithFrameNode implements Primitive2 {
+    protected abstract static class PrimPerformWithArguments1Node extends AbstractPrimitiveWithFrameNode implements Primitive1 {
+        @Specialization
+        @SuppressWarnings("unused")
+        protected static final Object failBadArgument(final Object receiver, final Object arg1) {
+            throw PrimitiveFailed.BAD_ARGUMENT;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 84)
+    protected abstract static class PrimPerformWithArguments2Node extends AbstractPrimitiveWithFrameNode implements Primitive2 {
         @SuppressWarnings("unused")
         @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject argumentsArray,
@@ -269,12 +278,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create(selector, guard)") final DispatchDirectNaryNode dispatchDirectNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
             final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
-            if (arguments.length == dispatchDirectNode.expectedNumArguments()) {
-                return dispatchDirectNode.execute(frame, receiver, arguments);
-            } else {
-                CompilerDirectives.transferToInterpreter();
-                throw PrimitiveFailed.BAD_NUMBER_OF_ARGUMENTS;
-            }
+            return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
         }
 
         @Megamorphic
@@ -461,12 +465,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractPrimPerformWithArgumentsInSuperclassNode extends AbstractPrimitiveWithFrameNode {
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, final ArrayObject arguments, final ClassObject lookupClass,
-                        final InheritsFromNode inheritsFromNode, final DirectedSuperDispatchNaryNode dispatchNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode, final Node node) {
+                        final InheritsFromNode inheritsFromNode, final DirectedSuperDispatchNaryPrimNode dispatchNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode, final Node node) {
             if (inheritsFromNode.execute(node, receiver, lookupClass)) {
                 return dispatchNode.execute(frame, lookupClass, receiver, getObjectArrayNode.execute(node, arguments));
             } else {
                 CompilerDirectives.transferToInterpreter();
-                throw PrimitiveFailed.BAD_RECEIVER;
+                throw PrimitiveFailed.BAD_ARGUMENT;
             }
         }
 
@@ -479,8 +483,31 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, getObjectArrayNode.execute(node, arguments), lookupClass, lookupResult, method, selector));
             } else {
                 CompilerDirectives.transferToInterpreter();
-                throw PrimitiveFailed.BAD_RECEIVER;
+                throw PrimitiveFailed.BAD_ARGUMENT;
             }
+        }
+    }
+
+    /**
+     * Same as
+     * {@link de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectedSuperNaryNode.DirectedSuperDispatchNaryNode
+     * DirectedSuperDispatchNaryNode} but with an additional argument length check.
+     */
+    protected abstract static class DirectedSuperDispatchNaryPrimNode extends AbstractNode {
+        protected final NativeObject selector;
+
+        DirectedSuperDispatchNaryPrimNode(final NativeObject selector) {
+            this.selector = selector;
+        }
+
+        protected abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object[] arguments);
+
+        @Specialization(guards = "lookupClass == cachedLookupClass", assumptions = {"cachedLookupClass.getClassHierarchyAndMethodDictStable()",
+                        "dispatchDirectNode.getAssumptions()"}, limit = "3")
+        protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject lookupClass, final Object receiver, final Object[] arguments,
+                        @SuppressWarnings("unused") @Cached("lookupClass") final ClassObject cachedLookupClass,
+                        @Cached("create(selector, cachedLookupClass)") final DispatchDirectNaryNode dispatchDirectNode) {
+            return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
         }
     }
 
@@ -495,7 +522,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
-                        @Cached("create(cachedSelector)") final DirectedSuperDispatchNaryNode dispatchNode) {
+                        @Cached("create(cachedSelector)") final DirectedSuperDispatchNaryPrimNode dispatchNode) {
             return performCached(frame, receiver, arguments, lookupClass, inheritsFromNode, dispatchNode, getObjectArrayNode, node);
         }
 
@@ -525,7 +552,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached("selector") final NativeObject cachedSelector,
                         @Exclusive @Cached final InheritsFromNode inheritsFromNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
-                        @Cached("create(cachedSelector)") final DirectedSuperDispatchNaryNode dispatchNode) {
+                        @Cached("create(cachedSelector)") final DirectedSuperDispatchNaryPrimNode dispatchNode) {
             return performCached(frame, target, arguments, lookupClass, inheritsFromNode, dispatchNode, getObjectArrayNode, node);
         }
 
@@ -669,11 +696,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final int numArgs = ArrayObjectSizeNode.executeUncached(argumentArray);
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexed(primitiveIndex, 1 + numArgs);
             if (primitiveNode == null) {
-                if (PrimitiveNodeFactory.isKnownPrimitiveIndex(primitiveIndex)) {
-                    throw PrimitiveFailed.BAD_ARGUMENT;
-                } else {
-                    throw PrimitiveFailed.GENERIC_ERROR;
-                }
+                throw PrimitiveFailed.BAD_NUMBER_OF_ARGUMENTS;
             } else {
                 final Object[] a = ArrayObjectToObjectArrayCopyNode.executeUncached(argumentArray);
                 return switch (primitiveNode) {

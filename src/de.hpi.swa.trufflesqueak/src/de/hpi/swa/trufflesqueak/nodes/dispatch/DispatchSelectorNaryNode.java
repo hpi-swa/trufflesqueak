@@ -180,7 +180,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 super(selector);
             }
 
-            public abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object[] arguments);
+            protected abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object[] arguments);
 
             @Specialization(guards = "lookupClass == cachedLookupClass", assumptions = {"cachedLookupClass.getClassHierarchyAndMethodDictStable()",
                             "dispatchDirectNode.getAssumptions()"}, limit = "3")
@@ -197,9 +197,21 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             super(assumptions);
         }
 
+        public final Object executeWithCheckedArguments(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
+            checkNumArguments(arguments);
+            return execute(frame, receiver, arguments);
+        }
+
         public abstract Object execute(VirtualFrame frame, Object receiver, Object[] arguments);
 
-        public abstract int expectedNumArguments();
+        protected abstract void checkNumArguments(Object[] arguments);
+
+        protected static final void checkNumArguments(final int expectedNumArguments, final int actualNumArguments) {
+            if (actualNumArguments != expectedNumArguments) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_NUMBER_OF_ARGUMENTS;
+            }
+        }
 
         @NeverDefault
         public static final DispatchDirectNaryNode create(final NativeObject selector, final LookupClassGuard guard) {
@@ -269,8 +281,8 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         }
 
         @Override
-        public int expectedNumArguments() {
-            return numArguments;
+        public void checkNumArguments(final Object[] arguments) {
+            checkNumArguments(numArguments, arguments.length);
         }
 
         @Override
@@ -522,27 +534,28 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     }
 
     abstract static class DispatchDirectWithSenderNaryNode extends DispatchDirectNaryNode {
-        private final int numArguments;
+
         @Child protected SenderNode senderNode;
 
         DispatchDirectWithSenderNaryNode(final Assumption[] assumptions, final CompiledCodeObject method) {
             super(assumptions);
-            numArguments = method.getNumArgs();
             senderNode = SenderNodeGen.create(method);
-        }
-
-        @Override
-        public final int expectedNumArguments() {
-            return numArguments;
         }
     }
 
     static final class DispatchDirectMethodNaryNode extends DispatchDirectWithSenderNaryNode {
+        private final int numArguments;
         @Child private DirectCallNode callNode;
 
         DispatchDirectMethodNaryNode(final Assumption[] assumptions, final CompiledCodeObject method) {
             super(assumptions, method);
+            numArguments = method.getNumArgs();
             callNode = DirectCallNode.create(method.getCallTarget());
+        }
+
+        @Override
+        protected void checkNumArguments(final Object[] arguments) {
+            checkNumArguments(numArguments, arguments.length);
         }
 
         @Override
@@ -563,6 +576,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         }
 
         @Override
+        protected void checkNumArguments(final Object[] arguments) {
+            // nothing to do
+        }
+
+        @Override
         public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
             return callNode.call(FrameAccess.newDNUWith(senderNode.execute(frame), receiver, createDNUMessageNode.execute(selector, receiver, arguments)));
         }
@@ -578,6 +596,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             this.selector = selector;
             callNode = DirectCallNode.create(runWithInMethod.getCallTarget());
             this.targetObject = targetObject;
+        }
+
+        @Override
+        public void checkNumArguments(final Object[] arguments) {
+            // nothing to do
         }
 
         @Override

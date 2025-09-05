@@ -206,10 +206,6 @@ public final class PrimitiveNodeFactory {
         return null;
     }
 
-    public static boolean isKnownPrimitiveIndex(final int primitiveIndex) {
-        return SINGLETON_PRIMITIVE_TABLE.get(primitiveIndex) != null || PRIMITIVE_TABLE.get(primitiveIndex) != null;
-    }
-
     private static boolean isLoadInstVar(final int primitiveIndex) {
         return PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX;
     }
