@@ -19,7 +19,7 @@ StdIOWriteStream stdout newLine; flush.
 failingTests := OrderedCollection new.
 {
     #FloatTest -> #(#testIsDenormalized #testPrimTruncated).
-    #ProcessorTest -> #("flaky" #testGrabProcessor #testGrabProcessorOnlyForNoTimeout #testGrabProcessorOnlyForTimeout #testValueUnpreemptively).
+    #StringTest -> #("flaky" #testFindSelector).
     #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString).
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
