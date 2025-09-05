@@ -798,7 +798,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 SERVER.invoke(OBJECT_NAME, OPERATION_NAME, PARAMS, SIGNATURE);
             } catch (InstanceNotFoundException | ReflectionException | MBeanException e) {
-                e.printStackTrace();
+                LogUtils.MAIN.warning("Invoking gcRun failed: " + e);
             }
         }
 
@@ -973,7 +973,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final PointersObject effectiveProcess,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached(inline = false) final FrameStackPushNode pushNode) {
+                        @Cached final FrameStackPushNode pushNode) {
             addLastLinkToListNode.execute(node, effectiveProcess, mutex);
             wakeHighestPriorityNode.executeWake(frame, node);
             /* Leave `false` as result on stack. */

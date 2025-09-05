@@ -32,21 +32,21 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     private static final boolean HAS_SOCKET_ACCESS;
-    protected static final byte[] LOCAL_HOST_NAME;
+    static final byte[] LOCAL_HOST_NAME;
 
     static {
         boolean hasSocketAccess = false;
@@ -55,7 +55,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             localHostName = InetAddress.getLocalHost().getHostName();
             hasSocketAccess = true;
         } catch (final SecurityException | UnknownHostException e) {
-            e.printStackTrace();
+            LogUtils.MAIN.warning(e.toString());
         }
         HAS_SOCKET_ACCESS = hasSocketAccess;
         LOCAL_HOST_NAME = localHostName.getBytes();
@@ -515,13 +515,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSocketAbortConnectionNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doAbort(final Object receiver, final PointersObject sd) {
-            try {
-                close(sd);
-            } catch (final IOException e) {
-                LogUtils.SOCKET.log(Level.FINE, "Closing socket failed", e);
-                throw PrimitiveFailed.andTransferToInterpreter();
-            }
-            return receiver;
+            return PrimSocketCloseConnectionNode.doClose(receiver, sd);
         }
     }
 

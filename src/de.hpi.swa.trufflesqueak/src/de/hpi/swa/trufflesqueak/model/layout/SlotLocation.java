@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model.layout;
 
+import java.io.Serial;
+
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -19,6 +21,7 @@ import com.oracle.truffle.api.profiles.IntValueProfile;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public abstract class SlotLocation {
@@ -82,7 +85,7 @@ public abstract class SlotLocation {
     }
 
     public static final class IllegalWriteException extends SlowPathException {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         private static final IllegalWriteException SINGLETON = new IllegalWriteException();
 
         private IllegalWriteException() {
@@ -103,7 +106,7 @@ public abstract class SlotLocation {
             write(obj, value);
         } catch (final IllegalWriteException e) {
             CompilerDirectives.transferToInterpreter();
-            e.printStackTrace();
+            LogUtils.MAIN.warning(e.toString());
         }
     }
 

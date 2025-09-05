@@ -66,12 +66,13 @@ import de.hpi.swa.trufflesqueak.nodes.ExecuteBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 
 @SuppressWarnings("static-method")
 @ExportLibrary(InteropLibrary.class)
 public final class JavaObjectWrapper implements TruffleObject {
-    protected static final int LIMIT = 2;
+    static final int LIMIT = 2;
     private static final WeakHashMap<Object, JavaObjectWrapper> CACHE = new WeakHashMap<>();
     private static final ClassValue<HashMap<String, Field>> CLASSES_TO_FIELDS = new ClassValue<>() {
         @Override
@@ -89,7 +90,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                         try {
                             field.setAccessible(true);
                         } catch (final RuntimeException e) {
-                            e.printStackTrace();
+                            LogUtils.INTEROP.warning(e.toString());
                             continue;
                         }
                     }
@@ -123,7 +124,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                             ReflectionUtils.openModuleByClass(currentClass, JavaObjectWrapper.class);
                             method.setAccessible(true);
                         } catch (final RuntimeException e) {
-                            e.printStackTrace();
+                            LogUtils.INTEROP.warning(e.toString());
                             continue;
                         }
                     }
@@ -262,15 +263,15 @@ public final class JavaObjectWrapper implements TruffleObject {
         return CLASSES_TO_MEMBERS.get(wrappedObject.getClass());
     }
 
-    protected boolean isClass() {
+    boolean isClass() {
         return wrappedObject instanceof Class<?>;
     }
 
-    protected boolean isArrayClass() {
+    boolean isArrayClass() {
         return isClass() && asClass().isArray();
     }
 
-    protected boolean isDefaultClass() {
+    boolean isDefaultClass() {
         return isClass() && !asClass().isArray();
     }
 
@@ -299,7 +300,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    protected Object readMember(final String member) throws UnknownIdentifierException {
+    Object readMember(final String member) throws UnknownIdentifierException {
         final Field field = lookupFields().get(member);
         if (field != null) {
             try {
@@ -313,36 +314,36 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
+    Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
         return lookupMembers();
     }
 
     @ExportMessage
-    protected boolean hasMembers() {
+    boolean hasMembers() {
         return true;
     }
 
     @TruffleBoundary
     @ExportMessage(name = "isMemberReadable")
     @ExportMessage(name = "isMemberModifiable")
-    protected boolean containsField(final String member) {
+    boolean containsField(final String member) {
         return lookupFields().containsKey(member);
     }
 
     @ExportMessage
-    protected boolean isMemberInsertable(@SuppressWarnings("unused") final String member) {
+    boolean isMemberInsertable(@SuppressWarnings("unused") final String member) {
         return false;
     }
 
     @ExportMessage
     @TruffleBoundary
-    protected boolean isMemberInvocable(final String member) {
+    boolean isMemberInvocable(final String member) {
         return lookupMethods().containsKey(member);
     }
 
     @ExportMessage
     @TruffleBoundary
-    protected Object invokeMember(final String member, final Object... arguments) throws UnknownIdentifierException, UnsupportedTypeException {
+    Object invokeMember(final String member, final Object... arguments) throws UnknownIdentifierException, UnsupportedTypeException {
         final Method method = lookupMethods().get(member);
         if (method != null) {
             try {
@@ -357,7 +358,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    protected void writeMember(final String key, final Object value) {
+    void writeMember(final String key, final Object value) {
         final Field field = lookupFields().get(key);
         if (field != null) {
             try {
@@ -371,18 +372,18 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean isNull(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean isNull(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         return lib.isNull(wrappedObject);
     }
 
     @ExportMessage
-    protected boolean isNumber() {
+    boolean isNumber() {
         final Class<?> c = wrappedObject.getClass();
         return c == Byte.class || c == Short.class || c == Integer.class || c == Long.class || c == Float.class || c == Double.class;
     }
 
     @ExportMessage
-    protected boolean fitsInByte(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean fitsInByte(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
             return lib.fitsInByte(wrappedObject);
         } else {
@@ -391,7 +392,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean fitsInShort(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean fitsInShort(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
             return lib.fitsInShort(wrappedObject);
         } else {
@@ -400,7 +401,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean fitsInInt(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean fitsInInt(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
             return lib.fitsInInt(wrappedObject);
         } else {
@@ -409,7 +410,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean fitsInLong(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean fitsInLong(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
             return lib.fitsInLong(wrappedObject);
         } else {
@@ -418,7 +419,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean fitsInBigInteger(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean fitsInBigInteger(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (wrappedObject instanceof BigInteger) {
             return true;
         }
@@ -430,7 +431,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean fitsInFloat(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean fitsInFloat(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
             return lib.fitsInFloat(wrappedObject);
         } else {
@@ -439,7 +440,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean fitsInDouble(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean fitsInDouble(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
             return lib.fitsInDouble(wrappedObject);
         } else {
@@ -448,7 +449,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected byte asByte(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
+    byte asByte(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
             return lib.asByte(wrappedObject);
         } else {
@@ -457,7 +458,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected short asShort(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
+    short asShort(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
             return lib.asShort(wrappedObject);
         } else {
@@ -466,7 +467,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected int asInt(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
+    int asInt(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
             return lib.asInt(wrappedObject);
         } else {
@@ -475,7 +476,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected long asLong(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
+    long asLong(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
             return lib.asLong(wrappedObject);
         } else {
@@ -484,7 +485,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected BigInteger asBigInteger(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
+    BigInteger asBigInteger(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (wrappedObject instanceof final BigInteger w) {
             return w;
         } else if (isNumber()) {
@@ -495,7 +496,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected float asFloat(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
+    float asFloat(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
             return lib.asFloat(wrappedObject);
         } else {
@@ -504,7 +505,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected double asDouble(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
+    double asDouble(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
             return lib.asDouble(wrappedObject);
         } else {
@@ -513,22 +514,22 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean isInstantiable() {
+    boolean isInstantiable() {
         return isClass();
     }
 
     @ExportMessage
-    protected static class Instantiate {
+    static class Instantiate {
 
         @Specialization(guards = "!receiver.isClass()")
         @SuppressWarnings("unused")
-        protected static final Object doUnsupported(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedMessageException {
+        static final Object doUnsupported(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedMessageException {
             throw UnsupportedMessageException.create();
         }
 
         @TruffleBoundary
         @Specialization(guards = "receiver.isArrayClass()")
-        protected static final Object doArrayCached(final JavaObjectWrapper receiver, final Object[] args,
+        static final Object doArrayCached(final JavaObjectWrapper receiver, final Object[] args,
                         @CachedLibrary(limit = "1") final InteropLibrary lib) throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
             if (args.length != 1) {
                 throw ArityException.create(1, 1, args.length);
@@ -545,7 +546,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
         @TruffleBoundary
         @Specialization(guards = "receiver.isDefaultClass()")
-        protected static final Object doObjectCached(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedTypeException {
+        static final Object doObjectCached(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedTypeException {
             assert !receiver.isArrayClass();
             iterateConstructors: for (final Constructor<?> constructor : receiver.asClass().getConstructors()) {
                 if (constructor.getParameterCount() == args.length) {
@@ -568,12 +569,12 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean isString() {
+    boolean isString() {
         return wrappedObject instanceof String;
     }
 
     @ExportMessage
-    protected String asString() throws UnsupportedMessageException {
+    String asString() throws UnsupportedMessageException {
         try {
             return (String) wrappedObject;
         } catch (final ClassCastException e) {
@@ -583,20 +584,20 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    protected String toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
+    String toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
         return toString(); // TODO: String.valueOf(wrappedObject);
     }
 
     @ExportMessage
     @TruffleBoundary
-    protected boolean hasArrayElements(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
+    boolean hasArrayElements(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         return wrappedObject.getClass().isArray() || wrappedObject instanceof TruffleObject && lib.hasArrayElements(wrappedObject);
     }
 
     @ExportMessage
     @ExportMessage(name = "isArrayElementModifiable")
     @TruffleBoundary
-    protected boolean isArrayElementReadable(final long index, @Bind final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) {
+    boolean isArrayElementReadable(final long index, @Bind final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) {
         try {
             return 0 <= index && index < sizeNode.execute(node, wrappedObject);
         } catch (final UnsupportedSpecializationException | UnsupportedMessageException e) {
@@ -605,13 +606,13 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean isArrayElementInsertable(@SuppressWarnings("unused") final long index) {
+    boolean isArrayElementInsertable(@SuppressWarnings("unused") final long index) {
         return false;
     }
 
     @ExportMessage
     @TruffleBoundary
-    protected long getArraySize(@Bind final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) throws UnsupportedMessageException {
+    long getArraySize(@Bind final Node node, @Shared("sizeNode") @Cached final ArraySizeNode sizeNode) throws UnsupportedMessageException {
         try {
             return sizeNode.execute(node, wrappedObject);
         } catch (final UnsupportedSpecializationException e) {
@@ -622,62 +623,62 @@ public final class JavaObjectWrapper implements TruffleObject {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
-    protected abstract static class ArraySizeNode extends Node {
-        protected abstract int execute(Node node, Object object) throws UnsupportedSpecializationException, UnsupportedMessageException;
+    abstract static class ArraySizeNode extends Node {
+        abstract int execute(Node node, Object object) throws UnsupportedSpecializationException, UnsupportedMessageException;
 
         @Specialization
-        protected static final int doBoolean(final boolean[] object) {
+        static final int doBoolean(final boolean[] object) {
             return object.length;
         }
 
         @Specialization
-        protected static final int doByte(final byte[] object) {
+        static final int doByte(final byte[] object) {
             return object.length;
         }
 
         @Specialization
-        protected static final int doChar(final char[] object) {
+        static final int doChar(final char[] object) {
             return object.length;
         }
 
         @Specialization
-        protected static final int doShort(final short[] object) {
+        static final int doShort(final short[] object) {
             return object.length;
         }
 
         @Specialization
-        protected static final int doInteger(final int[] object) {
+        static final int doInteger(final int[] object) {
             return object.length;
         }
 
         @Specialization
-        protected static final int doLong(final long[] object) {
+        static final int doLong(final long[] object) {
             return object.length;
         }
 
         @Specialization
-        protected static final int doFloat(final float[] object) {
+        static final int doFloat(final float[] object) {
             return object.length;
         }
 
         @Specialization
-        protected static final int doDouble(final double[] object) {
+        static final int doDouble(final double[] object) {
             return object.length;
         }
 
         @Specialization
-        protected static final int doObject(final Object[] object) {
+        static final int doObject(final Object[] object) {
             return object.length;
         }
 
         @Specialization(limit = "1")
-        protected static final int doTruffleObject(final TruffleObject object, @CachedLibrary("object") final InteropLibrary lib) throws UnsupportedMessageException {
+        static final int doTruffleObject(final TruffleObject object, @CachedLibrary("object") final InteropLibrary lib) throws UnsupportedMessageException {
             return (int) lib.getArraySize(object);
         }
     }
 
     @ExportMessage
-    protected Object readArrayElement(final long index, @Bind final Node node, @Cached final ReadArrayElementNode readNode) throws InvalidArrayIndexException, UnsupportedMessageException {
+    Object readArrayElement(final long index, @Bind final Node node, @Cached final ReadArrayElementNode readNode) throws InvalidArrayIndexException, UnsupportedMessageException {
         try {
             return readNode.execute(node, wrappedObject, (int) index);
         } catch (final ArrayIndexOutOfBoundsException e) {
@@ -690,63 +691,63 @@ public final class JavaObjectWrapper implements TruffleObject {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
-    protected abstract static class ReadArrayElementNode extends Node {
-        protected abstract Object execute(Node node, Object object, int index) throws UnsupportedMessageException, InvalidArrayIndexException;
+    abstract static class ReadArrayElementNode extends Node {
+        abstract Object execute(Node node, Object object, int index) throws UnsupportedMessageException, InvalidArrayIndexException;
 
         @Specialization
-        protected static final boolean doBoolean(final boolean[] object, final int index) {
+        static final boolean doBoolean(final boolean[] object, final int index) {
             return BooleanObject.wrap(object[index]);
         }
 
         @Specialization
-        protected static final long doByte(final byte[] object, final int index) {
+        static final long doByte(final byte[] object, final int index) {
             return object[index];
         }
 
         @Specialization
-        protected static final char doChar(final char[] object, final int index) {
+        static final char doChar(final char[] object, final int index) {
             return object[index];
         }
 
         @Specialization
-        protected static final long doShort(final short[] object, final int index) {
+        static final long doShort(final short[] object, final int index) {
             return object[index];
         }
 
         @Specialization
-        protected static final long doInteger(final int[] object, final int index) {
+        static final long doInteger(final int[] object, final int index) {
             return object[index];
         }
 
         @Specialization
-        protected static final long doLong(final long[] object, final int index) {
+        static final long doLong(final long[] object, final int index) {
             return object[index];
         }
 
         @Specialization
-        protected static final double doFloat(final float[] object, final int index) {
+        static final double doFloat(final float[] object, final int index) {
             return object[index];
         }
 
         @Specialization
-        protected static final double doDouble(final double[] object, final int index) {
+        static final double doDouble(final double[] object, final int index) {
             return object[index];
         }
 
         @Specialization
-        protected static final Object doObject(final Object[] object, final int index) {
+        static final Object doObject(final Object[] object, final int index) {
             return wrap(object[index]);
         }
 
         @Specialization(limit = "1")
-        protected static final Object doTruffleObject(final TruffleObject object, final int index, @CachedLibrary("object") final InteropLibrary lib)
+        static final Object doTruffleObject(final TruffleObject object, final int index, @CachedLibrary("object") final InteropLibrary lib)
                         throws UnsupportedMessageException, InvalidArrayIndexException {
             return lib.readArrayElement(object, index);
         }
     }
 
     @ExportMessage
-    protected void writeArrayElement(final long index, final Object value, @Bind final Node node, @Cached final WriteArrayElementNode writeNode)
+    void writeArrayElement(final long index, final Object value, @Bind final Node node, @Cached final WriteArrayElementNode writeNode)
                     throws InvalidArrayIndexException, UnsupportedMessageException, UnsupportedTypeException {
         try {
             writeNode.execute(node, wrappedObject, (int) index, value);
@@ -760,56 +761,56 @@ public final class JavaObjectWrapper implements TruffleObject {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
-    protected abstract static class WriteArrayElementNode extends Node {
-        protected abstract void execute(Node node, Object object, int index, Object value) throws UnsupportedMessageException, InvalidArrayIndexException, UnsupportedTypeException;
+    abstract static class WriteArrayElementNode extends Node {
+        abstract void execute(Node node, Object object, int index, Object value) throws UnsupportedMessageException, InvalidArrayIndexException, UnsupportedTypeException;
 
         @Specialization
-        protected static final void doBoolean(final boolean[] object, final int index, final boolean value) {
+        static final void doBoolean(final boolean[] object, final int index, final boolean value) {
             object[index] = value;
         }
 
         @Specialization
-        protected static final void doByte(final byte[] object, final int index, final byte value) {
+        static final void doByte(final byte[] object, final int index, final byte value) {
             object[index] = value;
         }
 
         @Specialization
-        protected static final void doChar(final char[] object, final int index, final char value) {
+        static final void doChar(final char[] object, final int index, final char value) {
             object[index] = value;
         }
 
         @Specialization
-        protected static final void doShort(final short[] object, final int index, final short value) {
+        static final void doShort(final short[] object, final int index, final short value) {
             object[index] = value;
         }
 
         @Specialization
-        protected static final void doInteger(final int[] object, final int index, final int value) {
+        static final void doInteger(final int[] object, final int index, final int value) {
             object[index] = value;
         }
 
         @Specialization
-        protected static final void doLong(final long[] object, final int index, final long value) {
+        static final void doLong(final long[] object, final int index, final long value) {
             object[index] = value;
         }
 
         @Specialization
-        protected static final void doFloat(final float[] object, final int index, final float value) {
+        static final void doFloat(final float[] object, final int index, final float value) {
             object[index] = value;
         }
 
         @Specialization
-        protected static final void doDouble(final double[] object, final int index, final double value) {
+        static final void doDouble(final double[] object, final int index, final double value) {
             object[index] = value;
         }
 
         @Specialization
-        protected static final void doObject(final Object[] object, final int index, final Object value) {
+        static final void doObject(final Object[] object, final int index, final Object value) {
             object[index] = value;
         }
 
         @Specialization(limit = "1")
-        protected static final void doTruffleObject(final TruffleObject object, final int index, final Object value, @CachedLibrary("object") final InteropLibrary lib)
+        static final void doTruffleObject(final TruffleObject object, final int index, final Object value, @CachedLibrary("object") final InteropLibrary lib)
                         throws UnsupportedMessageException, InvalidArrayIndexException, UnsupportedTypeException {
             lib.writeArrayElement(object, index, value);
         }
@@ -818,23 +819,23 @@ public final class JavaObjectWrapper implements TruffleObject {
     // Meta Object API
 
     @ExportMessage
-    protected boolean hasMetaObject() {
+    boolean hasMetaObject() {
         return true;
     }
 
     @ExportMessage
-    protected Object getMetaObject() {
+    Object getMetaObject() {
         return wrap(wrappedObject.getClass());
     }
 
     @ExportMessage
-    protected boolean isMetaObject() {
+    boolean isMetaObject() {
         return isClass();
     }
 
     @ExportMessage
     @TruffleBoundary
-    protected Object getMetaQualifiedName() throws UnsupportedMessageException {
+    Object getMetaQualifiedName() throws UnsupportedMessageException {
         if (isClass()) {
             return asClass().getTypeName();
         } else {
@@ -844,7 +845,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    protected Object getMetaSimpleName() throws UnsupportedMessageException {
+    Object getMetaSimpleName() throws UnsupportedMessageException {
         if (isClass()) {
             return asClass().getSimpleName();
         } else {
@@ -854,7 +855,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    protected boolean isMetaInstance(final Object other) throws UnsupportedMessageException {
+    boolean isMetaInstance(final Object other) throws UnsupportedMessageException {
         if (isClass()) {
             final Class<?> c = asClass();
             if (other instanceof final JavaObjectWrapper o) {
@@ -884,19 +885,19 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean hasLanguage() {
+    boolean hasLanguage() {
         return true;
     }
 
     @ExportMessage
-    protected Class<? extends TruffleLanguage<?>> getLanguage() {
+    Class<? extends TruffleLanguage<?>> getLanguage() {
         if (hostLanguage == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             try {
                 final Object hostObject = SqueakImageContext.getSlow().env.asGuestValue(Truffle.getRuntime());
                 hostLanguage = InteropLibrary.getUncached().getLanguage(hostObject);
             } catch (final UnsupportedMessageException e) {
-                e.printStackTrace();
+                LogUtils.INTEROP.warning(e.toString());
             }
         }
         return hostLanguage;

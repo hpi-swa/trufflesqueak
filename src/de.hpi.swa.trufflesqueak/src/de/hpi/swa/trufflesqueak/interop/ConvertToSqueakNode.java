@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 /**
  * Converts an object to a TruffleSqueak object, returns `nil` if conversion is not possible.
@@ -37,7 +38,7 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
             return lib.asBoolean(value);
         } catch (final UnsupportedMessageException e) {
             CompilerDirectives.transferToInterpreter();
-            e.printStackTrace();
+            LogUtils.INTEROP.warning(e.toString());
             return false;
         }
     }
@@ -50,7 +51,7 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
             return image.asByteString(lib.asString(value));
         } catch (final UnsupportedMessageException e) {
             CompilerDirectives.transferToInterpreter();
-            e.printStackTrace();
+            LogUtils.INTEROP.warning(e.toString());
             return image.asByteString("");
         }
     }
@@ -69,7 +70,7 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
             return lib.asLong(value);
         } catch (final UnsupportedMessageException e) {
             CompilerDirectives.transferToInterpreter();
-            e.printStackTrace();
+            LogUtils.INTEROP.warning(e.toString());
             return 0L;
         }
     }
@@ -81,7 +82,7 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
             return lib.asDouble(value);
         } catch (final UnsupportedMessageException e) {
             CompilerDirectives.transferToInterpreter();
-            e.printStackTrace();
+            LogUtils.INTEROP.warning(e.toString());
             return 0D;
         }
     }

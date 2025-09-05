@@ -130,7 +130,7 @@ public final class UnsafeUtils {
         try {
             return UNSAFE.objectFieldOffset(javaClass.getField(fieldName));
         } catch (NoSuchFieldException | SecurityException e) {
-            e.printStackTrace();
+            LogUtils.MAIN.warning(e.toString());
             return -1;
         }
     }

@@ -59,6 +59,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.AbstractPrimCalloutToFFINode;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
@@ -124,7 +125,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 return lib.asString(value);
             } catch (final UnsupportedMessageException e) {
                 CompilerDirectives.transferToInterpreter();
-                e.printStackTrace();
+                LogUtils.MAIN.warning(e.toString());
                 return "unknown";
             }
         }
@@ -197,11 +198,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 assert value != null;
                 return WrapToSqueakNode.executeUncached(conversionNode.execute(headerWordList.getFirst(), value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
-                e.printStackTrace();
+                LogUtils.MAIN.warning(e.toString());
                 // TODO: return correct error code.
                 throw PrimitiveFailed.GENERIC_ERROR;
             } catch (final Exception e) {
-                e.printStackTrace();
+                LogUtils.MAIN.warning(e.toString());
                 // TODO: handle exception
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
@@ -308,7 +309,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 pointer = lib.asPointer(symbol);
             } catch (final UnsupportedMessageException e) {
                 CompilerDirectives.transferToInterpreter();
-                e.printStackTrace();
+                LogUtils.MAIN.warning(e.toString());
                 return newExternalAddress(image, receiver, 0L);
             }
             return newExternalAddress(image, receiver, pointer);

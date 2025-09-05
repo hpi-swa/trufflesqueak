@@ -24,6 +24,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -47,6 +48,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakDisplay {
@@ -97,7 +99,7 @@ public final class SqueakDisplay {
         try {
             EventQueue.invokeAndWait(() -> display[0] = new SqueakDisplay(image));
         } catch (InvocationTargetException | InterruptedException e) {
-            e.printStackTrace();
+            LogUtils.IO.warning(e.toString());
         }
         return Objects.requireNonNull(display[0]);
     }
@@ -110,14 +112,13 @@ public final class SqueakDisplay {
                     taskbar.setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("/trufflesqueak-icon.png")));
                 }
             } catch (Exception e) {
-                // Never fail if the taskbar icon cannot be set.
-                e.printStackTrace();
+                LogUtils.IO.warning(e.toString());
             }
         }
     }
 
     private static final class SqueakDisplayCanvas extends Component {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         private transient BufferedImage bufferedImage;
 
         @Override
@@ -258,15 +259,6 @@ public final class SqueakDisplay {
             cursor = Cursor.getDefaultCursor();
         } else {
             // TODO: Ensure the below works correctly for all cursor and maybe refactor senders.
-            /**
-             * <pre>
-                  mask    cursor  effect
-                  0        0     transparent (underlying pixel shows through)
-                  1        1     opaque black
-                  1        0     opaque white
-                  0        1     invert the underlying pixel
-             * </pre>
-             */
             final int[] ints;
             if (mask != null) {
                 ints = mergeCursorWithMask(cursorWords, mask);
@@ -441,15 +433,13 @@ public final class SqueakDisplay {
                             dtde.getDropTargetContext().dropComplete(true);
                             return;
                         } catch (final IOException | UnsupportedFlavorException e) {
-                            CompilerDirectives.transferToInterpreter();
-                            e.printStackTrace();
+                            LogUtils.IO.warning(e.toString());
                         }
                     }
                 }
                 image.dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
                 addDragEvent(DRAG.DROP, dtde.getLocation());
                 dtde.rejectDrop();
-
             }
 
             @Override
