@@ -397,9 +397,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractClosurePrimitiveNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doValue(final VirtualFrame frame, final BlockClosureObject closure,
-                        @Bind final SqueakImageContext image,
                         @Cached final PrimClosureValue0Node primClosureValue0Node) {
-            image.interrupt.delayNextContextSwitch();
             return primClosureValue0Node.execute(frame, closure);
         }
     }
@@ -409,9 +407,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     public abstract static class PrimClosureValueNoContextSwitchNaryNode extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doValue(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
-                        @Bind final SqueakImageContext image,
                         @Cached final PrimClosureValueNaryNode primClosureValueNaryNode) {
-            image.interrupt.delayNextContextSwitch();
             return primClosureValueNaryNode.execute(frame, closure, argArray);
         }
     }
