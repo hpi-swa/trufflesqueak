@@ -8,9 +8,10 @@
 
 #define VM_PROXY_MAJOR 1
 #define VM_PROXY_MINOR 17
+#include "sqPlatformSpecific.h"
 #include "sqVirtualMachine.h"
 
-VirtualMachine* createInterpreterProxy(
+EXPORT(VirtualMachine*) createInterpreterProxy(
     // sorted alphabetically, identical to getExecutables in
     // src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/nodes/plugins/ffi/InterpreterProxy.java
 	sqInt (*booleanValueOf)(sqInt oop),
@@ -45,13 +46,17 @@ VirtualMachine* createInterpreterProxy(
 	sqInt (*fetchPointerofObject)(sqInt index, sqInt oop),
 	void *(*firstIndexableField)(sqInt oop),
 	double (*floatValueOf)(sqInt oop),
+	sqInt (*instanceSizeOf)(sqInt aClass),
 	sqInt (*instantiateClassindexableSize)(sqInt classPointer, sqInt size),
 	sqInt (*integerObjectOf)(sqInt value),
 	sqInt (*integerValueOf)(sqInt oop),
 	void *(*ioLoadFunctionFrom)(char *functionName, char *moduleName),
 	sqInt (*isArray)(sqInt oop),
+	sqInt (*isBooleanObject)(sqInt oop),
 	sqInt (*isBytes)(sqInt oop),
 	sqInt (*isIntegerObject)(sqInt oop),
+	sqInt (*isKindOf)(sqInt oop, char *aString),
+	sqInt (*isPinned)(sqInt oop),
 	sqInt (*isPointers)(sqInt oop),
 	sqInt (*isPositiveMachineIntegerObject)(sqInt oop),
 	sqInt (*isWords)(sqInt oop),
@@ -84,9 +89,11 @@ VirtualMachine* createInterpreterProxy(
 	sqInt (*stackObjectValue)(sqInt offset),
 	sqInt (*stackValue)(sqInt offset),
 	sqInt (*statNumGCs)(void),
-	sqInt (*stringForCString)(char* nullTerminatedCString),
 	sqInt (*storeIntegerofObjectwithValue)(sqInt index, sqInt oop, sqInt integer),
 	usqInt (*storeLong32ofObjectwithValue)(sqInt fieldIndex, sqInt oop, usqInt anInteger),
+	sqInt (*stringForCString)(char* nullTerminatedCString),
+	sqInt (*stSizeOf)(sqInt oop),
+	sqInt (*success)(sqInt aBoolean),
 	sqInt (*trueObject)(void)
 ) {
 	VirtualMachine* interpreterProxy = (VirtualMachine*)calloc(1, sizeof(VirtualMachine));
@@ -123,13 +130,17 @@ VirtualMachine* createInterpreterProxy(
 	interpreterProxy->fetchPointerofObject = fetchPointerofObject;
 	interpreterProxy->firstIndexableField = firstIndexableField;
 	interpreterProxy->floatValueOf = floatValueOf;
+	interpreterProxy->instanceSizeOf = instanceSizeOf;
 	interpreterProxy->instantiateClassindexableSize = instantiateClassindexableSize;
 	interpreterProxy->integerObjectOf = integerObjectOf;
 	interpreterProxy->integerValueOf = integerValueOf;
 	interpreterProxy->ioLoadFunctionFrom = ioLoadFunctionFrom;
 	interpreterProxy->isArray = isArray;
+	interpreterProxy->isBooleanObject = isBooleanObject;
 	interpreterProxy->isBytes = isBytes;
 	interpreterProxy->isIntegerObject = isIntegerObject;
+	interpreterProxy->isKindOf = isKindOf;
+	interpreterProxy->isPinned = isPinned;
 	interpreterProxy->isPointers = isPointers;
 	interpreterProxy->isPositiveMachineIntegerObject = isPositiveMachineIntegerObject;
 	interpreterProxy->isWords = isWords;
@@ -162,9 +173,11 @@ VirtualMachine* createInterpreterProxy(
 	interpreterProxy->stackObjectValue = stackObjectValue;
 	interpreterProxy->stackValue = stackValue;
 	interpreterProxy->statNumGCs = statNumGCs;
-	interpreterProxy->stringForCString = stringForCString;
 	interpreterProxy->storeIntegerofObjectwithValue = storeIntegerofObjectwithValue;
 	interpreterProxy->storeLong32ofObjectwithValue = storeLong32ofObjectwithValue;
+	interpreterProxy->stringForCString = stringForCString;
+	interpreterProxy->stSizeOf = stSizeOf;
+	interpreterProxy->success = success;
 	interpreterProxy->trueObject = trueObject;
 
 	return interpreterProxy;

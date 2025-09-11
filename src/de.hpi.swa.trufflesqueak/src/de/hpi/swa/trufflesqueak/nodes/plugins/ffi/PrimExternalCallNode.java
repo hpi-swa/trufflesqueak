@@ -111,105 +111,126 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver) {
-        return execute(frame);
+        return call(frame, receiver);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
-        return execute(frame);
+        return call(frame, receiver, arg1);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3, arg4);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7, final Object arg8) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7, final Object arg8, final Object arg9) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7, final Object arg8, final Object arg9, final Object arg10) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11) {
-        return execute(frame);
+        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
     }
 
-    private Object execute(final VirtualFrame frame) {
-        // arguments are handled via manipulation of the stack pointer, see below
-        return doExternalCall(frame.materialize());
+    private Object call(final VirtualFrame frame, final Object... receiverAndArguments) {
+        return doExternalCall(frame.materialize(), receiverAndArguments);
     }
 
     @TruffleBoundary
-    private Object doExternalCall(final MaterializedFrame frame) {
-        InterpreterProxy interpreterProxy = null;
+    private Object doExternalCall(final MaterializedFrame frame, final Object[] receiverAndArguments) {
+        restoreStackValues(frame, receiverAndArguments);
+        final InterpreterProxy interpreterProxy = getContext().getInterpreterProxy(frame, numReceiverAndArguments);
         try {
-            interpreterProxy = getContext().getInterpreterProxy(frame, numReceiverAndArguments);
-
-            // A send (AbstractSendNode.executeVoid) will decrement the stack pointer by
-            // numReceiverAndArguments
-            // before transferring control. We need the stack pointer to point at the last argument,
-            // since the C code expects that. Therefore, we undo the decrement operation here.
-            FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) + numReceiverAndArguments);
-
-            // return value is unused, the actual return value is pushed onto the stack (see below)
+            /*
+             * return value is unused, the actual return value is pushed onto the stack (see below)
+             */
             functionInteropLibrary.execute(functionSymbol);
-
-            // The return value is pushed onto the stack by the plugin via the InterpreterProxy, but
-            // TruffleSqueak expects the return value to be returned by this function
-            // (AbstractSendNode.executeVoid). Pop the return value and return it.
-            final Object returnValue = FrameAccess.getStackValue(frame, FrameAccess.getStackPointer(frame) - 1, FrameAccess.getNumArguments(frame));
-            FrameAccess.setStackPointer(frame, FrameAccess.getStackPointer(frame) - 1);
+            /*
+             * The return value is pushed onto the stack by the plugin via the InterpreterProxy, but
+             * TruffleSqueak expects the return value to be returned by this function
+             * (AbstractSendNode.executeVoid). Pop the return value and return it.
+             */
+            final int stackPointer = FrameAccess.getStackPointer(frame) - 1;
+            final Object returnValue = FrameAccess.getStackValue(frame, stackPointer, FrameAccess.getNumArguments(frame));
+            FrameAccess.setStackPointer(frame, stackPointer);
             final long failReason = interpreterProxy.failed();
-            if (failReason != 0) {
+            if (failReason == 0) {
+                return returnValue;
+            } else {
                 throw PrimitiveFailed.andTransferToInterpreter((int) failReason);
             }
-            return returnValue;
         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             throw CompilerDirectives.shouldNotReachHere(e);
         } finally {
-            if (interpreterProxy != null) {
-                interpreterProxy.postPrimitiveCleanups();
+            interpreterProxy.postPrimitiveCleanups();
+        }
+    }
+
+    private void restoreStackValues(final MaterializedFrame frame, final Object[] receiverAndArguments) {
+        /*
+         * A message send (AbstractSendNode.executeVoid) will pop and potentially clear stack
+         * values, and decrement the stack pointer by numReceiverAndArguments before transferring
+         * control. We need the values back on the stack and the stack pointer to point at the last
+         * argument, since the C code expects that. Therefore, we restore the stack values and
+         * pointer here.
+         */
+        assert numReceiverAndArguments == receiverAndArguments.length;
+        final int initialSP;
+        if (!FrameAccess.hasClosure(frame)) {
+            initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
+        } else {
+            initialSP = FrameAccess.getClosure(frame).getNumTemps();
+        }
+        final int stackPointer = FrameAccess.getStackPointer(frame);
+        for (int i = 0; i < numReceiverAndArguments; i++) {
+            final int stackIndex = stackPointer + i;
+            /* Only values stored above initialSP are cleared in FrameStackReadNode */
+            if (stackIndex >= initialSP) {
+                FrameAccess.setStackSlot(frame, stackIndex, receiverAndArguments[i]);
             }
         }
+        FrameAccess.setStackPointer(frame, stackPointer + numReceiverAndArguments);
     }
 }

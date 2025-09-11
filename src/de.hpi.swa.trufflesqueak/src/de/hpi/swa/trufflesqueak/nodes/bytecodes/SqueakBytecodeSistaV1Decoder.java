@@ -412,7 +412,8 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 yield jumpAndResetStackAfterBranchOrReturn(joins, index + 1, sp - 1, delta);
             }
             case 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7 -> sp - 1;
-            case 0xD8 -> sp - 1;
+            /* Check joins first for '(SqueakSSL class >> #ensureSampleCert) detailedSymbolic'. */
+            case 0xD8 -> joins[index] == SP_NIL_TAG ? sp - 1 : Math.max(0, sp - 1);
             case 0xD9 -> sp - 1;
             case 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF -> throw SqueakException.create("Not a bytecode:", b);
             case 0xE0 -> decodeStackPointer(code, joins, index, sp, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB, numExtB);

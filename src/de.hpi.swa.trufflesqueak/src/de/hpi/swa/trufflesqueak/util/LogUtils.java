@@ -25,6 +25,7 @@ public final class LogUtils {
     public static final TruffleLogger GC = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "gc");
     public static final TruffleLogger IMAGE = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "image");
     public static final TruffleLogger INTEROP = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interop");
+    public static final TruffleLogger INTERPRETER_PROXY = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interpreter-proxy");
     public static final TruffleLogger INTERRUPTS = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interrupts");
     public static final TruffleLogger IO = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "io");
     public static final TruffleLogger ITERATE_FRAMES = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "iterate-frames");

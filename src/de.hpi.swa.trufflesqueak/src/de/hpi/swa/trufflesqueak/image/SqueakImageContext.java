@@ -645,6 +645,12 @@ public final class SqueakImageContext {
         return homePath;
     }
 
+    public TruffleFile getLibraryPath() {
+        final TruffleFile libraryPath = getHomePath().resolve("lib");
+        assert libraryPath.exists() : "Library path not found";
+        return libraryPath;
+    }
+
     public NativeObject getResourcesDirectory() {
         ensureResourcesDirectoryAndPathInitialized();
         return NativeObject.newNativeBytes(this, byteStringClass, resourcesDirectoryBytes.clone());
@@ -1188,8 +1194,12 @@ public final class SqueakImageContext {
         return NativeObject.newNativeBytes(this, byteArrayClass, bytes);
     }
 
+    public NativeObject asByteString(final byte[] bytes) {
+        return NativeObject.newNativeBytes(this, byteStringClass, bytes);
+    }
+
     public NativeObject asByteString(final String value) {
-        return NativeObject.newNativeBytes(this, byteStringClass, MiscUtils.stringToBytes(value));
+        return asByteString(MiscUtils.stringToBytes(value));
     }
 
     public NativeObject asByteSymbol(final String value) {

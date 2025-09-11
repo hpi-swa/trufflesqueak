@@ -30,8 +30,12 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
+import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -40,14 +44,19 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleClosure;
 import de.hpi.swa.trufflesqueak.util.NFIUtils.TruffleExecutable;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class InterpreterProxy {
+    private static final int BaseHeaderSize = 8;
+
     private final SqueakImageContext context;
     private MaterializedFrame frame;
     private int numReceiverAndArguments;
     private final ArrayList<NativeObjectStorage> postPrimitiveCleanups = new ArrayList<>();
-    // should not be local, as the references are needed to keep the native closures alive
-    // since this class is a singleton, a private instance variable will suffice
+    /*
+     * should not be local, as the references are needed to keep the native closures alive since
+     * this class is a singleton, a private instance variable will suffice
+     */
     @SuppressWarnings("FieldCanBeLocal") private final TruffleClosure[] closures;
     private final Object interpreterProxyPointer;
 
@@ -59,19 +68,19 @@ public final class InterpreterProxy {
 
     public InterpreterProxy(final SqueakImageContext context) {
         this.context = context;
+        final TruffleExecutable[] executables = getExecutables();
+        closures = new TruffleClosure[executables.length];
+        for (int i = 0; i < executables.length; i++) {
+            closures[i] = executables[i].createClosure(context);
+        }
+
+        final String truffleExecutablesSignatures = Arrays.stream(closures).map(obj -> obj.executable.nfiSignature).collect(Collectors.joining(","));
+        final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
+                        "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }");
+        assert interpreterProxy != null : "InterpreterProxy module not found!";
+
+        final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
         try {
-            final TruffleExecutable[] executables = getExecutables();
-            closures = new TruffleClosure[executables.length];
-            for (int i = 0; i < executables.length; i++) {
-                closures[i] = executables[i].createClosure(context);
-            }
-
-            final String truffleExecutablesSignatures = Arrays.stream(closures).map(obj -> obj.executable.nfiSignature).collect(Collectors.joining(","));
-            final Object interpreterProxy = NFIUtils.loadLibrary(context, "InterpreterProxy",
-                            "{ createInterpreterProxy(" + truffleExecutablesSignatures + "):POINTER; }");
-            assert interpreterProxy != null : "InterpreterProxy module not found!";
-
-            final InteropLibrary interpreterProxyLibrary = NFIUtils.getInteropLibrary(interpreterProxy);
             interpreterProxyPointer = interpreterProxyLibrary.invokeMember(
                             interpreterProxy, "createInterpreterProxy", (Object[]) closures);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
@@ -110,18 +119,22 @@ public final class InterpreterProxy {
                         TruffleExecutable.wrap("():SINT64", this::classWordArray),
                         TruffleExecutable.wrap("():SINT64", this::failed),
                         TruffleExecutable.wrap("():SINT64", this::falseObject),
-                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchIntegerofObject),
-                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchLong32ofObject),
-                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchPointerofObject),
+                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchIntegerOfObject),
+                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchLong32OfObject),
+                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::fetchPointerOfObject),
                         TruffleExecutable.wrap("(SINT64):POINTER", this::firstIndexableField),
                         TruffleExecutable.wrap("(SINT64):DOUBLE", this::floatValueOf),
-                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::instantiateClassindexableSize),
+                        TruffleExecutable.wrap("(SINT64):SINT64", this::instanceSizeOf),
+                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::instantiateClassIndexableSize),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::integerObjectOf),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::integerValueOf),
-                        TruffleExecutable.wrap("(STRING,STRING):POINTER", this::ioLoadFunctionFrom),
+                        TruffleExecutable.wrap("(POINTER,POINTER):POINTER", this::ioLoadFunctionFrom),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::isArray),
+                        TruffleExecutable.wrap("(SINT64):SINT64", this::isBooleanObject),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::isBytes),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::isIntegerObject),
+                        TruffleExecutable.wrap("(SINT64,POINTER):SINT64", this::isKindOf),
+                        TruffleExecutable.wrap("(SINT64):SINT64", this::isPinned),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::isPointers),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::isPositiveMachineIntegerObject),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::isWords),
@@ -132,12 +145,12 @@ public final class InterpreterProxy {
                         TruffleExecutable.wrap("(DOUBLE):SINT64", this::methodReturnFloat),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::methodReturnInteger),
                         TruffleExecutable.wrap("():SINT64", this::methodReturnReceiver),
-                        TruffleExecutable.wrap("(STRING):SINT64", this::methodReturnString),
+                        TruffleExecutable.wrap("(POINTER):SINT64", this::methodReturnString),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::methodReturnValue),
                         TruffleExecutable.wrap("():SINT64", this::minorVersion),
                         TruffleExecutable.wrap("():SINT64", this::nilObject),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::pop),
-                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popthenPush),
+                        TruffleExecutable.wrap("(SINT64,SINT64):SINT64", this::popThenPush),
                         TruffleExecutable.wrap("(UINT64):SINT64", this::positive32BitIntegerFor),
                         TruffleExecutable.wrap("(SINT64):UINT64", this::positive32BitValueOf),
                         TruffleExecutable.wrap("(SINT64):UINT64", this::positive64BitIntegerFor),
@@ -154,9 +167,11 @@ public final class InterpreterProxy {
                         TruffleExecutable.wrap("(SINT64):SINT64", this::stackObjectValue),
                         TruffleExecutable.wrap("(SINT64):SINT64", this::stackValue),
                         TruffleExecutable.wrap("():SINT64", this::statNumGCs),
-                        TruffleExecutable.wrap("(STRING):UINT64", this::stringForCString),
-                        TruffleExecutable.wrap("(SINT64,SINT64,SINT64):SINT64", this::storeIntegerofObjectwithValue),
-                        TruffleExecutable.wrap("(SINT64,SINT64,UINT64):UINT64", this::storeLong32ofObjectwithValue),
+                        TruffleExecutable.wrap("(SINT64,SINT64,SINT64):SINT64", this::storeIntegerOfObjectWithValue),
+                        TruffleExecutable.wrap("(SINT64,SINT64,UINT64):UINT64", this::storeLong32OfObjectWithValue),
+                        TruffleExecutable.wrap("(POINTER):UINT64", this::stringForCString),
+                        TruffleExecutable.wrap("(SINT64):SINT64", this::stSizeOf),
+                        TruffleExecutable.wrap("(SINT64):SINT64", this::success),
                         TruffleExecutable.wrap("():SINT64", this::trueObject),
         };
     }
@@ -233,14 +248,17 @@ public final class InterpreterProxy {
             primitiveFail();
             return null;
         }
-        return FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
+        final Object value = FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
+        assert value != null;
+        return value;
     }
 
     private long methodReturnObject(final Object object) {
         assert hasSucceeded();
-        pop(numReceiverAndArguments);
-        pushObject(object);
-        return 0;
+        final int stackPointer = getStackPointer() - numReceiverAndArguments;
+        setStackPointer(stackPointer + 1);
+        FrameAccess.setStackSlot(frame, stackPointer, object);
+        return returnVoid();
     }
 
     private static long returnBoolean(final boolean bool) {
@@ -248,12 +266,6 @@ public final class InterpreterProxy {
     }
 
     private static long returnVoid() {
-        // For functions that do not have a defined return value
-        return 0L;
-    }
-
-    private static long returnNull() {
-        // For functions that should return null (=0)
         return 0L;
     }
 
@@ -262,19 +274,19 @@ public final class InterpreterProxy {
     private long objectToInteger(final Object object) {
         if (object instanceof final Long longObject) {
             return longObject;
+        } else {
+            LogUtils.INTERPRETER_PROXY.severe(() -> "Object to long called with non-Long: " + object);
+            return primitiveFail();
         }
-        LogUtils.PRIMITIVES.severe(() -> "Object to long called with non-Long: " + object);
-        primitiveFail();
-        return returnNull();
     }
 
     private double objectToFloat(final Object object) {
         if (object instanceof final FloatObject floatObject) {
             return floatObject.getValue();
+        } else {
+            LogUtils.INTERPRETER_PROXY.severe(() -> "Object to long called with non-FloatObject: " + object);
+            return primitiveFail();
         }
-        LogUtils.PRIMITIVES.severe(() -> "Object to long called with non-FloatObject: " + object);
-        primitiveFail();
-        return returnNull();
     }
 
     private static Object integerToObject(final long integer) {
@@ -293,8 +305,18 @@ public final class InterpreterProxy {
         return new FloatObject(context, value);
     }
 
-    private Object stringToObject(final String string) {
-        return context.asByteString(string);
+    private NativeObject charPointerToByteString(final Object charPointer) {
+        return context.asByteString(charPointerToBytes(charPointer));
+    }
+
+    private static byte[] charPointerToBytes(final Object charPointer) {
+        final long pointer;
+        try {
+            pointer = InteropLibrary.getUncached().asPointer(charPointer);
+        } catch (UnsupportedMessageException e) {
+            throw CompilerDirectives.shouldNotReachHere(e);
+        }
+        return UnsafeUtils.getString(pointer);
     }
 
     /* ACCESSING HELPERS */
@@ -324,18 +346,26 @@ public final class InterpreterProxy {
         final Object object = objectRegistryGet(oop);
         if (object instanceof final Boolean bool) {
             return returnBoolean(bool);
+        } else {
+            LogUtils.INTERPRETER_PROXY.severe(() -> "booleanValueOf called with non-Boolean object: " + object);
+            return primitiveFail();
         }
-        primitiveFail();
-        return returnNull();
     }
 
     private long byteSizeOf(final long oop) {
-        if (objectRegistryGet(oop) instanceof final NativeObject nativeObject) {
-            return NativeObjectStorage.from(nativeObject).byteSizeOf();
+        if (oop < objectRegistry.size()) {
+            if (objectRegistryGet(oop) instanceof final NativeObject nativeObject) {
+                return NativeObjectStorage.from(nativeObject).byteSizeOf();
+            }
+        } else {
+            for (NativeObjectStorage storage : postPrimitiveCleanups) {
+                if (storage.asPointer() == oop + BaseHeaderSize) {
+                    return storage.byteSizeOf();
+                }
+            }
         }
         // type is not supported (yet)
-        primitiveFail();
-        return 0L;
+        return primitiveFail();
     }
 
     private long classAlien() {
@@ -438,15 +468,15 @@ public final class InterpreterProxy {
         return oopFor(BooleanObject.FALSE);
     }
 
-    private long fetchIntegerofObject(final long fieldIndex, final long objectPointer) {
+    private long fetchIntegerOfObject(final long fieldIndex, final long objectPointer) {
         return objectToInteger(objectAt0(objectRegistryGet(objectPointer), fieldIndex));
     }
 
-    private long fetchLong32ofObject(final long fieldIndex, final long oop) {
-        return (int) fetchIntegerofObject(fieldIndex, oop);
+    private long fetchLong32OfObject(final long fieldIndex, final long oop) {
+        return (int) fetchIntegerOfObject(fieldIndex, oop);
     }
 
-    private long fetchPointerofObject(final long index, final long oop) {
+    private long fetchPointerOfObject(final long index, final long oop) {
         return oopFor(objectAt0(objectRegistryGet(oop), index));
     }
 
@@ -455,23 +485,35 @@ public final class InterpreterProxy {
             final NativeObjectStorage storage = NativeObjectStorage.from(nativeObject);
             postPrimitiveCleanups.add(storage);
             return storage;
+        } else {
+            assert false;
+            return null;
         }
-        return null;
     }
 
     private double floatValueOf(final long oop) {
         return objectToFloat(objectRegistryGet(oop));
     }
 
-    private long instantiateClassindexableSize(final long classPointer, final long size) {
+    private long instanceSizeOf(final long classPointer) {
         final Object object = objectRegistryGet(classPointer);
         if (object instanceof final ClassObject classObject) {
-            final AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject, (int) size);
-            return oopFor(newObject);
+            return classObject.getBasicInstanceSize();
+        } else {
+            LogUtils.INTERPRETER_PROXY.severe(() -> "instanceSizeOf called with non-ClassObject: " + object);
+            return primitiveFail();
         }
-        LogUtils.PRIMITIVES.severe(() -> "instantiateClassindexableSize called with non-ClassObject: " + object);
-        primitiveFail();
-        return returnVoid();
+    }
+
+    private long instantiateClassIndexableSize(final long classPointer, final long size) {
+        final Object object = objectRegistryGet(classPointer);
+        if (object instanceof final ClassObject classObject) {
+            final AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject, MiscUtils.toIntExact(size));
+            return oopFor(newObject);
+        } else {
+            LogUtils.INTERPRETER_PROXY.severe(() -> "instantiateClassIndexableSize called with non-ClassObject: " + object);
+            return primitiveFail();
+        }
     }
 
     private long integerObjectOf(final long value) {
@@ -482,14 +524,18 @@ public final class InterpreterProxy {
         return objectToInteger(objectRegistryGet(oop));
     }
 
-    private NativeObjectStorage ioLoadFunctionFrom(final String functionName, final String moduleName) {
+    private NativeObjectStorage ioLoadFunctionFrom(final Object functionName, final Object moduleName) {
         /* TODO */
-        LogUtils.PRIMITIVES.severe(() -> "Missing implementation for ioLoadFunctionFrom: %s>>%s".formatted(functionName, moduleName));
+        LogUtils.INTERPRETER_PROXY.severe(() -> "Missing implementation for ioLoadFunctionFrom: %s>>%s".formatted(charPointerToByteString(functionName), charPointerToByteString(moduleName)));
         return null;
     }
 
     private long isArray(final long oop) {
         return instanceOfCheck(oop, ArrayObject.class);
+    }
+
+    private long isBooleanObject(final long oop) {
+        return returnBoolean(objectRegistryGet(oop) instanceof Boolean);
     }
 
     private long isBytes(final long oop) {
@@ -498,6 +544,31 @@ public final class InterpreterProxy {
 
     private long isIntegerObject(final long oop) {
         return returnBoolean(objectRegistryGet(oop) instanceof Long);
+    }
+
+    private long isKindOf(final long oop, final Object classNamePointer) {
+        final byte[] className = charPointerToBytes(classNamePointer);
+        final Object value = objectRegistryGet(oop);
+        ClassObject currentClass = SqueakObjectClassNode.executeUncached(value);
+        while (currentClass != null) {
+            if (classNameOfIs(currentClass, className)) {
+                return returnBoolean(true);
+            }
+            currentClass = currentClass.getResolvedSuperclass();
+        }
+        return returnBoolean(false);
+    }
+
+    private static boolean classNameOfIs(final ClassObject classObject, final byte[] className) {
+        if (classObject.size() >= CLASS.NAME && classObject.getOtherPointers()[CLASS.NAME] instanceof final NativeObject nativeObject && nativeObject.isByteType()) {
+            return Arrays.equals(className, nativeObject.getByteStorage());
+        } else {
+            throw CompilerDirectives.shouldNotReachHere();
+        }
+    }
+
+    private long isPinned(@SuppressWarnings("unused") final long oop) {
+        return returnBoolean(false); // always false, pinning not yet supported
     }
 
     private long isPointers(final long oop) {
@@ -546,11 +617,11 @@ public final class InterpreterProxy {
     private long methodReturnReceiver() {
         assert hasSucceeded();
         pop(numReceiverAndArguments - 1); // leave the receiver on the stack
-        return 0L;
+        return returnVoid();
     }
 
-    private long methodReturnString(final String string) {
-        return methodReturnObject(stringToObject(string));
+    private long methodReturnString(final Object pointer) {
+        return methodReturnObject(charPointerToByteString(pointer));
     }
 
     private long methodReturnValue(final long oop) {
@@ -567,10 +638,10 @@ public final class InterpreterProxy {
 
     private long pop(final long nItems) {
         setStackPointer(getStackPointer() - (int) nItems);
-        return returnNull();
+        return returnVoid();
     }
 
-    private long popthenPush(final long nItems, final long oop) {
+    private long popThenPush(final long nItems, final long oop) {
         pop(nItems);
         push(oop);
         return returnVoid();
@@ -596,11 +667,11 @@ public final class InterpreterProxy {
         if (primFailCode == 0) {
             primitiveFailFor(1L);
         }
-        return 0L;
+        return returnVoid();
     }
 
     private long primitiveFailFor(final long reasonCode) {
-        LogUtils.PRIMITIVES.info(() -> "Primitive failed with code: " + reasonCode);
+        LogUtils.INTERPRETER_PROXY.fine(() -> "Primitive failed with code: " + reasonCode);
         return primFailCode = reasonCode;
     }
 
@@ -611,7 +682,7 @@ public final class InterpreterProxy {
 
     private long pushInteger(final long integer) {
         pushObject(integerToObject(integer));
-        return returnNull();
+        return returnVoid();
     }
 
     private long showDisplayBitsLeftTopRightBottom(final long aFormOop, final long l, final long t, final long r, final long b) {
@@ -634,19 +705,31 @@ public final class InterpreterProxy {
     }
 
     private long slotSizeOf(final long oop) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for slotSizeOf: " + oop);
-        return returnVoid();
+        final Object value = objectRegistryGet(oop);
+        if (value instanceof final NativeObject nativeObject) {
+            return NativeObjectSizeNode.executeUncached(nativeObject);
+        } else {
+            LogUtils.INTERPRETER_PROXY.warning(() -> "slotSizeOf called with non-NativeObject: " + value);
+            return returnVoid();
+        }
     }
 
     private long stackIntegerValue(final long offset) {
-        return objectToInteger(getObjectOnStack(offset));
+        final Object value = getObjectOnStack(offset);
+        if (value instanceof final Long longObject) {
+            return longObject;
+        } else {
+            return primitiveFail();
+        }
     }
 
     private long stackObjectValue(final long offset) {
-        /* TODO */
-        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for stackObjectValue: " + offset);
-        return returnVoid();
+        final Object value = getObjectOnStack(offset);
+        if (value instanceof Long) {
+            return primitiveFail();
+        } else {
+            return oopFor(value);
+        }
     }
 
     private long stackValue(final long offset) {
@@ -657,19 +740,30 @@ public final class InterpreterProxy {
         return MiscUtils.getCollectionCount();
     }
 
-    private long stringForCString(final String string) {
-        return oopFor(stringToObject(string));
-    }
-
-    private long storeIntegerofObjectwithValue(final long index, final long oop, final long integer) {
+    private long storeIntegerOfObjectWithValue(final long index, final long oop, final long integer) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for storeIntegerofObjectwithValue: %s, %s, %s".formatted(index, oop, integer));
+        LogUtils.INTERPRETER_PROXY.warning(() -> "Missing implementation for storeIntegerOfObjectWithValue: %s, %s, %s".formatted(index, oop, integer));
         return returnVoid();
     }
 
-    private long storeLong32ofObjectwithValue(final long fieldIndex, final long oop, final long anInteger) {
+    private long storeLong32OfObjectWithValue(final long fieldIndex, final long oop, final long anInteger) {
         /* TODO */
-        LogUtils.PRIMITIVES.warning(() -> "Missing implementation for storeLong32ofObjectwithValue: %s, %s, %s".formatted(fieldIndex, oop, anInteger));
+        LogUtils.INTERPRETER_PROXY.warning(() -> "Missing implementation for storeLong32OfObjectWithValue: %s, %s, %s".formatted(fieldIndex, oop, anInteger));
+        return returnVoid();
+    }
+
+    private long stringForCString(final Object object) {
+        return oopFor(charPointerToByteString(object));
+    }
+
+    private long stSizeOf(final long oop) {
+        return SqueakObjectSizeNode.executeUncached(objectRegistryGet(oop));
+    }
+
+    private long success(final long successBoolean) {
+        if (successBoolean == 0) {
+            primitiveFail();
+        }
         return returnVoid();
     }
 

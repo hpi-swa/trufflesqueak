@@ -66,54 +66,46 @@ public final class UnsafeUtils {
     }
 
     public static long allocateNativeBytes(final byte[] src) {
-        final long numBytes = src.length * Byte.BYTES;
-        final long address = UNSAFE.allocateMemory(numBytes);
-        UNSAFE.copyMemory(src, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, address, numBytes);
-        return address;
+        return allocateNative(src, Unsafe.ARRAY_BYTE_BASE_OFFSET, (long) src.length * Byte.BYTES);
     }
 
     public static long allocateNativeShorts(final short[] src) {
-        final long numBytes = (long) src.length * Short.BYTES;
-        final long address = UNSAFE.allocateMemory(numBytes);
-        UNSAFE.copyMemory(src, Unsafe.ARRAY_SHORT_BASE_OFFSET, null, address, numBytes);
-        return address;
+        return allocateNative(src, Unsafe.ARRAY_SHORT_BASE_OFFSET, (long) src.length * Short.BYTES);
     }
 
     public static long allocateNativeInts(final int[] src) {
-        final long numBytes = (long) src.length * Integer.BYTES;
-        final long address = UNSAFE.allocateMemory(numBytes);
-        UNSAFE.copyMemory(src, Unsafe.ARRAY_INT_BASE_OFFSET, null, address, numBytes);
-        return address;
+        return allocateNative(src, Unsafe.ARRAY_INT_BASE_OFFSET, (long) src.length * Integer.BYTES);
     }
 
     public static long allocateNativeLongs(final long[] src) {
-        final long numBytes = (long) src.length * Long.BYTES;
-        final long address = UNSAFE.allocateMemory(numBytes);
-        UNSAFE.copyMemory(src, Unsafe.ARRAY_LONG_BASE_OFFSET, null, address, numBytes);
+        return allocateNative(src, Unsafe.ARRAY_LONG_BASE_OFFSET, (long) src.length * Long.BYTES);
+    }
+
+    private static long allocateNative(final Object src, final long srcOffset, final long numBytes) {
+        /* Allocate at least 1 bytes to avoid null pointer. */
+        final long address = UNSAFE.allocateMemory(Math.max(1, numBytes));
+        UNSAFE.copyMemory(src, srcOffset, null, address, numBytes);
         return address;
     }
 
     public static void copyNativeBytesBackAndFree(final long address, final byte[] dest) {
-        final long numBytes = dest.length * Byte.BYTES;
-        UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_BYTE_BASE_OFFSET, numBytes);
-        UNSAFE.freeMemory(address);
+        copyNativeBackAndFree(address, dest, Unsafe.ARRAY_BYTE_BASE_OFFSET, (long) dest.length * Byte.BYTES);
     }
 
     public static void copyNativeShortsBackAndFree(final long address, final short[] dest) {
-        final long numBytes = (long) dest.length * Short.BYTES;
-        UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_SHORT_BASE_OFFSET, numBytes);
-        UNSAFE.freeMemory(address);
+        copyNativeBackAndFree(address, dest, Unsafe.ARRAY_SHORT_BASE_OFFSET, (long) dest.length * Short.BYTES);
     }
 
     public static void copyNativeIntsBackAndFree(final long address, final int[] dest) {
-        final long numBytes = (long) dest.length * Integer.BYTES;
-        UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_INT_BASE_OFFSET, numBytes);
-        UNSAFE.freeMemory(address);
+        copyNativeBackAndFree(address, dest, Unsafe.ARRAY_INT_BASE_OFFSET, (long) dest.length * Integer.BYTES);
     }
 
     public static void copyNativeLongsBackAndFree(final long address, final long[] dest) {
-        final long numBytes = (long) dest.length * Long.BYTES;
-        UNSAFE.copyMemory(null, address, dest, Unsafe.ARRAY_LONG_BASE_OFFSET, numBytes);
+        copyNativeBackAndFree(address, dest, Unsafe.ARRAY_LONG_BASE_OFFSET, (long) dest.length * Long.BYTES);
+    }
+
+    private static void copyNativeBackAndFree(final long address, final Object destBase, final long destOffset, final long numBytes) {
+        UNSAFE.copyMemory(null, address, destBase, destOffset, numBytes);
         UNSAFE.freeMemory(address);
     }
 
@@ -152,6 +144,21 @@ public final class UnsafeUtils {
     public static byte getByte(final byte[] storage, final long index) {
         assert inBounds(index, storage.length);
         return UNSAFE.getByte(storage, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+    }
+
+    /**
+     * FFM API: <code>MemorySegment.ofAddress(pointer).reinterpret(256).getString(0)</code>.
+     */
+    public static byte[] getString(final long address) {
+        for (int i = 0; i < 256; i++) {
+            if (UNSAFE.getByte(address + i) == 0) {
+                final byte[] bytes = new byte[i];
+                UNSAFE.copyMemory(null, address, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, i);
+                return bytes;
+            }
+        }
+        assert false : "Failed to find null terminator";
+        return ArrayUtils.EMPTY_BYTE_ARRAY;
     }
 
     public static char getChar(final char[] storage, final long index) {

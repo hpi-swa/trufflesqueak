@@ -37,8 +37,6 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
-    private static final byte[] EMPTY_BYTES = new byte[0];
-
     public SqueakImageChunk hiddenRootsChunk;
 
     public final AddressToChunkMap chunkMap = new AddressToChunkMap();
@@ -195,7 +193,7 @@ public final class SqueakImageReader {
     private static byte[] nextObjectData(final MappedByteBuffer buffer, final int size, final int format) {
         if (size == 0) {
             skip(buffer, SqueakImageConstants.WORD_SIZE); // skip trailing alignment word
-            return EMPTY_BYTES;
+            return ArrayUtils.EMPTY_BYTE_ARRAY;
         }
         final int paddedObjectSize = size * SqueakImageConstants.WORD_SIZE;
         final int padding = calculateObjectPadding(format);

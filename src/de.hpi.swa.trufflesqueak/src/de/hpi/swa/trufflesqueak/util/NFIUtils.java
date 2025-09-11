@@ -6,11 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
-import java.io.File;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -24,6 +23,7 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 
 public final class NFIUtils {
+    private static final String LOAD_SUFFIX = !TruffleOptions.AOT && Runtime.version().feature() >= 22 ? "with panama " : "";
 
     @ExportLibrary(InteropLibrary.class)
     public static class TruffleExecutable implements TruffleObject {
@@ -70,7 +70,7 @@ public final class NFIUtils {
             return executable.execute(arguments);
         }
 
-        public TruffleClosure createClosure(final SqueakImageContext context) throws UnsupportedTypeException {
+        public TruffleClosure createClosure(final SqueakImageContext context) {
             return new TruffleClosure(context, this);
         }
     }
@@ -81,8 +81,7 @@ public final class NFIUtils {
 
         final Object closure;
 
-        public TruffleClosure(final SqueakImageContext context, final TruffleExecutable executable)
-                        throws UnsupportedTypeException {
+        public TruffleClosure(final SqueakImageContext context, final TruffleExecutable executable) {
             this.executable = executable;
             this.closure = createClosure(context, executable, executable.nfiSignature);
         }
@@ -163,21 +162,43 @@ public final class NFIUtils {
     }
 
     public static Object loadLibrary(final SqueakImageContext context, final String moduleName, final String boundSymbols) {
+        final TruffleFile libPath = findLibrary(context, moduleName);
+        if (libPath == null) {
+            return null;
+        } else {
+            final String nfiCode = LOAD_SUFFIX + "load \"" + libPath.getAbsoluteFile().getPath() + "\" " + boundSymbols;
+            return executeNFI(context, nfiCode);
+        }
+    }
+
+    private static TruffleFile findLibrary(final SqueakImageContext context, final String moduleName) {
+        final TruffleFile libraryPath = context.getLibraryPath();
+
+        /* Try to resolve the common case first. */
         final String libName = System.mapLibraryName(moduleName);
-        TruffleFile libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName);
-        if (!libPath.exists()) {
-            // to preserve compatibility with plugins from opensmalltalk
-            // also check without 'lib' prefix
-            if (!libName.startsWith("lib")) {
-                return null;
+        final TruffleFile systemLibraryPath = libraryPath.resolve(libName);
+        if (systemLibraryPath.exists()) {
+            return systemLibraryPath;
+        }
+
+        if (OS.isMacOS()) {
+            /* Try to resolve macOS bundles. */
+            final TruffleFile bundleLibrary = libraryPath.resolve(moduleName + ".bundle/Contents/MacOS/" + moduleName);
+            if (bundleLibrary.exists()) {
+                return bundleLibrary;
             }
-            libPath = context.getHomePath().resolve("lib" + File.separatorChar + libName.substring(3));
-            if (!libPath.exists()) {
-                return null;
+        } else {
+            /* Try to resolve without 'lib' prefix for compatibility with OSVM plugins. */
+            if (libName.startsWith("lib")) {
+                final TruffleFile alternativeLibraryPath = libraryPath.resolve(libName.substring(3));
+                if (alternativeLibraryPath.exists()) {
+                    return alternativeLibraryPath;
+                }
             }
         }
-        final String nfiCode = "load \"" + libPath.getAbsoluteFile().getPath() + "\" " + boundSymbols;
-        return executeNFI(context, nfiCode);
+
+        /* All attempts have failed. */
+        return null;
     }
 
     public static Object createSignature(final SqueakImageContext context, final String signature) {
@@ -191,11 +212,10 @@ public final class NFIUtils {
         return signatureInteropLibrary.invokeMember(nfiSignature, method, args);
     }
 
-    public static Object createClosure(final SqueakImageContext context, final Object executable, final String signature)
-                    throws UnsupportedTypeException {
+    public static Object createClosure(final SqueakImageContext context, final Object executable, final String signature) {
         try {
             return invokeSignatureMethod(context, signature, "createClosure", executable);
-        } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException e) {
+        } catch (UnsupportedMessageException | UnsupportedTypeException | UnknownIdentifierException | ArityException e) {
             throw CompilerDirectives.shouldNotReachHere(e);
         }
     }

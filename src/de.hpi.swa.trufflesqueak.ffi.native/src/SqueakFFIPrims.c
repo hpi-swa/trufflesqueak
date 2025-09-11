@@ -21,13 +21,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
-
-#ifdef _WIN32
-#	define EXPORT(returnType) extern __declspec(dllexport) returnType
-#else
-#	define EXPORT(returnType) extern returnType
-#endif
+#include "sqPlatformSpecific.h"
 
 # define LONGLONG long long /* should be 64 bits */
 

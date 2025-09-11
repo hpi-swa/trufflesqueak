@@ -56,53 +56,33 @@ suite = {
     #  LIBRARIES
     # ==========================================================================
     "libraries": {
-        "BOUNCYCASTLE-PROVIDER": {
-            "digest": "sha512:dbc5b525d805823b53dbaded11547155a14f795212ce6fe1e93d6da431081ea9480718ea2fc17dc7906f8489aadb68e781afd1e771d26f9f8a09b21552bb165c",
-            "sourceDigest": "sha512:4ce8b88e26af98c3cb8a3691ace366e960e36a8225d14685447b4aa9838b92334bdb63f8ba4baf651d28c8e063e21d0cbca8f2fcf8eecd003362ae62b6c87dbd",
-            "maven": {
-                "groupId": "org.bouncycastle",
-                "artifactId": "bcprov-jdk18on",
-                "version": "1.76",
-            },
-            "moduleName": "org.bouncycastle.provider",
-        },
-        "BOUNCYCASTLE-PKIX": {
-            "digest": "sha512:b924374168e25f21ab7f6dd4f6755e55a401cbbbaa0d6f17a0c9bf59e61dc42750b200c494c413f6f8c27fc16d9312f51fc15c979e4298916f5bd0c329cbbffa",
-            "sourceDigest": "sha512:6945aedc041f9282ee3569aef46c6df8940643e5a66236c5e95fafdc4dead4b94d3d64f32750ce2f131b4fdd398aacd200968103fc3e4d22eb2dc171aedb48dd",
-            "maven": {
-                "groupId": "org.bouncycastle",
-                "artifactId": "bcpkix-jdk18on",
-                "version": "1.76",
-            },
-            "moduleName": "org.bouncycastle.pkix",
-        },
-        "BOUNCYCASTLE-UTIL": {
-            "digest": "sha512:385d95b4c32053bb3734c342d5f3255bcc1cee7e35649965bb5fbf8733ec37009fd5f5e06817a45e7857a2e62e923563ce1231ee3a1de411f788dfa93d39ce41",
-            "sourceDigest": "sha512:8d2068b8a90381dde75f25059dfdf3073a2657ea8f7d65872f972aaae6b780a4156b39d922e10302f4c4ddaf22d5057c02e9a0cb2a228f0a43730dfba46b1b22",
-            "maven": {
-                "groupId": "org.bouncycastle",
-                "artifactId": "bcutil-jdk18on",
-                "version": "1.76",
-            },
-            "moduleName": "org.bouncycastle.util",
-        },
         "OSVM_PLUGINS": {
-            "baseurl": "https://github.com/hpi-swa/trufflesqueak/releases/download/23.1.0/osvm-plugins-202312181441",
+            "baseurl": "https://github.com/hpi-swa/trufflesqueak/releases/download/24.2.2/osvm-plugins-202509110624",
             "os_arch": {
                 "linux": {
-                    "amd64": {
-                        "urls": ["{baseurl}-linux-amd64.zip"],
-                        "digest": "sha512:5e94f289e5e1c71772b3033fda31e637cdcbea17321f2a4448a6755dff6db2db210086cffc993320249bcb6a1df395c17a2a06aedc9636159623336ca92e8008",
-                    },
                     "aarch64": {
                         "urls": ["{baseurl}-linux-aarch64.zip"],
-                        "digest": "sha512:b4801b2a442ca383c6d5718c5a085b1446e66010e73587f166ff2726d393ecc47d7a195bba9d586e7f6c40d587e9a89c874a39adb3f65e9633a12703b40268e9",
+                        "digest": "sha512:cec920765eae6dca8b95e5a24b34333fdaf5b2b9d634ff4cb42fd1a73fec24ab6fafcde7a5c27bc06441fa1c381bd05c8d48f09e3b56d8e61c590fe37d17076f",
+                    },
+                    "amd64": {
+                        "urls": ["{baseurl}-linux-amd64.zip"],
+                        "digest": "sha512:ef7e6bcebb0b544908a68439685ac5ddfd60cfff13d0fcf77e0433e3a65d4185fc079907144a593e3667466fdafa2c38fbca94ba52adc7227c4a59829c5aa375",
+                    },
+                },
+                "darwin": {
+                    "aarch64": {
+                        "urls": ["{baseurl}-darwin-aarch64.zip"],
+                        "digest": "sha512:662239e86d9a50344d23b0ff20571059f0218569455855b80f29b1f356af9fa476dfc863d86dfddf896aa48732023bf9c1132c3c9cc365feed9340f1de55d8cb",
+                    },
+                    "amd64": {
+                        "urls": ["{baseurl}-darwin-amd64.zip"],
+                        "digest": "sha512:21e1ddf84e34b228af8a352f77d810591143010c1ea0fd95b02c96822cbc1c2bdbf754de08333259cd7101d14f0ce2d19b035c7366176e07634438b968091ed7",
                     },
                 },
                 "windows": {
                     "amd64": {
                         "urls": ["{baseurl}-windows-amd64.zip"],
-                        "digest": "sha512:10ec2b4b783bb83a814866ea237a424138802a99ee63b3cfbe2d2b2c6607e94ea000922f58f8a159108f66c0509764bc48b62885337d2a198534337eb2ed6f8e",
+                        "digest": "sha512:92dd38360192b6623dac6452791b6caa0c3108a9d31d3453895b5d63dff35e8ec0aa48660fdcf3a0d10c4782101447fb6afda420ff6dd056d506b02df0c0f9f5",
                     },
                 },
                 "<others>": {"<others>": {"optional": True}},
@@ -183,9 +163,6 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
-                "BOUNCYCASTLE-PROVIDER",
-                "BOUNCYCASTLE-PKIX",
-                "BOUNCYCASTLE-UTIL",
             ],
             "requires": [
                 "java.datatransfer",
@@ -304,11 +281,11 @@ suite = {
                 "TRUFFLESQUEAK_STANDALONE_COMMON",
             ],
             "build_args": [
-                # From mx.trufflesmalltalk/native-image.properties
                 # "-Dpolyglot.image-build-time.PreinitializeContexts=smalltalk",
-                "-Dorg.graalvm.language.smalltalk.home=<path:TRUFFLESQUEAK_STANDALONE_COMMON>",
                 # Configure launcher
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
+                "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
+                "-H:+DetectUserDirectoriesInImageHeap",
             ],
             "dynamicBuildArgs": "libsmalltalkvm_build_args",
         },
@@ -337,12 +314,8 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
-                "truffle:TRUFFLE_NFI_LIBFFI",
-            ],
-            "exclude": [
-                "BOUNCYCASTLE-PROVIDER",
-                "BOUNCYCASTLE-PKIX",
-                "BOUNCYCASTLE-UTIL",
+                "truffle:TRUFFLE_NFI_LIBFFI",  # runtime dependency
+                "truffle:TRUFFLE_NFI_PANAMA",  # runtime dependency
             ],
             "javaProperties": {
                 "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",

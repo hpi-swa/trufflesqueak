@@ -1,5 +1,5 @@
 [
-    | repoPath isNative isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
+    | repoPath isNative isLinux isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
 
     ToolSet default: CommandLineToolSet.
 
@@ -24,6 +24,8 @@
             classified: 'patched'.
 
     isNative := [Java type: 'java.lang.System'. false] on: Error do: [true].
+
+    isLinux := Smalltalk platformName = 'unix'.
     isMacOS := Smalltalk platformName = 'Mac OS'.
     isWin := Smalltalk platformName = 'Win32'.
 
@@ -102,6 +104,13 @@
     } collect: [:testCase |
         testCase allTestSelectors do: [:sel | ignoredTests add: (testCase selector: sel) ]].
 
+    (isLinux or: [ isWin ]) ifTrue: [
+        {
+            SqueakSSLTest. "known OSVM issue"
+        } collect: [:testCase |
+            testCase allTestSelectors do: [:sel | ignoredTests add: (testCase selector: sel) ]].
+    ].
+
     {
         "slow tests"
         CompilerTest -> #(#testAllNodePCsAreForBytecodesInCollections #testAllNodePCsAreForBytecodesInKernel #testAllNodePCsAreForBytecodesInMorphic).
@@ -127,7 +136,6 @@
         SlangTypePromotionTest -> #(#testFloatAndNil #testNilAndFloat). "broken"
         SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
         SocketTest -> #(#testSocketReuse #testTCPSocketReuse #testUDP).
-        SqueakSSLTest -> #(#testConnectAccept #testEncryptDecrypt #testFaceBookAPI #testGooglePopStream #testMultiFrameDecrypt #testSingleByteDecrypt #testSocketAccept #testSocketConnect #testSplitTlsFrameRead #testSSLSockets #testStreamAccept #testStreamConnect #testStreamTransfer).
         StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "broken"
         SystemChangeFileTest -> #(#testClassRenamed). "flaky and can hang the system"
         TruffleSqueakTest -> #(#testTestMapConsistency).
@@ -142,8 +150,6 @@
             FFIPluginTests -> FFIPluginTests allTestSelectors.
             InteropTest -> InteropTest allTestSelectors.
             JavaTest -> JavaTest allTestSelectors.
-            JPEGReadWriter2PluginTest -> JPEGReadWriter2PluginTest allTestSelectors.
-            JPEGReadWriter2Test -> JPEGReadWriter2Test allTestSelectors.
             PolyglotTest -> #(#testInstallLanguage).
             TruffleSqueakTest -> #(#testLayoutStatistics #testCallTarget).
         } collect: [:assoc | | testCase |
@@ -173,8 +179,6 @@
         BitBltSimulationTest -> #(#testRgbMulDepth16 #testRgbMulDepth1to8).
         CompilerExceptionsTest -> #(#testUnknownSelector).
         HelpBrowserTest -> #(#testRegistration).
-        JPEGReadWriter2PluginTest -> #(#testPrimJPEGWriteImage). "expected form has an off-by-one pixel; using ImageIO"
-        JPEGReadWriter2Test -> #(#testPrimJPEGWriteImage). "expected form has an off-by-one pixel; using ImageIO"
         MorphicToolBuilderTests -> #(#testGetButtonColor).
         ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent "become EmptyObject->PointersObject not yet supported" #testPinning "not yet supported").
         PackageDependencyTest -> #(#testBalloon #testPreferenceBrowser #testSUnit).

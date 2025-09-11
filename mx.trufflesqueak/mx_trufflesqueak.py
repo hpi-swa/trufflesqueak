@@ -189,7 +189,7 @@ mx_sdk_vm.register_vm_config(
         "tflc",
         "truffle-json",
         "nfi",
-        "nfi-libffi",
+        "nfi-libffi",  # includes NFI Panama
         "st",
     ],
     _SUITE,
@@ -206,14 +206,15 @@ mx_sdk.register_graalvm_component(
         standalone_dir_name="trufflesqueak-<version>-<graalvm_os>-<arch>",
         license_files=[],  # already included in `TRUFFLESQUEAK_HOME`.
         third_party_license_files=[],
-        dependencies=["Truffle", "Truffle NFI", "Truffle NFI LIBFFI"],
+        dependencies=[
+            "Truffle",
+            "Truffle NFI",
+            "Truffle NFI LIBFFI",  # includes NFI Panama
+        ],
         standalone_dependencies={},
         truffle_jars=[
             "trufflesqueak:TRUFFLESQUEAK",
             "trufflesqueak:TRUFFLESQUEAK_SHARED",
-            "trufflesqueak:BOUNCYCASTLE-PROVIDER",
-            "trufflesqueak:BOUNCYCASTLE-PKIX",
-            "trufflesqueak:BOUNCYCASTLE-UTIL",
         ],
         support_distributions=["trufflesqueak:TRUFFLESQUEAK_HOME"],
         library_configs=[
