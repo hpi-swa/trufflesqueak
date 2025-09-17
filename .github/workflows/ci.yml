@@ -98,7 +98,7 @@ jobs:
         type: [native, jvm]
     env:
       JAVA_VERSION: "25"
-      JVMCI_VERSION_CHECK: "warn" # version of EA build does not always match
+      # JVMCI_VERSION_CHECK: "warn" # version of EA build does not always match
       NATIVE_IMAGE_OPTIONS: "-J-XX:MaxRAMPercentage=100"
       VERBOSE_GRAALVM_LAUNCHERS: true
       VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
@@ -113,7 +113,7 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@v1
       with:
-        java-version: '${{ env.JAVA_VERSION }}-ea'
+        java-version: '${{ env.JAVA_VERSION }}'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Enable Oracle GraalVM
@@ -161,11 +161,11 @@ jobs:
         path: ${{ env.STANDALONE_ARCHIVE }}
         retention-days: 7
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
-    # - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
-    #   run: |
-    #     trufflesqueak-polyglot-get -v 25.0.0 -a js
-    #     trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-    #   if: ${{ matrix.type == 'jvm' }}
+    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
+      run: |
+        trufflesqueak-polyglot-get -v 25.0.0 -a js
+        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
+      if: ${{ matrix.type == 'jvm' }}
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
