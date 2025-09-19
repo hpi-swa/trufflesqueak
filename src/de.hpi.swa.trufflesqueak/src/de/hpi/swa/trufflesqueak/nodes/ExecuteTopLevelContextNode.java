@@ -65,7 +65,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
+        final boolean wasInPolyglotEvaluation = image.possiblyPolyglotEvaluation();
         try {
+            if (!isImageResuming) {
+                image.setPossiblyPolyglotEvaluation();
+            }
             executeLoop();
         } catch (final TopLevelReturn e) {
             return e.getReturnValue();
@@ -75,6 +79,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 if (image.hasDisplay()) {
                     image.getDisplay().close();
                 }
+            } else {
+                image.restorePossiblyPolyglotEvaluation(wasInPolyglotEvaluation);
             }
         }
         throw SqueakException.create("Top level context did not return");

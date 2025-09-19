@@ -9,18 +9,23 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.exceptions.Returns;
+import com.oracle.truffle.api.nodes.RootNode;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
@@ -31,6 +36,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SenderChainLink;
 
 public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -134,16 +141,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
-        @TruffleBoundary
-        @Specialization
-        protected static final AbstractSqueakObject doFindNext(final ContextObject receiver) {
-            /*
-             * TODO: The following has been omitted from this implementation. Perhaps a fake Context
-             * could be inserted into the sender chain so that it would not require special
-             * handling? "Foreign frame found during frame iteration. Inject a fake context which
-             * will throw the Smalltalk exception as polyglot exception."
-             */
-
+        @Specialization(guards = {"!image.possiblyPolyglotEvaluation()"})
+        protected static final AbstractSqueakObject findNextViaSenderChainLink(final ContextObject receiver,
+                        @SuppressWarnings("unused") @Shared @Cached(value = "getContext()", neverDefault = true) final SqueakImageContext image) {
             // Search starts with receiver.
             if (receiver.isExceptionHandlerMarked()) {
                 return receiver;
@@ -159,8 +159,92 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 // Move to the next link.
                 currentLink = currentLink.getNextLink();
             }
+
             // Reached the end of the chain without finding an exception handler Context.
             return NilObject.SINGLETON;
+        }
+
+        @TruffleBoundary
+        @Specialization(replaces = "findNextViaSenderChainLink")
+        protected final AbstractSqueakObject findNextPolyglotPath(final ContextObject receiver,
+                        @SuppressWarnings("unused") @Shared @Cached(value = "getContext()", neverDefault = true) final SqueakImageContext image) {
+            if (receiver.hasMaterializedSender()) {
+                return handleMaterializedSender(receiver);
+            } else {
+                return handleAvoidingMaterialization(receiver);
+            }
+        }
+
+        protected final AbstractSqueakObject handleMaterializedSender(final ContextObject receiver) {
+
+            ContextObject context = receiver;
+            while (context.hasMaterializedSender()) {
+                if (context.isExceptionHandlerMarked()) {
+                    assert !context.hasClosure();
+                    return context;
+                }
+                final AbstractSqueakObject sender = context.getMaterializedSender();
+                if (sender instanceof final ContextObject o) {
+                    context = o;
+                } else {
+                    assert sender == NilObject.SINGLETON;
+                    return NilObject.SINGLETON;
+                }
+            }
+            return handleAvoidingMaterialization(context);
+        }
+
+        protected final AbstractSqueakObject handleAvoidingMaterialization(final ContextObject receiver) {
+            final boolean[] foundMyself = new boolean[1];
+            final Object[] lastSender = new Object[1];
+            final ContextObject result = Truffle.getRuntime().iterateFrames(frameInstance -> {
+                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                if (!FrameAccess.isTruffleSqueakFrame(current)) {
+                    final RootNode rootNode = ((RootCallTarget) frameInstance.getCallTarget()).getRootNode();
+                    if (rootNode.isInternal() || rootNode.getLanguageInfo().getId().equals(SqueakLanguageConfig.ID)) {
+                        /* Skip internal and all other nodes that belong to TruffleSqueak. */
+                        return null;
+                    } else {
+                        /*
+                         * Found a frame of another language. Stop here by returning the receiver
+                         * context. This special case will be handled later on.
+                         */
+                        return receiver;
+                    }
+                }
+                final ContextObject context = FrameAccess.getContext(current);
+                if (!foundMyself[0]) {
+                    if (context == receiver) {
+                        foundMyself[0] = true;
+                    }
+                } else {
+                    if (FrameAccess.getCodeObject(current).isExceptionHandlerMarked()) {
+                        assert context != null : "Contexts are always created for methods marked as exception handler";
+                        return context;
+                    } else {
+                        lastSender[0] = FrameAccess.getSender(current);
+                    }
+                }
+                return null;
+            });
+            if (result == receiver) {
+                /*
+                 * Foreign frame found during frame iteration. Inject a fake context which will
+                 * throw the Smalltalk exception as polyglot exception.
+                 */
+                return getContext().getInteropExceptionThrowingContext();
+            } else if (result == null) {
+                if (!foundMyself[0]) {
+                    return handleMaterializedSender(receiver); // Fallback to other version.
+                }
+                if (lastSender[0] instanceof final ContextObject o) {
+                    return handleMaterializedSender(o);
+                } else {
+                    return NilObject.SINGLETON;
+                }
+            } else {
+                return result;
+            }
         }
     }
 
