@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
@@ -243,7 +243,7 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnTopFromBlockNode extends AbstractBlockReturnNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -251,7 +251,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected Object getReturnValue(final VirtualFrame frame) {
-            return popNode.execute(frame);
+            return topNode.execute(frame);
         }
 
         @Override
@@ -279,7 +279,7 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnTopFromMethodNode extends AbstractNormalReturnNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         protected ReturnTopFromMethodNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
             super(frame, code, index);
@@ -287,7 +287,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected Object getReturnValue(final VirtualFrame frame) {
-            return popNode.execute(frame);
+            return topNode.execute(frame);
         }
 
         @Override
