@@ -141,6 +141,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
 
+        @TruffleBoundary
         @Specialization(guards = {"!image.possiblyPolyglotEvaluation()"})
         protected static final AbstractSqueakObject findNextViaSenderChainLink(final ContextObject receiver,
                         @SuppressWarnings("unused") @Shared @Cached(value = "getContext()", neverDefault = true) final SqueakImageContext image) {

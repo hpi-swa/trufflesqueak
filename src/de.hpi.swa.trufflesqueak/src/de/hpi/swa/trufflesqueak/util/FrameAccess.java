@@ -208,15 +208,6 @@ public final class FrameAccess {
         return (FrameMarker) frame.getObjectStatic(SlotIndicies.THIS_MARKER.ordinal());
     }
 
-    public static FrameMarker getMarkerNonNull(final Frame frame) {
-        final FrameMarker frameMarker = getMarker(frame);
-        if (frameMarker == null) {
-            return initializeMarker(frame);
-        } else {
-            return frameMarker;
-        }
-    }
-
     public static void setMarker(final Frame frame, final FrameMarker marker) {
         frame.setObjectStatic(SlotIndicies.THIS_MARKER.ordinal(), marker);
         /* FrameMarker contains shadow copy */
