@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
+import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -66,10 +67,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Override
     public Object execute(final VirtualFrame frame) {
         final boolean wasInPolyglotEvaluation = image.possiblyPolyglotEvaluation();
+        if (!isImageResuming) {
+            image.setPossiblyPolyglotEvaluation();
+        }
         try {
-            if (!isImageResuming) {
-                image.setPossiblyPolyglotEvaluation();
-            }
             executeLoop();
         } catch (final TopLevelReturn e) {
             return e.getReturnValue();
@@ -195,26 +196,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert sender == NilObject.SINGLETON;
             return sendCannotReturnOrReturnToTopLevel(activeContext, targetContext, returnValue);
         }
-        // Make sure target is on sender chain.
-        ContextObject unwindMarkedContext = null;
-        ContextObject context = senderContext;
-        while (context != targetContext) {
-            if (context.getCodeObject().isUnwindMarked() && unwindMarkedContext == null) {
-                unwindMarkedContext = context;
-            }
-            final AbstractSqueakObject currentSender = context.getSender();
-            if (currentSender instanceof final ContextObject o) {
-                context = o;
-            } else {
-                return sendCannotReturn(activeContext, returnValue);
-            }
-        }
-        // Send aboutToReturn if an unwind marked Context was found.
-        if (unwindMarkedContext != null) {
-            return sendAboutToReturn(nlr.getHomeContext(), returnValue, unwindMarkedContext, activeContext);
-        }
         // Terminate the Contexts on sender chain.
-        context = senderContext;
+        ContextObject context = senderContext;
         while (context != targetContext) {
             final ContextObject currentSender = (ContextObject) context.getSender();
             context.terminate();
@@ -229,22 +212,15 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         throw new TopLevelReturn(returnValue);
     }
 
+    @TruffleBoundary
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {
         try {
             sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
+            WakeHighestPriorityNode.executeAndThrowUncached(startContext.getTruffleFrame(), image);
         } catch (final NonVirtualReturn nvr) {
             return commonNVReturn(startContext, nvr);
         }
         throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch or a NonVirtualReturn");
-    }
-
-    private ContextObject sendAboutToReturn(final ContextObject homeContext, final Object returnValue, final ContextObject unwindMarkedContext, final ContextObject activeContext) {
-        try {
-            sendAboutToReturnNode.execute(activeContext.getTruffleFrame(), homeContext, returnValue, unwindMarkedContext);
-        } catch (final NonVirtualReturn nvr) {
-            return commonNVReturn(activeContext, nvr);
-        }
-        throw CompilerDirectives.shouldNotReachHere("aboutToReturn should trigger a ProcessSwitch or a NonVirtualReturn");
     }
 
     private static void ensureCachedContextCanRunAgain(final ContextObject activeContext) {
