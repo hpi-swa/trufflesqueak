@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 
 public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDecoder {
     public static final SqueakBytecodeSistaV1Decoder SINGLETON = new SqueakBytecodeSistaV1Decoder();
-    private static final int SP_NIL_TAG = -42;
+    private static final byte SP_NIL_TAG = -42;
 
     private SqueakBytecodeSistaV1Decoder() {
     }
@@ -334,10 +334,10 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
     @Override
     public int determineMaxNumStackSlots(final CompiledCodeObject code) {
         final int trailerPosition = trailerPosition(code);
-        final int[] joins = new int[trailerPosition];
+        final byte[] joins = new byte[trailerPosition];
         Arrays.fill(joins, SP_NIL_TAG);
         int index = 0;
-        int currentStackPointer = code.getNumTemps(); // initial SP
+        byte currentStackPointer = (byte) code.getNumTemps(); // initial SP
         int maxStackPointer = 0;
         final int contextSize = code.getSqueakContextSize();
         // Uncomment the following and compare with `(Character>>#isSeparator) detailedSymbolic`
@@ -357,11 +357,11 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
         return maxStackPointer;
     }
 
-    private static int decodeStackPointer(final CompiledCodeObject code, final int[] joins, final int index, final int sp) {
-        return decodeStackPointer(code, joins, index, sp, 0, 0, 0, 0);
+    private static byte decodeStackPointer(final CompiledCodeObject code, final byte[] joins, final int index, final int sp) {
+        return (byte) decodeStackPointer(code, joins, index, sp, 0, 0, 0, 0);
     }
 
-    private static int decodeStackPointer(final CompiledCodeObject code, final int[] joins, final int index, final int sp, final int extBytes, final int extA,
+    private static int decodeStackPointer(final CompiledCodeObject code, final byte[] joins, final int index, final int sp, final int extBytes, final int extA,
                     final int extB, final int numExtB) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
@@ -484,16 +484,16 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
         };
     }
 
-    private static int jumpAndResetStackAfterBranchOrReturn(final int[] joins, final int pc, final int sp, final int delta) {
+    private static int jumpAndResetStackAfterBranchOrReturn(final byte[] joins, final int pc, final int sp, final int delta) {
         if (delta < 0) {
             assert joins[pc + delta] == sp : "bad join";
         } else {
-            joins[pc + delta] = sp;
+            joins[pc + delta] = (byte) sp;
         }
         return resetStackAfterBranchOrReturn(joins, pc, sp);
     }
 
-    private static int resetStackAfterBranchOrReturn(final int[] joins, final int pc, final int sp) {
+    private static int resetStackAfterBranchOrReturn(final byte[] joins, final int pc, final int sp) {
         if (pc < joins.length) {
             final int spAtPC = joins[pc];
             if (spAtPC == SP_NIL_TAG) {
