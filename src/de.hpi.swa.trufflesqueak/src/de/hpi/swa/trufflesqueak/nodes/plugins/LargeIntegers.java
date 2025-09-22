@@ -26,8 +26,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
@@ -68,53 +66,68 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primAnyBitFromTo")
     protected abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements Primitive2WithFallback {
-        private final BranchProfile startLargerThanStopProfile = BranchProfile.create();
-        private final ConditionProfile firstAndLastDigitIndexIdenticalProfile = ConditionProfile.create();
-        private final BranchProfile firstDigitNonZeroProfile = BranchProfile.create();
-        private final BranchProfile middleDigitsNonZeroProfile = BranchProfile.create();
-
         @Specialization(guards = {"start >= 1", "stopArg >= 1"})
-        protected final boolean doLong(final long receiver, final long start, final long stopArg) {
+        protected static final boolean doLong(final long receiver, final long start, final long stopArg,
+                        @Bind final Node node,
+                        @Shared("startLargerThanStopProfile") @Cached final InlinedBranchProfile startLargerThanStopProfile,
+                        @Shared("firstAndLastDigitIndexIdenticalProfile") @Cached final InlinedConditionProfile firstAndLastDigitIndexIdenticalProfile,
+                        @Shared("firstDigitNonZeroProfile") @Cached final InlinedBranchProfile firstDigitNonZeroProfile,
+                        @Shared("middleDigitsNonZeroProfile") @Cached final InlinedBranchProfile middleDigitsNonZeroProfile,
+                        @Shared("lastDigitProfile") @Cached final InlinedBranchProfile lastDigitProfile) {
             final long stop = Math.min(stopArg, Long.highestOneBit(receiver));
             if (start > stop) {
-                startLargerThanStopProfile.enter();
+                startLargerThanStopProfile.enter(node);
                 return BooleanObject.FALSE;
             }
             final int firstDigitIndex = ((int) start - 1) / 8 + 1;
             final int lastDigitIndex = ((int) stop - 1) / 8 + 1;
             final int rightShift = -(((int) start - 1) % 8);
             final int leftShift = 7 - ((int) stop - 1) % 8;
-            if (firstAndLastDigitIndexIdenticalProfile.profile(firstDigitIndex == lastDigitIndex)) {
+            if (firstAndLastDigitIndexIdenticalProfile.profile(node, firstDigitIndex == lastDigitIndex)) {
                 final int mask = 0xFF >> rightShift & 0xFF >> leftShift;
                 final byte digit = digitOf(receiver, firstDigitIndex - 1);
                 return BooleanObject.wrap((digit & mask) != 0);
             } else {
                 if (digitOf(receiver, firstDigitIndex - 1) << rightShift != 0) {
-                    firstDigitNonZeroProfile.enter();
+                    firstDigitNonZeroProfile.enter(node);
                     return BooleanObject.TRUE;
                 }
                 for (long i = firstDigitIndex + 1; i < lastDigitIndex; i++) {
                     if (digitOf(receiver, i - 1) != 0) {
-                        middleDigitsNonZeroProfile.enter();
+                        middleDigitsNonZeroProfile.enter(node);
                         return BooleanObject.TRUE;
                     }
                 }
+                lastDigitProfile.enter(node);
                 return BooleanObject.wrap((digitOf(receiver, lastDigitIndex - 1) << leftShift & 0xFF) != 0);
             }
         }
 
         @Specialization(guards = {"image.isLargeInteger(receiver)", "start >= 1", "stopArg >= 1"}, rewriteOn = {ArithmeticException.class})
-        protected final boolean doLargeIntegerAsLong(final NativeObject receiver, final long start, final long stopArg,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
-            return doLong(longValueExact(receiver), start, stopArg);
+        protected static final boolean doLargeIntegerAsLong(final NativeObject receiver, final long start, final long stopArg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Shared("startLargerThanStopProfile") @Cached final InlinedBranchProfile startLargerThanStopProfile,
+                        @Shared("firstAndLastDigitIndexIdenticalProfile") @Cached final InlinedConditionProfile firstAndLastDigitIndexIdenticalProfile,
+                        @Shared("firstDigitNonZeroProfile") @Cached final InlinedBranchProfile firstDigitNonZeroProfile,
+                        @Shared("middleDigitsNonZeroProfile") @Cached final InlinedBranchProfile middleDigitsNonZeroProfile,
+                        @Shared("lastDigitProfile") @Cached final InlinedBranchProfile lastDigitProfile) {
+            return doLong(longValueExact(receiver), start, stopArg, node, startLargerThanStopProfile, firstAndLastDigitIndexIdenticalProfile, firstDigitNonZeroProfile, middleDigitsNonZeroProfile,
+                            lastDigitProfile);
         }
 
         @Specialization(guards = {"image.isLargeInteger(receiver)", "start >= 1", "stopArg >= 1"})
-        protected final boolean doLargeInteger(final NativeObject receiver, final long start, final long stopArg,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+        protected static final boolean doLargeInteger(final NativeObject receiver, final long start, final long stopArg,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
+                        @Bind final Node node,
+                        @Shared("startLargerThanStopProfile") @Cached final InlinedBranchProfile startLargerThanStopProfile,
+                        @Shared("firstAndLastDigitIndexIdenticalProfile") @Cached final InlinedConditionProfile firstAndLastDigitIndexIdenticalProfile,
+                        @Shared("firstDigitNonZeroProfile") @Cached final InlinedBranchProfile firstDigitNonZeroProfile,
+                        @Shared("middleDigitsNonZeroProfile") @Cached final InlinedBranchProfile middleDigitsNonZeroProfile,
+                        @Shared("lastDigitProfile") @Cached final InlinedBranchProfile lastDigitProfile) {
             final long stop = Math.min(stopArg, highBitOfLargeInt(receiver));
             if (start > stop) {
-                startLargerThanStopProfile.enter();
+                startLargerThanStopProfile.enter(node);
                 return BooleanObject.FALSE;
             }
             final byte[] bytes = receiver.getByteStorage();
@@ -122,21 +135,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final int lastDigitIndex = ((int) stop - 1) / 8 + 1;
             final int rightShift = -(((int) start - 1) % 8);
             final int leftShift = 7 - ((int) stop - 1) % 8;
-            if (firstAndLastDigitIndexIdenticalProfile.profile(firstDigitIndex == lastDigitIndex)) {
+            if (firstAndLastDigitIndexIdenticalProfile.profile(node, firstDigitIndex == lastDigitIndex)) {
                 final int mask = 0xFF >> rightShift & 0xFF >> leftShift;
                 final byte digit = bytes[firstDigitIndex - 1];
                 return BooleanObject.wrap((digit & mask) != 0);
             } else {
                 if (bytes[firstDigitIndex - 1] << rightShift != 0) {
-                    firstDigitNonZeroProfile.enter();
+                    firstDigitNonZeroProfile.enter(node);
                     return BooleanObject.TRUE;
                 }
                 for (int i = firstDigitIndex + 1; i < lastDigitIndex; i++) {
                     if (bytes[i - 1] != 0) {
-                        middleDigitsNonZeroProfile.enter();
+                        middleDigitsNonZeroProfile.enter(node);
                         return BooleanObject.TRUE;
                     }
                 }
+                lastDigitProfile.enter(node);
                 return BooleanObject.wrap((bytes[lastDigitIndex - 1] << leftShift & 0xFF) != 0);
             }
         }
@@ -1051,11 +1065,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     /*
      * Large float operations
      */
-
-    @TruffleBoundary
-    public static Object truncated(final SqueakImageContext image, final double value) {
-        return normalize(image, new BigDecimal(value).toBigInteger());
-    }
 
     @TruffleBoundary
     public static double fractionPart(final double value) {
