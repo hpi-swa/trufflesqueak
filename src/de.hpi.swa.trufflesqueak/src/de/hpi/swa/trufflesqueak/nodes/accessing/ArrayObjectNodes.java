@@ -141,6 +141,10 @@ public final class ArrayObjectNodes {
     @GenerateCached(false)
     public abstract static class ArrayObjectSizeNode extends AbstractNode {
 
+        public static ArrayObjectSizeNode getUncached() {
+            return ArrayObjectSizeNodeGen.getUncached();
+        }
+
         public abstract int execute(Node node, ArrayObject obj);
 
         public static final int executeUncached(final ArrayObject obj) {

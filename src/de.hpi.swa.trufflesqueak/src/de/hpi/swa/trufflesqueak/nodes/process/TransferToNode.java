@@ -20,6 +20,8 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 
 /**

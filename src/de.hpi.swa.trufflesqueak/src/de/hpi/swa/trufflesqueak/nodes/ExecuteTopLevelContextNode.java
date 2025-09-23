@@ -19,6 +19,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
@@ -31,6 +32,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
+import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -64,6 +66,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
+        final boolean wasInPolyglotEvaluation = image.possiblyPolyglotEvaluation();
+        if (!isImageResuming) {
+            image.setPossiblyPolyglotEvaluation();
+        }
         try {
             executeLoop();
         } catch (final TopLevelReturn e) {
@@ -74,6 +80,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 if (image.hasDisplay()) {
                     image.getDisplay().close();
                 }
+            } else {
+                image.restorePossiblyPolyglotEvaluation(wasInPolyglotEvaluation);
             }
         }
         throw SqueakException.create("Top level context did not return");
@@ -108,6 +116,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 } catch (final NonVirtualReturn nvr) {
                     activeContext = commonNVReturn(activeContext, nvr);
                     LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
+                } catch (final CannotReturnToTarget cr) {
+                    activeContext = sendCannotReturn(cr.getStartingContext(), cr.getReturnValue());
+                    LogUtils.SCHEDULING.log(Level.FINE, "Cannot Return on top-level: {0}", activeContext);
                 }
             } catch (final ProcessSwitch ps) {
                 activeContext = getNextActiveContextNode.execute();
@@ -130,6 +141,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         if (!(sender instanceof final ContextObject senderContext)) {
             assert sender == NilObject.SINGLETON;
             return sendCannotReturnOrReturnToTopLevel(activeContext, activeContext, returnValue);
+        } else if (senderContext.isDead()) {
+            return sendCannotReturnOrReturnToTopLevel(activeContext, senderContext, returnValue);
         }
         final ContextObject context;
         if (senderContext.isPrimitiveContext()) {
@@ -183,26 +196,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert sender == NilObject.SINGLETON;
             return sendCannotReturnOrReturnToTopLevel(activeContext, targetContext, returnValue);
         }
-        // Make sure target is on sender chain.
-        ContextObject unwindMarkedContext = null;
-        ContextObject context = senderContext;
-        while (context != targetContext) {
-            if (context.getCodeObject().isUnwindMarked() && unwindMarkedContext == null) {
-                unwindMarkedContext = context;
-            }
-            final AbstractSqueakObject currentSender = context.getSender();
-            if (currentSender instanceof final ContextObject o) {
-                context = o;
-            } else {
-                return sendCannotReturn(activeContext, returnValue);
-            }
-        }
-        // Send aboutToReturn if an unwind marked Context was found.
-        if (unwindMarkedContext != null) {
-            return sendAboutToReturn(nlr.getHomeContext(), returnValue, unwindMarkedContext, activeContext);
-        }
         // Terminate the Contexts on sender chain.
-        context = senderContext;
+        ContextObject context = senderContext;
         while (context != targetContext) {
             final ContextObject currentSender = (ContextObject) context.getSender();
             context.terminate();
@@ -217,22 +212,15 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         throw new TopLevelReturn(returnValue);
     }
 
+    @TruffleBoundary
     private ContextObject sendCannotReturn(final ContextObject startContext, final Object returnValue) {
-        sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
-        throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch");
-    }
-
-    /**
-     * See {@link de.hpi.swa.trufflesqueak.nodes.AboutToReturnNode} for details.
-     *
-     */
-    private ContextObject sendAboutToReturn(final ContextObject homeContext, final Object returnValue, final ContextObject unwindMarkedContextOrNil, final ContextObject activeContext) {
         try {
-            sendAboutToReturnNode.execute(activeContext.getTruffleFrame(), homeContext, returnValue, unwindMarkedContextOrNil);
+            sendCannotReturnNode.execute(startContext.getTruffleFrame(), startContext, returnValue);
+            WakeHighestPriorityNode.executeAndThrowUncached(startContext.getTruffleFrame(), image);
         } catch (final NonVirtualReturn nvr) {
-            return commonNVReturn(activeContext, nvr);
+            return commonNVReturn(startContext, nvr);
         }
-        throw CompilerDirectives.shouldNotReachHere("aboutToReturn should trigger a ProcessSwitch or a NonVirtualReturn");
+        throw CompilerDirectives.shouldNotReachHere("cannotReturn should trigger a ProcessSwitch or a NonVirtualReturn");
     }
 
     private static void ensureCachedContextCanRunAgain(final ContextObject activeContext) {

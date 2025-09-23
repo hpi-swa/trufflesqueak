@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
+import com.oracle.truffle.api.dsl.NonIdempotent;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -189,6 +190,7 @@ public final class SqueakImageContext {
     @CompilationFinal private SqueakImage squeakImage;
 
     /* Stack Management */
+    private boolean possiblyPolyglotEvaluation;
     private ContextObject interopExceptionThrowingContextPrototype;
     public ContextObject lastSeenContext;
 
@@ -396,6 +398,19 @@ public final class SqueakImageContext {
         doItContext.setStackPointer(doItMethod.getNumTemps());
         doItContext.setSenderUnsafe(NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(this, getLanguage(), doItContext, false);
+    }
+
+    @NonIdempotent
+    public boolean possiblyPolyglotEvaluation() {
+        return possiblyPolyglotEvaluation;
+    }
+
+    public void setPossiblyPolyglotEvaluation() {
+        possiblyPolyglotEvaluation = true;
+    }
+
+    public void restorePossiblyPolyglotEvaluation(final boolean wasPossiblyPolyglotEvaluation) {
+        possiblyPolyglotEvaluation = wasPossiblyPolyglotEvaluation;
     }
 
     /**

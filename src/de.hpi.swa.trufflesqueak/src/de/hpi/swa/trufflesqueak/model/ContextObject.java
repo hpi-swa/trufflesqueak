@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import de.hpi.swa.trufflesqueak.util.SenderChainLink;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CallTarget;
@@ -32,7 +33,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
+public final class ContextObject extends AbstractSqueakObjectWithClassAndHash implements SenderChainLink {
     public static final int NIL_PC_VALUE = -1;
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
 
@@ -202,6 +203,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return truffleFrame;
     }
 
+    public ContextObject getContext() {
+        return this;
+    }
+
+    public SenderChainLink getNextLink() {
+        return (SenderChainLink) getFrameSender();
+    }
+
     public Object getFrameSender() {
         return FrameAccess.getSender(getTruffleFrame());
     }
@@ -238,6 +247,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public AbstractSqueakObject getMaterializedSender() {
         return (AbstractSqueakObject) FrameAccess.getSender(getTruffleFrame());
+    }
+
+    public boolean isUnwindMarked() {
+        return !hasClosure() && getCodeObject().isUnwindMarked();
+    }
+
+    public boolean isExceptionHandlerMarked() {
+        return getCodeObject().isExceptionHandlerMarked();
     }
 
     /**
