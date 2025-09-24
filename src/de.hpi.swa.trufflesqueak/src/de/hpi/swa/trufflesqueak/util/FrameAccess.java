@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -207,6 +208,7 @@ public final class FrameAccess {
         setMarker(frame, new FrameMarker());
     }
 
+    @SuppressWarnings("unused")
     public static Object getContextOrMarkerSlow(final VirtualFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return GetContextOrMarkerNode.getNotProfiled(frame);
@@ -277,8 +279,9 @@ public final class FrameAccess {
         setInstructionPointer(frame, ContextObject.NIL_PC_STACK_NIL_VALUE);
     }
 
-    /* Iterates used stack slots (may not be ordered). The stack of a dead frame is unreachable. */
-    public static void iterateStackSlots(final Frame frame, final Consumer<Integer> action) {
+    /* The stack of a dead frame is unreachable. Nil it out here. */
+    @TruffleBoundary
+    private static void nilStackSlots(final MaterializedFrame frame) {
         /**
          * From Squeak6.0-22104 class comment for Context - eem 4/4/2017 17:45
          *
@@ -288,24 +291,74 @@ public final class FrameAccess {
          * its sender and pc are nilled, and, if the context is still referred to, the virtual
          * machine guarantees to preserve only the arguments after a return."
          */
-        if (isDead(frame)) {
-            /*
-             * Replace all initialized stack slots with null, removing spurious references from the
-             * stack.
-             */
-            if (slotsAreNotNilled(frame)) {
-                setSlotsAreNilled(frame);
-                final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-                for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                    if (frameDescriptor.getSlotKind(slotIndex) != FrameSlotKind.Illegal) {
-                        frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
-                        frame.setObject(slotIndex, null);
-                    }
+        assert isDead(frame);
+        /*
+         * Replace all initialized stack slots with null, removing spurious references from the
+         * stack.
+         */
+        if (slotsAreNotNilled(frame)) {
+            setSlotsAreNilled(frame);
+            final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
+                if (frameDescriptor.getSlotKind(slotIndex) == FrameSlotKind.Object) {
+                    frame.setObject(slotIndex, null);
                 }
             }
+            for (final int auxiliarySlotIndex : frame.getFrameDescriptor().getAuxiliarySlots().values()) {
+                frame.setAuxiliarySlot(auxiliarySlotIndex, null);
+            }
+        }
+    }
+
+    /* Iterates used stack slots (may not be ordered). The stack of a dead frame is unreachable. */
+    public static void iterateStackSlots(final Frame frame, final Consumer<Integer> action) {
+        if (isDead(frame)) {
+            nilStackSlots(frame.materialize());
         } else {
             for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
                 action.accept(slotIndex);
+            }
+        }
+    }
+
+    /* Iterate stack objects (may not be ordered). The stack of a dead frame is unreachable. */
+    public static void iterateStackObjects(final Frame frame, final boolean materialized, final Consumer<Object> action) {
+        if (isDead(frame)) {
+            if (materialized) {
+                nilStackSlots(frame.materialize());
+            }
+        } else {
+            for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
+                if (frame.isObject(slotIndex)) {
+                    action.accept(frame.getObject(slotIndex));
+                }
+            }
+            for (final int auxiliarySlotIndex : frame.getFrameDescriptor().getAuxiliarySlots().values()) {
+                action.accept(frame.getAuxiliarySlot(auxiliarySlotIndex));
+            }
+        }
+    }
+
+    /* Iterate stack objects (may not be ordered) with optional replacement. The stack of a dead frame is unreachable. */
+    public static void iterateStackObjectsWithReplacement(final Frame frame, final boolean materialized, final Function<Object, Object> action) {
+        if (isDead(frame)) {
+            if (materialized) {
+                nilStackSlots(frame.materialize());
+            }
+        } else {
+            for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
+                if (frame.isObject(slotIndex)) {
+                    final Object replacement = action.apply(frame.getObject(slotIndex));
+                    if (replacement != null) {
+                        frame.setObject(slotIndex, replacement);
+                    }
+                }
+            }
+            for (final int auxiliarySlotIndex : frame.getFrameDescriptor().getAuxiliarySlots().values()) {
+                final Object replacement = action.apply(frame.getAuxiliarySlot(auxiliarySlotIndex));
+                if (replacement != null) {
+                    frame.setAuxiliarySlot(auxiliarySlotIndex, replacement);
+                }
             }
         }
     }
