@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -295,6 +296,10 @@ public final class ObjectGraphUtils {
         }
     }
 
+    public boolean isUnfollowNeeded() {
+        return !becomeMap.isEmpty();
+    }
+
     @TruffleBoundary
     public void unfollow() {
         if (becomeMap.isEmpty()) {
@@ -370,18 +375,13 @@ public final class ObjectGraphUtils {
              * Iterate over all stack slots here instead of stackPointer because in rare cases, the
              * stack is accessed behind the stackPointer.
              */
-            FrameAccess.iterateStackSlots(current, slotIndex -> {
-                if (current.isObject(slotIndex)) {
-                    final Object stackObject = current.getObject(slotIndex);
-                    if (stackObject != null) {
-                        final Object migratedObject = fromToMap.get(stackObject);
-                        if (migratedObject != null) {
-                            current.setObject(slotIndex, migratedObject);
-                            tracer.accept(migratedObject);
-                        } else {
-                            tracer.accept(stackObject);
-                        }
-                    }
+            FrameAccess.iterateStackObjectsWithReplacement(current, false, stackObject -> {
+                if (stackObject != null) {
+                    final Object migratedObject = fromToMap.get(stackObject);
+                    tracer.accept(Objects.requireNonNullElse(migratedObject, stackObject));
+                    return migratedObject;
+                } else {
+                    return null;
                 }
             });
             return null;
@@ -575,11 +575,7 @@ public final class ObjectGraphUtils {
                 }
                 addAllIfUnmarked(current.getArguments());
                 addIfUnmarked(FrameAccess.getContext(current));
-                FrameAccess.iterateStackSlots(current, slotIndex -> {
-                    if (current.isObject(slotIndex)) {
-                        addIfUnmarked(current.getObject(slotIndex));
-                    }
-                });
+                FrameAccess.iterateStackObjects(current, false, this::addIfUnmarked);
                 return null; // continue
             });
             assert resumeContextObject != null : "Failed to find ResumeContextRootNode";
