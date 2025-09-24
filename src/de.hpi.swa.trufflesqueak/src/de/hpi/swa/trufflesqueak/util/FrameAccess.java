@@ -339,7 +339,10 @@ public final class FrameAccess {
         }
     }
 
-    /* Iterate stack objects (may not be ordered) with optional replacement. The stack of a dead frame is unreachable. */
+    /*
+     * Iterate stack objects (may not be ordered) with optional replacement. The stack of a dead
+     * frame is unreachable.
+     */
     public static void iterateStackObjectsWithReplacement(final Frame frame, final boolean materialized, final Function<Object, Object> action) {
         if (isDead(frame)) {
             if (materialized) {
