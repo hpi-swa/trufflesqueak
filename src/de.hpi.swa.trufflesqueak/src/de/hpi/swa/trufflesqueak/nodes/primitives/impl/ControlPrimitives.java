@@ -798,7 +798,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
             final SqueakImageContext image = getContext();
-            image.objectGraphUtils.unfollow();
+            /*
+             * We need to do two things: remove forwarding pointers, and remove spurious references
+             * from the stacks of dead frames. Any tracing of the object graph will remove the
+             * spurious references, so if an unfollow is needed to remove the forwarding pointers,
+             * we're done. Otherwise, we ask for all instances of an unknown class.
+             */
+            if (image.objectGraphUtils.isUnfollowNeeded()) {
+                image.objectGraphUtils.unfollow();
+            } else {
+                image.objectGraphUtils.allInstancesOf(null);
+            }
             if (TruffleOptions.AOT) {
                 /* System.gc() triggers full GC by default in SVM (see https://git.io/JvY7g). */
                 MiscUtils.systemGC();

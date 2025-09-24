@@ -237,7 +237,7 @@ public final class FrameAccess {
     }
 
     public static boolean isDead(final Frame frame) {
-        return getInstructionPointer(frame) < 0;
+        return getInstructionPointer(frame) < ContextObject.NIL_PC_THRESHOLD;
     }
 
     public static void setInstructionPointer(final Frame frame, final int value) {
@@ -269,11 +269,44 @@ public final class FrameAccess {
         return frame.getFrameDescriptor().getNumberOfSlots() - SlotIndicies.STACK_START.ordinal();
     }
 
-    /* Iterates used stack slots (may not be ordered). */
+    public static boolean slotsAreNotNilled(final Frame frame) {
+        return getInstructionPointer(frame) == ContextObject.NIL_PC_STACK_NOT_NIL_VALUE;
+    }
+
+    public static void setSlotsAreNilled(final Frame frame) {
+        setInstructionPointer(frame, ContextObject.NIL_PC_STACK_NIL_VALUE);
+    }
+
+    /* Iterates used stack slots (may not be ordered). The stack of a dead frame is unreachable. */
     public static void iterateStackSlots(final Frame frame, final Consumer<Integer> action) {
-        // All slots after fourth slot for stackPointer
-        for (int i = SlotIndicies.STACK_START.ordinal(); i < frame.getFrameDescriptor().getNumberOfSlots(); i++) {
-            action.accept(i);
+        /**
+         * From Squeak6.0-22104 class comment for Context - eem 4/4/2017 17:45
+         *
+         * "Contexts refer to the context in which they were created via the sender inst var. An
+         * execution stack is made up of a linked list of contexts, linked through their sender inst
+         * var. Returning involves returning back to the sender. When a context is returned from,
+         * its sender and pc are nilled, and, if the context is still referred to, the virtual
+         * machine guarantees to preserve only the arguments after a return."
+         */
+        if (isDead(frame)) {
+            /*
+             * Replace all initialized stack slots with null, removing spurious references from the
+             * stack.
+             */
+            if (slotsAreNotNilled(frame)) {
+                setSlotsAreNilled(frame);
+                final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+                for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
+                    if (frameDescriptor.getSlotKind(slotIndex) != FrameSlotKind.Illegal) {
+                        frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
+                        frame.setObject(slotIndex, null);
+                    }
+                }
+            }
+        } else {
+            for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
+                action.accept(slotIndex);
+            }
         }
     }
 
@@ -333,7 +366,7 @@ public final class FrameAccess {
     }
 
     public static void terminateFrame(final Frame frame) {
-        setInstructionPointer(frame, ContextObject.NIL_PC_VALUE);
+        setInstructionPointer(frame, ContextObject.NIL_PC_STACK_NOT_NIL_VALUE);
         setSender(frame, NilObject.SINGLETON);
     }
 

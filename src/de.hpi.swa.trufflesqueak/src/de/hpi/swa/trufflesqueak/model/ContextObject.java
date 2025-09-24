@@ -33,7 +33,10 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
-    public static final int NIL_PC_VALUE = -1;
+    public static final int NIL_PC_THRESHOLD = 0;
+    public static final int NIL_PC_STACK_NOT_NIL_VALUE = -1;
+    public static final int NIL_PC_STACK_NIL_VALUE = -2;
+
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
 
     private MaterializedFrame truffleFrame;
@@ -276,7 +279,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public Object getInstructionPointer(final InlinedConditionProfile nilProfile, final Node node) {
         final int pc = FrameAccess.getInstructionPointer(getTruffleFrame());
-        if (nilProfile.profile(node, pc == NIL_PC_VALUE)) {
+        if (nilProfile.profile(node, pc < NIL_PC_THRESHOLD)) {
             return NilObject.SINGLETON;
         } else {
             return (long) pc; // Must be a long.
@@ -292,7 +295,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void removeInstructionPointer() {
-        FrameAccess.setInstructionPointer(getTruffleFrame(), NIL_PC_VALUE);
+        FrameAccess.setInstructionPointer(getTruffleFrame(), NIL_PC_STACK_NOT_NIL_VALUE);
     }
 
     public int getStackPointer() {

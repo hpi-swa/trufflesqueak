@@ -295,6 +295,10 @@ public final class ObjectGraphUtils {
         }
     }
 
+    public boolean isUnfollowNeeded() {
+        return !becomeMap.isEmpty();
+    }
+
     @TruffleBoundary
     public void unfollow() {
         if (becomeMap.isEmpty()) {
