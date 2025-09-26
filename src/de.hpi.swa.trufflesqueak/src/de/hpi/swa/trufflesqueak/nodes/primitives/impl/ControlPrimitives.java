@@ -435,7 +435,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             } else {
                 CompilerDirectives.transferToInterpreter();
-                assert myListOrNil == NilObject.SINGLETON : "Unexpected object for myList";
+                assert myContextOrNil == NilObject.SINGLETON || (myContextOrNil instanceof ContextObject) : "Unexpected object for myContext: " + myContextOrNil;
+                assert (myContextOrNil instanceof ContextObject context) && !context.isDead() : "Found Context but it is dead: " + myContextOrNil;
+                assert myListOrNil == NilObject.SINGLETON || (myListOrNil instanceof PointersObject) : "Unexpected object for myList: " + myListOrNil;
                 throw PrimitiveFailed.BAD_RECEIVER;
             }
         }
