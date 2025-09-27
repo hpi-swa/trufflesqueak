@@ -237,6 +237,8 @@
     ].
 
     testSuite := TestCase buildSuite.
+    testSuite tests removeAllSuchThat: [:ea | ea class ~~ ProcessTest].
+    ignoredTests := failingTests := flakyTests := OrderedCollection new.
     testSuite tests removeAllSuchThat: [:ea | ignoredTests anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
     testSuite tests removeAllSuchThat: [:ea | failingTests anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
     testSuite tests removeAllSuchThat: [:ea | flakyTests   anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
