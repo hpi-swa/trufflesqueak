@@ -423,19 +423,25 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final Object myListOrNil = readNode.execute(node, receiver, PROCESS.LIST);
-            final Object myContext = readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT);
-            if (myListOrNil instanceof final PointersObject myList) {
+            final Object myContextOrNil = readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT);
+            if ((myContextOrNil instanceof final ContextObject myContext) && !myContext.isDead() && (myListOrNil instanceof final PointersObject myList)) {
                 removeProcessNode.executeRemove(receiver, myList, readNode, writeNode, node);
                 writeNode.execute(node, receiver, PROCESS.LIST, NilObject.SINGLETON);
                 if (myList.getSqueakClass() != getContext(node).getLinkedListClass()) {
-                    backupContextToBlockingSendTo((ContextObject) myContext, myList);
+                    backupContextToBlockingSendTo(myContext, myList);
                     return NilObject.SINGLETON;
                 } else {
                     return myList;
                 }
             } else {
                 CompilerDirectives.transferToInterpreter();
-                assert myListOrNil == NilObject.SINGLETON : "Unexpected object for myList";
+                if (myContextOrNil instanceof final ContextObject context) {
+                    assert !context.isDead() : "Have Context but it is dead: " + context;
+                } else {
+                    // If it is NOT a ContextObject, assert that it must be the NilObject.
+                    assert myContextOrNil == NilObject.SINGLETON : "Expected ContextObject or Nil, but found unexpected object: " + myContextOrNil;
+                }
+                assert myListOrNil == NilObject.SINGLETON || (myListOrNil instanceof PointersObject) : "Unexpected object for myList: " + myListOrNil;
                 throw PrimitiveFailed.BAD_RECEIVER;
             }
         }
@@ -798,7 +804,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
             final SqueakImageContext image = getContext();
-            image.objectGraphUtils.unfollow();
+            /*
+             * We need to do two things: remove forwarding pointers, and remove spurious references
+             * from the stacks of dead frames. Any tracing of the object graph will remove the
+             * spurious references, so if an unfollow is needed to remove the forwarding pointers,
+             * we're done. Otherwise, we ask for all instances of an unknown class.
+             */
+            if (image.objectGraphUtils.isUnfollowNeeded()) {
+                image.objectGraphUtils.unfollow();
+            } else {
+                image.objectGraphUtils.allInstancesOf(null);
+            }
             if (TruffleOptions.AOT) {
                 /* System.gc() triggers full GC by default in SVM (see https://git.io/JvY7g). */
                 MiscUtils.systemGC();
