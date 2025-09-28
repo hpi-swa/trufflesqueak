@@ -331,17 +331,18 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public DoItRootNode getDoItContextNode(final ParsingRequest request) {
         final Source source = request.getSource();
-        final String sourceCode;
+        final String blockBody;
         if (isFileInFormat(source)) {
-            sourceCode = String.format("[[ (FileStream readOnlyFileNamed: '%s') fileIn. true ] on: Error do: [ :e | Interop throwException: e ]]", source.getPath());
+            blockBody = "(FileStream readOnlyFileNamed: '" + source.getPath() + "') fileIn. true";
         } else {
             if (request.getArgumentNames().isEmpty()) {
-                sourceCode = String.format("[ %s ]", source.getCharacters().toString());
+                blockBody = source.getCharacters().toString();
             } else {
-                sourceCode = String.format("[ :%s | %s ]", String.join(" :", request.getArgumentNames()), source.getCharacters().toString());
+                blockBody = ":" + String.join(" :", request.getArgumentNames()) + " | " + source.getCharacters();
             }
         }
-        return DoItRootNode.create(this, language, evaluateUninterruptably(sourceCode));
+        final String sourceCode = "[[ " + blockBody + " ] on: Error do: [ :e | Interop throwException: e ]]";
+        return DoItRootNode.create(this, language, (BlockClosureObject) evaluateUninterruptably(sourceCode));
     }
 
     private static boolean isFileInFormat(final Source source) {
