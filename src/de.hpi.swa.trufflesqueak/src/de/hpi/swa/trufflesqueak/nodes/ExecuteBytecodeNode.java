@@ -17,6 +17,7 @@ import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -34,6 +35,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     private static final int BACKJUMP_THRESHOLD = 1 << 14;
 
     private final CompiledCodeObject code;
+    private final BranchProfile nonLocalReturnProfile = BranchProfile.create();
     private final int initialPC;
     private SourceSection section;
 
@@ -52,6 +54,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         try {
             return interpretBytecode(frame, startPC);
         } catch (final NonLocalReturn nlr) {
+            nonLocalReturnProfile.enter();
             FrameAccess.terminateContextOrFrame(frame);
             throw nlr;
         } catch (final StackOverflowError e) {
