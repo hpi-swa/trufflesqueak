@@ -114,16 +114,14 @@ public final class CheckForInterruptsState {
 
     /* Enable / disable interrupts */
 
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void activate() {
-        isActive = true;
-    }
-
-    public void deactivate() {
+    public boolean deactivate() {
+        final boolean wasActive = isActive;
         isActive = false;
+        return wasActive;
+    }
+
+    public void reactivate(final boolean wasActive) {
+        isActive = wasActive;
     }
 
     /* User interrupt */

@@ -548,6 +548,7 @@ public final class FrameAccess {
             }
             LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
             if (frameMarker == getMarker(current)) {
+                assert getContext(current) == null : "Redundant frame lookup";
                 return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE).materialize();
             } else {
                 return null; // continue with next frame
