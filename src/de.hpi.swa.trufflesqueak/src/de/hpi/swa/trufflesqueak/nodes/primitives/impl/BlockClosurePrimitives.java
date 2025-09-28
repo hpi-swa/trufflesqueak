@@ -20,7 +20,6 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -89,7 +88,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = 201)
+    @SqueakPrimitive(indices = {201, 221})
     public abstract static class PrimClosureValue0Node extends AbstractClosurePrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 0"}, assumptions = {
                         "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
@@ -211,7 +210,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = 206)
+    @SqueakPrimitive(indices = {206, 222})
     protected abstract static class PrimClosureValueNaryNode extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(node, argArray)"}, assumptions = {
                         "cachedBlock.getCallTargetStable()"}, limit = "INLINE_BLOCK_CACHE_LIMIT")
@@ -389,26 +388,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), block.getNumArgs());
             copyIntoNode.execute(frameArguments, argArray);
             return indirectCallNode.call(block.getCallTarget(), frameArguments);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 221)
-    public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractClosurePrimitiveNode implements Primitive0WithFallback {
-        @Specialization
-        protected static final Object doValue(final VirtualFrame frame, final BlockClosureObject closure,
-                        @Cached final PrimClosureValue0Node primClosureValue0Node) {
-            return primClosureValue0Node.execute(frame, closure);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 222)
-    public abstract static class PrimClosureValueNoContextSwitchNaryNode extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        protected static final Object doValue(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
-                        @Cached final PrimClosureValueNaryNode primClosureValueNaryNode) {
-            return primClosureValueNaryNode.execute(frame, closure, argArray);
         }
     }
 
