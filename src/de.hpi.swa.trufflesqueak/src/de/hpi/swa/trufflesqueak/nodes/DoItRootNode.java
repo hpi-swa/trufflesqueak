@@ -15,7 +15,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.Returns;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -47,13 +46,6 @@ public abstract class DoItRootNode extends RootNode {
         if (closure.getNumArgs() != frame.getArguments().length) {
             return NilObject.SINGLETON;
         }
-        final boolean wasInPolyglotEvaluation = image.possiblyPolyglotEvaluation();
-        try {
-            image.setPossiblyPolyglotEvaluation();
-            return primitiveNode.execute(image.externalSenderFrame, closure, wrapNode.executeWrap(node, frame.getArguments()));
-        } finally {
-            image.restorePossiblyPolyglotEvaluation(wasInPolyglotEvaluation);
-        }
-
+        return primitiveNode.execute(image.externalSenderFrame, closure, wrapNode.executeWrap(node, frame.getArguments()));
     }
 }

@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-import com.oracle.truffle.api.dsl.NonIdempotent;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -71,7 +70,6 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
@@ -184,14 +182,11 @@ public final class SqueakImageContext {
     private final AllocationReporter allocationReporter;
     @CompilationFinal public SqueakLanguage.Env env;
     private final SqueakLanguage language;
-    private Source lastParseRequestSource;
     private final HashMap<Message, NativeObject> interopMessageToSelectorMap = new HashMap<>();
 
     @CompilationFinal private SqueakImage squeakImage;
 
     /* Stack Management */
-    private boolean possiblyPolyglotEvaluation;
-    private ContextObject interopExceptionThrowingContextPrototype;
     public ContextObject lastSeenContext;
 
     /* Low space handling */
@@ -336,7 +331,6 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public DoItRootNode getDoItContextNode(final ParsingRequest request) {
         final Source source = request.getSource();
-        lastParseRequestSource = source;
         final String sourceCode;
         if (isFileInFormat(source)) {
             sourceCode = String.format("[[ (FileStream readOnlyFileNamed: '%s') fileIn. true ] on: Error do: [ :e | Interop throwException: e ]]", source.getPath());
@@ -398,57 +392,6 @@ public final class SqueakImageContext {
         doItContext.setStackPointer(doItMethod.getNumTemps());
         doItContext.setSenderUnsafe(NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(this, getLanguage(), doItContext, false);
-    }
-
-    @NonIdempotent
-    public boolean possiblyPolyglotEvaluation() {
-        return possiblyPolyglotEvaluation;
-    }
-
-    public void setPossiblyPolyglotEvaluation() {
-        possiblyPolyglotEvaluation = true;
-    }
-
-    public void restorePossiblyPolyglotEvaluation(final boolean wasPossiblyPolyglotEvaluation) {
-        possiblyPolyglotEvaluation = wasPossiblyPolyglotEvaluation;
-    }
-
-    /**
-     * Returns a fake context for BlockClosure>>#on:do: that handles any exception (and may rethrow
-     * it as Interop exception). This allows Smalltalk exceptions to be thrown to other languages,
-     * so that they can catch them. The mechanism works essentially like this:
-     *
-     * <pre>
-     * <code>[ ... ] on: Exception do: [ :e | "handle e" ]</code>
-     * </pre>
-     *
-     * (see Context>>#handleSignal:)
-     */
-    public ContextObject getInteropExceptionThrowingContext() {
-        if (interopExceptionThrowingContextPrototype == null) {
-            assert evaluateUninterruptably("Interop") != NilObject.SINGLETON : "Interop class must be present";
-            final CompiledCodeObject onDoMethod = (CompiledCodeObject) evaluateUninterruptably("BlockClosure>>#on:do:");
-            interopExceptionThrowingContextPrototype = ContextObject.create(this, onDoMethod.getSqueakContextSize());
-            interopExceptionThrowingContextPrototype.setCodeObject(onDoMethod);
-            interopExceptionThrowingContextPrototype.setReceiver(NilObject.SINGLETON);
-            /*
-             * Need to catch all exceptions here. Otherwise, the contexts sender is used to find the
-             * next handler context (see Context>>#nextHandlerContext).
-             */
-            interopExceptionThrowingContextPrototype.atTempPut(0, evaluateUninterruptably("Exception"));
-            /*
-             * Throw Error and Halt as interop, ignore warnings, handle all other exceptions the
-             * usual way via UndefinedObject>>#handleSignal:.
-             */
-            interopExceptionThrowingContextPrototype.atTempPut(1, evaluateUninterruptably(
-                            "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] " +
-                                            "ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
-            interopExceptionThrowingContextPrototype.atTempPut(2, BooleanObject.TRUE);
-            interopExceptionThrowingContextPrototype.setInstructionPointer(onDoMethod.getInitialPC() + CallPrimitiveNode.NUM_BYTECODES);
-            interopExceptionThrowingContextPrototype.setStackPointer(onDoMethod.getNumTemps());
-            interopExceptionThrowingContextPrototype.removeSender();
-        }
-        return interopExceptionThrowingContextPrototype.shallowCopy();
     }
 
     /*
@@ -957,16 +900,8 @@ public final class SqueakImageContext {
         return systemAttributes.getSystemAttribute(index);
     }
 
-    public Source getLastParseRequestSource() {
-        return lastParseRequestSource;
-    }
-
     public boolean interruptHandlerDisabled() {
         return options.disableInterruptHandler();
-    }
-
-    public boolean isHeadless() {
-        return isHeadless;
     }
 
     public void attachDisplayIfNecessary() {
@@ -1018,10 +953,10 @@ public final class SqueakImageContext {
     }
 
     /*
-     * Probe the cache, and return the matching entry if found. Otherwise return one that can be
+     * Probe the cache, and return the matching entry if found. Otherwise, return one that can be
      * used (selector and class set) with method == null. Initial probe is class xor selector,
      * reprobe delta is selector. We do not try to optimize probe time -- all are equally 'fast'
-     * compared to lookup. Instead we randomize the reprobe so two or three very active conflicting
+     * compared to lookup. Instead, we randomize the reprobe so two or three very active conflicting
      * entries will not keep dislodging each other.
      */
     @ExplodeLoop
@@ -1266,13 +1201,7 @@ public final class SqueakImageContext {
             switch (message.getParameterCount()) {
                 case 1 -> suffix = "";
                 case 2 -> suffix = ":";
-                default -> {
-                    final StringBuilder sb = new StringBuilder(":");
-                    for (int i = 0; i < message.getParameterCount() - 2; i++) {
-                        sb.append("and:");
-                    }
-                    suffix = sb.toString();
-                }
+                default -> suffix = ":" + "and:".repeat(Math.max(0, message.getParameterCount() - 2));
             }
             return asByteSymbol(libraryPrefix + messageCapitalized + suffix);
         });

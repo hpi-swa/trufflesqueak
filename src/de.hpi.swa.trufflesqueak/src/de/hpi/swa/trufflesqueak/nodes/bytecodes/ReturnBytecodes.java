@@ -131,10 +131,8 @@ public final class ReturnBytecodes {
                     return firstMarkedContext;
                 }
                 // Watch for unwind-marked ContextObjects.
-                if (firstMarkedContext == null && context != null) {
-                    if (context.isUnwindMarked()) {
-                        firstMarkedContext = context;
-                    }
+                if (firstMarkedContext == null && context != null && context.isUnwindMarked()) {
+                    firstMarkedContext = context;
                 }
                 // Move to the next link.
                 currentLink = currentLink.getNextLink();

@@ -30,7 +30,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
 import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -49,7 +48,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
     @Child private GetNextActiveContextNode getNextActiveContextNode = GetNextActiveContextNode.create();
     @Child private Dispatch1Node sendCannotReturnNode;
-    @Child private Dispatch2Node sendAboutToReturnNode;
 
     private ExecuteTopLevelContextNode(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
         super(language, TOP_LEVEL_FRAME_DESCRIPTOR);
@@ -57,7 +55,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         initialContext = context;
         this.isImageResuming = isImageResuming;
         sendCannotReturnNode = Dispatch1Node.create(image.cannotReturn);
-        sendAboutToReturnNode = Dispatch2Node.create(image.aboutToReturnSelector);
     }
 
     public static ExecuteTopLevelContextNode create(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
@@ -66,10 +63,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        final boolean wasInPolyglotEvaluation = image.possiblyPolyglotEvaluation();
-        if (!isImageResuming) {
-            image.setPossiblyPolyglotEvaluation();
-        }
         try {
             executeLoop();
         } catch (final TopLevelReturn e) {
@@ -80,8 +73,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 if (image.hasDisplay()) {
                     image.getDisplay().close();
                 }
-            } else {
-                image.restorePossiblyPolyglotEvaluation(wasInPolyglotEvaluation);
             }
         }
         throw SqueakException.create("Top level context did not return");
