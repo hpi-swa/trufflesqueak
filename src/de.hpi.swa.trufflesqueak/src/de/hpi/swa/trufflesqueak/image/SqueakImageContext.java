@@ -298,14 +298,11 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public Object evaluateUninterruptably(final String sourceCode) {
-        final boolean wasActive = interrupt.isActive();
-        interrupt.deactivate();
+        final boolean wasActive = interrupt.deactivate();
         try {
             return evaluate(sourceCode);
         } finally {
-            if (wasActive) {
-                interrupt.activate();
-            }
+            interrupt.reactivate(wasActive);
         }
     }
 

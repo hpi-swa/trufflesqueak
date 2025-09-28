@@ -211,8 +211,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     public final Object send(final SqueakImageContext image, final String selector, final Object... arguments) {
         final Object methodObject = LookupMethodByStringNode.executeUncached(getSqueakClass(), selector);
         if (methodObject instanceof final CompiledCodeObject method) {
-            final boolean wasActive = image.interrupt.isActive();
-            image.interrupt.deactivate();
+            final boolean wasActive = image.interrupt.deactivate();
             try {
                 final Object result = TryPrimitiveNaryNode.executeUncached(image.externalSenderFrame, method, this, arguments);
                 if (result != null) {
@@ -221,9 +220,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
                     return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, this, arguments));
                 }
             } finally {
-                if (wasActive) {
-                    image.interrupt.activate();
-                }
+                image.interrupt.reactivate(wasActive);
             }
         } else {
             throw SqueakExceptions.SqueakException.create("CompiledMethodObject expected, got: " + methodObject);
