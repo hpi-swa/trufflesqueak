@@ -36,15 +36,12 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
 
     private final CompiledCodeObject code;
     private final BranchProfile nonLocalReturnProfile = BranchProfile.create();
-    private final int initialPC;
-    private SourceSection section;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @CompilationFinal private Object osrMetadata;
 
     public ExecuteBytecodeNode(final CompiledCodeObject code) {
         this.code = code;
-        initialPC = code.getInitialPC();
         bytecodeNodes = code.asBytecodeNodesEmpty();
     }
 
@@ -69,7 +66,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     @BytecodeInterpreterSwitch
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private Object interpretBytecode(final VirtualFrame frame, final int startPC) {
-        CompilerAsserts.partialEvaluationConstant(bytecodeNodes.length);
+        final int initialPC = code.getInitialPC();
         int pc = startPC;
         /*
          * Maintain backJumpCounter in a Counter so that the compiler does not confuse it with the
@@ -80,6 +77,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
+            CompilerAsserts.partialEvaluationConstant(node);
             if (node instanceof final AbstractSendNode sendNode) {
                 pc = sendNode.getSuccessorIndex();
                 FrameAccess.setInstructionPointer(frame, pc);
@@ -214,11 +212,8 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
 
     @Override
     public SourceSection getSourceSection() {
-        if (section == null) {
-            final Source source = code.getSource();
-            section = source.createSection(1, 1, source.getLength());
-        }
-        return section;
+        final Source source = code.getSource();
+        return source.createSection(1, 1, source.getLength());
     }
 
     @Override
