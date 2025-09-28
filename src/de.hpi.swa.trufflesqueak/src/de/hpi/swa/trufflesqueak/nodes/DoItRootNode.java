@@ -23,15 +23,15 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives.Pri
 
 public abstract class DoItRootNode extends RootNode {
     private final SqueakImageContext image;
-    private final Object maybeClosure;
+    private final BlockClosureObject blockClosure;
 
-    protected DoItRootNode(final SqueakImageContext image, final TruffleLanguage<?> language, final Object closure) {
+    protected DoItRootNode(final SqueakImageContext image, final TruffleLanguage<?> language, final BlockClosureObject closure) {
         super(language);
         this.image = image;
-        maybeClosure = closure;
+        blockClosure = closure;
     }
 
-    public static DoItRootNode create(final SqueakImageContext image, final SqueakLanguage language, final Object closure) {
+    public static DoItRootNode create(final SqueakImageContext image, final SqueakLanguage language, final BlockClosureObject closure) {
         return DoItRootNodeGen.create(image, (TruffleLanguage<?>) language, closure);
     }
 
@@ -40,12 +40,9 @@ public abstract class DoItRootNode extends RootNode {
                     @Bind final Node node,
                     @Cached final WrapToSqueakNode wrapNode,
                     @Cached final PrimFullClosureValueWithArgsNode primitiveNode) {
-        if (!(maybeClosure instanceof final BlockClosureObject closure)) {
+        if (blockClosure.getNumArgs() != frame.getArguments().length) {
             return NilObject.SINGLETON;
         }
-        if (closure.getNumArgs() != frame.getArguments().length) {
-            return NilObject.SINGLETON;
-        }
-        return primitiveNode.execute(image.externalSenderFrame, closure, wrapNode.executeWrap(node, frame.getArguments()));
+        return primitiveNode.execute(image.externalSenderFrame, blockClosure, wrapNode.executeWrap(node, frame.getArguments()));
     }
 }
