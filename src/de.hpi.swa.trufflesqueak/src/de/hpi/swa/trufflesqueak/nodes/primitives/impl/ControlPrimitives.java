@@ -804,6 +804,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
             final SqueakImageContext image = getContext();
+            return doGC(image);
+        }
+
+        @TruffleBoundary
+        private static Object doGC(final SqueakImageContext image) {
             /*
              * We need to do two things: remove forwarding pointers, and remove spurious references
              * from the stacks of dead frames. Any tracing of the object graph will remove the
