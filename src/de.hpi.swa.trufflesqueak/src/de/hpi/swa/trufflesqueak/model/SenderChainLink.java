@@ -4,12 +4,9 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.trufflesqueak.util;
+package de.hpi.swa.trufflesqueak.model;
 
-import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
-
-public interface SenderChainLink {
+public sealed interface SenderChainLink permits ContextObject, NilObject, FrameMarker {
     /**
      * Returns the ContextObject associated with this link, or null if none is directly associated.
      */
