@@ -20,14 +20,14 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.SenderChainLink;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.SenderChainLink;
 
 public final class ReturnBytecodes {
 
@@ -100,7 +100,7 @@ public final class ReturnBytecodes {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             if (homeContext.canBeReturnedTo()) {
-                final ContextObject firstMarkedContext = firstUnwindMarkedOrThrowNLR(FrameAccess.getSenderChainLink(frame), homeContext, returnValue);
+                final ContextObject firstMarkedContext = firstUnwindMarkedOrThrowNLR(FrameAccess.getSender(frame), homeContext, returnValue);
                 if (firstMarkedContext != null) {
                     getSendAboutToReturnNode().execute(frame, getGetOrCreateContextNode().executeGet(frame), returnValue, firstMarkedContext);
                     throw CompilerDirectives.shouldNotReachHere();
@@ -111,14 +111,15 @@ public final class ReturnBytecodes {
         }
 
         /**
-         * Walk the sender chain starting at the given FrameMarker and terminating at homeContext.
+         * Walk the sender chain starting at the given frame sender and terminating at homeContext.
          *
          * @return null if homeContext is not on sender chain; return first marked Context if found;
          *         raise NLR otherwise
          */
         @TruffleBoundary
-        private static ContextObject firstUnwindMarkedOrThrowNLR(final SenderChainLink startingLink, final ContextObject homeContext, final Object returnValue) {
-            SenderChainLink currentLink = startingLink;
+        private static ContextObject firstUnwindMarkedOrThrowNLR(final Object frameSender, final ContextObject homeContext, final Object returnValue) {
+            assert frameSender instanceof SenderChainLink;
+            SenderChainLink currentLink = (SenderChainLink) frameSender;
             ContextObject firstMarkedContext = null;
 
             while (currentLink != null && currentLink != NilObject.SINGLETON) {
@@ -243,7 +244,7 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnTopFromBlockNode extends AbstractBlockReturnNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -251,7 +252,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected Object getReturnValue(final VirtualFrame frame) {
-            return popNode.execute(frame);
+            return topNode.execute(frame);
         }
 
         @Override
@@ -279,7 +280,7 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnTopFromMethodNode extends AbstractNormalReturnNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         protected ReturnTopFromMethodNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
             super(frame, code, index);
@@ -287,7 +288,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected Object getReturnValue(final VirtualFrame frame) {
-            return popNode.execute(frame);
+            return topNode.execute(frame);
         }
 
         @Override

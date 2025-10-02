@@ -11,7 +11,6 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.util.SenderChainLink;
 
 public final class NilObject extends AbstractSqueakObject implements SenderChainLink {
     public static final NilObject SINGLETON = new NilObject();

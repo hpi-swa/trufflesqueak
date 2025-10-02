@@ -10,7 +10,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.SenderChainLink;
 
 /**
  * TruffleSqueak FrameMarker.

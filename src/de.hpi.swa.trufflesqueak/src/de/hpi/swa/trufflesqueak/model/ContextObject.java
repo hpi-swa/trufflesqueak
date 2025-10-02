@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
-import de.hpi.swa.trufflesqueak.util.SenderChainLink;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CallTarget;
@@ -34,7 +33,10 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class ContextObject extends AbstractSqueakObjectWithClassAndHash implements SenderChainLink {
-    public static final int NIL_PC_VALUE = -1;
+    public static final int NIL_PC_THRESHOLD = 0;
+    public static final int NIL_PC_STACK_NOT_NIL_VALUE = -1;
+    public static final int NIL_PC_STACK_NIL_VALUE = -2;
+
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
 
     private MaterializedFrame truffleFrame;
@@ -293,7 +295,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash im
 
     public Object getInstructionPointer(final InlinedConditionProfile nilProfile, final Node node) {
         final int pc = FrameAccess.getInstructionPointer(getTruffleFrame());
-        if (nilProfile.profile(node, pc == NIL_PC_VALUE)) {
+        if (nilProfile.profile(node, pc < NIL_PC_THRESHOLD)) {
             return NilObject.SINGLETON;
         } else {
             return (long) pc; // Must be a long.
@@ -309,7 +311,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash im
     }
 
     public void removeInstructionPointer() {
-        FrameAccess.setInstructionPointer(getTruffleFrame(), NIL_PC_VALUE);
+        FrameAccess.setInstructionPointer(getTruffleFrame(), NIL_PC_STACK_NOT_NIL_VALUE);
     }
 
     public int getStackPointer() {
@@ -369,6 +371,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash im
         FrameAccess.setStackPointer(truffleFrame, sp);
         FrameAccess.setClosure(truffleFrame, value);
         // Cannot use copyTo here as frame descriptors may be different
+        // ToDo: This does not handle any stack slots held in auxiliarySlots.
         FrameAccess.iterateStackSlots(oldFrame, slotIndex -> {
             final Object stackValue = oldFrame.getValue(slotIndex);
             if (stackValue != null) {
@@ -591,15 +594,11 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash im
                     }
                 }
             }
-            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
-                if (truffleFrame.isObject(slotIndex)) {
-                    final Object stackValue = truffleFrame.getObject(slotIndex);
-                    if (stackValue != null) {
-                        final Object migratedValue = fromToMap.get(stackValue);
-                        if (migratedValue != null) {
-                            truffleFrame.setObject(slotIndex, migratedValue);
-                        }
-                    }
+            FrameAccess.iterateStackObjectsWithReplacement(truffleFrame, true, stackValue -> {
+                if (stackValue != null) {
+                    return fromToMap.get(stackValue);
+                } else {
+                    return null;
                 }
             });
         }
@@ -611,11 +610,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash im
         if (hasTruffleFrame()) {
             tracer.addIfUnmarked(FrameAccess.getCodeObject(truffleFrame));
             tracer.addAllIfUnmarked(truffleFrame.getArguments());
-            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
-                if (truffleFrame.isObject(slotIndex)) {
-                    tracer.addIfUnmarked(truffleFrame.getObject(slotIndex));
-                }
-            });
+            FrameAccess.iterateStackObjects(truffleFrame, true, tracer::addIfUnmarked);
         }
     }
 
@@ -626,11 +621,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash im
             getSender(); /* May materialize sender. */
             writer.traceIfNecessary(FrameAccess.getCodeObject(truffleFrame));
             writer.traceAllIfNecessary(truffleFrame.getArguments());
-            FrameAccess.iterateStackSlots(truffleFrame, slotIndex -> {
-                if (truffleFrame.isObject(slotIndex)) {
-                    writer.traceIfNecessary(truffleFrame.getObject(slotIndex));
-                }
-            });
+            FrameAccess.iterateStackObjects(truffleFrame, true, writer::traceIfNecessary);
         }
     }
 
