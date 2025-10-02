@@ -100,7 +100,7 @@ public final class ReturnBytecodes {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             if (homeContext.canBeReturnedTo()) {
-                final ContextObject firstMarkedContext = firstUnwindMarkedOrThrowNLR(FrameAccess.getSenderChainLink(frame), homeContext, returnValue);
+                final ContextObject firstMarkedContext = firstUnwindMarkedOrThrowNLR(FrameAccess.getSender(frame), homeContext, returnValue);
                 if (firstMarkedContext != null) {
                     getSendAboutToReturnNode().execute(frame, getGetOrCreateContextNode().executeGet(frame), returnValue, firstMarkedContext);
                     throw CompilerDirectives.shouldNotReachHere();
@@ -111,14 +111,15 @@ public final class ReturnBytecodes {
         }
 
         /**
-         * Walk the sender chain starting at the given FrameMarker and terminating at homeContext.
+         * Walk the sender chain starting at the given frame sender and terminating at homeContext.
          *
          * @return null if homeContext is not on sender chain; return first marked Context if found;
          *         raise NLR otherwise
          */
         @TruffleBoundary
-        private static ContextObject firstUnwindMarkedOrThrowNLR(final SenderChainLink startingLink, final ContextObject homeContext, final Object returnValue) {
-            SenderChainLink currentLink = startingLink;
+        private static ContextObject firstUnwindMarkedOrThrowNLR(final Object frameSender, final ContextObject homeContext, final Object returnValue) {
+            assert frameSender instanceof SenderChainLink;
+            SenderChainLink currentLink = (SenderChainLink) frameSender;
             ContextObject firstMarkedContext = null;
 
             while (currentLink != null && currentLink != NilObject.SINGLETON) {
