@@ -34,7 +34,6 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.SenderChainLink;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
@@ -139,10 +138,6 @@ public final class FrameAccess {
         return (ContextObject) getSender(frame);
     }
 
-    public static SenderChainLink getSenderChainLink(final Frame frame) {
-        return (SenderChainLink) getSender(frame);
-    }
-
     public static void setSender(final Frame frame, final AbstractSqueakObject value) {
         frame.getArguments()[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = value;
         /* FrameMarker contains shadow copy */
@@ -217,11 +212,10 @@ public final class FrameAccess {
         marker.setContext(getContext(frame));
     }
 
-    public static FrameMarker initializeMarker(final Frame frame) {
+    public static void initializeMarker(final Frame frame) {
         /* FrameMarker contains shadow copy */
         final FrameMarker frameMarker = new FrameMarker(getSender(frame), getContext(frame));
         frame.setObjectStatic(SlotIndicies.THIS_MARKER.ordinal(), frameMarker);
-        return frameMarker;
     }
 
     @SuppressWarnings("unused")
@@ -300,18 +294,18 @@ public final class FrameAccess {
         setInstructionPointer(frame, ContextObject.NIL_PC_STACK_NIL_VALUE);
     }
 
-    /* The stack of a dead frame is unreachable. Nil it out here. */
-    @TruffleBoundary
-    private static void nilStackSlots(final MaterializedFrame frame) {
-        /**
-         * From Squeak6.0-22104 class comment for Context - eem 4/4/2017 17:45
-         *
-         * "Contexts refer to the context in which they were created via the sender inst var. An
-         * execution stack is made up of a linked list of contexts, linked through their sender inst
-         * var. Returning involves returning back to the sender. When a context is returned from,
-         * its sender and pc are nilled, and, if the context is still referred to, the virtual
-         * machine guarantees to preserve only the arguments after a return."
-         */
+    /**
+     * The stack of a dead frame is unreachable. Nil it out here.
+     * <p>
+     * From Squeak6.0-22104 class comment for Context - eem 4/4/2017 17:45
+     * <p>
+     * "Contexts refer to the context in which they were created via the sender inst var. An
+     * execution stack is made up of a linked list of contexts, linked through their sender inst
+     * var. Returning involves returning back to the sender. When a context is returned from, its
+     * sender and pc are nilled, and, if the context is still referred to, the virtual machine
+     * guarantees to preserve only the arguments after a return."
+     */
+    private static void clearStackSlots(final Frame frame) {
         assert isDead(frame);
         /*
          * Replace all initialized stack slots with null, removing spurious references from the
@@ -321,12 +315,12 @@ public final class FrameAccess {
             setSlotsAreNilled(frame);
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                if (frameDescriptor.getSlotKind(slotIndex) == FrameSlotKind.Object) {
+                if (frame.isObject(slotIndex)) {
                     frame.setObject(slotIndex, null);
                 }
             }
-            for (final int auxiliarySlotIndex : frame.getFrameDescriptor().getAuxiliarySlots().values()) {
-                frame.setAuxiliarySlot(auxiliarySlotIndex, null);
+            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
+                frame.setAuxiliarySlot(auxSlotIndex, null);
             }
         }
     }
@@ -334,7 +328,7 @@ public final class FrameAccess {
     /* Iterates used stack slots (may not be ordered). The stack of a dead frame is unreachable. */
     public static void iterateStackSlots(final Frame frame, final Consumer<Integer> action) {
         if (isDead(frame)) {
-            nilStackSlots(frame.materialize());
+            clearStackSlots(frame);
         } else {
             for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
                 action.accept(slotIndex);
@@ -343,19 +337,20 @@ public final class FrameAccess {
     }
 
     /* Iterate stack objects (may not be ordered). The stack of a dead frame is unreachable. */
-    public static void iterateStackObjects(final Frame frame, final boolean materialized, final Consumer<Object> action) {
+    public static void iterateStackObjects(final Frame frame, final boolean clearStackSlots, final Consumer<Object> action) {
         if (isDead(frame)) {
-            if (materialized) {
-                nilStackSlots(frame.materialize());
+            if (clearStackSlots) {
+                clearStackSlots(frame);
             }
         } else {
-            for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
+            final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
                 if (frame.isObject(slotIndex)) {
                     action.accept(frame.getObject(slotIndex));
                 }
             }
-            for (final int auxiliarySlotIndex : frame.getFrameDescriptor().getAuxiliarySlots().values()) {
-                action.accept(frame.getAuxiliarySlot(auxiliarySlotIndex));
+            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
+                action.accept(frame.getAuxiliarySlot(auxSlotIndex));
             }
         }
     }
@@ -364,13 +359,14 @@ public final class FrameAccess {
      * Iterate stack objects (may not be ordered) with optional replacement. The stack of a dead
      * frame is unreachable.
      */
-    public static void iterateStackObjectsWithReplacement(final Frame frame, final boolean materialized, final Function<Object, Object> action) {
+    public static void iterateStackObjectsWithReplacement(final Frame frame, final boolean clearStackSlots, final Function<Object, Object> action) {
         if (isDead(frame)) {
-            if (materialized) {
-                nilStackSlots(frame.materialize());
+            if (clearStackSlots) {
+                clearStackSlots(frame);
             }
         } else {
-            for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
+            final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
                 if (frame.isObject(slotIndex)) {
                     final Object replacement = action.apply(frame.getObject(slotIndex));
                     if (replacement != null) {
@@ -378,10 +374,10 @@ public final class FrameAccess {
                     }
                 }
             }
-            for (final int auxiliarySlotIndex : frame.getFrameDescriptor().getAuxiliarySlots().values()) {
-                final Object replacement = action.apply(frame.getAuxiliarySlot(auxiliarySlotIndex));
+            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
+                final Object replacement = action.apply(frame.getAuxiliarySlot(auxSlotIndex));
                 if (replacement != null) {
-                    frame.setAuxiliarySlot(auxiliarySlotIndex, replacement);
+                    frame.setAuxiliarySlot(auxSlotIndex, replacement);
                 }
             }
         }
@@ -392,8 +388,8 @@ public final class FrameAccess {
         if (slotIndex < numberOfSlots) {
             return frame.getValue(slotIndex);
         } else {
-            final int auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
-            return frame.getAuxiliarySlot(auxiliarySlotIndex);
+            final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+            return frame.getAuxiliarySlot(auxSlotIndex);
         }
     }
 
