@@ -438,7 +438,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (myContextOrNil instanceof final ContextObject context) {
                     assert !context.isDead() : "Have Context but it is dead: " + context;
                 } else {
-                    // If it is NOT a ContextObject, assert that it must be the NilObject.
                     assert myContextOrNil == NilObject.SINGLETON : "Expected ContextObject or Nil, but found unexpected object: " + myContextOrNil;
                 }
                 assert myListOrNil == NilObject.SINGLETON || (myListOrNil instanceof PointersObject) : "Unexpected object for myList: " + myListOrNil;
