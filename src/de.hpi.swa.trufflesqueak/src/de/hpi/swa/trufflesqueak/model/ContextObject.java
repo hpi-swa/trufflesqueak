@@ -10,7 +10,6 @@ import java.util.Arrays;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -206,9 +205,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     @TruffleBoundary
     public void materializeFromFrames() {
         truffleFrame = FrameAccess.findFrameForContext(this);
-        final Assumption doesNotNeedThisContextAssumption = getCodeObject().getDoesNotNeedThisContextAssumption();
-        assert doesNotNeedThisContextAssumption == Assumption.NEVER_VALID || doesNotNeedThisContextAssumption.isValid();
-        doesNotNeedThisContextAssumption.invalidate();
+        getCodeObject().getDoesNotNeedThisContextAssumption().invalidate();
     }
 
     public AbstractSqueakObject getMaterializedSender() {
