@@ -298,6 +298,39 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setCodeObject(final CompiledCodeObject value) {
         code = value;
+        truffleFrame = createTruffleFrame(this, truffleFrame, value);
+    }
+
+    @TruffleBoundary
+    private static MaterializedFrame createTruffleFrame(final ContextObject context, final MaterializedFrame currentFrame, final CompiledCodeObject method) {
+        final Object[] frameArguments;
+        final int instructionPointer;
+        final int stackPointer;
+        if (currentFrame != null) {
+            assert FrameAccess.getSender(currentFrame) != null : "Sender should not be null";
+            FrameAccess.assertReceiverNotNull(currentFrame);
+
+            final Object[] dummyArguments = currentFrame.getArguments();
+            final int expectedArgumentSize = FrameAccess.expectedArgumentSize(method.getNumArgs());
+            if (dummyArguments.length != expectedArgumentSize) {
+                // Adjust arguments.
+                frameArguments = Arrays.copyOf(dummyArguments, expectedArgumentSize);
+            } else {
+                frameArguments = currentFrame.getArguments();
+            }
+            assert currentFrame.getFrameDescriptor().getNumberOfSlots() > 0;
+            instructionPointer = FrameAccess.getInstructionPointer(currentFrame);
+            stackPointer = FrameAccess.getStackPointer(currentFrame);
+        } else {
+            frameArguments = FrameAccess.newWith(method.getNumArgs());
+            instructionPointer = method.getInitialPC();
+            stackPointer = method.getNumTemps();
+        }
+        final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, method.getFrameDescriptor());
+        FrameAccess.setContext(truffleFrame, context);
+        FrameAccess.setInstructionPointer(truffleFrame, instructionPointer);
+        FrameAccess.setStackPointer(truffleFrame, stackPointer);
+        return truffleFrame;
     }
 
     public BlockClosureObject getClosure() {
