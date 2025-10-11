@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -50,8 +49,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
-        @TruffleBoundary
         @Specialization
         protected static final AbstractSqueakObject doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
             // Search starts with sender.
@@ -104,7 +101,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          * Returns true if endContext is found on the sender chain of startContext. If terminate is
          * true, terminate Contexts while following the sender chain.
          */
-        @TruffleBoundary
         public static boolean hasSenderChainFromToAndTerminateIf(final ContextObject startContext, final AbstractSqueakObject endContext, final boolean terminate) {
             // Search starts with sender.
             AbstractSqueakObject currentLink = startContext.getFrameSender();
@@ -131,7 +127,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
-        @TruffleBoundary
         protected static final AbstractSqueakObject doNextHandler(final ContextObject receiver) {
             // Search starts with receiver.
             if (receiver.isExceptionHandlerMarked()) {
