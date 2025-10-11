@@ -6,8 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -20,18 +20,22 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /* Gets context or lazily initializes one if necessary. */
-@GenerateInline(false)
+@GenerateInline
+@GenerateCached(true)
 public abstract class GetOrCreateContextWithoutFrameNode extends AbstractNode {
     @NeverDefault
     public static GetOrCreateContextWithoutFrameNode create() {
         return GetOrCreateContextWithoutFrameNodeGen.create();
     }
 
-    public abstract ContextObject execute(VirtualFrame frame);
+    public abstract ContextObject execute(VirtualFrame frame, Node node);
+
+    public final ContextObject execute(final VirtualFrame frame) {
+        return execute(frame, this);
+    }
 
     @Specialization
-    public static ContextObject getContext(final VirtualFrame frame,
-                    @Bind final Node node,
+    public static ContextObject getContext(final VirtualFrame frame, final Node node,
                     @Cached final InlinedConditionProfile hasContextProfile) {
         final ContextObject context = FrameAccess.getContext(frame);
         if (hasContextProfile.profile(node, context != null)) {

@@ -97,9 +97,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
         private RootCallTarget callTarget;
         private CyclicAssumption callTargetStable;
-        private Assumption doesNotNeedSender;
-        private RootCallTarget resumptionCallTarget;
         private Assumption doesNotNeedThisContext;
+        private RootCallTarget resumptionCallTarget;
     }
 
     @TruffleBoundary
@@ -274,19 +273,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public Assumption getCallTargetStable() {
         return callTargetStable().getAssumption();
-    }
-
-    @TruffleBoundary
-    public Assumption getDoesNotNeedSenderAssumption() {
-        if (getExecutionData().doesNotNeedSender == null) {
-            initializeDoesNotNeedSenderAssumption();
-        }
-        return executionData.doesNotNeedSender;
-    }
-
-    @TruffleBoundary
-    private void initializeDoesNotNeedSenderAssumption() {
-        executionData.doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
     }
 
     @TruffleBoundary

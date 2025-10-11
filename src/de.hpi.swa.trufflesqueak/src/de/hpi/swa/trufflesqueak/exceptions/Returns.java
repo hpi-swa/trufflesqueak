@@ -41,7 +41,7 @@ public final class Returns {
 
         public NonLocalReturn(final Object returnValue, final ContextObject homeContext) {
             super(returnValue);
-            this.targetContext = (ContextObject) homeContext.getFrameSender(); // FIXME
+            this.targetContext = (ContextObject) homeContext.getFrameSender();
         }
 
         public boolean targetIsFrame(final VirtualFrame frame) {

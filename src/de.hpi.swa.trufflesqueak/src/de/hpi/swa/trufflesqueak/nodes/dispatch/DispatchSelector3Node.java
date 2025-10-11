@@ -39,6 +39,7 @@ import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3NodeFactory.Dispatch3NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3NodeFactory.DispatchDirectPrimitiveFallback3NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3NodeFactory.DispatchDirectedSuper3NodeFactory.DirectedSuperDispatch3NodeGen;
@@ -302,20 +303,20 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
 
         @Specialization
         protected static final Object doFallback(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final PrimitiveFailed pf,
+                        @Bind final Node node,
                         @Cached("create(method)") final HandlePrimitiveFailedNode handlePrimitiveFailedNode,
-                        @Cached("create(method)") final SenderNode senderNode,
+                        @Cached(inline = true) final GetOrCreateContextWithoutFrameNode senderNode,
                         @Cached("create(method.getCallTarget())") final DirectCallNode callNode) {
             handlePrimitiveFailedNode.execute(pf);
-            return callNode.call(FrameAccess.newWith(senderNode.execute(frame), null, receiver, arg1, arg2, arg3));
+            return callNode.call(FrameAccess.newWith(senderNode.execute(frame, node), null, receiver, arg1, arg2, arg3));
         }
     }
 
     abstract static class DispatchDirectWithSender3Node extends DispatchDirect3Node {
-        @Child protected SenderNode senderNode;
+        @Child protected GetOrCreateContextWithoutFrameNode senderNode = GetOrCreateContextWithoutFrameNode.create();
 
-        DispatchDirectWithSender3Node(final Assumption[] assumptions, final CompiledCodeObject method) {
+        DispatchDirectWithSender3Node(final Assumption[] assumptions) {
             super(assumptions);
-            senderNode = SenderNodeGen.create(method);
         }
     }
 
@@ -323,7 +324,7 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
         @Child private DirectCallNode callNode;
 
         DispatchDirectMethod3Node(final Assumption[] assumptions, final CompiledCodeObject method) {
-            super(assumptions, method);
+            super(assumptions);
             callNode = DirectCallNode.create(method.getCallTarget());
         }
 
@@ -339,7 +340,7 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
         @Child private CreateDoesNotUnderstandMessageNode createDNUMessageNode = CreateDoesNotUnderstandMessageNodeGen.create();
 
         DispatchDirectDoesNotUnderstand3Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject dnuMethod) {
-            super(assumptions, dnuMethod);
+            super(assumptions);
             this.selector = selector;
             callNode = DirectCallNode.create(dnuMethod.getCallTarget());
         }
@@ -356,7 +357,7 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
         @Child private DirectCallNode callNode;
 
         DispatchDirectObjectAsMethod3Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject runWithInMethod, final Object targetObject) {
-            super(assumptions, runWithInMethod);
+            super(assumptions);
             this.selector = selector;
             callNode = DirectCallNode.create(runWithInMethod.getCallTarget());
             this.targetObject = targetObject;
@@ -389,7 +390,7 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, arg1, arg2, arg3, receiverClass, lookupResult, method, selector));
+                return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, arg1, arg2, arg3, receiverClass, lookupResult, selector));
             }
         }
 
@@ -448,33 +449,32 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
         @GenerateInline
         @GenerateCached(false)
         protected abstract static class CreateFrameArgumentsForIndirectCall3Node extends AbstractNode {
-            abstract Object[] execute(VirtualFrame frame, Node node, Object receiver, Object arg1, Object arg2, Object arg3, ClassObject receiverClass, Object lookupResult,
-                            CompiledCodeObject method, NativeObject selector);
+            abstract Object[] execute(VirtualFrame frame, Node node, Object receiver, Object arg1, Object arg2, Object arg3, ClassObject receiverClass, Object lookupResult, NativeObject selector);
 
             @Specialization
             @SuppressWarnings("unused")
             protected static final Object[] doMethod(final VirtualFrame frame, final Node node, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
-                            final ClassObject receiverClass, final CompiledCodeObject lookupResult, final CompiledCodeObject method, final NativeObject selector,
-                            @Shared("senderNode") @Cached final GetOrCreateContextForDispatchNode senderNode) {
-                return FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1, arg2, arg3);
+                            final ClassObject receiverClass, final CompiledCodeObject lookupResult, final NativeObject selector,
+                            @Shared("senderNode") @Cached final GetOrCreateContextWithoutFrameNode senderNode) {
+                return FrameAccess.newWith(senderNode.execute(frame, node), null, receiver, arg1, arg2, arg3);
             }
 
             @Specialization(guards = "lookupResult == null")
             protected static final Object[] doDoesNotUnderstand(final VirtualFrame frame, final Node node, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
-                            final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult, final CompiledCodeObject method, final NativeObject selector,
+                            final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
                             @Cached final AbstractPointersObjectWriteNode writeNode,
-                            @Shared("senderNode") @Cached final GetOrCreateContextForDispatchNode senderNode) {
+                            @Shared("senderNode") @Cached final GetOrCreateContextWithoutFrameNode senderNode) {
                 final Object[] arguments = new Object[]{arg1, arg2, arg3};
                 final PointersObject message = getContext(node).newMessage(writeNode, node, selector, receiverClass, arguments);
-                return FrameAccess.newDNUWith(senderNode.execute(frame, node, method), receiver, message);
+                return FrameAccess.newDNUWith(senderNode.execute(frame, node), receiver, message);
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
             protected static final Object[] doObjectAsMethod(final VirtualFrame frame, final Node node, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
-                            @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject, final CompiledCodeObject method, final NativeObject selector,
-                            @Shared("senderNode") @Cached final GetOrCreateContextForDispatchNode senderNode) {
+                            @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject, final NativeObject selector,
+                            @Shared("senderNode") @Cached final GetOrCreateContextWithoutFrameNode senderNode) {
                 final Object[] arguments = new Object[]{arg1, arg2, arg3};
-                return FrameAccess.newOAMWith(senderNode.execute(frame, node, method), targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
+                return FrameAccess.newOAMWith(senderNode.execute(frame, node), targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
             }
         }
     }

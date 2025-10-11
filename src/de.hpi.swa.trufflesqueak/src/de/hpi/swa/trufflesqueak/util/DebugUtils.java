@@ -19,6 +19,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -229,7 +230,7 @@ public final class DebugUtils {
         while (current != null && current.hasTruffleFrame()) {
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments();
             b.append(MiscUtils.format("%s #(%s)", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs))).append('\n');
-            final Object sender = current.getFrameSender();
+            final AbstractSqueakObject sender = current.getFrameSender();
             if (sender == NilObject.SINGLETON) {
                 break;
             } else {
