@@ -66,7 +66,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateVirtualContextNod
  *                       +-------------------------------+
  * thisContext        -> | ContextObject                 |
  *                       +-------------------------------+
- * instructionPointer -> | int (-1 if terminated)        |
+ * instructionPointer -> | int (< 0 if terminated        |
  *                       +-------------------------------+
  * stackPointer       -> | int                           |
  *                       +-------------------------------+

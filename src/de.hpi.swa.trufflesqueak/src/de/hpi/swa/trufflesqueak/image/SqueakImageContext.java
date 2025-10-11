@@ -143,6 +143,8 @@ public final class SqueakImageContext {
     public final ClassObject nilClass = new ClassObject(this);
 
     public final CompiledCodeObject dummyMethod = new CompiledCodeObject(this, null, CompiledCodeHeaderUtils.makeHeader(true, 1, 0, 0, false, true), ArrayUtils.EMPTY_ARRAY, compiledMethodClass);
+    public final CompiledCodeObject dummyMethodSmallFrame = new CompiledCodeObject(this, null, CompiledCodeHeaderUtils.makeHeader(true, 1, 0, 0, false, false), ArrayUtils.EMPTY_ARRAY,
+                    compiledMethodClass);
     public final VirtualFrame externalSenderFrame = FrameAccess.newDummyFrame(dummyMethod);
 
     /* Method Cache */
