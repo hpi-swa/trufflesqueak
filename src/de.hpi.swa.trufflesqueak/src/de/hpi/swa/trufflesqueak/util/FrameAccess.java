@@ -35,7 +35,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateVirtualContextNode;
 
 /**
  * TruffleSqueak frame argument layout.
@@ -540,11 +540,11 @@ public final class FrameAccess {
         return arguments;
     }
 
-    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetContextOrMarkerNode getContextOrMarkerNode) {
+    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetOrCreateVirtualContextNode getContextOrMarkerNode) {
         return FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0);
     }
 
-    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetContextOrMarkerNode getContextOrMarkerNode, final Object arg1) {
+    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetOrCreateVirtualContextNode getContextOrMarkerNode, final Object arg1) {
         final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 1);
         frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
         return frameArguments;

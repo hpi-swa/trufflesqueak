@@ -15,8 +15,8 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateVirtualContextNode;
 
 abstract class SenderNode extends AbstractNode {
     protected final Assumption doesNotNeedSenderAssumption;
@@ -29,8 +29,8 @@ abstract class SenderNode extends AbstractNode {
 
     @Specialization(assumptions = "doesNotNeedSenderAssumption")
     protected static final Object doContextOrMarker(final VirtualFrame frame,
-                    @Cached final GetContextOrMarkerNode getContextOrMarkerNode) {
-        return getContextOrMarkerNode.execute(frame);
+                    @Cached final GetOrCreateVirtualContextNode getOrCreateVirtualContextNode) {
+        return getOrCreateVirtualContextNode.execute(frame);
     }
 
     @Specialization(replaces = "doContextOrMarker")
