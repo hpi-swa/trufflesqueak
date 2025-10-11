@@ -177,10 +177,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     private static MaterializedFrame createTruffleFrame(final ContextObject context) {
-        // Method is unknown, use dummy frame instead
         final Object[] dummyArguments = FrameAccess.newWith(1);
-        final CompiledCodeObject dummyMethod = SqueakImageContext.getSlow().dummyMethod;
-        final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
+        final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, context.code.getFrameDescriptor());
         FrameAccess.setContext(truffleFrame, context);
         FrameAccess.setInstructionPointer(truffleFrame, 0);
         FrameAccess.setStackPointer(truffleFrame, 1);
@@ -233,7 +231,9 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setSenderUnsafe(final AbstractSqueakObject value) {
         senderContextOrNil = value;
-        FrameAccess.setSender(getOrCreateTruffleFrame(), value);
+        if (hasTruffleFrame()) {
+            FrameAccess.setSender(truffleFrame, value);
+        }
     }
 
     public void removeSender() {
