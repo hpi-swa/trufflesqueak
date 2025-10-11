@@ -55,7 +55,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private ContextObject(final SqueakImageContext image, final int size) {
         super(image, image.methodContextClass);
         truffleFrame = null;
-        this.code = size <= CONTEXT.SMALL_FRAMESIZE ? image.dummyMethodSmallFrame : image.dummyMethod;
+        assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE;
+        this.code = size == CONTEXT.SMALL_FRAMESIZE ? image.dummyMethodSmallFrame : image.dummyMethod;
     }
 
     private ContextObject(final SqueakImageContext image, final VirtualFrame frame) {
