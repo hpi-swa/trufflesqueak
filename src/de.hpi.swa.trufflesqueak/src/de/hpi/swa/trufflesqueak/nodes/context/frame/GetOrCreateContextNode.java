@@ -36,6 +36,9 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         CompilerAsserts.neverPartOfCompilation();
         final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
+            if (!context.hasTruffleFrame()) {
+                context.setTruffleFrame(frame.materialize());
+            }
             return context;
         } else {
             return ContextObject.create(SqueakImageContext.getSlow(), frame.materialize(), FrameAccess.getCodeObject(frame));
@@ -53,10 +56,13 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
                     @Cached(value = "getCodeObject(frame)", neverDefault = true) final CompiledCodeObject code,
                     @Cached final InlinedCountingConditionProfile hasContextProfile) {
         final ContextObject context = FrameAccess.getContext(frame);
-        if (hasContextProfile.profile(node, context != null)) {
+        if (context != null) {
+            if (hasContextProfile.profile(node, !context.hasTruffleFrame())) {
+                context.setTruffleFrame(frame.materialize());
+            }
             return context;
         } else {
-            return ContextObject.create(getContext(node), frame.materialize(), code);
+            return ContextObject.create(SqueakImageContext.get(node), frame.materialize(), code);
         }
     }
 }

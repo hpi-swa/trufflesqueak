@@ -16,11 +16,11 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.SenderChainLink;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
@@ -117,14 +117,13 @@ public final class ReturnBytecodes {
          *         raise NLR otherwise
          */
         @TruffleBoundary
-        private static ContextObject firstUnwindMarkedOrThrowNLR(final Object frameSender, final ContextObject homeContext, final Object returnValue) {
-            assert frameSender instanceof SenderChainLink;
-            SenderChainLink currentLink = (SenderChainLink) frameSender;
+        private static ContextObject firstUnwindMarkedOrThrowNLR(final AbstractSqueakObject senderOrNil, final ContextObject homeContext, final Object returnValue) {
+            AbstractSqueakObject currentLink = senderOrNil;
             ContextObject firstMarkedContext = null;
 
-            while (currentLink != null && currentLink != NilObject.SINGLETON) {
+            while (currentLink != NilObject.SINGLETON) {
                 // Exit if we've found homeContext.
-                final ContextObject context = currentLink.getContext();
+                final ContextObject context = (ContextObject) currentLink;
                 if (context == homeContext) {
                     if (firstMarkedContext == null) {
                         throw new NonLocalReturn(returnValue, homeContext);
@@ -136,7 +135,7 @@ public final class ReturnBytecodes {
                     firstMarkedContext = context;
                 }
                 // Move to the next link.
-                currentLink = currentLink.getNextLink();
+                currentLink = context.getFrameSender();
             }
 
             // Reached the end of the chain without finding homeContext.

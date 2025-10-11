@@ -20,7 +20,6 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.SenderChainLink;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
@@ -59,20 +58,20 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             if (receiver == previousContextOrNil) {
                 return NilObject.SINGLETON;
             }
-            SenderChainLink currentLink = receiver.getNextLink();
+            AbstractSqueakObject currentLink = receiver.getFrameSender();
 
-            while (currentLink != null && currentLink != NilObject.SINGLETON) {
+            while (currentLink != NilObject.SINGLETON) {
                 // Exit if we've found the previous Context.
-                final ContextObject context = currentLink.getContext();
+                final ContextObject context = (ContextObject) currentLink;
                 if (context == previousContextOrNil) {
                     return NilObject.SINGLETON;
                 }
                 // Watch for unwind-marked ContextObjects.
-                if (context != null && context.isUnwindMarked()) {
+                if (context.isUnwindMarked()) {
                     return context;
                 }
                 // Move to the next link.
-                currentLink = currentLink.getNextLink();
+                currentLink = context.getFrameSender();
             }
             // Reached the end of the chain without finding previous Context.
             return NilObject.SINGLETON;
@@ -108,18 +107,18 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         public static boolean hasSenderChainFromToAndTerminateIf(final ContextObject startContext, final AbstractSqueakObject endContext, final boolean terminate) {
             // Search starts with sender.
-            SenderChainLink currentLink = startContext.getNextLink();
+            AbstractSqueakObject currentLink = startContext.getFrameSender();
 
-            while (currentLink != null && currentLink != NilObject.SINGLETON) {
+            while (currentLink != NilObject.SINGLETON) {
                 // Exit if we've found endContext.
-                final ContextObject context = currentLink.getContext();
+                final ContextObject context = (ContextObject) currentLink;
                 if (context == endContext) {
                     return true;
                 }
                 // Move to the next link.
-                currentLink = currentLink.getNextLink();
+                currentLink = ((ContextObject) currentLink).getFrameSender();
                 // Terminate if requested.
-                if (terminate && context != null) {
+                if (terminate && context.hasTruffleFrame()) {
                     context.terminate();
                 }
             }
@@ -138,16 +137,16 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             if (receiver.isExceptionHandlerMarked()) {
                 return receiver;
             }
-            SenderChainLink currentLink = receiver.getNextLink();
+            AbstractSqueakObject currentLink = receiver.getFrameSender();
 
-            while (currentLink != null && currentLink != NilObject.SINGLETON) {
+            while (currentLink != NilObject.SINGLETON) {
                 // Watch for exception handler marked ContextObjects.
-                final ContextObject context = currentLink.getContext();
-                if (context != null && context.isExceptionHandlerMarked()) {
+                final ContextObject context = (ContextObject) currentLink;
+                if (context.isExceptionHandlerMarked()) {
                     return context;
                 }
                 // Move to the next link.
-                currentLink = currentLink.getNextLink();
+                currentLink = context.getFrameSender();
             }
 
             // Reached the end of the chain without finding an exception handler Context.
