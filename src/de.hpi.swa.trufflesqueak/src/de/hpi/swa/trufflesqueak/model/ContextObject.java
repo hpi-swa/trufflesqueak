@@ -224,22 +224,11 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     /**
      * Sets the sender of a ContextObject.
      */
-    public void setSender(final ContextObject value) {
-        if (truffleFrame != null) {
-            if (!hasModifiedSender && FrameAccess.getSender(truffleFrame) != value) {
-                hasModifiedSender = true;
-            }
+    public void setSender(final AbstractSqueakObject value) {
+        if (!hasModifiedSender && truffleFrame != null && FrameAccess.getSender(truffleFrame) != value) {
+            hasModifiedSender = true;
         }
         setSenderUnsafe(value);
-    }
-
-    public void setNilSender() {
-        if (truffleFrame != null) {
-            if (!hasModifiedSender && FrameAccess.getSender(truffleFrame) != NilObject.SINGLETON) {
-                hasModifiedSender = true;
-            }
-        }
-        setSenderUnsafe(NilObject.SINGLETON);
     }
 
     public void setSenderUnsafe(final AbstractSqueakObject value) {
@@ -249,7 +238,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void removeSender() {
         if (hasModifiedSender) {
-            hasModifiedSender = false;
+            clearModifiedSender();
         }
         setSenderUnsafe(NilObject.SINGLETON);
     }
