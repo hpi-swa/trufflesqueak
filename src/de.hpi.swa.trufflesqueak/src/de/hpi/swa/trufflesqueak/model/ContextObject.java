@@ -226,8 +226,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
      */
     public void setSender(final ContextObject value) {
         if (truffleFrame != null) {
-            final Object sender = FrameAccess.getSender(getTruffleFrame());
-            if (!hasModifiedSender && sender != value) {
+            if (!hasModifiedSender && FrameAccess.getSender(truffleFrame) != value) {
                 hasModifiedSender = true;
             }
         }
@@ -236,8 +235,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setNilSender() {
         if (truffleFrame != null) {
-            final Object sender = FrameAccess.getSender(getTruffleFrame());
-            if (!hasModifiedSender && sender != NilObject.SINGLETON) {
+            if (!hasModifiedSender && FrameAccess.getSender(truffleFrame) != NilObject.SINGLETON) {
                 hasModifiedSender = true;
             }
         }
@@ -568,7 +566,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             if (compiledCodeObject != null && fromToMap.get(compiledCodeObject) instanceof final CompiledCodeObject o) {
                 setCodeObject(o);
             }
-            final Object sender = FrameAccess.getSender(truffleFrame);
+            final AbstractSqueakObject sender = FrameAccess.getSender(truffleFrame);
             if (sender != null && fromToMap.get(sender) instanceof final ContextObject o) {
                 setSender(o);
             }

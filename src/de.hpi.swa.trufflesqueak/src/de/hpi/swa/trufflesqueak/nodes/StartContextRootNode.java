@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsQuickNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -43,7 +43,7 @@ public final class StartContextRootNode extends AbstractRootNode {
     @Children private FrameStackWriteNode[] writeTempNodes;
     @Child private CheckForInterruptsQuickNode interruptHandlerNode;
     @Child private AbstractExecuteContextNode executeBytecodeNode;
-    @Child private GetOrCreateContextNode getOrCreateContextNode;
+    @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
 
     public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
@@ -60,7 +60,7 @@ public final class StartContextRootNode extends AbstractRootNode {
             if (image.enteringContextExceedsDepth()) {
                 CompilerDirectives.transferToInterpreter();
                 // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
-                final ContextObject activeContext = GetOrCreateContextNode.getOrCreateUncached(frame);
+                final ContextObject activeContext = GetOrCreateContextWithFrameNode.getOrCreateUncached(frame);
                 AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
                 throw ProcessSwitch.SINGLETON;
             }
@@ -112,10 +112,10 @@ public final class StartContextRootNode extends AbstractRootNode {
         }
     }
 
-    private GetOrCreateContextNode getGetOrCreateContextNode() {
+    private GetOrCreateContextWithFrameNode getGetOrCreateContextNode() {
         if (getOrCreateContextNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextNode.create());
+            getOrCreateContextNode = insert(GetOrCreateContextWithFrameNode.create());
         }
         return getOrCreateContextNode;
     }

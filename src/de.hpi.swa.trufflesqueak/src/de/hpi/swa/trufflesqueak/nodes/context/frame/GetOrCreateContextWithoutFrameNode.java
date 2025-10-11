@@ -21,10 +21,10 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /* Gets context or lazily initializes one if necessary. */
 @GenerateInline(false)
-public abstract class GetOrCreateVirtualContextNode extends AbstractNode {
+public abstract class GetOrCreateContextWithoutFrameNode extends AbstractNode {
     @NeverDefault
-    public static GetOrCreateVirtualContextNode create() {
-        return GetOrCreateVirtualContextNodeGen.create();
+    public static GetOrCreateContextWithoutFrameNode create() {
+        return GetOrCreateContextWithoutFrameNodeGen.create();
     }
 
     public abstract ContextObject execute(VirtualFrame frame);

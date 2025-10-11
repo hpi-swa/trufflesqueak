@@ -18,27 +18,27 @@ import com.oracle.truffle.api.profiles.InlinedExactClassProfile;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateVirtualContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
 
 @GenerateInline
 @GenerateCached(false)
-public abstract class GetOrCreateContextOrMarkerNode extends AbstractNode {
+public abstract class GetOrCreateContextForDispatchNode extends AbstractNode {
 
     public abstract Object execute(VirtualFrame frame, Node node, CompiledCodeObject code);
 
     @Specialization(guards = "doesNotNeedSender(code, assumptionProfile, node)")
-    protected static final Object doGetContextOrMarker(final VirtualFrame frame, @SuppressWarnings("unused") final Node node, @SuppressWarnings("unused") final CompiledCodeObject code,
+    protected static final Object doGetOrCreateContextWithoutFrame(final VirtualFrame frame, @SuppressWarnings("unused") final Node node, @SuppressWarnings("unused") final CompiledCodeObject code,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
-                    @Cached(inline = false) final GetOrCreateVirtualContextNode getContextOrMarkerNode) {
-        return getContextOrMarkerNode.execute(frame);
+                    @Cached(inline = false) final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode) {
+        return getOrCreateContextWithoutFrameNode.execute(frame);
     }
 
     @Specialization(guards = "!doesNotNeedSender(code, assumptionProfile, node)")
-    protected static final ContextObject doGetOrCreateContext(final VirtualFrame frame, @SuppressWarnings("unused") final Node node, @SuppressWarnings("unused") final CompiledCodeObject code,
+    protected static final ContextObject doGetOrCreateContextWithFrame(final VirtualFrame frame, @SuppressWarnings("unused") final Node node, @SuppressWarnings("unused") final CompiledCodeObject code,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached final InlinedExactClassProfile assumptionProfile,
-                    @Cached final GetOrCreateContextNode getOrCreateContextNode) {
-        return getOrCreateContextNode.executeGet(frame, node);
+                    @Cached final GetOrCreateContextWithFrameNode getOrCreateContextWithFrameNode) {
+        return getOrCreateContextWithFrameNode.executeGet(frame, node);
     }
 
     protected static final boolean doesNotNeedSender(final CompiledCodeObject code, final InlinedExactClassProfile assumptionProfile, final Node node) {

@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 
 /**
  * Record a Process to be awakened on the next interpreter cycle. Suspends the active Context and
@@ -38,13 +38,13 @@ public abstract class TransferToNode extends AbstractNode {
         final PointersObject scheduler = getContext(null).getScheduler();
         final PointersObject oldProcess = READ_NODE.executePointers(null, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS);
         WRITE_NODE.execute(null, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        final ContextObject activeContext = GetOrCreateContextNode.getOrCreateUncached(frame);
+        final ContextObject activeContext = GetOrCreateContextWithFrameNode.getOrCreateUncached(frame);
         WRITE_NODE.execute(null, oldProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
     }
 
     @Specialization
     protected static final void transferTo(final VirtualFrame frame, final Node node, final PointersObject newProcess,
-                    @Cached final GetOrCreateContextNode contextNode,
+                    @Cached final GetOrCreateContextWithFrameNode contextNode,
                     @Cached final AbstractPointersObjectReadNode readOldProcessNode,
                     @Cached final AbstractPointersObjectWriteNode writeActiveProcessNode,
                     @Cached final AbstractPointersObjectWriteNode writeSuspendedContextNode) {

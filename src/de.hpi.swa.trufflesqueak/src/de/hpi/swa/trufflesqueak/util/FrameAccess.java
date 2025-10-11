@@ -35,7 +35,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateVirtualContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
 
 /**
  * TruffleSqueak frame argument layout.
@@ -526,13 +526,12 @@ public final class FrameAccess {
     }
 
     /* Template because closure arguments still need to be filled in. */
-    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
+    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final ContextObject sender, final int numArgs) {
         final Object[] copied = closure.getCopiedValues();
         final int numCopied = copied.length;
         assert closure.getNumArgs() == numArgs : "number of required and provided block arguments do not match";
         final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs + numCopied];
-        // Sender is thisContext (or marker)
-        arguments[ArgumentIndicies.SENDER.ordinal()] = senderOrMarker;
+        arguments[ArgumentIndicies.SENDER.ordinal()] = sender;
         arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         arguments[ArgumentIndicies.RECEIVER.ordinal()] = closure.getReceiver();
         assert arguments[ArgumentIndicies.RECEIVER.ordinal()] != null;
@@ -540,12 +539,13 @@ public final class FrameAccess {
         return arguments;
     }
 
-    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetOrCreateVirtualContextNode getContextOrMarkerNode) {
-        return FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0);
+    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode) {
+        return FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextWithoutFrameNode.execute(frame), 0);
     }
 
-    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetOrCreateVirtualContextNode getContextOrMarkerNode, final Object arg1) {
-        final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 1);
+    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
+                    final Object arg1) {
+        final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextWithoutFrameNode.execute(frame), 1);
         frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
         return frameArguments;
     }
@@ -588,7 +588,7 @@ public final class FrameAccess {
     @TruffleBoundary
     public static MaterializedFrame findFrameForContext(final ContextObject context) {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
-        LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a marker...");
+        LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a ContextObject...");
         final Object frameOrResumingContextObject = Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!isTruffleSqueakFrame(current)) {

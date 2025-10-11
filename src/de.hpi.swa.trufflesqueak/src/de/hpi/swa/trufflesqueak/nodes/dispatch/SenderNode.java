@@ -15,8 +15,8 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateVirtualContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
 
 abstract class SenderNode extends AbstractNode {
     protected final Assumption doesNotNeedSenderAssumption;
@@ -28,15 +28,15 @@ abstract class SenderNode extends AbstractNode {
     protected abstract Object execute(VirtualFrame frame);
 
     @Specialization(assumptions = "doesNotNeedSenderAssumption")
-    protected static final Object doContextOrMarker(final VirtualFrame frame,
-                    @Cached final GetOrCreateVirtualContextNode getOrCreateVirtualContextNode) {
-        return getOrCreateVirtualContextNode.execute(frame);
+    protected static final Object doContextWithoutFrame(final VirtualFrame frame,
+                    @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode) {
+        return getOrCreateContextWithoutFrameNode.execute(frame);
     }
 
-    @Specialization(replaces = "doContextOrMarker")
-    protected static final Object doContext(final VirtualFrame frame,
+    @Specialization(replaces = "doContextWithoutFrame")
+    protected static final Object doContextWithFrame(final VirtualFrame frame,
                     @Bind final Node node,
-                    @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
+                    @Cached(inline = true) final GetOrCreateContextWithFrameNode getOrCreateContextNode) {
         return getOrCreateContextNode.executeGet(frame, node);
     }
 }

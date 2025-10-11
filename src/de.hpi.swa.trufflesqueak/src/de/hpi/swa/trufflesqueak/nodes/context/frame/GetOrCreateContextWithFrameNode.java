@@ -25,11 +25,11 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @GenerateInline
 @GenerateCached(true)
-public abstract class GetOrCreateContextNode extends AbstractNode {
+public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
 
     @NeverDefault
-    public static GetOrCreateContextNode create() {
-        return GetOrCreateContextNodeGen.create();
+    public static GetOrCreateContextWithFrameNode create() {
+        return GetOrCreateContextWithFrameNodeGen.create();
     }
 
     public static final ContextObject getOrCreateUncached(final Frame frame) {

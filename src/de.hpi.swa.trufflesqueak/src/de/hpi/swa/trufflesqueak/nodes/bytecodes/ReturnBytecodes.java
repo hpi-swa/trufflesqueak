@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -89,7 +89,7 @@ public final class ReturnBytecodes {
     }
 
     private static final class ReturnFromClosureNode extends AbstractReturnKindNode {
-        @Child private GetOrCreateContextNode getOrCreateContextNode;
+        @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode;
         @Child private Dispatch2Node sendAboutToReturnNode;
 
         /* Return to closure's home context's sender, executing unwind blocks */
@@ -142,10 +142,10 @@ public final class ReturnBytecodes {
             return null;
         }
 
-        private GetOrCreateContextNode getGetOrCreateContextNode() {
+        private GetOrCreateContextWithFrameNode getGetOrCreateContextNode() {
             if (getOrCreateContextNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getOrCreateContextNode = insert(GetOrCreateContextNode.create());
+                getOrCreateContextNode = insert(GetOrCreateContextWithFrameNode.create());
             }
             return getOrCreateContextNode;
         }
