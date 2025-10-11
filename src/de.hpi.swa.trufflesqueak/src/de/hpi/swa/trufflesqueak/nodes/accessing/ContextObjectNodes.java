@@ -92,7 +92,7 @@ public final class ContextObjectNodes {
         @SuppressWarnings("unused")
         @Specialization(guards = "index == SENDER_OR_NIL")
         protected static final void doSender(final ContextObject context, final long index, final NilObject value) {
-            context.setNilSender();
+            context.setSender(NilObject.SINGLETON);
         }
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER"})

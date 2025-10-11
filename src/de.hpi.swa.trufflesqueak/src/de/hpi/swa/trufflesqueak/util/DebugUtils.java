@@ -19,10 +19,10 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
@@ -164,11 +164,10 @@ public final class DebugUtils {
             }
             final CompiledCodeObject code = FrameAccess.getCodeObject(current);
             lastSender[0] = FrameAccess.getSender(current);
-            final Object marker = FrameAccess.getMarker(current);
             final Object context = FrameAccess.getContext(current);
             final String prefix = FrameAccess.hasClosure(current) ? "[] in " : "";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
-            log.info(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));
+            log.info(MiscUtils.format("%s%s #(%s) [context: %s, sender: %s]", prefix, code, argumentsString, context, lastSender[0]));
             return null;
         });
         if (lastSender[0] instanceof final ContextObject c) {
@@ -230,12 +229,9 @@ public final class DebugUtils {
         ContextObject current = context;
         while (current != null && current.hasTruffleFrame()) {
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments();
-            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker())).append('\n');
-            final Object sender = current.getFrameSender();
+            b.append(MiscUtils.format("%s #(%s)", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs))).append('\n');
+            final AbstractSqueakObject sender = current.getFrameSender();
             if (sender == NilObject.SINGLETON) {
-                break;
-            } else if (sender instanceof FrameMarker) {
-                b.append(sender).append('\n');
                 break;
             } else {
                 current = (ContextObject) sender;

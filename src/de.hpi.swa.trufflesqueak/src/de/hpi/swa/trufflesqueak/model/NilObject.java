@@ -12,7 +12,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 
-public final class NilObject extends AbstractSqueakObject implements SenderChainLink {
+public final class NilObject extends AbstractSqueakObject {
     public static final NilObject SINGLETON = new NilObject();
     public static final long SQUEAK_HASH = 1L;
 
@@ -53,15 +53,6 @@ public final class NilObject extends AbstractSqueakObject implements SenderChain
     @Override
     public int size() {
         return 0;
-    }
-
-    /** SenderChainLink methods. */
-    public ContextObject getContext() {
-        return null;
-    }
-
-    public SenderChainLink getNextLink() {
-        return null;
     }
 
     @Override

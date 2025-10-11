@@ -36,7 +36,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -84,7 +84,7 @@ public final class PushBytecodes {
 
         private final int blockSize;
 
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+        @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode = GetOrCreateContextWithFrameNode.create();
 
         private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numArgs, final int numCopied, final int blockSize) {
             super(code, index, numBytecodes + blockSize, numCopied);
@@ -170,7 +170,7 @@ public final class PushBytecodes {
         }
 
         private static final class PushFullClosureOnStackReceiverWithOuterContextNode extends AbstractPushFullClosureNode {
-            @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+            @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode = GetOrCreateContextWithFrameNode.create();
             @Child private FrameStackPopNode popReceiverNode = FrameStackPopNode.create();
 
             private PushFullClosureOnStackReceiverWithOuterContextNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
@@ -186,7 +186,7 @@ public final class PushBytecodes {
         }
 
         private static final class PushFullClosureFrameReceiverWithOuterContextNode extends AbstractPushFullClosureNode {
-            @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+            @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode = GetOrCreateContextWithFrameNode.create();
 
             private PushFullClosureFrameReceiverWithOuterContextNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
                 super(code, index, numBytecodes, literalIndex, numCopied);
@@ -228,7 +228,7 @@ public final class PushBytecodes {
     }
 
     public static final class PushActiveContextNode extends AbstractPushNode {
-        @Child private GetOrCreateContextNode getContextNode = GetOrCreateContextNode.create();
+        @Child private GetOrCreateContextWithFrameNode getContextNode = GetOrCreateContextWithFrameNode.create();
 
         public PushActiveContextNode(final CompiledCodeObject code, final int index) {
             super(code, index);

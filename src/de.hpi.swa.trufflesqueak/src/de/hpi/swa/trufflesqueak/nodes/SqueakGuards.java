@@ -21,7 +21,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -111,10 +110,6 @@ public final class SqueakGuards {
     public static boolean isFraction(final PointersObject object, final Node node) {
         CompilerAsserts.compilationConstant(node);
         return object.getSqueakClass() == SqueakImageContext.get(node).getFractionClass();
-    }
-
-    public static boolean isFrameMarker(final Object object) {
-        return object instanceof FrameMarker;
     }
 
     public static boolean isGreaterThanZero(final double value) {

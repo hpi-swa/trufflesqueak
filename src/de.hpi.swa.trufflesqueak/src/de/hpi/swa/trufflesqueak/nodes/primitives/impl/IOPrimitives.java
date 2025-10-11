@@ -57,7 +57,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Weak
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode.AbstractPrimitiveWithFrameNode;
@@ -134,7 +134,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         public final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Bind final Node node,
                         @Bind final SqueakImageContext image,
-                        @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
+                        @Cached(inline = true) final GetOrCreateContextWithFrameNode getOrCreateContextNode) {
             writeImage(image, getOrCreateContextNode.executeGet(frame, node));
             /* Return false to signal that the image is not resuming. */
             return BooleanObject.FALSE;
