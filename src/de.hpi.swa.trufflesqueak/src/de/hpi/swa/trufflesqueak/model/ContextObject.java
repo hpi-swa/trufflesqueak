@@ -238,7 +238,9 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public void materializeFromFrames() {
-        truffleFrame = FrameAccess.findFrameForMarker(this);
+        truffleFrame = FrameAccess.findFrameForContext(this);
+        assert getCodeObject().getDoesNotNeedThisContextAssumption().isValid();
+        getCodeObject().getDoesNotNeedThisContextAssumption().invalidate();
     }
 
     public AbstractSqueakObject getMaterializedSender() {

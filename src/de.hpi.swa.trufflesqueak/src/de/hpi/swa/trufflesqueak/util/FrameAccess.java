@@ -586,7 +586,7 @@ public final class FrameAccess {
     }
 
     @TruffleBoundary
-    public static MaterializedFrame findFrameForMarker(final ContextObject context) {
+    public static MaterializedFrame findFrameForContext(final ContextObject context) {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a marker...");
         final Object frameOrResumingContextObject = Truffle.getRuntime().iterateFrames(frameInstance -> {

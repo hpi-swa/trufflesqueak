@@ -35,7 +35,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
-    @CompilationFinal private boolean needsContextObject;
 
     @CompilationFinal private final SqueakImageContext image;
 
@@ -81,7 +80,6 @@ public final class StartContextRootNode extends AbstractRootNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final int numArgs = FrameAccess.getNumArguments(frame);
             final CompiledCodeObject code = getCode();
-            needsContextObject = code.isExceptionHandlerMarked() || code.isUnwindMarked();
             if (!FrameAccess.hasClosure(frame)) {
                 initialPC = code.getInitialPC();
                 initialSP = code.getNumTemps();
@@ -98,7 +96,7 @@ public final class StartContextRootNode extends AbstractRootNode {
                 assert writeTempNodes[i] instanceof FrameSlotWriteNode;
             }
         }
-        if (needsContextObject) {
+        if (!getCode().getDoesNotNeedThisContextAssumption().isValid()) {
             getGetOrCreateContextNode().executeGet(frame);
         }
         FrameAccess.setInstructionPointer(frame, initialPC);
