@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -35,6 +36,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
+    @CompilationFinal private Assumption doesNotNeedThisContext;
 
     @CompilationFinal private final SqueakImageContext image;
 
@@ -80,6 +82,7 @@ public final class StartContextRootNode extends AbstractRootNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final int numArgs = FrameAccess.getNumArguments(frame);
             final CompiledCodeObject code = getCode();
+            doesNotNeedThisContext = code.getDoesNotNeedThisContextAssumption();
             if (!FrameAccess.hasClosure(frame)) {
                 initialPC = code.getInitialPC();
                 initialSP = code.getNumTemps();
@@ -96,7 +99,7 @@ public final class StartContextRootNode extends AbstractRootNode {
                 assert writeTempNodes[i] instanceof FrameSlotWriteNode;
             }
         }
-        if (!getCode().getDoesNotNeedThisContextAssumption().isValid()) {
+        if (!doesNotNeedThisContext.isValid()) {
             getGetOrCreateContextNode().executeGet(frame);
         }
         FrameAccess.setInstructionPointer(frame, initialPC);
