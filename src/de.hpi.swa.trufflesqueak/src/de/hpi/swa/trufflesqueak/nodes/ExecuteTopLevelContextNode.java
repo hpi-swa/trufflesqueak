@@ -181,12 +181,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private ContextObject commonNLReturn(final AbstractSqueakObject sender, final ContextObject activeContext, final NonLocalReturn nlr) {
         final ContextObject targetContext = nlr.getTargetContext();
         final Object returnValue = nlr.getReturnValue();
-        if (!(sender instanceof final ContextObject senderContext)) {
-            assert sender == NilObject.SINGLETON;
+        if (sender == NilObject.SINGLETON) {
             return sendCannotReturnOrReturnToTopLevel(activeContext, targetContext, returnValue);
         }
         // Terminate the Contexts on sender chain.
-        ContextObject context = senderContext;
+        ContextObject context = (ContextObject) sender;
         while (context != targetContext) {
             final ContextObject currentSender = (ContextObject) context.getSender();
             context.terminate();

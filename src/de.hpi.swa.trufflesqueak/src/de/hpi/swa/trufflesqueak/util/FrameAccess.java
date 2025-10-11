@@ -419,7 +419,7 @@ public final class FrameAccess {
         return frame.getArguments().length >= ArgumentIndicies.RECEIVER.ordinal() && frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
     }
 
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
+    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
         final int receiverAndArgumentsLength = receiverAndArguments.length;
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
         assert sender != null : "Sender should never be null";
@@ -431,7 +431,7 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver) {
+    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal()];
         frameArguments[ArgumentIndicies.SENDER.ordinal()] = sender;
@@ -440,7 +440,7 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1) {
+    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 1];
         frameArguments[ArgumentIndicies.SENDER.ordinal()] = sender;
@@ -450,7 +450,7 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2) {
+    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 2];
         frameArguments[ArgumentIndicies.SENDER.ordinal()] = sender;
@@ -461,7 +461,7 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 3];
         frameArguments[ArgumentIndicies.SENDER.ordinal()] = sender;
@@ -473,7 +473,8 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+                    final Object arg4) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 4];
         frameArguments[ArgumentIndicies.SENDER.ordinal()] = sender;
@@ -486,8 +487,8 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
-                    final Object arg5) {
+    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+                    final Object arg4, final Object arg5) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + 5];
         frameArguments[ArgumentIndicies.SENDER.ordinal()] = sender;
@@ -501,7 +502,7 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object receiver, final Object[] arguments) {
+    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object[] arguments) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + arguments.length];
         frameArguments[ArgumentIndicies.SENDER.ordinal()] = sender;
@@ -517,11 +518,11 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newDNUWith(final Object sender, final Object receiver, final PointersObject message) {
+    public static Object[] newDNUWith(final AbstractSqueakObject sender, final Object receiver, final PointersObject message) {
         return newWith(sender, null, receiver, message);
     }
 
-    public static Object[] newOAMWith(final Object sender, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
+    public static Object[] newOAMWith(final AbstractSqueakObject sender, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
         return newWith(sender, null, object, selector, arguments, receiver);
     }
 
