@@ -91,7 +91,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             ensureCachedContextCanRunAgain(activeContext);
         }
         while (true) {
-            assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
             final AbstractSqueakObject sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
@@ -156,14 +155,13 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             startContext = startContextOrNull;
         }
         // Handle attempted return to a nil sender.
-        final Object targetContextMarkerOrNil = nvr.getTargetContextMarkerOrNil();
+        final AbstractSqueakObject targetContextOrNil = nvr.getTargetContextOrNil();
         final Object returnValue = nvr.getReturnValue();
-        if (targetContextMarkerOrNil == NilObject.SINGLETON) {
+        if (targetContextOrNil == NilObject.SINGLETON) {
             return sendCannotReturnOrReturnToTopLevel(startContext, null, returnValue);
         }
         // Skip over primitive contexts.
-        assert targetContextMarkerOrNil instanceof ContextObject;
-        final ContextObject possibleTargetContext = (ContextObject) targetContextMarkerOrNil;
+        final ContextObject possibleTargetContext = (ContextObject) targetContextOrNil;
         final ContextObject targetContext;
         if (possibleTargetContext.isPrimitiveContext()) {
             targetContext = (ContextObject) possibleTargetContext.getFrameSender();

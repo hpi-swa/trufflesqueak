@@ -15,7 +15,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @SuppressWarnings("truffle-inlining")
@@ -36,15 +36,12 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
                     @Bind final Node node,
                     @Cached final InlinedConditionProfile isNotLastSeenContextProfile,
                     @Cached final InlinedConditionProfile continueProfile,
-                    @Cached(inline = true) final GetOrCreateContextNode getOrCreateContextNode) {
+                    @Cached(inline = true) final GetOrCreateContextWithFrameNode getOrCreateContextNode) {
         final SqueakImageContext image = getContext();
         final ContextObject lastSeenContext = image.lastSeenContext;
         final ContextObject context = getOrCreateContextNode.executeGet(frame, node);
         if (isNotLastSeenContextProfile.profile(node, context != lastSeenContext)) {
             assert context.hasTruffleFrame();
-            if (lastSeenContext != null && !lastSeenContext.hasMaterializedSender()) {
-                lastSeenContext.setSender(context);
-            }
             if (continueProfile.profile(node, context.canBeReturnedTo() && context.hasEscaped())) {
                 // Materialization needs to continue in parent frame.
                 image.lastSeenContext = context;

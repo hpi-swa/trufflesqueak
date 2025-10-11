@@ -12,8 +12,8 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -37,37 +37,25 @@ public final class Returns {
      */
     public static final class NonLocalReturn extends AbstractReturn {
         @Serial private static final long serialVersionUID = 1L;
-        private final transient ContextObject homeContext;
-        private final transient Object targetContextOrMarker;
+        private final transient ContextObject targetContext;
 
         public NonLocalReturn(final Object returnValue, final ContextObject homeContext) {
             super(returnValue);
-            final Object target = homeContext.getFrameSender();
-            assert target instanceof ContextObject || target instanceof FrameMarker;
-            this.homeContext = homeContext;
-            this.targetContextOrMarker = target;
-        }
-
-        public ContextObject getHomeContext() {
-            return homeContext;
+            this.targetContext = (ContextObject) homeContext.getFrameSender(); // FIXME
         }
 
         public boolean targetIsFrame(final VirtualFrame frame) {
-            return targetContextOrMarker == FrameAccess.getMarker(frame) || targetContextOrMarker == FrameAccess.getContext(frame);
-        }
-
-        public Object getTargetContextOrMarker() {
-            return targetContextOrMarker;
+            return targetContext == FrameAccess.getContext(frame);
         }
 
         public ContextObject getTargetContext() {
-            return (ContextObject) targetContextOrMarker;
+            return targetContext;
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "NLR (value: " + returnValue + ", target: " + targetContextOrMarker + ")";
+            return "NLR (value: " + returnValue + ", target: " + targetContext + ")";
         }
     }
 
@@ -97,22 +85,22 @@ public final class Returns {
 
     public static final class NonVirtualReturn extends AbstractReturn {
         @Serial private static final long serialVersionUID = 1L;
-        private final transient Object targetContextMarkerOrNil;
+        private final transient AbstractSqueakObject targetContextOrNil;
         private final transient ContextObject currentContext;
 
-        public NonVirtualReturn(final Object returnValue, final Object targetContextMarkerOrNil, final ContextObject currentContext) {
+        public NonVirtualReturn(final Object returnValue, final AbstractSqueakObject targetContextOrNil, final ContextObject currentContext) {
             super(returnValue);
-            assert targetContextMarkerOrNil instanceof ContextObject || targetContextMarkerOrNil instanceof FrameMarker || targetContextMarkerOrNil == NilObject.SINGLETON;
-            this.targetContextMarkerOrNil = targetContextMarkerOrNil;
+            assert targetContextOrNil instanceof ContextObject || targetContextOrNil == NilObject.SINGLETON;
+            this.targetContextOrNil = targetContextOrNil;
             this.currentContext = currentContext;
         }
 
         public boolean targetIsFrame(final VirtualFrame frame) {
-            return targetContextMarkerOrNil == FrameAccess.getMarker(frame) || targetContextMarkerOrNil == FrameAccess.getContext(frame);
+            return targetContextOrNil == FrameAccess.getContext(frame);
         }
 
-        public Object getTargetContextMarkerOrNil() {
-            return targetContextMarkerOrNil;
+        public AbstractSqueakObject getTargetContextOrNil() {
+            return targetContextOrNil;
         }
 
         public ContextObject getCurrentContext() {
@@ -122,7 +110,7 @@ public final class Returns {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContextMarkerOrNil + ")";
+            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContextOrNil + ")";
         }
     }
 

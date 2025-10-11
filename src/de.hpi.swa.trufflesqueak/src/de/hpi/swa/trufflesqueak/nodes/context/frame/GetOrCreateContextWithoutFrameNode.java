@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) 2017-2025 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021-2025 Oracle and/or its affiliates
+ *
+ * Licensed under the MIT License.
+ */
+package de.hpi.swa.trufflesqueak.nodes.context.frame;
+
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.NeverDefault;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
+
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
+
+/* Gets context or lazily initializes one if necessary. */
+@GenerateInline(false)
+public abstract class GetOrCreateContextWithoutFrameNode extends AbstractNode {
+    @NeverDefault
+    public static GetOrCreateContextWithoutFrameNode create() {
+        return GetOrCreateContextWithoutFrameNodeGen.create();
+    }
+
+    public abstract ContextObject execute(VirtualFrame frame);
+
+    @Specialization
+    public static ContextObject getContext(final VirtualFrame frame,
+                    @Bind final Node node,
+                    @Cached final InlinedConditionProfile hasContextProfile) {
+        final ContextObject context = FrameAccess.getContext(frame);
+        if (hasContextProfile.profile(node, context != null)) {
+            return context;
+        } else {
+            return ContextObject.create(getContext(node), frame);
+        }
+    }
+}

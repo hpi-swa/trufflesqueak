@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -20,7 +19,6 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.SenderChainLink;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
@@ -51,28 +49,26 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
-        @TruffleBoundary
         @Specialization
         protected static final AbstractSqueakObject doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
             // Search starts with sender.
             if (receiver == previousContextOrNil) {
                 return NilObject.SINGLETON;
             }
-            SenderChainLink currentLink = receiver.getNextLink();
+            AbstractSqueakObject currentLink = receiver.getFrameSender();
 
-            while (currentLink != null && currentLink != NilObject.SINGLETON) {
+            while (currentLink != NilObject.SINGLETON) {
                 // Exit if we've found the previous Context.
-                final ContextObject context = currentLink.getContext();
+                final ContextObject context = (ContextObject) currentLink;
                 if (context == previousContextOrNil) {
                     return NilObject.SINGLETON;
                 }
                 // Watch for unwind-marked ContextObjects.
-                if (context != null && context.isUnwindMarked()) {
+                if (context.isUnwindMarked()) {
                     return context;
                 }
                 // Move to the next link.
-                currentLink = currentLink.getNextLink();
+                currentLink = context.getFrameSender();
             }
             // Reached the end of the chain without finding previous Context.
             return NilObject.SINGLETON;
@@ -105,21 +101,20 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          * Returns true if endContext is found on the sender chain of startContext. If terminate is
          * true, terminate Contexts while following the sender chain.
          */
-        @TruffleBoundary
         public static boolean hasSenderChainFromToAndTerminateIf(final ContextObject startContext, final AbstractSqueakObject endContext, final boolean terminate) {
             // Search starts with sender.
-            SenderChainLink currentLink = startContext.getNextLink();
+            AbstractSqueakObject currentLink = startContext.getFrameSender();
 
-            while (currentLink != null && currentLink != NilObject.SINGLETON) {
+            while (currentLink != NilObject.SINGLETON) {
                 // Exit if we've found endContext.
-                final ContextObject context = currentLink.getContext();
+                final ContextObject context = (ContextObject) currentLink;
                 if (context == endContext) {
                     return true;
                 }
                 // Move to the next link.
-                currentLink = currentLink.getNextLink();
+                currentLink = ((ContextObject) currentLink).getFrameSender();
                 // Terminate if requested.
-                if (terminate && context != null) {
+                if (terminate && context.hasTruffleFrame()) {
                     context.terminate();
                 }
             }
@@ -132,22 +127,21 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
-        @TruffleBoundary
         protected static final AbstractSqueakObject doNextHandler(final ContextObject receiver) {
             // Search starts with receiver.
             if (receiver.isExceptionHandlerMarked()) {
                 return receiver;
             }
-            SenderChainLink currentLink = receiver.getNextLink();
+            AbstractSqueakObject currentLink = receiver.getFrameSender();
 
-            while (currentLink != null && currentLink != NilObject.SINGLETON) {
+            while (currentLink != NilObject.SINGLETON) {
                 // Watch for exception handler marked ContextObjects.
-                final ContextObject context = currentLink.getContext();
-                if (context != null && context.isExceptionHandlerMarked()) {
+                final ContextObject context = (ContextObject) currentLink;
+                if (context.isExceptionHandlerMarked()) {
                     return context;
                 }
                 // Move to the next link.
-                currentLink = currentLink.getNextLink();
+                currentLink = context.getFrameSender();
             }
 
             // Reached the end of the chain without finding an exception handler Context.
@@ -158,7 +152,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"index <= receiver.getStackSize()"})
+        @Specialization(guards = {"index <= receiver.size()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
                         @Bind final Node node,
                         @Cached final ContextObjectReadNode readNode) {
@@ -169,7 +163,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = "index <= receiver.getStackSize()")
+        @Specialization(guards = "index <= receiver.size()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
                         @Bind final Node node,
                         @Cached final ContextObjectWriteNode writeNode) {

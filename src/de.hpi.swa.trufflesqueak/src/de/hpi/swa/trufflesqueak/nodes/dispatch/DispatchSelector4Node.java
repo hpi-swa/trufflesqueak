@@ -459,7 +459,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
             @SuppressWarnings("unused")
             protected static final Object[] doMethod(final VirtualFrame frame, final Node node, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                             final ClassObject receiverClass, final CompiledCodeObject lookupResult, final CompiledCodeObject method, final NativeObject selector,
-                            @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
+                            @Shared("senderNode") @Cached final GetOrCreateContextForDispatchNode senderNode) {
                 return FrameAccess.newWith(senderNode.execute(frame, node, method), null, receiver, arg1, arg2, arg3, arg4);
             }
 
@@ -467,7 +467,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
             protected static final Object[] doDoesNotUnderstand(final VirtualFrame frame, final Node node, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                             final Object arg4, final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult, final CompiledCodeObject method, final NativeObject selector,
                             @Cached final AbstractPointersObjectWriteNode writeNode,
-                            @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
+                            @Shared("senderNode") @Cached final GetOrCreateContextForDispatchNode senderNode) {
                 final Object[] arguments = new Object[]{arg1, arg2, arg3, arg4};
                 final PointersObject message = getContext(node).newMessage(writeNode, node, selector, receiverClass, arguments);
                 return FrameAccess.newDNUWith(senderNode.execute(frame, node, method), receiver, message);
@@ -477,7 +477,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
             protected static final Object[] doObjectAsMethod(final VirtualFrame frame, final Node node, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                             final Object arg4,
                             @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject, final CompiledCodeObject method, final NativeObject selector,
-                            @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
+                            @Shared("senderNode") @Cached final GetOrCreateContextForDispatchNode senderNode) {
                 final Object[] arguments = new Object[]{arg1, arg2, arg3, arg4};
                 return FrameAccess.newOAMWith(senderNode.execute(frame, node, method), targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
             }

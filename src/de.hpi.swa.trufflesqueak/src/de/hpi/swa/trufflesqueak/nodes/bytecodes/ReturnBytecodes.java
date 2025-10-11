@@ -16,14 +16,14 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.SenderChainLink;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -89,7 +89,7 @@ public final class ReturnBytecodes {
     }
 
     private static final class ReturnFromClosureNode extends AbstractReturnKindNode {
-        @Child private GetOrCreateContextNode getOrCreateContextNode;
+        @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode;
         @Child private Dispatch2Node sendAboutToReturnNode;
 
         /* Return to closure's home context's sender, executing unwind blocks */
@@ -117,14 +117,13 @@ public final class ReturnBytecodes {
          *         raise NLR otherwise
          */
         @TruffleBoundary
-        private static ContextObject firstUnwindMarkedOrThrowNLR(final Object frameSender, final ContextObject homeContext, final Object returnValue) {
-            assert frameSender instanceof SenderChainLink;
-            SenderChainLink currentLink = (SenderChainLink) frameSender;
+        private static ContextObject firstUnwindMarkedOrThrowNLR(final AbstractSqueakObject senderOrNil, final ContextObject homeContext, final Object returnValue) {
+            AbstractSqueakObject currentLink = senderOrNil;
             ContextObject firstMarkedContext = null;
 
-            while (currentLink != null && currentLink != NilObject.SINGLETON) {
+            while (currentLink != NilObject.SINGLETON) {
                 // Exit if we've found homeContext.
-                final ContextObject context = currentLink.getContext();
+                final ContextObject context = (ContextObject) currentLink;
                 if (context == homeContext) {
                     if (firstMarkedContext == null) {
                         throw new NonLocalReturn(returnValue, homeContext);
@@ -132,21 +131,21 @@ public final class ReturnBytecodes {
                     return firstMarkedContext;
                 }
                 // Watch for unwind-marked ContextObjects.
-                if (firstMarkedContext == null && context != null && context.isUnwindMarked()) {
+                if (firstMarkedContext == null && context.isUnwindMarked()) {
                     firstMarkedContext = context;
                 }
                 // Move to the next link.
-                currentLink = currentLink.getNextLink();
+                currentLink = context.getFrameSender();
             }
 
             // Reached the end of the chain without finding homeContext.
             return null;
         }
 
-        private GetOrCreateContextNode getGetOrCreateContextNode() {
+        private GetOrCreateContextWithFrameNode getGetOrCreateContextNode() {
             if (getOrCreateContextNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getOrCreateContextNode = insert(GetOrCreateContextNode.create());
+                getOrCreateContextNode = insert(GetOrCreateContextWithFrameNode.create());
             }
             return getOrCreateContextNode;
         }

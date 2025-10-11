@@ -24,7 +24,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -359,7 +359,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             if (result != null) {
                 return result;
             } else {
-                return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(GetOrCreateContextNode.getOrCreateUncached(frame), null, receiver, arguments));
+                return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(GetOrCreateContextWithFrameNode.getOrCreateUncached(frame), null, receiver, arguments));
             }
         } else {
             throw SqueakException.create("Illegal uncached message send");
