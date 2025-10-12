@@ -23,6 +23,7 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadAndClearNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -50,25 +51,9 @@ public abstract class FrameStackReadNode extends AbstractNode {
         // Only clear stack values, not receiver, arguments, or temporary variables.
         final boolean shouldClear = clear && index >= initialSP;
         if (stackSlotIndex < numberOfSlots) {
-            return FrameSlotReadNodeGen.create(stackSlotIndex, shouldClear);
+            return shouldClear ? FrameSlotReadAndClearNodeGen.create(stackSlotIndex) : FrameSlotReadNodeGen.create(stackSlotIndex);
         } else {
-            return new FrameAuxiliarySlotReadNode(frame, stackSlotIndex, shouldClear);
-        }
-    }
-
-    @NeverDefault
-    public static final FrameStackReadNode createTemporaryReadNode(final VirtualFrame frame, final int index) {
-        final int numArgs = FrameAccess.getNumArguments(frame);
-        if (index < numArgs) {
-            return FrameArgumentReadNode.getOrCreate(index);
-        } else {
-            final int stackSlotIndex = FrameAccess.toStackSlotIndex(frame, index);
-            final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
-            if (stackSlotIndex < numberOfSlots) {
-                return FrameSlotReadNodeGen.create(stackSlotIndex, false);
-            } else {
-                return new FrameAuxiliarySlotReadNode(frame, stackSlotIndex, false);
-            }
+            return shouldClear ? new FrameAuxiliarySlotReadAndClearNode(frame, stackSlotIndex) : new FrameAuxiliarySlotReadNode(frame, stackSlotIndex);
         }
     }
 
@@ -81,14 +66,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
     /* Unsafe as it may return `null` values. */
     public abstract Object executeReadUnsafe(VirtualFrame frame);
 
-    protected abstract static class FrameSlotReadNode extends FrameStackReadNode {
-        protected final byte slotIndex;
-        protected final boolean clearSlotAfterRead;
+    protected abstract static class AbstractFrameSlotReadNode extends FrameStackReadNode {
+        protected final int slotIndex;
 
-        FrameSlotReadNode(final int slotIndex, final boolean clearSlotAfterRead) {
-            this.slotIndex = (byte) slotIndex;
-            assert this.slotIndex == slotIndex;
-            this.clearSlotAfterRead = clearSlotAfterRead;
+        AbstractFrameSlotReadNode(final int slotIndex) {
+            this.slotIndex = slotIndex;
         }
 
         @Specialization(guards = "frame.isBoolean(slotIndex)")
@@ -105,6 +87,12 @@ public abstract class FrameStackReadNode extends AbstractNode {
         protected final double readDouble(final VirtualFrame frame) {
             return frame.getDouble(slotIndex);
         }
+    }
+
+    protected abstract static class FrameSlotReadNode extends AbstractFrameSlotReadNode {
+        FrameSlotReadNode(final int slotIndex) {
+            super(slotIndex);
+        }
 
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readObject(final VirtualFrame frame) {
@@ -119,15 +107,29 @@ public abstract class FrameStackReadNode extends AbstractNode {
                  */
                 CompilerDirectives.transferToInterpreter();
                 value = frame.getValue(slotIndex);
-                if (!clearSlotAfterRead) {
-                    frame.setObject(slotIndex, value);
-                }
+                frame.setObject(slotIndex, value);
             } else {
                 value = frame.getObject(slotIndex);
             }
-            if (clearSlotAfterRead) {
-                frame.setObject(slotIndex, NilObject.SINGLETON);
+            return value;
+        }
+    }
+
+    protected abstract static class FrameSlotReadAndClearNode extends AbstractFrameSlotReadNode {
+        FrameSlotReadAndClearNode(final int slotIndex) {
+            super(slotIndex);
+        }
+
+        @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
+        protected final Object readObject(final VirtualFrame frame) {
+            final Object value;
+            if (!frame.isObject(slotIndex)) {
+                CompilerDirectives.transferToInterpreter();
+                value = frame.getValue(slotIndex);
+            } else {
+                value = frame.getObject(slotIndex);
             }
+            frame.setObject(slotIndex, NilObject.SINGLETON);
             return value;
         }
     }
@@ -173,21 +175,34 @@ public abstract class FrameStackReadNode extends AbstractNode {
         }
     }
 
-    private static class FrameAuxiliarySlotReadNode extends FrameStackReadNode {
-        private final short auxiliarySlotIndex;
-        private final boolean clearSlotAfterRead;
+    private abstract static class AbstractFrameAuxiliarySlotReadNode extends FrameStackReadNode {
+        protected final int auxiliarySlotIndex;
 
-        FrameAuxiliarySlotReadNode(final VirtualFrame frame, final int slotIndex, final boolean clearSlotAfterRead) {
-            auxiliarySlotIndex = (short) frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
-            this.clearSlotAfterRead = clearSlotAfterRead;
+        AbstractFrameAuxiliarySlotReadNode(final VirtualFrame frame, final int slotIndex) {
+            auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+        }
+    }
+
+    private static final class FrameAuxiliarySlotReadNode extends AbstractFrameAuxiliarySlotReadNode {
+        FrameAuxiliarySlotReadNode(final VirtualFrame frame, final int slotIndex) {
+            super(frame, slotIndex);
+        }
+
+        @Override
+        public Object executeReadUnsafe(final VirtualFrame frame) {
+            return frame.getAuxiliarySlot(auxiliarySlotIndex);
+        }
+    }
+
+    private static final class FrameAuxiliarySlotReadAndClearNode extends AbstractFrameAuxiliarySlotReadNode {
+        FrameAuxiliarySlotReadAndClearNode(final VirtualFrame frame, final int slotIndex) {
+            super(frame, slotIndex);
         }
 
         @Override
         public Object executeReadUnsafe(final VirtualFrame frame) {
             final Object value = frame.getAuxiliarySlot(auxiliarySlotIndex);
-            if (clearSlotAfterRead) {
-                frame.setAuxiliarySlot(auxiliarySlotIndex, NilObject.SINGLETON);
-            }
+            frame.setAuxiliarySlot(auxiliarySlotIndex, NilObject.SINGLETON);
             return value;
         }
     }

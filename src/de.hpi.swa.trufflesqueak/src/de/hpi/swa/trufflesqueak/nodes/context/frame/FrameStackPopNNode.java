@@ -76,17 +76,18 @@ public abstract class FrameStackPopNNode extends AbstractNode {
         @Override
         @ExplodeLoop
         public Object[] execute(final VirtualFrame frame) {
+            final int numPop = numPop();
             if (stackPointer == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointer = FrameAccess.getStackPointer(frame) - readNodes.length;
+                stackPointer = FrameAccess.getStackPointer(frame) - numPop;
                 assert stackPointer >= 0 : "Bad stack pointer";
-                for (int i = 0; i < readNodes.length; i++) {
+                for (int i = 0; i < numPop; i++) {
                     readNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
                 }
             }
             FrameAccess.setStackPointer(frame, stackPointer);
-            final Object[] result = new Object[readNodes.length];
-            for (int i = 0; i < readNodes.length; i++) {
+            final Object[] result = new Object[numPop];
+            for (int i = 0; i < numPop; i++) {
                 result[i] = readNodes[i].executeRead(frame);
             }
             return result;

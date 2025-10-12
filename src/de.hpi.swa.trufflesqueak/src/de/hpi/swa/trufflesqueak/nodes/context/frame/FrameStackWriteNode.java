@@ -11,8 +11,10 @@ import java.util.Objects;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
@@ -51,25 +53,16 @@ public abstract class FrameStackWriteNode extends AbstractNode {
 
         @Specialization(guards = "isBooleanOrIllegal(frame)")
         protected final void writeBool(final VirtualFrame frame, final boolean value) {
-            /* Initialize type on first write. No-op if kind is already Boolean. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Boolean);
-
             frame.setBoolean(slotIndex, value);
         }
 
         @Specialization(guards = "isLongOrIllegal(frame)")
         protected final void writeLong(final VirtualFrame frame, final long value) {
-            /* Initialize type on first write. No-op if kind is already Long. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Long);
-
             frame.setLong(slotIndex, value);
         }
 
         @Specialization(guards = "isDoubleOrIllegal(frame)")
         protected final void writeDouble(final VirtualFrame frame, final double value) {
-            /* Initialize type on first write. No-op if kind is already Double. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Double);
-
             frame.setDouble(slotIndex, value);
         }
 
@@ -90,18 +83,27 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
 
         protected final boolean isBooleanOrIllegal(final VirtualFrame frame) {
-            final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(slotIndex);
-            return kind == FrameSlotKind.Boolean || kind == FrameSlotKind.Illegal;
+            return isKindOrIllegal(frame, FrameSlotKind.Boolean);
         }
 
         protected final boolean isLongOrIllegal(final VirtualFrame frame) {
-            final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(slotIndex);
-            return kind == FrameSlotKind.Long || kind == FrameSlotKind.Illegal;
+            return isKindOrIllegal(frame, FrameSlotKind.Long);
         }
 
         protected final boolean isDoubleOrIllegal(final VirtualFrame frame) {
-            final FrameSlotKind kind = frame.getFrameDescriptor().getSlotKind(slotIndex);
-            return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
+            return isKindOrIllegal(frame, FrameSlotKind.Double);
+        }
+
+        private boolean isKindOrIllegal(final VirtualFrame frame, final FrameSlotKind expectedKind) {
+            final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            final FrameSlotKind kind = frameDescriptor.getSlotKind(slotIndex);
+            if (kind == FrameSlotKind.Illegal) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                frameDescriptor.setSlotKind(slotIndex, expectedKind);
+                return true;
+            } else {
+                return kind == expectedKind;
+            }
         }
     }
 
