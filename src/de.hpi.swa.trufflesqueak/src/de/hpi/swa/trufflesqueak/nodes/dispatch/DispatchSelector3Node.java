@@ -107,11 +107,6 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
             super(selector);
         }
 
-        @NeverDefault
-        public static Dispatch3Node create(final NativeObject selector) {
-            return Dispatch3NodeGen.create(selector);
-        }
-
         @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
         protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,

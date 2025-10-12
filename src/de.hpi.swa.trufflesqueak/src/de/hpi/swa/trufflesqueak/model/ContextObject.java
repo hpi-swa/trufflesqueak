@@ -15,9 +15,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -100,11 +98,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         final ContextObject context = new ContextObject(image, frame);
         FrameAccess.setContext(frame, context);
         return context;
-    }
-
-    public static ContextObject create(final SqueakImageContext image, final FrameInstance frameInstance) {
-        final Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-        return create(image, frame.materialize(), FrameAccess.getCodeObject(frame));
     }
 
     public static ContextObject create(final SqueakImageContext image, final MaterializedFrame frame, final CompiledCodeObject blockOrMethod) {

@@ -14,7 +14,6 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -147,26 +146,6 @@ public final class MiscUtils {
         return String.format("GRAAL_VERSION=%s\nGRAAL_HOME=%s", graalVMVersion, graalVMHome);
     }
 
-    @TruffleBoundary
-    public static long getHeapMemoryMax() {
-        return ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getMax();
-    }
-
-    @TruffleBoundary
-    public static long getHeapMemoryUsed() {
-        return ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
-    }
-
-    @TruffleBoundary
-    public static String getJavaClassPath() {
-        return System.getProperty("java.class.path");
-    }
-
-    @TruffleBoundary
-    public static String getJavaHome() {
-        return System.getProperty("java.home");
-    }
-
     public static SecureRandom getSecureRandom() {
         /* SecureRandom must be initialized at (native image) runtime. */
         if (random == null) {
@@ -208,16 +187,7 @@ public final class MiscUtils {
         return sb.toString();
     }
 
-    @TruffleBoundary
-    public static long getTotalCompilationTime() {
-        final CompilationMXBean compilationBean = ManagementFactory.getCompilationMXBean();
-        if (compilationBean.isCompilationTimeMonitoringSupported()) {
-            return compilationBean.getTotalCompilationTime();
-        } else {
-            return -1L;
-        }
-    }
-
+    /** Called from JavaTest>>testLanguageClass. */
     @TruffleBoundary
     public static long getUptime() {
         return ManagementFactory.getRuntimeMXBean().getUptime();
@@ -317,11 +287,6 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long runtimeFreeMemory() {
         return Runtime.getRuntime().freeMemory();
-    }
-
-    @TruffleBoundary
-    public static long runtimeMaxMemory() {
-        return Runtime.getRuntime().maxMemory();
     }
 
     @TruffleBoundary

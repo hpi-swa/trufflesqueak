@@ -34,7 +34,6 @@ public final class LogUtils {
     public static final TruffleLogger READER = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "reader");
     public static final TruffleLogger SCHEDULING = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "scheduling");
     public static final TruffleLogger SOCKET = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "socket");
-    public static final TruffleLogger SSL = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "ssl");
 
     public static final boolean GC_IS_LOGGABLE_FINE = GC.isLoggable(Level.FINE);
 }

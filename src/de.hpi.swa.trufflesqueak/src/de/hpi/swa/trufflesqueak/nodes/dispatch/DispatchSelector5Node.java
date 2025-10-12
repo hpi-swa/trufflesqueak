@@ -112,11 +112,6 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
             super(selector);
         }
 
-        @NeverDefault
-        public static Dispatch5Node create(final NativeObject selector) {
-            return Dispatch5NodeGen.create(selector);
-        }
-
         @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
         protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
@@ -204,13 +199,6 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
         @NeverDefault
         public static final DispatchDirect5Node create(final NativeObject selector, final ClassObject lookupClass) {
             return create(selector, lookupClass, true);
-        }
-
-        @NeverDefault
-        public static final DispatchDirect5Node create(final CompiledCodeObject method, final LookupClassGuard guard) {
-            final ClassObject receiverClass = guard.getSqueakClassInternal(null);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(receiverClass, method);
-            return create(assumptions, method);
         }
 
         @NeverDefault

@@ -6,15 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.model.layout;
 
-import com.oracle.truffle.api.CompilerAsserts;
-
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 
 public final class ObjectLayouts {
 
@@ -72,26 +64,6 @@ public final class ObjectLayouts {
         public static final int ORGANIZATION = 4;
 
         public static final int SIZE = 5;
-
-        public static String getClassComment(final ClassObject squeakClass) {
-            CompilerAsserts.neverPartOfCompilation("For instrumentation access only.");
-            final AbstractSqueakObject organization = squeakClass.getOrganization();
-            if (organization == NilObject.SINGLETON) {
-                return null;
-            }
-            final AbstractSqueakObjectWithClassAndHash classComment = (AbstractSqueakObjectWithClassAndHash) ((VariablePointersObject) organization).instVarAt0Slow(CLASS_ORGANIZER.CLASS_COMMENT);
-            final NativeObject string = (NativeObject) classComment.send(SqueakImageContext.getSlow(), "string");
-            return string.asStringUnsafe();
-        }
-    }
-
-    public static final class CLASS_ORGANIZER {
-        public static final int CATEGORY_ARRAY = 0;
-        public static final int CATEGORY_STOPS = 1;
-        public static final int ELEMENT_ARRAY = 2;
-        public static final int SUBJECT = 3;
-        public static final int CLASS_COMMENT = 4;
-        public static final int COMMENT_STAMP = 5;
     }
 
     public static final class CLASS_TRAIT {

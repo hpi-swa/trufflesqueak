@@ -140,10 +140,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         }
     }
 
-    public ArrayObject getSubclasses() {
-        return (ArrayObject) pointers[CLASS.SUBCLASSES];
-    }
-
     private boolean isAClassTrait() {
         if (pointers == null || pointers.length <= CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE) {
             return false;
@@ -168,10 +164,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return getInstanceSpecification() == 5;
     }
 
-    public boolean isFixed() {
-        return !isVariable();
-    }
-
     public boolean isImmediateClassType() {
         return getInstanceSpecification() == 7;
     }
@@ -190,10 +182,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isLongs() {
         return getInstanceSpecification() == 9;
-    }
-
-    public boolean isPointers() {
-        return !isBits();
     }
 
     public boolean isShorts() {
@@ -582,10 +570,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public Assumption getClassFormatStable() {
         return classFormatStable().getAssumption();
-    }
-
-    public String getClassComment() {
-        return CLASS_DESCRIPTION.getClassComment(this);
     }
 
     @Override

@@ -19,7 +19,6 @@ public final class PrimitiveFailed extends ControlFlowException {
     public static final PrimitiveFailed BAD_ARGUMENT = new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT.ordinal());
     public static final PrimitiveFailed BAD_INDEX = new PrimitiveFailed(ERROR_TABLE.BAD_INDEX.ordinal());
     public static final PrimitiveFailed BAD_NUMBER_OF_ARGUMENTS = new PrimitiveFailed(ERROR_TABLE.BAD_NUMBER_OF_ARGUMENTS.ordinal());
-    public static final PrimitiveFailed INAPPROPRIATE_OPERATION = new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION.ordinal());
     public static final PrimitiveFailed INSUFFICIENT_OBJECT_MEMORY = new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY.ordinal());
 
     private final int primFailCode;

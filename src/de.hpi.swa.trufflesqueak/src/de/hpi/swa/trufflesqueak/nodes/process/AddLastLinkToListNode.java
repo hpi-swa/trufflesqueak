@@ -26,12 +26,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 @GenerateCached(false)
 public abstract class AddLastLinkToListNode extends AbstractNode {
 
-    public static void executeUncached(final PointersObject process, final PointersObject list) {
-        final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-        final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
-        addLastLinkToList(null, process, list, readNode, readNode, writeNode, writeNode, writeNode);
-    }
-
     public abstract void execute(Node node, PointersObject process, PointersObject list);
 
     @Specialization

@@ -54,10 +54,6 @@ public final class PointersObject extends AbstractPointersObject {
         return object2;
     }
 
-    public void setHiddenObject(final Object value) {
-        object2 = value;
-    }
-
     @Override
     protected void fillInVariablePart(final SqueakImageChunk chunk, final int instSize) {
         // No variable part to fill in

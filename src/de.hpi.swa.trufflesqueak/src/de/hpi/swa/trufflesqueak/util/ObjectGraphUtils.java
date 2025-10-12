@@ -58,10 +58,6 @@ public final class ObjectGraphUtils {
         return lastSeenObjects;
     }
 
-    public SqueakImageContext getImage() {
-        return image;
-    }
-
     static final class AllInstancesTask implements Runnable {
         private final ObjectTracer roots;
         private final ArrayDeque<AbstractSqueakObjectWithClassAndHash> objects;

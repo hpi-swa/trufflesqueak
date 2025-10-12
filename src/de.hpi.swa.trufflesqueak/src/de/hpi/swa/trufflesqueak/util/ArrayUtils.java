@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
-import java.util.AbstractCollection;
 import java.util.Arrays;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
@@ -15,18 +14,12 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-
 public final class ArrayUtils {
     @CompilationFinal(dimensions = 1) public static final Object[] EMPTY_ARRAY = new Object[0];
     @CompilationFinal(dimensions = 1) public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     @CompilationFinal(dimensions = 1) public static final String[] EMPTY_STRINGS_ARRAY = new String[0];
 
     private ArrayUtils() {
-    }
-
-    public static Object[] allButFirst(final Object[] values) {
-        return copyOfRange(values, 1, values.length);
     }
 
     public static void arraycopy(final Object src, final int srcPos, final Object dest, final int destPos, final int length) {
@@ -108,32 +101,6 @@ public final class ArrayUtils {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             throw t;
         }
-    }
-
-    public static <T> T[] copyOf(final T[] original, final int newLength) {
-        try {
-            return Arrays.copyOf(original, newLength);
-        } catch (final Throwable t) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            throw t;
-        }
-    }
-
-    public static <T> T[] copyOfRange(final T[] original, final int from, final int to) {
-        try {
-            return Arrays.copyOfRange(original, from, to);
-        } catch (final Throwable t) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            throw t;
-        }
-    }
-
-    public static Object[] copyWithFirst(final Object[] objects, final Object first) {
-        final int numObjects = objects.length;
-        final Object[] newObjects = new Object[numObjects + 1];
-        newObjects[0] = first;
-        arraycopy(objects, 0, newObjects, 1, numObjects);
-        return newObjects;
     }
 
     public static void fill(final byte[] array, final byte value) {
@@ -229,24 +196,6 @@ public final class ArrayUtils {
                 array[i] = replacement;
             }
         }
-    }
-
-    public static byte[] swapOrderCopy(final byte[] bytes) {
-        return swapOrderInPlace(copyOf(bytes, bytes.length));
-    }
-
-    public static byte[] swapOrderInPlace(final byte[] bytes) {
-        for (int i = 0; i < bytes.length / 2; i++) {
-            final byte b = bytes[i];
-            bytes[i] = bytes[bytes.length - 1 - i];
-            bytes[bytes.length - 1 - i] = b;
-        }
-        return bytes;
-    }
-
-    @TruffleBoundary
-    public static Object[] toArray(final AbstractCollection<AbstractSqueakObjectWithClassAndHash> list) {
-        return list.toArray(new Object[0]);
     }
 
     @TruffleBoundary

@@ -12,7 +12,6 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -26,10 +25,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @TypeSystemReference(SqueakTypes.class)
 @NodeInfo(language = SqueakLanguageConfig.ID)
 public abstract class AbstractNode extends Node {
-
-    public final SqueakLanguage getLanguage() {
-        return SqueakLanguage.get(this);
-    }
 
     public static SqueakImageContext getContext(final Node node) {
         return SqueakImageContext.get(node);
