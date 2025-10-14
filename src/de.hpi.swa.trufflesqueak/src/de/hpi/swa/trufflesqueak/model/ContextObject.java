@@ -121,7 +121,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (pc == NilObject.SINGLETON) {
             removeInstructionPointer();
         } else {
-            setInstructionPointer(MiscUtils.toIntExact((long) pc));
+            setInstructionPointer(MiscUtils.toIntExact((long) pc) - methodOrBlock.getInitialPC());
         }
         final int stackPointer = MiscUtils.toIntExact((long) chunk.getPointer(CONTEXT.STACKPOINTER));
         setStackPointer(stackPointer);
@@ -241,7 +241,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (nilProfile.profile(node, pc < NIL_PC_THRESHOLD)) {
             return NilObject.SINGLETON;
         } else {
-            return (long) pc; // Must be a long.
+            return getCodeObject().getInitialPC() + (long) pc; // Must be a long.
         }
     }
 
@@ -300,7 +300,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             stackPointer = FrameAccess.getStackPointer(currentFrame);
         } else {
             frameArguments = FrameAccess.newWith(method.getNumArgs());
-            instructionPointer = method.getInitialPC();
+            instructionPointer = 0;
             stackPointer = method.getNumTemps();
         }
         final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, method.getFrameDescriptor());
@@ -520,7 +520,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.
     public boolean isPrimitiveContext() {
-        return !hasClosure() && getCodeObject().hasPrimitive() && getInstructionPointerForBytecodeLoop() == getCodeObject().getInitialPC();
+        return !hasClosure() && getCodeObject().hasPrimitive() && getInstructionPointerForBytecodeLoop() == 0;
     }
 
     @TruffleBoundary

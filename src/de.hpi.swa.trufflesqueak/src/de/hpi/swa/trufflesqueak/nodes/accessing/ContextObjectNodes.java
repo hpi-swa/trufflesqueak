@@ -97,7 +97,7 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER"})
         protected static final void doInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index, final long value) {
-            context.setInstructionPointer((int) value);
+            context.setInstructionPointer((int) value - context.getCodeObject().getInitialPC());
         }
 
         @SuppressWarnings("unused")

@@ -66,7 +66,6 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     @BytecodeInterpreterSwitch
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private Object interpretBytecode(final VirtualFrame frame, final int startPC) {
-        final int initialPC = code.getInitialPC();
         int pc = startPC;
         /*
          * Maintain backJumpCounter in a Counter so that the compiler does not confuse it with the
@@ -76,7 +75,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
+            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc);
             CompilerAsserts.partialEvaluationConstant(node);
             pc = node.getSuccessorIndex();
             if (node instanceof final AbstractSendNode sendNode) {

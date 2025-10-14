@@ -33,16 +33,16 @@ public final class InlinePrimitiveBytecodes {
     protected abstract static class AbstractPushNode extends AbstractInstrumentableBytecodeNode {
         @Child protected FrameStackPushNode pushNode = FrameStackPushNode.create();
 
-        protected AbstractPushNode(final CompiledCodeObject code, final int index) {
-            super(code, index, 1);
+        protected AbstractPushNode(final int successorIndex) {
+            super(successorIndex);
         }
     }
 
     protected abstract static class AbstractNullaryInlinePrimitiveNode extends AbstractPushNode {
         @Child protected FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        protected AbstractNullaryInlinePrimitiveNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected AbstractNullaryInlinePrimitiveNode(final int successorIndex) {
+            super(successorIndex);
         }
     }
 
@@ -50,8 +50,8 @@ public final class InlinePrimitiveBytecodes {
         @Child protected FrameStackPopNode pop1Node = FrameStackPopNode.create();
         @Child protected FrameStackPopNode pop2Node = FrameStackPopNode.create();
 
-        protected AbstractUnaryInlinePrimitiveNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected AbstractUnaryInlinePrimitiveNode(final int successorIndex) {
+            super(successorIndex);
         }
     }
 
@@ -60,8 +60,8 @@ public final class InlinePrimitiveBytecodes {
         @Child protected FrameStackPopNode pop2Node = FrameStackPopNode.create();
         @Child protected FrameStackPopNode pop3Node = FrameStackPopNode.create();
 
-        protected AbstractTrinaryInlinePrimitiveNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected AbstractTrinaryInlinePrimitiveNode(final int successorIndex) {
+            super(successorIndex);
         }
     }
 
@@ -71,19 +71,19 @@ public final class InlinePrimitiveBytecodes {
         @Child protected FrameStackPopNode pop3Node = FrameStackPopNode.create();
         @Child protected FrameStackPopNode pop4Node = FrameStackPopNode.create();
 
-        protected AbstractQuaternaryInlinePrimitiveNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected AbstractQuaternaryInlinePrimitiveNode(final int successorIndex) {
+            super(successorIndex);
         }
     }
 
     protected abstract static class PrimClassNode extends AbstractInstrumentableBytecodeNode {
 
-        protected PrimClassNode(final CompiledCodeObject code, final int index) {
-            super(code, index, 1);
+        protected PrimClassNode(final int successorIndex) {
+            super(successorIndex);
         }
 
-        public static PrimClassNode create(final CompiledCodeObject code, final int index) {
-            return PrimClassNodeGen.create(code, index);
+        public static PrimClassNode create(final int successorIndex) {
+            return PrimClassNodeGen.create(successorIndex);
         }
 
         @Specialization
@@ -97,8 +97,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimNumSlotsNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumSlotsNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimNumSlotsNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -108,8 +108,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimBasicSizeNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimBasicSizeNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimBasicSizeNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -119,8 +119,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimNumBytesNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumBytesNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimNumBytesNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -137,8 +137,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimNumShortsNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumShortsNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimNumShortsNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -148,8 +148,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimNumWordsNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumWordsNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimNumWordsNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -159,8 +159,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimNumDoubleWordsNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumDoubleWordsNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimNumDoubleWordsNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -171,12 +171,12 @@ public final class InlinePrimitiveBytecodes {
 
     protected abstract static class PrimIdentityHashNode extends AbstractNullaryInlinePrimitiveNode {
 
-        protected PrimIdentityHashNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimIdentityHashNode(final int successorIndex) {
+            super(successorIndex);
         }
 
-        public static PrimIdentityHashNode create(final CompiledCodeObject code, final int index) {
-            return PrimIdentityHashNodeGen.create(code, index);
+        public static PrimIdentityHashNode create(final int successorIndex) {
+            return PrimIdentityHashNodeGen.create(successorIndex);
         }
 
         @Specialization
@@ -187,8 +187,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimIdentityHashSmallIntegerNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimIdentityHashSmallIntegerNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimIdentityHashSmallIntegerNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -198,8 +198,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimIdentityHashCharacterNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimIdentityHashCharacterNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimIdentityHashCharacterNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -209,8 +209,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimIdentityHashSmallFloatNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimIdentityHashSmallFloatNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimIdentityHashSmallFloatNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -220,8 +220,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimIdentityHashBehaviorNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimIdentityHashBehaviorNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimIdentityHashBehaviorNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -233,8 +233,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimImmediateAsIntegerCharacterNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimImmediateAsIntegerCharacterNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimImmediateAsIntegerCharacterNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -244,8 +244,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimImmediateAsIntegerSmallFloatNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimImmediateAsIntegerSmallFloatNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimImmediateAsIntegerSmallFloatNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -255,8 +255,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimImmediateAsFloatNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimImmediateAsFloatNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimImmediateAsFloatNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -266,8 +266,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerAddNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerAddNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerAddNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -277,8 +277,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerSubtractNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerSubtractNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerSubtractNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -288,8 +288,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerMultiplyNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerMultiplyNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerMultiplyNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -299,8 +299,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerDivideNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerDivideNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerDivideNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -310,8 +310,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerFloorDivideNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerFloorDivideNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerFloorDivideNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -321,8 +321,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerFloorModNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerFloorModNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerFloorModNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -332,8 +332,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerQuoNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerQuoNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerQuoNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -343,8 +343,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerBitAndNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitAndNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerBitAndNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -354,8 +354,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerBitOrNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitOrNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerBitOrNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -365,8 +365,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerBitXorNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitXorNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerBitXorNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -376,8 +376,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerBitShiftLeftNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitShiftLeftNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerBitShiftLeftNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -387,8 +387,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerBitShiftRightNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitShiftRightNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerBitShiftRightNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -398,8 +398,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerGreaterThanNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerGreaterThanNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerGreaterThanNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -409,8 +409,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerLessThanNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerLessThanNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerLessThanNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -420,8 +420,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerGreaterOrEqualNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerGreaterOrEqualNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerGreaterOrEqualNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -431,8 +431,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerLessOrEqualNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerLessOrEqualNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerLessOrEqualNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -442,8 +442,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerEqualNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerEqualNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerEqualNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -453,8 +453,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimSmallIntegerNotEqualNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerNotEqualNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimSmallIntegerNotEqualNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -464,8 +464,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimByteAtNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimByteAtNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimByteAtNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -477,8 +477,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimShortAtNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimShortAtNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimShortAtNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -490,8 +490,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimWordAtNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimWordAtNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimWordAtNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -503,8 +503,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimDoubleWordAtNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimDoubleWordAtNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimDoubleWordAtNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -516,8 +516,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimByteAtPutNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimByteAtPutNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimByteAtPutNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -530,8 +530,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimShortAtPutNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimShortAtPutNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimShortAtPutNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -544,8 +544,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimWordAtPutNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimWordAtPutNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimWordAtPutNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -558,8 +558,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimDoubleWordAtPutNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimDoubleWordAtPutNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimDoubleWordAtPutNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -572,8 +572,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimByteEqualsNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimByteEqualsNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimByteEqualsNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -587,12 +587,12 @@ public final class InlinePrimitiveBytecodes {
 
     protected abstract static class PrimFillFromToWithNode extends AbstractQuaternaryInlinePrimitiveNode {
 
-        protected PrimFillFromToWithNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+        protected PrimFillFromToWithNode(final int successorIndex) {
+            super(successorIndex);
         }
 
-        public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index) {
-            return PrimFillFromToWithNodeGen.create(code, index);
+        public static AbstractBytecodeNode create(final int successorIndex) {
+            return PrimFillFromToWithNodeGen.create(successorIndex);
         }
 
         @Specialization

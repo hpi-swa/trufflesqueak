@@ -18,7 +18,6 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextScope;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -28,8 +27,8 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @SuppressWarnings("static-method")
 public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecodeNode implements InstrumentableNode {
 
-    public AbstractInstrumentableBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-        super(code, index, numBytecodes);
+    public AbstractInstrumentableBytecodeNode(final int successorIndex) {
+        super(successorIndex);
     }
 
     protected AbstractInstrumentableBytecodeNode(final AbstractInstrumentableBytecodeNode original) {

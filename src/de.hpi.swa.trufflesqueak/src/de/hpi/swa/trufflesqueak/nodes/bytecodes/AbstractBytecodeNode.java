@@ -21,14 +21,6 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
         this.successorIndex = successorIndex;
     }
 
-    public AbstractBytecodeNode(final CompiledCodeObject code, final int index) {
-        this(code, index, 1);
-    }
-
-    public AbstractBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-        this(code.getInitialPC() + index + numBytecodes);
-    }
-
     public AbstractBytecodeNode(final AbstractBytecodeNode original) {
         successorIndex = original.successorIndex;
     }
@@ -47,7 +39,7 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
         if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
             return source.createUnavailableSection();
         } else {
-            final int lineNumber = code.findLineNumber(successorIndex - code.getInitialPC());
+            final int lineNumber = code.findLineNumber(successorIndex);
             return source.createSection(lineNumber);
         }
     }

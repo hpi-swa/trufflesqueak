@@ -84,12 +84,12 @@ public final class StartContextRootNode extends AbstractRootNode {
             final CompiledCodeObject code = getCode();
             doesNotNeedThisContext = code.getDoesNotNeedThisContextAssumption();
             if (!FrameAccess.hasClosure(frame)) {
-                initialPC = code.getInitialPC();
+                initialPC = 0;
                 initialSP = code.getNumTemps();
                 assert numArgs == code.getNumArgs();
             } else {
                 final BlockClosureObject closure = FrameAccess.getClosure(frame);
-                initialPC = (int) closure.getStartPC();
+                initialPC = (int) closure.getStartPC() - code.getInitialPC();
                 initialSP = closure.getNumTemps();
                 assert numArgs == closure.getNumArgs() + closure.getNumCopied();
             }
