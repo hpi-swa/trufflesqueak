@@ -220,7 +220,7 @@ public final class JumpBytecodes {
         if (SqueakImageContext.getSlow().interruptHandlerDisabled()) {
             return false;
         }
-        assert offset < 0 : "back jumps only";
+        assert offset < 0 : "back jumps onlyx";
         final int backJumpIndex = index + numBytecodes + offset;
         for (int i = backJumpIndex; i < index; i++) {
             if (bytecodeNodes[i] instanceof final AbstractSendNode abs) {
