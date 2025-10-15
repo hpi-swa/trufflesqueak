@@ -386,7 +386,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public void terminate() {
         removeInstructionPointer();
         removeSender();
-        hasModifiedSender = false;
     }
 
     /* Context>>#isDead */

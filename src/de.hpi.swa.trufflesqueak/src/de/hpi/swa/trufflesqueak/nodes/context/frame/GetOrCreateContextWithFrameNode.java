@@ -62,7 +62,7 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
             }
             return context;
         } else {
-            return ContextObject.create(SqueakImageContext.get(node), frame.materialize(), code);
+            return ContextObject.create(getContext(node), frame.materialize(), code);
         }
     }
 }

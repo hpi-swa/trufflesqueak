@@ -121,9 +121,8 @@ public final class ReturnBytecodes {
             AbstractSqueakObject currentLink = senderOrNil;
             ContextObject firstMarkedContext = null;
 
-            while (currentLink != NilObject.SINGLETON) {
+            while (currentLink instanceof final ContextObject context) {
                 // Exit if we've found homeContext.
-                final ContextObject context = (ContextObject) currentLink;
                 if (context == homeContext) {
                     if (firstMarkedContext == null) {
                         throw new NonLocalReturn(returnValue, homeContext);

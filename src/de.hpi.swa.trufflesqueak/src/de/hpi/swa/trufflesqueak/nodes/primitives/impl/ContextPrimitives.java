@@ -57,9 +57,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             AbstractSqueakObject currentLink = receiver.getFrameSender();
 
-            while (currentLink != NilObject.SINGLETON) {
+            while (currentLink instanceof final ContextObject context) {
                 // Exit if we've found the previous Context.
-                final ContextObject context = (ContextObject) currentLink;
                 if (context == previousContextOrNil) {
                     return NilObject.SINGLETON;
                 }
@@ -105,14 +104,13 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             // Search starts with sender.
             AbstractSqueakObject currentLink = startContext.getFrameSender();
 
-            while (currentLink != NilObject.SINGLETON) {
+            while (currentLink instanceof final ContextObject context) {
                 // Exit if we've found endContext.
-                final ContextObject context = (ContextObject) currentLink;
                 if (context == endContext) {
                     return true;
                 }
                 // Move to the next link.
-                currentLink = ((ContextObject) currentLink).getFrameSender();
+                currentLink = context.getFrameSender();
                 // Terminate if requested.
                 if (terminate && context.hasTruffleFrame()) {
                     context.terminate();
@@ -134,9 +132,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             AbstractSqueakObject currentLink = receiver.getFrameSender();
 
-            while (currentLink != NilObject.SINGLETON) {
+            while (currentLink instanceof final ContextObject context) {
                 // Watch for exception handler marked ContextObjects.
-                final ContextObject context = (ContextObject) currentLink;
                 if (context.isExceptionHandlerMarked()) {
                     return context;
                 }
