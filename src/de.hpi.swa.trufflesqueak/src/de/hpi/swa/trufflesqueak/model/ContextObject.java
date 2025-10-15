@@ -40,37 +40,34 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     private AbstractSqueakObject senderContextOrNil;
     private MaterializedFrame truffleFrame;
-    private CompiledCodeObject code;
     private boolean hasModifiedSender;
     private boolean escaped;
 
     private ContextObject(final long header, final SqueakImageContext image) {
         super(header, image.methodContextClass);
         truffleFrame = null;
-        code = null;
     }
 
     private ContextObject(final SqueakImageContext image, final int size) {
         super(image, image.methodContextClass);
         truffleFrame = null;
         assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE;
-        this.code = size == CONTEXT.SMALL_FRAMESIZE ? image.dummyMethodSmallFrame : image.dummyMethod;
     }
 
     private ContextObject(final SqueakImageContext image, final VirtualFrame frame) {
         super(image, image.methodContextClass);
         this.senderContextOrNil = FrameAccess.getSender(frame);
         this.truffleFrame = null;
-        this.code = FrameAccess.getCodeObject(frame);
+        assert senderContextOrNil != null;
+        assert FrameAccess.getContext(frame) == null;
     }
 
-    private ContextObject(final SqueakImageContext image, final MaterializedFrame truffleFrame, final CompiledCodeObject code) {
+    private ContextObject(final SqueakImageContext image, final MaterializedFrame frame) {
         super(image, image.methodContextClass);
-        assert FrameAccess.getSender(truffleFrame) != null;
-        assert FrameAccess.getContext(truffleFrame) == null;
-        this.senderContextOrNil = FrameAccess.getSender(truffleFrame);
-        this.truffleFrame = truffleFrame;
-        this.code = code;
+        this.senderContextOrNil = FrameAccess.getSender(frame);
+        this.truffleFrame = frame;
+        assert senderContextOrNil != null;
+        assert FrameAccess.getContext(frame) == null;
     }
 
     @TruffleBoundary
@@ -79,7 +76,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         hasModifiedSender = original.hasModifiedSender();
         senderContextOrNil = original.senderContextOrNil;
         escaped = original.escaped;
-        code = original.code;
         // Create shallow copy of Truffle frame
         final FrameDescriptor frameDescriptor = FrameAccess.getCodeObject(original.truffleFrame).getFrameDescriptor();
         truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments().clone(), frameDescriptor);
@@ -100,8 +96,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return context;
     }
 
-    public static ContextObject create(final SqueakImageContext image, final MaterializedFrame frame, final CompiledCodeObject blockOrMethod) {
-        final ContextObject context = new ContextObject(image, frame, blockOrMethod);
+    public static ContextObject create(final SqueakImageContext image, final MaterializedFrame frame) {
+        final ContextObject context = new ContextObject(image, frame);
         FrameAccess.setContext(frame, context);
         return context;
     }
@@ -117,7 +113,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void fillinContext(final SqueakImageChunk chunk) {
         assert chunk.getWordSize() > CONTEXT.TEMP_FRAME_START;
-        code = (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
+        final CompiledCodeObject code = (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
         final AbstractSqueakObject sender = (AbstractSqueakObject) chunk.getPointer(CONTEXT.SENDER_OR_NIL);
         assert sender != null : "sender should not be null";
         final Object closureOrNil = chunk.getPointer(CONTEXT.CLOSURE_OR_NIL);
@@ -206,12 +202,20 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return FrameAccess.getSender(getTruffleFrame());
     }
 
+    /**
+     * Returns <code>true</code> if method is unwind-marked. In this case, the ContextObject must
+     * always have a frame.
+     */
     public boolean isUnwindMarked() {
-        return getCodeObject().isUnwindMarked() && !hasClosure();
+        return hasTruffleFrame() && getCodeObject().isUnwindMarked() && !hasClosure();
     }
 
+    /**
+     * Returns <code>true</code> if method is exception-handler-marked. In this case, the
+     * ContextObject must always have a frame.
+     */
     public boolean isExceptionHandlerMarked() {
-        return getCodeObject().isExceptionHandlerMarked();
+        return hasTruffleFrame() && getCodeObject().isExceptionHandlerMarked();
     }
 
     /**
@@ -271,11 +275,10 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public CompiledCodeObject getCodeObject() {
-        return code;
+        return FrameAccess.getCodeObject(getTruffleFrame());
     }
 
     public void setCodeObject(final CompiledCodeObject value) {
-        code = value;
         truffleFrame = createTruffleFrame(this, truffleFrame, value);
     }
 
@@ -461,23 +464,20 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int size() {
-        return code.getSqueakContextSize();
+        return getCodeObject().getSqueakContextSize();
     }
 
     public void become(final ContextObject other) {
         final MaterializedFrame otherTruffleFrame = other.truffleFrame;
-        final CompiledCodeObject otherCode = other.code;
         final boolean otherHasModifiedSender = other.hasModifiedSender;
         final boolean otherEscaped = other.escaped;
-        other.setFields(truffleFrame, code, hasModifiedSender, escaped);
-        setFields(otherTruffleFrame, otherCode, otherHasModifiedSender, otherEscaped);
+        other.setFields(truffleFrame, hasModifiedSender, escaped);
+        setFields(otherTruffleFrame, otherHasModifiedSender, otherEscaped);
     }
 
-    private void setFields(final MaterializedFrame otherTruffleFrame, final CompiledCodeObject otherCode, final boolean otherHasModifiedSender,
-                    final boolean otherEscaped) {
+    private void setFields(final MaterializedFrame otherTruffleFrame, final boolean otherHasModifiedSender, final boolean otherEscaped) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         truffleFrame = otherTruffleFrame;
-        code = otherCode;
         hasModifiedSender = otherHasModifiedSender;
         escaped = otherEscaped;
     }

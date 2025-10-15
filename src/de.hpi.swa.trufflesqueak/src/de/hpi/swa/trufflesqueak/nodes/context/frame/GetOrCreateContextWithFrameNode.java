@@ -18,7 +18,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedCountingConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -41,7 +40,7 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
             }
             return context;
         } else {
-            return ContextObject.create(SqueakImageContext.getSlow(), frame.materialize(), FrameAccess.getCodeObject(frame));
+            return ContextObject.create(SqueakImageContext.getSlow(), frame.materialize());
         }
     }
 
@@ -53,7 +52,6 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
 
     @Specialization
     protected static final ContextObject doGetOrCreate(final VirtualFrame frame, final Node node,
-                    @Cached(value = "getCodeObject(frame)", neverDefault = true) final CompiledCodeObject code,
                     @Cached final InlinedCountingConditionProfile hasContextProfile) {
         final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
@@ -62,7 +60,7 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
             }
             return context;
         } else {
-            return ContextObject.create(getContext(node), frame.materialize(), code);
+            return ContextObject.create(getContext(node), frame.materialize());
         }
     }
 }
