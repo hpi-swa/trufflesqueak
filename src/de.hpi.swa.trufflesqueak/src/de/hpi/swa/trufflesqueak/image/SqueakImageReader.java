@@ -422,8 +422,7 @@ public final class SqueakImageReader {
             }
             final Object chunkObject = chunk.asObject();
             if (chunkObject instanceof final ContextObject contextObject) {
-                assert !contextObject.hasTruffleFrame();
-                contextObject.fillinContext(chunk);
+                contextObject.fillInContext(chunk);
             }
         }
     }
