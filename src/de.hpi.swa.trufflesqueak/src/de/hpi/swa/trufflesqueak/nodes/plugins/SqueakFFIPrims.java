@@ -242,7 +242,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             if (moduleObject != NilObject.SINGLETON) {
                 return ((NativeObject) moduleObject).asStringUnsafe();
             } else {
-                return ((NativeObject) ((PointersObject) receiver).instVarAt0Slow(ObjectLayouts.CLASS.NAME)).asStringUnsafe();
+                return ((NativeObject) ((PointersObject) receiver).instVarAt0Slow(1)).asStringUnsafe();
             }
         }
 

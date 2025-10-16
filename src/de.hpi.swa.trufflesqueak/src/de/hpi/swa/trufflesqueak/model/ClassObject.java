@@ -13,7 +13,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -29,7 +28,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_TRAIT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
@@ -47,8 +45,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private ClassObject superclass;
     @CompilationFinal private VariablePointersObject methodDict;
     @CompilationFinal private long format = -1;
-    private ArrayObject instanceVariables;
-    private PointersObject organization;
     private Object[] pointers;
 
     @CompilationFinal private ObjectLayout layout;
@@ -63,7 +59,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         this.image = image;
     }
 
-    private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
+    private ClassObject(final ClassObject original) {
         super(original);
         image = original.image;
         instancesAreClasses = original.instancesAreClasses;
@@ -71,8 +67,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         assert superclass == null || superclass.assertNotForwarded();
         methodDict = original.methodDict.shallowCopy();
         format = original.format;
-        instanceVariables = copiedInstanceVariablesOrNull;
-        organization = original.organization == null ? null : original.organization.shallowCopy();
         pointers = original.pointers.clone();
         initializeLayout();
     }
@@ -80,7 +74,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
         super(image, classObject);
         this.image = image;
-        pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON);
+        pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.INLINE_POINTERS, 0), NilObject.SINGLETON);
         instancesAreClasses = image.isMetaClass(classObject);
         // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
     }
@@ -119,14 +113,14 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             return "forward to " + getForwardingPointer().toString();
         }
         if (image.isMetaClass(getSqueakClass())) {
-            final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.SIZE];
+            final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.INLINE_POINTERS];
             if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] instanceof final NativeObject metaClassName) {
                 return metaClassName.asStringUnsafe() + " class";
             } else {
                 return "Unknown metaclass";
             }
         } else if (isAClassTrait()) {
-            final ClassObject traitInstance = (ClassObject) pointers[CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE];
+            final ClassObject traitInstance = (ClassObject) pointers[CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.INLINE_POINTERS];
             if (traitInstance.pointers[CLASS.NAME] instanceof final NativeObject traitClassName) {
                 return traitClassName.asStringUnsafe() + " classTrait";
             } else {
@@ -248,9 +242,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             superclass = (ClassObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.SUPERCLASS));
             methodDict = (VariablePointersObject) chunk.getPointer(CLASS_DESCRIPTION.METHOD_DICT);
             format = (long) chunk.getPointer(CLASS_DESCRIPTION.FORMAT);
-            instanceVariables = (ArrayObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.INSTANCE_VARIABLES));
-            organization = (PointersObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.ORGANIZATION));
-            pointers = chunk.getPointers(CLASS_DESCRIPTION.SIZE);
+            pointers = chunk.getPointers(CLASS_DESCRIPTION.INLINE_POINTERS);
             initializeLayout();
         }
     }
@@ -286,7 +278,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int size() {
-        return CLASS_DESCRIPTION.SIZE + pointers.length;
+        return CLASS_DESCRIPTION.INLINE_POINTERS + pointers.length;
     }
 
     public static boolean isSuperclassIndex(final long index) {
@@ -301,16 +293,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return index == CLASS_DESCRIPTION.FORMAT;
     }
 
-    public static boolean isInstanceVariablesIndex(final long index) {
-        return index == CLASS_DESCRIPTION.INSTANCE_VARIABLES;
-    }
-
-    public static boolean isOrganizationIndex(final long index) {
-        return index == CLASS_DESCRIPTION.ORGANIZATION;
-    }
-
     public static boolean isOtherIndex(final long index) {
-        return index >= CLASS_DESCRIPTION.SIZE;
+        return index >= CLASS_DESCRIPTION.INLINE_POINTERS;
     }
 
     public AbstractSqueakObject getSuperclass() {
@@ -345,32 +329,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return getMethodDict();
     }
 
-    public boolean hasInstanceVariables() {
-        return instanceVariables != null;
-    }
-
-    public AbstractSqueakObject getInstanceVariables() {
-        return hasInstanceVariables() ? instanceVariables : NilObject.SINGLETON;
-    }
-
-    public void setInstanceVariables(final ArrayObject instanceVariables) {
-        this.instanceVariables = instanceVariables;
-    }
-
-    public AbstractSqueakObject getOrganization() {
-        return NilObject.nullToNil(organization);
-    }
-
-    public void setOrganization(final PointersObject organization) {
-        this.organization = organization;
-    }
-
     public Object getOtherPointer(final int index) {
-        return pointers[index - CLASS_DESCRIPTION.SIZE];
+        return pointers[index - CLASS_DESCRIPTION.INLINE_POINTERS];
     }
 
     public void setOtherPointer(final int index, final Object value) {
-        pointers[index - CLASS_DESCRIPTION.SIZE] = value;
+        pointers[index - CLASS_DESCRIPTION.INLINE_POINTERS] = value;
     }
 
     public Object[] getOtherPointers() {
@@ -477,13 +441,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return (int) (format >> 16 & 0x1f);
     }
 
-    public ClassObject shallowCopy(final Node inlineTarget, final ArrayObjectShallowCopyNode arrayCopyNode) {
-        assert hasInstanceVariables();
-        return shallowCopy(arrayCopyNode.execute(inlineTarget, instanceVariables));
-    }
-
-    public ClassObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
-        return new ClassObject(this, copiedInstanceVariablesOrNull);
+    public ClassObject shallowCopy() {
+        return new ClassObject(this);
     }
 
     public boolean pointsTo(final Object thang) {
@@ -494,12 +453,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             return true;
         }
         if (thang instanceof final Long l && format == l) {
-            return true;
-        }
-        if (instanceVariables == thang) {
-            return true;
-        }
-        if (organization == thang) {
             return true;
         }
         return ArrayUtils.contains(pointers, thang);
@@ -517,22 +470,16 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         final ClassObject otherSuperclass = other.superclass;
         final VariablePointersObject otherMethodDict = other.methodDict;
         final long otherFormat = other.format;
-        final ArrayObject otherInstanceVariables = other.instanceVariables;
-        final PointersObject otherOrganization = other.organization;
         final Object[] otherPointers = other.pointers;
 
         other.setSuperclass(superclass);
         other.setMethodDict(methodDict);
         other.setFormat(format);
-        other.setInstanceVariables(instanceVariables);
-        other.setOrganization(organization);
         other.setOtherPointers(pointers);
 
         setSuperclass(otherSuperclass);
         setMethodDict(otherMethodDict);
         setFormat(otherFormat);
-        setInstanceVariables(otherInstanceVariables);
-        setOrganization(otherOrganization);
         setOtherPointers(otherPointers);
     }
 
@@ -597,20 +544,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             }
             assert methodDict.assertNotForwarded();
         }
-        if (instanceVariables != null) {
-            final Object replacement = fromToMap.get(instanceVariables);
-            if (replacement != null) {
-                setInstanceVariables((ArrayObject) replacement);
-            }
-            assert instanceVariables.assertNotForwarded();
-        }
-        if (organization != null) {
-            final Object replacement = fromToMap.get(organization);
-            if (replacement != null) {
-                setOrganization((PointersObject) replacement);
-            }
-            assert organization.assertNotForwarded();
-        }
         ArrayUtils.replaceAll(pointers, fromToMap);
     }
 
@@ -619,8 +552,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         super.tracePointers(tracer);
         tracer.addIfUnmarked(superclass);
         tracer.addIfUnmarked(methodDict);
-        tracer.addIfUnmarked(instanceVariables);
-        tracer.addIfUnmarked(organization);
         tracer.addAllIfUnmarked(pointers);
     }
 
@@ -629,8 +560,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         super.trace(writer);
         writer.traceIfNecessary(superclass);
         writer.traceIfNecessary(methodDict);
-        writer.traceIfNecessary(instanceVariables);
-        writer.traceIfNecessary(organization);
         writer.traceAllIfNecessary(pointers);
     }
 
@@ -642,8 +571,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         writer.writeObject(getSuperclass());
         writer.writeObject(getMethodDict());
         writer.writeSmallInteger(format);
-        writer.writeObject(getInstanceVariables());
-        writer.writeObject(getOrganization());
         writer.writeObjects(getOtherPointers());
     }
 }

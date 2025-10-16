@@ -33,14 +33,14 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         dummySpecialSelectors.setSqueakClass(image.arrayClass);
 
         image.setByteSymbolClass(new ClassObject(image));
-        setupMeta(image.metaClass, null, 0L, new Object[]{null, asByteSymbol("Metaclass"), null, null, null, null});
-        setupMeta(image.getByteSymbolClass(), null, 0L, new Object[]{null, asByteSymbol("ByteSymbol"), null, null, null, null});
-        setupMeta(image.compiledMethodClass, null, 1572864L, new Object[]{null, asByteSymbol("CompiledMethod"), null, null, null, null});
-        setupMeta(image.nilClass, null, 0L, new Object[]{null, asByteSymbol("UndefinedObject"), null, null, null, null});
-        setupMeta(image.arrayClass, null, 0L, new Object[]{null, asByteSymbol("Array"), null, null, null, null});
+        setupMeta(image.metaClass, null, 0L, "Metaclass");
+        setupMeta(image.getByteSymbolClass(), null, 0L, "ByteSymbol");
+        setupMeta(image.compiledMethodClass, null, 1572864L, "CompiledMethod");
+        setupMeta(image.nilClass, null, 0L, "UndefinedObject");
+        setupMeta(image.arrayClass, null, 0L, "Array");
 
-        final ClassObject bindingClass = setupMeta(new ClassObject(image), null, 1L, new Object[]{null, asByteSymbol("Binding"), null, null, null, null});
-        final ClassObject classBindingClass = setupMeta(new ClassObject(image), bindingClass, 2L, new Object[]{null, asByteSymbol("ClassBinding"), null, null, null, null});
+        final ClassObject bindingClass = setupMeta(new ClassObject(image), null, 1L, "Binding");
+        final ClassObject classBindingClass = setupMeta(new ClassObject(image), bindingClass, 2L, "ClassBinding");
         nilClassBinding = new PointersObject(image, classBindingClass, classBindingClass.getLayout());
         nilClassBinding.instVarAtPut0Slow(0, asByteSymbol("UndefinedObject"));
         nilClassBinding.instVarAtPut0Slow(1, image.nilClass);
@@ -49,13 +49,11 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         context.enter();
     }
 
-    private static ClassObject setupMeta(final ClassObject aClass, final ClassObject superclass, final long format, final Object[] otherPointers) {
+    private static ClassObject setupMeta(final ClassObject aClass, final ClassObject superclass, final long format, final String name) {
         aClass.setSuperclass(superclass);
         aClass.setMethodDict(null);
         aClass.setFormat(format);
-        aClass.setInstanceVariables(null);
-        aClass.setOrganization(null);
-        aClass.setOtherPointers(otherPointers);
+        aClass.setOtherPointers(new Object[]{null, null, null, asByteSymbol(name), null, null, null, null});
 
         final ClassObject aClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
         aClassClass.setInstancesAreClasses();

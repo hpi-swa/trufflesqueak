@@ -14,10 +14,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
@@ -42,16 +40,6 @@ public final class ClassObjectNodes {
         @Specialization(guards = {"isFormatIndex(index)"})
         protected static final long doClassFormat(final ClassObject obj, @SuppressWarnings("unused") final long index) {
             return obj.getFormat();
-        }
-
-        @Specialization(guards = "isInstanceVariablesIndex(index)")
-        protected static final AbstractSqueakObject doClassInstanceVariables(final ClassObject obj, @SuppressWarnings("unused") final long index) {
-            return obj.getInstanceVariables();
-        }
-
-        @Specialization(guards = "isOrganizationIndex(index)")
-        protected static final AbstractSqueakObject doClassOrganization(final ClassObject obj, @SuppressWarnings("unused") final long index) {
-            return obj.getOrganization();
         }
 
         @Specialization(guards = "isOtherIndex(index)")
@@ -86,26 +74,6 @@ public final class ClassObjectNodes {
         @Specialization(guards = "isFormatIndex(index)")
         protected static final void doClassFormat(final ClassObject obj, @SuppressWarnings("unused") final long index, final long value) {
             obj.setFormat(value);
-        }
-
-        @Specialization(guards = "isInstanceVariablesIndex(index)")
-        protected static final void doClassInstanceVariables(final ClassObject obj, @SuppressWarnings("unused") final long index, final ArrayObject value) {
-            obj.setInstanceVariables(value);
-        }
-
-        @Specialization(guards = "isInstanceVariablesIndex(index)")
-        protected static final void doClassInstanceVariables(final ClassObject obj, @SuppressWarnings("unused") final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.setInstanceVariables(null);
-        }
-
-        @Specialization(guards = "isOrganizationIndex(index)")
-        protected static final void doClassOrganization(final ClassObject obj, @SuppressWarnings("unused") final long index, final PointersObject value) {
-            obj.setOrganization(value);
-        }
-
-        @Specialization(guards = "isOrganizationIndex(index)")
-        protected static final void doClassOrganization(final ClassObject obj, @SuppressWarnings("unused") final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.setOrganization(null);
         }
 
         @Specialization(guards = "isOtherIndex(index)")

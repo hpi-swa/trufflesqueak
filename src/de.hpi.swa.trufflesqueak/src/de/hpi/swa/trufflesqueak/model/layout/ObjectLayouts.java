@@ -47,8 +47,7 @@ public final class ObjectLayouts {
         /**
          * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
          */
-        public static final int SUBCLASSES = 0;
-        public static final int NAME = 1;
+        public static final int NAME = 3;
     }
 
     public static final class CLASS_BINDING {
@@ -63,6 +62,7 @@ public final class ObjectLayouts {
         public static final int INSTANCE_VARIABLES = 3;
         public static final int ORGANIZATION = 4;
 
+        public static final int INLINE_POINTERS = INSTANCE_VARIABLES;
         public static final int SIZE = 5;
     }
 
