@@ -31,6 +31,7 @@ import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -99,7 +100,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 70)
     public abstract static class PrimNewNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"}, limit = "NEW_CACHE_LIMIT")
-        protected static final AbstractSqueakObjectWithClassAndHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
+        protected static final AbstractSqueakObjectWithHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
                         @Bind final Node node,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
@@ -113,7 +114,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newDirect")
-        protected static final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
+        protected static final AbstractSqueakObjectWithHash newIndirect(final ClassObject receiver,
                         @Bind final Node node,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
@@ -130,7 +131,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 71)
     protected abstract static class PrimNewWithArgNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization(guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"}, limit = "NEW_CACHE_LIMIT")
-        protected static final AbstractSqueakObjectWithClassAndHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
+        protected static final AbstractSqueakObjectWithHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
                         @Bind final Node node,
                         @Cached(value = "createIdentityProfile()", inline = true) final InlinedIntValueProfile sizeProfile,
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
@@ -145,7 +146,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected static final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
+        protected static final AbstractSqueakObjectWithHash newWithArg(final ClassObject receiver, final long size,
                         @Bind final Node node,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();

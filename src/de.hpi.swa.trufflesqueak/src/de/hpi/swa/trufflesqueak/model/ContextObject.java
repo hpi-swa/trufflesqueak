@@ -31,7 +31,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
+public final class ContextObject extends AbstractSqueakObjectWithHash {
     public static final int NIL_PC_THRESHOLD = 0;
     public static final int NIL_PC_STACK_NOT_NIL_VALUE = -1;
     public static final int NIL_PC_STACK_NIL_VALUE = -2;
@@ -42,28 +42,29 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private boolean hasModifiedSender;
     private boolean escaped;
 
-    private ContextObject(final long header, final SqueakImageContext image) {
-        super(header, image.methodContextClass);
+    public ContextObject(final long header) {
+        super(header);
         senderOrFrameOrSize = null;
     }
 
-    private ContextObject(final SqueakImageContext image, final int size) {
-        super(image, image.methodContextClass);
+    public ContextObject(final SqueakImageContext image, final int size) {
+        super(image);
         senderOrFrameOrSize = size;
         assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE;
     }
 
-    private ContextObject(final SqueakImageContext image, final VirtualFrame frame) {
-        super(image, image.methodContextClass);
+    public ContextObject(final SqueakImageContext image, final VirtualFrame frame) {
+        super(image);
+        FrameAccess.assertSenderNotNull(frame);
         this.senderOrFrameOrSize = FrameAccess.getSender(frame);
-        assert senderOrFrameOrSize != null;
-        assert FrameAccess.getContext(frame) == null;
+        FrameAccess.setContext(frame, this);
     }
 
-    private ContextObject(final SqueakImageContext image, final MaterializedFrame frame) {
-        super(image, image.methodContextClass);
+    public ContextObject(final SqueakImageContext image, final MaterializedFrame frame) {
+        super(image);
+        FrameAccess.assertSenderNotNull(frame);
         this.senderOrFrameOrSize = frame;
-        assert FrameAccess.getContext(frame) == null;
+        FrameAccess.setContext(frame, this);
     }
 
     @TruffleBoundary
@@ -75,26 +76,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         final FrameDescriptor frameDescriptor = FrameAccess.getCodeObject(original.getTruffleFrame()).getFrameDescriptor();
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(original.getTruffleFrame().getArguments().clone(), frameDescriptor);
         FrameAccess.copyAllSlots(original.getTruffleFrame(), getTruffleFrame());
-    }
-
-    public static ContextObject create(final SqueakImageContext image, final int size) {
-        return new ContextObject(image, size);
-    }
-
-    public static ContextObject createWithHeader(final SqueakImageContext image, final long header) {
-        return new ContextObject(header, image);
-    }
-
-    public static ContextObject create(final SqueakImageContext image, final VirtualFrame frame) {
-        final ContextObject context = new ContextObject(image, frame);
-        FrameAccess.setContext(frame, context);
-        return context;
-    }
-
-    public static ContextObject create(final SqueakImageContext image, final MaterializedFrame frame) {
-        final ContextObject context = new ContextObject(image, frame);
-        FrameAccess.setContext(frame, context);
-        return context;
     }
 
     /**
@@ -147,6 +128,26 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         for (int i = 0; i < stackPointer; i++) {
             atTempPut(i, chunk.getPointer(CONTEXT.TEMP_FRAME_START + i));
         }
+    }
+
+    @Override
+    public ClassObject getSqueakClass() {
+        return getSqueakClass(SqueakImageContext.getSlow());
+    }
+
+    @Override
+    public ClassObject getSqueakClass(final SqueakImageContext image) {
+        return image.methodContextClass;
+    }
+
+    @Override
+    protected AbstractSqueakObjectWithHash getForwardingPointer() {
+        return this; // ContextObject cannot be forwarded
+    }
+
+    @Override
+    public AbstractSqueakObjectWithHash resolveForwardingPointer() {
+        return this; // ContextObject cannot be forwarded
     }
 
     public CallTarget getCallTarget() {
@@ -543,7 +544,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
-        super.pointersBecomeOneWay(fromToMap);
         if (hasTruffleFrame()) {
             final MaterializedFrame frame = getTruffleFrame();
             final CompiledCodeObject compiledCodeObject = FrameAccess.getCodeObject(frame);
@@ -618,21 +618,21 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         for (int i = 0; i < 1 + numArgs; i++) {
             writer.writeObject(args[FrameAccess.getReceiverStartIndex() + i]);
         }
-        // Write remaining stack values
+        // Write stack values from frame slots
         final int numSlots = FrameAccess.getNumStackSlots(frame);
-        final int contextSize = getCodeObject().getSqueakContextSize();
-        for (int i = numArgs; i < contextSize; i++) {
-            if (i < numSlots) { // stack value stored in frame slot
-                final int slotIndex = FrameAccess.toStackSlotIndex(frame, i);
-                final Object stackValue = frame.getValue(slotIndex);
-                if (stackValue == null) {
-                    writer.writeNil();
-                } else {
-                    writer.writeObject(stackValue);
-                }
-            } else { // beyond max stack depth stack values are nil
+        for (int i = numArgs; i < numSlots; i++) {
+            final int slotIndex = FrameAccess.toStackSlotIndex(frame, i);
+            final Object stackValue = frame.getValue(slotIndex);
+            if (stackValue == null) {
                 writer.writeNil();
+            } else {
+                writer.writeObject(stackValue);
             }
+        }
+        // Write nil values for remaining stack values
+        final int contextSize = getCodeObject().getSqueakContextSize();
+        for (int i = numSlots; i < contextSize; i++) {
+            writer.writeNil();
         }
         assert FrameAccess.hasUnusedAuxiliarySlots(frame) : "Auxiliary slots are used but not (yet) persisted";
     }

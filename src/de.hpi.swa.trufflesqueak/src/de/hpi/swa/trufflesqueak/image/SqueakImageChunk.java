@@ -80,7 +80,7 @@ public final class SqueakImageChunk {
                 object = new ArrayObject(header, classObject);
             } else if (format == 3) { // fixed and indexable fields
                 if (classObject == image.methodContextClass) {
-                    object = ContextObject.createWithHeader(image, header);
+                    object = new ContextObject(header);
                 } else if (image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)) {
                     object = BlockClosureObject.createWithHeaderAndClass(header, classObject);
                 } else {

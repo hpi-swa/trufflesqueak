@@ -6,18 +6,15 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedCountingConditionProfile;
 
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -31,17 +28,8 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
         return GetOrCreateContextWithFrameNodeGen.create();
     }
 
-    public static final ContextObject getOrCreateUncached(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        final ContextObject context = FrameAccess.getContext(frame);
-        if (context != null) {
-            if (!context.hasTruffleFrame()) {
-                context.setTruffleFrame(frame.materialize());
-            }
-            return context;
-        } else {
-            return ContextObject.create(SqueakImageContext.getSlow(), frame.materialize());
-        }
+    public static final ContextObject executeUncached(final VirtualFrame frame) {
+        return doGetOrCreate(frame, null, InlinedCountingConditionProfile.getUncached());
     }
 
     public abstract ContextObject executeGet(VirtualFrame frame, Node node);
@@ -60,7 +48,7 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
             }
             return context;
         } else {
-            return ContextObject.create(getContext(node), frame.materialize());
+            return new ContextObject(getContext(node), frame.materialize());
         }
     }
 }

@@ -38,7 +38,7 @@ public abstract class TransferToNode extends AbstractNode {
         final PointersObject scheduler = getContext(null).getScheduler();
         final PointersObject oldProcess = READ_NODE.executePointers(null, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS);
         WRITE_NODE.execute(null, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        final ContextObject activeContext = GetOrCreateContextWithFrameNode.getOrCreateUncached(frame);
+        final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
         WRITE_NODE.execute(null, oldProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
     }
 

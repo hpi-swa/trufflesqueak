@@ -6,36 +6,15 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.IndirectCallNode;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
-import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
-import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObject {
-    private static final int MARK_BIT = 1 << 24;
-    private static final int FORWARDED_BIT = 1 << 25;
-    /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
-    private static final int HASH_UNINITIALIZED = 0;
-
+public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObjectWithHash {
     /**
      * Spur uses an 64-bit object header (see {@link ObjectHeader}). In TruffleSqueak, we only care
      * about the hash, the class, and a few bits (e.g., isImmutable). Instead of storing the
@@ -46,20 +25,6 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
      * can be represented by just one 64-bit word.
      */
     private AbstractSqueakObjectWithClassAndHash squeakClass;
-    private int squeakHashAndBits;
-
-    /**
-     * Support for atomically accessing the flags contained within squeakHashAndBits.
-     */
-    private static final VarHandle HASH_AND_BITS_HANDLE;
-
-    static {
-        try {
-            HASH_AND_BITS_HANDLE = MethodHandles.lookup().findVarHandle(AbstractSqueakObjectWithClassAndHash.class, "squeakHashAndBits", int.class);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw CompilerDirectives.shouldNotReachHere("Unable to find a VarHandle for squeakHashAndBits", e);
-        }
-    }
 
     // For special/well-known objects only.
     protected AbstractSqueakObjectWithClassAndHash() {
@@ -67,9 +32,8 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final long header, final ClassObject klass) {
+        super(header);
         squeakClass = klass;
-        // mark bit zero when loading image
-        squeakHashAndBits = ObjectHeader.getHash(header);
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final ClassObject klass) {
@@ -77,30 +41,27 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     private AbstractSqueakObjectWithClassAndHash(final boolean markingFlag, final ClassObject klass) {
+        super(markingFlag);
         squeakClass = klass;
-        squeakHashAndBits = AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED;
-        if (markingFlag) {
-            squeakHashAndBits |= MARK_BIT; // set MARK_BIT
-        }
     }
 
     @SuppressWarnings("this-escape")
     protected AbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash original) {
+        super(original);
         assert original.assertNotForwarded() && original.squeakClass.assertNotForwarded();
         squeakClass = original.squeakClass;
-        squeakHashAndBits = original.squeakHashAndBits;
         setSqueakHash(HASH_UNINITIALIZED);
     }
 
     @Override
-    public int getNumSlots() {
-        CompilerAsserts.neverPartOfCompilation();
-        return size();
-    }
-
     public final ClassObject getSqueakClass() {
         assert assertNotForwarded();
         return (ClassObject) squeakClass;
+    }
+
+    @Override
+    public final ClassObject getSqueakClass(final SqueakImageContext image) {
+        return getSqueakClass();
     }
 
     public final boolean needsSqueakClass() {
@@ -129,111 +90,14 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return getSqueakClass().getFormat() == other.getFormat();
     }
 
-    public abstract void fillin(SqueakImageChunk chunk);
-
-    @Override
-    public final long getOrCreateSqueakHash() {
-        return getOrCreateSqueakHash(InlinedBranchProfile.getUncached(), null);
-    }
-
-    public final long getOrCreateSqueakHash(final InlinedBranchProfile needsHashProfile, final Node node) {
-        if (needsSqueakHash()) {
-            /* Lazily initialize squeakHash and derive value from hashCode. */
-            needsHashProfile.enter(node);
-            setSqueakHash(System.identityHashCode(this) % SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK);
-        }
-        return getSqueakHash();
-    }
-
-    public long getSqueakHash() {
-        return getSqueakHashInt();
-    }
-
-    public int getSqueakHashInt() {
-        assert assertNotForwarded();
-        return squeakHashAndBits & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
-    }
-
-    public final boolean needsSqueakHash() {
-        return getSqueakHashInt() == HASH_UNINITIALIZED;
-    }
-
-    @SuppressWarnings("this-escape")
-    public final void setSqueakHash(final int newHash) {
-        assert assertNotForwarded();
-        assert (newHash & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) == newHash : "Invalid hash: " + newHash;
-        squeakHashAndBits = (squeakHashAndBits & ~SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK) + newHash;
-    }
-
-    /**
-     * @return <tt>true</tt> if marked with <tt>currentMarkingFlag</tt>, <tt>false</tt> otherwise;
-     *         thread safe
-     */
-    public final boolean isMarkedWith(final boolean currentMarkingFlag) {
-        return (((int) HASH_AND_BITS_HANDLE.getAcquire(this) & MARK_BIT) != 0) == currentMarkingFlag;
-    }
-
-    /**
-     * Mark this object; thread safe.
-     *
-     * @return <tt>false</tt> if already marked, <tt>true</tt> otherwise
-     */
-    public final boolean tryToMarkWith(final boolean currentMarkingFlag) {
-        int oldValue, newValue;
-        /*
-         * Atomically set the new value with release semantics. If another thread modified 'flags'
-         * since our getAcquire, CAS will fail and we retry.
-         */
-        do {
-            oldValue = (int) HASH_AND_BITS_HANDLE.getAcquire(this);
-            if (((oldValue & MARK_BIT) != 0) == currentMarkingFlag) {
-                return false; // Already marked
-            }
-            newValue = oldValue ^ MARK_BIT; // Flip MARK_BIT
-        } while (!HASH_AND_BITS_HANDLE.compareAndSet(this, oldValue, newValue));
-        return true; // Successfully marked
-    }
-
-    /**
-     * Unmark this object; thread safe.
-     */
-    public final void unmarkWith(final boolean currentMarkingFlag) {
-        tryToMarkWith(!currentMarkingFlag);
-    }
-
-    @Override
-    public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return "a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode());
-    }
-
-    @TruffleBoundary
-    public final Object send(final SqueakImageContext image, final String selector, final Object... arguments) {
-        final Object methodObject = LookupMethodByStringNode.executeUncached(getSqueakClass(), selector);
-        if (methodObject instanceof final CompiledCodeObject method) {
-            final boolean wasActive = image.interrupt.deactivate();
-            try {
-                final Object result = TryPrimitiveNaryNode.executeUncached(image.externalSenderFrame, method, this, arguments);
-                if (result != null) {
-                    return result;
-                } else {
-                    return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, this, arguments));
-                }
-            } finally {
-                image.interrupt.reactivate(wasActive);
-            }
-        } else {
-            throw SqueakExceptions.SqueakException.create("CompiledMethodObject expected, got: " + methodObject);
-        }
-    }
-
     public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
         assert this != pointer && pointer.isNotForwarded() : "Forwarding pointer should neither be the same nor a forwarded object itself (" + this + "->" + pointer + ")";
-        squeakHashAndBits |= FORWARDED_BIT;
+        setForwardedBit();
         squeakClass = pointer;
     }
 
-    public final AbstractSqueakObjectWithClassAndHash resolveForwardingPointer() {
+    @Override
+    public final AbstractSqueakObjectWithHash resolveForwardingPointer() {
         if (isNotForwarded()) {
             return this;
         } else {
@@ -243,6 +107,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         }
     }
 
+    @Override
     public final AbstractSqueakObjectWithClassAndHash getForwardingPointer() {
         assert !isNotForwarded();
         return squeakClass;
@@ -252,54 +117,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return pointer instanceof final AbstractSqueakObjectWithClassAndHash p ? p.resolveForwardingPointer() : pointer;
     }
 
-    public final boolean isNotForwarded() {
-        return (squeakHashAndBits & FORWARDED_BIT) == 0;
-    }
-
-    @SuppressWarnings("this-escape")
-    public final boolean assertNotForwarded() {
-        assert isNotForwarded() : MiscUtils.toObjectString(this) + " was unexpectedly forwarded to " + MiscUtils.toObjectString(getForwardingPointer());
-        return true;
-    }
-
-    public static final boolean assertNotForwarded(final Object object) {
-        return !(object instanceof final AbstractSqueakObjectWithClassAndHash o) || o.assertNotForwarded();
-    }
-
-    public void pointersBecomeOneWay(@SuppressWarnings("unused") final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
         final Object replacement = fromToMap.get(getSqueakClass());
         if (replacement != null) {
             setSqueakClass((ClassObject) replacement);
-        }
-    }
-
-    public void tracePointers(final ObjectTracer objectTracer) {
-        objectTracer.addIfUnmarked(getSqueakClass());
-    }
-
-    public void trace(final SqueakImageWriter writer) {
-        writer.traceIfNecessary(getSqueakClass());
-    }
-
-    public abstract void write(SqueakImageWriter writer);
-
-    /* Returns true if more content is following. */
-    protected final boolean writeHeader(final SqueakImageWriter writer) {
-        return writeHeader(writer, getNumSlots(), 0);
-    }
-
-    protected final boolean writeHeader(final SqueakImageWriter writer, final int thisNumSlots, final int formatOffset) {
-        long numSlots = thisNumSlots;
-        if (numSlots >= SqueakImageConstants.OVERFLOW_SLOTS) {
-            writer.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
-            numSlots = SqueakImageConstants.OVERFLOW_SLOTS;
-        }
-        writer.writeObjectHeader(numSlots, getSqueakHash(), getSqueakClass(), formatOffset);
-        if (numSlots == 0) {
-            writer.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
-            return false;
-        } else {
-            return true;
         }
     }
 }

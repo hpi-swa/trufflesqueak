@@ -60,7 +60,7 @@ public final class StartContextRootNode extends AbstractRootNode {
             if (image.enteringContextExceedsDepth()) {
                 CompilerDirectives.transferToInterpreter();
                 // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
-                final ContextObject activeContext = GetOrCreateContextWithFrameNode.getOrCreateUncached(frame);
+                final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
                 AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
                 throw ProcessSwitch.SINGLETON;
             }
