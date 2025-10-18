@@ -78,60 +78,66 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
             CompilerAsserts.partialEvaluationConstant(node);
-            if (node instanceof final AbstractSendNode sendNode) {
-                pc = sendNode.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, pc);
-                sendNode.executeVoid(frame);
-                final int actualNextPc = FrameAccess.getInstructionPointer(frame);
-                if (pc != actualNextPc) {
-                    /*
-                     * pc has changed, which can happen if a context is restarted (e.g. as part of
-                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
-                     * the Graal compiler.
-                     */
-                    CompilerDirectives.transferToInterpreter();
-                    pc = actualNextPc;
-                }
-                continue bytecode_loop;
-            } else if (node instanceof final ConditionalJumpNode jumpNode) {
-                if (jumpNode.executeCondition(frame)) {
-                    pc = jumpNode.getJumpSuccessorIndex();
-                    continue bytecode_loop;
-                } else {
-                    pc = jumpNode.getSuccessorIndex();
+            switch (node) {
+                case AbstractSendNode sendNode -> {
+                    pc = sendNode.getSuccessorIndex();
+                    FrameAccess.setInstructionPointer(frame, pc);
+                    sendNode.executeVoid(frame);
+                    final int actualNextPc = FrameAccess.getInstructionPointer(frame);
+                    if (pc != actualNextPc) {
+                        /*
+                         * pc has changed, which can happen if a context is restarted (e.g. as part
+                         * of Exception>>retry). For now, we continue in the interpreter to avoid
+                         * confusing the Graal compiler.
+                         */
+                        CompilerDirectives.transferToInterpreter();
+                        pc = actualNextPc;
+                    }
                     continue bytecode_loop;
                 }
-            } else if (node instanceof final AbstractUnconditionalJumpNode jumpNode) {
-                final int successor = jumpNode.getSuccessorIndex();
-                if (successor <= pc) {
-                    backJumpCounter.value++;
-                    if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
-                        if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
-                            returnValue = BytecodeOSRNode.tryOSR(this, successor, null, null, frame);
-                            if (returnValue != null) {
-                                break bytecode_loop;
-                            }
-                        } else {
-                            jumpNode.executeCheck(frame);
-                        }
+                case ConditionalJumpNode jumpNode -> {
+                    if (jumpNode.executeCondition(frame)) {
+                        pc = jumpNode.getJumpSuccessorIndex();
+                        continue bytecode_loop;
+                    } else {
+                        pc = jumpNode.getSuccessorIndex();
+                        continue bytecode_loop;
                     }
                 }
-                pc = successor;
-                continue bytecode_loop;
-            } else if (node instanceof final AbstractReturnNode returnNode) {
-                /*
-                 * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
-                 * cannotReturn.
-                 */
-                FrameAccess.setInstructionPointer(frame, returnNode.getSuccessorIndex());
-                returnValue = returnNode.executeReturn(frame);
-                pc = LOCAL_RETURN_PC;
-                continue bytecode_loop;
-            } else {
-                /* All other bytecode nodes. */
-                node.executeVoid(frame);
-                pc = node.getSuccessorIndex();
-                continue bytecode_loop;
+                case AbstractUnconditionalJumpNode jumpNode -> {
+                    final int successor = jumpNode.getSuccessorIndex();
+                    if (successor <= pc) {
+                        backJumpCounter.value++;
+                        if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
+                            if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
+                                returnValue = BytecodeOSRNode.tryOSR(this, successor, null, null, frame);
+                                if (returnValue != null) {
+                                    break bytecode_loop;
+                                }
+                            } else {
+                                jumpNode.executeCheck(frame);
+                            }
+                        }
+                    }
+                    pc = successor;
+                    continue bytecode_loop;
+                }
+                case AbstractReturnNode returnNode -> {
+                    /*
+                     * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
+                     * cannotReturn.
+                     */
+                    FrameAccess.setInstructionPointer(frame, returnNode.getSuccessorIndex());
+                    returnValue = returnNode.executeReturn(frame);
+                    pc = LOCAL_RETURN_PC;
+                    continue bytecode_loop;
+                }
+                default -> {
+                    /* All other bytecode nodes. */
+                    node.executeVoid(frame);
+                    pc = node.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
             }
         }
         assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
