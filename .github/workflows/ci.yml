@@ -209,14 +209,16 @@ jobs:
         include:
           - performance-mode: peak
             iterations: 300
-            vm-args: '--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=ExitVM --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics'
+            vm-args: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=ExitVM --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics"
+            timeout: 30
           - performance-mode: interpreter
             iterations: 10
-            vm-args: '--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --engine.Compilation=false'
+            vm-args: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --engine.Compilation=false"
+            timeout: 45
     env:
       EXEC: "/usr/bin/time -v"
     name: run ${{ matrix.performance-mode }} benchmarks
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.timeout }}
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
@@ -289,5 +291,5 @@ jobs:
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
-      if: always()
+      if: ${{ matrix.performance-mode == 'peak' }}
   
