@@ -47,11 +47,12 @@ RE_COMPILATION_SUMMARY_LINE = re.compile(
     r"maxTarget=(.+)"
 )
 
-WARMUP_ITERATIONS = 50
+IS_PEAK = sys.argv[1] == "peak"
+WARMUP_ITERATIONS = 50 if IS_PEAK else 6
 PEAK_ITERATIONS = 200
 
 
-def print_summary(results):
+def print_peak_summary(results):
     print(
         '| Benchmark | [Min](# "Smallest value in ms") | [Med](# "Low median in ms") | [Max](# "Largest value in ms") | [:stopwatch:](# "Total time in mm:ss.ss") | [:fire:](# "First Stable Iteration") | [:bulb:](# "Compilations") | [:wastebasket:](# "Invalidations") | [:dna:](# "Splits") | [Nodes](# "Truffle Node Count") | [Tier 1](# "Tier 1: Total Code Size") | [Tier 2](# "Tier 2: Total Code Size") | [Memory](# "Peak RSS in MB") |'  # pylint: disable=line-too-long
     )
@@ -90,6 +91,42 @@ def print_summary(results):
     )
 
 
+def print_interpreter_summary(results):
+    print(
+        '| Benchmark | [Min](# "Smallest value in ms") | [Med](# "Low median in ms") | [Max](# "Largest value in ms") | [:stopwatch:](# "Total time in mm:ss.ss") | [Memory](# "Peak RSS in MB") |'  # pylint: disable=line-too-long
+    )
+    print("|:-- | --:| --:| --:| -- | --:| ")
+    sums = [
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
+    for r in results.values():
+        r_min = r.min()
+        r_median_low = r.median_low()
+        r_max = r.max()
+        r_time_s = r.time_s()
+        print(
+            f"| {r.bench_name} | {r_min} | {r_median_low} | {r_max} | {mm_ss(r_time_s)} | {r.peak_rss} |"
+        )
+        sums = [
+            x + y
+            for x, y in zip(
+                sums,
+                [
+                    r_min,
+                    r_median_low,
+                    r_max,
+                    r_time_s,
+                    r.peak_rss,
+                ],
+            )
+        ]
+    print(f"| | {sums[0]} | {sums[1]} | {sums[2]} | {mm_ss(sums[3])} | {sums[4]} |")
+
+
 def mm_ss(seconds):
     minutes = int(seconds // 60)
     secs = seconds % 60
@@ -103,7 +140,7 @@ def to_int(value):
 
 
 def print_warmup(r):
-    print(f"## Warmup")
+    print(f"## {'Warmup' if IS_PEAK else 'Details'}")
 
     print(
         f"""
@@ -115,7 +152,7 @@ config:
             plotColorPalette: '#1f77b4, #ff7f0e, #2ca02c, #d62728, #9467bd, #8c564b, #e377c2, #7f7f7f, #bcbd22, #17becf'
 ---
 xychart-beta
-    title "First {WARMUP_ITERATIONS} Iterations"
+    title "{'First ' if IS_PEAK else ''}{WARMUP_ITERATIONS} Iterations"
     y-axis "Time (in ms)" {min([min(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])} --> {max([max(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])}
     """
     )
@@ -230,6 +267,8 @@ def get_result(bench_name):
                     first_stable_iteration = iteration
                 elif line.startswith("[engine] Truffle runtime statistics"):
                     phase = Phase.truffle_runtime_stats
+                elif "Command being timed" in line:
+                    phase = Phase.time_verbose
             elif phase == Phase.truffle_runtime_stats:
                 if "Compilations" in line:
                     compilations = int(line.split(":")[1].strip())
@@ -261,7 +300,7 @@ def get_result(bench_name):
                 if "Maximum resident set size (kbytes): " in line:
                     peak_rss = math.ceil(float(line.split(": ")[1]) / 1000)
             else:
-                raise ValueError(f"Unexpectedd phase: {phase}")
+                raise ValueError(f"Unexpected phase: {phase}")
 
     return Result(
         bench_name,
@@ -282,10 +321,14 @@ def main():
     for bench_name in BENCHMARKS:
         results[bench_name] = get_result(bench_name)
 
-    print("# Performance Report\n")
-    print_summary(results)
+    print(f"# {'Peak' if IS_PEAK else 'Interpreter'} Performance Report\n")
+    if IS_PEAK:
+        print_peak_summary(results)
+    else:
+        print_interpreter_summary(results)
     print_warmup(results)
-    print_steady(results)
+    if IS_PEAK:
+        print_steady(results)
 
     return 0
 

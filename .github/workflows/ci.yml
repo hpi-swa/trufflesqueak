@@ -204,13 +204,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04-arm]
-        type: [native]
-        iterations: [300]
+        include:
+          - performance-mode: peak
+            os: ubuntu-22.04-arm
+            type: native
+            iterations: 300
+            vm-args: '--compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=ExitVM --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics'
+          - performance-mode: interpreter
+            os: ubuntu-22.04-arm
+            type: native
+            iterations: 6
+            vm-args: '--engine.Compilation=false'
     env:
-      VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=ExitVM --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics"
+      COMMON_VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true"
       EXEC: "/usr/bin/time -v"
-    name: run benchmarks
+    name: run ${{ matrix.performance-mode }} benchmarks
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     steps:
@@ -226,52 +234,52 @@ jobs:
         echo $(cd trufflesqueak-*-linux*/bin && pwd) >> $GITHUB_PATH
     - name: Run 'tinyBenchmarks'
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "1 tinyBenchmarks"
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "1 tinyBenchmarks"
     - name: Run 'Bounce' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Bounce' ${{ matrix.iterations}} 1500)" 2>&1 | tee Bounce.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Bounce' ${{ matrix.iterations}} 1500)" 2>&1 | tee Bounce.log
     - name: Run 'CD' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('CD' ${{ matrix.iterations}} 250)" 2>&1 | tee CD.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('CD' ${{ matrix.iterations}} 250)" 2>&1 | tee CD.log
     - name: Run 'DeltaBlue' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('DeltaBlue' ${{ matrix.iterations}} 12000)" 2>&1 | tee DeltaBlue.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('DeltaBlue' ${{ matrix.iterations}} 12000)" 2>&1 | tee DeltaBlue.log
     - name: Run 'Havlak' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Havlak' ${{ matrix.iterations}} 1500)" 2>&1 | tee Havlak.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Havlak' ${{ matrix.iterations}} 1500)" 2>&1 | tee Havlak.log
     - name: Run 'Json' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Json' ${{ matrix.iterations}} 100)" 2>&1 | tee Json.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Json' ${{ matrix.iterations}} 100)" 2>&1 | tee Json.log
     - name: Run 'List' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('List' ${{ matrix.iterations}} 1500)" 2>&1 | tee List.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('List' ${{ matrix.iterations}} 1500)" 2>&1 | tee List.log
     - name: Run 'Mandelbrot' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Mandelbrot' ${{ matrix.iterations}} 500)" 2>&1 | tee Mandelbrot.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Mandelbrot' ${{ matrix.iterations}} 500)" 2>&1 | tee Mandelbrot.log
     - name: Run 'NBody' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('NBody' ${{ matrix.iterations}} 250000)" 2>&1 | tee NBody.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('NBody' ${{ matrix.iterations}} 250000)" 2>&1 | tee NBody.log
     - name: Run 'Queens' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Queens' ${{ matrix.iterations}} 1000)" 2>&1 | tee Queens.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Queens' ${{ matrix.iterations}} 1000)" 2>&1 | tee Queens.log
     - name: Run 'Permute' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Permute' ${{ matrix.iterations}} 1000)" 2>&1 | tee Permute.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Permute' ${{ matrix.iterations}} 1000)" 2>&1 | tee Permute.log
     - name: Run 'Richards' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Richards' ${{ matrix.iterations}} 100)" 2>&1 | tee Richards.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Richards' ${{ matrix.iterations}} 100)" 2>&1 | tee Richards.log
     - name: Run 'Sieve' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Sieve' ${{ matrix.iterations}} 3000)" 2>&1 | tee Sieve.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Sieve' ${{ matrix.iterations}} 3000)" 2>&1 | tee Sieve.log
     - name: Run 'Storage' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Storage' ${{ matrix.iterations}} 1000)" 2>&1 | tee Storage.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Storage' ${{ matrix.iterations}} 1000)" 2>&1 | tee Storage.log
     - name: Run 'Towers' benchmark
       run: |
-        ${{ env.EXEC }} trufflesqueak ${{ env.VM_ARGS }} -- --evaluate "AWFYHarness run: #('Towers' ${{ matrix.iterations}} 1500)" 2>&1 | tee Towers.log
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Towers' ${{ matrix.iterations}} 1500)" 2>&1 | tee Towers.log
     - name: Analyze benchmark results
       run: |
-        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py)" '{ body: $body }' |\
+        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.performance-mode }})" '{ body: $body }' |\
         curl -sL -X POST -d @- \
           -H "Content-Type: application/json" \
           -H "Accept: application/vnd.github.v3+json" \
@@ -284,5 +292,5 @@ jobs:
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
-      if: always()
+      if: ${{ matrix.performance-mode == 'peak' }}
   
