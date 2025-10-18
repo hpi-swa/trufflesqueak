@@ -391,7 +391,7 @@ public final class PushBytecodes {
             return "pushLitVar: " + literal;
         }
 
-        protected abstract static class PushLiteralVariableReadonlyNode extends PushLiteralVariableNode {
+        public abstract static class PushLiteralVariableReadonlyNode extends PushLiteralVariableNode {
             private final Object pushValue;
 
             protected PushLiteralVariableReadonlyNode(final CompiledCodeObject code, final int index, final int numBytecodes, final AbstractSqueakObjectWithClassAndHash literal) {
@@ -413,7 +413,7 @@ public final class PushBytecodes {
         }
 
         @SuppressWarnings("truffle-inlining")
-        protected abstract static class PushLiteralVariableWritableNode extends PushLiteralVariableNode {
+        public abstract static class PushLiteralVariableWritableNode extends PushLiteralVariableNode {
             protected PushLiteralVariableWritableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final AbstractSqueakObjectWithClassAndHash literal) {
                 super(code, index, numBytecodes, literal);
             }

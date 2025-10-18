@@ -26,8 +26,29 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.AbstractUnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushActiveContextNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushCharacterNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantFalseNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNilNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantOneNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantTrueNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantZeroNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushSmallIntegerNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushTemporaryLocationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushLiteralVariableNodeFactory.PushLiteralVariableReadonlyNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushLiteralVariableNodeFactory.PushLiteralVariableWritableNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushReceiverVariableNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoLiteralVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLocationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoLiteralVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoTemporaryLocationNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
@@ -79,6 +100,135 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
             CompilerAsserts.partialEvaluationConstant(node);
             switch (node) {
+                case PushReceiverVariableNodeGen pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushLiteralVariableReadonlyNodeGen pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushLiteralVariableWritableNodeGen pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushLiteralConstantNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushTemporaryLocationNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushReceiverNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushConstantTrueNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushConstantFalseNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushConstantNilNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushConstantZeroNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushConstantOneNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushActiveContextNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case DupNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+// case ReturnReceiverNode returnNode -> {
+// FrameAccess.setInstructionPointer(frame, returnNode.getSuccessorIndex());
+// returnNode.executeReturn(frame);
+// pc = LOCAL_RETURN_PC;
+// continue bytecode_loop;
+// }
+// case ReturnConstantTrueNode returnNode -> {
+// FrameAccess.setInstructionPointer(frame, returnNode.getSuccessorIndex());
+// returnNode.executeReturn(frame);
+// pc = LOCAL_RETURN_PC;
+// continue bytecode_loop;
+// }
+// case ReturnConstantFalseNode returnNode -> {
+// FrameAccess.setInstructionPointer(frame, returnNode.getSuccessorIndex());
+// returnNode.executeReturn(frame);
+// pc = LOCAL_RETURN_PC;
+// continue bytecode_loop;
+// }
+// case ReturnConstantNilNode returnNode -> {
+// FrameAccess.setInstructionPointer(frame, returnNode.getSuccessorIndex());
+// returnNode.executeReturn(frame);
+// pc = LOCAL_RETURN_PC;
+// continue bytecode_loop;
+// }
+                case PushSmallIntegerNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PushCharacterNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PopIntoReceiverVariableNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PopIntoLiteralVariableNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case PopIntoTemporaryLocationNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case StoreIntoReceiverVariableNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case StoreIntoLiteralVariableNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
+                case StoreIntoTemporaryLocationNode pushNode -> {
+                    pushNode.executeVoid(frame);
+                    pc = pushNode.getSuccessorIndex();
+                    continue bytecode_loop;
+                }
                 case AbstractSendNode sendNode -> {
                     pc = sendNode.getSuccessorIndex();
                     FrameAccess.setInstructionPointer(frame, pc);
