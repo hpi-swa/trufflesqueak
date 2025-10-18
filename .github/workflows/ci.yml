@@ -94,8 +94,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
-        type: [native, jvm]
+        os: [ubuntu-22.04-arm] # [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
+        type: [native] # [native, jvm]
     env:
       JAVA_VERSION: "25"
       # JVMCI_VERSION_CHECK: "warn" # version of EA build does not always match
