@@ -25,8 +25,8 @@ public final class StoreBytecodes {
     private abstract static class AbstractStoreIntoAssociationNode extends AbstractStoreIntoNode {
         protected final Object literalVariable;
 
-        private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int successorIndex, final long variableIndex) {
-            super(successorIndex);
+        private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int successorIndex, final int sp, final long variableIndex) {
+            super(successorIndex, sp);
             literalVariable = code.getLiteral(variableIndex);
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(ASSOCIATION.VALUE);
         }
@@ -41,8 +41,8 @@ public final class StoreBytecodes {
     private abstract static class AbstractStoreIntoNode extends AbstractInstrumentableBytecodeNode {
         @Child protected SqueakObjectAtPutAndMarkContextsNode storeNode;
 
-        private AbstractStoreIntoNode(final int successorIndex) {
-            super(successorIndex);
+        private AbstractStoreIntoNode(final int successorIndex, final int sp) {
+            super(successorIndex, sp);
         }
 
         protected abstract String getTypeName();
@@ -51,8 +51,8 @@ public final class StoreBytecodes {
     private abstract static class AbstractStoreIntoReceiverVariableNode extends AbstractStoreIntoNode {
         protected final int receiverIndex;
 
-        private AbstractStoreIntoReceiverVariableNode(final int successorIndex, final int receiverIndex) {
-            super(successorIndex);
+        private AbstractStoreIntoReceiverVariableNode(final int successorIndex, final int sp, final int receiverIndex) {
+            super(successorIndex, sp);
             this.receiverIndex = receiverIndex;
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(receiverIndex);
         }
@@ -70,8 +70,8 @@ public final class StoreBytecodes {
 
         @Child private FrameStackReadNode readNode;
 
-        private AbstractStoreIntoRemoteTempNode(final int successorIndex, final byte indexInArray, final byte indexOfArray) {
-            super(successorIndex);
+        private AbstractStoreIntoRemoteTempNode(final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
+            super(successorIndex, sp);
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray);
@@ -97,8 +97,8 @@ public final class StoreBytecodes {
 
         @Child private TemporaryWriteMarkContextsNode storeNode;
 
-        private AbstractStoreIntoTempNode(final int successorIndex, final int tempIndex) {
-            super(successorIndex);
+        private AbstractStoreIntoTempNode(final int successorIndex, final int sp, final int tempIndex) {
+            super(successorIndex, sp);
             this.tempIndex = tempIndex;
         }
 
@@ -122,8 +122,8 @@ public final class StoreBytecodes {
     public static final class PopIntoLiteralVariableNode extends AbstractStoreIntoAssociationNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopIntoLiteralVariableNode(final CompiledCodeObject code, final int successorIndex, final long variableIndex) {
-            super(code, successorIndex, variableIndex);
+        public PopIntoLiteralVariableNode(final CompiledCodeObject code, final int successorIndex, final int sp, final long variableIndex) {
+            super(code, successorIndex, sp, variableIndex);
         }
 
         @Override
@@ -140,8 +140,8 @@ public final class StoreBytecodes {
     public static final class PopIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopIntoReceiverVariableNode(final int successorIndex, final int receiverIndex) {
-            super(successorIndex, receiverIndex);
+        public PopIntoReceiverVariableNode(final int successorIndex, final int sp, final int receiverIndex) {
+            super(successorIndex, sp, receiverIndex);
         }
 
         @Override
@@ -158,8 +158,8 @@ public final class StoreBytecodes {
     public static final class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopIntoRemoteTempNode(final int successorIndex, final byte indexInArray, final byte indexOfArray) {
-            super(successorIndex, indexInArray, indexOfArray);
+        public PopIntoRemoteTempNode(final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
+            super(successorIndex, sp, indexInArray, indexOfArray);
         }
 
         @Override
@@ -176,8 +176,8 @@ public final class StoreBytecodes {
     public static final class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopIntoTemporaryLocationNode(final int successorIndex, final int tempIndex) {
-            super(successorIndex, tempIndex);
+        public PopIntoTemporaryLocationNode(final int successorIndex, final int sp, final int tempIndex) {
+            super(successorIndex, sp, tempIndex);
         }
 
         @Override
@@ -194,8 +194,8 @@ public final class StoreBytecodes {
     public static final class StoreIntoLiteralVariableNode extends AbstractStoreIntoAssociationNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public StoreIntoLiteralVariableNode(final CompiledCodeObject code, final int successorIndex, final long variableIndex) {
-            super(code, successorIndex, variableIndex);
+        public StoreIntoLiteralVariableNode(final CompiledCodeObject code, final int successorIndex, final int sp, final long variableIndex) {
+            super(code, successorIndex, sp, variableIndex);
         }
 
         @Override
@@ -212,8 +212,8 @@ public final class StoreBytecodes {
     public static final class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public StoreIntoReceiverVariableNode(final int successorIndex, final int receiverIndex) {
-            super(successorIndex, receiverIndex);
+        public StoreIntoReceiverVariableNode(final int successorIndex, final int sp, final int receiverIndex) {
+            super(successorIndex, sp, receiverIndex);
         }
 
         @Override
@@ -230,8 +230,8 @@ public final class StoreBytecodes {
     public static final class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public StoreIntoRemoteTempNode(final int successorIndex, final byte indexInArray, final byte indexOfArray) {
-            super(successorIndex, indexInArray, indexOfArray);
+        public StoreIntoRemoteTempNode(final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
+            super(successorIndex, sp, indexInArray, indexOfArray);
         }
 
         @Override
@@ -248,8 +248,8 @@ public final class StoreBytecodes {
     public static final class StoreIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public StoreIntoTemporaryLocationNode(final int successorIndex, final int tempIndex) {
-            super(successorIndex, tempIndex);
+        public StoreIntoTemporaryLocationNode(final int successorIndex, final int sp, final int tempIndex) {
+            super(successorIndex, sp, tempIndex);
         }
 
         @Override

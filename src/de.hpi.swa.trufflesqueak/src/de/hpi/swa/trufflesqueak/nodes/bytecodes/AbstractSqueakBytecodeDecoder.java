@@ -14,7 +14,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractSqueakBytecodeDecoder {
 
-    public abstract AbstractBytecodeNode decodeBytecode(VirtualFrame frame, CompiledCodeObject code, AbstractBytecodeNode[] bytecodeNodes, int index);
+    public abstract AbstractBytecodeNode decodeBytecode(VirtualFrame frame, CompiledCodeObject code, AbstractBytecodeNode[] bytecodeNodes, int index, int sp);
 
     public abstract boolean hasStoreIntoTemp1AfterCallPrimitive(CompiledCodeObject code);
 

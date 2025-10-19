@@ -39,20 +39,20 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
 public final class MiscellaneousBytecodes {
 
     public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
-        public CallPrimitiveNode(final int successorIndex) {
-            super(successorIndex);
+        public CallPrimitiveNode(final int successorIndex, final int sp) {
+            super(successorIndex, sp);
         }
 
-        public static CallPrimitiveNode create(final CompiledCodeObject code, final int successorIndex, final byte byte1, final byte byte2) {
-            return create(code, successorIndex, Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8));
+        public static CallPrimitiveNode create(final CompiledCodeObject code, final int successorIndex, final int sp, final byte byte1, final byte byte2) {
+            return create(code, successorIndex, sp, Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8));
         }
 
-        public static CallPrimitiveNode create(final CompiledCodeObject code, final int successorIndex, final int primitiveIndex) {
+        public static CallPrimitiveNode create(final CompiledCodeObject code, final int successorIndex, final int sp, final int primitiveIndex) {
             assert code.hasPrimitive() && code.primitiveIndex() == primitiveIndex;
             if (code.hasStoreIntoTemp1AfterCallPrimitive()) {
-                return CallPrimitiveWithErrorCodeNodeGen.create(successorIndex);
+                return CallPrimitiveWithErrorCodeNodeGen.create(successorIndex, sp);
             } else {
-                return new CallPrimitiveWithoutErrorCodeNode(successorIndex);
+                return new CallPrimitiveWithoutErrorCodeNode(successorIndex, sp);
             }
         }
 
@@ -63,8 +63,8 @@ public final class MiscellaneousBytecodes {
         }
 
         public static final class CallPrimitiveWithoutErrorCodeNode extends CallPrimitiveNode {
-            public CallPrimitiveWithoutErrorCodeNode(final int successorIndex) {
-                super(successorIndex);
+            public CallPrimitiveWithoutErrorCodeNode(final int successorIndex, final int sp) {
+                super(successorIndex, sp);
             }
 
             @Override
@@ -74,8 +74,8 @@ public final class MiscellaneousBytecodes {
         }
 
         public abstract static class CallPrimitiveWithErrorCodeNode extends CallPrimitiveNode {
-            public CallPrimitiveWithErrorCodeNode(final int successorIndex) {
-                super(successorIndex);
+            public CallPrimitiveWithErrorCodeNode(final int successorIndex, final int sp) {
+                super(successorIndex, sp + 1);
             }
 
             @Specialization
@@ -99,19 +99,19 @@ public final class MiscellaneousBytecodes {
 
     public static final class DoubleExtendedDoAnythingNode {
 
-        public static AbstractInstrumentableBytecodeNode create(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final byte param1, final byte param2) {
+        public static AbstractInstrumentableBytecodeNode create(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final byte param1, final byte param2) {
             final int second = Byte.toUnsignedInt(param1);
             final int third = Byte.toUnsignedInt(param2);
             return switch (second >> 5) {
-                case 0 -> new SelfSendNode(frame, successorIndex, (NativeObject) code.getLiteral(third), second & 31);
-                case 1 -> new SuperSendNode(frame, code, successorIndex, third, second & 31);
-                case 2 -> PushReceiverVariableNode.create(successorIndex, third);
-                case 3 -> new PushLiteralConstantNode(code, successorIndex, third);
-                case 4 -> PushLiteralVariableNode.create(code, successorIndex, third);
-                case 5 -> new StoreIntoReceiverVariableNode(successorIndex, third);
-                case 6 -> new PopIntoReceiverVariableNode(successorIndex, third);
-                case 7 -> new StoreIntoLiteralVariableNode(code, successorIndex, third);
-                default -> new UnknownBytecodeNode(successorIndex, second);
+                case 0 -> new SelfSendNode(frame, successorIndex, sp, (NativeObject) code.getLiteral(third), second & 31);
+                case 1 -> new SuperSendNode(frame, code, successorIndex, sp, third, second & 31);
+                case 2 -> PushReceiverVariableNode.create(frame, successorIndex, sp + 1, third);
+                case 3 -> new PushLiteralConstantNode(frame, code, successorIndex, sp + 1, third);
+                case 4 -> PushLiteralVariableNode.create(code, successorIndex, sp + 1, third);
+                case 5 -> new StoreIntoReceiverVariableNode(successorIndex, sp, third);
+                case 6 -> new PopIntoReceiverVariableNode(successorIndex, sp - 1, third);
+                case 7 -> new StoreIntoLiteralVariableNode(code, successorIndex, sp, third);
+                default -> new UnknownBytecodeNode(successorIndex, sp, second);
             };
         }
     }
@@ -120,8 +120,8 @@ public final class MiscellaneousBytecodes {
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public DupNode(final int successorIndex) {
-            super(successorIndex);
+        public DupNode(final int successorIndex, final int sp) {
+            super(successorIndex, sp);
         }
 
         @Override
@@ -138,35 +138,35 @@ public final class MiscellaneousBytecodes {
 
     public static final class ExtendedBytecodes {
 
-        public static AbstractInstrumentableBytecodeNode createPopInto(final CompiledCodeObject code, final int successorIndex, final byte nextByte) {
+        public static AbstractInstrumentableBytecodeNode createPopInto(final CompiledCodeObject code, final int successorIndex, final int sp, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             return switch (variableType(nextByte)) {
-                case 0 -> new PopIntoReceiverVariableNode(successorIndex, variableIndex);
-                case 1 -> new PopIntoTemporaryLocationNode(successorIndex, variableIndex);
-                case 2 -> new UnknownBytecodeNode(successorIndex, nextByte);
-                case 3 -> new PopIntoLiteralVariableNode(code, successorIndex, variableIndex);
+                case 0 -> new PopIntoReceiverVariableNode(successorIndex, sp - 1, variableIndex);
+                case 1 -> new PopIntoTemporaryLocationNode(successorIndex, sp - 1, variableIndex);
+                case 2 -> new UnknownBytecodeNode(successorIndex, sp, nextByte);
+                case 3 -> new PopIntoLiteralVariableNode(code, successorIndex, sp - 1, variableIndex);
                 default -> throw SqueakException.create("illegal ExtendedStore bytecode");
             };
         }
 
-        public static AbstractInstrumentableBytecodeNode createPush(final CompiledCodeObject code, final int successorIndex, final byte nextByte) {
+        public static AbstractInstrumentableBytecodeNode createPush(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             return switch (variableType(nextByte)) {
-                case 0 -> PushReceiverVariableNode.create(successorIndex, variableIndex);
-                case 1 -> new PushTemporaryLocationNode(successorIndex, variableIndex);
-                case 2 -> new PushLiteralConstantNode(code, successorIndex, variableIndex);
-                case 3 -> PushLiteralVariableNode.create(code, successorIndex, variableIndex);
+                case 0 -> PushReceiverVariableNode.create(frame, successorIndex, sp + 1, variableIndex);
+                case 1 -> new PushTemporaryLocationNode(successorIndex, sp + 1, variableIndex);
+                case 2 -> new PushLiteralConstantNode(frame, code, successorIndex, sp + 1, variableIndex);
+                case 3 -> PushLiteralVariableNode.create(code, successorIndex, sp + 1, variableIndex);
                 default -> throw SqueakException.create("unexpected type for ExtendedPush");
             };
         }
 
-        public static AbstractInstrumentableBytecodeNode createStoreInto(final CompiledCodeObject code, final int successorIndex, final byte nextByte) {
+        public static AbstractInstrumentableBytecodeNode createStoreInto(final CompiledCodeObject code, final int successorIndex, final int sp, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             return switch (variableType(nextByte)) {
-                case 0 -> new StoreIntoReceiverVariableNode(successorIndex, variableIndex);
-                case 1 -> new StoreIntoTemporaryLocationNode(successorIndex, variableIndex);
-                case 2 -> new UnknownBytecodeNode(successorIndex, nextByte);
-                case 3 -> new StoreIntoLiteralVariableNode(code, successorIndex, variableIndex);
+                case 0 -> new StoreIntoReceiverVariableNode(successorIndex, sp, variableIndex);
+                case 1 -> new StoreIntoTemporaryLocationNode(successorIndex, sp, variableIndex);
+                case 2 -> new UnknownBytecodeNode(successorIndex, sp, nextByte);
+                case 3 -> new StoreIntoLiteralVariableNode(code, successorIndex, sp, variableIndex);
                 default -> throw SqueakException.create("illegal ExtendedStore bytecode");
             };
         }
@@ -183,8 +183,8 @@ public final class MiscellaneousBytecodes {
     public static final class PopNode extends AbstractInstrumentableBytecodeNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopNode(final int successorIndex) {
-            super(successorIndex);
+        public PopNode(final int successorIndex, final int sp) {
+            super(successorIndex, sp);
         }
 
         @Override
@@ -200,8 +200,8 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class NopBytecodeNode extends AbstractInstrumentableBytecodeNode {
-        public NopBytecodeNode(final int successorIndex) {
-            super(successorIndex);
+        public NopBytecodeNode(final int successorIndex, final int sp) {
+            super(successorIndex, sp);
         }
 
         @Override
@@ -219,8 +219,8 @@ public final class MiscellaneousBytecodes {
     public static final class UnknownBytecodeNode extends AbstractInstrumentableBytecodeNode {
         private final long bytecode;
 
-        public UnknownBytecodeNode(final int successorIndex, final int bc) {
-            super(successorIndex);
+        public UnknownBytecodeNode(final int successorIndex, final int sp, final int bc) {
+            super(successorIndex, sp);
             bytecode = bc;
         }
 

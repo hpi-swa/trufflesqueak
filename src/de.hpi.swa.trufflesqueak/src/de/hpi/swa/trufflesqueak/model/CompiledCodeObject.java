@@ -373,8 +373,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return new AbstractBytecodeNode[AbstractSqueakBytecodeDecoder.trailerPosition(this)];
     }
 
-    public AbstractBytecodeNode bytecodeNodeAt(final VirtualFrame frame, final AbstractBytecodeNode[] bytecodeNodes, final int pc) {
-        return getDecoder().decodeBytecode(frame, this, bytecodeNodes, pc);
+    public AbstractBytecodeNode bytecodeNodeAt(final VirtualFrame frame, final AbstractBytecodeNode[] bytecodeNodes, final int pc, final int sp) {
+        return getDecoder().decodeBytecode(frame, this, bytecodeNodes, pc, sp);
     }
 
     public int findLineNumber(final int successorIndex) {

@@ -46,10 +46,11 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     }
 
     @Override
-    public Object execute(final VirtualFrame frame, final int startPC) {
+    public Object execute(final VirtualFrame frame, final int startPC, final int startSP) {
         CompilerAsserts.partialEvaluationConstant(startPC);
+        CompilerAsserts.partialEvaluationConstant(startSP);
         try {
-            return interpretBytecode(frame, startPC);
+            return interpretBytecode(frame, startPC, startSP);
         } catch (final NonLocalReturn nlr) {
             nonLocalReturnProfile.enter();
             FrameAccess.terminateContextOrFrame(frame);
@@ -65,8 +66,9 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
      */
     @BytecodeInterpreterSwitch
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private Object interpretBytecode(final VirtualFrame frame, final int startPC) {
+    private Object interpretBytecode(final VirtualFrame frame, final int startPC, final int startSP) {
         int pc = startPC;
+        int sp = startSP;
         /*
          * Maintain backJumpCounter in a Counter so that the compiler does not confuse it with the
          * pc because both are constant within the loop.
@@ -75,9 +77,12 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc);
+            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc, sp);
             CompilerAsserts.partialEvaluationConstant(node);
+            int frameSP = FrameAccess.getStackPointer(frame);
+            assert sp == frameSP;
             pc = node.getSuccessorIndex();
+            sp = node.getSuccessorStackPointer();
             if (node instanceof final AbstractSendNode sendNode) {
                 FrameAccess.setInstructionPointer(frame, pc);
                 sendNode.executeVoid(frame);
@@ -142,10 +147,10 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     /*
      * Fetch next bytecode and insert AST nodes on demand if enabled.
      */
-    private AbstractBytecodeNode fetchNextBytecodeNode(final VirtualFrame frame, final int pcZeroBased) {
+    private AbstractBytecodeNode fetchNextBytecodeNode(final VirtualFrame frame, final int pcZeroBased, final int sp) {
         if (bytecodeNodes[pcZeroBased] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            bytecodeNodes[pcZeroBased] = insert(code.bytecodeNodeAt(frame, bytecodeNodes, pcZeroBased));
+            bytecodeNodes[pcZeroBased] = insert(code.bytecodeNodeAt(frame, bytecodeNodes, pcZeroBased, sp));
             notifyInserted(bytecodeNodes[pcZeroBased]);
         }
         return bytecodeNodes[pcZeroBased];
@@ -157,7 +162,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
 
     @Override
     public Object executeOSR(final VirtualFrame osrFrame, final int target, final Object interpreterState) {
-        return execute(osrFrame, target);
+        return execute(osrFrame, target, FrameAccess.getStackPointer(osrFrame)); // FIXME?
     }
 
     @Override

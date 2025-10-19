@@ -39,10 +39,11 @@ public final class ResumeContextRootNode extends AbstractRootNode {
             assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
             activeContext.clearModifiedSender();
             final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
-            if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
-                return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
+            final int sp = instructionPointerProfile.profile(activeContext.getStackPointer());
+            if (CompilerDirectives.isPartialEvaluationConstant(pc) && CompilerDirectives.isPartialEvaluationConstant(sp)) {
+                return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc, sp);
             } else {
-                return interpretBytecodeWithBoundary(pc);
+                return interpretBytecodeWithBoundary(pc, sp);
             }
         } finally {
             SqueakImageContext.get(this).lastSeenContext = null; // Stop materialization here.
@@ -50,8 +51,8 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     }
 
     @TruffleBoundary
-    private Object interpretBytecodeWithBoundary(final int pc) {
-        return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
+    private Object interpretBytecodeWithBoundary(final int pc, final int sp) {
+        return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc, sp);
     }
 
     public ContextObject getActiveContext() {

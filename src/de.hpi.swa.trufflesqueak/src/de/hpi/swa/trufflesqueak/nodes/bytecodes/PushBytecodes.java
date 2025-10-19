@@ -36,6 +36,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -43,10 +44,11 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class PushBytecodes {
 
     private abstract static class AbstractPushNode extends AbstractInstrumentableBytecodeNode {
-        @Child protected FrameStackPushNode pushNode = FrameStackPushNode.create();
+        @Child protected FrameStackWriteNode pushNode;
 
-        protected AbstractPushNode(final int successorIndex) {
-            super(successorIndex);
+        protected AbstractPushNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(successorIndex, sp);
+            pushNode = FrameStackWriteNode.create(frame, sp - 1);
         }
     }
 
@@ -54,8 +56,8 @@ public final class PushBytecodes {
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child protected FrameStackPopNNode popCopiedValuesNode;
 
-        private AbstractPushClosureNode(final int successorIndex, final int numCopied) {
-            super(successorIndex);
+        private AbstractPushClosureNode(final int successorIndex, final int sp, final int numCopied) {
+            super(successorIndex, sp - numCopied);
             popCopiedValuesNode = FrameStackPopNNode.create(numCopied);
         }
 
@@ -80,25 +82,25 @@ public final class PushBytecodes {
 
         @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode = GetOrCreateContextWithFrameNode.create();
 
-        private PushClosureNode(final CompiledCodeObject code, final int successorIndex, final int numArgs, final int numCopied, final int blockSize) {
-            super(successorIndex + blockSize, numCopied);
+        private PushClosureNode(final CompiledCodeObject code, final int successorIndex, final int sp, final int numArgs, final int numCopied, final int blockSize) {
+            super(successorIndex + blockSize, sp, numCopied);
             this.numArgs = numArgs;
             this.blockSize = blockSize;
             shadowBlock = code.getOrCreateShadowBlock(code.getInitialPC() + getSuccessorIndex() - blockSize);
         }
 
-        public static PushClosureNode create(final CompiledCodeObject code, final int successorIndex, final byte i, final byte j, final byte k) {
+        public static PushClosureNode create(final CompiledCodeObject code, final int successorIndex, final int sp, final byte i, final byte j, final byte k) {
             final int numArgs = i & 0xF;
             final int numCopied = Byte.toUnsignedInt(i) >> 4 & 0xF;
             final int blockSize = Byte.toUnsignedInt(j) << 8 | Byte.toUnsignedInt(k);
-            return new PushClosureNode(code, successorIndex, numArgs, numCopied, blockSize);
+            return new PushClosureNode(code, successorIndex, sp, numArgs, numCopied, blockSize);
         }
 
-        public static PushClosureNode createExtended(final CompiledCodeObject code, final int successorIndex, final int extA, final int extB, final byte byteA, final byte byteB) {
+        public static PushClosureNode createExtended(final CompiledCodeObject code, final int successorIndex, final int sp, final int extA, final int extB, final byte byteA, final byte byteB) {
             final int numArgs = (byteA & 7) + Math.floorMod(extA, 16) * 8;
             final int numCopied = (Byte.toUnsignedInt(byteA) >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
             final int blockSize = Byte.toUnsignedInt(byteB) + (extB << 8);
-            return new PushClosureNode(code, successorIndex, numArgs, numCopied, blockSize);
+            return new PushClosureNode(code, successorIndex, sp, numArgs, numCopied, blockSize);
         }
 
         @Override
@@ -124,30 +126,30 @@ public final class PushBytecodes {
         private final int blockInitialPC;
         private final int blockNumArgs;
 
-        protected AbstractPushFullClosureNode(final CompiledCodeObject code, final int successorIndex, final int literalIndex, final int numCopied) {
-            super(successorIndex, numCopied);
+        protected AbstractPushFullClosureNode(final CompiledCodeObject code, final int successorIndex, final int sp, final int literalIndex, final int numCopied) {
+            super(successorIndex, sp, numCopied);
             this.literalIndex = literalIndex;
             block = (CompiledCodeObject) code.getLiteral(literalIndex);
             blockInitialPC = block.getInitialPC();
             blockNumArgs = block.getNumArgs();
         }
 
-        public static AbstractPushFullClosureNode createExtended(final CompiledCodeObject code, final int successorIndex, final int extA, final byte byteA, final byte byteB) {
+        public static AbstractPushFullClosureNode createExtended(final CompiledCodeObject code, final int successorIndex, final int sp, final int extA, final byte byteA, final byte byteB) {
             final int literalIndex = Byte.toUnsignedInt(byteA) + (extA << 8);
             final int numCopied = Byte.toUnsignedInt(byteB) & 63;
             final boolean ignoreOuterContext = (byteB >> 6 & 1) == 1;
             final boolean receiverOnStack = (byteB >> 7 & 1) == 1;
             if (receiverOnStack) {
                 if (ignoreOuterContext) {
-                    return new PushFullClosureOnStackReceiverIgnoreOuterContextNode(code, successorIndex, literalIndex, numCopied);
+                    return new PushFullClosureOnStackReceiverIgnoreOuterContextNode(code, successorIndex, sp, literalIndex, numCopied);
                 } else {
-                    return new PushFullClosureOnStackReceiverWithOuterContextNode(code, successorIndex, literalIndex, numCopied);
+                    return new PushFullClosureOnStackReceiverWithOuterContextNode(code, successorIndex, sp, literalIndex, numCopied);
                 }
             } else {
                 if (ignoreOuterContext) {
-                    return new PushFullClosureFrameReceiverIgnoreOuterContextNode(code, successorIndex, literalIndex, numCopied);
+                    return new PushFullClosureFrameReceiverIgnoreOuterContextNode(code, successorIndex, sp, literalIndex, numCopied);
                 } else {
-                    return new PushFullClosureFrameReceiverWithOuterContextNode(code, successorIndex, literalIndex, numCopied);
+                    return new PushFullClosureFrameReceiverWithOuterContextNode(code, successorIndex, sp, literalIndex, numCopied);
                 }
             }
         }
@@ -167,8 +169,8 @@ public final class PushBytecodes {
             @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode = GetOrCreateContextWithFrameNode.create();
             @Child private FrameStackPopNode popReceiverNode = FrameStackPopNode.create();
 
-            private PushFullClosureOnStackReceiverWithOuterContextNode(final CompiledCodeObject code, final int successorIndex, final int literalIndex, final int numCopied) {
-                super(code, successorIndex, literalIndex, numCopied);
+            private PushFullClosureOnStackReceiverWithOuterContextNode(final CompiledCodeObject code, final int successorIndex, final int sp, final int literalIndex, final int numCopied) {
+                super(code, successorIndex, sp, literalIndex, numCopied);
             }
 
             @Override
@@ -182,8 +184,8 @@ public final class PushBytecodes {
         private static final class PushFullClosureFrameReceiverWithOuterContextNode extends AbstractPushFullClosureNode {
             @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode = GetOrCreateContextWithFrameNode.create();
 
-            private PushFullClosureFrameReceiverWithOuterContextNode(final CompiledCodeObject code, final int successorIndex, final int literalIndex, final int numCopied) {
-                super(code, successorIndex, literalIndex, numCopied);
+            private PushFullClosureFrameReceiverWithOuterContextNode(final CompiledCodeObject code, final int successorIndex, final int sp, final int literalIndex, final int numCopied) {
+                super(code, successorIndex, sp, literalIndex, numCopied);
             }
 
             @Override
@@ -197,8 +199,8 @@ public final class PushBytecodes {
         private static final class PushFullClosureOnStackReceiverIgnoreOuterContextNode extends AbstractPushFullClosureNode {
             @Child private FrameStackPopNode popReceiverNode = FrameStackPopNode.create();
 
-            private PushFullClosureOnStackReceiverIgnoreOuterContextNode(final CompiledCodeObject code, final int successorIndex, final int literalIndex, final int numCopied) {
-                super(code, successorIndex, literalIndex, numCopied);
+            private PushFullClosureOnStackReceiverIgnoreOuterContextNode(final CompiledCodeObject code, final int successorIndex, final int sp, final int literalIndex, final int numCopied) {
+                super(code, successorIndex, sp, literalIndex, numCopied);
             }
 
             @Override
@@ -209,8 +211,8 @@ public final class PushBytecodes {
         }
 
         private static final class PushFullClosureFrameReceiverIgnoreOuterContextNode extends AbstractPushFullClosureNode {
-            private PushFullClosureFrameReceiverIgnoreOuterContextNode(final CompiledCodeObject code, final int successorIndex, final int literalIndex, final int numCopied) {
-                super(code, successorIndex, literalIndex, numCopied);
+            private PushFullClosureFrameReceiverIgnoreOuterContextNode(final CompiledCodeObject code, final int successorIndex, final int sp, final int literalIndex, final int numCopied) {
+                super(code, successorIndex, sp, literalIndex, numCopied);
             }
 
             @Override
@@ -224,13 +226,14 @@ public final class PushBytecodes {
     public static final class PushActiveContextNode extends AbstractPushNode {
         @Child private GetOrCreateContextWithFrameNode getContextNode = GetOrCreateContextWithFrameNode.create();
 
-        public PushActiveContextNode(final int successorIndex) {
-            super(successorIndex);
+        public PushActiveContextNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, getContextNode.executeGet(frame));
+            pushNode.executeWrite(frame, getContextNode.executeGet(frame));
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
         }
 
         @Override
@@ -241,15 +244,16 @@ public final class PushBytecodes {
     }
 
     private abstract static class PushConstantNode extends AbstractPushNode {
-        private PushConstantNode(final int successorIndex) {
-            super(successorIndex);
+        private PushConstantNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         protected abstract Object getConstant();
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, getConstant());
+            pushNode.executeWrite(frame, getConstant());
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
         }
 
         @Override
@@ -260,8 +264,8 @@ public final class PushBytecodes {
     }
 
     public static final class PushConstantTrueNode extends PushConstantNode {
-        public PushConstantTrueNode(final int successorIndex) {
-            super(successorIndex);
+        public PushConstantTrueNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -271,8 +275,8 @@ public final class PushBytecodes {
     }
 
     public static final class PushConstantFalseNode extends PushConstantNode {
-        public PushConstantFalseNode(final int successorIndex) {
-            super(successorIndex);
+        public PushConstantFalseNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -282,8 +286,8 @@ public final class PushBytecodes {
     }
 
     public static final class PushConstantNilNode extends PushConstantNode {
-        public PushConstantNilNode(final int successorIndex) {
-            super(successorIndex);
+        public PushConstantNilNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -293,8 +297,8 @@ public final class PushBytecodes {
     }
 
     public static final class PushConstantMinusOneNode extends PushConstantNode {
-        public PushConstantMinusOneNode(final int successorIndex) {
-            super(successorIndex);
+        public PushConstantMinusOneNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -304,8 +308,8 @@ public final class PushBytecodes {
     }
 
     public static final class PushConstantZeroNode extends PushConstantNode {
-        public PushConstantZeroNode(final int successorIndex) {
-            super(successorIndex);
+        public PushConstantZeroNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -315,8 +319,8 @@ public final class PushBytecodes {
     }
 
     public static final class PushConstantOneNode extends PushConstantNode {
-        public PushConstantOneNode(final int successorIndex) {
-            super(successorIndex);
+        public PushConstantOneNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -326,8 +330,8 @@ public final class PushBytecodes {
     }
 
     public static final class PushConstantTwoNode extends PushConstantNode {
-        public PushConstantTwoNode(final int successorIndex) {
-            super(successorIndex);
+        public PushConstantTwoNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -339,14 +343,15 @@ public final class PushBytecodes {
     public static final class PushLiteralConstantNode extends AbstractPushNode {
         private final Object literal;
 
-        public PushLiteralConstantNode(final CompiledCodeObject code, final int successorIndex, final int literalIndex) {
-            super(successorIndex);
+        public PushLiteralConstantNode(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final int literalIndex) {
+            super(frame, successorIndex, sp);
             literal = code.getLiteral(literalIndex);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, literal);
+            pushNode.executeWrite(frame, literal);
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
         }
 
         @Override
@@ -360,19 +365,19 @@ public final class PushBytecodes {
         private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
         protected final AbstractSqueakObjectWithClassAndHash literal;
 
-        protected PushLiteralVariableNode(final int successorIndex, final AbstractSqueakObjectWithClassAndHash literal) {
-            super(successorIndex);
+        protected PushLiteralVariableNode(final int successorIndex, final int sp, final AbstractSqueakObjectWithClassAndHash literal) {
+            super(successorIndex, sp);
             this.literal = literal;
         }
 
-        public static final AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int successorIndex, final int literalIndex) {
+        public static final AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int successorIndex, final int sp, final int literalIndex) {
             final Object literal = code.getLiteral(literalIndex);
             if (literal instanceof final AbstractSqueakObjectWithClassAndHash l) {
                 final String squeakClassName = l.getSqueakClassName();
                 if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
-                    return PushLiteralVariableReadonlyNodeGen.create(successorIndex, l);
+                    return PushLiteralVariableReadonlyNodeGen.create(successorIndex, sp, l);
                 } else {
-                    return PushLiteralVariableWritableNodeGen.create(successorIndex, l);
+                    return PushLiteralVariableWritableNodeGen.create(successorIndex, sp, l);
                 }
             } else {
                 throw SqueakException.create("Unexpected literal", literal);
@@ -388,8 +393,8 @@ public final class PushBytecodes {
         protected abstract static class PushLiteralVariableReadonlyNode extends PushLiteralVariableNode {
             private final Object pushValue;
 
-            protected PushLiteralVariableReadonlyNode(final int successorIndex, final AbstractSqueakObjectWithClassAndHash literal) {
-                super(successorIndex, literal);
+            protected PushLiteralVariableReadonlyNode(final int successorIndex, final int sp, final AbstractSqueakObjectWithClassAndHash literal) {
+                super(successorIndex, sp, literal);
                 pushValue = getPushValue(literal);
             }
 
@@ -408,8 +413,8 @@ public final class PushBytecodes {
 
         @SuppressWarnings("truffle-inlining")
         protected abstract static class PushLiteralVariableWritableNode extends PushLiteralVariableNode {
-            protected PushLiteralVariableWritableNode(final int successorIndex, final AbstractSqueakObjectWithClassAndHash literal) {
-                super(successorIndex, literal);
+            protected PushLiteralVariableWritableNode(final int successorIndex, final int sp, final AbstractSqueakObjectWithClassAndHash literal) {
+                super(successorIndex, sp, literal);
             }
 
             @Specialization
@@ -426,19 +431,19 @@ public final class PushBytecodes {
     public static final class PushNewArrayNode extends AbstractPushNode {
         @Child private ArrayNode arrayNode;
 
-        protected PushNewArrayNode(final int successorIndex, final byte param) {
-            super(successorIndex);
-            final int arraySize = param & 127;
-            arrayNode = param < 0 ? new ArrayFromStackNode(arraySize) : new CreateNewArrayNode(arraySize);
+        protected PushNewArrayNode(final VirtualFrame frame, final int successorIndex, final int sp, final boolean popFromStack, final int arraySize) {
+            super(frame, successorIndex, sp - (popFromStack ? arraySize : 0));
+            arrayNode = popFromStack ? new ArrayFromStackNode(arraySize) : new CreateNewArrayNode(arraySize);
         }
 
-        public static PushNewArrayNode create(final int successorIndex, final byte param) {
-            return new PushNewArrayNode(successorIndex, param);
+        public static PushNewArrayNode create(final VirtualFrame frame, final int successorIndex, final int sp, final byte param) {
+            return new PushNewArrayNode(frame, successorIndex, sp, param < 0, param & 127);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, arrayNode.execute(frame));
+            pushNode.executeWrite(frame, arrayNode.execute(frame));
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
         }
 
         protected abstract static class ArrayNode extends AbstractNode {
@@ -493,13 +498,14 @@ public final class PushBytecodes {
     }
 
     public static final class PushReceiverNode extends AbstractPushNode {
-        public PushReceiverNode(final int successorIndex) {
-            super(successorIndex);
+        public PushReceiverNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, FrameAccess.getReceiver(frame));
+            pushNode.executeWrite(frame, FrameAccess.getReceiver(frame));
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
         }
 
         @Override
@@ -512,21 +518,25 @@ public final class PushBytecodes {
     public abstract static class PushReceiverVariableNode extends AbstractInstrumentableBytecodeNode {
         private final int variableIndex;
 
-        protected PushReceiverVariableNode(final int successorIndex, final int varIndex) {
-            super(successorIndex);
+        @Child private FrameStackWriteNode pushNode;
+
+        protected PushReceiverVariableNode(final VirtualFrame frame, final int successorIndex, final int sp, final int varIndex) {
+            super(successorIndex, sp);
             variableIndex = varIndex;
+            pushNode = FrameStackWriteNode.create(frame, sp - 1);
         }
 
-        public static PushReceiverVariableNode create(final int successorIndex, final int varIndex) {
-            return PushReceiverVariableNodeGen.create(successorIndex, varIndex);
+        public static PushReceiverVariableNode create(final VirtualFrame frame, final int successorIndex, final int sp, final int varIndex) {
+            return PushReceiverVariableNodeGen.create(frame, successorIndex, sp, varIndex);
         }
 
         @Specialization
         protected final void doPushReceiver(final VirtualFrame frame,
                         @Bind final Node node,
                         @Cached final SqueakObjectAt0Node at0Node,
-                        @Cached final FrameStackPushNode pushNode) {
-            pushNode.execute(frame, at0Node.execute(node, FrameAccess.getReceiver(frame), variableIndex));
+                        @Cached final FrameStackPushNode push2Node) {
+            pushNode.executeWrite(frame, at0Node.execute(node, FrameAccess.getReceiver(frame), variableIndex));
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
         }
 
         @Override
@@ -540,14 +550,14 @@ public final class PushBytecodes {
         protected final int indexInArray;
         protected final int indexOfArray;
 
-        public PushRemoteTempNode(final int successorIndex, final byte indexInArray, final byte indexOfArray) {
-            super(successorIndex);
+        public PushRemoteTempNode(final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
+            super(successorIndex, sp);
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
         }
 
-        public static PushRemoteTempNode create(final int successorIndex, final byte indexInArray, final byte indexOfArray) {
-            return PushRemoteTempNodeGen.create(successorIndex, indexInArray, indexOfArray);
+        public static PushRemoteTempNode create(final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
+            return PushRemoteTempNodeGen.create(successorIndex, sp, indexInArray, indexOfArray);
         }
 
         @SuppressWarnings("truffle-static-method")
@@ -572,8 +582,8 @@ public final class PushBytecodes {
         @Child private FrameStackReadNode tempNode;
         private final int tempIndex;
 
-        public PushTemporaryLocationNode(final int successorIndex, final int tempIndex) {
-            super(successorIndex);
+        public PushTemporaryLocationNode(final int successorIndex, final int sp, final int tempIndex) {
+            super(successorIndex, sp);
             this.tempIndex = tempIndex;
         }
 
@@ -596,14 +606,15 @@ public final class PushBytecodes {
     public static final class PushSmallIntegerNode extends AbstractPushNode {
         private final long value;
 
-        public PushSmallIntegerNode(final int successorIndex, final int value) {
-            super(successorIndex);
+        public PushSmallIntegerNode(final VirtualFrame frame, final int successorIndex, final int sp, final int value) {
+            super(frame, successorIndex, sp);
             this.value = value;
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, value);
+            pushNode.executeWrite(frame, value);
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
         }
 
         @Override
@@ -616,14 +627,15 @@ public final class PushBytecodes {
     public static final class PushCharacterNode extends AbstractPushNode {
         private final Object value;
 
-        public PushCharacterNode(final int successorIndex, final long value) {
-            super(successorIndex);
+        public PushCharacterNode(final VirtualFrame frame, final int successorIndex, final int sp, final long value) {
+            super(frame, successorIndex, sp);
             this.value = CharacterObject.valueOf(value);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, value);
+            pushNode.executeWrite(frame, value);
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
         }
 
         @Override

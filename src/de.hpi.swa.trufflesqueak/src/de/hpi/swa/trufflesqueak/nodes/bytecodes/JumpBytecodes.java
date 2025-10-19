@@ -32,8 +32,8 @@ public final class JumpBytecodes {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
         @SuppressWarnings("this-escape")
-        protected ConditionalJumpNode(final int successorIndex, final int offset) {
-            super(successorIndex);
+        protected ConditionalJumpNode(final int successorIndex, final int sp, final int offset) {
+            super(successorIndex, sp);
             jumpSuccessorIndex = getSuccessorIndex() + offset;
             assert offset > 0 : "Jump offset is expected to be positive for conditional jump bytecodes (Squeak compiler does not produce conditional back jumps)";
         }
@@ -64,20 +64,20 @@ public final class JumpBytecodes {
     }
 
     public static final class ConditionalJumpOnFalseNode extends ConditionalJumpNode {
-        private ConditionalJumpOnFalseNode(final int successorIndex, final int offset) {
-            super(successorIndex, offset);
+        private ConditionalJumpOnFalseNode(final int successorIndex, final int sp, final int offset) {
+            super(successorIndex, sp, offset);
         }
 
-        public static ConditionalJumpOnFalseNode createShort(final int successorIndex, final int bytecode) {
-            return new ConditionalJumpOnFalseNode(successorIndex, calculateShortOffset(bytecode));
+        public static ConditionalJumpOnFalseNode createShort(final int successorIndex, final int sp, final int bytecode) {
+            return new ConditionalJumpOnFalseNode(successorIndex, sp, calculateShortOffset(bytecode));
         }
 
-        public static ConditionalJumpOnFalseNode createLong(final int successorIndex, final int bytecode, final byte parameter) {
-            return new ConditionalJumpOnFalseNode(successorIndex, calculateLongOffset(bytecode, parameter));
+        public static ConditionalJumpOnFalseNode createLong(final int successorIndex, final int sp, final int bytecode, final byte parameter) {
+            return new ConditionalJumpOnFalseNode(successorIndex, sp, calculateLongOffset(bytecode, parameter));
         }
 
-        public static ConditionalJumpOnFalseNode createLongExtended(final int successorIndex, final byte bytecode, final int extB) {
-            return new ConditionalJumpOnFalseNode(successorIndex, calculateLongExtendedOffset(bytecode, extB));
+        public static ConditionalJumpOnFalseNode createLongExtended(final int successorIndex, final int sp, final byte bytecode, final int extB) {
+            return new ConditionalJumpOnFalseNode(successorIndex, sp, calculateLongExtendedOffset(bytecode, extB));
         }
 
         @Override
@@ -93,20 +93,20 @@ public final class JumpBytecodes {
     }
 
     public static final class ConditionalJumpOnTrueNode extends ConditionalJumpNode {
-        private ConditionalJumpOnTrueNode(final int successorIndex, final int offset) {
-            super(successorIndex, offset);
+        private ConditionalJumpOnTrueNode(final int successorIndex, final int sp, final int offset) {
+            super(successorIndex, sp, offset);
         }
 
-        public static ConditionalJumpOnTrueNode createShort(final int successorIndex, final int bytecode) {
-            return new ConditionalJumpOnTrueNode(successorIndex, calculateShortOffset(bytecode));
+        public static ConditionalJumpOnTrueNode createShort(final int successorIndex, final int sp, final int bytecode) {
+            return new ConditionalJumpOnTrueNode(successorIndex, sp, calculateShortOffset(bytecode));
         }
 
-        public static ConditionalJumpOnTrueNode createLong(final int successorIndex, final int bytecode, final byte parameter) {
-            return new ConditionalJumpOnTrueNode(successorIndex, calculateLongOffset(bytecode, parameter));
+        public static ConditionalJumpOnTrueNode createLong(final int successorIndex, final int sp, final int bytecode, final byte parameter) {
+            return new ConditionalJumpOnTrueNode(successorIndex, sp, calculateLongOffset(bytecode, parameter));
         }
 
-        public static ConditionalJumpOnTrueNode createLongExtended(final int successorIndex, final byte bytecode, final int extB) {
-            return new ConditionalJumpOnTrueNode(successorIndex, calculateLongExtendedOffset(bytecode, extB));
+        public static ConditionalJumpOnTrueNode createLongExtended(final int successorIndex, final int sp, final byte bytecode, final int extB) {
+            return new ConditionalJumpOnTrueNode(successorIndex, sp, calculateLongExtendedOffset(bytecode, extB));
         }
 
         @Override
@@ -122,8 +122,8 @@ public final class JumpBytecodes {
     }
 
     public abstract static class AbstractUnconditionalJumpNode extends AbstractBytecodeNode {
-        private AbstractUnconditionalJumpNode(final int successorIndex, final int offset) {
-            super(successorIndex + offset);
+        private AbstractUnconditionalJumpNode(final int successorIndex, final int sp, final int offset) {
+            super(successorIndex + offset, sp);
         }
 
         @Override
@@ -134,8 +134,8 @@ public final class JumpBytecodes {
     }
 
     public static final class UnconditionalForwardJumpWithoutCheckNode extends AbstractUnconditionalJumpNode {
-        private UnconditionalForwardJumpWithoutCheckNode(final int successorIndex, final int offset) {
-            super(successorIndex, offset);
+        private UnconditionalForwardJumpWithoutCheckNode(final int successorIndex, final int sp, final int offset) {
+            super(successorIndex, sp, offset);
         }
 
         @Override
@@ -145,8 +145,8 @@ public final class JumpBytecodes {
     }
 
     public abstract static class AbstractUnconditionalBackJumpNode extends AbstractUnconditionalJumpNode {
-        protected AbstractUnconditionalBackJumpNode(final int successorIndex, final int offset) {
-            super(successorIndex, offset);
+        protected AbstractUnconditionalBackJumpNode(final int successorIndex, final int sp, final int offset) {
+            super(successorIndex, sp, offset);
         }
 
         public abstract void executeCheck(VirtualFrame frame);
@@ -158,8 +158,8 @@ public final class JumpBytecodes {
     }
 
     public static final class UnconditionalBackJumpWithoutCheckNode extends AbstractUnconditionalBackJumpNode {
-        private UnconditionalBackJumpWithoutCheckNode(final int successorIndex, final int offset) {
-            super(successorIndex, offset);
+        private UnconditionalBackJumpWithoutCheckNode(final int successorIndex, final int sp, final int offset) {
+            super(successorIndex, sp, offset);
         }
 
         @Override
@@ -171,8 +171,8 @@ public final class JumpBytecodes {
     public static final class UnconditionalBackJumpWithCheckNode extends AbstractUnconditionalBackJumpNode {
         @Child private CheckForInterruptsQuickNode interruptHandlerNode = CheckForInterruptsQuickNode.createForLoop();
 
-        private UnconditionalBackJumpWithCheckNode(final int successorIndex, final int offset) {
-            super(successorIndex, offset);
+        private UnconditionalBackJumpWithCheckNode(final int successorIndex, final int sp, final int offset) {
+            super(successorIndex, sp, offset);
             assert offset < 0;
         }
 
@@ -188,30 +188,32 @@ public final class JumpBytecodes {
         }
     }
 
-    public static AbstractUnconditionalJumpNode createUnconditionalShortJump(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode) {
-        return create(bytecodeNodes, index, 1, calculateShortOffset(bytecode));
+    public static AbstractUnconditionalJumpNode createUnconditionalShortJump(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int sp, final int bytecode) {
+        return create(bytecodeNodes, index, sp, 1, calculateShortOffset(bytecode));
     }
 
-    public static AbstractUnconditionalJumpNode createUnconditionalLongJump(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode, final byte parameter) {
+    public static AbstractUnconditionalJumpNode createUnconditionalLongJump(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int sp, final int bytecode,
+                    final byte parameter) {
         final int offset = ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter);
-        return create(bytecodeNodes, index, 2, offset);
+        return create(bytecodeNodes, index, sp, 2, offset);
     }
 
-    public static AbstractUnconditionalJumpNode createUnconditionalLongExtendedJump(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes, final byte bytecode,
+    public static AbstractUnconditionalJumpNode createUnconditionalLongExtendedJump(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int sp, final int numBytecodes,
+                    final byte bytecode,
                     final int extB) {
-        return create(bytecodeNodes, index, numBytecodes, calculateLongExtendedOffset(bytecode, extB));
+        return create(bytecodeNodes, index, sp, numBytecodes, calculateLongExtendedOffset(bytecode, extB));
     }
 
-    private static AbstractUnconditionalJumpNode create(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes, final int offset) {
+    private static AbstractUnconditionalJumpNode create(final AbstractBytecodeNode[] bytecodeNodes, final int index, final int sp, final int numBytecodes, final int offset) {
         final int successorIndex = index + numBytecodes;
         if (offset < 0) {
             if (needsCheck(bytecodeNodes, index, numBytecodes, offset)) {
-                return new UnconditionalBackJumpWithCheckNode(successorIndex, offset);
+                return new UnconditionalBackJumpWithCheckNode(successorIndex, sp, offset);
             } else {
-                return new UnconditionalBackJumpWithoutCheckNode(successorIndex, offset);
+                return new UnconditionalBackJumpWithoutCheckNode(successorIndex, sp, offset);
             }
         } else {
-            return new UnconditionalForwardJumpWithoutCheckNode(successorIndex, offset);
+            return new UnconditionalForwardJumpWithoutCheckNode(successorIndex, sp, offset);
         }
     }
 

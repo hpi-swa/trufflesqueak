@@ -16,19 +16,27 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 public abstract class AbstractBytecodeNode extends AbstractNode {
     private final int successorIndex;
+    private final byte successorStackPointer;
 
-    public AbstractBytecodeNode(final int successorIndex) {
+    public AbstractBytecodeNode(final int successorIndex, final int successorStackPointer) {
         this.successorIndex = successorIndex;
+        this.successorStackPointer = (byte) successorStackPointer;
+        assert this.successorStackPointer == successorStackPointer;
     }
 
     public AbstractBytecodeNode(final AbstractBytecodeNode original) {
         successorIndex = original.successorIndex;
+        successorStackPointer = original.successorStackPointer;
     }
 
     public abstract void executeVoid(VirtualFrame frame);
 
     public final int getSuccessorIndex() {
         return successorIndex;
+    }
+
+    public final byte getSuccessorStackPointer() {
+        return successorStackPointer;
     }
 
     @Override

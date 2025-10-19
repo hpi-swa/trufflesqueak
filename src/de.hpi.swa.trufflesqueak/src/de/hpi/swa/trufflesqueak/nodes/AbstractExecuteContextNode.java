@@ -14,7 +14,7 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 @GenerateWrapper
 public abstract class AbstractExecuteContextNode extends AbstractNode implements InstrumentableNode {
 
-    public abstract Object execute(VirtualFrame frame, int startPC);
+    public abstract Object execute(VirtualFrame frame, int startPC, int startSP);
 
     @Override
     public WrapperNode createWrapper(final ProbeNode probeNode) {
