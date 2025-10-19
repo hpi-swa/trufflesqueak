@@ -87,8 +87,8 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF //
                 -> new SendBytecodes.SelfSendNode(frame, index + 1, sp, (NativeObject) code.getLiteral(b & 0xF), 2);
             case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> JumpBytecodes.createUnconditionalShortJump(bytecodeNodes, index, sp, b);
-            case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> JumpBytecodes.ConditionalJumpOnTrueNode.createShort(index + 1, sp - 1, b);
-            case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> JumpBytecodes.ConditionalJumpOnFalseNode.createShort(index + 1, sp - 1, b);
+            case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> JumpBytecodes.ConditionalJumpOnTrueNode.createShort(frame, index + 1, sp - 1, b);
+            case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> JumpBytecodes.ConditionalJumpOnFalseNode.createShort(frame, index + 1, sp - 1, b);
             case 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF -> new StoreBytecodes.PopIntoReceiverVariableNode(index + 1, sp - 1, b & 7);
             case 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7 -> new StoreBytecodes.PopIntoTemporaryLocationNode(index + 1, sp - 1, b & 7);
             case 0xD8 -> new MiscellaneousBytecodes.PopNode(index + 1, sp - 1);
@@ -133,8 +133,8 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             }
             case 0xEC -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, sp, b);
             case 0xED -> JumpBytecodes.createUnconditionalLongExtendedJump(bytecodeNodes, index, sp, 2 + extBytes, bytecode[indexWithExt + 1], extB);
-            case 0xEE -> JumpBytecodes.ConditionalJumpOnTrueNode.createLongExtended(index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1], extB);
-            case 0xEF -> JumpBytecodes.ConditionalJumpOnFalseNode.createLongExtended(index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1], extB);
+            case 0xEE -> JumpBytecodes.ConditionalJumpOnTrueNode.createLongExtended(frame, index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1], extB);
+            case 0xEF -> JumpBytecodes.ConditionalJumpOnFalseNode.createLongExtended(frame, index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1], extB);
             case 0xF0 -> new StoreBytecodes.PopIntoReceiverVariableNode(index + 2 + extBytes, sp - 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xF1 -> new StoreBytecodes.PopIntoLiteralVariableNode(code, index + 2 + extBytes, sp - 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xF2 -> new StoreBytecodes.PopIntoTemporaryLocationNode(index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1]);

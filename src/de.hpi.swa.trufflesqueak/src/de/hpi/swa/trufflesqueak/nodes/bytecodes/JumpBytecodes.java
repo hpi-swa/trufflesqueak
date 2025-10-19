@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsQuickNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives.AbstractClosurePrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -29,13 +29,14 @@ public final class JumpBytecodes {
         private final int jumpSuccessorIndex;
         private final CountingConditionProfile conditionProfile = CountingConditionProfile.create();
 
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackReadNode popNode;
 
         @SuppressWarnings("this-escape")
-        protected ConditionalJumpNode(final int successorIndex, final int sp, final int offset) {
+        protected ConditionalJumpNode(final VirtualFrame frame, final int successorIndex, final int sp, final int offset) {
             super(successorIndex, sp);
             jumpSuccessorIndex = getSuccessorIndex() + offset;
             assert offset > 0 : "Jump offset is expected to be positive for conditional jump bytecodes (Squeak compiler does not produce conditional back jumps)";
+            popNode = FrameStackReadNode.create(frame, sp, true);
         }
 
         @Override
@@ -44,7 +45,8 @@ public final class JumpBytecodes {
         }
 
         public final boolean executeCondition(final VirtualFrame frame) {
-            final Object result = popNode.execute(frame);
+            final Object result = popNode.executeRead(frame);
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
             if (result instanceof Boolean r) {
                 return conditionProfile.profile(check(r));
             } else {
@@ -64,20 +66,20 @@ public final class JumpBytecodes {
     }
 
     public static final class ConditionalJumpOnFalseNode extends ConditionalJumpNode {
-        private ConditionalJumpOnFalseNode(final int successorIndex, final int sp, final int offset) {
-            super(successorIndex, sp, offset);
+        private ConditionalJumpOnFalseNode(final VirtualFrame frame, final int successorIndex, final int sp, final int offset) {
+            super(frame, successorIndex, sp, offset);
         }
 
-        public static ConditionalJumpOnFalseNode createShort(final int successorIndex, final int sp, final int bytecode) {
-            return new ConditionalJumpOnFalseNode(successorIndex, sp, calculateShortOffset(bytecode));
+        public static ConditionalJumpOnFalseNode createShort(final VirtualFrame frame, final int successorIndex, final int sp, final int bytecode) {
+            return new ConditionalJumpOnFalseNode(frame, successorIndex, sp, calculateShortOffset(bytecode));
         }
 
-        public static ConditionalJumpOnFalseNode createLong(final int successorIndex, final int sp, final int bytecode, final byte parameter) {
-            return new ConditionalJumpOnFalseNode(successorIndex, sp, calculateLongOffset(bytecode, parameter));
+        public static ConditionalJumpOnFalseNode createLong(final VirtualFrame frame, final int successorIndex, final int sp, final int bytecode, final byte parameter) {
+            return new ConditionalJumpOnFalseNode(frame, successorIndex, sp, calculateLongOffset(bytecode, parameter));
         }
 
-        public static ConditionalJumpOnFalseNode createLongExtended(final int successorIndex, final int sp, final byte bytecode, final int extB) {
-            return new ConditionalJumpOnFalseNode(successorIndex, sp, calculateLongExtendedOffset(bytecode, extB));
+        public static ConditionalJumpOnFalseNode createLongExtended(final VirtualFrame frame, final int successorIndex, final int sp, final byte bytecode, final int extB) {
+            return new ConditionalJumpOnFalseNode(frame, successorIndex, sp, calculateLongExtendedOffset(bytecode, extB));
         }
 
         @Override
@@ -93,20 +95,20 @@ public final class JumpBytecodes {
     }
 
     public static final class ConditionalJumpOnTrueNode extends ConditionalJumpNode {
-        private ConditionalJumpOnTrueNode(final int successorIndex, final int sp, final int offset) {
-            super(successorIndex, sp, offset);
+        private ConditionalJumpOnTrueNode(final VirtualFrame frame, final int successorIndex, final int sp, final int offset) {
+            super(frame, successorIndex, sp, offset);
         }
 
-        public static ConditionalJumpOnTrueNode createShort(final int successorIndex, final int sp, final int bytecode) {
-            return new ConditionalJumpOnTrueNode(successorIndex, sp, calculateShortOffset(bytecode));
+        public static ConditionalJumpOnTrueNode createShort(final VirtualFrame frame, final int successorIndex, final int sp, final int bytecode) {
+            return new ConditionalJumpOnTrueNode(frame, successorIndex, sp, calculateShortOffset(bytecode));
         }
 
-        public static ConditionalJumpOnTrueNode createLong(final int successorIndex, final int sp, final int bytecode, final byte parameter) {
-            return new ConditionalJumpOnTrueNode(successorIndex, sp, calculateLongOffset(bytecode, parameter));
+        public static ConditionalJumpOnTrueNode createLong(final VirtualFrame frame, final int successorIndex, final int sp, final int bytecode, final byte parameter) {
+            return new ConditionalJumpOnTrueNode(frame, successorIndex, sp, calculateLongOffset(bytecode, parameter));
         }
 
-        public static ConditionalJumpOnTrueNode createLongExtended(final int successorIndex, final int sp, final byte bytecode, final int extB) {
-            return new ConditionalJumpOnTrueNode(successorIndex, sp, calculateLongExtendedOffset(bytecode, extB));
+        public static ConditionalJumpOnTrueNode createLongExtended(final VirtualFrame frame, final int successorIndex, final int sp, final byte bytecode, final int extB) {
+            return new ConditionalJumpOnTrueNode(frame, successorIndex, sp, calculateLongExtendedOffset(bytecode, extB));
         }
 
         @Override
