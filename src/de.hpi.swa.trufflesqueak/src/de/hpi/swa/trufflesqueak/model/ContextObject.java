@@ -370,7 +370,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (FrameAccess.getArgumentStartIndex() + index < args.length) {
             return args[FrameAccess.getArgumentStartIndex() + index];
         } else {
-            return NilObject.nullToNil(FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, index)));
+            return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, index));
         }
     }
 

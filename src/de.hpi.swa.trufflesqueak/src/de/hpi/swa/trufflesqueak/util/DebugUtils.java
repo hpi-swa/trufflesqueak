@@ -164,7 +164,7 @@ public final class DebugUtils {
             }
             final CompiledCodeObject code = FrameAccess.getCodeObject(current);
             lastSender[0] = FrameAccess.getSender(current);
-            final Object context = FrameAccess.getContext(current);
+            final Object context = FrameAccess.getContextOrNil(current);
             final String prefix = FrameAccess.hasClosure(current) ? "[] in " : "";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
             log.info(MiscUtils.format("%s%s #(%s) [context: %s, sender: %s]", prefix, code, argumentsString, context, lastSender[0]));

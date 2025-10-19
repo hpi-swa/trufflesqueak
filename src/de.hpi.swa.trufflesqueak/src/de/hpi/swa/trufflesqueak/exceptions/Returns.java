@@ -45,7 +45,7 @@ public final class Returns {
         }
 
         public boolean targetIsFrame(final VirtualFrame frame) {
-            return targetContext == FrameAccess.getContext(frame);
+            return targetContext == FrameAccess.getContextOrNil(frame);
         }
 
         public ContextObject getTargetContext() {
@@ -96,7 +96,7 @@ public final class Returns {
         }
 
         public boolean targetIsFrame(final VirtualFrame frame) {
-            return targetContextOrNil == FrameAccess.getContext(frame);
+            return targetContextOrNil == FrameAccess.getContextOrNil(frame);
         }
 
         public AbstractSqueakObject getTargetContextOrNil() {

@@ -37,9 +37,9 @@ public abstract class GetOrCreateContextWithoutFrameNode extends AbstractNode {
     @Specialization
     public static ContextObject getContext(final VirtualFrame frame, final Node node,
                     @Cached final InlinedConditionProfile hasContextProfile) {
-        final ContextObject context = FrameAccess.getContext(frame);
-        if (hasContextProfile.profile(node, context != null)) {
-            return context;
+        final Object context = FrameAccess.getContextOrNil(frame);
+        if (hasContextProfile.profile(node, context instanceof ContextObject)) {
+            return (ContextObject) context;
         } else {
             return new ContextObject(getContext(node), frame);
         }

@@ -359,8 +359,8 @@ public final class ObjectGraphUtils {
                 tracer.accept(arguments[i]);
             }
 
-            final ContextObject context = FrameAccess.getContext(current);
-            if (context != null) {
+            final Object contextOrNil = FrameAccess.getContextOrNil(current);
+            if (contextOrNil instanceof final ContextObject context) {
                 final Object toContext = fromToMap.get(context);
                 if (toContext instanceof final ContextObject o) {
                     FrameAccess.setContext(current, o);
@@ -573,7 +573,7 @@ public final class ObjectGraphUtils {
                     return FrameAccess.getResumingContextObjectOrSkip(frameInstance);
                 }
                 addAllIfUnmarked(current.getArguments());
-                addIfUnmarked(FrameAccess.getContext(current));
+                addIfUnmarked(FrameAccess.getContextOrNil(current));
                 FrameAccess.iterateStackObjects(current, false, this::addIfUnmarked);
                 return null; // continue
             });

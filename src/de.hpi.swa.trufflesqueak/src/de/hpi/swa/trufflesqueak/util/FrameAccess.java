@@ -96,6 +96,7 @@ public final class FrameAccess {
     public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code) {
         final int numStackSlots = code.getMaxNumStackSlots();
         final Builder builder = FrameDescriptor.newBuilder(4 + numStackSlots);
+        builder.defaultValue(NilObject.SINGLETON);
         builder.info(code);
         addDefaultSlots(builder);
         builder.addSlots(numStackSlots, FrameSlotKind.Illegal);
@@ -104,6 +105,7 @@ public final class FrameAccess {
 
     public static VirtualFrame newDummyFrame(final CompiledCodeObject dummyMethod) {
         final Builder builder = FrameDescriptor.newBuilder(4);
+        builder.defaultValue(NilObject.SINGLETON);
         builder.info(dummyMethod);
         addDefaultSlots(builder);
         return Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), builder.build());
@@ -191,21 +193,23 @@ public final class FrameAccess {
     }
 
     public static ContextObject getContext(final Frame frame) {
-        return (ContextObject) frame.getObjectStatic(SlotIndicies.THIS_CONTEXT.ordinal());
+        return (ContextObject) getContextOrNil(frame);
+    }
+
+    public static Object getContextOrNil(final Frame frame) {
+        return frame.getObjectStatic(SlotIndicies.THIS_CONTEXT.ordinal());
     }
 
     public static boolean hasEscapedContext(final VirtualFrame frame) {
-        final ContextObject context = getContext(frame);
-        return context != null && context.hasEscaped();
+        return getContextOrNil(frame) instanceof final ContextObject context && context.hasEscaped();
     }
 
     public static boolean hasModifiedSender(final VirtualFrame frame) {
-        final ContextObject context = getContext(frame);
-        return context != null && context.hasModifiedSender();
+        return getContextOrNil(frame) instanceof final ContextObject context && context.hasModifiedSender();
     }
 
     public static void setContext(final Frame frame, final ContextObject context) {
-        assert getContext(frame) == null : "ContextObject already allocated";
+        assert getContextOrNil(frame) == NilObject.SINGLETON : "ContextObject already allocated";
         frame.setObjectStatic(SlotIndicies.THIS_CONTEXT.ordinal(), context);
     }
 
@@ -404,11 +408,11 @@ public final class FrameAccess {
     }
 
     public static void terminateContextOrFrame(final Frame frame) {
-        final ContextObject context = getContext(frame);
-        if (context != null && context.hasTruffleFrame()) {
+        final Object contextOrNil = getContextOrNil(frame);
+        if (contextOrNil instanceof final ContextObject context && context.hasTruffleFrame()) {
             context.terminate();
         } else {
-            if (context != null) {
+            if (contextOrNil instanceof final ContextObject context) {
                 context.clearModifiedSender();
             }
             terminateFrame(frame);
@@ -596,9 +600,9 @@ public final class FrameAccess {
                 return FrameAccess.getResumingContextObjectOrSkip(frameInstance);
             }
             LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
-            final ContextObject contextObject = getContext(current);
+            final Object contextObject = getContextOrNil(current);
             if (context == contextObject) {
-                assert contextObject == null || !contextObject.hasTruffleFrame() : "Redundant frame lookup";
+                assert !((ContextObject) contextObject).hasTruffleFrame() : "Redundant frame lookup";
                 return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE).materialize();
             } else {
                 return null; // continue with next frame
