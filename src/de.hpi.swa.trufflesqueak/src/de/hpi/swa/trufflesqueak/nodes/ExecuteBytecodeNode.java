@@ -106,7 +106,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 backJumpCounter.value++;
                 if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
                     if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
-                        returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
+                        returnValue = BytecodeOSRNode.tryOSR(this, pc, sp, null, frame);
                         if (returnValue != null) {
                             break bytecode_loop;
                         }
@@ -162,7 +162,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
 
     @Override
     public Object executeOSR(final VirtualFrame osrFrame, final int target, final Object interpreterState) {
-        return execute(osrFrame, target, FrameAccess.getStackPointer(osrFrame)); // FIXME?
+        return execute(osrFrame, target, (int) interpreterState); // FIXME?
     }
 
     @Override
