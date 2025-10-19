@@ -13,6 +13,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteBytecodeNode;
 
 public abstract class AbstractBytecodeNode extends AbstractNode {
     private final int successorIndex;
@@ -44,7 +45,8 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
         CompilerAsserts.neverPartOfCompilation();
         final CompiledCodeObject code = getCode();
         final Source source = code.getSource();
-        if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
+        if (successorIndex == ExecuteBytecodeNode.LOCAL_RETURN_PC || // FIXME
+                        CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
             return source.createUnavailableSection();
         } else {
             final int lineNumber = code.findLineNumber(successorIndex);

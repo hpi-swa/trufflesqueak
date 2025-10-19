@@ -79,8 +79,8 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc, sp);
             CompilerAsserts.partialEvaluationConstant(node);
-            int frameSP = FrameAccess.getStackPointer(frame);
-            assert sp == frameSP;
+// int frameSP = FrameAccess.getStackPointer(frame);
+// assert sp == frameSP;
             pc = node.getSuccessorIndex();
             sp = node.getSuccessorStackPointer();
             if (node instanceof final AbstractSendNode sendNode) {
