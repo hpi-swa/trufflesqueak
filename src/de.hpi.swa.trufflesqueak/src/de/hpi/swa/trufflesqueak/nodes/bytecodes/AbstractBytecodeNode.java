@@ -17,13 +17,16 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 public abstract class AbstractBytecodeNode extends AbstractNode {
     private final int successorIndex;
 
+    public AbstractBytecodeNode(final int successorIndex) {
+        this.successorIndex = successorIndex;
+    }
+
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index) {
         this(code, index, 1);
     }
 
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-        final int initialPC = code.getInitialPC();
-        successorIndex = initialPC + index + numBytecodes;
+        this(code.getInitialPC() + index + numBytecodes);
     }
 
     public AbstractBytecodeNode(final AbstractBytecodeNode original) {

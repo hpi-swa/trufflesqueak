@@ -24,14 +24,14 @@ import com.oracle.truffle.api.source.SourceSection;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.AbstractUnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalBackjumpWithCheckNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
-    private static final int LOCAL_RETURN_PC = -2;
+    public static final int LOCAL_RETURN_PC = -2;
     private static final int BACKJUMP_THRESHOLD = 1 << 14;
 
     private final CompiledCodeObject code;
@@ -78,8 +78,8 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
             CompilerAsserts.partialEvaluationConstant(node);
+            pc = node.getSuccessorIndex();
             if (node instanceof final AbstractSendNode sendNode) {
-                pc = sendNode.getSuccessorIndex();
                 FrameAccess.setInstructionPointer(frame, pc);
                 sendNode.executeVoid(frame);
                 final int actualNextPc = FrameAccess.getInstructionPointer(frame);
@@ -97,40 +97,30 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 if (jumpNode.executeCondition(frame)) {
                     pc = jumpNode.getJumpSuccessorIndex();
                     continue bytecode_loop;
-                } else {
-                    pc = jumpNode.getSuccessorIndex();
-                    continue bytecode_loop;
                 }
-            } else if (node instanceof final AbstractUnconditionalJumpNode jumpNode) {
-                final int successor = jumpNode.getSuccessorIndex();
-                if (successor <= pc) {
-                    backJumpCounter.value++;
-                    if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
-                        if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
-                            returnValue = BytecodeOSRNode.tryOSR(this, successor, null, null, frame);
-                            if (returnValue != null) {
-                                break bytecode_loop;
-                            }
-                        } else {
-                            jumpNode.executeCheck(frame);
+            } else if (node instanceof final UnconditionalBackjumpWithCheckNode jumpNode) {
+                backJumpCounter.value++;
+                if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
+                    if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
+                        returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
+                        if (returnValue != null) {
+                            break bytecode_loop;
                         }
+                    } else {
+                        jumpNode.executeCheck(frame);
                     }
                 }
-                pc = successor;
                 continue bytecode_loop;
             } else if (node instanceof final AbstractReturnNode returnNode) {
                 /*
                  * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
                  * cannotReturn.
                  */
-                FrameAccess.setInstructionPointer(frame, returnNode.getSuccessorIndex());
+                FrameAccess.setInstructionPointer(frame, pc);
                 returnValue = returnNode.executeReturn(frame);
-                pc = LOCAL_RETURN_PC;
                 continue bytecode_loop;
-            } else {
-                /* All other bytecode nodes. */
+            } else { /* All other bytecode nodes. */
                 node.executeVoid(frame);
-                pc = node.getSuccessorIndex();
                 continue bytecode_loop;
             }
         }

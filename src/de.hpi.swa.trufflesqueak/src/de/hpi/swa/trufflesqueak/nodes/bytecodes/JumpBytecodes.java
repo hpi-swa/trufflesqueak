@@ -129,13 +129,6 @@ public final class JumpBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
-            throw CompilerDirectives.shouldNotReachHere();
-        }
-
-        public abstract void executeCheck(VirtualFrame frame);
-
-        @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "jumpTo: " + getSuccessorIndex();
@@ -148,20 +141,25 @@ public final class JumpBytecodes {
         }
 
         @Override
-        public void executeCheck(final VirtualFrame frame) {
+        public void executeVoid(final VirtualFrame frame) {
             // nothing to do
         }
     }
 
-    protected static final class UnconditionalJumpWithCheckNode extends AbstractUnconditionalJumpNode {
+    public static final class UnconditionalBackjumpWithCheckNode extends AbstractUnconditionalJumpNode {
         @Child private CheckForInterruptsQuickNode interruptHandlerNode = CheckForInterruptsQuickNode.createForLoop();
 
-        protected UnconditionalJumpWithCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+        protected UnconditionalBackjumpWithCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes, offset);
+            assert offset < 0;
             LogUtils.INTERRUPTS.fine(() -> "Added interrupt check to backjump in " + code);
         }
 
         @Override
+        public void executeVoid(final VirtualFrame frame) {
+            throw CompilerDirectives.shouldNotReachHere();
+        }
+
         public void executeCheck(final VirtualFrame frame) {
             try {
                 interruptHandlerNode.execute(frame);
@@ -176,7 +174,7 @@ public final class JumpBytecodes {
     public static AbstractUnconditionalJumpNode createUnconditionalShortJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode) {
         final int offset = calculateShortOffset(bytecode);
         if (needsCheck(bytecodeNodes, index, 1, offset)) {
-            return new UnconditionalJumpWithCheckNode(code, index, 1, offset);
+            return new UnconditionalBackjumpWithCheckNode(code, index, 1, offset);
         } else {
             return new UnconditionalJumpWithoutCheckNode(code, index, 1, offset);
         }
@@ -186,7 +184,7 @@ public final class JumpBytecodes {
                     final byte parameter) {
         final int offset = ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter);
         if (needsCheck(bytecodeNodes, index, 2, offset)) {
-            return new UnconditionalJumpWithCheckNode(code, index, 2, offset);
+            return new UnconditionalBackjumpWithCheckNode(code, index, 2, offset);
         } else {
             return new UnconditionalJumpWithoutCheckNode(code, index, 2, offset);
         }
@@ -196,7 +194,7 @@ public final class JumpBytecodes {
                     final byte bytecode, final int extB) {
         final int offset = calculateLongExtendedOffset(bytecode, extB);
         if (needsCheck(bytecodeNodes, index, numBytecodes, offset)) {
-            return new UnconditionalJumpWithCheckNode(code, index, numBytecodes, offset);
+            return new UnconditionalBackjumpWithCheckNode(code, index, numBytecodes, offset);
         } else {
             return new UnconditionalJumpWithoutCheckNode(code, index, numBytecodes, offset);
         }
