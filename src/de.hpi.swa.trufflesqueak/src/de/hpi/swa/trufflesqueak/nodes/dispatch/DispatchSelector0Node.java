@@ -55,10 +55,9 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
     @Child private FrameStackReadNode receiverNode;
     @Child private AbstractDispatch0Node dispatchNode;
 
-    DispatchSelector0Node(final VirtualFrame frame, final AbstractDispatch0Node dispatchNode) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
+    DispatchSelector0Node(final VirtualFrame frame, final int sp, final AbstractDispatch0Node dispatchNode) {
         /* TODO: Not clearing receiver here for ProcessTest>>testTerminateEnsureOnTopOfEnsure. */
-        receiverNode = FrameStackReadNode.create(frame, stackPointer - 1, false);
+        receiverNode = FrameStackReadNode.create(frame, sp - 1, false);
         this.dispatchNode = dispatchNode;
     }
 
@@ -72,21 +71,16 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
         return dispatchNode.selector;
     }
 
-    static DispatchSelector0Node create(final VirtualFrame frame, final NativeObject selector) {
-        return new DispatchSelector0Node(frame, Dispatch0NodeGen.create(selector));
+    static DispatchSelector0Node create(final VirtualFrame frame, final int sp, final NativeObject selector) {
+        return new DispatchSelector0Node(frame, sp, Dispatch0NodeGen.create(selector));
     }
 
-    static DispatchSelector0Node createSuper(final VirtualFrame frame, final ClassObject methodClass, final NativeObject selector) {
-        return new DispatchSelector0Node(frame, DispatchSuper0NodeGen.create(methodClass, selector));
+    static DispatchSelector0Node createSuper(final VirtualFrame frame, final int sp, final ClassObject methodClass, final NativeObject selector) {
+        return new DispatchSelector0Node(frame, sp, DispatchSuper0NodeGen.create(methodClass, selector));
     }
 
     static DispatchSelector0Node createDirectedSuper(final VirtualFrame frame, final int sp, final NativeObject selector) {
-        // Trick: decrement stack pointer so that node uses the right receiver and args
-        FrameAccess.setStackPointer(frame, sp - 1);
-        final DispatchSelector0Node result = new DispatchSelector0Node(frame, new DispatchDirectedSuper0Node(frame, selector, sp));
-        // Restore stack pointer
-        FrameAccess.setStackPointer(frame, sp);
-        return result;
+        return new DispatchSelector0Node(frame, sp - 1, new DispatchDirectedSuper0Node(frame, selector, sp));
     }
 
     protected abstract static class AbstractDispatch0Node extends AbstractDispatchNode {

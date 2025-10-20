@@ -16,28 +16,28 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 public abstract class DispatchSelectorNode extends AbstractNode {
     public abstract Object execute(VirtualFrame frame);
 
-    public static final DispatchSelectorNode create(final VirtualFrame frame, final NativeObject selector, final int numArgs) {
+    public static final DispatchSelectorNode create(final VirtualFrame frame, final int sp, final NativeObject selector, final int numArgs) {
         return switch (numArgs) {
-            case 0 -> DispatchSelector0Node.create(frame, selector);
-            case 1 -> DispatchSelector1Node.create(frame, selector);
-            case 2 -> DispatchSelector2Node.create(frame, selector);
-            case 3 -> DispatchSelector3Node.create(frame, selector);
-            case 4 -> DispatchSelector4Node.create(frame, selector);
-            case 5 -> DispatchSelector5Node.create(frame, selector);
-            default -> DispatchSelectorNaryNode.create(frame, numArgs, selector);
+            case 0 -> DispatchSelector0Node.create(frame, sp, selector);
+            case 1 -> DispatchSelector1Node.create(frame, sp, selector);
+            case 2 -> DispatchSelector2Node.create(frame, sp, selector);
+            case 3 -> DispatchSelector3Node.create(frame, sp, selector);
+            case 4 -> DispatchSelector4Node.create(frame, sp, selector);
+            case 5 -> DispatchSelector5Node.create(frame, sp, selector);
+            default -> DispatchSelectorNaryNode.create(frame, sp, numArgs, selector);
         };
     }
 
-    public static final DispatchSelectorNode createSuper(final VirtualFrame frame, final CompiledCodeObject code, final NativeObject selector, final int numArgs) {
+    public static final DispatchSelectorNode createSuper(final VirtualFrame frame, final int sp, final CompiledCodeObject code, final NativeObject selector, final int numArgs) {
         final ClassObject methodClass = code.getMethod().getMethodClassSlow();
         return switch (numArgs) {
-            case 0 -> DispatchSelector0Node.createSuper(frame, methodClass, selector);
-            case 1 -> DispatchSelector1Node.createSuper(frame, methodClass, selector);
-            case 2 -> DispatchSelector2Node.createSuper(frame, methodClass, selector);
-            case 3 -> DispatchSelector3Node.createSuper(frame, methodClass, selector);
-            case 4 -> DispatchSelector4Node.createSuper(frame, methodClass, selector);
-            case 5 -> DispatchSelector5Node.createSuper(frame, methodClass, selector);
-            default -> DispatchSelectorNaryNode.createSuper(frame, numArgs, methodClass, selector);
+            case 0 -> DispatchSelector0Node.createSuper(frame, sp, methodClass, selector);
+            case 1 -> DispatchSelector1Node.createSuper(frame, sp, methodClass, selector);
+            case 2 -> DispatchSelector2Node.createSuper(frame, sp, methodClass, selector);
+            case 3 -> DispatchSelector3Node.createSuper(frame, sp, methodClass, selector);
+            case 4 -> DispatchSelector4Node.createSuper(frame, sp, methodClass, selector);
+            case 5 -> DispatchSelector5Node.createSuper(frame, sp, methodClass, selector);
+            default -> DispatchSelectorNaryNode.createSuper(frame, sp, numArgs, methodClass, selector);
         };
     }
 

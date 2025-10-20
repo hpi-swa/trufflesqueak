@@ -175,7 +175,7 @@ public final class SendBytecodes {
     public static final class SelfSendNode extends AbstractSendNode {
         public SelfSendNode(final VirtualFrame frame, final int successorIndex, final int sp, final NativeObject selector, final int numArgs) {
             super(frame, successorIndex, sp, numArgs, 0);
-            dispatchNode = DispatchSelectorNode.create(frame, selector, numArgs);
+            dispatchNode = DispatchSelectorNode.create(frame, sp, selector, numArgs);
         }
 
         @Override
@@ -188,7 +188,7 @@ public final class SendBytecodes {
         public SuperSendNode(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final int literalIndex, final int numArgs) {
             super(frame, successorIndex, sp, numArgs, 0);
             final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
-            dispatchNode = DispatchSelectorNode.createSuper(frame, code, selector, numArgs);
+            dispatchNode = DispatchSelectorNode.createSuper(frame, sp, code, selector, numArgs);
         }
 
         @Override

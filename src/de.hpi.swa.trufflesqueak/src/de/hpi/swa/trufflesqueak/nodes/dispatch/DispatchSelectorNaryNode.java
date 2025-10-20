@@ -70,9 +70,8 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     @Children private FrameStackReadNode[] argumentNodes;
     @Child private AbstractDispatchNaryNode dispatchNode;
 
-    DispatchSelectorNaryNode(final VirtualFrame frame, final int numArgs, final AbstractDispatchNaryNode dispatchNode) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
-        final int receiverIndex = stackPointer - 1 - numArgs;
+    DispatchSelectorNaryNode(final VirtualFrame frame, final int sp, final int numArgs, final AbstractDispatchNaryNode dispatchNode) {
+        final int receiverIndex = sp - 1 - numArgs;
         receiverNode = FrameStackReadNode.create(frame, receiverIndex, true);
         argumentNodes = new FrameStackReadNode[numArgs];
         for (int i = 0; i < numArgs; i++) {
@@ -97,21 +96,16 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         return dispatchNode.selector;
     }
 
-    static DispatchSelectorNaryNode create(final VirtualFrame frame, final int numArgs, final NativeObject selector) {
-        return new DispatchSelectorNaryNode(frame, numArgs, DispatchNaryNodeGen.create(selector));
+    static DispatchSelectorNaryNode create(final VirtualFrame frame, final int sp, final int numArgs, final NativeObject selector) {
+        return new DispatchSelectorNaryNode(frame, sp, numArgs, DispatchNaryNodeGen.create(selector));
     }
 
-    static DispatchSelectorNaryNode createSuper(final VirtualFrame frame, final int numArgs, final ClassObject methodClass, final NativeObject selector) {
-        return new DispatchSelectorNaryNode(frame, numArgs, DispatchSuperNaryNodeGen.create(methodClass, selector));
+    static DispatchSelectorNaryNode createSuper(final VirtualFrame frame, final int sp, final int numArgs, final ClassObject methodClass, final NativeObject selector) {
+        return new DispatchSelectorNaryNode(frame, sp, numArgs, DispatchSuperNaryNodeGen.create(methodClass, selector));
     }
 
     static DispatchSelectorNaryNode createDirectedSuper(final VirtualFrame frame, final int sp, final int numArgs, final NativeObject selector) {
-        // Trick: decrement stack pointer so that node uses the right receiver and args
-        FrameAccess.setStackPointer(frame, sp - 1);
-        final DispatchSelectorNaryNode result = new DispatchSelectorNaryNode(frame, numArgs, new DispatchDirectedSuperNaryNode(frame, selector, sp));
-        // Restore stack pointer
-        FrameAccess.setStackPointer(frame, sp);
-        return result;
+        return new DispatchSelectorNaryNode(frame, sp - 1, numArgs, new DispatchDirectedSuperNaryNode(frame, selector, sp));
     }
 
     protected abstract static class AbstractDispatchNaryNode extends AbstractDispatchNode {

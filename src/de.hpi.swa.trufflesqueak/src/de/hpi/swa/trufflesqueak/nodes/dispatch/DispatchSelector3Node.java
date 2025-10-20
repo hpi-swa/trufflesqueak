@@ -57,12 +57,11 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
     @Child private FrameStackReadNode arg3Node;
     @Child private AbstractDispatch3Node dispatchNode;
 
-    DispatchSelector3Node(final VirtualFrame frame, final AbstractDispatch3Node dispatchNode) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
-        receiverNode = FrameStackReadNode.create(frame, stackPointer - 4, true);
-        arg1Node = FrameStackReadNode.create(frame, stackPointer - 3, true);
-        arg2Node = FrameStackReadNode.create(frame, stackPointer - 2, true);
-        arg3Node = FrameStackReadNode.create(frame, stackPointer - 1, true);
+    DispatchSelector3Node(final VirtualFrame frame, final int sp, final AbstractDispatch3Node dispatchNode) {
+        receiverNode = FrameStackReadNode.create(frame, sp - 4, true);
+        arg1Node = FrameStackReadNode.create(frame, sp - 3, true);
+        arg2Node = FrameStackReadNode.create(frame, sp - 2, true);
+        arg3Node = FrameStackReadNode.create(frame, sp - 1, true);
         this.dispatchNode = dispatchNode;
     }
 
@@ -76,21 +75,16 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
         return dispatchNode.selector;
     }
 
-    static DispatchSelector3Node create(final VirtualFrame frame, final NativeObject selector) {
-        return new DispatchSelector3Node(frame, Dispatch3NodeGen.create(selector));
+    static DispatchSelector3Node create(final VirtualFrame frame, final int sp, final NativeObject selector) {
+        return new DispatchSelector3Node(frame, sp, Dispatch3NodeGen.create(selector));
     }
 
-    static DispatchSelector3Node createSuper(final VirtualFrame frame, final ClassObject methodClass, final NativeObject selector) {
-        return new DispatchSelector3Node(frame, DispatchSuper3NodeGen.create(methodClass, selector));
+    static DispatchSelector3Node createSuper(final VirtualFrame frame, final int sp, final ClassObject methodClass, final NativeObject selector) {
+        return new DispatchSelector3Node(frame, sp, DispatchSuper3NodeGen.create(methodClass, selector));
     }
 
     static DispatchSelector3Node createDirectedSuper(final VirtualFrame frame, final int sp, final NativeObject selector) {
-        // Trick: decrement stack pointer so that node uses the right receiver and args
-        FrameAccess.setStackPointer(frame, sp - 1);
-        final DispatchSelector3Node result = new DispatchSelector3Node(frame, new DispatchDirectedSuper3Node(frame, selector, sp));
-        // Restore stack pointer
-        FrameAccess.setStackPointer(frame, sp);
-        return result;
+        return new DispatchSelector3Node(frame, sp - 1, new DispatchDirectedSuper3Node(frame, selector, sp - 1));
     }
 
     protected abstract static class AbstractDispatch3Node extends AbstractDispatchNode {
