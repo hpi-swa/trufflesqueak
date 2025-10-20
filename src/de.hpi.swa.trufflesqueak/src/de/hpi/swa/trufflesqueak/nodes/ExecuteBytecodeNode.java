@@ -31,7 +31,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
-    public static final int LOCAL_RETURN_PC = -2;
+    private static final int LOCAL_RETURN_PC = -2;
     private static final int BACKJUMP_THRESHOLD = 1 << 14;
 
     private final CompiledCodeObject code;
@@ -117,6 +117,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                  */
                 FrameAccess.setInstructionPointer(frame, pc);
                 returnValue = returnNode.executeReturn(frame);
+                pc = LOCAL_RETURN_PC;
                 continue bytecode_loop;
             } else { /* All other bytecode nodes. */
                 node.executeVoid(frame);

@@ -64,15 +64,15 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             }
             case 0x53 -> new MiscellaneousBytecodes.DupNode(index + 1);
             case 0x54, 0x55, 0x56, 0x57 -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, b);
-            case 0x58 -> new ReturnBytecodes.ReturnReceiverNode(frame);
-            case 0x59 -> new ReturnBytecodes.ReturnConstantTrueNode(frame);
-            case 0x5A -> new ReturnBytecodes.ReturnConstantFalseNode(frame);
-            case 0x5B -> new ReturnBytecodes.ReturnConstantNilNode(frame);
-            case 0x5C -> new ReturnBytecodes.ReturnTopFromMethodNode(frame);
-            case 0x5D -> new ReturnBytecodes.ReturnNilFromBlockNode();
+            case 0x58 -> new ReturnBytecodes.ReturnReceiverNode(frame, index + 1);
+            case 0x59 -> new ReturnBytecodes.ReturnConstantTrueNode(frame, index + 1);
+            case 0x5A -> new ReturnBytecodes.ReturnConstantFalseNode(frame, index + 1);
+            case 0x5B -> new ReturnBytecodes.ReturnConstantNilNode(frame, index + 1);
+            case 0x5C -> new ReturnBytecodes.ReturnTopFromMethodNode(frame, index + 1);
+            case 0x5D -> new ReturnBytecodes.ReturnNilFromBlockNode(index + 1);
             case 0x5E -> {
                 if (extA == 0) {
-                    yield new ReturnBytecodes.ReturnTopFromBlockNode();
+                    yield new ReturnBytecodes.ReturnTopFromBlockNode(index + 1);
                 } else { // shouldBeImplemented, see #genExtReturnTopFromBlock
                     yield new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, b);
                 }

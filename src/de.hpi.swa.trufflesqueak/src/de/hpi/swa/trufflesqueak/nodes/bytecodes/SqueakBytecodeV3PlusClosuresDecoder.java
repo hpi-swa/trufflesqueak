@@ -49,12 +49,12 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             case 0x75 -> new PushBytecodes.PushConstantZeroNode(index + 1);
             case 0x76 -> new PushBytecodes.PushConstantOneNode(index + 1);
             case 0x77 -> new PushBytecodes.PushConstantTwoNode(index + 1);
-            case 0x78 -> new ReturnBytecodes.ReturnReceiverNode(frame);
-            case 0x79 -> new ReturnBytecodes.ReturnConstantTrueNode(frame);
-            case 0x7A -> new ReturnBytecodes.ReturnConstantFalseNode(frame);
-            case 0x7B -> new ReturnBytecodes.ReturnConstantNilNode(frame);
-            case 0x7C -> new ReturnBytecodes.ReturnTopFromMethodNode(frame);
-            case 0x7D -> new ReturnBytecodes.ReturnTopFromBlockNode();
+            case 0x78 -> new ReturnBytecodes.ReturnReceiverNode(frame, index + 1);
+            case 0x79 -> new ReturnBytecodes.ReturnConstantTrueNode(frame, index + 1);
+            case 0x7A -> new ReturnBytecodes.ReturnConstantFalseNode(frame, index + 1);
+            case 0x7B -> new ReturnBytecodes.ReturnConstantNilNode(frame, index + 1);
+            case 0x7C -> new ReturnBytecodes.ReturnTopFromMethodNode(frame, index + 1);
+            case 0x7D -> new ReturnBytecodes.ReturnTopFromBlockNode(index + 1);
             case 0x7E, 0x7F -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, b);
             case 0x80 -> MiscellaneousBytecodes.ExtendedBytecodes.createPush(code, index + 2, bytecode[index + 1]);
             case 0x81 -> MiscellaneousBytecodes.ExtendedBytecodes.createStoreInto(code, index + 2, bytecode[index + 1]);

@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import static de.hpi.swa.trufflesqueak.nodes.ExecuteBytecodeNode.LOCAL_RETURN_PC;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -33,8 +31,8 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 public final class ReturnBytecodes {
 
     public abstract static class AbstractReturnNode extends AbstractBytecodeNode {
-        protected AbstractReturnNode() {
-            super(LOCAL_RETURN_PC);
+        protected AbstractReturnNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -54,8 +52,8 @@ public final class ReturnBytecodes {
     public abstract static class AbstractNormalReturnNode extends AbstractReturnNode {
         @Child private AbstractReturnKindNode returnNode;
 
-        protected AbstractNormalReturnNode(final VirtualFrame frame) {
-            super();
+        protected AbstractNormalReturnNode(final VirtualFrame frame, final int successorIndex) {
+            super(successorIndex);
             returnNode = FrameAccess.hasClosure(frame) ? new ReturnFromClosureNode() : new ReturnFromMethodNode();
         }
 
@@ -161,8 +159,8 @@ public final class ReturnBytecodes {
     }
 
     protected abstract static class AbstractReturnConstantNode extends AbstractNormalReturnNode {
-        protected AbstractReturnConstantNode(final VirtualFrame frame) {
-            super(frame);
+        protected AbstractReturnConstantNode(final VirtualFrame frame, final int successorIndex) {
+            super(frame, successorIndex);
         }
 
         @Override
@@ -173,8 +171,8 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnConstantTrueNode extends AbstractReturnConstantNode {
-        protected ReturnConstantTrueNode(final VirtualFrame frame) {
-            super(frame);
+        public ReturnConstantTrueNode(final VirtualFrame frame, final int successorIndex) {
+            super(frame, successorIndex);
         }
 
         @Override
@@ -184,8 +182,8 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnConstantFalseNode extends AbstractReturnConstantNode {
-        protected ReturnConstantFalseNode(final VirtualFrame frame) {
-            super(frame);
+        public ReturnConstantFalseNode(final VirtualFrame frame, final int successorIndex) {
+            super(frame, successorIndex);
         }
 
         @Override
@@ -195,8 +193,8 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnConstantNilNode extends AbstractReturnConstantNode {
-        protected ReturnConstantNilNode(final VirtualFrame frame) {
-            super(frame);
+        public ReturnConstantNilNode(final VirtualFrame frame, final int successorIndex) {
+            super(frame, successorIndex);
         }
 
         @Override
@@ -206,8 +204,8 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnReceiverNode extends AbstractNormalReturnNode {
-        protected ReturnReceiverNode(final VirtualFrame frame) {
-            super(frame);
+        public ReturnReceiverNode(final VirtualFrame frame, final int successorIndex) {
+            super(frame, successorIndex);
         }
 
         @Override
@@ -228,8 +226,8 @@ public final class ReturnBytecodes {
 
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.create();
 
-        protected AbstractBlockReturnNode() {
-            super();
+        protected AbstractBlockReturnNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -245,8 +243,8 @@ public final class ReturnBytecodes {
     public static final class ReturnTopFromBlockNode extends AbstractBlockReturnNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        protected ReturnTopFromBlockNode() {
-            super();
+        public ReturnTopFromBlockNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -262,8 +260,8 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnNilFromBlockNode extends AbstractBlockReturnNode {
-        protected ReturnNilFromBlockNode() {
-            super();
+        public ReturnNilFromBlockNode(final int successorIndex) {
+            super(successorIndex);
         }
 
         @Override
@@ -281,8 +279,8 @@ public final class ReturnBytecodes {
     public static final class ReturnTopFromMethodNode extends AbstractNormalReturnNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        protected ReturnTopFromMethodNode(final VirtualFrame frame) {
-            super(frame);
+        public ReturnTopFromMethodNode(final VirtualFrame frame, final int successorIndex) {
+            super(frame, successorIndex);
         }
 
         @Override
