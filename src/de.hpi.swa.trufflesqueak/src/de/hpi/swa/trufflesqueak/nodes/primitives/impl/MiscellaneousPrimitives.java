@@ -584,10 +584,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 148)
     public abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final Object doShallowCopy(final Object receiver,
+        protected static final Object doShallowCopy(final Object receiver,
                         @Bind final Node node,
                         @Cached final SqueakObjectShallowCopyNode shallowCopyNode) {
-            return shallowCopyNode.execute(node, getContext(), receiver);
+            return shallowCopyNode.execute(node, receiver);
         }
     }
 

@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -47,16 +46,11 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return SqueakObjectNewNodeGen.getUncached().execute(null, image, classObject);
     }
 
-    public final AbstractSqueakObjectWithHash execute(final Node node, final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        CompilerAsserts.partialEvaluationConstant(image);
-        return image.reportAllocation(executeAllocation(node, image, classObject, extraSize));
-    }
+    public abstract AbstractSqueakObjectWithHash execute(Node node, SqueakImageContext image, ClassObject classObject, int extraSize);
 
     public static final AbstractSqueakObjectWithHash executeUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         return SqueakObjectNewNodeGen.getUncached().execute(null, image, classObject, extraSize);
     }
-
-    protected abstract AbstractSqueakObjectWithHash executeAllocation(Node node, SqueakImageContext image, ClassObject classObject, int extraSize);
 
     @Specialization(guards = "classObject.isZeroSized()")
     protected static final EmptyObject doEmpty(final SqueakImageContext image, final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {

@@ -25,7 +25,6 @@ import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.dsl.Bind.DefaultExpression;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -179,7 +178,6 @@ public final class SqueakImageContext {
     public final ReferenceQueue<AbstractSqueakObject> weakPointersQueue = new ReferenceQueue<>();
 
     /* Truffle */
-    private final AllocationReporter allocationReporter;
     @CompilationFinal public SqueakLanguage.Env env;
     private final SqueakLanguage language;
     private final HashMap<Message, NativeObject> interopMessageToSelectorMap = new HashMap<>();
@@ -224,7 +222,6 @@ public final class SqueakImageContext {
         patch(environment);
         interrupt = new CheckForInterruptsState(this);
         objectGraphUtils = new ObjectGraphUtils(this);
-        allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
         final String truffleLanguageHome = language.getTruffleLanguageHome();
         if (truffleLanguageHome != null) {
@@ -1203,17 +1200,5 @@ public final class SqueakImageContext {
             }
             return asByteSymbol(libraryPrefix + messageCapitalized + suffix);
         });
-    }
-
-    /*
-     * INSTRUMENTATION
-     */
-
-    public <T> T reportAllocation(final T value) {
-        if (allocationReporter.isActive()) {
-            allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
-            allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
-        }
-        return value;
     }
 }
