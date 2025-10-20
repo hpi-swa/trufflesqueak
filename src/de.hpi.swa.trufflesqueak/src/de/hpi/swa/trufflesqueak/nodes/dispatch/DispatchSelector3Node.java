@@ -84,7 +84,7 @@ public final class DispatchSelector3Node extends DispatchSelectorNode {
     }
 
     static DispatchSelector3Node createDirectedSuper(final VirtualFrame frame, final int sp, final NativeObject selector) {
-        return new DispatchSelector3Node(frame, sp - 1, new DispatchDirectedSuper3Node(frame, selector, sp - 1));
+        return new DispatchSelector3Node(frame, sp - 1, new DispatchDirectedSuper3Node(frame, selector, sp));
     }
 
     protected abstract static class AbstractDispatch3Node extends AbstractDispatchNode {
