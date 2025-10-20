@@ -953,13 +953,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Cached final ResumeProcessNode resumeProcessNode,
-                            @Cached final FrameStackPushNode pushReceiverNode,
-                            @Cached final FrameStackPushNode pushFirstLinkNode) {
+                            @Cached final FrameStackPushNode pushReceiverNode) {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode, node);
                 writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
                 if (resumeProcessNode.executeResume(frame, node, owningProcess)) {
                     pushReceiverNode.execute(frame, mutex);
-                    pushFirstLinkNode.execute(frame, firstLink);
                     throw ProcessSwitch.SINGLETON;
                 } else {
                     return mutex;
