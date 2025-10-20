@@ -62,7 +62,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                     yield new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, b);
                 }
             }
-            case 0x53 -> new MiscellaneousBytecodes.DupNode(index + 1);
+            case 0x53 -> new MiscellaneousBytecodes.DupNode(frame, index + 1);
             case 0x54, 0x55, 0x56, 0x57 -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, b);
             case 0x58 -> new ReturnBytecodes.ReturnReceiverNode(frame, index + 1);
             case 0x59 -> new ReturnBytecodes.ReturnConstantTrueNode(frame, index + 1);
@@ -72,7 +72,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0x5D -> new ReturnBytecodes.ReturnNilFromBlockNode(index + 1);
             case 0x5E -> {
                 if (extA == 0) {
-                    yield new ReturnBytecodes.ReturnTopFromBlockNode(index + 1);
+                    yield new ReturnBytecodes.ReturnTopFromBlockNode(frame, index + 1);
                 } else { // shouldBeImplemented, see #genExtReturnTopFromBlock
                     yield new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, b);
                 }
@@ -138,9 +138,9 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xF0 -> new StoreBytecodes.PopIntoReceiverVariableNode(index + 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xF1 -> new StoreBytecodes.PopIntoLiteralVariableNode(code, index + 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xF2 -> new StoreBytecodes.PopIntoTemporaryLocationNode(index + 2 + extBytes, bytecode[indexWithExt + 1]);
-            case 0xF3 -> new StoreBytecodes.StoreIntoReceiverVariableNode(index + 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
-            case 0xF4 -> new StoreBytecodes.StoreIntoLiteralVariableNode(code, index + 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
-            case 0xF5 -> new StoreBytecodes.StoreIntoTemporaryLocationNode(index + 2 + extBytes, bytecode[indexWithExt + 1]);
+            case 0xF3 -> new StoreBytecodes.StoreIntoReceiverVariableNode(frame, index + 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
+            case 0xF4 -> new StoreBytecodes.StoreIntoLiteralVariableNode(frame, code, index + 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
+            case 0xF5 -> new StoreBytecodes.StoreIntoTemporaryLocationNode(frame, index + 2 + extBytes, bytecode[indexWithExt + 1]);
             case 0xF6, 0xF7 -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 2, b);
             case 0xF8 -> {
                 // TODO: use `final boolean m = bytecode[indexWithExt + 2] >> 8 == 0;`
@@ -203,7 +203,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xF9 -> PushBytecodes.AbstractPushFullClosureNode.createExtended(code, index + 3 + extBytes, extA, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 0xFA -> PushBytecodes.PushClosureNode.createExtended(code, index + 3 + extBytes, extA, extB, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 0xFB -> PushBytecodes.PushRemoteTempNode.create(index + 3 + extBytes, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
-            case 0xFC -> new StoreBytecodes.StoreIntoRemoteTempNode(index + 3 + extBytes, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xFC -> new StoreBytecodes.StoreIntoRemoteTempNode(frame, index + 3 + extBytes, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 0xFD -> new StoreBytecodes.PopIntoRemoteTempNode(index + 3 + extBytes, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 0xFE, 0xFF -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 3, b);
             default -> throw SqueakException.create("Not a bytecode:", b);

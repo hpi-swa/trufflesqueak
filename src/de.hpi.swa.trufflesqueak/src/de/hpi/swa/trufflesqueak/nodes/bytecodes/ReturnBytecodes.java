@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
@@ -241,15 +241,16 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnTopFromBlockNode extends AbstractBlockReturnNode {
-        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
+        @Child private FrameStackReadNode topNode;
 
-        public ReturnTopFromBlockNode(final int successorIndex) {
+        public ReturnTopFromBlockNode(final VirtualFrame frame, final int successorIndex) {
             super(successorIndex);
+            topNode = FrameStackReadNode.createStackTop(frame);
         }
 
         @Override
         protected Object getReturnValue(final VirtualFrame frame) {
-            return topNode.execute(frame);
+            return topNode.executeRead(frame);
         }
 
         @Override
@@ -277,15 +278,16 @@ public final class ReturnBytecodes {
     }
 
     public static final class ReturnTopFromMethodNode extends AbstractNormalReturnNode {
-        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
+        @Child private FrameStackReadNode topNode;
 
         public ReturnTopFromMethodNode(final VirtualFrame frame, final int successorIndex) {
             super(frame, successorIndex);
+            topNode = FrameStackReadNode.createStackTop(frame);
         }
 
         @Override
         protected Object getReturnValue(final VirtualFrame frame) {
-            return topNode.execute(frame);
+            return topNode.executeRead(frame);
         }
 
         @Override

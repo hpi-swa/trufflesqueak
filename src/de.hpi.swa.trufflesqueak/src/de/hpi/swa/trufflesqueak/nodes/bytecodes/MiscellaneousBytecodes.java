@@ -34,7 +34,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoReceiver
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoTemporaryLocationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 
 public final class MiscellaneousBytecodes {
 
@@ -108,9 +108,9 @@ public final class MiscellaneousBytecodes {
                 case 2 -> PushReceiverVariableNode.create(successorIndex, third);
                 case 3 -> new PushLiteralConstantNode(code, successorIndex, third);
                 case 4 -> PushLiteralVariableNode.create(code, successorIndex, third);
-                case 5 -> new StoreIntoReceiverVariableNode(successorIndex, third);
+                case 5 -> new StoreIntoReceiverVariableNode(frame, successorIndex, third);
                 case 6 -> new PopIntoReceiverVariableNode(successorIndex, third);
-                case 7 -> new StoreIntoLiteralVariableNode(code, successorIndex, third);
+                case 7 -> new StoreIntoLiteralVariableNode(frame, code, successorIndex, third);
                 default -> new UnknownBytecodeNode(successorIndex, second);
             };
         }
@@ -118,15 +118,16 @@ public final class MiscellaneousBytecodes {
 
     public static final class DupNode extends AbstractInstrumentableBytecodeNode {
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
-        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
+        @Child private FrameStackReadNode topNode;
 
-        public DupNode(final int successorIndex) {
+        public DupNode(final VirtualFrame frame, final int successorIndex) {
             super(successorIndex);
+            topNode = FrameStackReadNode.createStackTop(frame);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, topNode.execute(frame));
+            pushNode.execute(frame, topNode.executeRead(frame));
         }
 
         @Override
@@ -160,13 +161,13 @@ public final class MiscellaneousBytecodes {
             };
         }
 
-        public static AbstractInstrumentableBytecodeNode createStoreInto(final CompiledCodeObject code, final int successorIndex, final byte nextByte) {
+        public static AbstractInstrumentableBytecodeNode createStoreInto(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             return switch (variableType(nextByte)) {
-                case 0 -> new StoreIntoReceiverVariableNode(successorIndex, variableIndex);
-                case 1 -> new StoreIntoTemporaryLocationNode(successorIndex, variableIndex);
+                case 0 -> new StoreIntoReceiverVariableNode(frame, successorIndex, variableIndex);
+                case 1 -> new StoreIntoTemporaryLocationNode(frame, successorIndex, variableIndex);
                 case 2 -> new UnknownBytecodeNode(successorIndex, nextByte);
-                case 3 -> new StoreIntoLiteralVariableNode(code, successorIndex, variableIndex);
+                case 3 -> new StoreIntoLiteralVariableNode(frame, code, successorIndex, variableIndex);
                 default -> throw SqueakException.create("illegal ExtendedStore bytecode");
             };
         }

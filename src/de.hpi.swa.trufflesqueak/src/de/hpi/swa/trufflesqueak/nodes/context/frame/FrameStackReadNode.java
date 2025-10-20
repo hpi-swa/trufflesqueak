@@ -57,6 +57,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
         }
     }
 
+    public static FrameStackReadNode createStackTop(final VirtualFrame frame) {
+        final int stackPointer = FrameAccess.getStackPointer(frame) - 1;
+        return create(frame, stackPointer, false);
+    }
+
     public final Object executeRead(final VirtualFrame frame) {
         final Object value = executeReadUnsafe(frame);
         assert value != null : "Unexpected `null` value";

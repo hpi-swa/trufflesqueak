@@ -54,10 +54,10 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             case 0x7A -> new ReturnBytecodes.ReturnConstantFalseNode(frame, index + 1);
             case 0x7B -> new ReturnBytecodes.ReturnConstantNilNode(frame, index + 1);
             case 0x7C -> new ReturnBytecodes.ReturnTopFromMethodNode(frame, index + 1);
-            case 0x7D -> new ReturnBytecodes.ReturnTopFromBlockNode(index + 1);
+            case 0x7D -> new ReturnBytecodes.ReturnTopFromBlockNode(frame, index + 1);
             case 0x7E, 0x7F -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, b);
             case 0x80 -> MiscellaneousBytecodes.ExtendedBytecodes.createPush(code, index + 2, bytecode[index + 1]);
-            case 0x81 -> MiscellaneousBytecodes.ExtendedBytecodes.createStoreInto(code, index + 2, bytecode[index + 1]);
+            case 0x81 -> MiscellaneousBytecodes.ExtendedBytecodes.createStoreInto(frame, code, index + 2, bytecode[index + 1]);
             case 0x82 -> MiscellaneousBytecodes.ExtendedBytecodes.createPopInto(code, index + 2, bytecode[index + 1]);
             case 0x83 -> {
                 final byte byte1 = bytecode[index + 1];
@@ -79,12 +79,12 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
                 yield new SendBytecodes.SelfSendNode(frame, index + 2, selector, numArgs);
             }
             case 0x87 -> new MiscellaneousBytecodes.PopNode(index + 1);
-            case 0x88 -> new MiscellaneousBytecodes.DupNode(index + 1);
+            case 0x88 -> new MiscellaneousBytecodes.DupNode(frame, index + 1);
             case 0x89 -> new PushBytecodes.PushActiveContextNode(index + 1);
             case 0x8A -> PushBytecodes.PushNewArrayNode.create(index + 2, bytecode[index + 1]);
             case 0x8B -> MiscellaneousBytecodes.CallPrimitiveNode.create(code, index + 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8C -> PushBytecodes.PushRemoteTempNode.create(index + 3, bytecode[index + 1], bytecode[index + 2]);
-            case 0x8D -> new StoreBytecodes.StoreIntoRemoteTempNode(index + 3, bytecode[index + 1], bytecode[index + 2]);
+            case 0x8D -> new StoreBytecodes.StoreIntoRemoteTempNode(frame, index + 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8E -> new StoreBytecodes.PopIntoRemoteTempNode(index + 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8F -> PushBytecodes.PushClosureNode.create(code, index + 4, bytecode[index + 1], bytecode[index + 2], bytecode[index + 3]);
             case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97 -> JumpBytecodes.createUnconditionalShortJump(bytecodeNodes, index, b);
