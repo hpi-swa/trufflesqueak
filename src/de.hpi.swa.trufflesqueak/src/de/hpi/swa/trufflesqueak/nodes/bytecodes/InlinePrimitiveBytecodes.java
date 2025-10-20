@@ -26,79 +26,88 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimFillFromToWithNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.InlinePrimitiveBytecodesFactory.PrimIdentityHashNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 
 public final class InlinePrimitiveBytecodes {
     protected abstract static class AbstractPushNode extends AbstractInstrumentableBytecodeNode {
-        @Child protected FrameStackPushNode pushNode = FrameStackPushNode.create();
+        @Child protected FrameStackWriteNode pushNode;
 
-        protected AbstractPushNode(final int successorIndex, final int sp) {
+        protected AbstractPushNode(final VirtualFrame frame, final int successorIndex, final int sp) {
             super(successorIndex, sp);
+            pushNode = FrameStackWriteNode.create(frame, sp - 1);
         }
     }
 
     protected abstract static class AbstractNullaryInlinePrimitiveNode extends AbstractPushNode {
-        @Child protected FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child protected FrameStackReadNode popNode;
 
-        protected AbstractNullaryInlinePrimitiveNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected AbstractNullaryInlinePrimitiveNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
+            popNode = FrameStackReadNode.create(frame, sp, true);
         }
     }
 
     protected abstract static class AbstractUnaryInlinePrimitiveNode extends AbstractPushNode {
-        @Child protected FrameStackPopNode pop1Node = FrameStackPopNode.create();
-        @Child protected FrameStackPopNode pop2Node = FrameStackPopNode.create();
+        @Child protected FrameStackReadNode pop1Node;
+        @Child protected FrameStackReadNode pop2Node;
 
-        protected AbstractUnaryInlinePrimitiveNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected AbstractUnaryInlinePrimitiveNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
+            pop1Node = FrameStackReadNode.create(frame, sp - 1, true);
+            pop2Node = FrameStackReadNode.create(frame, sp, true);
         }
     }
 
     protected abstract static class AbstractTrinaryInlinePrimitiveNode extends AbstractPushNode {
-        @Child protected FrameStackPopNode pop1Node = FrameStackPopNode.create();
-        @Child protected FrameStackPopNode pop2Node = FrameStackPopNode.create();
-        @Child protected FrameStackPopNode pop3Node = FrameStackPopNode.create();
+        @Child protected FrameStackReadNode pop1Node;
+        @Child protected FrameStackReadNode pop2Node;
+        @Child protected FrameStackReadNode pop3Node;
 
-        protected AbstractTrinaryInlinePrimitiveNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected AbstractTrinaryInlinePrimitiveNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
+            pop1Node = FrameStackReadNode.create(frame, sp - 2, true);
+            pop2Node = FrameStackReadNode.create(frame, sp - 1, true);
+            pop3Node = FrameStackReadNode.create(frame, sp, true);
         }
     }
 
     protected abstract static class AbstractQuaternaryInlinePrimitiveNode extends AbstractPushNode {
-        @Child protected FrameStackPopNode pop1Node = FrameStackPopNode.create();
-        @Child protected FrameStackPopNode pop2Node = FrameStackPopNode.create();
-        @Child protected FrameStackPopNode pop3Node = FrameStackPopNode.create();
-        @Child protected FrameStackPopNode pop4Node = FrameStackPopNode.create();
+        @Child protected FrameStackReadNode pop1Node;
+        @Child protected FrameStackReadNode pop2Node;
+        @Child protected FrameStackReadNode pop3Node;
+        @Child protected FrameStackReadNode pop4Node;
 
-        protected AbstractQuaternaryInlinePrimitiveNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected AbstractQuaternaryInlinePrimitiveNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
+            pop1Node = FrameStackReadNode.create(frame, sp - 3, true);
+            pop2Node = FrameStackReadNode.create(frame, sp - 2, true);
+            pop3Node = FrameStackReadNode.create(frame, sp - 1, true);
+            pop4Node = FrameStackReadNode.create(frame, sp, true);
         }
     }
 
-    protected abstract static class PrimClassNode extends AbstractInstrumentableBytecodeNode {
+    protected abstract static class PrimClassNode extends AbstractNullaryInlinePrimitiveNode {
 
-        protected PrimClassNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimClassNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
-        public static PrimClassNode create(final int successorIndex, final int sp) {
-            return PrimClassNodeGen.create(successorIndex, sp);
+        public static PrimClassNode create(final VirtualFrame frame, final int successorIndex, final int sp) {
+            return PrimClassNodeGen.create(frame, successorIndex, sp);
         }
 
         @Specialization
-        protected static final void doClass(final VirtualFrame frame,
+        protected final void doClass(final VirtualFrame frame,
                         @Bind final Node node,
-                        @Cached final SqueakObjectClassNode classNode,
-                        @Cached final FrameStackPopNode popNode,
-                        @Cached final FrameStackPushNode pushNode) {
-            pushNode.execute(frame, classNode.executeLookup(node, popNode.execute(frame)));
+                        @Cached final SqueakObjectClassNode classNode) {
+            pushNode.executeWrite(frame, classNode.executeLookup(node, popNode.executeRead(frame)));
         }
     }
 
     protected static final class PrimNumSlotsNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumSlotsNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimNumSlotsNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -108,8 +117,8 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimBasicSizeNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimBasicSizeNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimBasicSizeNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
@@ -119,495 +128,495 @@ public final class InlinePrimitiveBytecodes {
     }
 
     protected static final class PrimNumBytesNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumBytesNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimNumBytesNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final Object receiver = popNode.execute(frame);
+            final Object receiver = popNode.executeRead(frame);
             final long numBytes;
             if (receiver instanceof final CompiledCodeObject o) {
                 numBytes = o.getBytes().length;
             } else {
                 numBytes = ((NativeObject) receiver).getByteLength();
             }
-            pushNode.execute(frame, numBytes);
+            pushNode.executeWrite(frame, numBytes);
         }
     }
 
     protected static final class PrimNumShortsNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumShortsNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimNumShortsNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) ((NativeObject) popNode.execute(frame)).getShortLength());
+            pushNode.executeWrite(frame, (long) ((NativeObject) popNode.executeRead(frame)).getShortLength());
         }
     }
 
     protected static final class PrimNumWordsNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumWordsNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimNumWordsNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) ((NativeObject) popNode.execute(frame)).getIntLength());
+            pushNode.executeWrite(frame, (long) ((NativeObject) popNode.executeRead(frame)).getIntLength());
         }
     }
 
     protected static final class PrimNumDoubleWordsNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimNumDoubleWordsNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimNumDoubleWordsNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) ((NativeObject) popNode.execute(frame)).getLongLength());
+            pushNode.executeWrite(frame, (long) ((NativeObject) popNode.executeRead(frame)).getLongLength());
         }
     }
 
     protected abstract static class PrimIdentityHashNode extends AbstractNullaryInlinePrimitiveNode {
 
-        protected PrimIdentityHashNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimIdentityHashNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
-        public static PrimIdentityHashNode create(final int successorIndex, final int sp) {
-            return PrimIdentityHashNodeGen.create(successorIndex, sp);
+        public static PrimIdentityHashNode create(final VirtualFrame frame, final int successorIndex, final int sp) {
+            return PrimIdentityHashNodeGen.create(frame, successorIndex, sp);
         }
 
         @Specialization
         protected final void doIdentityHash(final VirtualFrame frame,
                         @Cached final InlinedBranchProfile needsHashProfile) {
-            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getOrCreateSqueakHash(needsHashProfile, this));
+            pushNode.executeWrite(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.executeRead(frame)).getOrCreateSqueakHash(needsHashProfile, this));
         }
     }
 
     protected static final class PrimIdentityHashSmallIntegerNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimIdentityHashSmallIntegerNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimIdentityHashSmallIntegerNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, popNode.execute(frame));
+            pushNode.executeWrite(frame, popNode.executeRead(frame));
         }
     }
 
     protected static final class PrimIdentityHashCharacterNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimIdentityHashCharacterNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimIdentityHashCharacterNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) (char) popNode.execute(frame));
+            pushNode.executeWrite(frame, (long) (char) popNode.executeRead(frame));
         }
     }
 
     protected static final class PrimIdentityHashSmallFloatNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimIdentityHashSmallFloatNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimIdentityHashSmallFloatNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, Double.doubleToRawLongBits((double) popNode.execute(frame)));
+            pushNode.executeWrite(frame, Double.doubleToRawLongBits((double) popNode.executeRead(frame)));
         }
     }
 
     protected static final class PrimIdentityHashBehaviorNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimIdentityHashBehaviorNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimIdentityHashBehaviorNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final ClassObject classObject = (ClassObject) popNode.execute(frame);
+            final ClassObject classObject = (ClassObject) popNode.executeRead(frame);
             classObject.ensureBehaviorHash();
-            pushNode.execute(frame, classObject.getSqueakHash());
+            pushNode.executeWrite(frame, classObject.getSqueakHash());
         }
     }
 
     protected static final class PrimImmediateAsIntegerCharacterNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimImmediateAsIntegerCharacterNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimImmediateAsIntegerCharacterNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) (char) popNode.execute(frame));
+            pushNode.executeWrite(frame, (long) (char) popNode.executeRead(frame));
         }
     }
 
     protected static final class PrimImmediateAsIntegerSmallFloatNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimImmediateAsIntegerSmallFloatNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimImmediateAsIntegerSmallFloatNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, Double.doubleToRawLongBits((double) popNode.execute(frame)));
+            pushNode.executeWrite(frame, Double.doubleToRawLongBits((double) popNode.executeRead(frame)));
         }
     }
 
     protected static final class PrimImmediateAsFloatNode extends AbstractNullaryInlinePrimitiveNode {
-        protected PrimImmediateAsFloatNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimImmediateAsFloatNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (double) (long) popNode.execute(frame));
+            pushNode.executeWrite(frame, (double) (long) popNode.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerAddNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerAddNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerAddNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) + (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) + (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerSubtractNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerSubtractNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerSubtractNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) - (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) - (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerMultiplyNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerMultiplyNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerMultiplyNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) * (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) * (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerDivideNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerDivideNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerDivideNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) / (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) / (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerFloorDivideNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerFloorDivideNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerFloorDivideNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, Math.floorDiv((long) pop1Node.execute(frame), (long) pop2Node.execute(frame)));
+            pushNode.executeWrite(frame, Math.floorDiv((long) pop1Node.executeRead(frame), (long) pop2Node.executeRead(frame)));
         }
     }
 
     protected static final class PrimSmallIntegerFloorModNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerFloorModNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerFloorModNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, Math.floorMod((long) pop1Node.execute(frame), (long) pop2Node.execute(frame)));
+            pushNode.executeWrite(frame, Math.floorMod((long) pop1Node.executeRead(frame), (long) pop2Node.executeRead(frame)));
         }
     }
 
     protected static final class PrimSmallIntegerQuoNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerQuoNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerQuoNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) / (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) / (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerBitAndNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitAndNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerBitAndNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) & (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) & (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerBitOrNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitOrNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerBitOrNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) | (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) | (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerBitXorNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitXorNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerBitXorNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) ^ (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) ^ (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerBitShiftLeftNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitShiftLeftNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerBitShiftLeftNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) << (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) << (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerBitShiftRightNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerBitShiftRightNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerBitShiftRightNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) pop1Node.execute(frame) >> (long) pop2Node.execute(frame));
+            pushNode.executeWrite(frame, (long) pop1Node.executeRead(frame) >> (long) pop2Node.executeRead(frame));
         }
     }
 
     protected static final class PrimSmallIntegerGreaterThanNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerGreaterThanNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerGreaterThanNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, BooleanObject.wrap((long) pop1Node.execute(frame) > (long) pop2Node.execute(frame)));
+            pushNode.executeWrite(frame, BooleanObject.wrap((long) pop1Node.executeRead(frame) > (long) pop2Node.executeRead(frame)));
         }
     }
 
     protected static final class PrimSmallIntegerLessThanNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerLessThanNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerLessThanNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, BooleanObject.wrap((long) pop1Node.execute(frame) < (long) pop2Node.execute(frame)));
+            pushNode.executeWrite(frame, BooleanObject.wrap((long) pop1Node.executeRead(frame) < (long) pop2Node.executeRead(frame)));
         }
     }
 
     protected static final class PrimSmallIntegerGreaterOrEqualNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerGreaterOrEqualNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerGreaterOrEqualNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, BooleanObject.wrap((long) pop1Node.execute(frame) >= (long) pop2Node.execute(frame)));
+            pushNode.executeWrite(frame, BooleanObject.wrap((long) pop1Node.executeRead(frame) >= (long) pop2Node.executeRead(frame)));
         }
     }
 
     protected static final class PrimSmallIntegerLessOrEqualNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerLessOrEqualNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerLessOrEqualNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, BooleanObject.wrap((long) pop1Node.execute(frame) <= (long) pop2Node.execute(frame)));
+            pushNode.executeWrite(frame, BooleanObject.wrap((long) pop1Node.executeRead(frame) <= (long) pop2Node.executeRead(frame)));
         }
     }
 
     protected static final class PrimSmallIntegerEqualNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerEqualNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerEqualNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, BooleanObject.wrap((long) pop1Node.execute(frame) == (long) pop2Node.execute(frame)));
+            pushNode.executeWrite(frame, BooleanObject.wrap((long) pop1Node.executeRead(frame) == (long) pop2Node.executeRead(frame)));
         }
     }
 
     protected static final class PrimSmallIntegerNotEqualNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimSmallIntegerNotEqualNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimSmallIntegerNotEqualNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, BooleanObject.wrap((long) pop1Node.execute(frame) != (long) pop2Node.execute(frame)));
+            pushNode.executeWrite(frame, BooleanObject.wrap((long) pop1Node.executeRead(frame) != (long) pop2Node.executeRead(frame)));
         }
     }
 
     protected static final class PrimByteAtNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimByteAtNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimByteAtNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long atIndex = (long) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, (long) receiver.getByte(atIndex));
+            final long atIndex = (long) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
+            pushNode.executeWrite(frame, (long) receiver.getByte(atIndex));
         }
     }
 
     protected static final class PrimShortAtNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimShortAtNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimShortAtNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long atIndex = (long) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, (long) receiver.getShort(atIndex));
+            final long atIndex = (long) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
+            pushNode.executeWrite(frame, (long) receiver.getShort(atIndex));
         }
     }
 
     protected static final class PrimWordAtNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimWordAtNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimWordAtNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long atIndex = (long) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, (long) receiver.getInt(atIndex));
+            final long atIndex = (long) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
+            pushNode.executeWrite(frame, (long) receiver.getInt(atIndex));
         }
     }
 
     protected static final class PrimDoubleWordAtNode extends AbstractUnaryInlinePrimitiveNode {
-        protected PrimDoubleWordAtNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimDoubleWordAtNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long atIndex = (long) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, receiver.getLong(atIndex));
+            final long atIndex = (long) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
+            pushNode.executeWrite(frame, receiver.getLong(atIndex));
         }
     }
 
     protected static final class PrimByteAtPutNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimByteAtPutNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimByteAtPutNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long value = (long) pop3Node.execute(frame);
-            final long atIndex = (long) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
+            final long value = (long) pop3Node.executeRead(frame);
+            final long atIndex = (long) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
             receiver.setByte(atIndex, (byte) value);
         }
     }
 
     protected static final class PrimShortAtPutNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimShortAtPutNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimShortAtPutNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long value = (long) pop3Node.execute(frame);
-            final long atIndex = (long) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
+            final long value = (long) pop3Node.executeRead(frame);
+            final long atIndex = (long) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
             receiver.setShort(atIndex, (short) value);
         }
     }
 
     protected static final class PrimWordAtPutNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimWordAtPutNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimWordAtPutNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long value = (long) pop3Node.execute(frame);
-            final long atIndex = (long) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
+            final long value = (long) pop3Node.executeRead(frame);
+            final long atIndex = (long) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
             receiver.setInt(atIndex, (int) value);
         }
     }
 
     protected static final class PrimDoubleWordAtPutNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimDoubleWordAtPutNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimDoubleWordAtPutNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final long value = (long) pop3Node.execute(frame);
-            final long atIndex = (long) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
+            final long value = (long) pop3Node.executeRead(frame);
+            final long atIndex = (long) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
             receiver.setLong(atIndex, value);
         }
     }
 
     protected static final class PrimByteEqualsNode extends AbstractTrinaryInlinePrimitiveNode {
-        protected PrimByteEqualsNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimByteEqualsNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
             // TODO: Make use of `final long length = (long) pop3Node.execute(frame);`
-            final NativeObject argument = (NativeObject) pop2Node.execute(frame);
-            final NativeObject receiver = (NativeObject) pop1Node.execute(frame);
-            pushNode.execute(frame, BooleanObject.wrap(Arrays.equals(receiver.getByteStorage(), argument.getByteStorage())));
+            final NativeObject argument = (NativeObject) pop2Node.executeRead(frame);
+            final NativeObject receiver = (NativeObject) pop1Node.executeRead(frame);
+            pushNode.executeWrite(frame, BooleanObject.wrap(Arrays.equals(receiver.getByteStorage(), argument.getByteStorage())));
         }
     }
 
     protected abstract static class PrimFillFromToWithNode extends AbstractQuaternaryInlinePrimitiveNode {
 
-        protected PrimFillFromToWithNode(final int successorIndex, final int sp) {
-            super(successorIndex, sp);
+        protected PrimFillFromToWithNode(final VirtualFrame frame, final int successorIndex, final int sp) {
+            super(frame, successorIndex, sp);
         }
 
-        public static AbstractBytecodeNode create(final int successorIndex, final int sp) {
-            return PrimFillFromToWithNodeGen.create(successorIndex, sp);
+        public static AbstractBytecodeNode create(final VirtualFrame frame, final int successorIndex, final int sp) {
+            return PrimFillFromToWithNodeGen.create(frame, successorIndex, sp);
         }
 
         @Specialization
         protected final void doFillFromToWith(final VirtualFrame frame,
                         @Bind final Node node,
                         @Cached final SqueakObjectAtPut0Node atPutNode) {
-            final Object value = pop4Node.execute(frame);
-            final long to = (long) pop3Node.execute(frame);
-            final long from = (long) pop2Node.execute(frame);
-            final Object receiver = pop1Node.execute(frame);
+            final Object value = pop4Node.executeRead(frame);
+            final long to = (long) pop3Node.executeRead(frame);
+            final long from = (long) pop2Node.executeRead(frame);
+            final Object receiver = pop1Node.executeRead(frame);
             // TODO: maybe there's a more efficient way to fill pointers object?
             for (long i = from; i < to; i++) {
                 atPutNode.execute(node, receiver, i, value);
             }
-            pushNode.execute(frame, receiver);
+            pushNode.executeWrite(frame, receiver);
         }
     }
 }

@@ -68,7 +68,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecial
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimNotIdenticalSistaV1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimSubtractNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNode;
@@ -115,22 +114,20 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
-        private final int stackPointer;
         private final ConditionProfile nlrProfile = ConditionProfile.create();
         private final ConditionProfile nvrProfile = ConditionProfile.create();
 
         @Child protected DispatchSelectorNode dispatchNode;
-        @Child private FrameStackPushNode pushNode;
+        @Child private FrameStackWriteNode pushNode;
 
         private AbstractSendNode(final VirtualFrame frame, final int successorIndex, final int sp, final int numArgs, final int numAdditional) {
             super(successorIndex, sp - numArgs - numAdditional);
-            stackPointer = FrameAccess.getStackPointer(frame) - 1 - numArgs - numAdditional;
-            assert stackPointer >= 0 : "Bad stack pointer";
+            pushNode = FrameStackWriteNode.create(frame, sp - 1 - numArgs - numAdditional);
         }
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            FrameAccess.setStackPointer(frame, stackPointer);
+            FrameAccess.setStackPointer(frame, getSuccessorStackPointer() - 1); // pending receiver
             Object result;
             try {
                 result = dispatchNode.execute(frame);
@@ -148,15 +145,7 @@ public final class SendBytecodes {
                 }
             }
             assert result != null : "Result of a message send should not be null";
-            getPushNode().execute(frame, result);
-        }
-
-        private FrameStackPushNode getPushNode() {
-            if (pushNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                pushNode = insert(FrameStackPushNode.create());
-            }
-            return pushNode;
+            pushNode.executeWriteAndSetSP(frame, result, getSuccessorStackPointer());
         }
 
         private NativeObject getSelector() {
@@ -214,7 +203,7 @@ public final class SendBytecodes {
             assert 0 <= selectorLiteralIndex && selectorLiteralIndex < 65535 : "selectorLiteralIndex out of range";
             assert 0 <= numArgs && numArgs <= 31 : "numArgs out of range";
             final NativeObject selector = (NativeObject) code.getLiteral(selectorLiteralIndex);
-            dispatchNode = DispatchSelectorNode.createDirectedSuper(frame, selector, numArgs);
+            dispatchNode = DispatchSelectorNode.createDirectedSuper(frame, sp, selector, numArgs);
         }
 
         @Override
@@ -298,9 +287,8 @@ public final class SendBytecodes {
 
             SendSpecial0Node(final VirtualFrame frame, final int successorIndex, final int sp, final int selectorIndex, final DispatchBytecodePrim0Node dispatchNode) {
                 super(successorIndex, sp);
-                final int stackPointer = FrameAccess.getStackPointer(frame);
-                receiverNode = FrameStackReadNode.create(frame, stackPointer - 1, false); // overwritten
-                writeResultNode = FrameStackWriteNode.create(frame, stackPointer - 1);
+                receiverNode = FrameStackReadNode.create(frame, sp - 1, false); // overwritten
+                writeResultNode = FrameStackWriteNode.create(frame, sp - 1);
                 assert selectorIndex == dispatchNode.getSelectorIndex();
                 this.dispatchNode = dispatchNode;
             }
@@ -431,7 +419,6 @@ public final class SendBytecodes {
         }
 
         protected static final class SendSpecial1Node extends SendSpecialNode {
-            private final int newStackPointer;
             @Child private FrameStackReadNode receiverNode;
             @Child private FrameStackReadNode arg1Node;
             @Child private FrameStackWriteNode writeResultNode;
@@ -439,11 +426,9 @@ public final class SendBytecodes {
 
             SendSpecial1Node(final VirtualFrame frame, final int successorIndex, final int sp, final int selectorIndex, final DispatchBytecodePrim1Node dispatchNode) {
                 super(successorIndex, sp - 1);
-                final int stackPointer = FrameAccess.getStackPointer(frame);
-                newStackPointer = stackPointer - 1;
-                receiverNode = FrameStackReadNode.create(frame, stackPointer - 2, false); // overwritten
-                arg1Node = FrameStackReadNode.create(frame, stackPointer - 1, false);
-                writeResultNode = FrameStackWriteNode.create(frame, stackPointer - 2);
+                receiverNode = FrameStackReadNode.create(frame, sp - 2, false); // overwritten
+                arg1Node = FrameStackReadNode.create(frame, sp - 1, false);
+                writeResultNode = FrameStackWriteNode.create(frame, sp - 2);
                 assert selectorIndex == dispatchNode.getSelectorIndex();
                 this.dispatchNode = dispatchNode;
             }
@@ -452,7 +437,7 @@ public final class SendBytecodes {
             public void executeVoid(final VirtualFrame frame) {
                 try {
                     final Object result = dispatchNode.execute(frame, receiverNode.executeRead(frame), arg1Node.executeRead(frame));
-                    FrameAccess.setStackPointer(frame, newStackPointer);
+                    FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
                     writeResultNode.executeWrite(frame, result);
                 } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
                     rewriteToSend(frame, dispatchNode);

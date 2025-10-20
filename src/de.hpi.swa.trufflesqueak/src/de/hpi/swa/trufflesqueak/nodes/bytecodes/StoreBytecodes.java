@@ -15,9 +15,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class StoreBytecodes {
@@ -120,15 +118,16 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoLiteralVariableNode extends AbstractStoreIntoAssociationNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackReadNode popNode;
 
-        public PopIntoLiteralVariableNode(final CompiledCodeObject code, final int successorIndex, final int sp, final long variableIndex) {
+        public PopIntoLiteralVariableNode(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final long variableIndex) {
             super(code, successorIndex, sp, variableIndex);
+            popNode = FrameStackReadNode.create(frame, sp, true);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(literalVariable, popNode.execute(frame));
+            storeNode.executeWrite(literalVariable, popNode.executeReadAndSetPC(frame, getSuccessorStackPointer()));
         }
 
         @Override
@@ -138,15 +137,16 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackReadNode popNode;
 
-        public PopIntoReceiverVariableNode(final int successorIndex, final int sp, final int receiverIndex) {
+        public PopIntoReceiverVariableNode(final VirtualFrame frame, final int successorIndex, final int sp, final int receiverIndex) {
             super(successorIndex, sp, receiverIndex);
+            popNode = FrameStackReadNode.create(frame, sp, true);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(FrameAccess.getReceiver(frame), popNode.execute(frame));
+            storeNode.executeWrite(FrameAccess.getReceiver(frame), popNode.executeReadAndSetPC(frame, getSuccessorStackPointer()));
         }
 
         @Override
@@ -156,15 +156,16 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackReadNode popNode;
 
-        public PopIntoRemoteTempNode(final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
+        public PopIntoRemoteTempNode(final VirtualFrame frame, final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
             super(successorIndex, sp, indexInArray, indexOfArray);
+            popNode = FrameStackReadNode.create(frame, sp, true);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(getReadNode(frame).executeRead(frame), popNode.execute(frame));
+            storeNode.executeWrite(getReadNode(frame).executeRead(frame), popNode.executeReadAndSetPC(frame, getSuccessorStackPointer()));
         }
 
         @Override
@@ -174,15 +175,16 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackReadNode popNode;
 
-        public PopIntoTemporaryLocationNode(final int successorIndex, final int sp, final int tempIndex) {
+        public PopIntoTemporaryLocationNode(final VirtualFrame frame, final int successorIndex, final int sp, final int tempIndex) {
             super(successorIndex, sp, tempIndex);
+            popNode = FrameStackReadNode.create(frame, sp, true);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            getStoreNode(frame).executeWrite(frame, popNode.execute(frame));
+            getStoreNode(frame).executeWrite(frame, popNode.executeReadAndSetPC(frame, getSuccessorStackPointer()));
         }
 
         @Override
@@ -192,15 +194,16 @@ public final class StoreBytecodes {
     }
 
     public static final class StoreIntoLiteralVariableNode extends AbstractStoreIntoAssociationNode {
-        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
+        @Child private FrameStackReadNode topNode;
 
-        public StoreIntoLiteralVariableNode(final CompiledCodeObject code, final int successorIndex, final int sp, final long variableIndex) {
+        public StoreIntoLiteralVariableNode(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final long variableIndex) {
             super(code, successorIndex, sp, variableIndex);
+            topNode = FrameStackReadNode.create(frame, sp - 1, false);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(literalVariable, topNode.execute(frame));
+            storeNode.executeWrite(literalVariable, topNode.executeRead(frame));
         }
 
         @Override
@@ -210,15 +213,16 @@ public final class StoreBytecodes {
     }
 
     public static final class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
-        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
+        @Child private FrameStackReadNode topNode;
 
-        public StoreIntoReceiverVariableNode(final int successorIndex, final int sp, final int receiverIndex) {
+        public StoreIntoReceiverVariableNode(final VirtualFrame frame, final int successorIndex, final int sp, final int receiverIndex) {
             super(successorIndex, sp, receiverIndex);
+            topNode = FrameStackReadNode.create(frame, sp - 1, false);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(FrameAccess.getReceiver(frame), topNode.execute(frame));
+            storeNode.executeWrite(FrameAccess.getReceiver(frame), topNode.executeRead(frame));
         }
 
         @Override
@@ -228,15 +232,16 @@ public final class StoreBytecodes {
     }
 
     public static final class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
-        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
+        @Child private FrameStackReadNode topNode;
 
-        public StoreIntoRemoteTempNode(final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
+        public StoreIntoRemoteTempNode(final VirtualFrame frame, final int successorIndex, final int sp, final byte indexInArray, final byte indexOfArray) {
             super(successorIndex, sp, indexInArray, indexOfArray);
+            topNode = FrameStackReadNode.create(frame, sp - 1, false);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(getReadNode(frame).executeRead(frame), topNode.execute(frame));
+            storeNode.executeWrite(getReadNode(frame).executeRead(frame), topNode.executeRead(frame));
         }
 
         @Override
@@ -246,15 +251,16 @@ public final class StoreBytecodes {
     }
 
     public static final class StoreIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
-        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
+        @Child private FrameStackReadNode topNode;
 
-        public StoreIntoTemporaryLocationNode(final int successorIndex, final int sp, final int tempIndex) {
+        public StoreIntoTemporaryLocationNode(final VirtualFrame frame, final int successorIndex, final int sp, final int tempIndex) {
             super(successorIndex, sp, tempIndex);
+            topNode = FrameStackReadNode.create(frame, sp - 1, false);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            getStoreNode(frame).executeWrite(frame, topNode.execute(frame));
+            getStoreNode(frame).executeWrite(frame, topNode.executeRead(frame));
         }
 
         @Override

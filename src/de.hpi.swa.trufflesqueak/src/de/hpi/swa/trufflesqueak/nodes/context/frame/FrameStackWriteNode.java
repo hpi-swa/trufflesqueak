@@ -19,13 +19,26 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeUtil;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNodeFactory.FrameSlotWriteNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class FrameStackWriteNode extends AbstractNode {
+    @NeverDefault
+    public static FrameStackWriteNode create(final VirtualFrame frame, final Node node) {
+        return create(frame, node, 1);
+    }
+
+    @NeverDefault
+    public static FrameStackWriteNode create(final VirtualFrame frame, final Node node, final int spOffset) {
+        final int sp = NodeUtil.findParent(node, AbstractBytecodeNode.class).getSuccessorStackPointer();
+        return create(frame, sp - spOffset);
+    }
+
     @NeverDefault
     public static FrameStackWriteNode create(final VirtualFrame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
@@ -40,6 +53,11 @@ public abstract class FrameStackWriteNode extends AbstractNode {
                 return new FrameAuxiliarySlotWriteNode(frame, stackSlotIndex);
             }
         }
+    }
+
+    public final void executeWriteAndSetSP(VirtualFrame frame, Object value, final int sp) {
+        executeWrite(frame, value);
+        FrameAccess.setStackPointer(frame, sp);
     }
 
     public abstract void executeWrite(VirtualFrame frame, Object value);

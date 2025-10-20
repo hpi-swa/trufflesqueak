@@ -41,15 +41,15 @@ public abstract class DispatchSelectorNode extends AbstractNode {
         };
     }
 
-    public static final DispatchSelectorNode createDirectedSuper(final VirtualFrame frame, final NativeObject selector, final int numArgs) {
+    public static final DispatchSelectorNode createDirectedSuper(final VirtualFrame frame, final int sp, final NativeObject selector, final int numArgs) {
         return switch (numArgs) {
-            case 0 -> DispatchSelector0Node.createDirectedSuper(frame, selector);
-            case 1 -> DispatchSelector1Node.createDirectedSuper(frame, selector);
-            case 2 -> DispatchSelector2Node.createDirectedSuper(frame, selector);
-            case 3 -> DispatchSelector3Node.createDirectedSuper(frame, selector);
-            case 4 -> DispatchSelector4Node.createDirectedSuper(frame, selector);
-            case 5 -> DispatchSelector5Node.createDirectedSuper(frame, selector);
-            default -> DispatchSelectorNaryNode.createDirectedSuper(frame, numArgs, selector);
+            case 0 -> DispatchSelector0Node.createDirectedSuper(frame, sp, selector);
+            case 1 -> DispatchSelector1Node.createDirectedSuper(frame, sp, selector);
+            case 2 -> DispatchSelector2Node.createDirectedSuper(frame, sp, selector);
+            case 3 -> DispatchSelector3Node.createDirectedSuper(frame, sp, selector);
+            case 4 -> DispatchSelector4Node.createDirectedSuper(frame, sp, selector);
+            case 5 -> DispatchSelector5Node.createDirectedSuper(frame, sp, selector);
+            default -> DispatchSelectorNaryNode.createDirectedSuper(frame, sp, numArgs, selector);
         };
     }
 

@@ -44,11 +44,11 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F //
                 -> PushBytecodes.PushReceiverVariableNode.create(frame, index + 1, sp + 1, b & 0xF);
             case 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F //
-                -> PushBytecodes.PushLiteralVariableNode.create(code, index + 1, sp + 1, b & 0xF);
+                -> PushBytecodes.PushLiteralVariableNode.create(frame, code, index + 1, sp + 1, b & 0xF);
             case 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F //
                 -> new PushBytecodes.PushLiteralConstantNode(frame, code, index + 1, sp + 1, b & 0x1F);
-            case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47 -> new PushBytecodes.PushTemporaryLocationNode(index + 1, sp + 1, b & 0x7);
-            case 0x48, 0x49, 0x4A, 0x4B -> new PushBytecodes.PushTemporaryLocationNode(index + 1, sp + 1, (b & 3) + 8);
+            case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47 -> new PushBytecodes.PushTemporaryLocationNode(frame, index + 1, sp + 1, b & 0x7);
+            case 0x48, 0x49, 0x4A, 0x4B -> new PushBytecodes.PushTemporaryLocationNode(frame, index + 1, sp + 1, (b & 3) + 8);
             case 0x4C -> new PushBytecodes.PushReceiverNode(frame, index + 1, sp + 1);
             case 0x4D -> new PushBytecodes.PushConstantTrueNode(frame, index + 1, sp + 1);
             case 0x4E -> new PushBytecodes.PushConstantFalseNode(frame, index + 1, sp + 1);
@@ -62,7 +62,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                     yield new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, sp, b);
                 }
             }
-            case 0x53 -> new MiscellaneousBytecodes.DupNode(index + 1, sp + 1);
+            case 0x53 -> new MiscellaneousBytecodes.DupNode(frame, index + 1, sp + 1);
             case 0x54, 0x55, 0x56, 0x57 -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, sp, b);
             case 0x58 -> new ReturnBytecodes.ReturnReceiverNode(frame, sp);
             case 0x59 -> new ReturnBytecodes.ReturnConstantTrueNode(frame, sp);
@@ -72,7 +72,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0x5D -> new ReturnBytecodes.ReturnNilFromBlockNode(sp);
             case 0x5E -> {
                 if (extA == 0) {
-                    yield new ReturnBytecodes.ReturnTopFromBlockNode(sp);
+                    yield new ReturnBytecodes.ReturnTopFromBlockNode(frame, sp);
                 } else { // shouldBeImplemented, see #genExtReturnTopFromBlock
                     yield new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, sp, b);
                 }
@@ -89,9 +89,9 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> JumpBytecodes.createUnconditionalShortJump(bytecodeNodes, index, sp, b);
             case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> JumpBytecodes.ConditionalJumpOnTrueNode.createShort(frame, index + 1, sp - 1, b);
             case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> JumpBytecodes.ConditionalJumpOnFalseNode.createShort(frame, index + 1, sp - 1, b);
-            case 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF -> new StoreBytecodes.PopIntoReceiverVariableNode(index + 1, sp - 1, b & 7);
-            case 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7 -> new StoreBytecodes.PopIntoTemporaryLocationNode(index + 1, sp - 1, b & 7);
-            case 0xD8 -> new MiscellaneousBytecodes.PopNode(index + 1, sp - 1);
+            case 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF -> new StoreBytecodes.PopIntoReceiverVariableNode(frame, index + 1, sp - 1, b & 7);
+            case 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7 -> new StoreBytecodes.PopIntoTemporaryLocationNode(frame, index + 1, sp - 1, b & 7);
+            case 0xD8 -> new MiscellaneousBytecodes.PopNode(frame, index + 1, sp - 1);
             // FIXME: Unconditional trap
             case 0xD9 -> new SendBytecodes.SelfSendNode(frame, index + 1, sp, code.getSqueakClass().getImage().getSpecialSelector(SPECIAL_OBJECT.SELECTOR_SISTA_TRAP), 1);
             case 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, sp, b);
@@ -101,9 +101,9 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 yield decodeBytecode(frame, code, bytecodeNodes, index, sp, extBytes + 2, extA, numExtB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue, numExtB + 1);
             }
             case 0xE2 -> PushBytecodes.PushReceiverVariableNode.create(frame, index + 2 + extBytes, sp + 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
-            case 0xE3 -> PushBytecodes.PushLiteralVariableNode.create(code, index + 2 + extBytes, sp + 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
+            case 0xE3 -> PushBytecodes.PushLiteralVariableNode.create(frame, code, index + 2 + extBytes, sp + 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xE4 -> new PushBytecodes.PushLiteralConstantNode(frame, code, index + 2 + extBytes, sp + 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
-            case 0xE5 -> new PushBytecodes.PushTemporaryLocationNode(index + 2, sp + 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]));
+            case 0xE5 -> new PushBytecodes.PushTemporaryLocationNode(frame, index + 2, sp + 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]));
             case 0xE6 -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 1, sp, b);
             case 0xE7 -> PushBytecodes.PushNewArrayNode.create(frame, index + 2, sp + 1, bytecode[indexWithExt + 1]);
             case 0xE8 -> new PushBytecodes.PushSmallIntegerNode(frame, index + 2 + extBytes, sp + 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extB << 8));
@@ -135,12 +135,12 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xED -> JumpBytecodes.createUnconditionalLongExtendedJump(bytecodeNodes, index, sp, 2 + extBytes, bytecode[indexWithExt + 1], extB);
             case 0xEE -> JumpBytecodes.ConditionalJumpOnTrueNode.createLongExtended(frame, index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1], extB);
             case 0xEF -> JumpBytecodes.ConditionalJumpOnFalseNode.createLongExtended(frame, index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1], extB);
-            case 0xF0 -> new StoreBytecodes.PopIntoReceiverVariableNode(index + 2 + extBytes, sp - 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
-            case 0xF1 -> new StoreBytecodes.PopIntoLiteralVariableNode(code, index + 2 + extBytes, sp - 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
-            case 0xF2 -> new StoreBytecodes.PopIntoTemporaryLocationNode(index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1]);
-            case 0xF3 -> new StoreBytecodes.StoreIntoReceiverVariableNode(index + 2 + extBytes, sp, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
-            case 0xF4 -> new StoreBytecodes.StoreIntoLiteralVariableNode(code, index + 2 + extBytes, sp, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
-            case 0xF5 -> new StoreBytecodes.StoreIntoTemporaryLocationNode(index + 2 + extBytes, sp, bytecode[indexWithExt + 1]);
+            case 0xF0 -> new StoreBytecodes.PopIntoReceiverVariableNode(frame, index + 2 + extBytes, sp - 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
+            case 0xF1 -> new StoreBytecodes.PopIntoLiteralVariableNode(frame, code, index + 2 + extBytes, sp - 1, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
+            case 0xF2 -> new StoreBytecodes.PopIntoTemporaryLocationNode(frame, index + 2 + extBytes, sp - 1, bytecode[indexWithExt + 1]);
+            case 0xF3 -> new StoreBytecodes.StoreIntoReceiverVariableNode(frame, index + 2 + extBytes, sp, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
+            case 0xF4 -> new StoreBytecodes.StoreIntoLiteralVariableNode(frame, code, index + 2 + extBytes, sp, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
+            case 0xF5 -> new StoreBytecodes.StoreIntoTemporaryLocationNode(frame, index + 2 + extBytes, sp, bytecode[indexWithExt + 1]);
             case 0xF6, 0xF7 -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 2, sp, b);
             case 0xF8 -> {
                 // TODO: use `final boolean m = bytecode[indexWithExt + 2] >> 8 == 0;`
@@ -151,60 +151,60 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 assert 1 <= primitiveIndex && primitiveIndex < 32767 : "primitiveIndex out of range";
                 final int successorIndex = index + 3;
                 if (primitiveIndex < 1000) {
-                    yield MiscellaneousBytecodes.CallPrimitiveNode.create(code, successorIndex, sp, primitiveIndex);
+                    yield MiscellaneousBytecodes.CallPrimitiveNode.create(frame, code, successorIndex, sp, primitiveIndex);
                 }
                 yield switch (primitiveIndex) {
-                    case 1000 -> InlinePrimitiveBytecodes.PrimClassNode.create(successorIndex, sp);
-                    case 1001 -> new InlinePrimitiveBytecodes.PrimNumSlotsNode(successorIndex, sp);
-                    case 1002 -> new InlinePrimitiveBytecodes.PrimBasicSizeNode(successorIndex, sp);
-                    case 1003 -> new InlinePrimitiveBytecodes.PrimNumBytesNode(successorIndex, sp);
-                    case 1004 -> new InlinePrimitiveBytecodes.PrimNumShortsNode(successorIndex, sp);
-                    case 1005 -> new InlinePrimitiveBytecodes.PrimNumWordsNode(successorIndex, sp);
-                    case 1006 -> new InlinePrimitiveBytecodes.PrimNumDoubleWordsNode(successorIndex, sp);
-                    case 1020 -> InlinePrimitiveBytecodes.PrimIdentityHashNode.create(successorIndex, sp);
-                    case 1021 -> new InlinePrimitiveBytecodes.PrimIdentityHashSmallIntegerNode(successorIndex, sp);
-                    case 1022 -> new InlinePrimitiveBytecodes.PrimIdentityHashCharacterNode(successorIndex, sp);
-                    case 1023 -> new InlinePrimitiveBytecodes.PrimIdentityHashSmallFloatNode(successorIndex, sp);
-                    case 1024 -> new InlinePrimitiveBytecodes.PrimIdentityHashBehaviorNode(successorIndex, sp);
-                    case 1030 -> new InlinePrimitiveBytecodes.PrimImmediateAsIntegerCharacterNode(successorIndex, sp);
-                    case 1031 -> new InlinePrimitiveBytecodes.PrimImmediateAsIntegerSmallFloatNode(successorIndex, sp);
-                    case 1032 -> new InlinePrimitiveBytecodes.PrimImmediateAsFloatNode(successorIndex, sp);
-                    case 2000 -> new InlinePrimitiveBytecodes.PrimSmallIntegerAddNode(successorIndex, sp);
-                    case 2001 -> new InlinePrimitiveBytecodes.PrimSmallIntegerSubtractNode(successorIndex, sp);
-                    case 2002 -> new InlinePrimitiveBytecodes.PrimSmallIntegerMultiplyNode(successorIndex, sp);
-                    case 2003 -> new InlinePrimitiveBytecodes.PrimSmallIntegerDivideNode(successorIndex, sp);
-                    case 2004 -> new InlinePrimitiveBytecodes.PrimSmallIntegerFloorDivideNode(successorIndex, sp);
-                    case 2005 -> new InlinePrimitiveBytecodes.PrimSmallIntegerFloorModNode(successorIndex, sp);
-                    case 2006 -> new InlinePrimitiveBytecodes.PrimSmallIntegerQuoNode(successorIndex, sp);
-                    case 2016 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitAndNode(successorIndex, sp);
-                    case 2017 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitOrNode(successorIndex, sp);
-                    case 2018 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitXorNode(successorIndex, sp);
-                    case 2019 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitShiftLeftNode(successorIndex, sp);
-                    case 2020 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitShiftRightNode(successorIndex, sp);
-                    case 2032 -> new InlinePrimitiveBytecodes.PrimSmallIntegerGreaterThanNode(successorIndex, sp);
-                    case 2033 -> new InlinePrimitiveBytecodes.PrimSmallIntegerLessThanNode(successorIndex, sp);
-                    case 2034 -> new InlinePrimitiveBytecodes.PrimSmallIntegerGreaterOrEqualNode(successorIndex, sp);
-                    case 2035 -> new InlinePrimitiveBytecodes.PrimSmallIntegerLessOrEqualNode(successorIndex, sp);
-                    case 2036 -> new InlinePrimitiveBytecodes.PrimSmallIntegerEqualNode(successorIndex, sp);
-                    case 2037 -> new InlinePrimitiveBytecodes.PrimSmallIntegerNotEqualNode(successorIndex, sp);
-                    case 2065 -> new InlinePrimitiveBytecodes.PrimByteAtNode(successorIndex, sp);
-                    case 2066 -> new InlinePrimitiveBytecodes.PrimShortAtNode(successorIndex, sp);
-                    case 2067 -> new InlinePrimitiveBytecodes.PrimWordAtNode(successorIndex, sp);
-                    case 2068 -> new InlinePrimitiveBytecodes.PrimDoubleWordAtNode(successorIndex, sp);
-                    case 3001 -> new InlinePrimitiveBytecodes.PrimByteAtPutNode(successorIndex, sp);
-                    case 3002 -> new InlinePrimitiveBytecodes.PrimShortAtPutNode(successorIndex, sp);
-                    case 3003 -> new InlinePrimitiveBytecodes.PrimWordAtPutNode(successorIndex, sp);
-                    case 3004 -> new InlinePrimitiveBytecodes.PrimDoubleWordAtPutNode(successorIndex, sp);
-                    case 3021 -> new InlinePrimitiveBytecodes.PrimByteEqualsNode(successorIndex, sp);
-                    case 4000 -> InlinePrimitiveBytecodes.PrimFillFromToWithNode.create(successorIndex, sp);
+                    case 1000 -> InlinePrimitiveBytecodes.PrimClassNode.create(frame, successorIndex, sp);
+                    case 1001 -> new InlinePrimitiveBytecodes.PrimNumSlotsNode(frame, successorIndex, sp);
+                    case 1002 -> new InlinePrimitiveBytecodes.PrimBasicSizeNode(frame, successorIndex, sp);
+                    case 1003 -> new InlinePrimitiveBytecodes.PrimNumBytesNode(frame, successorIndex, sp);
+                    case 1004 -> new InlinePrimitiveBytecodes.PrimNumShortsNode(frame, successorIndex, sp);
+                    case 1005 -> new InlinePrimitiveBytecodes.PrimNumWordsNode(frame, successorIndex, sp);
+                    case 1006 -> new InlinePrimitiveBytecodes.PrimNumDoubleWordsNode(frame, successorIndex, sp);
+                    case 1020 -> InlinePrimitiveBytecodes.PrimIdentityHashNode.create(frame, successorIndex, sp);
+                    case 1021 -> new InlinePrimitiveBytecodes.PrimIdentityHashSmallIntegerNode(frame, successorIndex, sp);
+                    case 1022 -> new InlinePrimitiveBytecodes.PrimIdentityHashCharacterNode(frame, successorIndex, sp);
+                    case 1023 -> new InlinePrimitiveBytecodes.PrimIdentityHashSmallFloatNode(frame, successorIndex, sp);
+                    case 1024 -> new InlinePrimitiveBytecodes.PrimIdentityHashBehaviorNode(frame, successorIndex, sp);
+                    case 1030 -> new InlinePrimitiveBytecodes.PrimImmediateAsIntegerCharacterNode(frame, successorIndex, sp);
+                    case 1031 -> new InlinePrimitiveBytecodes.PrimImmediateAsIntegerSmallFloatNode(frame, successorIndex, sp);
+                    case 1032 -> new InlinePrimitiveBytecodes.PrimImmediateAsFloatNode(frame, successorIndex, sp);
+                    case 2000 -> new InlinePrimitiveBytecodes.PrimSmallIntegerAddNode(frame, successorIndex, sp);
+                    case 2001 -> new InlinePrimitiveBytecodes.PrimSmallIntegerSubtractNode(frame, successorIndex, sp);
+                    case 2002 -> new InlinePrimitiveBytecodes.PrimSmallIntegerMultiplyNode(frame, successorIndex, sp);
+                    case 2003 -> new InlinePrimitiveBytecodes.PrimSmallIntegerDivideNode(frame, successorIndex, sp);
+                    case 2004 -> new InlinePrimitiveBytecodes.PrimSmallIntegerFloorDivideNode(frame, successorIndex, sp);
+                    case 2005 -> new InlinePrimitiveBytecodes.PrimSmallIntegerFloorModNode(frame, successorIndex, sp);
+                    case 2006 -> new InlinePrimitiveBytecodes.PrimSmallIntegerQuoNode(frame, successorIndex, sp);
+                    case 2016 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitAndNode(frame, successorIndex, sp);
+                    case 2017 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitOrNode(frame, successorIndex, sp);
+                    case 2018 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitXorNode(frame, successorIndex, sp);
+                    case 2019 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitShiftLeftNode(frame, successorIndex, sp);
+                    case 2020 -> new InlinePrimitiveBytecodes.PrimSmallIntegerBitShiftRightNode(frame, successorIndex, sp);
+                    case 2032 -> new InlinePrimitiveBytecodes.PrimSmallIntegerGreaterThanNode(frame, successorIndex, sp);
+                    case 2033 -> new InlinePrimitiveBytecodes.PrimSmallIntegerLessThanNode(frame, successorIndex, sp);
+                    case 2034 -> new InlinePrimitiveBytecodes.PrimSmallIntegerGreaterOrEqualNode(frame, successorIndex, sp);
+                    case 2035 -> new InlinePrimitiveBytecodes.PrimSmallIntegerLessOrEqualNode(frame, successorIndex, sp);
+                    case 2036 -> new InlinePrimitiveBytecodes.PrimSmallIntegerEqualNode(frame, successorIndex, sp);
+                    case 2037 -> new InlinePrimitiveBytecodes.PrimSmallIntegerNotEqualNode(frame, successorIndex, sp);
+                    case 2065 -> new InlinePrimitiveBytecodes.PrimByteAtNode(frame, successorIndex, sp);
+                    case 2066 -> new InlinePrimitiveBytecodes.PrimShortAtNode(frame, successorIndex, sp);
+                    case 2067 -> new InlinePrimitiveBytecodes.PrimWordAtNode(frame, successorIndex, sp);
+                    case 2068 -> new InlinePrimitiveBytecodes.PrimDoubleWordAtNode(frame, successorIndex, sp);
+                    case 3001 -> new InlinePrimitiveBytecodes.PrimByteAtPutNode(frame, successorIndex, sp);
+                    case 3002 -> new InlinePrimitiveBytecodes.PrimShortAtPutNode(frame, successorIndex, sp);
+                    case 3003 -> new InlinePrimitiveBytecodes.PrimWordAtPutNode(frame, successorIndex, sp);
+                    case 3004 -> new InlinePrimitiveBytecodes.PrimDoubleWordAtPutNode(frame, successorIndex, sp);
+                    case 3021 -> new InlinePrimitiveBytecodes.PrimByteEqualsNode(frame, successorIndex, sp);
+                    case 4000 -> InlinePrimitiveBytecodes.PrimFillFromToWithNode.create(frame, successorIndex, sp);
                     default -> new MiscellaneousBytecodes.UnknownBytecodeNode(successorIndex, sp, b);
                 };
             }
-            case 0xF9 -> PushBytecodes.AbstractPushFullClosureNode.createExtended(code, index + 3 + extBytes, sp + 1, extA, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
-            case 0xFA -> PushBytecodes.PushClosureNode.createExtended(code, index + 3 + extBytes, sp + 1, extA, extB, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
-            case 0xFB -> PushBytecodes.PushRemoteTempNode.create(index + 3 + extBytes, sp + 1, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
-            case 0xFC -> new StoreBytecodes.StoreIntoRemoteTempNode(index + 3 + extBytes, sp, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
-            case 0xFD -> new StoreBytecodes.PopIntoRemoteTempNode(index + 3 + extBytes, sp - 1, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xF9 -> PushBytecodes.AbstractPushFullClosureNode.createExtended(frame, code, index + 3 + extBytes, sp + 1, extA, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xFA -> PushBytecodes.PushClosureNode.createExtended(frame, code, index + 3 + extBytes, sp + 1, extA, extB, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xFB -> PushBytecodes.PushRemoteTempNode.create(frame, index + 3 + extBytes, sp + 1, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xFC -> new StoreBytecodes.StoreIntoRemoteTempNode(frame, index + 3 + extBytes, sp, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+            case 0xFD -> new StoreBytecodes.PopIntoRemoteTempNode(frame, index + 3 + extBytes, sp - 1, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 0xFE, 0xFF -> new MiscellaneousBytecodes.UnknownBytecodeNode(index + 3, sp, b);
             default -> throw SqueakException.create("Not a bytecode:", b);
         };

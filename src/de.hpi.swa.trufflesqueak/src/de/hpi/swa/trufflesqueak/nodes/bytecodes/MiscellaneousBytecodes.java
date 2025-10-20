@@ -32,9 +32,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryL
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoTemporaryLocationNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 
 public final class MiscellaneousBytecodes {
 
@@ -43,14 +42,14 @@ public final class MiscellaneousBytecodes {
             super(successorIndex, sp);
         }
 
-        public static CallPrimitiveNode create(final CompiledCodeObject code, final int successorIndex, final int sp, final byte byte1, final byte byte2) {
-            return create(code, successorIndex, sp, Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8));
+        public static CallPrimitiveNode create(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final byte byte1, final byte byte2) {
+            return create(frame, code, successorIndex, sp, Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8));
         }
 
-        public static CallPrimitiveNode create(final CompiledCodeObject code, final int successorIndex, final int sp, final int primitiveIndex) {
+        public static CallPrimitiveNode create(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final int primitiveIndex) {
             assert code.hasPrimitive() && code.primitiveIndex() == primitiveIndex;
             if (code.hasStoreIntoTemp1AfterCallPrimitive()) {
-                return CallPrimitiveWithErrorCodeNodeGen.create(successorIndex, sp);
+                return CallPrimitiveWithErrorCodeNodeGen.create(frame, successorIndex, sp);
             } else {
                 return new CallPrimitiveWithoutErrorCodeNode(successorIndex, sp);
             }
@@ -74,15 +73,17 @@ public final class MiscellaneousBytecodes {
         }
 
         public abstract static class CallPrimitiveWithErrorCodeNode extends CallPrimitiveNode {
-            public CallPrimitiveWithErrorCodeNode(final int successorIndex, final int sp) {
+            @Child private FrameStackWriteNode pushNode;
+
+            public CallPrimitiveWithErrorCodeNode(final VirtualFrame frame, final int successorIndex, final int sp) {
                 super(successorIndex, sp + 1);
+                pushNode = FrameStackWriteNode.create(frame, sp);
             }
 
             @Specialization
-            protected static final void doCallPrimitive(final VirtualFrame frame,
+            protected final void doCallPrimitive(final VirtualFrame frame,
                             @Bind final Node node,
                             @Bind final SqueakImageContext image,
-                            @Cached final FrameStackPushNode pushNode,
                             @Cached final InlinedConditionProfile inRangeProfile) {
                 final int primFailCode = image.getPrimFailCode();
                 final ArrayObject errorTable = image.primitiveErrorTable;
@@ -92,7 +93,7 @@ public final class MiscellaneousBytecodes {
                 } else {
                     errorObject = (long) primFailCode;
                 }
-                pushNode.execute(frame, errorObject);
+                pushNode.executeWriteAndSetSP(frame, errorObject, getSuccessorStackPointer());
             }
         }
     }
@@ -107,26 +108,28 @@ public final class MiscellaneousBytecodes {
                 case 1 -> new SuperSendNode(frame, code, successorIndex, sp, third, second & 31);
                 case 2 -> PushReceiverVariableNode.create(frame, successorIndex, sp + 1, third);
                 case 3 -> new PushLiteralConstantNode(frame, code, successorIndex, sp + 1, third);
-                case 4 -> PushLiteralVariableNode.create(code, successorIndex, sp + 1, third);
-                case 5 -> new StoreIntoReceiverVariableNode(successorIndex, sp, third);
-                case 6 -> new PopIntoReceiverVariableNode(successorIndex, sp - 1, third);
-                case 7 -> new StoreIntoLiteralVariableNode(code, successorIndex, sp, third);
+                case 4 -> PushLiteralVariableNode.create(frame, code, successorIndex, sp + 1, third);
+                case 5 -> new StoreIntoReceiverVariableNode(frame, successorIndex, sp, third);
+                case 6 -> new PopIntoReceiverVariableNode(frame, successorIndex, sp - 1, third);
+                case 7 -> new StoreIntoLiteralVariableNode(frame, code, successorIndex, sp, third);
                 default -> new UnknownBytecodeNode(successorIndex, sp, second);
             };
         }
     }
 
     public static final class DupNode extends AbstractInstrumentableBytecodeNode {
-        @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
-        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
+        @Child private FrameStackReadNode topNode;
+        @Child private FrameStackWriteNode pushNode;
 
-        public DupNode(final int successorIndex, final int sp) {
+        public DupNode(final VirtualFrame frame, final int successorIndex, final int sp) {
             super(successorIndex, sp);
+            topNode = FrameStackReadNode.create(frame, sp - 2, false);
+            pushNode = FrameStackWriteNode.create(frame, sp - 1);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, topNode.execute(frame));
+            pushNode.executeWriteAndSetSP(frame, topNode.executeRead(frame), getSuccessorStackPointer());
         }
 
         @Override
@@ -138,13 +141,13 @@ public final class MiscellaneousBytecodes {
 
     public static final class ExtendedBytecodes {
 
-        public static AbstractInstrumentableBytecodeNode createPopInto(final CompiledCodeObject code, final int successorIndex, final int sp, final byte nextByte) {
+        public static AbstractInstrumentableBytecodeNode createPopInto(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             return switch (variableType(nextByte)) {
-                case 0 -> new PopIntoReceiverVariableNode(successorIndex, sp - 1, variableIndex);
-                case 1 -> new PopIntoTemporaryLocationNode(successorIndex, sp - 1, variableIndex);
+                case 0 -> new PopIntoReceiverVariableNode(frame, successorIndex, sp - 1, variableIndex);
+                case 1 -> new PopIntoTemporaryLocationNode(frame, successorIndex, sp - 1, variableIndex);
                 case 2 -> new UnknownBytecodeNode(successorIndex, sp, nextByte);
-                case 3 -> new PopIntoLiteralVariableNode(code, successorIndex, sp - 1, variableIndex);
+                case 3 -> new PopIntoLiteralVariableNode(frame, code, successorIndex, sp - 1, variableIndex);
                 default -> throw SqueakException.create("illegal ExtendedStore bytecode");
             };
         }
@@ -153,20 +156,20 @@ public final class MiscellaneousBytecodes {
             final int variableIndex = variableIndex(nextByte);
             return switch (variableType(nextByte)) {
                 case 0 -> PushReceiverVariableNode.create(frame, successorIndex, sp + 1, variableIndex);
-                case 1 -> new PushTemporaryLocationNode(successorIndex, sp + 1, variableIndex);
+                case 1 -> new PushTemporaryLocationNode(frame, successorIndex, sp + 1, variableIndex);
                 case 2 -> new PushLiteralConstantNode(frame, code, successorIndex, sp + 1, variableIndex);
-                case 3 -> PushLiteralVariableNode.create(code, successorIndex, sp + 1, variableIndex);
+                case 3 -> PushLiteralVariableNode.create(frame, code, successorIndex, sp + 1, variableIndex);
                 default -> throw SqueakException.create("unexpected type for ExtendedPush");
             };
         }
 
-        public static AbstractInstrumentableBytecodeNode createStoreInto(final CompiledCodeObject code, final int successorIndex, final int sp, final byte nextByte) {
+        public static AbstractInstrumentableBytecodeNode createStoreInto(final VirtualFrame frame, final CompiledCodeObject code, final int successorIndex, final int sp, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             return switch (variableType(nextByte)) {
-                case 0 -> new StoreIntoReceiverVariableNode(successorIndex, sp, variableIndex);
-                case 1 -> new StoreIntoTemporaryLocationNode(successorIndex, sp, variableIndex);
+                case 0 -> new StoreIntoReceiverVariableNode(frame, successorIndex, sp, variableIndex);
+                case 1 -> new StoreIntoTemporaryLocationNode(frame, successorIndex, sp, variableIndex);
                 case 2 -> new UnknownBytecodeNode(successorIndex, sp, nextByte);
-                case 3 -> new StoreIntoLiteralVariableNode(code, successorIndex, sp, variableIndex);
+                case 3 -> new StoreIntoLiteralVariableNode(frame, code, successorIndex, sp, variableIndex);
                 default -> throw SqueakException.create("illegal ExtendedStore bytecode");
             };
         }
@@ -181,15 +184,16 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class PopNode extends AbstractInstrumentableBytecodeNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+        @Child private FrameStackReadNode popNode;
 
-        public PopNode(final int successorIndex, final int sp) {
+        public PopNode(final VirtualFrame frame, final int successorIndex, final int sp) {
             super(successorIndex, sp);
+            popNode = FrameStackReadNode.create(frame, sp, true);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            popNode.execute(frame);
+            popNode.executeReadAndSetPC(frame, getSuccessorStackPointer());
         }
 
         @Override

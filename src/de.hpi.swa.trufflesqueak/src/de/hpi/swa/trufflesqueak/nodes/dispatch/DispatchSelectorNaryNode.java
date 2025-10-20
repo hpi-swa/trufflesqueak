@@ -105,13 +105,12 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         return new DispatchSelectorNaryNode(frame, numArgs, DispatchSuperNaryNodeGen.create(methodClass, selector));
     }
 
-    static DispatchSelectorNaryNode createDirectedSuper(final VirtualFrame frame, final int numArgs, final NativeObject selector) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
+    static DispatchSelectorNaryNode createDirectedSuper(final VirtualFrame frame, final int sp, final int numArgs, final NativeObject selector) {
         // Trick: decrement stack pointer so that node uses the right receiver and args
-        FrameAccess.setStackPointer(frame, stackPointer - 1);
-        final DispatchSelectorNaryNode result = new DispatchSelectorNaryNode(frame, numArgs, new DispatchDirectedSuperNaryNode(frame, selector, stackPointer));
+        FrameAccess.setStackPointer(frame, sp - 1);
+        final DispatchSelectorNaryNode result = new DispatchSelectorNaryNode(frame, numArgs, new DispatchDirectedSuperNaryNode(frame, selector, sp));
         // Restore stack pointer
-        FrameAccess.setStackPointer(frame, stackPointer);
+        FrameAccess.setStackPointer(frame, sp);
         return result;
     }
 

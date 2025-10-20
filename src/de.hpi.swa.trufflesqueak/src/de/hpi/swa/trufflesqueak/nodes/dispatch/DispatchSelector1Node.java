@@ -80,13 +80,12 @@ public final class DispatchSelector1Node extends DispatchSelectorNode {
         return new DispatchSelector1Node(frame, DispatchSuper1NodeGen.create(methodClass, selector));
     }
 
-    static DispatchSelector1Node createDirectedSuper(final VirtualFrame frame, final NativeObject selector) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
+    static DispatchSelector1Node createDirectedSuper(final VirtualFrame frame, final int sp, final NativeObject selector) {
         // Trick: decrement stack pointer so that node uses the right receiver and args
-        FrameAccess.setStackPointer(frame, stackPointer - 1);
-        final DispatchSelector1Node result = new DispatchSelector1Node(frame, new DispatchDirectedSuper1Node(frame, selector, stackPointer));
+        FrameAccess.setStackPointer(frame, sp - 1);
+        final DispatchSelector1Node result = new DispatchSelector1Node(frame, new DispatchDirectedSuper1Node(frame, selector, sp));
         // Restore stack pointer
-        FrameAccess.setStackPointer(frame, stackPointer);
+        FrameAccess.setStackPointer(frame, sp);
         return result;
     }
 

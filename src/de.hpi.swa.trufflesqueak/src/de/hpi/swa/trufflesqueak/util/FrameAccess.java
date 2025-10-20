@@ -34,7 +34,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
 
 /**
@@ -353,7 +352,10 @@ public final class FrameAccess {
         }
     }
 
-    /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
+    /**
+     * Write to a frame slot (slow operation), prefer
+     * {@link de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode}.
+     */
     public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {
         setSlot(frame, SlotIndicies.STACK_START.ordinal() + stackIndex, value);
     }

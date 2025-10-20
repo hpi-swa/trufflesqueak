@@ -72,7 +72,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchDirect0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchIndirect0Node;
@@ -305,9 +305,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Bind final Node node,
                         @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("create(frame, $node)") final FrameStackWriteNode pushReceiverNode) {
             if (signalSemaphoreNode.executeSignal(frame, node, receiver)) {
-                pushReceiverNode.execute(frame, receiver);
+                pushReceiverNode.executeWriteAndSetSP(frame, receiver, FrameAccess.getStackPointer(frame) + 1);
                 throw ProcessSwitch.SINGLETON;
             } else {
                 return receiver;
@@ -327,7 +327,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("create(frame, $node)") final FrameStackWriteNode pushReceiverNode) {
             assert isSemaphore(receiver);
             final long excessSignals = pointersReadNode.executeLong(node, receiver, SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0) {
@@ -336,7 +336,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), receiver);
                 wakeHighestPriorityNode.executeWake(frame, node);
-                pushReceiverNode.execute(frame, receiver);
+                pushReceiverNode.executeWriteAndSetSP(frame, receiver, FrameAccess.getStackPointer(frame) + 1);
                 throw ProcessSwitch.SINGLETON;
             }
         }
@@ -350,13 +350,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ResumeProcessNode resumeProcessNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("create(frame, $node)") final FrameStackWriteNode pushReceiverNode) {
             if (!(readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject)) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             if (resumeProcessNode.executeResume(frame, node, receiver)) {
-                pushReceiverNode.execute(frame, receiver);
+                pushReceiverNode.executeWriteAndSetSP(frame, receiver, FrameAccess.getStackPointer(frame) + 1);
                 throw ProcessSwitch.SINGLETON;
             } else {
                 return receiver;
@@ -373,10 +373,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushNode) {
+                        @Cached("create(frame, $node)") final FrameStackWriteNode pushNode) {
             wakeHighestPriorityNode.executeWake(frame, node);
             /* Leave `nil` as result on stack. */
-            pushNode.execute(frame, NilObject.SINGLETON);
+            pushNode.executeWriteAndSetSP(frame, NilObject.SINGLETON, FrameAccess.getStackPointer(frame) + 1);
             throw ProcessSwitch.SINGLETON;
         }
 
@@ -408,10 +408,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushNode) {
+                        @Cached("create(frame, $node)") final FrameStackWriteNode pushNode) {
             wakeHighestPriorityNode.executeWake(frame, node);
             /* Leave `nil` as result on stack. */
-            pushNode.execute(frame, NilObject.SINGLETON);
+            pushNode.executeWriteAndSetSP(frame, NilObject.SINGLETON, FrameAccess.getStackPointer(frame) + 1);
             throw ProcessSwitch.SINGLETON;
         }
 
@@ -899,7 +899,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("create(frame, $node)") final FrameStackWriteNode pushReceiverNode) {
             final PointersObject activeProcess = getActiveProcessNode.execute(node);
             final long priority = pointersReadNode.executeLong(node, activeProcess, PROCESS.PRIORITY);
             final ArrayObject processLists = pointersReadNode.executeArray(node, scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
@@ -909,7 +909,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             addLastLinkToListNode.execute(node, activeProcess, processList);
             wakeHighestPriorityNode.executeWake(frame, node);
-            pushReceiverNode.execute(frame, scheduler);
+            pushReceiverNode.executeWriteAndSetSP(frame, scheduler, FrameAccess.getStackPointer(frame) + 1);
             throw ProcessSwitch.SINGLETON;
         }
     }
@@ -953,13 +953,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Cached final ResumeProcessNode resumeProcessNode,
-                            @Cached final FrameStackPushNode pushReceiverNode,
-                            @Cached final FrameStackPushNode pushFirstLinkNode) {
+                            @Cached("create(frame, $node, 2)") final FrameStackWriteNode pushReceiverNode,
+                            @Cached("create(frame, $node, 1)") final FrameStackWriteNode pushFirstLinkNode) {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode, node);
                 writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
                 if (resumeProcessNode.executeResume(frame, node, owningProcess)) {
-                    pushReceiverNode.execute(frame, mutex);
-                    pushFirstLinkNode.execute(frame, firstLink);
+                    pushReceiverNode.executeWrite(frame, mutex);
+                    pushFirstLinkNode.executeWriteAndSetSP(frame, firstLink, FrameAccess.getStackPointer(frame) + 2);
                     throw ProcessSwitch.SINGLETON;
                 } else {
                     return mutex;
@@ -1016,11 +1016,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final PointersObject effectiveProcess,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushNode) {
+                        @Cached("create(frame, $node)") final FrameStackWriteNode pushNode) {
             addLastLinkToListNode.execute(node, effectiveProcess, mutex);
             wakeHighestPriorityNode.executeWake(frame, node);
             /* Leave `false` as result on stack. */
-            pushNode.execute(frame, BooleanObject.FALSE);
+            pushNode.executeWriteAndSetSP(frame, BooleanObject.FALSE, FrameAccess.getStackPointer(frame) + 1);
             throw ProcessSwitch.SINGLETON;
         }
     }
@@ -1281,7 +1281,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final CheckForInterruptsFullNode interruptNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("create(frame, $node)") final FrameStackWriteNode pushReceiverNode) {
             MiscUtils.park(timeMicroseconds * 1000);
             /*
              * Perform interrupt check (even if interrupt handler is not active), otherwise
@@ -1290,7 +1290,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 interruptNode.execute(frame);
             } catch (final ProcessSwitch ps) {
-                pushReceiverNode.execute(frame, receiver);
+                pushReceiverNode.executeWriteAndSetSP(frame, receiver, FrameAccess.getStackPointer(frame) + 1);
                 throw ps;
             }
             return receiver;

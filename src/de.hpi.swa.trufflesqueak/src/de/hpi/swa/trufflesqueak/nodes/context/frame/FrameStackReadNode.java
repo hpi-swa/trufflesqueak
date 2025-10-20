@@ -63,6 +63,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
         return value;
     }
 
+    public final Object executeReadAndSetPC(final VirtualFrame frame, final int sp) {
+        FrameAccess.setStackPointer(frame, sp);
+        return executeReadUnsafe(frame);
+    }
+
     /* Unsafe as it may return `null` values. */
     public abstract Object executeReadUnsafe(VirtualFrame frame);
 

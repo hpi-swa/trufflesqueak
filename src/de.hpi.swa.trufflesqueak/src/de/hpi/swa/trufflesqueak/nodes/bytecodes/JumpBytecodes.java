@@ -45,8 +45,7 @@ public final class JumpBytecodes {
         }
 
         public final boolean executeCondition(final VirtualFrame frame) {
-            final Object result = popNode.executeRead(frame);
-            FrameAccess.setStackPointer(frame, getSuccessorStackPointer());
+            final Object result = popNode.executeReadAndSetPC(frame, getSuccessorStackPointer());
             if (result instanceof Boolean r) {
                 return conditionProfile.profile(check(r));
             } else {
