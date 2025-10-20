@@ -24,8 +24,8 @@ import com.oracle.truffle.api.source.SourceSection;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.AbstractUnconditionalBackJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalBackjumpWithCheckNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -98,7 +98,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     pc = jumpNode.getJumpSuccessorIndex();
                     continue bytecode_loop;
                 }
-            } else if (node instanceof final UnconditionalBackjumpWithCheckNode jumpNode) {
+            } else if (node instanceof final AbstractUnconditionalBackJumpNode jumpNode) {
                 backJumpCounter.value++;
                 if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
                     if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {

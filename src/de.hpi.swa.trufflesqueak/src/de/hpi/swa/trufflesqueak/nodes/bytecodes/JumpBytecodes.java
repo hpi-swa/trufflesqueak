@@ -135,8 +135,8 @@ public final class JumpBytecodes {
         }
     }
 
-    public static final class UnconditionalJumpWithoutCheckNode extends AbstractUnconditionalJumpNode {
-        protected UnconditionalJumpWithoutCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+    public static final class UnconditionalForwardJumpWithoutCheckNode extends AbstractUnconditionalJumpNode {
+        protected UnconditionalForwardJumpWithoutCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes, offset);
         }
 
@@ -146,20 +146,40 @@ public final class JumpBytecodes {
         }
     }
 
-    public static final class UnconditionalBackjumpWithCheckNode extends AbstractUnconditionalJumpNode {
+    public abstract static class AbstractUnconditionalBackJumpNode extends AbstractUnconditionalJumpNode {
+        protected AbstractUnconditionalBackJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+            super(code, index, numBytecodes, offset);
+        }
+
+        public abstract void executeCheck(VirtualFrame frame);
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            throw CompilerDirectives.shouldNotReachHere();
+        }
+    }
+
+    public static final class UnconditionalBackJumpWithoutCheckNode extends AbstractUnconditionalBackJumpNode {
+        private UnconditionalBackJumpWithoutCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+            super(code, index, numBytecodes, offset);
+        }
+
+        @Override
+        public void executeCheck(final VirtualFrame frame) {
+            // nothing to do
+        }
+    }
+
+    public static final class UnconditionalBackJumpWithCheckNode extends AbstractUnconditionalBackJumpNode {
         @Child private CheckForInterruptsQuickNode interruptHandlerNode = CheckForInterruptsQuickNode.createForLoop();
 
-        protected UnconditionalBackjumpWithCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+        private UnconditionalBackJumpWithCheckNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes, offset);
             assert offset < 0;
             LogUtils.INTERRUPTS.fine(() -> "Added interrupt check to backjump in " + code);
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
-            throw CompilerDirectives.shouldNotReachHere();
-        }
-
         public void executeCheck(final VirtualFrame frame) {
             try {
                 interruptHandlerNode.execute(frame);
@@ -172,31 +192,29 @@ public final class JumpBytecodes {
     }
 
     public static AbstractUnconditionalJumpNode createUnconditionalShortJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode) {
-        final int offset = calculateShortOffset(bytecode);
-        if (needsCheck(bytecodeNodes, index, 1, offset)) {
-            return new UnconditionalBackjumpWithCheckNode(code, index, 1, offset);
-        } else {
-            return new UnconditionalJumpWithoutCheckNode(code, index, 1, offset);
-        }
+        return create(code, bytecodeNodes, index, 1, calculateShortOffset(bytecode));
     }
 
     public static AbstractUnconditionalJumpNode createUnconditionalLongJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int bytecode,
                     final byte parameter) {
         final int offset = ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter);
-        if (needsCheck(bytecodeNodes, index, 2, offset)) {
-            return new UnconditionalBackjumpWithCheckNode(code, index, 2, offset);
-        } else {
-            return new UnconditionalJumpWithoutCheckNode(code, index, 2, offset);
-        }
+        return create(code, bytecodeNodes, index, 2, offset);
     }
 
     public static AbstractUnconditionalJumpNode createUnconditionalLongExtendedJump(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes,
                     final byte bytecode, final int extB) {
-        final int offset = calculateLongExtendedOffset(bytecode, extB);
-        if (needsCheck(bytecodeNodes, index, numBytecodes, offset)) {
-            return new UnconditionalBackjumpWithCheckNode(code, index, numBytecodes, offset);
+        return create(code, bytecodeNodes, index, numBytecodes, calculateLongExtendedOffset(bytecode, extB));
+    }
+
+    private static AbstractUnconditionalJumpNode create(final CompiledCodeObject code, final AbstractBytecodeNode[] bytecodeNodes, final int index, final int numBytecodes, final int offset) {
+        if (offset < 0) {
+            if (needsCheck(bytecodeNodes, index, numBytecodes, offset)) {
+                return new UnconditionalBackJumpWithCheckNode(code, index, numBytecodes, offset);
+            } else {
+                return new UnconditionalBackJumpWithoutCheckNode(code, index, numBytecodes, offset);
+            }
         } else {
-            return new UnconditionalJumpWithoutCheckNode(code, index, numBytecodes, offset);
+            return new UnconditionalForwardJumpWithoutCheckNode(code, index, numBytecodes, offset);
         }
     }
 
