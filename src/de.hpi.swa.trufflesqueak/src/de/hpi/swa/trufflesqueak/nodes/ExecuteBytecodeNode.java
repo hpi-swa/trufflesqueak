@@ -73,7 +73,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
          */
         final Counter backJumpCounter = new Counter();
         Object returnValue = null;
-        bytecode_loop: while (pc != LOCAL_RETURN_PC) {
+        while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc);
             CompilerAsserts.partialEvaluationConstant(node);
@@ -91,11 +91,9 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     CompilerDirectives.transferToInterpreter();
                     pc = actualNextPc;
                 }
-                continue bytecode_loop;
             } else if (node instanceof final ConditionalJumpNode jumpNode) {
                 if (jumpNode.executeCondition(frame)) {
                     pc = jumpNode.getJumpSuccessorIndex();
-                    continue bytecode_loop;
                 }
             } else if (node instanceof final AbstractUnconditionalBackJumpNode jumpNode) {
                 backJumpCounter.value++;
@@ -103,13 +101,12 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
                         returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
                         if (returnValue != null) {
-                            break bytecode_loop;
+                            break;
                         }
                     } else {
                         jumpNode.executeCheck(frame);
                     }
                 }
-                continue bytecode_loop;
             } else if (node instanceof final AbstractReturnNode returnNode) {
                 /*
                  * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
@@ -118,10 +115,8 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 FrameAccess.setInstructionPointer(frame, pc);
                 returnValue = returnNode.executeReturn(frame);
                 pc = LOCAL_RETURN_PC;
-                continue bytecode_loop;
             } else { /* All other bytecode nodes. */
                 node.executeVoid(frame);
-                continue bytecode_loop;
             }
         }
         assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
