@@ -49,7 +49,17 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     public Object execute(final VirtualFrame frame, final int startPC) {
         CompilerAsserts.partialEvaluationConstant(startPC);
         try {
-            return interpretBytecode(frame, startPC);
+            final Counter backJumpCounter = new Counter();
+            try {
+                return interpretBytecode(frame, backJumpCounter, startPC);
+            } finally {
+                assert !FrameAccess.hasModifiedSender(frame);
+                FrameAccess.terminateFrame(frame);
+                // only report non-zero counters to reduce interpreter overhead
+                if (CompilerDirectives.hasNextTier() && backJumpCounter.value != 0) {
+                    LoopNode.reportLoopCount(this, backJumpCounter.value > 0 ? backJumpCounter.value : Integer.MAX_VALUE);
+                }
+            }
         } catch (final NonLocalReturn nlr) {
             nonLocalReturnProfile.enter();
             FrameAccess.terminateContextOrFrame(frame);
@@ -65,20 +75,30 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
      */
     @BytecodeInterpreterSwitch
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private Object interpretBytecode(final VirtualFrame frame, final int startPC) {
+    private Object interpretBytecode(final VirtualFrame frame, final Counter backJumpCounter, final int startPC) {
         int pc = startPC;
         /*
          * Maintain backJumpCounter in a Counter so that the compiler does not confuse it with the
          * pc because both are constant within the loop.
          */
-        final Counter backJumpCounter = new Counter();
-        Object returnValue = null;
-        while (pc != LOCAL_RETURN_PC) {
+
+// Object result = null;
+        while (true) {
+// while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc);
             CompilerAsserts.partialEvaluationConstant(node);
             pc = node.getSuccessorIndex();
-            if (node instanceof final AbstractSendNode sendNode) {
+            if (node instanceof final AbstractReturnNode returnNode) {
+                /*
+                 * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
+                 * cannotReturn.
+                 */
+                FrameAccess.setInstructionPointer(frame, pc);
+// result = returnNode.executeReturn(frame);
+// pc = LOCAL_RETURN_PC;
+                return returnNode.executeReturn(frame);
+            } else if (node instanceof final AbstractSendNode sendNode) {
                 FrameAccess.setInstructionPointer(frame, pc);
                 sendNode.executeVoid(frame);
                 final int actualNextPc = FrameAccess.getInstructionPointer(frame);
@@ -99,33 +119,20 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 backJumpCounter.value++;
                 if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
                     if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
-                        returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
+                        final Object returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
                         if (returnValue != null) {
-                            break;
+                            return returnValue;
+// break;
                         }
                     } else {
                         jumpNode.executeCheck(frame);
                     }
                 }
-            } else if (node instanceof final AbstractReturnNode returnNode) {
-                /*
-                 * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
-                 * cannotReturn.
-                 */
-                FrameAccess.setInstructionPointer(frame, pc);
-                returnValue = returnNode.executeReturn(frame);
-                pc = LOCAL_RETURN_PC;
             } else { /* All other bytecode nodes. */
                 node.executeVoid(frame);
             }
         }
-        assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
-        FrameAccess.terminateFrame(frame);
-        // only report non-zero counters to reduce interpreter overhead
-        if (CompilerDirectives.hasNextTier() && backJumpCounter.value != 0) {
-            LoopNode.reportLoopCount(this, backJumpCounter.value > 0 ? backJumpCounter.value : Integer.MAX_VALUE);
-        }
-        return returnValue;
+// return result;
     }
 
     /**
