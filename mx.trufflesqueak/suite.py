@@ -268,7 +268,7 @@ suite = {
             },
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
             "default_vm_args": [
-                "--vm.Xms512M",
+                "--vm.Xms256M",
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
             ],
         },
