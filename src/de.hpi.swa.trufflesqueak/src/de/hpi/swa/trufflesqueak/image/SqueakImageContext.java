@@ -957,8 +957,8 @@ public final class SqueakImageContext {
     @ExplodeLoop
     public MethodCacheEntry findMethodCacheEntry(final ClassObject classObject, final NativeObject selector) {
         methodCacheRandomish = methodCacheRandomish + 1 & 3;
-        final int selectorHash = System.identityHashCode(selector);
-        int firstProbe = (System.identityHashCode(classObject) ^ selectorHash) & METHOD_CACHE_MASK;
+        final int selectorHash = selector.getSqueakHashInt();
+        int firstProbe = (classObject.getSqueakHashInt() ^ selectorHash) & METHOD_CACHE_MASK;
         int probe = firstProbe;
         for (int i = 0; i < METHOD_CACHE_REPROBES; i++) {
             final MethodCacheEntry entry = methodCache[probe];
