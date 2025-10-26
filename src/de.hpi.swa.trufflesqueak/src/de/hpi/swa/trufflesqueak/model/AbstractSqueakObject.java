@@ -46,6 +46,7 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 
 @SuppressWarnings("static-method")
+@jdk.internal.ValueBased
 @ExportLibrary(ReflectionLibrary.class)
 public abstract class AbstractSqueakObject implements TruffleObject {
     private static final Object DEFAULT = new Object();

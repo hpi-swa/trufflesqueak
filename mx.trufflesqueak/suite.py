@@ -173,7 +173,10 @@ suite = {
                 "jdk.unsupported",
             ],
             "requiresConcealed": {
-                "java.base": ["jdk.internal.module"],
+                "java.base": [
+                    "jdk.internal",
+                    "jdk.internal.module",
+                ],
             },
             "checkstyleVersion": "10.7.0",
             "jacoco": "include",
