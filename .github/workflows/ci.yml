@@ -216,7 +216,7 @@ jobs:
             iterations: 6
             vm-args: '--engine.Compilation=false'
     env:
-      COMMON_VM_ARGS: "--vm.Xmx8G --headless --quiet --experimental-options --smalltalk.resource-summary=true"
+      COMMON_VM_ARGS: "--headless --quiet --experimental-options --smalltalk.resource-summary=true"
       EXEC: "/usr/bin/time -v"
     name: run ${{ matrix.performance-mode }} benchmarks
     timeout-minutes: 30

@@ -234,7 +234,6 @@ mx_sdk.register_graalvm_component(
                     "-H:+DetectUserDirectoriesInImageHeap",
                 ],
                 default_vm_args=[
-                    "--vm.Xms512M",
                     "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
                 ],
             )
