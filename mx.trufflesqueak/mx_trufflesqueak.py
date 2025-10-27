@@ -52,7 +52,7 @@ def trufflesqueak_standalone_deps():
 
 # Called from suite.py
 def libsmalltalkvm_build_args():
-    build_args = []
+    build_args = ["-H:+CompactingOldGen"]
     selected_march = (
         "x86-64-v2"
         if mx.get_arch() == "amd64"
