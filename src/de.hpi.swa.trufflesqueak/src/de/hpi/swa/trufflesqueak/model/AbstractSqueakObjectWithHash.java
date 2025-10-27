@@ -91,15 +91,15 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     public abstract void fillin(SqueakImageChunk chunk);
 
     @Override
-    public final long getOrCreateSqueakHash() {
-        return getOrCreateSqueakHash(InlinedBranchProfile.getUncached(), null);
+    public final long getOrCreateSqueakHash(final SqueakImageContext image) {
+        return getOrCreateSqueakHash(image, InlinedBranchProfile.getUncached(), null);
     }
 
-    public final long getOrCreateSqueakHash(final InlinedBranchProfile needsHashProfile, final Node node) {
+    public final long getOrCreateSqueakHash(final SqueakImageContext image, final InlinedBranchProfile needsHashProfile, final Node node) {
         if (needsSqueakHash()) {
             /* Lazily initialize squeakHash and derive value from hashCode. */
             needsHashProfile.enter(node);
-            setSqueakHash(System.identityHashCode(this) % SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK);
+            setSqueakHash(image.newObjectHash());
         }
         return getSqueakHash();
     }

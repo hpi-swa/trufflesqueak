@@ -50,7 +50,7 @@ import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 public abstract class AbstractSqueakObject implements TruffleObject {
     private static final Object DEFAULT = new Object();
 
-    public abstract long getOrCreateSqueakHash();
+    public abstract long getOrCreateSqueakHash(SqueakImageContext image);
 
     public abstract int getNumSlots();
 

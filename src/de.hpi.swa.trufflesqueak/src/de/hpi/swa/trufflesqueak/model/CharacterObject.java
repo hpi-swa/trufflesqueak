@@ -11,6 +11,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 
 @ValueType
 public final class CharacterObject extends AbstractSqueakObject {
@@ -61,7 +62,7 @@ public final class CharacterObject extends AbstractSqueakObject {
     }
 
     @Override
-    public long getOrCreateSqueakHash() {
+    public long getOrCreateSqueakHash(final SqueakImageContext image) {
         return getValue();
     }
 

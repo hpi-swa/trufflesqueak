@@ -237,7 +237,7 @@ public final class ObjectGraphUtils {
                 becomeMap.put(from, to);
                 if (from instanceof final AbstractSqueakObjectWithClassAndHash f && to instanceof final AbstractSqueakObjectWithClassAndHash t) {
                     if (copyHash) {
-                        t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash()));
+                        t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash(image)));
                     }
                     f.forwardTo(t);
                 } else {

@@ -113,7 +113,7 @@ public final class SqueakImageWriter {
         writeLong(0); // memory size (yet unknown, see finalizeFileHeader)
         writeLong(image.flags.getOldBaseAddress()); // oldBaseAddress
         writeLong(specialObjectOop);
-        writeLong(0xffee); // last hash
+        writeLong(image.getLastHash()); // last hash
         writeLong(image.flags.getSnapshotScreenSize());
         writeLong(image.flags.getHeaderFlags());
         writeInt(0); // extra VM memory

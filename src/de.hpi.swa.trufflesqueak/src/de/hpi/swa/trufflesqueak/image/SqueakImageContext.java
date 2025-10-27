@@ -168,6 +168,7 @@ public final class SqueakImageContext {
     /* System */
     public NativeObject clipboardTextHeadless = asByteString("");
     private boolean currentMarkingFlag;
+    private int lastHash = 0;
     public final ObjectGraphUtils objectGraphUtils;
     private ArrayObject hiddenRoots;
     // first page of classTable is special
@@ -427,6 +428,24 @@ public final class SqueakImageContext {
 
     public boolean toggleCurrentMarkingFlag() {
         return currentMarkingFlag = !currentMarkingFlag;
+    }
+
+    public void setLastHash(final int lastHash) {
+        assert this.lastHash == 0;
+        this.lastHash = lastHash;
+    }
+
+    public long getLastHash() {
+        return lastHash;
+    }
+
+    public int newObjectHash() {
+        int hash;
+        do {
+            lastHash = lastHash * 16807;
+            hash = (lastHash + (lastHash >> 4)) & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
+        } while (hash == 0);
+        return hash;
     }
 
     public void setHiddenRoots(final ArrayObject theHiddenRoots) {

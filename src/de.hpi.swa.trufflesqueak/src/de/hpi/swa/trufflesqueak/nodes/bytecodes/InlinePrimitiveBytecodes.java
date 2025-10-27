@@ -16,6 +16,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -181,8 +182,9 @@ public final class InlinePrimitiveBytecodes {
 
         @Specialization
         protected final void doIdentityHash(final VirtualFrame frame,
+                        @Bind final SqueakImageContext image,
                         @Cached final InlinedBranchProfile needsHashProfile) {
-            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getOrCreateSqueakHash(needsHashProfile, this));
+            pushNode.execute(frame, ((AbstractSqueakObjectWithClassAndHash) popNode.execute(frame)).getOrCreateSqueakHash(image, needsHashProfile, this));
         }
     }
 
