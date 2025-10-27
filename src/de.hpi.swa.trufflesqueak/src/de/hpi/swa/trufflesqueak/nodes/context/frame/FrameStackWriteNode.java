@@ -11,11 +11,8 @@ import java.util.Objects;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
@@ -51,59 +48,29 @@ public abstract class FrameStackWriteNode extends AbstractNode {
             this.slotIndex = slotIndex;
         }
 
-        @Specialization(guards = "isBooleanOrIllegal(frame)")
+        @Specialization
         protected final void writeBool(final VirtualFrame frame, final boolean value) {
             frame.setBoolean(slotIndex, value);
         }
 
-        @Specialization(guards = "isLongOrIllegal(frame)")
+        @Specialization
         protected final void writeLong(final VirtualFrame frame, final long value) {
             frame.setLong(slotIndex, value);
         }
 
-        @Specialization(guards = "isDoubleOrIllegal(frame)")
+        @Specialization
         protected final void writeDouble(final VirtualFrame frame, final double value) {
             frame.setDouble(slotIndex, value);
         }
 
         @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
         protected final void writeAbstractSqueakObjectWithClassAndHash(final VirtualFrame frame, final AbstractSqueakObjectWithClassAndHash value) {
-            /* Initialize type on first write. No-op if kind is already Object. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Object);
-
             frame.setObject(slotIndex, value.resolveForwardingPointer());
         }
 
         @Specialization(replaces = {"writeBool", "writeLong", "writeDouble", "writeAbstractSqueakObjectWithClassAndHash"})
         protected final void writeObject(final VirtualFrame frame, final Object value) {
-            /* Initialize type on first write. No-op if kind is already Object. */
-            frame.getFrameDescriptor().setSlotKind(slotIndex, FrameSlotKind.Object);
-
             frame.setObject(slotIndex, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
-        }
-
-        protected final boolean isBooleanOrIllegal(final VirtualFrame frame) {
-            return isKindOrIllegal(frame, FrameSlotKind.Boolean);
-        }
-
-        protected final boolean isLongOrIllegal(final VirtualFrame frame) {
-            return isKindOrIllegal(frame, FrameSlotKind.Long);
-        }
-
-        protected final boolean isDoubleOrIllegal(final VirtualFrame frame) {
-            return isKindOrIllegal(frame, FrameSlotKind.Double);
-        }
-
-        private boolean isKindOrIllegal(final VirtualFrame frame, final FrameSlotKind expectedKind) {
-            final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            final FrameSlotKind kind = frameDescriptor.getSlotKind(slotIndex);
-            if (kind == FrameSlotKind.Illegal) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameDescriptor.setSlotKind(slotIndex, expectedKind);
-                return true;
-            } else {
-                return kind == expectedKind;
-            }
         }
     }
 
