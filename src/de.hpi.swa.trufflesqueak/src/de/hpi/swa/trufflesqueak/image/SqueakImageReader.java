@@ -99,7 +99,7 @@ public final class SqueakImageReader {
         final long dataSize = buffer.getLong();
         final long oldBaseAddress = buffer.getLong();
         specialObjectsPointer = buffer.getLong();
-        final long lastHash = buffer.getLong();
+        image.setLastHash((int) buffer.getLong());
         final long snapshotScreenSize = buffer.getLong();
         final long headerFlags = buffer.getLong();
         // extraVMMemory
@@ -120,8 +120,6 @@ public final class SqueakImageReader {
         final long firstSegmentSize = buffer.getLong();
         // freeOldSpace
         buffer.getLong();
-
-        image.setLastHash(MiscUtils.toIntExact(lastHash));
         image.flags.initialize(oldBaseAddress, headerFlags, snapshotScreenSize, maxExternalSemaphoreTableSize);
 
         skip(buffer, headerSize - buffer.position());

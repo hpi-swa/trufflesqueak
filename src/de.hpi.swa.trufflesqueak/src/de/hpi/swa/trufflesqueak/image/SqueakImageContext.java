@@ -431,7 +431,6 @@ public final class SqueakImageContext {
     }
 
     public void setLastHash(final int lastHash) {
-        assert this.lastHash == 0;
         this.lastHash = lastHash;
     }
 
