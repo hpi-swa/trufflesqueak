@@ -32,6 +32,14 @@ public final class VariablePointersObject extends AbstractVariablePointersObject
         return new VariablePointersObject(this);
     }
 
+    public Object getFromVariablePart(final long index) {
+        return getObjectFromVariablePart(index);
+    }
+
+    public void putIntoVariablePart(final long index, final Object value) {
+        putObjectFromVariablePart(index, value);
+    }
+
     @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
         super.pointersBecomeOneWay(fromToMap);

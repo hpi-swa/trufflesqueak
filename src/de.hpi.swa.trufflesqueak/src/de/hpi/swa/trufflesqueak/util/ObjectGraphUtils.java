@@ -137,12 +137,13 @@ public final class ObjectGraphUtils {
 
         public void run() {
             final ObjectTracer tracer = roots.copyEmpty();
+            final SqueakImageContext image = tracer.image;
             AbstractSqueakObjectWithHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithHash currentObject = root;
                 do {
                     currentObject.pointersBecomeOneWay(fromToMap);
-                    if (targetClass == currentObject.getSqueakClass(tracer.image)) {
+                    if (targetClass == currentObject.getSqueakClass(image)) {
                         objects.add(currentObject);
                     }
                     tracer.tracePointers(currentObject);

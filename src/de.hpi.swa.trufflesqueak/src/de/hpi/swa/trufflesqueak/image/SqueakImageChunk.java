@@ -87,7 +87,7 @@ public final class SqueakImageChunk {
                     object = new VariablePointersObject(header, classObject);
                 }
             } else if (format == 4) { // indexable weak fields
-                object = new WeakVariablePointersObject(image, header, classObject);
+                object = new WeakVariablePointersObject(header, classObject);
             } else if (format == 5) { // fixed fields, special notification
                 object = new EphemeronObject(image, header, classObject);
             } else if (format <= 8) {

@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -19,6 +20,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -324,7 +326,7 @@ public class AbstractPointersObjectNodes {
                         @Cached("index") final long cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final InlinedConditionProfile weakRefProfile) {
-            return object.getFromVariablePart(cachedIndex - cachedLayout.getInstSize(), weakRefProfile, node);
+            return object.getFromWeakVariablePart(node, cachedIndex - cachedLayout.getInstSize(), weakRefProfile);
         }
 
         @Specialization(guards = {"index >= object.instsize()", "!object.getLayout().isValid()"})
@@ -338,7 +340,7 @@ public class AbstractPointersObjectNodes {
         @Specialization(guards = "index >= object.instsize()", replaces = {"doReadFromVariablePartCached", "doReadFromVariablePartInvalid"})
         protected static final Object doReadFromVariablePartGeneric(final Node node, final WeakVariablePointersObject object, final long index,
                         @Shared("weakRefProfile") @Cached final InlinedConditionProfile weakRefProfile) {
-            return object.getFromVariablePart(index - object.instsize(), weakRefProfile, node);
+            return object.getFromWeakVariablePart(node, index - object.instsize(), weakRefProfile);
         }
     }
 
@@ -376,24 +378,27 @@ public class AbstractPointersObjectNodes {
         @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_VARIABLE_PART_CACHE_LIMIT")
         protected static final void doWriteIntoVariablePartCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+                        @Bind final SqueakImageContext image,
                         @Cached("index") final long cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final InlinedConditionProfile primitiveProfile) {
-            object.putIntoVariablePart(cachedIndex - cachedLayout.getInstSize(), value, primitiveProfile, node);
+            object.putIntoWeakVariablePart(node, cachedIndex - cachedLayout.getInstSize(), value, image, primitiveProfile);
         }
 
         @Specialization(guards = {"index >= object.instsize()", "!object.getLayout().isValid()"})
         protected static final void doWriteIntoVariablePartInvalid(final Node node, final WeakVariablePointersObject object, final long index, final Object value,
+                        @Bind final SqueakImageContext image,
                         @Shared("weakRefProfile") @Cached final InlinedConditionProfile weakRefProfile) {
             object.updateLayout(); // ensure layout is updated
-            doWriteIntoVariablePartGeneric(node, object, index, value, weakRefProfile);
+            doWriteIntoVariablePartGeneric(node, object, index, value, image, weakRefProfile);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCached", "doWriteIntoVariablePartInvalid"})
         protected static final void doWriteIntoVariablePartGeneric(final Node node, final WeakVariablePointersObject object, final long index, final Object value,
+                        @Bind final SqueakImageContext image,
                         @Shared("weakRefProfile") @Cached final InlinedConditionProfile primitiveProfile) {
-            object.putIntoVariablePart(index - object.instsize(), value, primitiveProfile, node);
+            object.putIntoWeakVariablePart(node, index - object.instsize(), value, image, primitiveProfile);
         }
     }
 }
