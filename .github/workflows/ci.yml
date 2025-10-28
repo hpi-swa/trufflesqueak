@@ -97,7 +97,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
-      JAVA_VERSION: "25"
+      JAVA_VERSION: "25.0.0"
       # JVMCI_VERSION_CHECK: "warn" # version of EA build does not always match
       NATIVE_IMAGE_OPTIONS: "-J-XX:MaxRAMPercentage=100"
       VERBOSE_GRAALVM_LAUNCHERS: true
@@ -163,7 +163,7 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
-        trufflesqueak-polyglot-get -v 25.0.0 -a js
+        trufflesqueak-polyglot-get -v ${{ env.JAVA_VERSION }} -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' }}
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
