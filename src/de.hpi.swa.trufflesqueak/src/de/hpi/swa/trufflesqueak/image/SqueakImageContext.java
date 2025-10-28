@@ -168,7 +168,7 @@ public final class SqueakImageContext {
     /* System */
     public NativeObject clipboardTextHeadless = asByteString("");
     private boolean currentMarkingFlag;
-    private int lastHash = 0;
+    private int lastHash = SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
     public final ObjectGraphUtils objectGraphUtils;
     private ArrayObject hiddenRoots;
     // first page of classTable is special
@@ -431,6 +431,7 @@ public final class SqueakImageContext {
     }
 
     public void setLastHash(final int lastHash) {
+        assert lastHash != 0;
         this.lastHash = lastHash;
     }
 
@@ -439,10 +440,24 @@ public final class SqueakImageContext {
     }
 
     public int newObjectHash() {
+        final int hash = newObjectHashSingleShot();
+        if (hash != 0) {
+            return hash;
+        } else {
+            CompilerDirectives.transferToInterpreter();
+            return newObjectHashSlowPath();
+        }
+    }
+
+    private int newObjectHashSingleShot() {
+        lastHash = lastHash * 16807; /* "7 raisedTo: 5" */
+        return (lastHash + (lastHash >>> 4)) & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
+    }
+
+    private int newObjectHashSlowPath() {
         int hash;
         do {
-            lastHash = lastHash * 16807;
-            hash = (lastHash + (lastHash >> 4)) & SqueakImageConstants.IDENTITY_HASH_HALF_WORD_MASK;
+            hash = newObjectHashSingleShot();
         } while (hash == 0);
         return hash;
     }
