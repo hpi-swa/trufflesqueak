@@ -11,7 +11,6 @@ import java.util.Objects;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -94,24 +93,9 @@ public abstract class FrameStackReadNode extends AbstractNode {
             super(slotIndex);
         }
 
-        @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
+        @Specialization(guards = "frame.isObject(slotIndex)")
         protected final Object readObject(final VirtualFrame frame) {
-            final Object value;
-            if (!frame.isObject(slotIndex)) {
-                /*
-                 * The FrameSlotKind has been set to Object, so from now on all writes to the slot
-                 * will be Object writes. However, now we are in a frame that still has an old
-                 * non-Object value. This is a slow-path operation: we read the non-Object value,
-                 * and clear it immediately as an Object value so that we do not hit this path again
-                 * multiple times for the same slot of the same frame.
-                 */
-                CompilerDirectives.transferToInterpreter();
-                value = frame.getValue(slotIndex);
-                frame.setObject(slotIndex, value);
-            } else {
-                value = frame.getObject(slotIndex);
-            }
-            return value;
+            return frame.getObject(slotIndex);
         }
     }
 
@@ -120,15 +104,9 @@ public abstract class FrameStackReadNode extends AbstractNode {
             super(slotIndex);
         }
 
-        @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
+        @Specialization(guards = "frame.isObject(slotIndex)")
         protected final Object readObject(final VirtualFrame frame) {
-            final Object value;
-            if (!frame.isObject(slotIndex)) {
-                CompilerDirectives.transferToInterpreter();
-                value = frame.getValue(slotIndex);
-            } else {
-                value = frame.getObject(slotIndex);
-            }
+            final Object value = frame.getObject(slotIndex);
             frame.setObject(slotIndex, NilObject.SINGLETON);
             return value;
         }
