@@ -59,17 +59,8 @@ public final class ObjectGraphUtils {
         return lastSeenObjects;
     }
 
-    static final class AllInstancesTask implements Runnable {
-        private final ObjectTracer roots;
-        private final ArrayDeque<AbstractSqueakObjectWithHash> objects;
-        private final UnmodifiableEconomicMap<Object, Object> fromToMap;
-
-        AllInstancesTask(final ObjectTracer theRoots, final ArrayDeque<AbstractSqueakObjectWithHash> theObjects, final UnmodifiableEconomicMap<Object, Object> theFromToMap) {
-            roots = theRoots;
-            objects = theObjects;
-            fromToMap = theFromToMap;
-        }
-
+    private record AllInstancesTask(ObjectTracer roots, ArrayDeque<AbstractSqueakObjectWithHash> objects,
+                    UnmodifiableEconomicMap<Object, Object> fromToMap) implements Runnable {
         public void run() {
             final ObjectTracer tracer = roots.copyEmpty();
             AbstractSqueakObjectWithHash root;
@@ -121,20 +112,9 @@ public final class ObjectGraphUtils {
         return result;
     }
 
-    static final class AllInstancesOfTask implements Runnable {
-        private final ClassObject targetClass;
-        private final ObjectTracer roots;
-        private final ArrayDeque<AbstractSqueakObjectWithHash> objects;
-        private final UnmodifiableEconomicMap<Object, Object> fromToMap;
-
-        AllInstancesOfTask(final ClassObject theTargetClass, final ObjectTracer theRoots, final ArrayDeque<AbstractSqueakObjectWithHash> theObjects,
-                        final UnmodifiableEconomicMap<Object, Object> theFromToMap) {
-            targetClass = theTargetClass;
-            roots = theRoots;
-            objects = theObjects;
-            fromToMap = theFromToMap;
-        }
-
+    private record AllInstancesOfTask(ClassObject targetClass, ObjectTracer roots,
+                    ArrayDeque<AbstractSqueakObjectWithHash> objects,
+                    UnmodifiableEconomicMap<Object, Object> fromToMap) implements Runnable {
         public void run() {
             final ObjectTracer tracer = roots.copyEmpty();
             final SqueakImageContext image = tracer.image;
@@ -319,15 +299,8 @@ public final class ObjectGraphUtils {
         postProcessBecomeMap(null);
     }
 
-    static final class BecomeOneWayManyPairsTask implements Runnable {
-        private final ObjectTracer roots;
-        private final UnmodifiableEconomicMap<Object, Object> fromToMap;
-
-        BecomeOneWayManyPairsTask(final ObjectTracer theRoots, final UnmodifiableEconomicMap<Object, Object> theFromToMap) {
-            roots = theRoots;
-            fromToMap = theFromToMap;
-        }
-
+    private record BecomeOneWayManyPairsTask(ObjectTracer roots,
+                    UnmodifiableEconomicMap<Object, Object> fromToMap) implements Runnable {
         public void run() {
             final ObjectTracer tracer = roots.copyEmpty();
             AbstractSqueakObjectWithHash root;
@@ -392,17 +365,8 @@ public final class ObjectGraphUtils {
         }
     }
 
-    static final class EphemeronsTask implements Runnable {
-        private final ObjectTracer roots;
-        private final ArrayDeque<EphemeronObject> ephemeronsToBeTraced;
-        private final UnmodifiableEconomicMap<Object, Object> fromToMap;
-
-        EphemeronsTask(final ObjectTracer theRoots, final ArrayDeque<EphemeronObject> ephemerons, final UnmodifiableEconomicMap<Object, Object> theFromToMap) {
-            roots = theRoots;
-            ephemeronsToBeTraced = ephemerons;
-            fromToMap = theFromToMap;
-        }
-
+    private record EphemeronsTask(ObjectTracer roots, ArrayDeque<EphemeronObject> ephemeronsToBeTraced,
+                    UnmodifiableEconomicMap<Object, Object> fromToMap) implements Runnable {
         public void run() {
             final ObjectTracer tracer = roots.copyEmpty();
             AbstractSqueakObjectWithHash root;
