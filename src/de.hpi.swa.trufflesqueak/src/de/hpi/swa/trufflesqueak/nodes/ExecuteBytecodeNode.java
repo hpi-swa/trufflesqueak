@@ -32,7 +32,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
     private static final int LOCAL_RETURN_PC = -2;
-    private static final int BACKJUMP_THRESHOLD = 1 << 14;
 
     private final CompiledCodeObject code;
     private final BranchProfile nonLocalReturnProfile = BranchProfile.create();
@@ -71,7 +70,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
          * Maintain backJumpCounter in a Counter so that the compiler does not confuse it with the
          * pc because both are constant within the loop.
          */
-        final Counter backJumpCounter = new Counter();
+        final LoopCounter loopCounter = new LoopCounter();
         Object returnValue = null;
         while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
@@ -96,9 +95,12 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     pc = jumpNode.getJumpSuccessorIndex();
                 }
             } else if (node instanceof final AbstractUnconditionalBackJumpNode jumpNode) {
-                backJumpCounter.value++;
-                if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
-                    if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
+                final int loopCount = ++loopCounter.value;
+                if (CompilerDirectives.injectBranchProbability(LoopCounter.REPORT_LOOP_PROBABILITY, loopCount >= LoopCounter.REPORT_LOOP_STRIDE)) {
+                    if (CompilerDirectives.hasNextTier()) {
+                        LoopNode.reportLoopCount(this, loopCount);
+                    }
+                    if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
                         returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
                         if (returnValue != null) {
                             break;
@@ -106,6 +108,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     } else {
                         jumpNode.executeCheck(frame);
                     }
+                    loopCounter.value = 0;
                 }
             } else if (node instanceof final AbstractReturnNode returnNode) {
                 /*
@@ -121,9 +124,11 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         }
         assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
         FrameAccess.terminateFrame(frame);
-        // only report non-zero counters to reduce interpreter overhead
-        if (CompilerDirectives.hasNextTier() && backJumpCounter.value != 0) {
-            LoopNode.reportLoopCount(this, backJumpCounter.value > 0 ? backJumpCounter.value : Integer.MAX_VALUE);
+        if (CompilerDirectives.hasNextTier()) {
+            final int loopCount = loopCounter.value;
+            if (loopCount > 0) {
+                LoopNode.reportLoopCount(this, loopCount);
+            }
         }
         return returnValue;
     }
@@ -131,8 +136,10 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     /**
      * Smaller than int[1], does not kill int[] on write and doesn't need bounds checks.
      */
-    private static final class Counter {
-        int value;
+    private static final class LoopCounter {
+        private static final int REPORT_LOOP_STRIDE = 1 << 14;
+        private static final double REPORT_LOOP_PROBABILITY = (double) 1 / (double) REPORT_LOOP_STRIDE;
+        private int value;
     }
 
     /*
