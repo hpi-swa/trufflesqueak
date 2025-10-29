@@ -528,22 +528,26 @@ public final class SqueakImageContext {
         while (majorIndex < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS) {
             final Object classTablePageOrNil = hiddenRoots.getObject(majorIndex);
             if (classTablePageOrNil instanceof final ArrayObject page) {
-                for (int minorIndex = 0; minorIndex < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; minorIndex++) {
-                    final int currentClassTableIndex = SqueakImageConstants.classTableIndexFor(majorIndex, minorIndex);
-                    Object entry = page.getObject(minorIndex);
-                    if (entry instanceof final ClassObject classObject && !classObject.isNotForwarded()) {
-                        entry = classObject.getForwardingPointer();
-                        page.setObject(minorIndex, entry);
-                    }
-                    final boolean isDuplicate = entry == clazz && currentClassTableIndex != expectedIndex && currentClassTableIndex > SqueakImageConstants.LAST_CLASS_INDEX_PUN;
-                    if (isDuplicate || isUnreachable(entry)) {
-                        page.setObject(minorIndex, NilObject.SINGLETON);
-                        if (currentClassTableIndex < classTableIndex) {
-                            classTableIndex = currentClassTableIndex;
+                if (page.isObjectType()) {
+                    for (int minorIndex = 0; minorIndex < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; minorIndex++) {
+                        final int currentClassTableIndex = SqueakImageConstants.classTableIndexFor(majorIndex, minorIndex);
+                        Object entry = page.getObject(minorIndex);
+                        if (entry instanceof final ClassObject classObject && !classObject.isNotForwarded()) {
+                            entry = classObject.getForwardingPointer();
+                            page.setObject(minorIndex, entry);
                         }
-                    } else if (entry instanceof final ClassObject classObject) {
-                        classObject.pointersBecomeOneWay(becomeMap);
+                        final boolean isDuplicate = entry == clazz && currentClassTableIndex != expectedIndex && currentClassTableIndex > SqueakImageConstants.LAST_CLASS_INDEX_PUN;
+                        if (isDuplicate || isUnreachable(entry)) {
+                            page.setObject(minorIndex, NilObject.SINGLETON);
+                            if (currentClassTableIndex < classTableIndex) {
+                                classTableIndex = currentClassTableIndex;
+                            }
+                        } else if (entry instanceof final ClassObject classObject) {
+                            classObject.pointersBecomeOneWay(becomeMap);
+                        }
                     }
+                } else {
+                    assert page.isEmptyType() && page.getEmptyLength() == SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
                 }
             } else {
                 assert classTablePageOrNil == NilObject.SINGLETON;
@@ -570,17 +574,21 @@ public final class SqueakImageContext {
     private void flushCachesForSelectorInClassTable(final NativeObject selector) {
         for (final Object classTablePageOrNil : hiddenRoots.getObjectStorage()) {
             if (classTablePageOrNil instanceof final ArrayObject page) {
-                final Object[] entries = page.getObjectStorage();
-                for (int i = 0; i < entries.length; i++) {
-                    final Object entry = entries[i];
-                    if (entry instanceof final ClassObject classObject) {
-                        if (!classObject.isNotForwarded()) {
-                            entries[i] = classObject.getForwardingPointer();
+                if (page.isObjectType()) {
+                    final Object[] entries = page.getObjectStorage();
+                    for (int i = 0; i < entries.length; i++) {
+                        final Object entry = entries[i];
+                        if (entry instanceof final ClassObject classObject) {
+                            if (!classObject.isNotForwarded()) {
+                                entries[i] = classObject.getForwardingPointer();
+                            }
+                            ((ClassObject) entries[i]).flushCachesForSelector(selector);
+                        } else {
+                            assert entry == NilObject.SINGLETON;
                         }
-                        ((ClassObject) entries[i]).flushCachesForSelector(selector);
-                    } else {
-                        assert entry == NilObject.SINGLETON;
                     }
+                } else {
+                    assert page.isEmptyType() && page.getEmptyLength() == SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
                 }
             } else {
                 assert classTablePageOrNil == NilObject.SINGLETON;
