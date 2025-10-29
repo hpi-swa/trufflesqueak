@@ -71,7 +71,15 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
          * Maintain backJumpCounter in a Counter so that the compiler does not confuse it with the
          * pc because both are constant within the loop.
          */
-        final Counter backJumpCounter = new Counter();
+        int counter = 0;
+        LoopCounter loopCounter = null;
+        if (CompilerDirectives.hasNextTier() && !CompilerDirectives.inInterpreter()) {
+            // Using a class for the loop counter is a workaround to prevent PE from merging it at
+            // the end of the loop.
+            // We need to use a class with PE, in the interpreter we can use a regular counter.
+            loopCounter = new LoopCounter();
+        }
+
         Object returnValue = null;
         while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
@@ -96,17 +104,31 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     pc = jumpNode.getJumpSuccessorIndex();
                 }
             } else if (node instanceof final AbstractUnconditionalBackJumpNode jumpNode) {
-                backJumpCounter.value++;
-                if (backJumpCounter.value % BACKJUMP_THRESHOLD == 0) {
-                    if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
-                        returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
-                        if (returnValue != null) {
-                            break;
-                        }
+                if (CompilerDirectives.hasNextTier()) {
+                    if (CompilerDirectives.inCompiledCode()) {
+                        counter = ++loopCounter.value;
                     } else {
-                        jumpNode.executeCheck(frame);
+                        counter++;
+                    }
+                    if (CompilerDirectives.injectBranchProbability(LoopCounter.REPORT_LOOP_PROBABILITY, counter >= LoopCounter.REPORT_LOOP_STRIDE)) {
+                        LoopNode.reportLoopCount(this, counter);
+                        if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, BACKJUMP_THRESHOLD)) {
+                            returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
+                            if (returnValue != null) {
+                                break;
+                            }
+                        }
+                        if (CompilerDirectives.inCompiledCode()) {
+                            loopCounter.value = 0;
+                        } else {
+                            counter = 0;
+                        }
+                    }
+                    if (CompilerDirectives.inCompiledCode()) {
+                        counter = 0;
                     }
                 }
+                jumpNode.executeCheck(frame);
             } else if (node instanceof final AbstractReturnNode returnNode) {
                 /*
                  * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
@@ -121,9 +143,13 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
         }
         assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
         FrameAccess.terminateFrame(frame);
-        // only report non-zero counters to reduce interpreter overhead
-        if (CompilerDirectives.hasNextTier() && backJumpCounter.value != 0) {
-            LoopNode.reportLoopCount(this, backJumpCounter.value > 0 ? backJumpCounter.value : Integer.MAX_VALUE);
+        if (CompilerDirectives.hasNextTier()) {
+            if (CompilerDirectives.inCompiledCode()) {
+                counter = loopCounter.value;
+            }
+            if (counter > 0) {
+                LoopNode.reportLoopCount(this, counter);
+            }
         }
         return returnValue;
     }
@@ -131,8 +157,11 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     /**
      * Smaller than int[1], does not kill int[] on write and doesn't need bounds checks.
      */
-    private static final class Counter {
-        int value;
+    private static final class LoopCounter {
+        private static final int REPORT_LOOP_STRIDE = 1 << 8;
+        private static final double REPORT_LOOP_PROBABILITY = (double) 1 / (double) REPORT_LOOP_STRIDE;
+
+        private int value;
     }
 
     /*
