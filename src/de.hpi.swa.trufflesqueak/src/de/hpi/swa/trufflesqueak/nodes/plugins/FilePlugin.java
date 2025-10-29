@@ -25,6 +25,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleFile.AttributeDescriptor;
 import com.oracle.truffle.api.TruffleFile.Attributes;
+import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -712,11 +714,42 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetWorkingDirectory")
+    protected abstract static class PrimGetWorkingDirectoryNode extends AbstractPrimitiveNode implements Primitive0 {
+        @Specialization
+        public static final NativeObject getWorkingDirectory(@SuppressWarnings("unused") final Object receiver,
+                        @Bind final SqueakImageContext image) {
+            return image.asByteString(image.env.getCurrentWorkingDirectory().getPath());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHasFileAccess")
     protected abstract static class PrimHasFileAccessNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final boolean hasFileAccess(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.wrap(getContext().env.isFileIOAllowed());
+        protected static final boolean hasFileAccess(@SuppressWarnings("unused") final Object receiver,
+                        @Bind final SqueakImageContext image) {
+            return BooleanObject.wrap(image.env.isFileIOAllowed());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSetWorkingDirectory")
+    protected abstract static class PrimSetWorkingDirectoryNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "path.isByteType()")
+        protected static final Object setWorkingDirectory(final Object receiver, final NativeObject path,
+                        @Bind final SqueakImageContext image) {
+            setWorkingDirectoryOrFail(image, path);
+            return receiver;
+        }
+
+        public static final void setWorkingDirectoryOrFail(final SqueakImageContext image, final NativeObject path) {
+            final Env env = image.env;
+            final TruffleFile file = env.getPublicTruffleFile(path.asStringUnsafe());
+            if (!file.exists()) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
+            env.setCurrentWorkingDirectory(file);
         }
     }
 }

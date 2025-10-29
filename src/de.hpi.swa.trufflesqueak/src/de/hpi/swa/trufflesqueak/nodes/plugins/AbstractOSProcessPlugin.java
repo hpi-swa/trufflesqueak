@@ -10,7 +10,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Bind;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
@@ -27,6 +26,8 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin.PrimGetWorkingDirectoryNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin.PrimSetWorkingDirectoryNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
@@ -108,30 +109,21 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveChdir")
     protected abstract static class PrimChdirNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
-        @Specialization(guards = "pathString.isByteType()")
-        protected final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
-                        @Bind final Node node,
-                        @Cached final InlinedBranchProfile errorProfile) {
-            final SqueakImageContext image = getContext();
-            try {
-                image.env.setCurrentWorkingDirectory(image.env.getPublicTruffleFile(pathString.asStringUnsafe()));
-                return NilObject.SINGLETON; // Signals success.
-            } catch (UnsupportedOperationException | IllegalArgumentException | SecurityException e) {
-                errorProfile.enter(node);
-                throw PrimitiveFailed.BAD_ARGUMENT;
-            }
+        @Specialization(guards = "path.isByteType()")
+        protected static final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject path,
+                        @Bind final SqueakImageContext image) {
+            PrimSetWorkingDirectoryNode.setWorkingDirectoryOrFail(image, path);
+            return NilObject.SINGLETON; // Signals success.
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetCurrentWorkingDirectory")
     protected abstract static class PrimGetCurrentWorkingDirectoryNode extends AbstractPrimitiveNode implements Primitive0 {
-
         @Specialization
-        protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver) {
-            final SqueakImageContext image = getContext();
-            return image.asByteString(image.env.getCurrentWorkingDirectory().getPath());
+        protected static final NativeObject doGet(final Object receiver,
+                        @Bind final SqueakImageContext image) {
+            return PrimGetWorkingDirectoryNode.getWorkingDirectory(receiver, image);
         }
     }
 
