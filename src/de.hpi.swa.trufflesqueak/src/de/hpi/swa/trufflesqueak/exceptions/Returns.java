@@ -21,9 +21,9 @@ public final class Returns {
         @Serial private static final long serialVersionUID = 1L;
         protected final transient Object returnValue;
 
-        private AbstractReturn(final Object result) {
-            assert result != null : "Unexpected `null` value";
-            returnValue = result;
+        private AbstractReturn(final Object returnValue) {
+            assert returnValue != null : "Unexpected `null` value";
+            this.returnValue = returnValue;
         }
 
         public final Object getReturnValue() {
@@ -31,24 +31,32 @@ public final class Returns {
         }
     }
 
-    /**
-     * NonLocalReturn represents a return to a targetContext that is on the sender chain.
-     */
-    public static final class NonLocalReturn extends AbstractReturn {
+    private abstract static class AbstractReturnWithContext extends AbstractReturn {
         @Serial private static final long serialVersionUID = 1L;
-        private final transient ContextObject targetContext;
+        protected final transient ContextObject targetContext;
 
-        public NonLocalReturn(final Object returnValue, final ContextObject homeContext) {
+        private AbstractReturnWithContext(final Object returnValue, final ContextObject targetContext) {
             super(returnValue);
-            this.targetContext = (ContextObject) homeContext.getFrameSender();
+            this.targetContext = targetContext;
         }
 
-        public boolean targetIsFrame(final VirtualFrame frame) {
+        public final boolean targetIsFrame(final VirtualFrame frame) {
             return targetContext == FrameAccess.getContext(frame);
         }
 
-        public ContextObject getTargetContext() {
+        public final ContextObject getTargetContext() {
             return targetContext;
+        }
+    }
+
+    /**
+     * NonLocalReturn represents a return to a targetContext that is on the sender chain.
+     */
+    public static final class NonLocalReturn extends AbstractReturnWithContext {
+        @Serial private static final long serialVersionUID = 1L;
+
+        public NonLocalReturn(final Object returnValue, final ContextObject homeContext) {
+            super(returnValue, (ContextObject) homeContext.getFrameSender());
         }
 
         @Override
@@ -62,42 +70,25 @@ public final class Returns {
      * CannotReturnToTarget represents a return to a targetContext that cannot be found on the
      * sender chain.
      */
-    public static final class CannotReturnToTarget extends AbstractReturn {
+    public static final class CannotReturnToTarget extends AbstractReturnWithContext {
         @Serial private static final long serialVersionUID = 1L;
-        private final transient ContextObject startingContext;
 
         public CannotReturnToTarget(final Object returnValue, final ContextObject startingContext) {
-            super(returnValue);
-            this.startingContext = startingContext;
-        }
-
-        public ContextObject getStartingContext() {
-            return startingContext;
+            super(returnValue, startingContext);
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "CR-NLR (value: " + returnValue + ", starting: " + startingContext + ")";
+            return "CR-NLR (value: " + returnValue + ", starting: " + targetContext + ")";
         }
     }
 
-    public static final class NonVirtualReturn extends AbstractReturn {
+    public static final class NonVirtualReturn extends AbstractReturnWithContext {
         @Serial private static final long serialVersionUID = 1L;
-        private final transient ContextObject targetContext;
 
         public NonVirtualReturn(final Object returnValue, final AbstractSqueakObject targetContextOrNil) {
-            super(returnValue);
-            assert targetContextOrNil instanceof ContextObject;
-            this.targetContext = (ContextObject) targetContextOrNil;
-        }
-
-        public boolean targetIsFrame(final VirtualFrame frame) {
-            return targetContext == FrameAccess.getContext(frame);
-        }
-
-        public ContextObject getTargetContext() {
-            return targetContext;
+            super(returnValue, (ContextObject) targetContextOrNil);
         }
 
         @Override
