@@ -403,18 +403,6 @@ public final class FrameAccess {
         setSender(frame, NilObject.SINGLETON);
     }
 
-    public static void terminateContextOrFrame(final Frame frame) {
-        final ContextObject context = getContext(frame);
-        if (context != null && context.hasTruffleFrame()) {
-            context.terminate();
-        } else {
-            if (context != null) {
-                context.clearModifiedSender();
-            }
-            terminateFrame(frame);
-        }
-    }
-
     public static boolean isTruffleSqueakFrame(final Frame frame) {
         return frame.getArguments().length >= ArgumentIndicies.RECEIVER.ordinal() && frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
     }
