@@ -77,10 +77,7 @@ public final class ReturnBytecodes {
         protected Object execute(final VirtualFrame frame, final Object returnValue) {
             assert !FrameAccess.hasClosure(frame);
             if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
-                // ToDo: It may be that the sender is always materialized, but it is not a
-                // requirement at this time.
-                assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
-                throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame), null);
+                throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame));
             } else {
                 return returnValue;
             }
@@ -233,7 +230,7 @@ public final class ReturnBytecodes {
         @Override
         public final Object executeReturnSpecialized(final VirtualFrame frame) {
             if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
-                throw new NonVirtualReturn(getReturnValue(frame), FrameAccess.getSender(frame), null);
+                throw new NonVirtualReturn(getReturnValue(frame), FrameAccess.getSender(frame));
             } else {
                 return getReturnValue(frame);
             }
