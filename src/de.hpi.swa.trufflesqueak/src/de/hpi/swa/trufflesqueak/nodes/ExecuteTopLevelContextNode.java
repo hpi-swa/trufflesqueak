@@ -147,22 +147,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @TruffleBoundary
     private ContextObject commonNVReturn(final ContextObject activeContext, final NonVirtualReturn nvr) {
         // Normal returns with modified senders end up here with a target but no start Context.
-        final ContextObject startContextOrNull = nvr.getCurrentContext();
-        final ContextObject startContext;
-        if (startContextOrNull == null) {
-            startContext = activeContext;
-        } else {
-            startContext = startContextOrNull;
-        }
-        // Handle attempted return to a nil sender.
-        final AbstractSqueakObject targetContextOrNil = nvr.getTargetContextOrNil();
         final Object returnValue = nvr.getReturnValue();
-        if (targetContextOrNil == NilObject.SINGLETON) {
-            return sendCannotReturnOrReturnToTopLevel(startContext, null, returnValue);
-        }
-        // Skip over primitive contexts.
-        final ContextObject possibleTargetContext = (ContextObject) targetContextOrNil;
+        final ContextObject possibleTargetContext = nvr.getTargetContext();
         final ContextObject targetContext;
+        // Skip over primitive contexts.
         if (possibleTargetContext.isPrimitiveContext()) {
             targetContext = (ContextObject) possibleTargetContext.getFrameSender();
         } else {
@@ -170,7 +158,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         }
         // Make sure that the targetContext can be returned to.
         if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
-            return sendCannotReturnOrReturnToTopLevel(startContext, targetContext, returnValue);
+            return sendCannotReturnOrReturnToTopLevel(activeContext, targetContext, returnValue);
         }
         // Return to the target context with the return value.
         targetContext.push(returnValue);

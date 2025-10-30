@@ -14,7 +14,6 @@ import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class Returns {
@@ -85,32 +84,26 @@ public final class Returns {
 
     public static final class NonVirtualReturn extends AbstractReturn {
         @Serial private static final long serialVersionUID = 1L;
-        private final transient AbstractSqueakObject targetContextOrNil;
-        private final transient ContextObject currentContext;
+        private final transient ContextObject targetContext;
 
-        public NonVirtualReturn(final Object returnValue, final AbstractSqueakObject targetContextOrNil, final ContextObject currentContext) {
+        public NonVirtualReturn(final Object returnValue, final AbstractSqueakObject targetContextOrNil) {
             super(returnValue);
-            assert targetContextOrNil instanceof ContextObject || targetContextOrNil == NilObject.SINGLETON;
-            this.targetContextOrNil = targetContextOrNil;
-            this.currentContext = currentContext;
+            assert targetContextOrNil instanceof ContextObject;
+            this.targetContext = (ContextObject) targetContextOrNil;
         }
 
         public boolean targetIsFrame(final VirtualFrame frame) {
-            return targetContextOrNil == FrameAccess.getContext(frame);
+            return targetContext == FrameAccess.getContext(frame);
         }
 
-        public AbstractSqueakObject getTargetContextOrNil() {
-            return targetContextOrNil;
-        }
-
-        public ContextObject getCurrentContext() {
-            return currentContext;
+        public ContextObject getTargetContext() {
+            return targetContext;
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContextOrNil + ")";
+            return "NVR (value: " + returnValue + ", target: " + targetContext + ")";
         }
     }
 
