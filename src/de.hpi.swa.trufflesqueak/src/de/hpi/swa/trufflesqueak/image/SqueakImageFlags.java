@@ -18,14 +18,17 @@ public final class SqueakImageFlags {
     @CompilationFinal private long headerFlags;
     @CompilationFinal private long snapshotScreenSize;
     @CompilationFinal private int maxExternalSemaphoreTableSize;
+    @CompilationFinal private boolean isPrimitiveDoMixedArithmetic;
+    @CompilationFinal private boolean preemptionYields;
 
     public void initialize(final long oldBaseAddressValue, final long flags, final long screenSize, final int lastMaxExternalSemaphoreTableSize) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         oldBaseAddress = oldBaseAddressValue;
-        // TruffleSqueak only supports mixed arithmetics, unset bit to ensure flag is always true
-        headerFlags = flags; // & ~PRIMITIVE_DO_MIXED_ARITHMETIC;
+        headerFlags = flags;
         snapshotScreenSize = screenSize;
         maxExternalSemaphoreTableSize = lastMaxExternalSemaphoreTableSize;
+        isPrimitiveDoMixedArithmetic = (headerFlags & PRIMITIVE_DO_MIXED_ARITHMETIC) == 0;
+        preemptionYields = (headerFlags & PREEMPTION_DOES_NOT_YIELD) == 0;
     }
 
     public long getOldBaseAddress() {
@@ -60,11 +63,11 @@ public final class SqueakImageFlags {
 
     @Idempotent
     public boolean isPrimitiveDoMixedArithmetic() {
-        return (headerFlags & PRIMITIVE_DO_MIXED_ARITHMETIC) == 0;
+        return isPrimitiveDoMixedArithmetic;
     }
 
     @Idempotent
     public boolean preemptionYields() {
-        return (headerFlags & PREEMPTION_DOES_NOT_YIELD) == 0;
+        return preemptionYields;
     }
 }
