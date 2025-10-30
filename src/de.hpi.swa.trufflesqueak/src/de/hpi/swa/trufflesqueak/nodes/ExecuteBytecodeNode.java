@@ -45,18 +45,73 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     }
 
     @Override
+    @BytecodeInterpreterSwitch
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     public Object execute(final VirtualFrame frame, final int startPC) {
         CompilerAsserts.partialEvaluationConstant(startPC);
+        int pc = startPC;
+        Object returnValue = null;
         /*
          * Maintain LoopCounter object so that the compiler does not confuse it with the pc because
          * both are constant within the loop.
          */
         final LoopCounter loopCounter = new LoopCounter();
         try {
-            return interpretBytecode(frame, startPC, loopCounter);
+            while (pc != LOCAL_RETURN_PC) {
+                CompilerAsserts.partialEvaluationConstant(pc);
+                final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc);
+                CompilerAsserts.partialEvaluationConstant(node);
+                pc = node.getSuccessorIndex();
+                if (node instanceof final AbstractSendNode sendNode) {
+                    FrameAccess.setInstructionPointer(frame, pc);
+                    sendNode.executeVoid(frame);
+                    final int actualNextPc = FrameAccess.getInstructionPointer(frame);
+                    if (pc != actualNextPc) {
+                        /*
+                         * pc has changed, which can happen if a context is restarted (e.g. as part
+                         * of Exception>>retry). For now, we continue in the interpreter to avoid
+                         * confusing the Graal compiler.
+                         */
+                        CompilerDirectives.transferToInterpreter();
+                        pc = actualNextPc;
+                    }
+                } else if (node instanceof final ConditionalJumpNode jumpNode) {
+                    if (jumpNode.executeCondition(frame)) {
+                        pc = jumpNode.getJumpSuccessorIndex();
+                    }
+                } else if (node instanceof final AbstractUnconditionalBackJumpNode jumpNode) {
+                    final int loopCount = ++loopCounter.value;
+                    if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, loopCount >= LoopCounter.CHECK_LOOP_STRIDE)) {
+                        LoopNode.reportLoopCount(this, loopCount);
+                        if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
+                            returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
+                            if (returnValue != null) {
+                                assert !FrameAccess.hasModifiedSender(frame);
+                                FrameAccess.terminateFrame(frame);
+                                break;
+                            }
+                        } else {
+                            jumpNode.executeCheck(frame);
+                        }
+                        loopCounter.value = 0;
+                    }
+                } else if (node instanceof final AbstractReturnNode returnNode) {
+                    /*
+                     * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
+                     * cannotReturn.
+                     */
+                    FrameAccess.setInstructionPointer(frame, pc);
+                    returnValue = returnNode.executeReturn(frame);
+                    assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
+                    FrameAccess.terminateFrame(frame);
+                    pc = LOCAL_RETURN_PC;
+                } else { /* All other bytecode nodes. */
+                    node.executeVoid(frame);
+                }
+            }
         } catch (final NonLocalReturn nlr) {
             nonLocalReturnProfile.enter();
-            FrameAccess.terminateContextOrFrame(frame);
+            FrameAccess.terminateContextAndFrame(frame);
             throw nlr;
         } catch (final StackOverflowError e) {
             CompilerDirectives.transferToInterpreter();
@@ -66,66 +121,6 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                 LoopNode.reportLoopCount(this, loopCounter.value);
             }
         }
-    }
-
-    /*
-     * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://git.io/fjEDw).
-     */
-    @BytecodeInterpreterSwitch
-    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private Object interpretBytecode(final VirtualFrame frame, final int startPC, final LoopCounter loopCounter) {
-        int pc = startPC;
-        Object returnValue = null;
-        while (pc != LOCAL_RETURN_PC) {
-            CompilerAsserts.partialEvaluationConstant(pc);
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc);
-            CompilerAsserts.partialEvaluationConstant(node);
-            pc = node.getSuccessorIndex();
-            if (node instanceof final AbstractSendNode sendNode) {
-                FrameAccess.setInstructionPointer(frame, pc);
-                sendNode.executeVoid(frame);
-                final int actualNextPc = FrameAccess.getInstructionPointer(frame);
-                if (pc != actualNextPc) {
-                    /*
-                     * pc has changed, which can happen if a context is restarted (e.g. as part of
-                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
-                     * the Graal compiler.
-                     */
-                    CompilerDirectives.transferToInterpreter();
-                    pc = actualNextPc;
-                }
-            } else if (node instanceof final ConditionalJumpNode jumpNode) {
-                if (jumpNode.executeCondition(frame)) {
-                    pc = jumpNode.getJumpSuccessorIndex();
-                }
-            } else if (node instanceof final AbstractUnconditionalBackJumpNode jumpNode) {
-                final int loopCount = ++loopCounter.value;
-                if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, loopCount >= LoopCounter.CHECK_LOOP_STRIDE)) {
-                    LoopNode.reportLoopCount(this, loopCount);
-                    if (CompilerDirectives.inInterpreter() && !FrameAccess.hasClosure(frame) && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
-                        returnValue = BytecodeOSRNode.tryOSR(this, pc, null, null, frame);
-                        if (returnValue != null) {
-                            break;
-                        }
-                    } else {
-                        jumpNode.executeCheck(frame);
-                    }
-                    loopCounter.value = 0;
-                }
-            } else if (node instanceof final AbstractReturnNode returnNode) {
-                /*
-                 * Save pc in frame since ReturnFromClosureNode could send aboutToReturn or
-                 * cannotReturn.
-                 */
-                FrameAccess.setInstructionPointer(frame, pc);
-                returnValue = returnNode.executeReturn(frame);
-                pc = LOCAL_RETURN_PC;
-            } else { /* All other bytecode nodes. */
-                node.executeVoid(frame);
-            }
-        }
-        assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
-        FrameAccess.terminateFrame(frame);
         return returnValue;
     }
 
@@ -148,6 +143,11 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             notifyInserted(bytecodeNodes[pcZeroBased]);
         }
         return bytecodeNodes[pcZeroBased];
+    }
+
+    @Override
+    public CompiledCodeObject getCodeObject() {
+        return code;
     }
 
     /*
