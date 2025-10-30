@@ -12,7 +12,7 @@ suite = {
     "name": "trufflesqueak",
     "mxversion": "7.54.7",
     "versionConflictResolution": "latest",
-    "version": "25.0.0",
+    "version": "25.0.1",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-7.3-7036.zip",
         "cuis_test_image_tag": "24.1.2",
@@ -47,7 +47,7 @@ suite = {
             {
                 "name": "truffle",
                 "subdir": True,
-                "version": "graal-25.0.0",
+                "version": "graal-25.0.1",
                 "urls": [{"url": "https://github.com/oracle/graal", "kind": "git"}],
             }
         ],
