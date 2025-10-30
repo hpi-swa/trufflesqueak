@@ -107,7 +107,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     activeContext = commonNVReturn(activeContext, nvr);
                     LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
                 } catch (final CannotReturnToTarget cr) {
-                    activeContext = sendCannotReturn(cr.getStartingContext(), cr.getReturnValue());
+                    activeContext = sendCannotReturn(cr.getTargetContext(), cr.getReturnValue());
                     LogUtils.SCHEDULING.log(Level.FINE, "Cannot Return on top-level: {0}", activeContext);
                 }
             } catch (final ProcessSwitch ps) {
