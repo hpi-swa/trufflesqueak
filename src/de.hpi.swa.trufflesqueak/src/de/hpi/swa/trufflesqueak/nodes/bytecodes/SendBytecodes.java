@@ -138,6 +138,7 @@ public final class SendBytecodes {
                 if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
                     result = nlr.getReturnValue();
                 } else {
+                    FrameAccess.terminateFrame(frame);
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {

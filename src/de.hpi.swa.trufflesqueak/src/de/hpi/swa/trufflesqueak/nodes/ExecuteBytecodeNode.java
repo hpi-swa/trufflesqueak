@@ -17,11 +17,9 @@ import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.AbstractUnconditionalBackJumpNode;
@@ -34,7 +32,6 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     private static final int LOCAL_RETURN_PC = -2;
 
     private final CompiledCodeObject code;
-    private final BranchProfile nonLocalReturnProfile = BranchProfile.create();
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @CompilationFinal private Object osrMetadata;
@@ -109,10 +106,6 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
                     node.executeVoid(frame);
                 }
             }
-        } catch (final NonLocalReturn nlr) {
-            nonLocalReturnProfile.enter();
-            FrameAccess.terminateContextAndFrame(frame);
-            throw nlr;
         } catch (final StackOverflowError e) {
             CompilerDirectives.transferToInterpreter();
             throw getContext().tryToSignalLowSpace(frame, e);
