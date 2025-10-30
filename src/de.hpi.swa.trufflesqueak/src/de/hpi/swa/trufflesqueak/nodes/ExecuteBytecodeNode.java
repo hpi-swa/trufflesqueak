@@ -111,7 +111,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             }
         } catch (final NonLocalReturn nlr) {
             nonLocalReturnProfile.enter();
-            FrameAccess.terminateContextAndFrame(frame);
+            FrameAccess.terminateFrame(frame);
             throw nlr;
         } catch (final StackOverflowError e) {
             CompilerDirectives.transferToInterpreter();
