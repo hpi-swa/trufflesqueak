@@ -11,10 +11,14 @@ import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+
 @GenerateWrapper
 public abstract class AbstractExecuteContextNode extends AbstractNode implements InstrumentableNode {
 
     public abstract Object execute(VirtualFrame frame, int startPC);
+
+    public abstract CompiledCodeObject getCodeObject();
 
     @Override
     public WrapperNode createWrapper(final ProbeNode probeNode) {

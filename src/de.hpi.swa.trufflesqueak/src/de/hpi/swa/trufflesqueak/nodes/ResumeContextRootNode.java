@@ -12,7 +12,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 
@@ -20,17 +19,10 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     private ContextObject activeContext;
     private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();
 
-    @Child private AbstractExecuteContextNode executeBytecodeNode;
-
-    protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
-        super(language, context.getCodeObject());
+    public ResumeContextRootNode(final SqueakImageContext image, final ContextObject context) {
+        super(image, context.getCodeObject());
         activeContext = context;
         assert !context.isDead() : "Terminated contexts cannot be resumed";
-        executeBytecodeNode = new ExecuteBytecodeNode(context.getCodeObject());
-    }
-
-    public static ResumeContextRootNode create(final SqueakLanguage language, final ContextObject activeContext) {
-        return new ResumeContextRootNode(language, activeContext);
     }
 
     @Override
@@ -45,7 +37,7 @@ public final class ResumeContextRootNode extends AbstractRootNode {
                 return interpretBytecodeWithBoundary(pc);
             }
         } finally {
-            SqueakImageContext.get(this).lastSeenContext = null; // Stop materialization here.
+            image.lastSeenContext = null; // Stop materialization here.
         }
     }
 
@@ -69,19 +61,8 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     }
 
     @Override
-    public String getName() {
-        CompilerAsserts.neverPartOfCompilation();
-        return activeContext.toString();
-    }
-
-    @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return activeContext.toString();
-    }
-
-    @Override
-    public boolean isCloningAllowed() {
-        return true;
     }
 }

@@ -25,7 +25,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -222,9 +221,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary
     private void initializeCallTarget() {
-        final SqueakLanguage language = SqueakImageContext.getSlow().getLanguage();
         assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
-        executionData.callTarget = new StartContextRootNode(language, this).getCallTarget();
+        executionData.callTarget = new StartContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget();
     }
 
     private void invalidateCallTarget() {
@@ -295,7 +293,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
         if (getExecutionData().resumptionCallTarget == null) {
-            executionData.resumptionCallTarget = ResumeContextRootNode.create(SqueakImageContext.getSlow().getLanguage(), context).getCallTarget();
+            executionData.resumptionCallTarget = new ResumeContextRootNode(SqueakImageContext.getSlow(), context).getCallTarget();
         } else {
             final ResumeContextRootNode resumeNode = (ResumeContextRootNode) executionData.resumptionCallTarget.getRootNode();
             if (resumeNode.getActiveContext() != context) {

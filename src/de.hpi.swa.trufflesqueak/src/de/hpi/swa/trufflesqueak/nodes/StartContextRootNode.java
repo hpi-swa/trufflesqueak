@@ -16,7 +16,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -42,21 +41,18 @@ public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private Assumption doesNotNeedThisContext;
 
     @Child private CheckForInterruptsQuickNode interruptHandlerNode;
-    @Child private AbstractExecuteContextNode executeBytecodeNode;
     @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
 
-    public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
-        super(language, code);
+    public StartContextRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
+        super(image, code);
         interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
-        executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
 
     @Override
     public Object execute(final VirtualFrame frame) {
         ensureInitialized(frame);
         initializeFrame(frame);
-        final SqueakImageContext image = SqueakImageContext.get(this);
         try {
             if (image.enteringContextExceedsDepth()) {
                 CompilerDirectives.transferToInterpreter();
@@ -125,18 +121,8 @@ public final class StartContextRootNode extends AbstractRootNode {
     }
 
     @Override
-    public String getName() {
-        return toString();
-    }
-
-    @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return getCode().toString();
-    }
-
-    @Override
-    public boolean isCloningAllowed() {
-        return true;
     }
 }

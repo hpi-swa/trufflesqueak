@@ -7,20 +7,33 @@
 
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.nodes.RootNode;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractRootNode extends RootNode {
-    private final CompiledCodeObject code;
+    protected final SqueakImageContext image;
 
-    protected AbstractRootNode(final TruffleLanguage<?> language, final CompiledCodeObject code) {
-        super(language, code.getFrameDescriptor());
-        this.code = code;
+    @Child protected AbstractExecuteContextNode executeBytecodeNode;
+
+    protected AbstractRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
+        super(image.getLanguage(), code.getFrameDescriptor());
+        this.image = image;
+        executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
 
-    protected final CompiledCodeObject getCode() {
-        return code;
+    public final CompiledCodeObject getCode() {
+        return executeBytecodeNode.getCodeObject();
+    }
+
+    @Override
+    public final String getName() {
+        return toString();
+    }
+
+    @Override
+    public final boolean isCloningAllowed() {
+        return true;
     }
 }
