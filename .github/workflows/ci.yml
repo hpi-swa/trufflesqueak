@@ -94,7 +94,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
         type: [native, jvm]
     env:
       JAVA_VERSION: "25.0.1"
@@ -182,7 +182,7 @@ jobs:
       run: |
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
       timeout-minutes: 30
-      if: ${{ matrix.os != 'windows-2022' && matrix.os != 'macos-13' }} # tests fail on macos-13 and it is reaching EOL soon
+      if: ${{ matrix.os != 'windows-2022' }}
     - name: Upload test image on failure
       uses: actions/upload-artifact@v4
       with:
