@@ -60,13 +60,13 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
     @Child private AbstractDispatch5Node dispatchNode;
 
     DispatchSelector5Node(final VirtualFrame frame, final AbstractDispatch5Node dispatchNode) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
-        receiverNode = FrameStackReadNode.create(frame, stackPointer - 6, true);
-        arg1Node = FrameStackReadNode.create(frame, stackPointer - 5, true);
-        arg2Node = FrameStackReadNode.create(frame, stackPointer - 4, true);
-        arg3Node = FrameStackReadNode.create(frame, stackPointer - 3, true);
-        arg4Node = FrameStackReadNode.create(frame, stackPointer - 2, true);
-        arg5Node = FrameStackReadNode.create(frame, stackPointer - 1, true);
+        final int sp = FrameAccess.getStackPointer(frame);
+        receiverNode = FrameStackReadNode.create(frame, sp - 6, false); // replaced by result
+        arg1Node = FrameStackReadNode.create(frame, sp - 5, true);
+        arg2Node = FrameStackReadNode.create(frame, sp - 4, true);
+        arg3Node = FrameStackReadNode.create(frame, sp - 3, true);
+        arg4Node = FrameStackReadNode.create(frame, sp - 2, true);
+        arg5Node = FrameStackReadNode.create(frame, sp - 1, true);
         this.dispatchNode = dispatchNode;
     }
 
