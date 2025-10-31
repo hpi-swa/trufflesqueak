@@ -55,7 +55,7 @@ public abstract class FrameStackWriteNode extends AbstractNode {
         }
     }
 
-    public final void executeWriteAndSetSP(VirtualFrame frame, Object value, final int sp) {
+    public final void executeWriteAndSetSP(final VirtualFrame frame, final Object value, final int sp) {
         executeWrite(frame, value);
         FrameAccess.setStackPointer(frame, sp);
     }
