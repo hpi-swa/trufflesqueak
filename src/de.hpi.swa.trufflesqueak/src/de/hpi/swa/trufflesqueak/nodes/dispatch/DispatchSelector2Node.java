@@ -57,10 +57,10 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
     @Child private AbstractDispatch2Node dispatchNode;
 
     DispatchSelector2Node(final VirtualFrame frame, final AbstractDispatch2Node dispatchNode) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
-        receiverNode = FrameStackReadNode.create(frame, stackPointer - 3, true);
-        arg1Node = FrameStackReadNode.create(frame, stackPointer - 2, true);
-        arg2Node = FrameStackReadNode.create(frame, stackPointer - 1, true);
+        final int sp = FrameAccess.getStackPointer(frame);
+        receiverNode = FrameStackReadNode.create(frame, sp - 3, false); // replaced by result
+        arg1Node = FrameStackReadNode.create(frame, sp - 2, true);
+        arg2Node = FrameStackReadNode.create(frame, sp - 1, true);
         this.dispatchNode = dispatchNode;
     }
 

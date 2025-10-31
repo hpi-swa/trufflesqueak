@@ -56,9 +56,8 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
     @Child private AbstractDispatch0Node dispatchNode;
 
     DispatchSelector0Node(final VirtualFrame frame, final AbstractDispatch0Node dispatchNode) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
-        /* TODO: Not clearing receiver here for ProcessTest>>testTerminateEnsureOnTopOfEnsure. */
-        receiverNode = FrameStackReadNode.create(frame, stackPointer - 1, false);
+        final int sp = FrameAccess.getStackPointer(frame);
+        receiverNode = FrameStackReadNode.create(frame, sp - 1, false); // replaced by result
         this.dispatchNode = dispatchNode;
     }
 
