@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -35,6 +36,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoTemporar
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class MiscellaneousBytecodes {
 
@@ -82,7 +85,7 @@ public final class MiscellaneousBytecodes {
             protected static final void doCallPrimitive(final VirtualFrame frame,
                             @Bind final Node node,
                             @Bind final SqueakImageContext image,
-                            @Cached final FrameStackPushNode pushNode,
+                            @Cached("createStoreNode(frame)") final FrameStackWriteNode storeNode,
                             @Cached final InlinedConditionProfile inRangeProfile) {
                 final int primFailCode = image.getPrimFailCode();
                 final ArrayObject errorTable = image.primitiveErrorTable;
@@ -92,7 +95,12 @@ public final class MiscellaneousBytecodes {
                 } else {
                     errorObject = (long) primFailCode;
                 }
-                pushNode.execute(frame, errorObject);
+                storeNode.executeWrite(frame, errorObject);
+            }
+
+            @NeverDefault
+            protected static final FrameStackWriteNode createStoreNode(final VirtualFrame frame) {
+                return FrameStackWriteNode.create(frame, FrameAccess.getStackPointer(frame) - 1);
             }
         }
     }
