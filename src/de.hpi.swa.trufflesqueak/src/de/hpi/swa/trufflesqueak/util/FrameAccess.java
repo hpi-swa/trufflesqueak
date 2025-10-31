@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameDescriptor.Builder;
@@ -223,6 +224,11 @@ public final class FrameAccess {
 
     public static int getStackPointer(final Frame frame) {
         return frame.getIntStatic(SlotIndicies.STACK_POINTER.ordinal());
+    }
+
+    @NeverDefault
+    public static int getIncrementedStackPointer(final VirtualFrame frame) {
+        return getStackPointer(frame) + 1;
     }
 
     public static void setStackPointer(final Frame frame, final int value) {
