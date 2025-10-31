@@ -99,7 +99,7 @@ jobs:
     env:
       JAVA_VERSION: "25.0.1"
       # JVMCI_VERSION_CHECK: "warn" # version of EA build does not always match
-      NATIVE_IMAGE_OPTIONS: "-J-Xms8G -J-XX:MaxRAMPercentage=100"
+      NATIVE_IMAGE_OPTIONS: "-J-XX:MaxRAMPercentage=100"
       VERBOSE_GRAALVM_LAUNCHERS: true
       VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
     name: ${{ matrix.type }} ${{ matrix.os }}
