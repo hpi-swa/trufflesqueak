@@ -53,6 +53,7 @@ public final class StartContextRootNode extends AbstractRootNode {
     public Object execute(final VirtualFrame frame) {
         ensureInitialized(frame);
         initializeFrame(frame);
+        final SqueakImageContext image = SqueakImageContext.get(this);
         try {
             if (image.enteringContextExceedsDepth()) {
                 CompilerDirectives.transferToInterpreter();

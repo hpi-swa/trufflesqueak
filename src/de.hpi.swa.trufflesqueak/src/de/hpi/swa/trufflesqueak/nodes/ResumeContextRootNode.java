@@ -37,7 +37,7 @@ public final class ResumeContextRootNode extends AbstractRootNode {
                 return interpretBytecodeWithBoundary(pc);
             }
         } finally {
-            image.lastSeenContext = null; // Stop materialization here.
+            SqueakImageContext.get(this).lastSeenContext = null; // Stop materialization here.
         }
     }
 
