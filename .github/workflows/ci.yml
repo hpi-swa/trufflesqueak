@@ -18,9 +18,14 @@ on:
   workflow_dispatch:
 
 env:
-  VERBOSE_GRAALVM_LAUNCHERS: true
+  # JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
+  JAVA_VERSION: '25.0.1'
   MX_GATE_OPTS: '--strict-mode --omit-clean'
+  NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
+  PGO_FILE: '${{ github.workspace }}/trufflesqueak.iprof'
+  PGO_LCOV_FILE: '${{ github.workspace }}/lcov.info'
   PYTHONIOENCODING: 'utf-8'
+  VERBOSE_GRAALVM_LAUNCHERS: true
 
 jobs:
   style_and_build_config:
@@ -49,13 +54,13 @@ jobs:
     - name: Check style and perform full build
       run: mx --java-home="${JAVA_HOME}" --tools-java-home="${JAVA_HOME}" gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
 
-  build-coverage:
+  build-instrumented:
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
-        java: [25]
-    name: coverage ${{ matrix.os }}
+        type: [native]
+    name: instrument ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ubuntu-22.04
     steps:
@@ -63,46 +68,55 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
+    - name: Set up Oracle GraalVM
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: '${{ env.JAVA_VERSION }}'
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Enable Oracle GraalVM
+      shell: bash
+      run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12.0'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies jar latest
-    - name: Build GraalVM with TruffleSqueak
-      run: mx.trufflesqueak/utils.sh build-graalvm ${{ matrix.java }}
-    - name: Run SystemReporter on TruffleSqueak
-      run: 'trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image'
-    - name: Run gate with code coverage # do not use Graal compiler with JaCoCo code coverage
-      run: mx --disable-polyglot gate ${{ env.MX_GATE_OPTS }} --tags build,test --jacocout coverage
+      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
+    - name: Build instrumented TruffleSqueak standalone
+      run: |
+        export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo-instrument -H:+UnlockExperimentalVMOptions -H:+ProfilingLCOV -H:-UnlockExperimentalVMOptions"
+        mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
+    - name: Run SystemReporter on TruffleSqueak standalone
+      shell: bash
+      run: |
+        trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
+    - name: Run Squeak/Smalltalk tests on instrumented TruffleSqueak standalone
+      shell: bash
+      run: |
+        trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
+      timeout-minutes: 30
     - name: Report code coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r jacoco.xml
-      if: ${{ env.CODACY_PROJECT_TOKEN != '' && job.status == 'success' }}
-    - name: Upload Graal compiler dumps
-      if: always()
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE }}
+    - name: Upload PGO profile
       uses: actions/upload-artifact@v4
       with:
-        name: graal_dumps-coverage-${{ matrix.os }}
-        path: graal_dumps/
-        if-no-files-found: ignore
-        retention-days: 5
+        name: trufflesqueak-profile
+        path: ${{ env.PGO_FILE }}
 
   build-standalone:
+    needs: build-instrumented
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
         type: [native, jvm]
     env:
-      JAVA_VERSION: "25.0.1"
-      # JVMCI_VERSION_CHECK: "warn" # version of EA build does not always match
-      NATIVE_IMAGE_OPTIONS: "-J-XX:MaxRAMPercentage=100"
-      VERBOSE_GRAALVM_LAUNCHERS: true
       VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
-    name: ${{ matrix.type }} ${{ matrix.os }}
+    name: build ${{ matrix.type }} ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
     steps:
@@ -125,13 +139,21 @@ jobs:
         python-version: '3.12.0'
     - name: Set up dependencies
       shell: bash
-      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }} skip
+      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
+    - name: Download PGO profile
+      uses: actions/download-artifact@v4
+      with:
+        name: trufflesqueak-profile
+      if: ${{ matrix.type == 'native' }}
     - name: Build TruffleSqueak standalone
-      run: mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
+      run: |
+        export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo=${{ env.PGO_FILE }}"
+        mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
       if: ${{ runner.os != 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
       run: |
+        set NATIVE_IMAGE_OPTIONS=%NATIVE_IMAGE_OPTIONS% --pgo=${{ env.PGO_FILE }}
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call mx --env trufflesqueak-${{ matrix.type }} --no-download-progress build
         if ${{ matrix.type }}==native (set "STANDALONE_NAME=TRUFFLESQUEAK_NATIVE_STANDALONE") else (set "STANDALONE_NAME=TRUFFLESQUEAK_JVM_STANDALONE") 
@@ -169,18 +191,18 @@ jobs:
     - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-test-image
-        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runCuisTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
       run: |
-        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\de.hpi.swa.trufflesqueak.test\src\de\hpi\swa\trufflesqueak\test\runSqueakTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\image-tests\runSqueakTests.st
       timeout-minutes: 30
       if: ${{ matrix.os == 'windows-2022' }}
     - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
       shell: bash
       run: |
-        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/de.hpi.swa.trufflesqueak.test/src/de/hpi/swa/trufflesqueak/test/runSqueakTests.st
+        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' }}
     - name: Upload test image on failure
@@ -205,12 +227,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - performance-mode: peak
+          - kind: peak
             os: ubuntu-22.04-arm
             type: native
             iterations: 300
             vm-args: '--compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=ExitVM --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics'
-          - performance-mode: interpreter
+          - kind: interpreter
             os: ubuntu-22.04-arm
             type: native
             iterations: 6
@@ -218,7 +240,7 @@ jobs:
     env:
       COMMON_VM_ARGS: "--headless --quiet --experimental-options --smalltalk.resource-summary=true"
       EXEC: "/usr/bin/time -v"
-    name: run ${{ matrix.performance-mode }} benchmarks
+    name: benchmark ${{ matrix.kind }}
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     steps:
@@ -279,7 +301,7 @@ jobs:
         ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Towers' ${{ matrix.iterations}} 1500)" 2>&1 | tee Towers.log
     - name: Analyze benchmark results
       run: |
-        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.performance-mode }})" '{ body: $body }' |\
+        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.kind }})" '{ body: $body }' |\
         curl -sL -X POST -d @- \
           -H "Content-Type: application/json" \
           -H "Accept: application/vnd.github.v3+json" \
@@ -292,5 +314,5 @@ jobs:
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
-      if: ${{ matrix.performance-mode == 'peak' }}
+      if: ${{ matrix.kind == 'peak' }}
   

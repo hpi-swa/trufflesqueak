@@ -226,7 +226,6 @@ set-env() {
 
 set-up-dependencies() {
   local kind=$1
-  local java_version=$2
 
   if [[ "${kind}" == "native" ]]; then
     case "$(uname -s)" in
@@ -243,9 +242,6 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
-  if [[ "${java_version}" != "skip" ]]; then
-    set-up-labsjdk "${java_version}"
-  fi
   download-trufflesqueak-test-image
 
   if [[ "${OS_NAME}" == "windows" ]]; then
