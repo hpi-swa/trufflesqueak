@@ -12,7 +12,7 @@ suite = {
     "name": "trufflesqueak",
     "mxversion": "7.54.7",
     "versionConflictResolution": "latest",
-    "version": "25.0.0",
+    "version": "25.0.1",
     "trufflesqueak:dependencyMap": {
         "cuis_test_image": "CuisTestImage-7.3-7036.zip",
         "cuis_test_image_tag": "24.1.2",
@@ -47,7 +47,7 @@ suite = {
             {
                 "name": "truffle",
                 "subdir": True,
-                "version": "graal-25.0.0",
+                "version": "graal-25.0.1",
                 "urls": [{"url": "https://github.com/oracle/graal", "kind": "git"}],
             }
         ],
@@ -89,62 +89,43 @@ suite = {
             },
         },
         "GRAALJS_LANGUAGE": {
-            "digest": "sha512:0aa2eac9b820f3d95a0c3ed092be0a9a31c32f0cae8a5ba2539cfb84580dff56fae696d2c87e194bf81867bc72374e12392c49088e9290eb0088b30caf3469d5",
+            "digest": "sha512:dbd9395b23a08718ec1273aa4f50a8d6e432a2aa79e6839d0fd13c9e16084fbaef3e3f0984a1c6d5a9ffecb595519c742250694c90bceb81e1eb55bc30af745e",
             "maven": {
                 "groupId": "org.graalvm.js",
                 "artifactId": "js-language",
-                "version": "24.2.2",
+                "version": "25.0.1",
             },
             "dependencies": ["REGEX_LANGUAGE", "SHADOWED_ICU4J"],
             "useModulePath": True,
             "licence": "UPL",
         },
         "REGEX_LANGUAGE": {
-            "digest": "sha512:8a64e0ec61965e6c1a961a806d4242a69d739392a36d74653ac57f20f8b3a948910d8cb501765462449c3396fe10345c14f94e9c659d850c94f6f93507a0bbff",
+            "digest": "sha512:a215b10c4fd73eff7522a78ab830134ad23176ec0d36a2e620bb2ff9a417994eed5c227c0bc12e22890904ba958b4da44f92f4f78e922fbcd2857abdc168f869",
             "maven": {
                 "groupId": "org.graalvm.regex",
                 "artifactId": "regex",
-                "version": "24.2.2",
+                "version": "25.0.1",
             },
             "dependencies": ["SHADOWED_ICU4J"],
             "useModulePath": True,
             "licence": "UPL",
         },
         "SHADOWED_ICU4J": {
-            "digest": "sha512:739e16b2ad0ac0d3a5bbab956c22bc9b316478d3be601059bc233bb996eff4a967972646d9c5f66423a8fa8cd0cf0e5c90635bda6ead25c0213b5b60b83e4b53",
+            "digest": "sha512:e122e16fe4fc8fa65714fe526f4eb625605a375a11e00edb6bd39352afeeb690c749c92f427135c1f01dc552b9659a28fda7730f01e0306234d8439facc7215a",
             "maven": {
                 "groupId": "org.graalvm.shadowed",
                 "artifactId": "icu4j",
-                "version": "24.2.2",
+                "version": "25.0.1",
             },
             "dependencies": ["SHADOWED_XZ"],
             "useModulePath": True,
         },
         "SHADOWED_XZ": {
-            "digest": "sha512:c38d48ef37f3264b08a898f5f884704530019ce8b89a4cb25b0b7c6229f4ccf603107c4a44be9cc3311641f9d35c261f24c2fed7dba11fd6ea0dbb4517e44b66",
+            "digest": "sha512:b12f38e92164e15afe257b1907ac113f6fd39e2413f208030eb376fb74e9dea5e083cabe2b5f3c3fbf4caeb63889b2b869160228d1a6c0def7f070fb60e5b2c3",
             "maven": {
                 "groupId": "org.graalvm.shadowed",
                 "artifactId": "xz",
-                "version": "24.2.2",
-            },
-            "useModulePath": True,
-        },
-        "TRUFFLE-ENTERPRISE": {
-            "digest": "sha512:8470d6f2d33f4f6b33263343125e03d34ee1716d1c17ca0e7cea868d7b008c31f93c323cb3b982bf437f48ea7cd054394a1ee95660dba3ae734e9989c92cf7ba",
-            "maven": {
-                "groupId": "org.graalvm.truffle",
-                "artifactId": "truffle-enterprise",
-                "version": "24.2.2",
-            },
-            "useModulePath": True,
-            "licence": "GFTC",
-        },
-        "SDK-NATIVEBRIDGE": {
-            "digest": "sha512:eb433421d0be6b62e54261ee9aecb3a11b5e4bfd3c3cfd2de41e2266f81788cfa33e0d72ae7c507701936a8b3ff259e6e295537581b543115ec0d437af3072f1",
-            "maven": {
-                "groupId": "org.graalvm.sdk",
-                "artifactId": "nativebridge",
-                "version": "24.2.2",
+                "version": "25.0.1",
             },
             "useModulePath": True,
         },

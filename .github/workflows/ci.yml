@@ -97,7 +97,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13, macos-14]
         type: [native, jvm]
     env:
-      JAVA_VERSION: "25.0.0"
+      JAVA_VERSION: "25.0.1"
       # JVMCI_VERSION_CHECK: "warn" # version of EA build does not always match
       NATIVE_IMAGE_OPTIONS: "-J-Xms8G -J-XX:MaxRAMPercentage=100"
       VERBOSE_GRAALVM_LAUNCHERS: true
