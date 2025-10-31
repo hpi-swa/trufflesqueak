@@ -305,9 +305,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Bind final Node node,
                         @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
             if (signalSemaphoreNode.executeSignal(frame, node, receiver)) {
-                pushReceiverNode.execute(frame, receiver);
+                FrameAccess.setStackPointer(frame, stackPointer);
                 throw ProcessSwitch.SINGLETON;
             } else {
                 return receiver;
@@ -327,7 +327,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
             assert isSemaphore(receiver);
             final long excessSignals = pointersReadNode.executeLong(node, receiver, SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0) {
@@ -336,7 +336,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), receiver);
                 wakeHighestPriorityNode.executeWake(frame, node);
-                pushReceiverNode.execute(frame, receiver);
+                FrameAccess.setStackPointer(frame, stackPointer);
                 throw ProcessSwitch.SINGLETON;
             }
         }
@@ -350,13 +350,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ResumeProcessNode resumeProcessNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
             if (!(readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject)) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             if (resumeProcessNode.executeResume(frame, node, receiver)) {
-                pushReceiverNode.execute(frame, receiver);
+                FrameAccess.setStackPointer(frame, stackPointer);
                 throw ProcessSwitch.SINGLETON;
             } else {
                 return receiver;
@@ -899,7 +899,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
             final PointersObject activeProcess = getActiveProcessNode.execute(node);
             final long priority = pointersReadNode.executeLong(node, activeProcess, PROCESS.PRIORITY);
             final ArrayObject processLists = pointersReadNode.executeArray(node, scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
@@ -909,7 +909,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             addLastLinkToListNode.execute(node, activeProcess, processList);
             wakeHighestPriorityNode.executeWake(frame, node);
-            pushReceiverNode.execute(frame, scheduler);
+            FrameAccess.setStackPointer(frame, stackPointer);
             throw ProcessSwitch.SINGLETON;
         }
     }
@@ -953,11 +953,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Cached final ResumeProcessNode resumeProcessNode,
-                            @Cached final FrameStackPushNode pushReceiverNode) {
+                            @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode, node);
                 writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
                 if (resumeProcessNode.executeResume(frame, node, owningProcess)) {
-                    pushReceiverNode.execute(frame, mutex);
+                    FrameAccess.setStackPointer(frame, stackPointer);
                     throw ProcessSwitch.SINGLETON;
                 } else {
                     return mutex;
@@ -1279,7 +1279,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final CheckForInterruptsFullNode interruptNode,
-                        @Cached final FrameStackPushNode pushReceiverNode) {
+                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
             MiscUtils.park(timeMicroseconds * 1000);
             /*
              * Perform interrupt check (even if interrupt handler is not active), otherwise
@@ -1288,7 +1288,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 interruptNode.execute(frame);
             } catch (final ProcessSwitch ps) {
-                pushReceiverNode.execute(frame, receiver);
+                FrameAccess.setStackPointer(frame, stackPointer);
                 throw ps;
             }
             return receiver;
