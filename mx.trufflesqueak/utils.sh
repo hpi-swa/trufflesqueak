@@ -98,7 +98,7 @@ archive-standalone() {
   mv "${standalone_name}" "${standalone_home_name}"
   popd > /dev/null
   echo "Standalone archive created at ${standalone_archive}"
-  set-env "STANDALONE_ARCHIVE" "$(resolve-path "${standalone_archive}")"
+  set-env "STANDALONE_ARCHIVE" "${standalone_archive}"
 }
 
 deploy-asset() {
@@ -143,7 +143,7 @@ deploy-asset() {
   curl --fail -o /dev/null -w "%{http_code}" \
     -H "${auth}" -H "Content-Type: application/zip" \
     --data-binary @"${filename}" \
-    "https://uploads.github.com/repos/${GITHUB_SLUG}/releases/${release_id}/assets?name=${filename}"
+    "https://uploads.github.com/repos/${GITHUB_SLUG}/releases/${release_id}/assets?name=$(basename "${filename}")"
 }
 
 download-asset() {

@@ -152,7 +152,7 @@ jobs:
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Deploy TruffleSqueak standalone
       shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset '${{ env.STANDALONE_ARCHIVE }}' ${{ secrets.GITHUB_TOKEN }}
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_ARCHIVE }} ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@v4
