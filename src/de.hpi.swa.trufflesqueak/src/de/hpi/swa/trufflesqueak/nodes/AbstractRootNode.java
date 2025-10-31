@@ -13,13 +13,10 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractRootNode extends RootNode {
-    protected final SqueakImageContext image;
-
     @Child protected AbstractExecuteContextNode executeBytecodeNode;
 
     protected AbstractRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image.getLanguage(), code.getFrameDescriptor());
-        this.image = image;
         executeBytecodeNode = new ExecuteBytecodeNode(code);
     }
 
