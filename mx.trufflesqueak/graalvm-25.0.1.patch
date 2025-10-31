@@ -1,8 +1,8 @@
 diff --git a/sdk/mx.sdk/suite.py b/sdk/mx.sdk/suite.py
-index d99ab6d014f..524b644db63 100644
+index 79c97354020..9518d41f5db 100644
 --- a/sdk/mx.sdk/suite.py
 +++ b/sdk/mx.sdk/suite.py
-@@ -514,6 +514,8 @@ suite = {
+@@ -520,6 +520,8 @@ suite = {
        "javaCompliance" : "17+",
        "workingSets" : "Truffle,Tools",
        "checkstyle" : "org.graalvm.word",
