@@ -959,7 +959,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
                 if (resumeProcessNode.executeResume(frame, node, owningProcess)) {
                     pushReceiverNode.executeWrite(frame, mutex);
-                    pushFirstLinkNode.executeWriteAndSetSP(frame, firstLink, FrameAccess.getStackPointer(frame) + 2);
+                    pushFirstLinkNode.executeWriteAndSetSP(frame, firstLink, FrameAccess.getStackPointer(frame));
                     throw ProcessSwitch.SINGLETON;
                 } else {
                     return mutex;
@@ -1020,7 +1020,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             addLastLinkToListNode.execute(node, effectiveProcess, mutex);
             wakeHighestPriorityNode.executeWake(frame, node);
             /* Leave `false` as result on stack. */
-            pushNode.executeWriteAndSetSP(frame, BooleanObject.FALSE, FrameAccess.getStackPointer(frame) + 1);
+            pushNode.executeWriteAndSetSP(frame, BooleanObject.FALSE, FrameAccess.getStackPointer(frame));
             throw ProcessSwitch.SINGLETON;
         }
     }

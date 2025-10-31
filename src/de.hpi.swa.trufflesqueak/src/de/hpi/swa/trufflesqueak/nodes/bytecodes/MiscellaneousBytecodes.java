@@ -76,8 +76,8 @@ public final class MiscellaneousBytecodes {
             @Child private FrameStackWriteNode pushNode;
 
             public CallPrimitiveWithErrorCodeNode(final VirtualFrame frame, final int successorIndex, final int sp) {
-                super(successorIndex, sp + 1);
-                pushNode = FrameStackWriteNode.create(frame, sp);
+                super(successorIndex, sp);
+                pushNode = FrameStackWriteNode.create(frame, sp - 1);
             }
 
             @Specialization
