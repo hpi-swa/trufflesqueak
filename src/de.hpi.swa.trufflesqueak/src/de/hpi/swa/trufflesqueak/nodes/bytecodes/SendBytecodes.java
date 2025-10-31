@@ -68,7 +68,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecial
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimNotIdenticalSistaV1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimSubtractNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNode;
@@ -120,12 +119,13 @@ public final class SendBytecodes {
         private final ConditionProfile nvrProfile = ConditionProfile.create();
 
         @Child protected DispatchSelectorNode dispatchNode;
-        @Child private FrameStackPushNode pushNode;
+        @Child private FrameStackWriteNode writeResultNode;
 
         private AbstractSendNode(final VirtualFrame frame, final int successorIndex, final int numArgs, final int numAdditional) {
             super(successorIndex);
             stackPointer = FrameAccess.getStackPointer(frame) - 1 - numArgs - numAdditional;
             assert stackPointer >= 0 : "Bad stack pointer";
+            writeResultNode = FrameStackWriteNode.create(frame, stackPointer);
         }
 
         @Override
@@ -148,16 +148,10 @@ public final class SendBytecodes {
                     throw nvr;
                 }
             }
+            // Push result
             assert result != null : "Result of a message send should not be null";
-            getPushNode().execute(frame, result);
-        }
-
-        private FrameStackPushNode getPushNode() {
-            if (pushNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                pushNode = insert(FrameStackPushNode.create());
-            }
-            return pushNode;
+            writeResultNode.executeWrite(frame, result);
+            FrameAccess.setStackPointer(frame, stackPointer + 1);
         }
 
         private NativeObject getSelector() {
