@@ -22,8 +22,10 @@ env:
   JAVA_VERSION: '25.0.1'
   MX_GATE_OPTS: '--strict-mode --omit-clean'
   NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
-  PGO_FILE: '${{ github.workspace }}/trufflesqueak.iprof'
-  PGO_LCOV_FILE: '${{ github.workspace }}/lcov.info'
+  PGO_FILE_CUIS: '${{ github.workspace }}/trufflesqueak-cuis.iprof'
+  PGO_FILE_SQUEAK: '${{ github.workspace }}/trufflesqueak-squeak.iprof'
+  PGO_LCOV_FILE_CUIS: '${{ github.workspace }}/lcov-cuis.info'
+  PGO_LCOV_FILE_SQUEAK: '${{ github.workspace }}/lcov-squeak.info'
   PYTHONIOENCODING: 'utf-8'
   PYTHON_VERSION: '3.12.0'
   VERBOSE_GRAALVM_LAUNCHERS: true
@@ -199,21 +201,27 @@ jobs:
       shell: bash
       run: |
         trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
+    - name: Run Cuis-Smalltalk tests on instrumented TruffleSqueak standalone
+      run: |
+        mx.trufflesqueak/utils.sh download-cuis-test-image
+        trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_CUIS }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_CUIS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+      timeout-minutes: 10
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
     - name: Run Squeak/Smalltalk tests on instrumented TruffleSqueak standalone
       shell: bash
       run: |
-        trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
+        trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
       timeout-minutes: 30
     - name: Report code coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE }}
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE_CUIS }} -r ${{ env.PGO_LCOV_FILE_SQUEAK }}
       if: ${{ env.CODACY_PROJECT_TOKEN != '' }}
-    - name: Upload PGO profile
+    - name: Upload PGO profiles
       uses: actions/upload-artifact@v4
       with:
-        name: trufflesqueak-profile
-        path: ${{ env.PGO_FILE }}
+        name: trufflesqueak-profiles
+        path: trufflesqueak-*.iprof
 
   build-native-standalone:
     needs: build-instrumented
@@ -248,20 +256,20 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
-    - name: Download PGO profile
+    - name: Download PGO profiles
       uses: actions/download-artifact@v4
       with:
-        name: trufflesqueak-profile
+        name: trufflesqueak-profiles
       if: ${{ matrix.type == 'native' }}
     - name: Build TruffleSqueak standalone
       run: |
-        export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo=${{ env.PGO_FILE }}"
+        export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo=${{ env.PGO_FILE_CUIS }},${{ env.PGO_FILE_SQUEAK }}"
         mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
       if: ${{ runner.os != 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
       run: |
-        set NATIVE_IMAGE_OPTIONS=%NATIVE_IMAGE_OPTIONS% --pgo=${{ env.PGO_FILE }}
+        set NATIVE_IMAGE_OPTIONS=%NATIVE_IMAGE_OPTIONS% --pgo=${{ env.PGO_FILE_CUIS }},${{ env.PGO_FILE_SQUEAK }}
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call mx --env trufflesqueak-${{ matrix.type }} --no-download-progress build
         if ${{ matrix.type }}==native (set "STANDALONE_NAME=TRUFFLESQUEAK_NATIVE_STANDALONE") else (set "STANDALONE_NAME=TRUFFLESQUEAK_JVM_STANDALONE") 
