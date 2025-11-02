@@ -262,7 +262,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash object,
+        protected static final long doAbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash object,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile needsHashProfile) {
             assert object.assertNotForwarded();

@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerAsserts;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -13,13 +15,13 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
-public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
+public final class FloatObject extends AbstractSqueakObjectWithHash {
     public static final int PRECISION = 53;
     public static final int WORD_LENGTH = 2;
     private double doubleValue;
 
     public FloatObject(final SqueakImageContext image) {
-        super(image, image.floatClass);
+        super(image);
     }
 
     private FloatObject(final FloatObject original) {
@@ -28,13 +30,38 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public FloatObject(final SqueakImageContext image, final double doubleValue) {
-        super(image, image.floatClass);
+        super(image);
         this.doubleValue = doubleValue;
     }
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         // Nothing to do.
+    }
+
+    @Override
+    public ClassObject getSqueakClass() {
+        return getSqueakClass(SqueakImageContext.getSlow());
+    }
+
+    @Override
+    public ClassObject getSqueakClass(final SqueakImageContext image) {
+        return image.floatClass;
+    }
+
+    @Override
+    protected AbstractSqueakObjectWithHash getForwardingPointer() {
+        return this; // FloatObject cannot be forwarded
+    }
+
+    @Override
+    public AbstractSqueakObjectWithHash resolveForwardingPointer() {
+        return this; // FloatObject cannot be forwarded
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        // Nothing to do
     }
 
     public static FloatObject valueOf(final SqueakImageContext image, final double value) {
