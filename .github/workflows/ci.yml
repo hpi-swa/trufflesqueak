@@ -208,6 +208,7 @@ jobs:
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE }}
+      if: ${{ env.CODACY_PROJECT_TOKEN != '' }}
     - name: Upload PGO profile
       uses: actions/upload-artifact@v4
       with:
