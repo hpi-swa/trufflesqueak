@@ -20,7 +20,6 @@ on:
 env:
   # JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
   JAVA_VERSION: '25.0.1'
-  MX_GATE_OPTS: '--strict-mode --omit-clean'
   NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
   PGO_FILE_CUIS: '${{ github.workspace }}/trufflesqueak-cuis.iprof'
   PGO_FILE_SQUEAK: '${{ github.workspace }}/trufflesqueak-squeak.iprof'
@@ -31,8 +30,8 @@ env:
   VERBOSE_GRAALVM_LAUNCHERS: true
 
 jobs:
-  style_and_build_config:
-    name: style and fullbuild
+  gate:
+    name: gate
     timeout-minutes: 15
     runs-on: ubuntu-22.04
     steps:
@@ -54,8 +53,8 @@ jobs:
         # Set up style dependencies
         sudo apt update && sudo apt install python3-pip python-setuptools
         jq -r '.pip | to_entries[] | .key+.value' ../graal/common.json | xargs sudo pip install
-    - name: Check style and perform full build
-      run: mx --java-home="${JAVA_HOME}" --tools-java-home="${JAVA_HOME}" gate ${{ env.MX_GATE_OPTS }} --tags style,fullbuild
+    - name: Run gate
+      run: mx --java-home="${JAVA_HOME}" gate --strict-mode --omit-clean --tags style,fullbuild,test
 
   build-jvm-standalone:
     strategy:

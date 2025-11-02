@@ -45,7 +45,7 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
         }
 
         for (int i = 0; i < obj1.getNumSlots(); i++) {
-            assertSame("All reads should return nil", readNode.execute(null, obj1, i), NilObject.SINGLETON);
+            assertSame("All reads should return nil", NilObject.SINGLETON, readNode.execute(null, obj1, i));
         }
 
         /* Ensure nil writes do not change uninitialized locations. */
@@ -72,7 +72,7 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
         assertNotSame("Layouts should be out of sync", obj1.getLayout(), obj2.getLayout());
         assertSame(obj1.object0, dummyClass);
 
-        assertSame(readNode.execute(null, obj2, 1), NilObject.SINGLETON);
+        assertSame(NilObject.SINGLETON, readNode.execute(null, obj2, 1));
         assertFalse("Read does not update layout", obj2.getLayout().isValid());
         assertNotSame("Layouts should still be out of sync after read", obj1.getLayout(), obj2.getLayout());
 
@@ -110,9 +110,9 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
 
         final int expectedGenericLocations = 3;
         assertEquals(obj.getNumSlots() - SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS - expectedGenericLocations, obj.primitiveExtension.length);
-        assertNotSame(obj.object0, NilObject.SINGLETON);
-        assertNotSame(obj.object1, NilObject.SINGLETON);
-        assertNotSame(obj.object2, NilObject.SINGLETON);
+        assertNotSame(NilObject.SINGLETON, obj.object0);
+        assertNotSame(NilObject.SINGLETON, obj.object1);
+        assertNotSame(NilObject.SINGLETON, obj.object2);
         assertNull(obj.objectExtension);
 
         writeAndValidate(obj, 26, '#');
@@ -173,9 +173,9 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
     }
 
     private static void assertUnsetObjectFields(final AbstractPointersObject obj) {
-        assertSame(obj.object0, NilObject.SINGLETON);
-        assertSame(obj.object1, NilObject.SINGLETON);
-        assertSame(obj.object2, NilObject.SINGLETON);
+        assertSame(NilObject.SINGLETON, obj.object0);
+        assertSame(NilObject.SINGLETON, obj.object1);
+        assertSame(NilObject.SINGLETON, obj.object2);
         assertNull(obj.objectExtension);
     }
 

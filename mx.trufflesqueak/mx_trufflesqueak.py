@@ -7,7 +7,9 @@
 
 import os
 import mx
+import mx_gate
 import mx_truffle
+import mx_unittest
 
 # re-export custom mx project classes so they can be used from suite.py
 from mx_cmake import CMakeNinjaProject  # pylint: disable=unused-import
@@ -17,6 +19,8 @@ from mx_sdk_vm_ng import (  # pylint: disable=unused-import
     LanguageLibraryProject,
     DynamicPOMDistribution,
 )
+
+_SUITE = mx.suite("trufflesqueak")
 
 
 # Called from suite.py
@@ -37,3 +41,40 @@ def libsmalltalkvm_build_args():
     if is_oracle_graalvm and mx.get_os() == "linux":
         build_args.append("--gc=G1")
     return build_args
+
+
+def _trufflesqueak_gate_runner(args, tasks):
+    with mx_gate.Task("Check Copyrights", tasks, tags=[mx_gate.Tags.style]) as t:
+        if t:
+            if mx.checkcopyrights(["--primary"]) != 0:
+                t.abort(
+                    'Copyright errors found. Please run "mx '
+                    'checkcopyrights --primary -- --fix" to fix them.'
+                )
+    with mx_gate.Task("TruffleSqueak JUnit and SUnit tests", tasks, tags=["test"]) as t:
+        if t:
+            mx_unittest.unittest(
+                [
+                    "--suite",
+                    "trufflesqueak",
+                    "--very-verbose",
+                    "--color",
+                    "--enable-timing",
+                ]
+            )
+
+
+def _unittest_config_participant(config):
+    (vmArgs, mainClass, mainClassArgs) = config
+    vmArgs += ["-Dpolyglotimpl.DisableClassPathIsolation=true"]
+    vmArgs += ["--add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak"]
+    mainClassArgs += [
+        "-JUnitOpenPackages",
+        "de.hpi.swa.trufflesqueak/*=de.hpi.swa.trufflesqueak.test",
+    ]
+    mainClassArgs += ["-JUnitOpenPackages", "de.hpi.swa.trufflesqueak/*=ALL-UNNAMED"]
+    return (vmArgs, mainClass, mainClassArgs)
+
+
+mx_gate.add_gate_runner(_SUITE, _trufflesqueak_gate_runner)
+mx_unittest.add_config_participant(_unittest_config_participant)

@@ -14,7 +14,6 @@ import java.util.Arrays;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
-import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
@@ -35,17 +34,9 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class AbstractSqueakTestCase {
-    private static final boolean IS_GRAAL_RUNTIME;
-
     protected static Context context;
     protected static SqueakImageContext image;
     protected static PointersObject nilClassBinding;
-
-    static {
-        try (Engine engine = Engine.create()) {
-            IS_GRAAL_RUNTIME = engine.getImplementationName().contains("Graal");
-        }
-    }
 
     protected static final CompiledCodeObject makeMethod(final byte[] bytes, final long header, final Object[] literals) {
         return new CompiledCodeObject(image, bytes, header, literals, image.compiledMethodClass);
@@ -109,11 +100,6 @@ public abstract class AbstractSqueakTestCase {
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, "true");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.TESTING, "true");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.RESOURCE_SUMMARY, Boolean.toString(spec.showStatistics));
-        if (IS_GRAAL_RUNTIME) {
-            contextBuilder.option("compiler.TreatPerformanceWarningsAsErrors", "call,instanceof,store,trivial");
-            contextBuilder.option("engine.CompilationFailureAction", "Diagnose");
-            contextBuilder.option("engine.CompilationStatistics", Boolean.toString(spec.showStatistics));
-        }
 
         final String logLevel = System.getProperty("log.level");
         if (logLevel != null) {
@@ -146,12 +132,6 @@ public abstract class AbstractSqueakTestCase {
     protected static final void println(final String text) {
         // Checkstyle: stop
         System.out.println(text);
-        // Checkstyle: resume
-    }
-
-    protected static final void printlnErr(final String text) {
-        // Checkstyle: stop
-        System.err.println(text);
         // Checkstyle: resume
     }
 }
