@@ -331,11 +331,6 @@ public final class SendBytecodes {
                     return 18;
                 }
 
-                @Specialization
-                protected static final long doNilObject(final NilObject receiver) {
-                    return receiver.size();
-                }
-
                 /*
                  * Cannot use specialization for NativeObject as Cuis has lots of conflicting
                  * overrides, such as Float64Array#size.
@@ -349,12 +344,7 @@ public final class SendBytecodes {
                 }
 
                 @Specialization
-                protected static final long doClass(final ClassObject obj) {
-                    return obj.size();
-                }
-
-                @Specialization
-                protected static final long doContext(final ContextObject obj) {
+                protected static final long doCode(final CompiledCodeObject obj) {
                     return obj.size();
                 }
 
@@ -364,13 +354,23 @@ public final class SendBytecodes {
                  */
 
                 @Specialization
-                protected static final long doCode(final CompiledCodeObject obj) {
+                protected static final long doContext(final ContextObject obj) {
                     return obj.size();
                 }
 
                 @Specialization
                 protected static final long doFloat(final FloatObject obj) {
                     return obj.size();
+                }
+
+                @Specialization
+                protected static final long doClass(final ClassObject obj) {
+                    return obj.size();
+                }
+
+                @Specialization
+                protected static final long doNilObject(final NilObject receiver) {
+                    return receiver.size();
                 }
 
                 @Specialization

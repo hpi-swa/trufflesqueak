@@ -34,7 +34,7 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final boolean doBoolean(final boolean left, final boolean right) {
+    protected static final boolean doLong(final long left, final long right) {
         return BooleanObject.wrap(left == right);
     }
 
@@ -44,7 +44,7 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final boolean doLong(final long left, final long right) {
+    protected static final boolean doBoolean(final boolean left, final boolean right) {
         return BooleanObject.wrap(left == right);
     }
 

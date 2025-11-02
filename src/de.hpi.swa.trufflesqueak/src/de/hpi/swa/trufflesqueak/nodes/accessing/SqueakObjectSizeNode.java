@@ -45,13 +45,8 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doNil(final NilObject obj) {
-        return obj.size();
-    }
-
-    @Specialization
-    protected static final int doEmpty(final EmptyObject obj) {
-        return obj.size();
+    protected static final int doArray(final Node node, final ArrayObject obj, @Cached final ArrayObjectSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
     }
 
     @Specialization
@@ -61,8 +56,31 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doArray(final Node node, final ArrayObject obj, @Cached final ArrayObjectSizeNode sizeNode) {
+    protected static final int doCode(final CompiledCodeObject obj) {
+        return obj.size();
+    }
+
+    @Specialization
+    protected static final int doWeakVariablePointers(final Node node, final WeakVariablePointersObject obj,
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(node, obj) + obj.getVariablePartSize();
+    }
+
+    @Specialization
+    protected static final int doVariablePointers(final Node node, final VariablePointersObject obj,
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(node, obj) + obj.getVariablePartSize();
+    }
+
+    @Specialization
+    protected static final int doPointers(final Node node, final PointersObject obj,
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
         return sizeNode.execute(node, obj);
+    }
+
+    @Specialization
+    protected static final int doClosure(final BlockClosureObject obj) {
+        return obj.size();
     }
 
     @Specialization
@@ -76,36 +94,12 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doPointers(final Node node, final PointersObject obj,
-                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(node, obj);
-    }
-
-    @Specialization
-    protected static final int doVariablePointers(final Node node, final VariablePointersObject obj,
-                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(node, obj) + obj.getVariablePartSize();
-    }
-
-    @Specialization
-    protected static final int doWeakVariablePointers(final Node node, final WeakVariablePointersObject obj,
-                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(node, obj) + obj.getVariablePartSize();
-    }
-
-    @Specialization
-    protected static final int doEphemeron(final Node node, final EphemeronObject obj,
-                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
-        return sizeNode.execute(node, obj);
-    }
-
-    @Specialization
-    protected static final int doClosure(final BlockClosureObject obj) {
+    protected static final int doNil(final NilObject obj) {
         return obj.size();
     }
 
     @Specialization
-    protected static final int doCode(final CompiledCodeObject obj) {
+    protected static final int doEmpty(final EmptyObject obj) {
         return obj.size();
     }
 
@@ -117,5 +111,11 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     @Specialization
     protected static final int doCharacterObject(final CharacterObject obj) {
         return obj.size();
+    }
+
+    @Specialization
+    protected static final int doEphemeron(final Node node, final EphemeronObject obj,
+                    @Shared("sizeNode") @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(node, obj);
     }
 }

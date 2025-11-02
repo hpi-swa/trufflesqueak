@@ -23,7 +23,6 @@ import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
@@ -38,13 +37,14 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     public abstract Object execute(Node node, Object object);
 
     @Specialization
-    protected static final NilObject doNil(final NilObject receiver) {
-        return receiver;
+    protected static final PointersObject doPointers(final PointersObject receiver) {
+        return receiver.shallowCopy();
     }
 
     @Specialization
-    protected static final EmptyObject doEmpty(final EmptyObject receiver) {
-        return receiver.shallowCopy();
+    protected static final ArrayObject doArray(final Node node, final ArrayObject receiver,
+                    @Exclusive @Cached final ArrayObjectShallowCopyNode copyNode) {
+        return copyNode.execute(node, receiver);
     }
 
     @Specialization
@@ -54,12 +54,12 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final PointersObject doPointers(final PointersObject receiver) {
+    protected static final VariablePointersObject doVariablePointers(final VariablePointersObject receiver) {
         return receiver.shallowCopy();
     }
 
     @Specialization
-    protected static final VariablePointersObject doVariablePointers(final VariablePointersObject receiver) {
+    protected static final ContextObject doContext(final ContextObject receiver) {
         return receiver.shallowCopy();
     }
 
@@ -74,12 +74,6 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ArrayObject doArray(final Node node, final ArrayObject receiver,
-                    @Exclusive @Cached final ArrayObjectShallowCopyNode copyNode) {
-        return copyNode.execute(node, receiver);
-    }
-
-    @Specialization
     protected static final BlockClosureObject doClosure(final BlockClosureObject receiver) {
         return receiver.shallowCopy();
     }
@@ -90,12 +84,12 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ContextObject doContext(final ContextObject receiver) {
+    protected static final ClassObject doClass(final ClassObject receiver) {
         return receiver.shallowCopy();
     }
 
     @Specialization
-    protected static final ClassObject doClass(final ClassObject receiver) {
+    protected static final EmptyObject doEmpty(final EmptyObject receiver) {
         return receiver.shallowCopy();
     }
 

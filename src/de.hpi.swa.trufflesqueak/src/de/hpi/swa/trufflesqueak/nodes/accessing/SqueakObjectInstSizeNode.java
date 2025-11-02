@@ -33,12 +33,12 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
     public abstract int execute(Node node, Object obj);
 
     @Specialization
-    protected static final int doNil(final NilObject obj) {
+    protected static final int doArray(final ArrayObject obj) {
         return obj.instsize();
     }
 
     @Specialization
-    protected static final int doArray(final ArrayObject obj) {
+    protected static final int doNative(final NativeObject obj) {
         return obj.instsize();
     }
 
@@ -49,12 +49,7 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doClass(final ClassObject obj) {
-        return obj.instsize();
-    }
-
-    @Specialization
-    protected static final int doContext(final ContextObject obj) {
+    protected static final int doCode(final CompiledCodeObject obj) {
         return obj.instsize();
     }
 
@@ -64,7 +59,12 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doCode(final CompiledCodeObject obj) {
+    protected static final int doClass(final ClassObject obj) {
+        return obj.instsize();
+    }
+
+    @Specialization
+    protected static final int doNil(final NilObject obj) {
         return obj.instsize();
     }
 
@@ -74,7 +74,7 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doNative(final NativeObject obj) {
+    protected static final int doContext(final ContextObject obj) {
         return obj.instsize();
     }
 

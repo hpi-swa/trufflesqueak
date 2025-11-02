@@ -65,9 +65,14 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doVariablePointers(final Node node, final VariablePointersObject obj, final long index,
-                    @Cached final VariablePointersObjectReadNode readNode) {
+    protected static final Object doNative(final Node node, final NativeObject obj, final long index,
+                    @Cached final NativeObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
+    }
+
+    @Specialization
+    protected static final Object doCode(final CompiledCodeObject obj, final long index) {
+        return obj.at0(index);
     }
 
     @Specialization
@@ -77,20 +82,15 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
+    protected static final Object doVariablePointers(final Node node, final VariablePointersObject obj, final long index,
+                    @Cached final VariablePointersObjectReadNode readNode) {
+        return readNode.execute(node, obj, index);
+    }
+
+    @Specialization
     protected static final Object doWeakPointersVariable(final Node node, final WeakVariablePointersObject obj, final long index,
                     @Cached final WeakVariablePointersObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
-    }
-
-    @Specialization
-    protected static final Object doNative(final Node node, final NativeObject obj, final long index,
-                    @Cached final NativeObjectReadNode readNode) {
-        return readNode.execute(node, obj, index);
-    }
-
-    @Specialization
-    protected static final Object doCode(final CompiledCodeObject obj, final long index) {
-        return obj.at0(index);
     }
 
     @Specialization

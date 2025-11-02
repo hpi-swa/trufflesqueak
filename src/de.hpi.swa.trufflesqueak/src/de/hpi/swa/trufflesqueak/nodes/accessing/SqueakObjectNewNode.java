@@ -52,21 +52,34 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return SqueakObjectNewNodeGen.getUncached().execute(null, image, classObject, extraSize);
     }
 
-    @Specialization(guards = "classObject.isZeroSized()")
-    protected static final EmptyObject doEmpty(final SqueakImageContext image, final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {
-        return new EmptyObject(image, classObject);
+    @Specialization(guards = "classObject.isIndexableWithNoInstVars()")
+    protected static final ArrayObject doArray(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert classObject.getBasicInstanceSize() == 0;
+        return ArrayObject.createEmptyStrategy(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "image.isMetaClass(classObject)"})
-    protected static final ClassObject doClass(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert classObject.getBasicInstanceSize() == METACLASS.INST_SIZE && extraSize == 0;
-        return new ClassObject(image, classObject, METACLASS.INST_SIZE);
+    @Specialization(guards = {"classObject.isBytes()"})
+    protected static final NativeObject doNativeBytes(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeBytes(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!image.isMetaClass(classObject)", "classObject.instancesAreClasses()"})
-    protected static final ClassObject doClassOdd(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert extraSize == 0;
-        return new ClassObject(image, classObject, classObject.getBasicInstanceSize() + METACLASS.INST_SIZE);
+    @Specialization(guards = "classObject.isShorts()")
+    protected static final NativeObject doNativeShorts(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeShorts(image, classObject, extraSize);
+    }
+
+    @Specialization(guards = {"classObject.isWords()", "!image.isFloatClass(classObject)"})
+    protected static final NativeObject doNativeInts(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeInts(image, classObject, extraSize);
+    }
+
+    @Specialization(guards = "classObject.isLongs()")
+    protected static final NativeObject doNativeLongs(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeLongs(image, classObject, extraSize);
     }
 
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
@@ -88,24 +101,6 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     protected static final PointersObject doPointersUncached(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
         return new PointersObject(image, classObject, null);
-    }
-
-    @Specialization(guards = "classObject.isIndexableWithNoInstVars()")
-    protected static final ArrayObject doIndexedPointers(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert classObject.getBasicInstanceSize() == 0;
-        return ArrayObject.createEmptyStrategy(image, classObject, extraSize);
-    }
-
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "image.isMethodContextClass(classObject)"})
-    protected static final ContextObject doContext(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert classObject.getBasicInstanceSize() == CONTEXT.INST_SIZE;
-        return new ContextObject(image, extraSize);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)"})
-    protected static final BlockClosureObject doBlockClosure(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        return BlockClosureObject.create(image, classObject, extraSize);
     }
 
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
@@ -148,6 +143,35 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new WeakVariablePointersObject(image, classObject, null, extraSize);
     }
 
+    @Specialization(guards = "classObject.isZeroSized()")
+    protected static final EmptyObject doEmpty(final SqueakImageContext image, final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {
+        return new EmptyObject(image, classObject);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)"})
+    protected static final BlockClosureObject doBlockClosure(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        return BlockClosureObject.create(image, classObject, extraSize);
+    }
+
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "image.isMethodContextClass(classObject)"})
+    protected static final ContextObject doContext(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert classObject.getBasicInstanceSize() == CONTEXT.INST_SIZE;
+        return new ContextObject(image, extraSize);
+    }
+
+    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "image.isMetaClass(classObject)"})
+    protected static final ClassObject doClass(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert classObject.getBasicInstanceSize() == METACLASS.INST_SIZE && extraSize == 0;
+        return new ClassObject(image, classObject, METACLASS.INST_SIZE);
+    }
+
+    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!image.isMetaClass(classObject)", "classObject.instancesAreClasses()"})
+    protected static final ClassObject doClassOdd(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+        assert extraSize == 0;
+        return new ClassObject(image, classObject, classObject.getBasicInstanceSize() + METACLASS.INST_SIZE);
+    }
+
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
     protected static final EphemeronObject doEphemeronCached(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
                     @Cached("getEphemeronLayoutOrNull(classObject)") final ObjectLayout cachedLayout) {
@@ -165,34 +189,10 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new EphemeronObject(image, classObject, null);
     }
 
-    @Specialization(guards = "classObject.isLongs()")
-    protected static final NativeObject doNativeLongs(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert classObject.getBasicInstanceSize() == 0;
-        return NativeObject.newNativeLongs(image, classObject, extraSize);
-    }
-
     @Specialization(guards = {"classObject.isWords()", "image.isFloatClass(classObject)"})
     protected static final FloatObject doFloat(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() + extraSize == 2;
         return new FloatObject(image);
-    }
-
-    @Specialization(guards = {"classObject.isWords()", "!image.isFloatClass(classObject)"})
-    protected static final NativeObject doNativeInts(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert classObject.getBasicInstanceSize() == 0;
-        return NativeObject.newNativeInts(image, classObject, extraSize);
-    }
-
-    @Specialization(guards = "classObject.isShorts()")
-    protected static final NativeObject doNativeShorts(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert classObject.getBasicInstanceSize() == 0;
-        return NativeObject.newNativeShorts(image, classObject, extraSize);
-    }
-
-    @Specialization(guards = {"classObject.isBytes()"})
-    protected static final NativeObject doNativeBytes(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        assert classObject.getBasicInstanceSize() == 0;
-        return NativeObject.newNativeBytes(image, classObject, extraSize);
     }
 
     @Specialization(guards = {"classObject.isCompiledMethodClassType()"})

@@ -51,12 +51,6 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     protected abstract void executeSpecialized(Node node, Object obj, long index, Object value);
 
     @Specialization
-    protected static final void doNative(final Node node, final NativeObject obj, final long index, final Object value,
-                    @Cached final NativeObjectWriteNode writeNode) {
-        writeNode.execute(node, obj, index, value);
-    }
-
-    @Specialization
     protected static final void doArray(final Node node, final ArrayObject obj, final long index, final Object value,
                     @Cached final ArrayObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
@@ -69,20 +63,8 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doVariablePointers(final Node node, final VariablePointersObject obj, final long index, final Object value,
-                    @Cached final VariablePointersObjectWriteNode writeNode) {
-        writeNode.execute(node, obj, (int) index, value);
-    }
-
-    @Specialization
-    protected static final void doWeakPointers(final Node node, final WeakVariablePointersObject obj, final long index, final Object value,
-                    @Cached final WeakVariablePointersObjectWriteNode writeNode) {
-        writeNode.execute(node, obj, (int) index, value);
-    }
-
-    @Specialization
-    protected static final void doClass(final Node node, final ClassObject obj, final long index, final Object value,
-                    @Cached final ClassObjectWriteNode writeNode) {
+    protected static final void doNative(final Node node, final NativeObject obj, final long index, final Object value,
+                    @Cached final NativeObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
     }
 
@@ -92,14 +74,32 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doClosure(final Node node, final BlockClosureObject obj, final long index, final Object value,
-                    @Cached final BlockClosureObjectWriteNode writeNode) {
-        writeNode.execute(node, obj, index, value);
+    protected static final void doWeakPointers(final Node node, final WeakVariablePointersObject obj, final long index, final Object value,
+                    @Cached final WeakVariablePointersObjectWriteNode writeNode) {
+        writeNode.execute(node, obj, (int) index, value);
+    }
+
+    @Specialization
+    protected static final void doVariablePointers(final Node node, final VariablePointersObject obj, final long index, final Object value,
+                    @Cached final VariablePointersObjectWriteNode writeNode) {
+        writeNode.execute(node, obj, (int) index, value);
     }
 
     @Specialization
     protected static final void doContext(final Node node, final ContextObject obj, final long index, final Object value,
                     @Cached final ContextObjectWriteNode writeNode) {
+        writeNode.execute(node, obj, index, value);
+    }
+
+    @Specialization
+    protected static final void doClass(final Node node, final ClassObject obj, final long index, final Object value,
+                    @Cached final ClassObjectWriteNode writeNode) {
+        writeNode.execute(node, obj, index, value);
+    }
+
+    @Specialization
+    protected static final void doClosure(final Node node, final BlockClosureObject obj, final long index, final Object value,
+                    @Cached final BlockClosureObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
     }
 

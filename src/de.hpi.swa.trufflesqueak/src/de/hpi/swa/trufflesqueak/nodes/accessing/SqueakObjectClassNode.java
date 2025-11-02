@@ -39,6 +39,27 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
+    protected static final ClassObject doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash value) {
+        assert value.assertNotForwarded();
+        return value.getSqueakClass();
+    }
+
+    @Specialization
+    protected final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value) {
+        return getContext().smallIntegerClass;
+    }
+
+    @Specialization
+    protected final ClassObject doDouble(@SuppressWarnings("unused") final double value) {
+        return getContext().smallFloatClass;
+    }
+
+    @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"}, assumptions = "getContext().getForeignObjectClassStableAssumption()")
+    protected final ClassObject doForeignObject(@SuppressWarnings("unused") final Object value) {
+        return getContext().getForeignObjectClass();
+    }
+
+    @Specialization
     protected final ClassObject doNil(@SuppressWarnings("unused") final NilObject value) {
         return getContext().nilClass;
     }
@@ -54,22 +75,7 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value) {
-        return getContext().smallIntegerClass;
-    }
-
-    @Specialization
     protected final ClassObject doChar(@SuppressWarnings("unused") final char value) {
-        return getContext().characterClass;
-    }
-
-    @Specialization
-    protected final ClassObject doDouble(@SuppressWarnings("unused") final double value) {
-        return getContext().smallFloatClass;
-    }
-
-    @Specialization
-    protected final ClassObject doCharacter(@SuppressWarnings("unused") final CharacterObject value) {
         return getContext().characterClass;
     }
 
@@ -84,13 +90,7 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ClassObject doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash value) {
-        assert value.assertNotForwarded();
-        return value.getSqueakClass();
-    }
-
-    @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"}, assumptions = "getContext().getForeignObjectClassStableAssumption()")
-    protected final ClassObject doForeignObject(@SuppressWarnings("unused") final Object value) {
-        return getContext().getForeignObjectClass();
+    protected final ClassObject doCharacter(@SuppressWarnings("unused") final CharacterObject value) {
+        return getContext().characterClass;
     }
 }

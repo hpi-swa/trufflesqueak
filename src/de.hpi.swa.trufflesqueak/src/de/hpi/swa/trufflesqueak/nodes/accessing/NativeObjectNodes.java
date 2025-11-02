@@ -39,14 +39,14 @@ public final class NativeObjectNodes {
             return Byte.toUnsignedLong(obj.getByte(index));
         }
 
-        @Specialization(guards = "obj.isShortType()")
-        protected static final long doNativeShorts(final NativeObject obj, final long index) {
-            return Short.toUnsignedLong(obj.getShort(index));
-        }
-
         @Specialization(guards = "obj.isIntType()")
         protected static final long doNativeInts(final NativeObject obj, final long index) {
             return Integer.toUnsignedLong(obj.getInt(index));
+        }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final long doNativeShorts(final NativeObject obj, final long index) {
+            return Short.toUnsignedLong(obj.getShort(index));
         }
 
         @Specialization(guards = "obj.isLongType()")
@@ -74,14 +74,14 @@ public final class NativeObjectNodes {
             obj.setByte(index, (byte) value);
         }
 
-        @Specialization(guards = {"obj.isShortType()", "value >= 0", "value <= SHORT_MAX"})
-        protected static final void doNativeShorts(final NativeObject obj, final long index, final long value) {
-            obj.setShort(index, (short) value);
-        }
-
         @Specialization(guards = {"obj.isIntType()", "value >= 0", "value <= INTEGER_MAX"})
         protected static final void doNativeInts(final NativeObject obj, final long index, final long value) {
             obj.setInt(index, (int) value);
+        }
+
+        @Specialization(guards = {"obj.isShortType()", "value >= 0", "value <= SHORT_MAX"})
+        protected static final void doNativeShorts(final NativeObject obj, final long index, final long value) {
+            obj.setShort(index, (short) value);
         }
 
         @Specialization(guards = {"obj.isLongType()", "value >= 0"})
@@ -184,14 +184,14 @@ public final class NativeObjectNodes {
             return obj.getByteLength();
         }
 
-        @Specialization(guards = "obj.isShortType()")
-        protected static final int doNativeShorts(final NativeObject obj) {
-            return obj.getShortLength();
-        }
-
         @Specialization(guards = "obj.isIntType()")
         protected static final int doNativeInts(final NativeObject obj) {
             return obj.getIntLength();
+        }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final int doNativeShorts(final NativeObject obj) {
+            return obj.getShortLength();
         }
 
         @Specialization(guards = "obj.isLongType()")
