@@ -588,8 +588,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         public static final PointersObject doPoint(final Object xPos, final Object yPos,
                         @Bind final Node node,
+                        @Bind final SqueakImageContext image,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext(node).asPoint(writeNode, node, xPos, yPos);
+            return image.asPoint(writeNode, node, xPos, yPos);
         }
     }
 

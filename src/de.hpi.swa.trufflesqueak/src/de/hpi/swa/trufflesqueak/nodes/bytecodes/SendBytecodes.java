@@ -239,7 +239,7 @@ public final class SendBytecodes {
                 case 8 /* #* */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimMultiplyNodeGen::create, true);
                 case 9 /* #/ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimDivideNodeGen::create, true);
                 case 10 /* #\\ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimModNodeGen::create, true);
-                case 11 /* #@ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimMakePointNodeGen::create, false);
+                case 11 /* #@ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimMakePointNodeGen::create, true);
                 case 12 /* #bitShift: */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimBitShiftNodeGen::create, true);
                 case 13 /* #// */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimDivNodeGen::create, true);
                 case 14 /* #bitAnd: */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimBitAndNodeGen::create, true);
@@ -1102,29 +1102,25 @@ public final class SendBytecodes {
                 @Specialization
                 protected static final PointersObject doLong(final long xPos, final Object yPos,
                                 @Bind final Node node,
+                                @Bind final SqueakImageContext image,
                                 @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-                    return PrimMakePointNode.doPoint(xPos, yPos, node, writeNode);
+                    return PrimMakePointNode.doPoint(xPos, yPos, node, image, writeNode);
                 }
 
                 @Specialization
                 protected static final PointersObject doDouble(final double xPos, final Object yPos,
                                 @Bind final Node node,
+                                @Bind final SqueakImageContext image,
                                 @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-                    return PrimMakePointNode.doPoint(xPos, yPos, node, writeNode);
+                    return PrimMakePointNode.doPoint(xPos, yPos, node, image, writeNode);
                 }
 
-                @Specialization(guards = "getContext(node).isLargeInteger(xPos)")
+                @Specialization(guards = "image.isLargeInteger(xPos)")
                 protected static final PointersObject doLargeInteger(final NativeObject xPos, final Object yPos,
                                 @Bind final Node node,
+                                @Bind final SqueakImageContext image,
                                 @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-                    return PrimMakePointNode.doPoint(xPos, yPos, node, writeNode);
-                }
-
-                @Specialization
-                protected static final PointersObject doFloat(final FloatObject xPos, final Object yPos,
-                                @Bind final Node node,
-                                @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-                    return PrimMakePointNode.doPoint(xPos, yPos, node, writeNode);
+                    return PrimMakePointNode.doPoint(xPos, yPos, node, image, writeNode);
                 }
             }
 
