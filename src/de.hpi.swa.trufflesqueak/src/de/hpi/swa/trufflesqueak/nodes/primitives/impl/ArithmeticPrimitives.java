@@ -1580,9 +1580,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 550)
-    protected abstract static class PrimSmallFloatDivideNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+    public abstract static class PrimSmallFloatDivideNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(rewriteOn = RespecializeException.class)
-        protected static final double doDoubleFinite(final double lhs, final double rhs,
+        public static final double doDoubleFinite(final double lhs, final double rhs,
                         @Bind final Node node,
                         @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
             if (isZeroProfile.profile(node, SqueakGuards.isZero(rhs))) {
@@ -1593,7 +1593,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doDoubleFinite")
-        protected static final Object doDouble(final double lhs, final double rhs,
+        public static final Object doDouble(final double lhs, final double rhs,
                         @Bind final Node node,
                         @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
                         @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
@@ -1605,14 +1605,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, rewriteOn = RespecializeException.class)
-        protected static final double doLongFinite(final double lhs, final long rhs,
+        public static final double doDoubleLongFinite(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
             return doDoubleFinite(lhs, rhs, node, isZeroProfile);
         }
 
-        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, replaces = "doLongFinite")
-        protected static final Object doLong(final double lhs, final long rhs,
+        @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, replaces = "doDoubleLongFinite")
+        public static final Object doDoubleLong(final double lhs, final long rhs,
                         @Bind final Node node,
                         @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
                         @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {

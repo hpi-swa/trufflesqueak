@@ -101,6 +101,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimM
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimNotEqualLargeIntegersNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimNotEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatAddNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatDivideNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterOrEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterThanNode;
@@ -1010,11 +1011,41 @@ public final class SendBytecodes {
                 protected static final Object doLongDouble(final long lhs, final double rhs,
                                 @Bind final Node node,
                                 @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
-                                @Cached final FloatObjectNormalizeNode normalizeNode) {
+                                @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
                     return PrimDivideNode.doLongDouble(lhs, rhs, node, isZeroProfile, normalizeNode);
                 }
 
-                @Specialization(guards = {"image.isLargeInteger(lhs)", "rhs != 0"})
+                @Specialization(rewriteOn = RespecializeException.class)
+                protected static final double doDoubleFinite(final double lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+                    return PrimSmallFloatDivideNode.doDoubleFinite(lhs, rhs, node, isZeroProfile);
+                }
+
+                @Specialization(replaces = "doDoubleFinite")
+                protected static final Object doDouble(final double lhs, final double rhs,
+                                @Bind final Node node,
+                                @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                                @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                    return PrimSmallFloatDivideNode.doDouble(lhs, rhs, node, isZeroProfile, normalizeNode);
+                }
+
+                @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, rewriteOn = RespecializeException.class)
+                protected static final double doDoubleLongFinite(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+                    return PrimSmallFloatDivideNode.doDoubleLongFinite(lhs, rhs, node, isZeroProfile);
+                }
+
+                @Specialization(guards = {"isPrimitiveDoMixedArithmetic()"}, replaces = "doDoubleLongFinite")
+                protected static final Object doDoubleLong(final double lhs, final long rhs,
+                                @Bind final Node node,
+                                @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                                @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                    return PrimSmallFloatDivideNode.doDoubleLong(lhs, rhs, node, isZeroProfile, normalizeNode);
+                }
+
+                @Specialization(guards = {"image.isLargeInteger(lhs)"})
                 protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
                                 @Bind final SqueakImageContext image,
                                 @Bind final Node node,
@@ -1023,7 +1054,7 @@ public final class SendBytecodes {
                     return PrimDivideLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image, node, isZeroProfile, successProfile);
                 }
 
-                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)", "!isZero(rhs)"})
+                @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
                 protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                                 @Bind final SqueakImageContext image,
                                 @Bind final Node node,
