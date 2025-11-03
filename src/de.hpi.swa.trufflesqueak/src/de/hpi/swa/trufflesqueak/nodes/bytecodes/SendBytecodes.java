@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import java.util.function.Supplier;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.debug.DebuggerTags;
@@ -225,31 +227,31 @@ public final class SendBytecodes {
 
         public static AbstractBytecodeNode create(final VirtualFrame frame, final int successorIndex, final int selectorIndex) {
             return switch (selectorIndex) {
-                case 0 /* #+ */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimAddNodeGen.create());
-                case 1 /* #- */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimSubtractNodeGen.create());
-                case 2 /* #< */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimLessThanNodeGen.create());
-                case 3 /* #> */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimGreaterThanNodeGen.create());
-                case 4 /* #<= */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimLessOrEqualNodeGen.create());
-                case 5 /* #>= */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimGreaterOrEqualNodeGen.create());
-                case 6 /* #= */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimEqualNodeGen.create());
-                case 7 /* #~= */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimNotEqualNodeGen.create());
-                case 8 /* #* */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimMultiplyNodeGen.create());
-                case 9 /* #/ */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimDivideNodeGen.create());
-                case 10 /* #\\ */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimModNodeGen.create());
-                case 11 /* #@ */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimMakePointNodeGen.create());
-                case 12 /* #bitShift: */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimBitShiftNodeGen.create());
-                case 13 /* #// */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimDivNodeGen.create());
-                case 14 /* #bitAnd: */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimBitAndNodeGen.create());
-                case 15 /* #bitOr: */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimBitOrNodeGen.create());
+                case 0 /* #+ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimAddNodeGen::create, true);
+                case 1 /* #- */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimSubtractNodeGen::create, true);
+                case 2 /* #< */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimLessThanNodeGen::create, true);
+                case 3 /* #> */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimGreaterThanNodeGen::create, true);
+                case 4 /* #<= */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimLessOrEqualNodeGen::create, true);
+                case 5 /* #>= */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimGreaterOrEqualNodeGen::create, true);
+                case 6 /* #= */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimEqualNodeGen::create, true);
+                case 7 /* #~= */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimNotEqualNodeGen::create, true);
+                case 8 /* #* */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimMultiplyNodeGen::create, true);
+                case 9 /* #/ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimDivideNodeGen::create, true);
+                case 10 /* #\\ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimModNodeGen::create, true);
+                case 11 /* #@ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimMakePointNodeGen::create, false);
+                case 12 /* #bitShift: */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimBitShiftNodeGen::create, true);
+                case 13 /* #// */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimDivNodeGen::create, true);
+                case 14 /* #bitAnd: */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimBitAndNodeGen::create, true);
+                case 15 /* #bitOr: */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimBitOrNodeGen::create, true);
                 // case 16 /* #at: */ -> fallthrough;
                 // case 17 /* #at:put: */ -> fallthrough;
                 case 18 /* #size */ -> new SendSpecial0Node(frame, successorIndex, selectorIndex, BytecodePrimSizeNodeGen.create());
                 // case 19 /* #next */ -> fallthrough;
                 // case 20 /* #nextPut: */ -> fallthrough;
                 // case 21 /* #atEnd */ -> fallthrough;
-                case 22 /* #== */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimIdenticalSistaV1NodeGen.create());
+                case 22 /* #== */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimIdenticalSistaV1NodeGen::create, false);
                 case 23 /* #class */ -> new SendSpecial0Node(frame, successorIndex, selectorIndex, BytecodePrimClassNodeGen.create());
-                case 24 /* #~~ */ -> new SendSpecial1Node(frame, successorIndex, selectorIndex, BytecodePrimNotIdenticalSistaV1NodeGen.create());
+                case 24 /* #~~ */ -> SendSpecial1Node.create(frame, successorIndex, selectorIndex, BytecodePrimNotIdenticalSistaV1NodeGen::create, false);
                 // case 25 /* #value */ -> should go through SelfSendNode;
                 // case 26 /* #value: */ -> should go through SelfSendNode;
                 // case 27 /* #do: */ -> fallthrough;
@@ -257,13 +259,15 @@ public final class SendBytecodes {
                 // case 29 /* #new: */ -> fallthrough;
                 case 30 /* #x: */ -> new SendSpecial0Node(frame, successorIndex, selectorIndex, BytecodePrimPointXNodeGen.create());
                 case 31 /* #y: */ -> new SendSpecial0Node(frame, successorIndex, selectorIndex, BytecodePrimPointYNodeGen.create());
-                default -> {
-                    final SqueakImageContext image = SqueakImageContext.getSlow();
-                    final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
-                    final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
-                    yield new SelfSendNode(frame, successorIndex, specialSelector, numArguments);
-                }
+                default -> createSelfSend(frame, successorIndex, selectorIndex);
             };
+        }
+
+        private static AbstractBytecodeNode createSelfSend(final VirtualFrame frame, final int successorIndex, final int selectorIndex) {
+            final SqueakImageContext image = SqueakImageContext.getSlow();
+            final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
+            final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
+            return new SelfSendNode(frame, successorIndex, specialSelector, numArguments);
         }
 
         protected final void rewriteToSend(final VirtualFrame frame, final DispatchBytecodePrimNode dispatchNode) {
@@ -271,11 +275,7 @@ public final class SendBytecodes {
             // Replace with normal send (pc needs to be written first)
             FrameAccess.setInstructionPointer(frame, getSuccessorIndex());
             // Lookup specialSelector and replace with normal send
-            final SqueakImageContext image = getContext();
-            final int selectorIndex = dispatchNode.getSelectorIndex();
-            final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
-            final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
-            replace(new SelfSendNode(frame, getSuccessorIndex(), specialSelector, numArguments)).executeVoid(frame);
+            replace(createSelfSend(frame, getSuccessorIndex(), dispatchNode.getSelectorIndex())).executeVoid(frame);
         }
 
         protected abstract static class DispatchBytecodePrimNode extends AbstractNode {
@@ -441,6 +441,22 @@ public final class SendBytecodes {
                 writeResultNode = FrameStackWriteNode.create(frame, stackPointer - 2);
                 assert selectorIndex == dispatchNode.getSelectorIndex();
                 this.dispatchNode = dispatchNode;
+            }
+
+            static AbstractBytecodeNode create(final VirtualFrame frame, final int successorIndex, final int selectorIndex, final Supplier<DispatchBytecodePrim1Node> dispatchNodeSupplier,
+                            final boolean isArithmetic) {
+                final int stackSlotIndex = FrameAccess.toStackSlotIndex(frame, FrameAccess.getStackPointer(frame));
+                final Object receiver = frame.getValue(stackSlotIndex - 2);
+                final Object arg = frame.getValue(stackSlotIndex - 1);
+                if (!isArithmetic || (isArithmetic(receiver) && isArithmetic(arg))) {
+                    return new SendSpecial1Node(frame, successorIndex, selectorIndex, dispatchNodeSupplier.get());
+                } else {
+                    return createSelfSend(frame, successorIndex, selectorIndex);
+                }
+            }
+
+            private static boolean isArithmetic(final Object value) {
+                return value instanceof Long || value instanceof Double || (value instanceof final NativeObject no && SqueakImageContext.getSlow().isLargeInteger(no));
             }
 
             @Override
