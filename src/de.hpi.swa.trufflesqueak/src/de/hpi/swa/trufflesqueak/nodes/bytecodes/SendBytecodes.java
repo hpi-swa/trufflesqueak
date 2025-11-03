@@ -331,16 +331,23 @@ public final class SendBytecodes {
                     return 18;
                 }
 
-                /*
-                 * Cannot use specialization for NativeObject as Cuis has lots of conflicting
-                 * overrides, such as Float64Array#size.
-                 */
-
                 @Specialization
                 protected static final long doArrayObject(final ArrayObject receiver,
                                 @Bind final Node node,
                                 @Cached final ArrayObjectSizeNode sizeNode) {
                     return sizeNode.execute(node, receiver);
+                }
+
+                /*
+                 * Cannot use all specializations for NativeObject as Cuis has lots of conflicting
+                 * overrides, such as Float64Array#size. Use only a single specialization for byte
+                 * strings and symbols.
+                 */
+
+                @Specialization(guards = "image.isByteString(obj) || image.isByteSymbol(obj)")
+                protected static final long doNativeBytes(final NativeObject obj,
+                                @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
+                    return obj.getByteLength();
                 }
 
                 @Specialization

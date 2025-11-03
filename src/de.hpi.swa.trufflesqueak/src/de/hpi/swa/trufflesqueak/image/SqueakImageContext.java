@@ -1031,8 +1031,16 @@ public final class SqueakImageContext {
         return object == blockClosureClass;
     }
 
+    public boolean isByteString(final NativeObject object) {
+        return isByteStringClass(object.getSqueakClass());
+    }
+
     public boolean isByteStringClass(final ClassObject object) {
         return object == byteStringClass;
+    }
+
+    public boolean isByteSymbol(final NativeObject object) {
+        return isByteSymbolClass(object.getSqueakClass());
     }
 
     public boolean isByteSymbolClass(final ClassObject object) {
