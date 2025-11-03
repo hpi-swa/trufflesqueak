@@ -247,26 +247,23 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 75)
     protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
-        protected static final long doNil(@SuppressWarnings("unused") final NilObject object) {
-            return NilObject.SQUEAK_HASH;
-        }
-
-        @Specialization(guards = "!object")
-        protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean object) {
-            return BooleanObject.FALSE_SQUEAK_HASH;
-        }
-
-        @Specialization(guards = "object")
-        protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean object) {
-            return BooleanObject.TRUE_SQUEAK_HASH;
-        }
-
-        @Specialization
         protected static final long doAbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash object,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile needsHashProfile) {
             assert object.assertNotForwarded();
             return object.getOrCreateSqueakHash(needsHashProfile, node);
+        }
+
+        @Specialization
+        protected static final long doNil(@SuppressWarnings("unused") final NilObject object) {
+            return NilObject.SQUEAK_HASH;
+        }
+
+        @Specialization
+        protected static final long doBoolean(final boolean object,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile profile) {
+            return profile.profile(node, object) ? BooleanObject.TRUE_SQUEAK_HASH : BooleanObject.FALSE_SQUEAK_HASH;
         }
     }
 

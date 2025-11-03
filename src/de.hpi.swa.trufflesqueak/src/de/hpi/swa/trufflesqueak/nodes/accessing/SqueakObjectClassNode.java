@@ -6,12 +6,16 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -64,14 +68,11 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
         return getContext().nilClass;
     }
 
-    @Specialization(guards = "value == TRUE")
-    protected final ClassObject doTrue(@SuppressWarnings("unused") final boolean value) {
-        return getContext().trueClass;
-    }
-
-    @Specialization(guards = "value != TRUE")
-    protected final ClassObject doFalse(@SuppressWarnings("unused") final boolean value) {
-        return getContext().falseClass;
+    @Specialization
+    protected static final ClassObject doBoolean(final Node node, final boolean value,
+                    @Bind final SqueakImageContext image,
+                    @Cached final InlinedConditionProfile profile) {
+        return profile.profile(node, value) ? image.trueClass : image.falseClass;
     }
 
     @Specialization
