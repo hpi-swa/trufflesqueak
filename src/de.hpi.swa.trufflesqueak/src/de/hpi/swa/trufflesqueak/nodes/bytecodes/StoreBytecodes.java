@@ -13,11 +13,12 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.trufflesqueak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class StoreBytecodes {
@@ -28,7 +29,6 @@ public final class StoreBytecodes {
         private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int successorIndex, final long variableIndex) {
             super(successorIndex);
             literalVariable = code.getLiteral(variableIndex);
-            storeNode = SqueakObjectAtPutAndMarkContextsNode.create(ASSOCIATION.VALUE);
         }
 
         @Override
@@ -39,7 +39,7 @@ public final class StoreBytecodes {
     }
 
     private abstract static class AbstractStoreIntoNode extends AbstractInstrumentableBytecodeNode {
-        @Child protected SqueakObjectAtPutAndMarkContextsNode storeNode;
+        @Child protected SqueakObjectAtPut0Node storeNode = SqueakObjectAtPut0NodeGen.create();
 
         private AbstractStoreIntoNode(final int successorIndex) {
             super(successorIndex);
@@ -54,7 +54,6 @@ public final class StoreBytecodes {
         private AbstractStoreIntoReceiverVariableNode(final int successorIndex, final int receiverIndex) {
             super(successorIndex);
             this.receiverIndex = receiverIndex;
-            storeNode = SqueakObjectAtPutAndMarkContextsNode.create(receiverIndex);
         }
 
         @Override
@@ -65,7 +64,7 @@ public final class StoreBytecodes {
     }
 
     private abstract static class AbstractStoreIntoRemoteTempNode extends AbstractStoreIntoNode {
-        private final int indexInArray;
+        protected final int indexInArray;
         private final int indexOfArray;
 
         @Child private FrameStackReadNode readNode;
@@ -74,7 +73,6 @@ public final class StoreBytecodes {
             super(successorIndex);
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
-            storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray);
         }
 
         protected final FrameStackReadNode getReadNode(final VirtualFrame frame) {
@@ -95,17 +93,17 @@ public final class StoreBytecodes {
     private abstract static class AbstractStoreIntoTempNode extends AbstractInstrumentableBytecodeNode {
         protected final int tempIndex;
 
-        @Child private TemporaryWriteMarkContextsNode storeNode;
+        @Child private FrameStackWriteNode storeNode;
 
         private AbstractStoreIntoTempNode(final int successorIndex, final int tempIndex) {
             super(successorIndex);
             this.tempIndex = tempIndex;
         }
 
-        protected final TemporaryWriteMarkContextsNode getStoreNode(final VirtualFrame frame) {
+        protected final FrameStackWriteNode getStoreNode(final VirtualFrame frame) {
             if (storeNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                storeNode = insert(TemporaryWriteMarkContextsNode.create(frame, tempIndex));
+                storeNode = insert(FrameStackWriteNode.create(frame, tempIndex));
             }
             return storeNode;
         }
@@ -128,7 +126,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(literalVariable, popNode.execute(frame));
+            storeNode.execute(this, literalVariable, ASSOCIATION.VALUE, popNode.execute(frame));
         }
 
         @Override
@@ -146,7 +144,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(FrameAccess.getReceiver(frame), popNode.execute(frame));
+            storeNode.execute(this, FrameAccess.getReceiver(frame), receiverIndex, popNode.execute(frame));
         }
 
         @Override
@@ -164,7 +162,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(getReadNode(frame).executeRead(frame), popNode.execute(frame));
+            storeNode.execute(this, getReadNode(frame).executeRead(frame), indexInArray, popNode.execute(frame));
         }
 
         @Override
@@ -200,7 +198,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(literalVariable, topNode.execute(frame));
+            storeNode.execute(this, literalVariable, ASSOCIATION.VALUE, topNode.execute(frame));
         }
 
         @Override
@@ -218,7 +216,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(FrameAccess.getReceiver(frame), topNode.execute(frame));
+            storeNode.execute(this, FrameAccess.getReceiver(frame), receiverIndex, topNode.execute(frame));
         }
 
         @Override
@@ -236,7 +234,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(getReadNode(frame).executeRead(frame), topNode.execute(frame));
+            storeNode.execute(this, getReadNode(frame).executeRead(frame), indexInArray, topNode.execute(frame));
         }
 
         @Override

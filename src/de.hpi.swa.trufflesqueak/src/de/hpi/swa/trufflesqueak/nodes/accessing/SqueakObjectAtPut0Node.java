@@ -39,7 +39,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObject
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 
 @GenerateInline
-@GenerateCached(false)
+@GenerateCached(true)
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 

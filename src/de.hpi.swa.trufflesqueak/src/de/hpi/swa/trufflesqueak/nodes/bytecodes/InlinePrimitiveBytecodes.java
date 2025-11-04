@@ -598,7 +598,7 @@ public final class InlinePrimitiveBytecodes {
         @Specialization
         protected final void doFillFromToWith(final VirtualFrame frame,
                         @Bind final Node node,
-                        @Cached final SqueakObjectAtPut0Node atPutNode) {
+                        @Cached(inline = true) final SqueakObjectAtPut0Node atPutNode) {
             final Object value = pop4Node.execute(frame);
             final long to = (long) pop3Node.execute(frame);
             final long from = (long) pop2Node.execute(frame);
