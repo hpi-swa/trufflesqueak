@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -102,6 +101,7 @@ public final class ReturnBytecodes {
                     throw CompilerDirectives.shouldNotReachHere();
                 }
             }
+            CompilerDirectives.transferToInterpreter();
             LogUtils.SCHEDULING.info("ReturnFromClosureNode: sendCannotReturn");
             throw new CannotReturnToTarget(returnValue, getGetOrCreateContextNode().executeGet(frame));
         }
@@ -112,7 +112,6 @@ public final class ReturnBytecodes {
          * @return null if homeContext is not on sender chain; return first marked Context if found;
          *         raise NLR otherwise
          */
-        @TruffleBoundary
         private static ContextObject firstUnwindMarkedOrThrowNLR(final AbstractSqueakObject senderOrNil, final ContextObject homeContext, final Object returnValue) {
             AbstractSqueakObject currentLink = senderOrNil;
             ContextObject firstMarkedContext = null;
