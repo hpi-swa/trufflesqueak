@@ -27,17 +27,13 @@ public final class ResumeContextRootNode extends AbstractRootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        try {
-            assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
-            activeContext.clearModifiedSender();
-            final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
-            if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
-                return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
-            } else {
-                return interpretBytecodeWithBoundary(pc);
-            }
-        } finally {
-            SqueakImageContext.get(this).lastSeenContext = null; // Stop materialization here.
+        assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
+        activeContext.clearModifiedSender();
+        final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
+        if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
+            return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
+        } else {
+            return interpretBytecodeWithBoundary(pc);
         }
     }
 

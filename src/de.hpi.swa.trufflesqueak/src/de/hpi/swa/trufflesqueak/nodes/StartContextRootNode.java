@@ -42,7 +42,6 @@ public final class StartContextRootNode extends AbstractRootNode {
 
     @Child private CheckForInterruptsQuickNode interruptHandlerNode;
     @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode;
-    @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
 
     public StartContextRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image, code);
@@ -66,11 +65,10 @@ public final class StartContextRootNode extends AbstractRootNode {
             return executeBytecodeNode.execute(frame, initialPC);
         } catch (final NonVirtualReturn | ProcessSwitch | CannotReturnToTarget nvr) {
             /* {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            getGetOrCreateContextNode().executeGet(frame);
             throw nvr;
         } finally {
             image.exitingContext();
-            materializeContextOnMethodExitNode.execute(frame);
         }
     }
 

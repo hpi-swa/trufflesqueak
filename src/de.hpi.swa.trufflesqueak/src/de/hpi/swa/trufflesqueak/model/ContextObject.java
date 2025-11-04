@@ -40,7 +40,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private Object senderOrFrameOrSize;
     private boolean hasModifiedSender;
-    private boolean escaped;
 
     public ContextObject(final long header) {
         super(header);
@@ -71,7 +70,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     private ContextObject(final ContextObject original) {
         super(original);
         hasModifiedSender = original.hasModifiedSender();
-        escaped = original.escaped;
         // Create shallow copy of Truffle frame
         final FrameDescriptor frameDescriptor = FrameAccess.getCodeObject(original.getTruffleFrame()).getFrameDescriptor();
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(original.getTruffleFrame().getArguments().clone(), frameDescriptor);
@@ -403,14 +401,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return new ContextObject(this);
     }
 
-    public boolean hasEscaped() {
-        return escaped;
-    }
-
-    public void markEscaped() {
-        escaped = true;
-    }
-
     public void clearModifiedSender() {
         hasModifiedSender = false;
     }
@@ -473,16 +463,14 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public void become(final ContextObject other) {
         final Object otherSenderOrFrame = other.senderOrFrameOrSize;
         final boolean otherHasModifiedSender = other.hasModifiedSender;
-        final boolean otherEscaped = other.escaped;
-        other.setFields(senderOrFrameOrSize, hasModifiedSender, escaped);
-        setFields(otherSenderOrFrame, otherHasModifiedSender, otherEscaped);
+        other.setFields(senderOrFrameOrSize, hasModifiedSender);
+        setFields(otherSenderOrFrame, otherHasModifiedSender);
     }
 
-    private void setFields(final Object otherSenderOrFrame, final boolean otherHasModifiedSender, final boolean otherEscaped) {
+    private void setFields(final Object otherSenderOrFrame, final boolean otherHasModifiedSender) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         senderOrFrameOrSize = otherSenderOrFrame;
         hasModifiedSender = otherHasModifiedSender;
-        escaped = otherEscaped;
     }
 
     public Object[] getReceiverAndNArguments() {

@@ -184,9 +184,6 @@ public final class SqueakImageContext {
 
     @CompilationFinal private SqueakImage squeakImage;
 
-    /* Stack Management */
-    public ContextObject lastSeenContext;
-
     /* Low space handling */
     private static final int LOW_SPACE_NUM_SKIPPED_SENDS = 4;
     private int lowSpaceSkippedSendsCount;

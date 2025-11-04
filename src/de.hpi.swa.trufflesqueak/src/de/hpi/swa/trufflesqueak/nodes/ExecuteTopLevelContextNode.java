@@ -95,7 +95,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 try {
-                    image.lastSeenContext = null;  // Reset materialization mechanism.
                     image.resetContextStackDepth();
                     final Object result = callNode.call(activeContext.getCallTarget());
                     activeContext = returnTo(activeContext, sender, result);
