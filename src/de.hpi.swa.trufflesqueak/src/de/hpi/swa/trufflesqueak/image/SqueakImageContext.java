@@ -1135,7 +1135,8 @@ public final class SqueakImageContext {
         }
         final long gcd = Math.abs(m);
         // Instantiate reduced fraction
-        final PointersObject fraction = new PointersObject(this, getFractionClass(), fractionClass.getLayout());
+        // FIXME: fractionClass.getLayout()
+        final PointersObject fraction = new PointersObject(this, getFractionClass(), null);
         writeNode.execute(inlineTarget, fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
         writeNode.execute(inlineTarget, fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
         return fraction;

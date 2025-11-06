@@ -32,7 +32,7 @@ public final class ResumeContextRootNode extends AbstractRootNode {
         activeContext.clearModifiedSender();
         final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
         final int sp = stackPointerProfile.profile(activeContext.getStackPointer());
-        if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
+        if (CompilerDirectives.isPartialEvaluationConstant(pc) && CompilerDirectives.isPartialEvaluationConstant(sp)) {
             return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc, sp);
         } else {
             return interpretBytecodeWithBoundary(pc, sp);
