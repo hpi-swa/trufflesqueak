@@ -39,7 +39,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectRe
 
 @GenerateInline
 @GenerateUncached
-@GenerateCached(false)
+@GenerateCached(true)
 public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     public final Object execute(final Node node, final Object obj, final long index) {

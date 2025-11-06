@@ -44,7 +44,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
     @Override
     @BytecodeInterpreterSwitch
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    public Object execute(final VirtualFrame frame, final int startPC) {
+    public Object execute(final VirtualFrame frame, final int startPC, final int startSP) {
         CompilerAsserts.partialEvaluationConstant(startPC);
         int pc = startPC;
         Object returnValue = null;
@@ -149,7 +149,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
 
     @Override
     public Object executeOSR(final VirtualFrame osrFrame, final int target, final Object interpreterState) {
-        return execute(osrFrame, target);
+        return execute(osrFrame, target, -1);
     }
 
     @Override

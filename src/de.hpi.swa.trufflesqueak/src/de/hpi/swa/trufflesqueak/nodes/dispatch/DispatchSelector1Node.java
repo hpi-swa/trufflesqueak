@@ -30,6 +30,8 @@ import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -108,6 +110,25 @@ public final class DispatchSelector1Node extends DispatchSelectorNode {
         @NeverDefault
         public static Dispatch1Node create(final NativeObject selector) {
             return Dispatch1NodeGen.create(selector);
+        }
+
+        public final Object executeHandled(final VirtualFrame frame, final Object receiver, final Object arg1) {
+            try {
+                return execute(frame, receiver, arg1);
+            } catch (final NonLocalReturn nlr) {
+                if (nlr.targetIsFrame(frame)) {
+                    return nlr.getReturnValue();
+                } else {
+                    FrameAccess.terminateFrame(frame);
+                    throw nlr;
+                }
+            } catch (final NonVirtualReturn nvr) {
+                if (nvr.targetIsFrame(frame)) {
+                    return nvr.getReturnValue();
+                } else {
+                    throw nvr;
+                }
+            }
         }
 
         @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")

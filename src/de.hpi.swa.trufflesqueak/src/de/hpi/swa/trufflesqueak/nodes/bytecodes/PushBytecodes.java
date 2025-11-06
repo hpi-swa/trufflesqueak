@@ -524,7 +524,7 @@ public final class PushBytecodes {
         @Specialization
         protected final void doPushReceiver(final VirtualFrame frame,
                         @Bind final Node node,
-                        @Cached final SqueakObjectAt0Node at0Node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
                         @Cached final FrameStackPushNode pushNode) {
             pushNode.execute(frame, at0Node.execute(node, FrameAccess.getReceiver(frame), variableIndex));
         }
@@ -555,7 +555,7 @@ public final class PushBytecodes {
         protected final void doPushRemoteTemp(final VirtualFrame frame,
                         @Bind final Node node,
                         @Cached("create(frame, indexOfArray, false)") final FrameStackReadNode readTempNode,
-                        @Cached final SqueakObjectAt0Node at0Node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
                         @Cached final FrameStackPushNode pushNode) {
             pushNode.execute(frame, at0Node.execute(node, readTempNode.executeRead(frame), indexInArray));
         }

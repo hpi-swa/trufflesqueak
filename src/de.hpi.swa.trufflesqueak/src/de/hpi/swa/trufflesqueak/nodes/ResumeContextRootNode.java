@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 public final class ResumeContextRootNode extends AbstractRootNode {
     private ContextObject activeContext;
     private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();
+    private final IntValueProfile stackPointerProfile = IntValueProfile.createIdentityProfile();
 
     public ResumeContextRootNode(final SqueakImageContext image, final ContextObject context) {
         super(image, context.getCodeObject());
@@ -30,16 +31,17 @@ public final class ResumeContextRootNode extends AbstractRootNode {
         assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
         activeContext.clearModifiedSender();
         final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
+        final int sp = stackPointerProfile.profile(activeContext.getStackPointer());
         if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
-            return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
+            return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc, sp);
         } else {
-            return interpretBytecodeWithBoundary(pc);
+            return interpretBytecodeWithBoundary(pc, sp);
         }
     }
 
     @TruffleBoundary
-    private Object interpretBytecodeWithBoundary(final int pc) {
-        return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
+    private Object interpretBytecodeWithBoundary(final int pc, final int sp) {
+        return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc, sp);
     }
 
     public ContextObject getActiveContext() {

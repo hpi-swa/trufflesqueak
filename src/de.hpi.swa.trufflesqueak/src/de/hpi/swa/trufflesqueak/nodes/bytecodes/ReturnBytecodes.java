@@ -84,7 +84,7 @@ public final class ReturnBytecodes {
         }
     }
 
-    private static final class ReturnFromClosureNode extends AbstractReturnKindNode {
+    public static final class ReturnFromClosureNode extends AbstractReturnKindNode {
         @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode;
         @Child private Dispatch2Node sendAboutToReturnNode;
 
@@ -112,8 +112,7 @@ public final class ReturnBytecodes {
          * @return null if homeContext is not on sender chain; return first marked Context if found;
          *         raise NLR otherwise
          */
-        @TruffleBoundary
-        private static ContextObject firstUnwindMarkedOrThrowNLR(final AbstractSqueakObject senderOrNil, final ContextObject homeContext, final Object returnValue) {
+        public static ContextObject firstUnwindMarkedOrThrowNLR(final AbstractSqueakObject senderOrNil, final ContextObject homeContext, final Object returnValue) {
             AbstractSqueakObject currentLink = senderOrNil;
             ContextObject firstMarkedContext = null;
 

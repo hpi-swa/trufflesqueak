@@ -62,7 +62,7 @@ public final class StartContextRootNode extends AbstractRootNode {
                 throw ProcessSwitch.SINGLETON;
             }
             interruptHandlerNode.execute(frame);
-            return executeBytecodeNode.execute(frame, initialPC);
+            return executeBytecodeNode.execute(frame, initialPC, initialSP);
         } catch (final NonVirtualReturn | ProcessSwitch | CannotReturnToTarget nvr) {
             /* {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame);

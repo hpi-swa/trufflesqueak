@@ -11,13 +11,14 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecode.BytecodeLoopNode;
 
 public abstract class AbstractRootNode extends RootNode {
     @Child protected AbstractExecuteContextNode executeBytecodeNode;
 
     protected AbstractRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image.getLanguage(), code.getFrameDescriptor());
-        executeBytecodeNode = new ExecuteBytecodeNode(code);
+        executeBytecodeNode = code.getSignFlag() ? new ExecuteBytecodeNode(code) : new BytecodeLoopNode(code);
     }
 
     public final CompiledCodeObject getCode() {
