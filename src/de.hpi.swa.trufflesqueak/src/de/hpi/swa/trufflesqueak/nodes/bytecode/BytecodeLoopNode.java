@@ -707,7 +707,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 /* 2 byte bytecodes */
                 case BC.EXT_A: {
-                    extA = (extA << 8) + Byte.toUnsignedInt(getByte(bc, pc + 1));
+                    extA = (extA << 8) + getByteUnsignedInt(bc, pc + 1);
                     pc += 2;
                     break;
                 }
@@ -993,11 +993,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
-    private byte getByte(final byte[] bc, final int pc) {
+    private static byte getByte(final byte[] bc, final int pc) {
         return UnsafeUtils.getByte(bc, pc);
     }
 
-    private int getByteUnsignedInt(final byte[] bc, final int pc) {
+    private static int getByteUnsignedInt(final byte[] bc, final int pc) {
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
@@ -1030,11 +1030,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return getStackValue(frame, sp - 1);
     }
 
-    private void setTop(final VirtualFrame frame, final int sp, final Object value) {
+    private static void setTop(final VirtualFrame frame, final int sp, final Object value) {
         setStackValue(frame, sp - 1, value);
     }
 
-    private Object getTemp(final VirtualFrame frame, final int index) {
+    private static Object getTemp(final VirtualFrame frame, final int index) {
         final int numArguments = FrameAccess.getNumArguments(frame);
         if (index < numArguments) {
             return frame.getArguments()[ArgumentIndicies.ARGUMENTS_START.ordinal() + index];
@@ -1043,7 +1043,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
-    private void setTemp(final VirtualFrame frame, final int index, final Object value) {
+    private static void setTemp(final VirtualFrame frame, final int index, final Object value) {
         final int numArguments = FrameAccess.getNumArguments(frame);
         if (index < numArguments) {
             throw CompilerDirectives.shouldNotReachHere();
@@ -1052,11 +1052,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
-    private Object getStackValue(final VirtualFrame frame, final int stackIndex) {
+    private static Object getStackValue(final VirtualFrame frame, final int stackIndex) {
         return FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
     }
 
-    private void setStackValue(final VirtualFrame frame, final int stackIndex, final Object value) {
+    private static void setStackValue(final VirtualFrame frame, final int stackIndex, final Object value) {
         FrameAccess.setStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame), value);
     }
 
@@ -1103,7 +1103,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T uncheckedCast(final Object obj, final Class<T> clazz) {
+    private <T> T uncheckedCast(final Object obj, @SuppressWarnings("unused") final Class<T> clazz) {
         return (T) obj;
     }
 
