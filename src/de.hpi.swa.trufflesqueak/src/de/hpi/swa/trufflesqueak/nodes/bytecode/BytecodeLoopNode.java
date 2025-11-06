@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -1030,10 +1031,6 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return getStackValue(frame, sp - 1);
     }
 
-    private static void setTop(final VirtualFrame frame, final int sp, final Object value) {
-        setStackValue(frame, sp - 1, value);
-    }
-
     private static Object getTemp(final VirtualFrame frame, final int index) {
         final int numArguments = FrameAccess.getNumArguments(frame);
         if (index < numArguments) {
@@ -1044,12 +1041,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     private static void setTemp(final VirtualFrame frame, final int index, final Object value) {
-        final int numArguments = FrameAccess.getNumArguments(frame);
-        if (index < numArguments) {
-            throw CompilerDirectives.shouldNotReachHere();
-        } else {
-            FrameAccess.setSlotValue(frame, FrameAccess.toStackSlotIndex(frame, index), value);
-        }
+        assert index >= FrameAccess.getNumArguments(frame) : "Not a temp";
+        FrameAccess.setSlotValue(frame, FrameAccess.toStackSlotIndex(frame, index), AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
     }
 
     private static Object getStackValue(final VirtualFrame frame, final int stackIndex) {
@@ -1057,7 +1050,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     private static void setStackValue(final VirtualFrame frame, final int stackIndex, final Object value) {
-        FrameAccess.setStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame), value);
+        FrameAccess.setStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame), AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
     }
 
     private Object normalReturn(final VirtualFrame frame, final LoopCounter loopCounter, final Object returnValue, final int pc, final int sp) {
