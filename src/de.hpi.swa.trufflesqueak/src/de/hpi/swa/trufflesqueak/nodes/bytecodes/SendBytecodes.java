@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -48,6 +49,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSize
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecode.BytecodeLoopNode.SendBytecode0Node;
+import de.hpi.swa.trufflesqueak.nodes.bytecode.BytecodeLoopNode.SendBytecode1Node;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimPointXNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimPointYNodeGen;
@@ -287,7 +290,7 @@ public final class SendBytecodes {
             abstract int getSelectorIndex();
         }
 
-        protected static final class SendSpecial0Node extends SendSpecialNode {
+        public static final class SendSpecial0Node extends SendSpecialNode {
             @Child private FrameStackReadNode receiverNode;
             @Child private FrameStackWriteNode writeResultNode;
             @Child private DispatchBytecodePrim0Node dispatchNode;
@@ -316,7 +319,24 @@ public final class SendBytecodes {
                 return "send: " + dispatchNode.getSpecialSelector().asStringUnsafe();
             }
 
-            abstract static class DispatchBytecodePrim0Node extends DispatchBytecodePrimNode {
+            public interface SendBytecode0 {
+                Object executeOrRewrite(VirtualFrame frame, Object[] data, int pc, Object receiver);
+            }
+
+            abstract static class DispatchBytecodePrim0Node extends DispatchBytecodePrimNode implements SendBytecode0 {
+                @Override
+                public final Object executeOrRewrite(final VirtualFrame frame, final Object[] data, final int pc, final Object receiver) {
+                    try {
+                        return execute(frame, receiver);
+                    } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        final NativeObject specialSelector = SqueakImageContext.getSlow().getSpecialSelector(getSelectorIndex());
+                        final SendBytecode0Node sendNode = new SendBytecode0Node(specialSelector);
+                        data[pc] = insert(sendNode);
+                        return sendNode.executeOrRewrite(frame, data, pc, receiver);
+                    }
+                }
+
                 abstract Object execute(VirtualFrame frame, Object receiver);
             }
 
@@ -326,7 +346,7 @@ public final class SendBytecodes {
              * performs sends.
              */
             @GenerateInline(false)
-            abstract static class BytecodePrimSizeNode extends DispatchBytecodePrim0Node {
+            public abstract static class BytecodePrimSizeNode extends DispatchBytecodePrim0Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 18;
@@ -388,7 +408,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimClassNode extends DispatchBytecodePrim0Node {
+            public abstract static class BytecodePrimClassNode extends DispatchBytecodePrim0Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 23;
@@ -403,7 +423,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimPointXNode extends DispatchBytecodePrim0Node {
+            public abstract static class BytecodePrimPointXNode extends DispatchBytecodePrim0Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 30;
@@ -418,7 +438,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimPointYNode extends DispatchBytecodePrim0Node {
+            public abstract static class BytecodePrimPointYNode extends DispatchBytecodePrim0Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 31;
@@ -433,7 +453,7 @@ public final class SendBytecodes {
             }
         }
 
-        protected static final class SendSpecial1Node extends SendSpecialNode {
+        public static final class SendSpecial1Node extends SendSpecialNode {
             private final int newStackPointer;
             @Child private FrameStackReadNode receiverNode;
             @Child private FrameStackReadNode arg1Node;
@@ -484,12 +504,30 @@ public final class SendBytecodes {
                 return "send: " + dispatchNode.getSpecialSelector().asStringUnsafe();
             }
 
-            abstract static class DispatchBytecodePrim1Node extends DispatchBytecodePrimNode {
-                abstract Object execute(VirtualFrame frame, Object receiver, Object arg1);
+            public interface SendBytecode1 {
+                Object executeOrRewrite(VirtualFrame frame, Object[] data, int pc, Object receiver, Object arg);
+            }
+
+            abstract static class DispatchBytecodePrim1Node extends DispatchBytecodePrimNode implements SendBytecode1 {
+                @Override
+                public final Object executeOrRewrite(final VirtualFrame frame, final Object[] data, final int pc, final Object receiver, final Object arg) {
+                    try {
+                        return execute(frame, receiver, arg);
+                    } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        final SqueakImageContext image = SqueakImageContext.getSlow();
+                        final NativeObject specialSelector = image.getSpecialSelector(getSelectorIndex());
+                        final SendBytecode1Node sendNode = new SendBytecode1Node(specialSelector);
+                        data[pc] = insert(sendNode);
+                        return sendNode.executeOrRewrite(frame, data, pc, receiver, arg);
+                    }
+                }
+
+                public abstract Object execute(VirtualFrame frame, Object receiver, Object arg);
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimAddNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimAddNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 0;
@@ -541,7 +579,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimSubtractNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimSubtractNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 1;
@@ -593,7 +631,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimLessThanNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimLessThanNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 2;
@@ -645,7 +683,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimGreaterThanNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimGreaterThanNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 3;
@@ -697,7 +735,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimLessOrEqualNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimLessOrEqualNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 4;
@@ -749,7 +787,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimGreaterOrEqualNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimGreaterOrEqualNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 5;
@@ -801,10 +839,16 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimEqualNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimEqualNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 6;
+                }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdentical(final Object lhs, final Object rhs) {
+                    return BooleanObject.TRUE;
                 }
 
                 @Specialization
@@ -853,7 +897,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimNotEqualNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimNotEqualNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 7;
@@ -905,7 +949,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimMultiplyNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimMultiplyNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 8;
@@ -978,7 +1022,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimDivideNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimDivideNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 9;
@@ -1065,7 +1109,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimModNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimModNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 10;
@@ -1093,7 +1137,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimMakePointNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimMakePointNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 11;
@@ -1125,7 +1169,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimBitShiftNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimBitShiftNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 12;
@@ -1147,7 +1191,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimDivNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimDivNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 13;
@@ -1172,7 +1216,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimBitAndNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimBitAndNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 14;
@@ -1215,7 +1259,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimBitOrNode extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimBitOrNode extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 15;
@@ -1258,7 +1302,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimIdenticalSistaV1Node extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimIdenticalSistaV1Node extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 22;
@@ -1273,7 +1317,7 @@ public final class SendBytecodes {
             }
 
             @GenerateInline(false)
-            abstract static class BytecodePrimNotIdenticalSistaV1Node extends DispatchBytecodePrim1Node {
+            public abstract static class BytecodePrimNotIdenticalSistaV1Node extends DispatchBytecodePrim1Node {
                 @Override
                 protected final int getSelectorIndex() {
                     return 24;

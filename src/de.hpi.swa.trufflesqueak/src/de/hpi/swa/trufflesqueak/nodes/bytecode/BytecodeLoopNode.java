@@ -49,6 +49,30 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnFromClosureNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSpecialNode.SendSpecial0Node.SendBytecode0;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSpecialNode.SendSpecial1Node.SendBytecode1;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimPointXNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimPointYNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimSizeNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimAddNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimBitAndNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimBitOrNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimBitShiftNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimDivNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimDivideNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimGreaterOrEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimGreaterThanNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimIdenticalSistaV1NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimLessOrEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimLessThanNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimMakePointNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimModNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimMultiplyNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimNotEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimNotIdenticalSistaV1NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimSubtractNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
@@ -80,6 +104,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         isBlock = code.isCompiledBlock();
 
         final byte[] bc = code.getBytes();
+        final SqueakImageContext image = SqueakImageContext.getSlow();
         final int trailerPosition = AbstractSqueakBytecodeDecoder.trailerPosition(code);
         data = new Object[trailerPosition];
         int pc = 0;
@@ -190,21 +215,163 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     pc++;
                     extA = extB = 0;
                     break;
-                case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, //
-                    BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
-                    BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_AT_PUT, BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_NEXT_PUT, //
-                    BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_CLASS, BC.BYTECODE_PRIM_NOT_IDENTICAL, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, //
-                    BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_NEW_WITH_ARG, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
-                    final int selectorIndex = b - 96;
-                    final SqueakImageContext image = SqueakImageContext.getSlow();
-                    final NativeObject selector = image.getSpecialSelector(selectorIndex);
-                    final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
-                    data[pc] = insert(switch (numArguments) {
-                        case 0 -> new SendBytecode0Node(selector);
-                        case 1 -> new SendBytecode1Node(selector);
-                        case 2 -> new SendBytecode2Node(selector);
-                        default -> throw CompilerDirectives.shouldNotReachHere();
-                    });
+                case BC.BYTECODE_PRIM_ADD: {
+                    data[pc] = insert(BytecodePrimAddNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_SUBTRACT: {
+                    data[pc] = insert(BytecodePrimSubtractNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_LESS_THAN: {
+                    data[pc] = insert(BytecodePrimLessThanNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_GREATER_THAN: {
+                    data[pc] = insert(BytecodePrimGreaterThanNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
+                    data[pc] = insert(BytecodePrimLessOrEqualNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
+                    data[pc] = insert(BytecodePrimGreaterOrEqualNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_EQUAL: {
+                    data[pc] = insert(BytecodePrimEqualNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_NOT_EQUAL: {
+                    data[pc] = insert(BytecodePrimNotEqualNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_MULTIPLY: {
+                    data[pc] = insert(BytecodePrimMultiplyNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_DIVIDE: {
+                    data[pc] = insert(BytecodePrimDivideNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_MOD: {
+                    data[pc] = insert(BytecodePrimModNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_MAKE_POINT: {
+                    data[pc] = insert(BytecodePrimMakePointNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_BIT_SHIFT: {
+                    data[pc] = insert(BytecodePrimBitShiftNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_DIV: {
+                    data[pc] = insert(BytecodePrimDivNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_BIT_AND: {
+                    data[pc] = insert(BytecodePrimBitAndNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_BIT_OR: {
+                    data[pc] = insert(BytecodePrimBitOrNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_AT: {
+                    data[pc] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_AT_PUT: {
+                    data[pc] = insert(new SendBytecode2Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_SIZE: {
+                    data[pc] = insert(BytecodePrimSizeNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_NEXT: {
+                    data[pc] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_NEXT_PUT: {
+                    data[pc] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_AT_END: {
+                    data[pc] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_IDENTICAL: {
+                    data[pc] = insert(BytecodePrimIdenticalSistaV1NodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_CLASS: {
+                    data[pc] = insert(BytecodePrimClassNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
+                    data[pc] = insert(BytecodePrimNotIdenticalSistaV1NodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_VALUE: {
+                    data[pc] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_VALUE_WITH_ARG: {
+                    data[pc] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_DO: {
+                    data[pc] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_NEW: {
+                    data[pc] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_NEW_WITH_ARG: {
+                    data[pc] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_POINT_X: {
+                    data[pc] = insert(BytecodePrimPointXNodeGen.create());
+                    pc++;
+                    break;
+                }
+                case BC.BYTECODE_PRIM_POINT_Y: {
+                    data[pc] = insert(BytecodePrimPointYNodeGen.create());
                     pc++;
                     break;
                 }
@@ -560,7 +727,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1.class).executeOrRewrite(frame, data, pc, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -568,7 +735,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1.class).executeOrRewrite(frame, data, pc, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -584,7 +751,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0.class).executeOrRewrite(frame, data, pc, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -592,14 +759,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1.class).executeOrRewrite(frame, data, pc, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_END: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0.class).executeOrRewrite(frame, data, pc, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -607,14 +774,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1.class).executeOrRewrite(frame, data, pc, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_CLASS: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0.class).executeOrRewrite(frame, data, pc, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -622,14 +789,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1.class).executeOrRewrite(frame, data, pc, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0.class).executeOrRewrite(frame, data, pc, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -637,14 +804,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1.class).executeOrRewrite(frame, data, pc, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEW: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0.class).executeOrRewrite(frame, data, pc, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -652,7 +819,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1.class).executeOrRewrite(frame, data, pc, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -660,7 +827,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     CompilerAsserts.partialEvaluationConstant(data[pc]);
-                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0.class).executeOrRewrite(frame, data, pc, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -1060,14 +1227,19 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         protected final ConditionProfile nvrProfile = ConditionProfile.create();
     }
 
-    static final class SendBytecode0Node extends AbstractSendBytecodeNode {
+    public static final class SendBytecode0Node extends AbstractSendBytecodeNode implements SendBytecode0 {
         @Child private Dispatch0Node dispatchNode;
 
-        SendBytecode0Node(final NativeObject selector) {
+        public SendBytecode0Node(final NativeObject selector) {
             dispatchNode = Dispatch0NodeGen.create(selector);
         }
 
-        Object execute(final VirtualFrame frame, final Object receiver) {
+        @Override
+        public Object executeOrRewrite(final VirtualFrame frame, final Object[] data, final int pc, final Object receiver) {
+            return execute(frame, receiver);
+        }
+
+        public Object execute(final VirtualFrame frame, final Object receiver) {
             try {
                 return dispatchNode.execute(frame, receiver);
             } catch (final NonLocalReturn nlr) {
@@ -1090,16 +1262,21 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
-    static final class SendBytecode1Node extends AbstractSendBytecodeNode {
+    public static final class SendBytecode1Node extends AbstractSendBytecodeNode implements SendBytecode1 {
         @Child private Dispatch1Node dispatchNode;
 
-        SendBytecode1Node(final NativeObject selector) {
+        public SendBytecode1Node(final NativeObject selector) {
             dispatchNode = Dispatch1NodeGen.create(selector);
         }
 
-        Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
+        @Override
+        public Object executeOrRewrite(final VirtualFrame frame, final Object[] data, final int pc, final Object receiver, final Object arg) {
+            return execute(frame, receiver, arg);
+        }
+
+        Object execute(final VirtualFrame frame, final Object receiver, final Object arg) {
             try {
-                return dispatchNode.execute(frame, receiver, arg1);
+                return dispatchNode.execute(frame, receiver, arg);
             } catch (final NonLocalReturn nlr) {
                 if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
                     return nlr.getReturnValue();
