@@ -1002,17 +1002,17 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
-    private void push(final VirtualFrame frame, final int sp, final Object value) {
+    private static void push(final VirtualFrame frame, final int sp, final Object value) {
         setStackValue(frame, sp, value);
     }
 
-    private Object pop(final VirtualFrame frame, final int sp) {
+    private static Object pop(final VirtualFrame frame, final int sp) {
         final Object result = getStackValue(frame, sp);
         setStackValue(frame, sp, NilObject.SINGLETON);
         return result;
     }
 
-    private Object popReceiver(final VirtualFrame frame, final int sp) {
+    private static Object popReceiver(final VirtualFrame frame, final int sp) {
         return getStackValue(frame, sp);
     }
 
@@ -1027,7 +1027,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return stackValues;
     }
 
-    private Object top(final VirtualFrame frame, final int sp) {
+    private static Object top(final VirtualFrame frame, final int sp) {
         return getStackValue(frame, sp - 1);
     }
 
@@ -1096,7 +1096,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T uncheckedCast(final Object obj, @SuppressWarnings("unused") final Class<T> clazz) {
+    private static <T> T uncheckedCast(final Object obj, @SuppressWarnings("unused") final Class<T> clazz) {
         return (T) obj;
     }
 
