@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
+import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -353,11 +355,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 0;
-                return ((Primitive0) primitiveNode).execute(frame, receiver);
+                return uncheckedCast(primitiveNode, Primitive0.class).execute(frame, receiver);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver) {
-                return ((Primitive0) primitiveNode).execute(frame, receiver);
+                return uncheckedCast(primitiveNode, Primitive0.class).execute(frame, receiver);
             }
         }
 
@@ -369,11 +371,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 1;
-                return ((Primitive1) primitiveNode).execute(frame, receiver, args[0]);
+                return uncheckedCast(primitiveNode, Primitive1.class).execute(frame, receiver, args[0]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
-                return ((Primitive1) primitiveNode).execute(frame, receiver, arg1);
+                return uncheckedCast(primitiveNode, Primitive1.class).execute(frame, receiver, arg1);
             }
         }
 
@@ -385,11 +387,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
                 assert arguments.length == 2;
-                return ((Primitive2) primitiveNode).execute(frame, receiver, arguments[0], arguments[1]);
+                return uncheckedCast(primitiveNode, Primitive2.class).execute(frame, receiver, arguments[0], arguments[1]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
-                return ((Primitive2) primitiveNode).execute(frame, receiver, arg1, arg2);
+                return uncheckedCast(primitiveNode, Primitive2.class).execute(frame, receiver, arg1, arg2);
             }
         }
 
@@ -401,11 +403,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 3;
-                return ((Primitive3) primitiveNode).execute(frame, receiver, args[0], args[1], args[2]);
+                return uncheckedCast(primitiveNode, Primitive3.class).execute(frame, receiver, args[0], args[1], args[2]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
-                return ((Primitive3) primitiveNode).execute(frame, receiver, arg1, arg2, arg3);
+                return uncheckedCast(primitiveNode, Primitive3.class).execute(frame, receiver, arg1, arg2, arg3);
             }
         }
 
@@ -417,11 +419,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 4;
-                return ((Primitive4) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3]);
+                return uncheckedCast(primitiveNode, Primitive4.class).execute(frame, receiver, args[0], args[1], args[2], args[3]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-                return ((Primitive4) primitiveNode).execute(frame, receiver, arg1, arg2, arg3, arg4);
+                return uncheckedCast(primitiveNode, Primitive4.class).execute(frame, receiver, arg1, arg2, arg3, arg4);
             }
         }
 
@@ -433,11 +435,11 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 5;
-                return ((Primitive5) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4]);
+                return uncheckedCast(primitiveNode, Primitive5.class).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4]);
             }
 
             public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-                return ((Primitive5) primitiveNode).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+                return uncheckedCast(primitiveNode, Primitive5.class).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
             }
         }
 
@@ -449,7 +451,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 6;
-                return ((Primitive6) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5]);
+                return uncheckedCast(primitiveNode, Primitive6.class).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5]);
             }
         }
 
@@ -461,7 +463,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 7;
-                return ((Primitive7) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+                return uncheckedCast(primitiveNode, Primitive7.class).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
             }
         }
 
@@ -473,7 +475,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 8;
-                return ((Primitive8) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+                return uncheckedCast(primitiveNode, Primitive8.class).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
             }
         }
 
@@ -485,7 +487,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 9;
-                return ((Primitive9) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+                return uncheckedCast(primitiveNode, Primitive9.class).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
             }
         }
 
@@ -497,7 +499,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 10;
-                return ((Primitive10) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
+                return uncheckedCast(primitiveNode, Primitive10.class).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
             }
         }
 
@@ -509,7 +511,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             @Override
             public Object execute(final VirtualFrame frame, final Object receiver, final Object[] args) {
                 assert args.length == 11;
-                return ((Primitive11) primitiveNode).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
+                return uncheckedCast(primitiveNode, Primitive11.class).execute(frame, receiver, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
             }
         }
     }
