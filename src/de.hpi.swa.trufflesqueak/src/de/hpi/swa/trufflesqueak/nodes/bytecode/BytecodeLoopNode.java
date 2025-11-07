@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecode;
 
+import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -1146,11 +1148,6 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             FrameAccess.terminateFrame(frame);
             return returnValue;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T uncheckedCast(final Object obj, @SuppressWarnings("unused") final Class<T> clazz) {
-        return (T) obj;
     }
 
     /**
