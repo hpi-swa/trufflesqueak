@@ -25,6 +25,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -49,9 +50,15 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnFromClosureNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectedSuperNaryNode.DirectedSuperDispatchNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchSuperNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeFactory.DirectedSuperDispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
@@ -193,9 +200,9 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final NativeObject selector = image.getSpecialSelector(selectorIndex);
                     final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
                     data[pc] = insert(switch (numArguments) {
-                        case 0 -> Dispatch0NodeGen.create(selector);
-                        case 1 -> Dispatch1NodeGen.create(selector);
-                        case 2 -> Dispatch2NodeGen.create(selector);
+                        case 0 -> new SendBytecode0Node(selector);
+                        case 1 -> new SendBytecode1Node(selector);
+                        case 2 -> new SendBytecode2Node(selector);
                         default -> throw CompilerDirectives.shouldNotReachHere();
                     });
                     pc++;
@@ -204,21 +211,21 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                     final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
-                    data[pc] = insert(Dispatch0NodeGen.create(selector));
+                    data[pc] = insert(new SendBytecode0Node(selector));
                     pc++;
                     break;
                 }
                 case BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                     final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
-                    data[pc] = insert(Dispatch1NodeGen.create(selector));
+                    data[pc] = insert(new SendBytecode1Node(selector));
                     pc++;
                     break;
                 }
                 case BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
                     final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
-                    data[pc] = insert(Dispatch2NodeGen.create(selector));
+                    data[pc] = insert(new SendBytecode2Node(selector));
                     pc++;
                     break;
                 }
@@ -301,7 +308,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final int byte1 = getByteUnsignedInt(bc, pc + 1);
                     final int literalIndex = (byte1 >> 3) + (extA << 5);
                     final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
-                    data[pc] = insert(DispatchNaryNodeGen.create(selector));
+                    data[pc] = insert(new SendBytecodeNaryNode(selector));
                     pc += 2;
                     extA = extB = 0;
                     break;
@@ -312,10 +319,10 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final int literalIndex = (byte1 >> 3) + (extA << 5);
                     final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
                     if (isDirected) {
-                        data[pc] = insert(DirectedSuperDispatchNaryNodeGen.create(selector));
+                        data[pc] = insert(new SendBytecodeSuperDirectedNode(selector));
                     } else {
                         final ClassObject methodClass = code.getMethod().getMethodClassSlow();
-                        data[pc] = insert(DispatchSuperNaryNodeGen.create(methodClass, selector));
+                        data[pc] = insert(new SendBytecodeSuperNode(methodClass, selector));
                     }
                     pc += 2;
                     extA = extB = 0;
@@ -549,7 +556,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -557,7 +564,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -566,14 +573,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg1 = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch2NodeGen.class).executeHandled(frame, receiver, arg1, arg2));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode2Node.class).execute(frame, receiver, arg1, arg2));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -581,14 +588,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_END: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -596,14 +603,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_CLASS: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -611,14 +618,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -626,14 +633,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEW: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -641,7 +648,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -649,7 +656,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     CompilerAsserts.partialEvaluationConstant(data[pc]);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -657,7 +664,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode0Node.class).execute(frame, receiver));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -666,7 +673,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -676,7 +683,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg1 = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], Dispatch2NodeGen.class).executeHandled(frame, receiver, arg1, arg2));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecode2Node.class).execute(frame, receiver, arg1, arg2));
                     pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
@@ -824,7 +831,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     sp -= numArgs;
                     final Object receiver = pop(frame, --sp);
                     externalizePCAndSP(frame, pc + 2, sp);
-                    push(frame, sp++, uncheckedCast(data[pc], DispatchNaryNodeGen.class).executeHandled(frame, receiver, arguments));
+                    push(frame, sp++, uncheckedCast(data[pc], SendBytecodeNaryNode.class).execute(frame, receiver, arguments));
                     pc = checkPCAfterSend(frame, pc + 2);
                     extA = extB = 0;
                     break;
@@ -844,9 +851,9 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 2, sp);
                     if (isDirected) {
-                        push(frame, sp++, uncheckedCast(data[pc], DirectedSuperDispatchNaryNodeGen.class).executeHandled(frame, lookupClass, receiver, arguments));
+                        push(frame, sp++, uncheckedCast(data[pc], SendBytecodeSuperDirectedNode.class).execute(frame, lookupClass, receiver, arguments));
                     } else {
-                        push(frame, sp++, uncheckedCast(data[pc], DispatchSuperNaryNodeGen.class).executeHandled(frame, receiver, arguments));
+                        push(frame, sp++, uncheckedCast(data[pc], SendBytecodeSuperNode.class).execute(frame, receiver, arguments));
                     }
                     pc = checkPCAfterSend(frame, pc + 2);
                     extA = extB = 0;
@@ -1044,6 +1051,191 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
+    static abstract class AbstractSendBytecodeNode extends AbstractNode {
+        protected final ConditionProfile nlrProfile = ConditionProfile.create();
+        protected final ConditionProfile nvrProfile = ConditionProfile.create();
+    }
+
+    static final class SendBytecode0Node extends AbstractSendBytecodeNode {
+        @Child private Dispatch0Node dispatchNode;
+
+        SendBytecode0Node(final NativeObject selector) {
+            dispatchNode = Dispatch0NodeGen.create(selector);
+        }
+
+        Object execute(final VirtualFrame frame, final Object receiver) {
+            try {
+                return dispatchNode.execute(frame, receiver);
+            } catch (final NonLocalReturn nlr) {
+                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
+                    return nlr.getReturnValue();
+                } else {
+                    FrameAccess.terminateFrame(frame);
+                    throw nlr;
+                }
+            } catch (final NonVirtualReturn nvr) {
+                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
+                    return nvr.getReturnValue();
+                } else {
+                    throw nvr;
+                }
+            } catch (final StackOverflowError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw getContext().tryToSignalLowSpace(frame, e);
+            }
+        }
+    }
+
+    static final class SendBytecode1Node extends AbstractSendBytecodeNode {
+        @Child private Dispatch1Node dispatchNode;
+
+        SendBytecode1Node(final NativeObject selector) {
+            dispatchNode = Dispatch1NodeGen.create(selector);
+        }
+
+        Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
+            try {
+                return dispatchNode.execute(frame, receiver, arg1);
+            } catch (final NonLocalReturn nlr) {
+                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
+                    return nlr.getReturnValue();
+                } else {
+                    FrameAccess.terminateFrame(frame);
+                    throw nlr;
+                }
+            } catch (final NonVirtualReturn nvr) {
+                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
+                    return nvr.getReturnValue();
+                } else {
+                    throw nvr;
+                }
+            } catch (final StackOverflowError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw getContext().tryToSignalLowSpace(frame, e);
+            }
+        }
+    }
+
+    static final class SendBytecode2Node extends AbstractSendBytecodeNode {
+        @Child private Dispatch2Node dispatchNode;
+
+        SendBytecode2Node(final NativeObject selector) {
+            dispatchNode = Dispatch2NodeGen.create(selector);
+        }
+
+        Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
+            try {
+                return dispatchNode.execute(frame, receiver, arg1, arg2);
+            } catch (final NonLocalReturn nlr) {
+                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
+                    return nlr.getReturnValue();
+                } else {
+                    FrameAccess.terminateFrame(frame);
+                    throw nlr;
+                }
+            } catch (final NonVirtualReturn nvr) {
+                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
+                    return nvr.getReturnValue();
+                } else {
+                    throw nvr;
+                }
+            } catch (final StackOverflowError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw getContext().tryToSignalLowSpace(frame, e);
+            }
+        }
+    }
+
+    static final class SendBytecodeNaryNode extends AbstractSendBytecodeNode {
+        @Child private DispatchNaryNode dispatchNode;
+
+        SendBytecodeNaryNode(final NativeObject selector) {
+            dispatchNode = DispatchNaryNodeGen.create(selector);
+        }
+
+        Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
+            try {
+                return dispatchNode.execute(frame, receiver, arguments);
+            } catch (final NonLocalReturn nlr) {
+                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
+                    return nlr.getReturnValue();
+                } else {
+                    FrameAccess.terminateFrame(frame);
+                    throw nlr;
+                }
+            } catch (final NonVirtualReturn nvr) {
+                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
+                    return nvr.getReturnValue();
+                } else {
+                    throw nvr;
+                }
+            } catch (final StackOverflowError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw getContext().tryToSignalLowSpace(frame, e);
+            }
+        }
+    }
+
+    static final class SendBytecodeSuperDirectedNode extends AbstractSendBytecodeNode {
+        @Child private DirectedSuperDispatchNaryNode dispatchNode;
+
+        SendBytecodeSuperDirectedNode(final NativeObject selector) {
+            dispatchNode = DirectedSuperDispatchNaryNodeGen.create(selector);
+        }
+
+        Object execute(final VirtualFrame frame, final ClassObject lookupClass, final Object receiver, final Object[] arguments) {
+            try {
+                return dispatchNode.execute(frame, lookupClass, receiver, arguments);
+            } catch (final NonLocalReturn nlr) {
+                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
+                    return nlr.getReturnValue();
+                } else {
+                    FrameAccess.terminateFrame(frame);
+                    throw nlr;
+                }
+            } catch (final NonVirtualReturn nvr) {
+                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
+                    return nvr.getReturnValue();
+                } else {
+                    throw nvr;
+                }
+            } catch (final StackOverflowError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw getContext().tryToSignalLowSpace(frame, e);
+            }
+        }
+    }
+
+    static final class SendBytecodeSuperNode extends AbstractSendBytecodeNode {
+        @Child private DispatchSuperNaryNode dispatchNode;
+
+        SendBytecodeSuperNode(final ClassObject methodClass, final NativeObject selector) {
+            dispatchNode = DispatchSuperNaryNodeGen.create(methodClass, selector);
+        }
+
+        Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
+            try {
+                return dispatchNode.execute(frame, receiver, arguments);
+            } catch (final NonLocalReturn nlr) {
+                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
+                    return nlr.getReturnValue();
+                } else {
+                    FrameAccess.terminateFrame(frame);
+                    throw nlr;
+                }
+            } catch (final NonVirtualReturn nvr) {
+                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
+                    return nvr.getReturnValue();
+                } else {
+                    throw nvr;
+                }
+            } catch (final StackOverflowError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw getContext().tryToSignalLowSpace(frame, e);
+            }
+        }
+    }
+
     private static byte getByte(final byte[] bc, final int pc) {
         return UnsafeUtils.getByte(bc, pc);
     }
@@ -1127,7 +1319,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         FrameAccess.setStackPointer(frame, sp);
     }
 
-    private int checkPCAfterSend(final VirtualFrame frame, final int pc) {
+    private static int checkPCAfterSend(final VirtualFrame frame, final int pc) {
         final int framePC = FrameAccess.getInstructionPointer(frame);
         if (pc != framePC) {
             CompilerDirectives.transferToInterpreter();

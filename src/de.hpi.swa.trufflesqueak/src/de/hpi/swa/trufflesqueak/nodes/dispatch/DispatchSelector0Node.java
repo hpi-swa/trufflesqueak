@@ -30,8 +30,6 @@ import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -104,28 +102,6 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
     public abstract static class Dispatch0Node extends AbstractDispatch0Node {
         Dispatch0Node(final NativeObject selector) {
             super(selector);
-        }
-
-        public final Object executeHandled(final VirtualFrame frame, final Object receiver) {
-            try {
-                return execute(frame, receiver);
-            } catch (final NonLocalReturn nlr) {
-                if (nlr.targetIsFrame(frame)) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
-            } catch (final NonVirtualReturn nvr) {
-                if (nvr.targetIsFrame(frame)) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
-            } catch (final StackOverflowError e) {
-                CompilerDirectives.transferToInterpreter();
-                throw getContext().tryToSignalLowSpace(frame, e);
-            }
         }
 
         @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")

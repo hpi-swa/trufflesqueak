@@ -32,8 +32,6 @@ import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -130,25 +128,6 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             super(selector);
         }
 
-        public final Object executeHandled(final VirtualFrame frame, final Object receiver, final Object[] args) {
-            try {
-                return execute(frame, receiver, args);
-            } catch (final NonLocalReturn nlr) {
-                if (nlr.targetIsFrame(frame)) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
-            } catch (final NonVirtualReturn nvr) {
-                if (nvr.targetIsFrame(frame)) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
-            }
-        }
-
         @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
         protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
@@ -171,25 +150,6 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         DispatchSuperNaryNode(final ClassObject methodClass, final NativeObject selector) {
             super(selector);
             this.methodClass = methodClass;
-        }
-
-        public final Object executeHandled(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-            try {
-                return execute(frame, receiver, arguments);
-            } catch (final NonLocalReturn nlr) {
-                if (nlr.targetIsFrame(frame)) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
-            } catch (final NonVirtualReturn nvr) {
-                if (nvr.targetIsFrame(frame)) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
-            }
         }
 
         @Specialization(assumptions = {"methodClass.getClassHierarchyAndMethodDictStable()", "dispatchDirectNode.getAssumptions()"})
@@ -219,25 +179,6 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         public abstract static class DirectedSuperDispatchNaryNode extends AbstractDispatchNode {
             DirectedSuperDispatchNaryNode(final NativeObject selector) {
                 super(selector);
-            }
-
-            public final Object executeHandled(final VirtualFrame frame, final ClassObject lookupClass, final Object receiver, final Object[] arguments) {
-                try {
-                    return execute(frame, lookupClass, receiver, arguments);
-                } catch (final NonLocalReturn nlr) {
-                    if (nlr.targetIsFrame(frame)) {
-                        return nlr.getReturnValue();
-                    } else {
-                        FrameAccess.terminateFrame(frame);
-                        throw nlr;
-                    }
-                } catch (final NonVirtualReturn nvr) {
-                    if (nvr.targetIsFrame(frame)) {
-                        return nvr.getReturnValue();
-                    } else {
-                        throw nvr;
-                    }
-                }
             }
 
             public abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object[] arguments);
