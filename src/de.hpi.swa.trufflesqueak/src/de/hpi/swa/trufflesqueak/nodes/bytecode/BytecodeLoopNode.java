@@ -96,6 +96,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     private final CompiledCodeObject code;
     private final boolean isBlock;
 
+    @CompilationFinal private int numArguments = -1;
+
     @CompilationFinal(dimensions = 1) private final Object[] data;
     @CompilationFinal private Object osrMetadata;
 
@@ -603,6 +605,10 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     @BytecodeInterpreterSwitch
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     public Object execute(final VirtualFrame frame, final int startPC, final int startSP) {
+        if (numArguments == -1) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            numArguments = FrameAccess.getNumArguments(frame);
+        }
         assert isBlock == FrameAccess.hasClosure(frame);
 
         final byte[] bc = code.getBytes();
@@ -1425,21 +1431,21 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
-    private static void push(final VirtualFrame frame, final int sp, final Object value) {
+    private void push(final VirtualFrame frame, final int sp, final Object value) {
         setStackValue(frame, sp, value);
     }
 
-    private static Object pop(final VirtualFrame frame, final int sp) {
+    private Object pop(final VirtualFrame frame, final int sp) {
         final Object result = getStackValue(frame, sp);
         setStackValue(frame, sp, NilObject.SINGLETON);
         return result;
     }
 
-    private static Object popReceiver(final VirtualFrame frame, final int sp) {
+    private Object popReceiver(final VirtualFrame frame, final int sp) {
         return getStackValue(frame, sp);
     }
 
-    private static Object[] popN(final VirtualFrame frame, final int sp, final int numPop) {
+    private Object[] popN(final VirtualFrame frame, final int sp, final int numPop) {
         if (numPop == 0) {
             return ArrayUtils.EMPTY_ARRAY;
         }
@@ -1450,12 +1456,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return stackValues;
     }
 
-    private static Object top(final VirtualFrame frame, final int sp) {
+    private Object top(final VirtualFrame frame, final int sp) {
         return getStackValue(frame, sp - 1);
     }
 
-    private static Object getTemp(final VirtualFrame frame, final int index) {
-        final int numArguments = FrameAccess.getNumArguments(frame);
+    private Object getTemp(final VirtualFrame frame, final int index) {
         if (index < numArguments) {
             return frame.getArguments()[FrameAccess.getArgumentStartIndex() + index];
         } else {
@@ -1463,17 +1468,17 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
-    private static void setTemp(final VirtualFrame frame, final int index, final Object value) {
-        assert index >= FrameAccess.getNumArguments(frame) : "Not a temp";
+    private void setTemp(final VirtualFrame frame, final int index, final Object value) {
+        assert index >= numArguments : "Not a temp";
         setSlotValue(frame, FrameAccess.toStackSlotIndex(frame, index), AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
     }
 
-    private static Object getStackValue(final VirtualFrame frame, final int stackIndex) {
-        return FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
+    private Object getStackValue(final VirtualFrame frame, final int stackIndex) {
+        return FrameAccess.getStackValue(frame, stackIndex, numArguments);
     }
 
-    private static void setStackValue(final VirtualFrame frame, final int stackIndex, final Object value) {
-        setStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame), AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
+    private void setStackValue(final VirtualFrame frame, final int stackIndex, final Object value) {
+        setStackValue(frame, stackIndex, numArguments, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
     }
 
     private static void setStackValue(final Frame frame, final int stackIndex, final int numArguments, final Object value) {
