@@ -845,12 +845,6 @@ public final class SendBytecodes {
                     return 6;
                 }
 
-                @SuppressWarnings("unused")
-                @Specialization(guards = "lhs == rhs")
-                protected static final boolean doIdentical(final Object lhs, final Object rhs) {
-                    return BooleanObject.TRUE;
-                }
-
                 @Specialization
                 protected static final boolean doLong(final long lhs, final long rhs) {
                     return PrimEqualNode.doLong(lhs, rhs);
@@ -893,6 +887,18 @@ public final class SendBytecodes {
                 protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
                                 @Bind final SqueakImageContext image) {
                     return PrimEqualNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdenticalNativeObject(final NativeObject lhs, final NativeObject rhs) {
+                    return BooleanObject.TRUE;
+                }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdenticalArrayObject(final ArrayObject lhs, final ArrayObject rhs) {
+                    return BooleanObject.TRUE;
                 }
             }
 
@@ -945,6 +951,18 @@ public final class SendBytecodes {
                 protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
                                 @Bind final SqueakImageContext image) {
                     return PrimNotEqualNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdenticalNativeObject(final NativeObject lhs, final NativeObject rhs) {
+                    return BooleanObject.FALSE;
+                }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdenticalArrayObject(final ArrayObject lhs, final ArrayObject rhs) {
+                    return BooleanObject.FALSE;
                 }
             }
 
