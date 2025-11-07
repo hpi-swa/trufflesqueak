@@ -76,7 +76,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFra
  * </pre>
  */
 public final class FrameAccess {
-    public enum ArgumentIndicies {
+    private enum ArgumentIndicies {
         SENDER, // 0
         CLOSURE_OR_NULL, // 1
         RECEIVER, // 2
@@ -230,11 +230,6 @@ public final class FrameAccess {
         frame.setIntStatic(SlotIndicies.STACK_POINTER.ordinal(), value);
     }
 
-    public static void externalizePCAndSP(final VirtualFrame frame, final int pc, final int sp) {
-        setInstructionPointer(frame, pc);
-        setStackPointer(frame, sp);
-    }
-
     public static int toStackSlotIndex(final Frame frame, final int index) {
         assert frame.getArguments().length - getArgumentStartIndex() <= index;
         return SlotIndicies.STACK_START.ordinal() + index;
@@ -245,14 +240,6 @@ public final class FrameAccess {
             return getArgument(frame, stackIndex);
         } else {
             return getSlotValue(frame, toStackSlotIndex(frame, stackIndex));
-        }
-    }
-
-    public static void setStackValue(final Frame frame, final int stackIndex, final int numArguments, final Object value) {
-        if (stackIndex < numArguments) {
-            throw CompilerDirectives.shouldNotReachHere();
-        } else {
-            setSlotValue(frame, toStackSlotIndex(frame, stackIndex), value);
         }
     }
 
@@ -365,17 +352,6 @@ public final class FrameAccess {
             CompilerDirectives.transferToInterpreter();
             final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
             return frame.getAuxiliarySlot(auxSlotIndex);
-        }
-    }
-
-    public static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
-        final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
-        if (slotIndex < numberOfSlots) {
-            frame.setObject(slotIndex, value);
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
-            frame.setAuxiliarySlot(auxSlotIndex, value);
         }
     }
 
