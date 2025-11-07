@@ -162,68 +162,67 @@ jobs:
         retention-days: 5
       if: always()
 
-  # build-instrumented:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [ubuntu-22.04]
-  #       type: [native]
-  #   name: instrument ${{ matrix.os }}
-  #   timeout-minutes: 45
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #   - name: Clone TruffleSqueak repository
-  #     uses: actions/checkout@v4
-  #     with:
-  #       submodules: true
-  #   - name: Set up Oracle GraalVM
-  #     uses: graalvm/setup-graalvm@v1
-  #     with:
-  #       java-version: '${{ env.JAVA_VERSION }}'
-  #       distribution: 'graalvm'
-  #       github-token: ${{ secrets.GITHUB_TOKEN }}
-  #   - name: Enable Oracle GraalVM
-  #     shell: bash
-  #     run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: '${{ env.PYTHON_VERSION }}'
-  #   - name: Set up dependencies
-  #     shell: bash
-  #     run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
-  #   - name: Build instrumented TruffleSqueak standalone
-  #     run: |
-  #       export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo-instrument -H:+UnlockExperimentalVMOptions -H:+ProfilingLCOV -H:-UnlockExperimentalVMOptions"
-  #       mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
-  #   - name: Run SystemReporter on TruffleSqueak standalone
-  #     shell: bash
-  #     run: |
-  #       trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
-  #   - name: Run Cuis-Smalltalk tests on instrumented TruffleSqueak standalone
-  #     run: |
-  #       mx.trufflesqueak/utils.sh download-cuis-test-image
-  #       trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_CUIS }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_CUIS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
-  #     timeout-minutes: 10
-  #     if: ${{ matrix.os == 'ubuntu-22.04' }}
-  #   - name: Run Squeak/Smalltalk tests on instrumented TruffleSqueak standalone
-  #     shell: bash
-  #     run: |
-  #       trufflesqueak --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
-  #     timeout-minutes: 30
-  #   - name: Report code coverage
-  #     env:
-  #       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-  #     run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE_CUIS }} -r ${{ env.PGO_LCOV_FILE_SQUEAK }}
-  #     if: ${{ env.CODACY_PROJECT_TOKEN != '' }}
-  #   - name: Upload PGO profiles
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: trufflesqueak-profiles
-  #       path: trufflesqueak-*.iprof
+  build-instrumented:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04]
+        type: [native]
+    name: instrument ${{ matrix.os }}
+    timeout-minutes: 45
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Set up Oracle GraalVM
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: '${{ env.JAVA_VERSION }}'
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Enable Oracle GraalVM
+      shell: bash
+      run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '${{ env.PYTHON_VERSION }}'
+    - name: Set up dependencies
+      shell: bash
+      run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
+    - name: Build instrumented TruffleSqueak standalone
+      run: |
+        export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo-instrument -H:+UnlockExperimentalVMOptions -H:+ProfilingLCOV -H:-UnlockExperimentalVMOptions"
+        mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
+    - name: Run SystemReporter on TruffleSqueak standalone
+      shell: bash
+      run: |
+        trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
+    - name: Run Cuis-Smalltalk tests on instrumented TruffleSqueak standalone
+      run: |
+        trufflesqueak --quiet --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_CUIS }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_CUIS }} -- --evaluate "AWFYHarness run: #('Richards' 300 100)"
+      timeout-minutes: 10
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
+    - name: Run Squeak/Smalltalk tests on instrumented TruffleSqueak standalone
+      shell: bash
+      run: |
+        trufflesqueak --quiet --headless --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} -- --evaluate "AWFYHarness run: #('Towers' 300 1500)"
+      timeout-minutes: 30
+    - name: Report code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE_CUIS }} -r ${{ env.PGO_LCOV_FILE_SQUEAK }}
+      if: ${{ env.CODACY_PROJECT_TOKEN != '' }}
+    - name: Upload PGO profiles
+      uses: actions/upload-artifact@v4
+      with:
+        name: trufflesqueak-profiles
+        path: trufflesqueak-*.iprof
 
   build-native-standalone:
-    # needs: build-instrumented
+    needs: build-instrumented
     strategy:
       fail-fast: false
       matrix:
