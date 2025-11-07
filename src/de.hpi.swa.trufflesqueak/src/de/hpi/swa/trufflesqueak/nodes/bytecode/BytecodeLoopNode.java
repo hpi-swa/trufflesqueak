@@ -22,7 +22,6 @@ import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -679,7 +678,27 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
-                    pc += JumpBytecodes.calculateShortOffset(b) + 1;
+                    final int offset = JumpBytecodes.calculateShortOffset(b);
+                    if (offset < 0) {
+                        final int loopCount = ++loopCounter.value;
+                        if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, loopCount >= LoopCounter.CHECK_LOOP_STRIDE)) {
+                            LoopNode.reportLoopCount(this, loopCount);
+                            final int newPC = pc + 2 + offset;
+                            if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
+                                final Object returnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | newPC, null, null, frame);
+                                if (returnValue != null) {
+                                    assert !FrameAccess.hasModifiedSender(frame);
+                                    FrameAccess.terminateFrame(frame);
+                                    return returnValue;
+                                }
+                            } else {
+                                FrameAccess.setInstructionPointer(frame, newPC);
+                                uncheckedCast(data[pc], CheckForInterruptsQuickNode.class).execute(frame);
+                            }
+                            loopCounter.value = 0;
+                        }
+                    }
+                    pc += 1 + offset;
                     break;
                 }
                 case BC.SHORT_CJUMP_TRUE_0, BC.SHORT_CJUMP_TRUE_1, BC.SHORT_CJUMP_TRUE_2, BC.SHORT_CJUMP_TRUE_3, BC.SHORT_CJUMP_TRUE_4, BC.SHORT_CJUMP_TRUE_5, BC.SHORT_CJUMP_TRUE_6, BC.SHORT_CJUMP_TRUE_7: {
@@ -826,20 +845,17 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         final int loopCount = ++loopCounter.value;
                         if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, loopCount >= LoopCounter.CHECK_LOOP_STRIDE)) {
                             LoopNode.reportLoopCount(this, loopCount);
+                            final int newPC = pc + 2 + offset;
                             if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
-                                final Object returnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc + 2 + offset, null, null, frame);
+                                final Object returnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | newPC, null, null, frame);
                                 if (returnValue != null) {
                                     assert !FrameAccess.hasModifiedSender(frame);
                                     FrameAccess.terminateFrame(frame);
                                     return returnValue;
                                 }
                             } else {
-                                try {
-                                    uncheckedCast(data[pc], CheckForInterruptsQuickNode.class).execute(frame);
-                                } catch (final ProcessSwitch ps) {
-                                    FrameAccess.setInstructionPointer(frame, pc + offset);
-                                    throw ps;
-                                }
+                                FrameAccess.setInstructionPointer(frame, newPC);
+                                uncheckedCast(data[pc], CheckForInterruptsQuickNode.class).execute(frame);
                             }
                             loopCounter.value = 0;
                         }
