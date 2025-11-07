@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -41,14 +42,18 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
         }
     }
 
-    public static final CheckForInterruptsQuickNode createForLoop(final CompiledCodeObject code, final Object[] data, final int pc, final int numBytecodes, final int offset) {
-        if (SqueakImageContext.getSlow().interruptHandlerDisabled() || code.isCompiledBlock() || code.hasOuterMethod()) {
+    public static final CheckForInterruptsQuickNode createForLoop(final Object[] data, final int pc, final int numBytecodes, final int offset) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (SqueakImageContext.getSlow().interruptHandlerDisabled()) {
             return NoCheckForInterruptsNode.SINGLETON;
         }
         final int loopStart = pc + numBytecodes + offset;
         assert offset < 0 : "back jumps only";
         for (int i = loopStart; i < pc; i++) {
-            // FIXME?
+            /*
+             * FIXME?: Search for call nodes but reject the ones from closure primitives as they do
+             * not check for interrupts.
+             */
             // if ((NodeUtil.findFirstNodeInstance(abs, DirectCallNode.class) != null ||
             // NodeUtil.findFirstNodeInstance(abs, IndirectCallNode.class) != null) &&
             // NodeUtil.findFirstNodeInstance(abs, AbstractClosurePrimitiveNode.class) == null) {
