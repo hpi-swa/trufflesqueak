@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecode.BytecodeLoopNode.AbstractSendBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 
 public abstract class CheckForInterruptsQuickNode extends AbstractNode {
@@ -38,6 +39,24 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
         } else {
             return CheckForInterruptsQuickImplNode.SINGLETON;
         }
+    }
+
+    public static final CheckForInterruptsQuickNode createForLoop(final CompiledCodeObject code, final Object[] data, final int pc, final int numBytecodes, final int offset) {
+        if (SqueakImageContext.getSlow().interruptHandlerDisabled() || code.isCompiledBlock() || code.hasOuterMethod()) {
+            return NoCheckForInterruptsNode.SINGLETON;
+        }
+        final int loopStart = pc + numBytecodes + offset;
+        assert offset < 0 : "back jumps only";
+        for (int i = loopStart; i < pc; i++) {
+            // FIXME?
+            // if ((NodeUtil.findFirstNodeInstance(abs, DirectCallNode.class) != null ||
+            // NodeUtil.findFirstNodeInstance(abs, IndirectCallNode.class) != null) &&
+            // NodeUtil.findFirstNodeInstance(abs, AbstractClosurePrimitiveNode.class) == null) {
+            if (data[i] instanceof AbstractSendBytecodeNode) {
+                return NoCheckForInterruptsNode.SINGLETON;
+            }
+        }
+        return CheckForInterruptsQuickImplNode.SINGLETON;
     }
 
     public static final CheckForInterruptsQuickNode createForLoop() {

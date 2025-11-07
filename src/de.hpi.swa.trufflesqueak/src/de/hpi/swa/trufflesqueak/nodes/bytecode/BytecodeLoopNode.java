@@ -230,6 +230,10 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
+                    final int offset = JumpBytecodes.calculateShortOffset(b);
+                    if (offset < 0) {
+                        data[pc] = insert(CheckForInterruptsQuickNode.createForLoop(code, data, pc, 1, offset));
+                    }
                     pc++;
                     break;
                 }
@@ -331,7 +335,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.EXT_UNCONDITIONAL_JUMP: {
                     final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
                     if (offset < 0) {
-                        data[pc] = insert(CheckForInterruptsQuickNode.createForLoop());
+                        data[pc] = insert(CheckForInterruptsQuickNode.createForLoop(code, data, pc, 2, offset));
                     }
                     pc += 2;
                     extA = extB = 0;
@@ -1051,7 +1055,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
-    static abstract class AbstractSendBytecodeNode extends AbstractNode {
+    public abstract static class AbstractSendBytecodeNode extends AbstractNode {
         protected final ConditionProfile nlrProfile = ConditionProfile.create();
         protected final ConditionProfile nvrProfile = ConditionProfile.create();
     }
