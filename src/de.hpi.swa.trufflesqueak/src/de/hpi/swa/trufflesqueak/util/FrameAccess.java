@@ -361,6 +361,7 @@ public final class FrameAccess {
     }
 
     public static void setSlot(final Frame frame, final int slotIndex, final Object value) {
+        assert value != null;
         final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         assert SlotIndicies.STACK_START.ordinal() <= slotIndex && slotIndex <= SlotIndicies.STACK_START.ordinal() + getCodeObject(frame).getSqueakContextSize();
         final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
@@ -380,7 +381,7 @@ public final class FrameAccess {
                     frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
                     frame.setDouble(slotIndex, d);
                 }
-                case null, default -> {
+                default -> {
                     frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
                     frame.setObject(slotIndex, value);
                 }
