@@ -26,6 +26,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -549,7 +550,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT: {
@@ -557,7 +558,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_PUT: {
@@ -566,14 +567,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch2NodeGen.class).executeHandled(frame, receiver, arg1, arg2));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEXT_PUT: {
@@ -581,14 +582,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_END: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_IDENTICAL: {
@@ -596,14 +597,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_CLASS: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
@@ -611,14 +612,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO: {
@@ -626,14 +627,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEW: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEW_WITH_ARG: {
@@ -641,7 +642,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
@@ -649,7 +650,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     externalizePCAndSP(frame, pc + 1, sp);
                     CompilerAsserts.partialEvaluationConstant(data[pc]);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
@@ -657,7 +658,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch0NodeGen.class).executeHandled(frame, receiver));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
@@ -666,7 +667,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch1NodeGen.class).executeHandled(frame, receiver, arg));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
@@ -676,7 +677,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 1, sp);
                     push(frame, sp++, uncheckedCast(data[pc], Dispatch2NodeGen.class).executeHandled(frame, receiver, arg1, arg2));
-                    pc++;
+                    pc = checkPCAfterSend(frame, pc + 1);
                     break;
                 }
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
@@ -704,22 +705,32 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.SHORT_CJUMP_TRUE_0, BC.SHORT_CJUMP_TRUE_1, BC.SHORT_CJUMP_TRUE_2, BC.SHORT_CJUMP_TRUE_3, BC.SHORT_CJUMP_TRUE_4, BC.SHORT_CJUMP_TRUE_5, BC.SHORT_CJUMP_TRUE_6, BC.SHORT_CJUMP_TRUE_7: {
-                    if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(pop(frame, --sp) == Boolean.TRUE)) {
-                        final int offset = JumpBytecodes.calculateShortOffset(b);
-                        CompilerAsserts.partialEvaluationConstant(offset);
-                        pc += 1 + offset;
+                    final Object stackValue = pop(frame, --sp);
+                    if (stackValue instanceof final Boolean conditionResult) {
+                        if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(conditionResult)) {
+                            final int offset = JumpBytecodes.calculateShortOffset(b);
+                            CompilerAsserts.partialEvaluationConstant(offset);
+                            pc += 1 + offset;
+                        } else {
+                            pc++;
+                        }
                     } else {
-                        pc++;
+                        sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                     }
                     break;
                 }
                 case BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
-                    if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(pop(frame, --sp) == Boolean.FALSE)) {
-                        final int offset = JumpBytecodes.calculateShortOffset(b);
-                        CompilerAsserts.partialEvaluationConstant(offset);
-                        pc += 1 + offset;
+                    final Object stackValue = pop(frame, --sp);
+                    if (stackValue instanceof final Boolean conditionResult) {
+                        if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!conditionResult)) {
+                            final int offset = JumpBytecodes.calculateShortOffset(b);
+                            CompilerAsserts.partialEvaluationConstant(offset);
+                            pc += 1 + offset;
+                        } else {
+                            pc++;
+                        }
                     } else {
-                        pc++;
+                        sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                     }
                     break;
                 }
@@ -814,7 +825,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object receiver = pop(frame, --sp);
                     externalizePCAndSP(frame, pc + 2, sp);
                     push(frame, sp++, uncheckedCast(data[pc], DispatchNaryNodeGen.class).executeHandled(frame, receiver, arguments));
-                    pc += 2;
+                    pc = checkPCAfterSend(frame, pc + 2);
                     extA = extB = 0;
                     break;
                 }
@@ -837,7 +848,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     } else {
                         push(frame, sp++, uncheckedCast(data[pc], DispatchSuperNaryNodeGen.class).executeHandled(frame, receiver, arguments));
                     }
-                    pc += 2;
+                    pc = checkPCAfterSend(frame, pc + 2);
                     extA = extB = 0;
                     break;
                 }
@@ -867,23 +878,33 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_JUMP_IF_TRUE: {
-                    if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(pop(frame, --sp) == Boolean.TRUE)) {
-                        final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
-                        CompilerAsserts.partialEvaluationConstant(offset);
-                        pc += 2 + offset;
+                    final Object stackValue = pop(frame, --sp);
+                    if (stackValue instanceof final Boolean conditionResult) {
+                        if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(conditionResult)) {
+                            final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
+                            CompilerAsserts.partialEvaluationConstant(offset);
+                            pc += 2 + offset;
+                        } else {
+                            pc += 2;
+                        }
                     } else {
-                        pc += 2;
+                        sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                     }
                     extA = extB = 0;
                     break;
                 }
                 case BC.EXT_JUMP_IF_FALSE: {
-                    if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(pop(frame, --sp) == Boolean.FALSE)) {
-                        final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
-                        CompilerAsserts.partialEvaluationConstant(offset);
-                        pc += 2 + offset;
+                    final Object stackValue = pop(frame, --sp);
+                    if (stackValue instanceof final Boolean conditionResult) {
+                        if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!conditionResult)) {
+                            final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
+                            CompilerAsserts.partialEvaluationConstant(offset);
+                            pc += 2 + offset;
+                        } else {
+                            pc += 2;
+                        }
                     } else {
-                        pc += 2;
+                        sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                     }
                     extA = extB = 0;
                     break;
@@ -1106,6 +1127,16 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         FrameAccess.setStackPointer(frame, sp);
     }
 
+    private int checkPCAfterSend(final VirtualFrame frame, final int pc) {
+        final int framePC = FrameAccess.getInstructionPointer(frame);
+        if (pc != framePC) {
+            CompilerDirectives.transferToInterpreter();
+            return framePC;
+        } else {
+            return pc;
+        }
+    }
+
     private Object normalReturn(final VirtualFrame frame, final int pc, final int sp, final LoopCounter loopCounter, final Object returnValue) {
         if (loopCounter.value > 0) {
             LoopNode.reportLoopCount(this, loopCounter.value);
@@ -1148,6 +1179,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             FrameAccess.terminateFrame(frame);
             return returnValue;
         }
+    }
+
+    private void sendMustBeBooleanInInterpreter(final VirtualFrame frame, final int pc, final Object stackValue) {
+        CompilerDirectives.transferToInterpreter();
+        FrameAccess.setInstructionPointer(frame, pc + 1);
+        final SqueakImageContext image = getContext();
+        image.mustBeBooleanSelector.executeAsSymbolSlow(image, frame, stackValue);
+        throw SqueakException.create("Should not be reached");
     }
 
     /**
