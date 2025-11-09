@@ -36,6 +36,14 @@ public final class CharacterObject extends AbstractSqueakObject {
         return 0;
     }
 
+    public static Object valueOf(final int value) {
+        if (value <= Character.MAX_VALUE) {
+            return (char) value;
+        } else {
+            return new CharacterObject(value);
+        }
+    }
+
     public static Object valueOf(final long value) {
         if (value <= Character.MAX_VALUE) {
             return (char) value;

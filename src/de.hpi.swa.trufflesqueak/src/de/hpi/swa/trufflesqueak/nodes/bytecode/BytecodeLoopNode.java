@@ -943,22 +943,19 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_RECEIVER_VARIABLE: {
-                    final int index = getByteUnsignedInt(bc, pc + 1) + (extA << 8);
-                    push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), index));
+                    push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), getNextByteExtended(bc, pc, extA)));
                     pc += 2;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                    final int index = getByteUnsignedInt(bc, pc + 1) + (extA << 8);
-                    push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, code.getLiteral(index), ASSOCIATION.VALUE));
+                    push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, code.getLiteral(getNextByteExtended(bc, pc, extA)), ASSOCIATION.VALUE));
                     pc += 2;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL: {
-                    final int index = getByteUnsignedInt(bc, pc + 1) + (extA << 8);
-                    push(frame, sp++, code.getLiteral(index));
+                    push(frame, sp++, code.getLiteral(getNextByteExtended(bc, pc, extA)));
                     pc += 2;
                     extA = 0;
                     break;
@@ -984,15 +981,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_INTEGER: {
-                    final long value = (getByteUnsignedInt(bc, pc + 1) + (extB << 8));
-                    push(frame, sp++, value);
+                    push(frame, sp++, (long) getNextByteExtended(bc, pc, extB));
                     pc += 2;
                     extB = 0;
                     break;
                 }
                 case BC.EXT_PUSH_CHARACTER: {
-                    final Object value = CharacterObject.valueOf(getByteUnsignedInt(bc, pc + 1) + (extA << 8));
-                    push(frame, sp++, value);
+                    push(frame, sp++, CharacterObject.valueOf(getNextByteExtended(bc, pc, extA)));
                     pc += 2;
                     extA = 0;
                     break;
@@ -1086,15 +1081,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE: {
-                    final int index = getByteUnsignedInt(bc, pc + 1) + (extA << 8);
-                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --sp));
+                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), getNextByteExtended(bc, pc, extA), pop(frame, --sp));
                     pc += 2;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                    final int index = getByteUnsignedInt(bc, pc + 1) + (extA << 8);
-                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(index), ASSOCIATION.VALUE, pop(frame, --sp));
+                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getNextByteExtended(bc, pc, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
                     pc += 2;
                     extA = 0;
                     break;
@@ -1105,15 +1098,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_STORE_RECEIVER_VARIABLE: {
-                    final int index = getByteUnsignedInt(bc, pc + 1) + (extA << 8);
-                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, sp));
+                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), getNextByteExtended(bc, pc, extA), top(frame, sp));
                     pc += 2;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_STORE_LITERAL_VARIABLE: {
-                    final int index = getByteUnsignedInt(bc, pc + 1) + (extA << 8);
-                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(index), ASSOCIATION.VALUE, top(frame, sp));
+                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getNextByteExtended(bc, pc, extA)), ASSOCIATION.VALUE, top(frame, sp));
                     pc += 2;
                     extA = 0;
                     break;
@@ -1421,6 +1412,10 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
 
     private static int getByteUnsignedInt(final byte[] bc, final int pc) {
         return Byte.toUnsignedInt(getByte(bc, pc));
+    }
+
+    private static int getNextByteExtended(final byte[] bc, final int pc, final int extA) {
+        return getByteUnsignedInt(bc, pc + 1) + (extA << 8);
     }
 
     private void push(final VirtualFrame frame, final int sp, final Object value) {
