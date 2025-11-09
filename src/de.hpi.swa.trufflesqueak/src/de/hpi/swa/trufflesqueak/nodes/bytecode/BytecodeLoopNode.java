@@ -1449,6 +1449,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         if (numPop == 0) {
             return ArrayUtils.EMPTY_ARRAY;
         }
+        return popNExploded(frame, sp, numPop);
+    }
+
+    @ExplodeLoop
+    private Object[] popNExploded(final VirtualFrame frame, final int sp, final int numPop) {
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             stackValues[numPop - 1 - i] = pop(frame, sp - 1 - i);
