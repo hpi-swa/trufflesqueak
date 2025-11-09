@@ -892,9 +892,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object stackValue = pop(frame, --sp);
                     if (stackValue instanceof final Boolean conditionResult) {
                         if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(conditionResult)) {
-                            final int offset = JumpBytecodes.calculateShortOffset(b);
-                            CompilerAsserts.partialEvaluationConstant(offset);
-                            pc += 1 + offset;
+                            pc += 1 + JumpBytecodes.calculateShortOffset(b);
                         } else {
                             pc++;
                         }
@@ -907,9 +905,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object stackValue = pop(frame, --sp);
                     if (stackValue instanceof final Boolean conditionResult) {
                         if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!conditionResult)) {
-                            final int offset = JumpBytecodes.calculateShortOffset(b);
-                            CompilerAsserts.partialEvaluationConstant(offset);
-                            pc += 1 + offset;
+                            pc += 1 + JumpBytecodes.calculateShortOffset(b);
                         } else {
                             pc++;
                         }
@@ -1065,9 +1061,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object stackValue = pop(frame, --sp);
                     if (stackValue instanceof final Boolean conditionResult) {
                         if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(conditionResult)) {
-                            final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
-                            CompilerAsserts.partialEvaluationConstant(offset);
-                            pc += 2 + offset;
+                            pc += 2 + JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
                         } else {
                             pc += 2;
                         }
@@ -1081,9 +1075,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object stackValue = pop(frame, --sp);
                     if (stackValue instanceof final Boolean conditionResult) {
                         if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!conditionResult)) {
-                            final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
-                            CompilerAsserts.partialEvaluationConstant(offset);
-                            pc += 2 + offset;
+                            pc += 2 + JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc + 1), extB);
                         } else {
                             pc += 2;
                         }
