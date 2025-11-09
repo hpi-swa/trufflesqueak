@@ -561,8 +561,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.EXT_PUSH_FULL_CLOSURE: {
                     final byte byteB = getByte(bc, pc + 2);
-                    final boolean needsOuterContext = (byteB >> 6 & 1) == 0;
-                    if (needsOuterContext) {
+                    final boolean ignoreContext = (byteB & 0x40) != 0;
+                    if (!ignoreContext) {
                         data[pc] = insert(GetOrCreateContextWithFrameNode.create());
                     }
                     pc += 3;
@@ -571,10 +571,9 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.EXT_PUSH_CLOSURE: {
                     final byte byteA = getByte(bc, pc + 1);
-                    final byte byteB = getByte(bc, pc + 2);
                     final int numArgs = (byteA & 7) + Math.floorMod(extA, 16) * 8;
-                    final int blockSize = Byte.toUnsignedInt(byteB) + (extB << 8);
                     data[pc] = insert(new PushClosureNode(code, pc + 3, numArgs));
+                    final int blockSize = getByteExtended(bc, pc + 2, extB);
                     pc += 3 + blockSize;
                     extA = extB = 0;
                     break;
@@ -943,19 +942,19 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_RECEIVER_VARIABLE: {
-                    push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), getNextByteExtended(bc, pc, extA)));
+                    push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc + 1, extA)));
                     pc += 2;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                    push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, code.getLiteral(getNextByteExtended(bc, pc, extA)), ASSOCIATION.VALUE));
+                    push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc + 1, extA)), ASSOCIATION.VALUE));
                     pc += 2;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL: {
-                    push(frame, sp++, code.getLiteral(getNextByteExtended(bc, pc, extA)));
+                    push(frame, sp++, code.getLiteral(getByteExtended(bc, pc + 1, extA)));
                     pc += 2;
                     extA = 0;
                     break;
@@ -981,13 +980,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_INTEGER: {
-                    push(frame, sp++, (long) getNextByteExtended(bc, pc, extB));
+                    push(frame, sp++, (long) getByteExtended(bc, pc + 1, extB));
                     pc += 2;
                     extB = 0;
                     break;
                 }
                 case BC.EXT_PUSH_CHARACTER: {
-                    push(frame, sp++, CharacterObject.valueOf(getNextByteExtended(bc, pc, extA)));
+                    push(frame, sp++, CharacterObject.valueOf(getByteExtended(bc, pc + 1, extA)));
                     pc += 2;
                     extA = 0;
                     break;
@@ -1005,11 +1004,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_SEND_SUPER: {
-                    boolean isDirected = false;
-                    int extBValue = extB;
-                    if (extBValue >= 64) {
+                    final boolean isDirected;
+                    final int extBValue;
+                    if (extB >= 64) {
                         isDirected = true;
-                        extBValue = extBValue & 63;
+                        extBValue = extB & 63;
+                    } else {
+                        isDirected = false;
+                        extBValue = extB;
                     }
                     final int byte1 = getUnsignedInt(bc, pc + 1);
                     final int numArgs = (byte1 & 7) + (extBValue << 3);
@@ -1018,11 +1020,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     sp -= numArgs;
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc + 2, sp);
+                    final Object result;
                     if (isDirected) {
-                        push(frame, sp++, uncheckedCast(data[pc], SendBytecodeSuperDirectedNode.class).execute(frame, lookupClass, receiver, arguments));
+                        result = uncheckedCast(data[pc], SendBytecodeSuperDirectedNode.class).execute(frame, lookupClass, receiver, arguments);
                     } else {
-                        push(frame, sp++, uncheckedCast(data[pc], SendBytecodeSuperNode.class).execute(frame, receiver, arguments));
+                        result = uncheckedCast(data[pc], SendBytecodeSuperNode.class).execute(frame, receiver, arguments);
                     }
+                    push(frame, sp++, result);
                     pc = checkPCAfterSend(frame, pc + 2);
                     extA = extB = 0;
                     break;
@@ -1081,13 +1085,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE: {
-                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), getNextByteExtended(bc, pc, extA), pop(frame, --sp));
+                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc + 1, extA), pop(frame, --sp));
                     pc += 2;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getNextByteExtended(bc, pc, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
+                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc + 1, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
                     pc += 2;
                     extA = 0;
                     break;
@@ -1098,13 +1102,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_STORE_RECEIVER_VARIABLE: {
-                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), getNextByteExtended(bc, pc, extA), top(frame, sp));
+                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc + 1, extA), top(frame, sp));
                     pc += 2;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_STORE_LITERAL_VARIABLE: {
-                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getNextByteExtended(bc, pc, extA)), ASSOCIATION.VALUE, top(frame, sp));
+                    uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc + 1, extA)), ASSOCIATION.VALUE, top(frame, sp));
                     pc += 2;
                     extA = 0;
                     break;
@@ -1132,12 +1136,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_FULL_CLOSURE: {
-                    final byte byteA = getByte(bc, pc + 1);
-                    final byte byteB = getByte(bc, pc + 2);
-                    final int literalIndex = Byte.toUnsignedInt(byteA) + (extA << 8);
+                    final int literalIndex = getByteExtended(bc, pc + 1, extA);
                     final CompiledCodeObject block = uncheckedCast(code.getLiteral(literalIndex), CompiledCodeObject.class);
                     final int blockInitialPC = block.getInitialPC();
                     final int blockNumArgs = block.getNumArgs();
+                    final byte byteB = getByte(bc, pc + 2);
                     final int numCopied = Byte.toUnsignedInt(byteB) & 63;
                     final Object[] copiedValues = popN(frame, sp, numCopied);
                     sp -= numCopied;
@@ -1152,40 +1155,39 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_CLOSURE: {
-                    final byte byteA = getByte(bc, pc + 1);
-                    final byte byteB = getByte(bc, pc + 2);
-                    final int numCopied = (Byte.toUnsignedInt(byteA) >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
+                    final int byteA = getUnsignedInt(bc, pc + 1);
+                    final int numCopied = (byteA >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
                     final Object[] copiedValues = popN(frame, sp, numCopied);
                     sp -= numCopied;
                     push(frame, sp++, uncheckedCast(data[pc], PushClosureNode.class).execute(frame, copiedValues));
-                    final int blockSize = Byte.toUnsignedInt(byteB) + (extB << 8);
+                    final int blockSize = getByteExtended(bc, pc + 2, extB);
                     pc += 3 + blockSize;
                     extA = extB = 0;
                     break;
                 }
                 case BC.PUSH_REMOTE_TEMP_LONG: {
                     final int indexInArray = getUnsignedInt(bc, pc + 1);
-                    final int indexOfArray = Byte.toUnsignedInt(getByte(bc, pc + 2));
+                    final int indexOfArray = getUnsignedInt(bc, pc + 2);
                     push(frame, sp++, uncheckedCast(data[pc], SqueakObjectAt0Node.class).execute(this, getTemp(frame, indexOfArray), indexInArray));
                     pc += 3;
                     break;
                 }
                 case BC.STORE_REMOTE_TEMP_LONG: {
                     final int indexInArray = getUnsignedInt(bc, pc + 1);
-                    final int indexOfArray = Byte.toUnsignedInt(getByte(bc, pc + 2));
+                    final int indexOfArray = getUnsignedInt(bc, pc + 2);
                     uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getTemp(frame, indexOfArray), indexInArray, top(frame, sp));
                     pc += 3;
                     break;
                 }
                 case BC.STORE_AND_POP_REMOTE_TEMP_LONG: {
                     final int indexInArray = getUnsignedInt(bc, pc + 1);
-                    final int indexOfArray = Byte.toUnsignedInt(getByte(bc, pc + 2));
+                    final int indexOfArray = getUnsignedInt(bc, pc + 2);
                     uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getTemp(frame, indexOfArray), indexInArray, pop(frame, --sp));
                     pc += 3;
                     break;
                 }
                 default: {
-                    throw CompilerDirectives.shouldNotReachHere();
+                    throw CompilerDirectives.shouldNotReachHere("Unknown bytecode");
                 }
             }
         }
@@ -1414,8 +1416,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
-    private static int getNextByteExtended(final byte[] bc, final int pc, final int extA) {
-        return getUnsignedInt(bc, pc + 1) + (extA << 8);
+    private static int getByteExtended(final byte[] bc, final int pc, final int extend) {
+        return getUnsignedInt(bc, pc) + (extend << 8);
     }
 
     private void push(final VirtualFrame frame, final int sp, final Object value) {
