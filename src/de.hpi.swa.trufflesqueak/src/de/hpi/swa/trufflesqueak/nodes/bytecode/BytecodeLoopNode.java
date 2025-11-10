@@ -572,7 +572,6 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
                     BC.PUSH_LIT_VAR_8, BC.PUSH_LIT_VAR_9, BC.PUSH_LIT_VAR_A, BC.PUSH_LIT_VAR_B, BC.PUSH_LIT_VAR_C, BC.PUSH_LIT_VAR_D, BC.PUSH_LIT_VAR_E, BC.PUSH_LIT_VAR_F: {
-                    externalizePCAndSP(frame, pc, sp); // for ContextObject access
                     push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(b & 0xF), ASSOCIATION.VALUE));
                     break;
                 }
@@ -958,24 +957,22 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.EXT_JUMP_IF_TRUE: {
                     final Object stackValue = pop(frame, --sp);
+                    final int offset = getByteExtended(bc, pc++, extB);
                     if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(stackValue == Boolean.TRUE)) {
-                        pc += JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc), extB) + 1;
+                        pc += offset;
                     } else if (stackValue != Boolean.FALSE) {
                         sendMustBeBooleanInInterpreter(frame, pc, stackValue);
-                    } else {
-                        pc++;
                     }
                     extA = extB = 0;
                     break;
                 }
                 case BC.EXT_JUMP_IF_FALSE: {
                     final Object stackValue = pop(frame, --sp);
+                    final int offset = getByteExtended(bc, pc++, extB);
                     if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(stackValue == Boolean.FALSE)) {
-                        pc += JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc), extB) + 1;
+                        pc += offset;
                     } else if (stackValue != Boolean.TRUE) {
                         sendMustBeBooleanInInterpreter(frame, pc, stackValue);
-                    } else {
-                        pc++;
                     }
                     extA = extB = 0;
                     break;
@@ -1010,7 +1007,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 /* 3 byte bytecodes */
                 case BC.CALL_PRIMITIVE: {
-                    if (getByte(bc, 3) == BC.LONG_STORE_TEMPORARY_VARIABLE) {
+                    pc += 2;
+                    if (getByte(bc, pc) == BC.LONG_STORE_TEMPORARY_VARIABLE) {
                         final SqueakImageContext image = getContext();
                         final int primFailCode = image.getPrimFailCode();
                         final ArrayObject errorTable = image.primitiveErrorTable;
@@ -1022,7 +1020,6 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         }
                         push(frame, sp++, errorObject);
                     }
-                    pc += 2;
                     break;
                 }
                 case BC.EXT_PUSH_FULL_CLOSURE: {
@@ -1430,7 +1427,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
 
     private void sendMustBeBooleanInInterpreter(final VirtualFrame frame, final int pc, final Object stackValue) {
         CompilerDirectives.transferToInterpreter();
-        FrameAccess.setInstructionPointer(frame, pc + 1);
+        FrameAccess.setInstructionPointer(frame, pc);
         final SqueakImageContext image = getContext();
         image.mustBeBooleanSelector.executeAsSymbolSlow(image, frame, stackValue);
         throw SqueakException.create("Should not be reached");
