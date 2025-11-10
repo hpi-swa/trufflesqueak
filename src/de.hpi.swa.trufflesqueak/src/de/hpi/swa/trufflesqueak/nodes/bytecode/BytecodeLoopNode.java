@@ -557,7 +557,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, //
                     BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, //
                     BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG: {
-                    final Object arg = pop(frame, --sp);
+                    final Object arg = popArgument(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
                     pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
@@ -574,7 +574,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
-                    final Object arg = pop(frame, --sp);
+                    final Object arg = popArgument(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
                     pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1Node.class).execute(frame, receiver, arg));
@@ -584,8 +584,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.BYTECODE_PRIM_AT_PUT, //
                     BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
-                    final Object arg2 = pop(frame, --sp);
-                    final Object arg1 = pop(frame, --sp);
+                    final Object arg2 = popArgument(frame, --sp);
+                    final Object arg1 = popArgument(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
                     pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecode2Node.class).execute(frame, receiver, arg1, arg2));
@@ -706,9 +706,9 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.EXT_SEND: {
                     final int byte1 = getUnsignedInt(bc, pc++);
                     final int numArgs = (byte1 & 7) + (extB << 3);
-                    final Object[] arguments = popN(frame, sp, numArgs);
+                    final Object[] arguments = popArguments(frame, sp, numArgs);
                     sp -= numArgs;
-                    final Object receiver = pop(frame, --sp);
+                    final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
                     pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecodeNaryNode.class).execute(frame, receiver, arguments));
                     pc = checkPCAfterSend(frame, pc);
@@ -728,7 +728,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final int byte1 = getUnsignedInt(bc, pc++);
                     final int numArgs = (byte1 & 7) + (extBValue << 3);
                     final ClassObject lookupClass = isDirected ? uncheckedCast(pop(frame, --sp), ClassObject.class).getResolvedSuperclass() : null;
-                    final Object[] arguments = popN(frame, sp, numArgs);
+                    final Object[] arguments = popArguments(frame, sp, numArgs);
                     sp -= numArgs;
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
@@ -1090,15 +1090,29 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return result;
     }
 
+    private Object popArgument(final VirtualFrame frame, final int sp) {
+        return AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(pop(frame, sp));
+    }
+
+    private Object[] popArguments(final VirtualFrame frame, final int sp, final int numPop) {
+        return numPop == 0 ? ArrayUtils.EMPTY_ARRAY : popArgumentsExploded(frame, sp, numPop);
+    }
+
+    @ExplodeLoop
+    private Object[] popArgumentsExploded(final VirtualFrame frame, final int sp, final int numPop) {
+        final Object[] stackValues = new Object[numPop];
+        for (int i = 0; i < numPop; i++) {
+            stackValues[numPop - 1 - i] = popArgument(frame, sp - 1 - i);
+        }
+        return stackValues;
+    }
+
     private Object popReceiver(final VirtualFrame frame, final int sp) {
-        return getStackValue(frame, sp);
+        return AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(getStackValue(frame, sp));
     }
 
     private Object[] popN(final VirtualFrame frame, final int sp, final int numPop) {
-        if (numPop == 0) {
-            return ArrayUtils.EMPTY_ARRAY;
-        }
-        return popNExploded(frame, sp, numPop);
+        return numPop == 0 ? ArrayUtils.EMPTY_ARRAY : popNExploded(frame, sp, numPop);
     }
 
     @ExplodeLoop
@@ -1118,6 +1132,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         if (sp < numArguments) {
             return frame.getArguments()[FrameAccess.getArgumentStartIndex() + sp];
         } else {
+            // FIXME: use frame.getObject()
             return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, sp));
         }
     }
