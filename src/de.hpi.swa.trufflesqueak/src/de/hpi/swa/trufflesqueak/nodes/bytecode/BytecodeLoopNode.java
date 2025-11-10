@@ -919,7 +919,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7: {
-                    setTemp(frame, b & 7, pop(frame, --sp));
+                    setStackValue(frame, b & 7, pop(frame, --sp));
                     pc++;
                     break;
                 }
@@ -1097,7 +1097,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE: {
-                    setTemp(frame, getByte(bc, pc + 1), pop(frame, --sp));
+                    setStackValue(frame, getByte(bc, pc + 1), pop(frame, --sp));
                     pc += 2;
                     break;
                 }
@@ -1114,7 +1114,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.LONG_STORE_TEMPORARY_VARIABLE: {
-                    setTemp(frame, getByte(bc, pc + 1), top(frame, sp));
+                    setStackValue(frame, getByte(bc, pc + 1), top(frame, sp));
                     pc += 2;
                     break;
                 }
@@ -1454,39 +1454,28 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return getStackValue(frame, sp - 1);
     }
 
-    private Object getTemp(final VirtualFrame frame, final int index) {
-        if (index < numArguments) {
-            return frame.getArguments()[FrameAccess.getArgumentStartIndex() + index];
+    private Object getTemp(final VirtualFrame frame, final int sp) {
+        if (sp < numArguments) {
+            return frame.getArguments()[FrameAccess.getArgumentStartIndex() + sp];
         } else {
-            return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, index));
+            return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, sp));
         }
     }
 
-    private void setTemp(final VirtualFrame frame, final int index, final Object value) {
-        assert index >= numArguments : "Not a temp";
-        setSlotValue(frame, FrameAccess.toStackSlotIndex(frame, index), AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
+    private Object getStackValue(final VirtualFrame frame, final int sp) {
+        return FrameAccess.getStackValue(frame, sp, numArguments);
     }
 
-    private Object getStackValue(final VirtualFrame frame, final int stackIndex) {
-        return FrameAccess.getStackValue(frame, stackIndex, numArguments);
-    }
-
-    private void setStackValue(final VirtualFrame frame, final int stackIndex, final Object value) {
-        setStackValue(frame, stackIndex, numArguments, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
-    }
-
-    private static void setStackValue(final Frame frame, final int stackIndex, final int numArguments, final Object value) {
-        if (stackIndex < numArguments) {
-            throw CompilerDirectives.shouldNotReachHere();
-        } else {
-            setSlotValue(frame, FrameAccess.toStackSlotIndex(frame, stackIndex), value);
-        }
+    private void setStackValue(final VirtualFrame frame, final int sp, final Object value) {
+        assert sp >= numArguments;
+        setSlotValue(frame, FrameAccess.toStackSlotIndex(frame, sp), value);
     }
 
     private static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
+        final Object resolvedValue = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
         final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
         if (slotIndex < numberOfSlots) {
-            frame.setObject(slotIndex, value);
+            frame.setObject(slotIndex, resolvedValue);
         } else {
             CompilerDirectives.transferToInterpreter();
             final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
