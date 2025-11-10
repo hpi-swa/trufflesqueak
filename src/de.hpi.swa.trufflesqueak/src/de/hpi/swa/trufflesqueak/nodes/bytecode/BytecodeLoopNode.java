@@ -809,18 +809,22 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.SHORT_CJUMP_TRUE_0, BC.SHORT_CJUMP_TRUE_1, BC.SHORT_CJUMP_TRUE_2, BC.SHORT_CJUMP_TRUE_3, BC.SHORT_CJUMP_TRUE_4, BC.SHORT_CJUMP_TRUE_5, BC.SHORT_CJUMP_TRUE_6, BC.SHORT_CJUMP_TRUE_7: {
                     final Object stackValue = pop(frame, --sp);
-                    if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(stackValue == Boolean.TRUE)) {
-                        pc += JumpBytecodes.calculateShortOffset(b);
-                    } else if (stackValue != Boolean.FALSE) {
+                    if (stackValue instanceof final Boolean condition) {
+                        if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(condition)) {
+                            pc += JumpBytecodes.calculateShortOffset(b);
+                        }
+                    } else {
                         sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                     }
                     break;
                 }
                 case BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
                     final Object stackValue = pop(frame, --sp);
-                    if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(stackValue == Boolean.FALSE)) {
-                        pc += JumpBytecodes.calculateShortOffset(b);
-                    } else if (stackValue != Boolean.TRUE) {
+                    if (stackValue instanceof final Boolean condition) {
+                        if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(!condition)) {
+                            pc += JumpBytecodes.calculateShortOffset(b);
+                        }
+                    } else {
                         sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                     }
                     break;
@@ -958,9 +962,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.EXT_JUMP_IF_TRUE: {
                     final Object stackValue = pop(frame, --sp);
                     final int offset = getByteExtended(bc, pc++, extB);
-                    if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(stackValue == Boolean.TRUE)) {
-                        pc += offset;
-                    } else if (stackValue != Boolean.FALSE) {
+                    if (stackValue instanceof final Boolean condition) {
+                        if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(condition)) {
+                            pc += offset;
+                        }
+                    } else {
                         sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                     }
                     extA = extB = 0;
@@ -969,9 +975,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.EXT_JUMP_IF_FALSE: {
                     final Object stackValue = pop(frame, --sp);
                     final int offset = getByteExtended(bc, pc++, extB);
-                    if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(stackValue == Boolean.FALSE)) {
-                        pc += offset;
-                    } else if (stackValue != Boolean.TRUE) {
+                    if (stackValue instanceof final Boolean condition) {
+                        if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(!condition)) {
+                            pc += offset;
+                        }
+                    } else {
                         sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                     }
                     extA = extB = 0;
