@@ -826,7 +826,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     pc += 2;
                     if (getByte(bc, pc) == BC.LONG_STORE_TEMPORARY_VARIABLE) {
                         assert sp > 0;
-                        setStackValue(frame, sp, getErrorObject());
+                        setStackValue(frame, sp - 1, getErrorObject());
                     }
                     break;
                 }
