@@ -13,6 +13,7 @@ import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -433,6 +434,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             invalidateCallTarget();
         } else {
             literals[index - 1] = obj;
+        }
+    }
+
+    public Object getAndResolveLiteral(final long longIndex) {
+        /* See storeLiteralVariable:withValue: */
+        final Object litVar = UnsafeUtils.getObject(literals, longIndex);
+        if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
+            CompilerDirectives.transferToInterpreter();
+            final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();
+            UnsafeUtils.putObject(literals, longIndex, forwarded);
+            return forwarded;
+        } else {
+            return litVar;
         }
     }
 

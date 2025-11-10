@@ -480,7 +480,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
                     BC.PUSH_TEMP_VAR_8, BC.PUSH_TEMP_VAR_9, BC.PUSH_TEMP_VAR_A, BC.PUSH_TEMP_VAR_B: {
-                    push(frame, sp++, getTemp(frame, b & 0xF));
+                    pushResolved(frame, sp++, getTemp(frame, b & 0xF));
                     break;
                 }
                 case BC.PUSH_RECEIVER: {
@@ -549,7 +549,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_CLASS, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
+                    pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
                     pc = checkPCAfterSend(frame, pc);
                     break;
                 }
@@ -560,7 +560,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
+                    pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
                     pc = checkPCAfterSend(frame, pc);
                     break;
                 }
@@ -568,7 +568,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0Node.class).execute(frame, receiver));
+                    pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0Node.class).execute(frame, receiver));
                     pc = checkPCAfterSend(frame, pc);
                     break;
                 }
@@ -577,7 +577,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1Node.class).execute(frame, receiver, arg));
+                    pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1Node.class).execute(frame, receiver, arg));
                     pc = checkPCAfterSend(frame, pc);
                     break;
                 }
@@ -588,7 +588,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final Object arg1 = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode2Node.class).execute(frame, receiver, arg1, arg2));
+                    pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecode2Node.class).execute(frame, receiver, arg1, arg2));
                     pc = checkPCAfterSend(frame, pc);
                     break;
                 }
@@ -666,7 +666,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                    push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE));
+                    push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE));
                     extA = 0;
                     break;
                 }
@@ -710,7 +710,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     sp -= numArgs;
                     final Object receiver = pop(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecodeNaryNode.class).execute(frame, receiver, arguments));
+                    pushResolved(frame, sp++, uncheckedCast(data[currentPC], SendBytecodeNaryNode.class).execute(frame, receiver, arguments));
                     pc = checkPCAfterSend(frame, pc);
                     extA = extB = 0;
                     break;
@@ -738,7 +738,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     } else {
                         result = uncheckedCast(data[currentPC], SendBytecodeSuperNode.class).execute(frame, receiver, arguments);
                     }
-                    push(frame, sp++, result);
+                    pushResolved(frame, sp++, result);
                     pc = checkPCAfterSend(frame, pc);
                     extA = extB = 0;
                     break;
@@ -799,7 +799,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                    uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
+                    uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
                     extA = 0;
                     break;
                 }
@@ -813,7 +813,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_STORE_LITERAL_VARIABLE: {
-                    uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, top(frame, sp));
+                    uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, top(frame, sp));
                     extA = 0;
                     break;
                 }
@@ -833,6 +833,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.EXT_PUSH_FULL_CLOSURE: {
                     final int literalIndex = getByteExtended(bc, pc++, extA);
                     final CompiledCodeObject block = uncheckedCast(code.getLiteral(literalIndex), CompiledCodeObject.class);
+                    assert block.assertNotForwarded();
                     CompilerAsserts.partialEvaluationConstant(block);
                     final int blockInitialPC = block.getInitialPC();
                     final int blockNumArgs = block.getNumArgs();
@@ -1078,6 +1079,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         setStackValue(frame, sp, value);
     }
 
+    private void pushResolved(final VirtualFrame frame, final int sp, final Object value) {
+        // TODO: profile and only resolve on first Object kind?
+        setStackValue(frame, sp, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value));
+    }
+
     private Object pop(final VirtualFrame frame, final int sp) {
         final Object result = getStackValue(frame, sp);
         setStackValue(frame, sp, NilObject.SINGLETON);
@@ -1126,10 +1132,9 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     private static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
-        final Object resolvedValue = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
         final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
         if (slotIndex < numberOfSlots) {
-            frame.setObject(slotIndex, resolvedValue);
+            frame.setObject(slotIndex, value);
         } else {
             CompilerDirectives.transferToInterpreter();
             final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
@@ -1184,7 +1189,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return commonReturn(frame, currentPC, returnValue);
     }
 
-    private Object commonReturn(VirtualFrame frame, int currentPC, Object returnValue) {
+    private Object commonReturn(final VirtualFrame frame, final int currentPC, final Object returnValue) {
         if (uncheckedCast(data[currentPC], ConditionProfile.class).profile(FrameAccess.hasModifiedSender(frame))) {
             throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame));
         } else {
