@@ -42,14 +42,14 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
         }
     }
 
-    public static final CheckForInterruptsQuickNode createForLoop(final Object[] data, final int pc, final int numBytecodes, final int offset) {
+    public static final CheckForInterruptsQuickNode createForLoop(final Object[] data, final int currentPC, final int numBytecodes, final int offset) {
         CompilerAsserts.neverPartOfCompilation();
         if (SqueakImageContext.getSlow().interruptHandlerDisabled()) {
             return NoCheckForInterruptsNode.SINGLETON;
         }
-        final int loopStart = pc + numBytecodes + offset;
+        final int loopStart = currentPC + numBytecodes + offset;
         assert offset < 0 : "back jumps only";
-        for (int i = loopStart; i < pc; i++) {
+        for (int i = loopStart; i < currentPC; i++) {
             /*
              * FIXME?: Search for call nodes but reject the ones from closure primitives as they do
              * not check for interrupts.

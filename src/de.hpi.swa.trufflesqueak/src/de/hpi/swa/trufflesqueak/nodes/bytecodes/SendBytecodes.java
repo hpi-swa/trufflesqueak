@@ -320,20 +320,20 @@ public final class SendBytecodes {
             }
 
             public interface SendBytecode0 {
-                Object executeOrRewrite(VirtualFrame frame, Object[] data, int pc, Object receiver);
+                Object executeOrRewrite(VirtualFrame frame, Object[] data, int currentPC, Object receiver);
             }
 
             abstract static class DispatchBytecodePrim0Node extends DispatchBytecodePrimNode implements SendBytecode0 {
                 @Override
-                public final Object executeOrRewrite(final VirtualFrame frame, final Object[] data, final int pc, final Object receiver) {
+                public final Object executeOrRewrite(final VirtualFrame frame, final Object[] data, final int currentPC, final Object receiver) {
                     try {
                         return execute(frame, receiver);
                     } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         final NativeObject specialSelector = SqueakImageContext.getSlow().getSpecialSelector(getSelectorIndex());
                         final SendBytecode0Node sendNode = new SendBytecode0Node(specialSelector);
-                        data[pc] = insert(sendNode);
-                        return sendNode.executeOrRewrite(frame, data, pc, receiver);
+                        data[currentPC] = insert(sendNode);
+                        return sendNode.executeOrRewrite(frame, data, currentPC, receiver);
                     }
                 }
 
@@ -505,12 +505,12 @@ public final class SendBytecodes {
             }
 
             public interface SendBytecode1 {
-                Object executeOrRewrite(VirtualFrame frame, Object[] data, int pc, Object receiver, Object arg);
+                Object executeOrRewrite(VirtualFrame frame, Object[] data, int currentPC, Object receiver, Object arg);
             }
 
             abstract static class DispatchBytecodePrim1Node extends DispatchBytecodePrimNode implements SendBytecode1 {
                 @Override
-                public final Object executeOrRewrite(final VirtualFrame frame, final Object[] data, final int pc, final Object receiver, final Object arg) {
+                public final Object executeOrRewrite(final VirtualFrame frame, final Object[] data, final int currentPC, final Object receiver, final Object arg) {
                     try {
                         return execute(frame, receiver, arg);
                     } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
@@ -518,8 +518,8 @@ public final class SendBytecodes {
                         final SqueakImageContext image = SqueakImageContext.getSlow();
                         final NativeObject specialSelector = image.getSpecialSelector(getSelectorIndex());
                         final SendBytecode1Node sendNode = new SendBytecode1Node(specialSelector);
-                        data[pc] = insert(sendNode);
-                        return sendNode.executeOrRewrite(frame, data, pc, receiver, arg);
+                        data[currentPC] = insert(sendNode);
+                        return sendNode.executeOrRewrite(frame, data, currentPC, receiver, arg);
                     }
                 }
 
