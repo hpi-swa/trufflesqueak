@@ -825,7 +825,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.CALL_PRIMITIVE: {
                     pc += 2;
                     if (getByte(bc, pc) == BC.LONG_STORE_TEMPORARY_VARIABLE) {
-                        push(frame, sp++, getErrorObject());
+                        assert sp == 1;
+                        setStackValue(frame, sp, getErrorObject());
                     }
                     break;
                 }
