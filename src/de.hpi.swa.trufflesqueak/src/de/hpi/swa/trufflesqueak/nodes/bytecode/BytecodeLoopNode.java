@@ -131,29 +131,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.PUSH_LIT_CONST_00, BC.PUSH_LIT_CONST_01, BC.PUSH_LIT_CONST_02, BC.PUSH_LIT_CONST_03, BC.PUSH_LIT_CONST_04, BC.PUSH_LIT_CONST_05, BC.PUSH_LIT_CONST_06, BC.PUSH_LIT_CONST_07, //
                     BC.PUSH_LIT_CONST_08, BC.PUSH_LIT_CONST_09, BC.PUSH_LIT_CONST_0A, BC.PUSH_LIT_CONST_0B, BC.PUSH_LIT_CONST_0C, BC.PUSH_LIT_CONST_0D, BC.PUSH_LIT_CONST_0E, BC.PUSH_LIT_CONST_0F, //
                     BC.PUSH_LIT_CONST_10, BC.PUSH_LIT_CONST_11, BC.PUSH_LIT_CONST_12, BC.PUSH_LIT_CONST_13, BC.PUSH_LIT_CONST_14, BC.PUSH_LIT_CONST_15, BC.PUSH_LIT_CONST_16, BC.PUSH_LIT_CONST_17, //
-                    BC.PUSH_LIT_CONST_18, BC.PUSH_LIT_CONST_19, BC.PUSH_LIT_CONST_1A, BC.PUSH_LIT_CONST_1B, BC.PUSH_LIT_CONST_1C, BC.PUSH_LIT_CONST_1D, BC.PUSH_LIT_CONST_1E, BC.PUSH_LIT_CONST_1F: {
-                    break;
-                }
-                case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
-                    BC.PUSH_TEMP_VAR_8, BC.PUSH_TEMP_VAR_9, BC.PUSH_TEMP_VAR_A, BC.PUSH_TEMP_VAR_B: {
-                    break;
-                }
-                case BC.PUSH_RECEIVER: {
-                    break;
-                }
-                case BC.PUSH_CONSTANT_TRUE: {
-                    break;
-                }
-                case BC.PUSH_CONSTANT_FALSE: {
-                    break;
-                }
-                case BC.PUSH_CONSTANT_NIL: {
-                    break;
-                }
-                case BC.PUSH_CONSTANT_ZERO: {
-                    break;
-                }
-                case BC.PUSH_CONSTANT_ONE: {
+                    BC.PUSH_LIT_CONST_18, BC.PUSH_LIT_CONST_19, BC.PUSH_LIT_CONST_1A, BC.PUSH_LIT_CONST_1B, BC.PUSH_LIT_CONST_1C, BC.PUSH_LIT_CONST_1D, BC.PUSH_LIT_CONST_1E, BC.PUSH_LIT_CONST_1F, //
+                    BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
+                    BC.PUSH_TEMP_VAR_8, BC.PUSH_TEMP_VAR_9, BC.PUSH_TEMP_VAR_A, BC.PUSH_TEMP_VAR_B, //
+                    BC.PUSH_RECEIVER, BC.PUSH_CONSTANT_TRUE, BC.PUSH_CONSTANT_FALSE, BC.PUSH_CONSTANT_NIL, BC.PUSH_CONSTANT_ZERO, BC.PUSH_CONSTANT_ONE, //
+                    BC.DUPLICATE_TOP, //
+                    BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7, //
+                    BC.POP_STACK: {
                     break;
                 }
                 case BC.EXT_PUSH_PSEUDO_VARIABLE: {
@@ -164,34 +148,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         throw CompilerDirectives.shouldNotReachHere();
                     }
                 }
-                case BC.DUPLICATE_TOP: {
-                    break;
-                }
-                case BC.RETURN_RECEIVER: {
-                    data[currentPC] = ConditionProfile.create();
-                    break;
-                }
-                case BC.RETURN_TRUE: {
-                    data[currentPC] = ConditionProfile.create();
-                    break;
-                }
-                case BC.RETURN_FALSE: {
-                    data[currentPC] = ConditionProfile.create();
-                    break;
-                }
-                case BC.RETURN_NIL: {
-                    data[currentPC] = ConditionProfile.create();
-                    break;
-                }
-                case BC.RETURN_TOP_FROM_METHOD: {
-                    data[currentPC] = ConditionProfile.create();
-                    break;
-                }
-                case BC.RETURN_NIL_FROM_BLOCK: {
-                    data[currentPC] = ConditionProfile.create();
-                    break;
-                }
-                case BC.RETURN_TOP_FROM_BLOCK: {
+                case BC.RETURN_RECEIVER, BC.RETURN_TRUE, BC.RETURN_FALSE, BC.RETURN_NIL, BC.RETURN_TOP_FROM_METHOD, BC.RETURN_NIL_FROM_BLOCK, BC.RETURN_TOP_FROM_BLOCK: {
                     data[currentPC] = ConditionProfile.create();
                     break;
                 }
@@ -351,22 +308,13 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     }
                     break;
                 }
-                case BC.SHORT_CJUMP_TRUE_0, BC.SHORT_CJUMP_TRUE_1, BC.SHORT_CJUMP_TRUE_2, BC.SHORT_CJUMP_TRUE_3, BC.SHORT_CJUMP_TRUE_4, BC.SHORT_CJUMP_TRUE_5, BC.SHORT_CJUMP_TRUE_6, BC.SHORT_CJUMP_TRUE_7: {
-                    data[currentPC] = CountingConditionProfile.create();
-                    break;
-                }
-                case BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
+                case BC.SHORT_CJUMP_TRUE_0, BC.SHORT_CJUMP_TRUE_1, BC.SHORT_CJUMP_TRUE_2, BC.SHORT_CJUMP_TRUE_3, BC.SHORT_CJUMP_TRUE_4, BC.SHORT_CJUMP_TRUE_5, BC.SHORT_CJUMP_TRUE_6, BC.SHORT_CJUMP_TRUE_7, //
+                    BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
                     data[currentPC] = CountingConditionProfile.create();
                     break;
                 }
                 case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
                     data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
-                    break;
-                }
-                case BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7: {
-                    break;
-                }
-                case BC.POP_STACK: {
                     break;
                 }
                 /* 2 byte bytecodes */
@@ -380,39 +328,24 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     assert extB != 0 : "should use numExtB?";
                     break;
                 }
-                case BC.EXT_PUSH_RECEIVER_VARIABLE: {
+                case BC.EXT_PUSH_RECEIVER_VARIABLE, BC.EXT_PUSH_LITERAL_VARIABLE: {
                     data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
                     pc++;
                     extA = 0;
                     break;
                 }
-                case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                    data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_CHARACTER: {
                     pc++;
                     extA = 0;
                     break;
                 }
-                case BC.EXT_PUSH_LITERAL: {
-                    pc++;
-                    extA = 0;
-                    break;
-                }
-                case BC.LONG_PUSH_TEMPORARY_VARIABLE: {
-                    pc++;
-                    break;
-                }
-                case BC.PUSH_NEW_ARRAY: {
+                case BC.LONG_PUSH_TEMPORARY_VARIABLE, BC.PUSH_NEW_ARRAY, BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE, BC.LONG_STORE_TEMPORARY_VARIABLE: {
                     pc++;
                     break;
                 }
                 case BC.EXT_PUSH_INTEGER: {
                     pc++;
                     extB = 0;
-                    break;
-                }
-                case BC.EXT_PUSH_CHARACTER: {
-                    pc++;
-                    extA = 0;
                     break;
                 }
                 case BC.EXT_SEND: {
@@ -445,48 +378,16 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     extA = extB = 0;
                     break;
                 }
-                case BC.EXT_JUMP_IF_TRUE: {
+                case BC.EXT_JUMP_IF_TRUE, BC.EXT_JUMP_IF_FALSE: {
                     data[currentPC] = CountingConditionProfile.create();
                     pc++;
                     extA = extB = 0;
                     break;
                 }
-                case BC.EXT_JUMP_IF_FALSE: {
-                    data[currentPC] = CountingConditionProfile.create();
-                    pc++;
-                    extA = extB = 0;
-                    break;
-                }
-                case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE: {
+                case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, BC.EXT_STORE_AND_POP_LITERAL_VARIABLE, BC.EXT_STORE_RECEIVER_VARIABLE, BC.EXT_STORE_LITERAL_VARIABLE: {
                     data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
                     pc++;
                     extA = 0;
-                    break;
-                }
-                case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
-                    pc++;
-                    extA = 0;
-                    break;
-                }
-                case BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE: {
-                    pc++;
-                    break;
-                }
-                case BC.EXT_STORE_RECEIVER_VARIABLE: {
-                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
-                    pc++;
-                    extA = 0;
-                    break;
-                }
-                case BC.EXT_STORE_LITERAL_VARIABLE: {
-                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
-                    pc++;
-                    extA = 0;
-                    break;
-                }
-                case BC.LONG_STORE_TEMPORARY_VARIABLE: {
-                    pc++;
                     break;
                 }
                 /* 3 byte bytecodes */
@@ -518,12 +419,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     pc += 2;
                     break;
                 }
-                case BC.STORE_REMOTE_TEMP_LONG: {
-                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
-                    pc += 2;
-                    break;
-                }
-                case BC.STORE_AND_POP_REMOTE_TEMP_LONG: {
+                case BC.STORE_REMOTE_TEMP_LONG, BC.STORE_AND_POP_REMOTE_TEMP_LONG: {
                     data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
                     pc += 2;
                     break;
@@ -649,111 +545,22 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     extA = extB = 0;
                     break;
                 }
+                /* bytecode prims with 0 args */
+                case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_CLASS, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
+                    final Object receiver = popReceiver(frame, --sp);
+                    externalizePCAndSP(frame, pc, sp);
+                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
+                    pc = checkPCAfterSend(frame, pc);
+                    break;
+                }
+                /* bytecode prims with 1 arg */
                 case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, //
-                    BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR: {
+                    BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, //
+                    BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG: {
                     final Object arg = pop(frame, --sp);
                     final Object receiver = popReceiver(frame, --sp);
                     externalizePCAndSP(frame, pc, sp);
                     push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_AT: {
-                    final Object arg = pop(frame, --sp);
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_AT_PUT: {
-                    final Object arg2 = pop(frame, --sp);
-                    final Object arg1 = pop(frame, --sp);
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode2Node.class).execute(frame, receiver, arg1, arg2));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT: {
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_NEXT_PUT: {
-                    final Object arg = pop(frame, --sp);
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_AT_END: {
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_IDENTICAL: {
-                    final Object arg = pop(frame, --sp);
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_CLASS: {
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
-                    final Object arg = pop(frame, --sp);
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_VALUE: {
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO: {
-                    final Object arg = pop(frame, --sp);
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_NEW: {
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_NEW_WITH_ARG: {
-                    final Object arg = pop(frame, --sp);
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
-                    pc = checkPCAfterSend(frame, pc);
-                    break;
-                }
-                case BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
-                    final Object receiver = popReceiver(frame, --sp);
-                    externalizePCAndSP(frame, pc, sp);
-                    push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
                     pc = checkPCAfterSend(frame, pc);
                     break;
                 }
@@ -774,7 +581,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     pc = checkPCAfterSend(frame, pc);
                     break;
                 }
-                case BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
+                case BC.BYTECODE_PRIM_AT_PUT, //
+                    BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
                     final Object arg2 = pop(frame, --sp);
                     final Object arg1 = pop(frame, --sp);
@@ -1017,22 +825,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.CALL_PRIMITIVE: {
                     pc += 2;
                     if (getByte(bc, pc) == BC.LONG_STORE_TEMPORARY_VARIABLE) {
-                        final SqueakImageContext image = getContext();
-                        final int primFailCode = image.getPrimFailCode();
-                        final ArrayObject errorTable = image.primitiveErrorTable;
-                        final Object errorObject;
-                        if (primFailCode < errorTable.getObjectLength()) {
-                            errorObject = errorTable.getObject(primFailCode);
-                        } else {
-                            errorObject = (long) primFailCode;
-                        }
-                        push(frame, sp++, errorObject);
+                        push(frame, sp++, getErrorObject());
                     }
                     break;
                 }
                 case BC.EXT_PUSH_FULL_CLOSURE: {
                     final int literalIndex = getByteExtended(bc, pc++, extA);
                     final CompiledCodeObject block = uncheckedCast(code.getLiteral(literalIndex), CompiledCodeObject.class);
+                    CompilerAsserts.partialEvaluationConstant(block);
                     final int blockInitialPC = block.getInitialPC();
                     final int blockNumArgs = block.getNumArgs();
                     final byte byteB = getByte(bc, pc++);
@@ -1105,8 +905,30 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     public abstract static class AbstractSendBytecodeNode extends AbstractNode {
-        protected final ConditionProfile nlrProfile = ConditionProfile.create();
-        protected final ConditionProfile nvrProfile = ConditionProfile.create();
+        private final ConditionProfile nlrProfile = ConditionProfile.create();
+        private final ConditionProfile nvrProfile = ConditionProfile.create();
+
+        protected final Object handleNonLocalReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
+            if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
+                return nlr.getReturnValue();
+            } else {
+                FrameAccess.terminateFrame(frame);
+                throw nlr;
+            }
+        }
+
+        protected final Object handleNonVirtualReturn(final VirtualFrame frame, final NonVirtualReturn nvr) {
+            if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
+                return nvr.getReturnValue();
+            } else {
+                throw nvr;
+            }
+        }
+
+        protected final StackOverflowError handleStackOverflow(final VirtualFrame frame, final StackOverflowError error) {
+            CompilerDirectives.transferToInterpreter();
+            throw getContext().tryToSignalLowSpace(frame, error);
+        }
     }
 
     public static final class SendBytecode0Node extends AbstractSendBytecodeNode implements SendBytecode0 {
@@ -1125,21 +947,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             try {
                 return dispatchNode.execute(frame, receiver);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
+                return handleNonLocalReturn(frame, nlr);
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
+                return handleNonVirtualReturn(frame, nvr);
             } catch (final StackOverflowError e) {
-                CompilerDirectives.transferToInterpreter();
-                throw getContext().tryToSignalLowSpace(frame, e);
+                throw handleStackOverflow(frame, e);
             }
         }
     }
@@ -1160,21 +972,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             try {
                 return dispatchNode.execute(frame, receiver, arg);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
+                return handleNonLocalReturn(frame, nlr);
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
+                return handleNonVirtualReturn(frame, nvr);
             } catch (final StackOverflowError e) {
-                CompilerDirectives.transferToInterpreter();
-                throw getContext().tryToSignalLowSpace(frame, e);
+                throw handleStackOverflow(frame, e);
             }
         }
     }
@@ -1190,21 +992,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             try {
                 return dispatchNode.execute(frame, receiver, arg1, arg2);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
+                return handleNonLocalReturn(frame, nlr);
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
+                return handleNonVirtualReturn(frame, nvr);
             } catch (final StackOverflowError e) {
-                CompilerDirectives.transferToInterpreter();
-                throw getContext().tryToSignalLowSpace(frame, e);
+                throw handleStackOverflow(frame, e);
             }
         }
     }
@@ -1220,21 +1012,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             try {
                 return dispatchNode.execute(frame, receiver, arguments);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
+                return handleNonLocalReturn(frame, nlr);
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
+                return handleNonVirtualReturn(frame, nvr);
             } catch (final StackOverflowError e) {
-                CompilerDirectives.transferToInterpreter();
-                throw getContext().tryToSignalLowSpace(frame, e);
+                throw handleStackOverflow(frame, e);
             }
         }
     }
@@ -1250,21 +1032,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             try {
                 return dispatchNode.execute(frame, lookupClass, receiver, arguments);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
+                return handleNonLocalReturn(frame, nlr);
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
+                return handleNonVirtualReturn(frame, nvr);
             } catch (final StackOverflowError e) {
-                CompilerDirectives.transferToInterpreter();
-                throw getContext().tryToSignalLowSpace(frame, e);
+                throw handleStackOverflow(frame, e);
             }
         }
     }
@@ -1280,21 +1052,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             try {
                 return dispatchNode.execute(frame, receiver, arguments);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
-                    return nlr.getReturnValue();
-                } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
+                return handleNonLocalReturn(frame, nlr);
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
-                    return nvr.getReturnValue();
-                } else {
-                    throw nvr;
-                }
+                return handleNonVirtualReturn(frame, nvr);
             } catch (final StackOverflowError e) {
-                CompilerDirectives.transferToInterpreter();
-                throw getContext().tryToSignalLowSpace(frame, e);
+                throw handleStackOverflow(frame, e);
             }
         }
     }
@@ -1430,6 +1192,17 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             assert !FrameAccess.hasModifiedSender(frame);
             FrameAccess.terminateFrame(frame);
             return returnValue;
+        }
+    }
+
+    private Object getErrorObject() {
+        final SqueakImageContext image = getContext();
+        final int primFailCode = image.getPrimFailCode();
+        final ArrayObject errorTable = image.primitiveErrorTable;
+        if (primFailCode < errorTable.getObjectLength()) {
+            return errorTable.getObject(primFailCode);
+        } else {
+            return (long) primFailCode;
         }
     }
 
