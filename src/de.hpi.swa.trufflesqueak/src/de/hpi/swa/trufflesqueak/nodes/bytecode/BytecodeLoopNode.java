@@ -1172,13 +1172,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             LogUtils.SCHEDULING.info("ReturnFromClosureNode: sendCannotReturn");
             throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
         } else {
-            if (uncheckedCast(data[currentPC], ConditionProfile.class).profile(FrameAccess.hasModifiedSender(frame))) {
-                throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame));
-            } else {
-                assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
-                FrameAccess.terminateFrame(frame);
-                return returnValue;
-            }
+            return commonReturn(frame, currentPC, returnValue);
         }
     }
 
@@ -1186,10 +1180,14 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         if (loopCounter.value > 0) {
             LoopNode.reportLoopCount(this, loopCounter.value);
         }
+        return commonReturn(frame, currentPC, returnValue);
+    }
+
+    private Object commonReturn(VirtualFrame frame, int currentPC, Object returnValue) {
         if (uncheckedCast(data[currentPC], ConditionProfile.class).profile(FrameAccess.hasModifiedSender(frame))) {
             throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame));
         } else {
-            assert !FrameAccess.hasModifiedSender(frame);
+            assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
             FrameAccess.terminateFrame(frame);
             return returnValue;
         }
