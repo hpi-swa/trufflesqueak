@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -62,18 +63,18 @@ public final class ReturnBytecodes {
         }
     }
 
-    public abstract static class AbstractReturnKindNode extends AbstractNode {
-        public abstract Object execute(VirtualFrame frame, Object returnValue);
+    private abstract static class AbstractReturnKindNode extends AbstractNode {
+        protected abstract Object execute(VirtualFrame frame, Object returnValue);
     }
 
-    public static final class ReturnFromMethodNode extends AbstractReturnKindNode {
+    private static final class ReturnFromMethodNode extends AbstractReturnKindNode {
 
         /* Return to sender (never needs to unwind) */
 
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.create();
 
         @Override
-        public Object execute(final VirtualFrame frame, final Object returnValue) {
+        protected Object execute(final VirtualFrame frame, final Object returnValue) {
             assert !FrameAccess.hasClosure(frame);
             if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
                 throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame));
@@ -90,7 +91,7 @@ public final class ReturnBytecodes {
         /* Return to closure's home context's sender, executing unwind blocks */
 
         @Override
-        public Object execute(final VirtualFrame frame, final Object returnValue) {
+        protected Object execute(final VirtualFrame frame, final Object returnValue) {
             assert FrameAccess.hasClosure(frame);
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();

@@ -24,6 +24,7 @@ import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
+import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -47,9 +48,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnKindNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnFromClosureNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnFromMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSpecialNode.SendSpecial0Node.SendBytecode0;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSpecialNode.SendSpecial1Node.SendBytecode1;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimClassNodeGen;
@@ -90,11 +89,10 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.D
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsQuickNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class BytecodeLoopNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
-    private static final int LOCAL_RETURN_PC = -2;
-
     private final CompiledCodeObject code;
     private final boolean isBlock;
 
@@ -152,12 +150,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         throw CompilerDirectives.shouldNotReachHere();
                     }
                 }
-                case BC.RETURN_RECEIVER, BC.RETURN_TRUE, BC.RETURN_FALSE, BC.RETURN_NIL, BC.RETURN_TOP_FROM_METHOD: {
-                    data[currentPC] = insert(isBlock ? new ReturnFromClosureNode() : new ReturnFromMethodNode());
-                    break;
-                }
-                case BC.RETURN_NIL_FROM_BLOCK, BC.RETURN_TOP_FROM_BLOCK: {
-                    data[currentPC] = insert(new BlockReturnNode());
+                case BC.RETURN_RECEIVER, BC.RETURN_TRUE, BC.RETURN_FALSE, BC.RETURN_NIL, BC.RETURN_TOP_FROM_METHOD, BC.RETURN_NIL_FROM_BLOCK, BC.RETURN_TOP_FROM_BLOCK: {
+                    data[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.EXT_NOP:
@@ -458,8 +452,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
 
         final LoopCounter loopCounter = new LoopCounter();
 
-        Object returnValue = null;
-        while (pc >= 0) {
+        while (true) {
             CompilerAsserts.partialEvaluationConstant(pc);
             CompilerAsserts.partialEvaluationConstant(sp);
             CompilerAsserts.partialEvaluationConstant(extA);
@@ -530,39 +523,25 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.RETURN_RECEIVER: {
-                    returnValue = uncheckedCast(data[currentPC], AbstractReturnKindNode.class).execute(frame, FrameAccess.getReceiver(frame));
-                    pc = LOCAL_RETURN_PC;
-                    break;
+                    return normalReturn(frame, currentPC, pc, sp, loopCounter, FrameAccess.getReceiver(frame));
                 }
                 case BC.RETURN_TRUE: {
-                    returnValue = uncheckedCast(data[currentPC], AbstractReturnKindNode.class).execute(frame, BooleanObject.TRUE);
-                    pc = LOCAL_RETURN_PC;
-                    break;
+                    return normalReturn(frame, currentPC, pc, sp, loopCounter, BooleanObject.TRUE);
                 }
                 case BC.RETURN_FALSE: {
-                    returnValue = uncheckedCast(data[currentPC], AbstractReturnKindNode.class).execute(frame, BooleanObject.FALSE);
-                    pc = LOCAL_RETURN_PC;
-                    break;
+                    return normalReturn(frame, currentPC, pc, sp, loopCounter, BooleanObject.FALSE);
                 }
                 case BC.RETURN_NIL: {
-                    returnValue = uncheckedCast(data[currentPC], AbstractReturnKindNode.class).execute(frame, NilObject.SINGLETON);
-                    pc = LOCAL_RETURN_PC;
-                    break;
+                    return normalReturn(frame, currentPC, pc, sp, loopCounter, NilObject.SINGLETON);
                 }
                 case BC.RETURN_TOP_FROM_METHOD: {
-                    returnValue = uncheckedCast(data[currentPC], AbstractReturnKindNode.class).execute(frame, top(frame, sp));
-                    pc = LOCAL_RETURN_PC;
-                    break;
+                    return normalReturn(frame, currentPC, pc, sp, loopCounter, top(frame, sp));
                 }
                 case BC.RETURN_NIL_FROM_BLOCK: {
-                    returnValue = uncheckedCast(data[currentPC], BlockReturnNode.class).execute(frame, NilObject.SINGLETON);
-                    pc = LOCAL_RETURN_PC;
-                    break;
+                    return blockReturn(frame, currentPC, loopCounter, NilObject.SINGLETON);
                 }
                 case BC.RETURN_TOP_FROM_BLOCK: {
-                    returnValue = uncheckedCast(data[currentPC], BlockReturnNode.class).execute(frame, top(frame, sp));
-                    pc = LOCAL_RETURN_PC;
-                    break;
+                    return blockReturn(frame, currentPC, loopCounter, top(frame, sp));
                 }
                 case BC.EXT_NOP: {
                     extA = extB = 0;
@@ -623,12 +602,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, loopCount >= LoopCounter.CHECK_LOOP_STRIDE)) {
                             LoopNode.reportLoopCount(this, loopCount);
                             if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
-                                returnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc, null, null, frame);
+                                final Object returnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc, null, null, frame);
                                 if (returnValue != null) {
                                     assert !FrameAccess.hasModifiedSender(frame);
                                     FrameAccess.terminateFrame(frame);
-                                    pc = LOCAL_RETURN_PC;
-                                    break;
+                                    return returnValue;
                                 }
                             } else {
                                 FrameAccess.setInstructionPointer(frame, pc);
@@ -775,12 +753,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, loopCount >= LoopCounter.CHECK_LOOP_STRIDE)) {
                             LoopNode.reportLoopCount(this, loopCount);
                             if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
-                                returnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc, null, null, frame);
+                                final Object returnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc, null, null, frame);
                                 if (returnValue != null) {
                                     assert !FrameAccess.hasModifiedSender(frame);
                                     FrameAccess.terminateFrame(frame);
-                                    pc = LOCAL_RETURN_PC;
-                                    break;
+                                    return returnValue;
                                 }
                             } else {
                                 FrameAccess.setInstructionPointer(frame, pc);
@@ -907,23 +884,6 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 default: {
                     throw CompilerDirectives.shouldNotReachHere("Unknown bytecode");
                 }
-            }
-        }
-        if (loopCounter.value > 0) {
-            LoopNode.reportLoopCount(this, loopCounter.value);
-        }
-        return returnValue;
-    }
-
-    static final class BlockReturnNode extends AbstractNode {
-        /* Return to caller (never needs to unwind) */
-        private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.create();
-
-        public Object execute(final VirtualFrame frame, final Object returnValue) {
-            if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
-                throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame));
-            } else {
-                return returnValue;
             }
         }
     }
@@ -1207,6 +1167,48 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             return framePC;
         } else {
             return pc;
+        }
+    }
+
+    private Object normalReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final LoopCounter loopCounter, final Object returnValue) {
+        if (loopCounter.value > 0) {
+            LoopNode.reportLoopCount(this, loopCounter.value);
+        }
+        if (isBlock) {
+            externalizePCAndSP(frame, pc, sp);
+            // Target is sender of closure's home context.
+            final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+            if (homeContext.canBeReturnedTo()) {
+                final ContextObject firstMarkedContext = ReturnFromClosureNode.firstUnwindMarkedOrThrowNLR(FrameAccess.getSender(frame), homeContext, returnValue);
+                if (firstMarkedContext != null) {
+                    // FIXME:
+                    CompilerDirectives.transferToInterpreter();
+                    Dispatch2NodeGen.create(getContext().aboutToReturnSelector).execute(frame, GetOrCreateContextWithFrameNode.executeUncached(frame), returnValue, firstMarkedContext);
+                }
+            }
+            // FIXME:
+            CompilerDirectives.transferToInterpreter();
+            LogUtils.SCHEDULING.info("ReturnFromClosureNode: sendCannotReturn");
+            throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
+        } else {
+            return commonReturn(frame, currentPC, returnValue);
+        }
+    }
+
+    private Object blockReturn(final VirtualFrame frame, final int currentPC, final LoopCounter loopCounter, final Object returnValue) {
+        if (loopCounter.value > 0) {
+            LoopNode.reportLoopCount(this, loopCounter.value);
+        }
+        return commonReturn(frame, currentPC, returnValue);
+    }
+
+    private Object commonReturn(final VirtualFrame frame, final int currentPC, final Object returnValue) {
+        if (uncheckedCast(data[currentPC], ConditionProfile.class).profile(FrameAccess.hasModifiedSender(frame))) {
+            throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame));
+        } else {
+            assert returnValue != null && !FrameAccess.hasModifiedSender(frame);
+            FrameAccess.terminateFrame(frame);
+            return returnValue;
         }
     }
 
