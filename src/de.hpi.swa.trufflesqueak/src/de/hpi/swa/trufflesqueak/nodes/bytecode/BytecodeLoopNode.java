@@ -1078,19 +1078,21 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     private void push(final VirtualFrame frame, final int sp, final Object value) {
-        final Object valueMaybeResolved;
+        setStackValue(frame, sp, resolve(sp, value));
+    }
+
+    private Object resolve(int sp, Object value) {
         if (resolveStackSlot[sp]) {
-            valueMaybeResolved = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
+            return AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
         } else {
-            if (value instanceof AbstractSqueakObjectWithClassAndHash) {
+            if (value instanceof final AbstractSqueakObjectWithClassAndHash o) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 resolveStackSlot[sp] = true;
-                valueMaybeResolved = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
+                return o.resolveForwardingPointer();
             } else {
-                valueMaybeResolved = value;
+                return value;
             }
         }
-        setStackValue(frame, sp, valueMaybeResolved);
     }
 
     private void pushResolved(final VirtualFrame frame, final int sp, final Object value) {
