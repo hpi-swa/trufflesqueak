@@ -685,7 +685,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                    push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE));
+                    push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE));
                     extA = 0;
                     break;
                 }
@@ -818,7 +818,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                    uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
+                    uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
                     extA = 0;
                     break;
                 }
@@ -832,7 +832,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_STORE_LITERAL_VARIABLE: {
-                    uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, top(frame, sp));
+                    uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, top(frame, sp));
                     extA = 0;
                     break;
                 }
