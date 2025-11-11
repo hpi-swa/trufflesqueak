@@ -490,28 +490,28 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.PUSH_CONSTANT_TRUE: {
-                    push(frame, sp++, BooleanObject.TRUE);
+                    pushResolved(frame, sp++, BooleanObject.TRUE);
                     break;
                 }
                 case BC.PUSH_CONSTANT_FALSE: {
-                    push(frame, sp++, BooleanObject.FALSE);
+                    pushResolved(frame, sp++, BooleanObject.FALSE);
                     break;
                 }
                 case BC.PUSH_CONSTANT_NIL: {
-                    push(frame, sp++, NilObject.SINGLETON);
+                    pushResolved(frame, sp++, NilObject.SINGLETON);
                     break;
                 }
                 case BC.PUSH_CONSTANT_ZERO: {
-                    push(frame, sp++, 0L);
+                    pushResolved(frame, sp++, 0L);
                     break;
                 }
                 case BC.PUSH_CONSTANT_ONE: {
-                    push(frame, sp++, 1L);
+                    pushResolved(frame, sp++, 1L);
                     break;
                 }
                 case BC.EXT_PUSH_PSEUDO_VARIABLE: {
                     if (extB == 0) {
-                        push(frame, sp++, uncheckedCast(data[currentPC], GetOrCreateContextWithFrameNode.class).executeGet(frame));
+                        pushResolved(frame, sp++, uncheckedCast(data[currentPC], GetOrCreateContextWithFrameNode.class).executeGet(frame));
                         break;
                     } else {
                         throw CompilerDirectives.shouldNotReachHere();
@@ -684,24 +684,24 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.PUSH_NEW_ARRAY: {
                     final int param = getByte(bc, pc++);
                     final int arraySize = param & 127;
-                    final SqueakImageContext image = getContext();
-                    final ArrayObject newArray;
+                    final Object[] values;
                     if (param < 0) {
-                        newArray = image.asArrayOfObjects(popN(frame, sp, arraySize));
+                        values = popN(frame, sp, arraySize);
                         sp -= arraySize;
                     } else {
-                        newArray = ArrayObject.createObjectStrategy(image, image.arrayClass, arraySize);
+                        values = ArrayUtils.withAll(arraySize, NilObject.SINGLETON);
                     }
-                    push(frame, sp++, newArray);
+                    final SqueakImageContext image = getContext();
+                    pushResolved(frame, sp++, ArrayObject.createWithStorage(image, image.arrayClass, values));
                     break;
                 }
                 case BC.EXT_PUSH_INTEGER: {
-                    push(frame, sp++, (long) getByteExtended(bc, pc++, extB));
+                    pushResolved(frame, sp++, (long) getByteExtended(bc, pc++, extB));
                     extB = 0;
                     break;
                 }
                 case BC.EXT_PUSH_CHARACTER: {
-                    push(frame, sp++, CharacterObject.valueOf(getByteExtended(bc, pc++, extA)));
+                    pushResolved(frame, sp++, CharacterObject.valueOf(getByteExtended(bc, pc++, extA)));
                     extA = 0;
                     break;
                 }
@@ -848,7 +848,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final ContextObject outerContext = ignoreContext ? null : uncheckedCast(data[currentPC], GetOrCreateContextWithFrameNode.class).executeGet(frame);
                     final Object receiver = receiverOnStack ? pop(frame, --sp) : FrameAccess.getReceiver(frame);
                     final SqueakImageContext image = getContext();
-                    push(frame, sp++, new BlockClosureObject(image, image.getFullBlockClosureClass(), block, blockInitialPC, blockNumArgs, copiedValues, receiver, outerContext));
+                    pushResolved(frame, sp++, new BlockClosureObject(image, image.getFullBlockClosureClass(), block, blockInitialPC, blockNumArgs, copiedValues, receiver, outerContext));
                     extA = 0;
                     break;
                 }
@@ -857,7 +857,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final int numCopied = (byteA >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
                     final Object[] copiedValues = popN(frame, sp, numCopied);
                     sp -= numCopied;
-                    push(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues));
+                    pushResolved(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues));
                     final int blockSize = getByteExtended(bc, pc++, extB);
                     pc += blockSize;
                     extA = extB = 0;
@@ -1091,6 +1091,10 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
             }
         }
         setStackValue(frame, sp, valueMaybeResolved);
+    }
+
+    private void pushResolved(final VirtualFrame frame, final int sp, final Object value) {
+        setStackValue(frame, sp, value);
     }
 
     private Object pop(final VirtualFrame frame, final int sp) {
