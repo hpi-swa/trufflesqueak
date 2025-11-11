@@ -1135,9 +1135,20 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     private Object pop(final VirtualFrame frame, final int sp) {
-        final Object result = getStackValue(frame, sp);
-        setStackValue(frame, sp, NilObject.SINGLETON);
-        return result;
+        final int slotIndex = FrameAccess.toStackSlotIndex(frame, sp);
+        final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
+        if (slotIndex < numberOfSlots) {
+            // FIXME: use frame.getObject()
+            final Object result = frame.getValue(slotIndex);
+            frame.setObject(slotIndex, NilObject.SINGLETON);
+            return result;
+        } else {
+            CompilerDirectives.transferToInterpreter();
+            final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+            final Object result = frame.getAuxiliarySlot(auxSlotIndex);
+            frame.setAuxiliarySlot(auxSlotIndex, NilObject.SINGLETON);
+            return result;
+        }
     }
 
     private Object popReceiver(final VirtualFrame frame, final int sp) {
@@ -1165,18 +1176,30 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         if (sp < numArguments) {
             return frame.getArguments()[FrameAccess.getArgumentStartIndex() + sp];
         } else {
-            // FIXME: use frame.getObject()
-            return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, sp));
+            return getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, sp));
         }
     }
 
     private Object getStackValue(final VirtualFrame frame, final int sp) {
-        return FrameAccess.getStackValue(frame, sp, numArguments);
+        assert sp >= numArguments;
+        return getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, sp));
     }
 
     private void setStackValue(final VirtualFrame frame, final int sp, final Object value) {
         assert sp >= numArguments;
         setSlotValue(frame, FrameAccess.toStackSlotIndex(frame, sp), value);
+    }
+
+    private static Object getSlotValue(final Frame frame, final int slotIndex) {
+        final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
+        if (slotIndex < numberOfSlots) {
+            // FIXME: use frame.getObject()
+            return frame.getValue(slotIndex);
+        } else {
+            CompilerDirectives.transferToInterpreter();
+            final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+            return frame.getAuxiliarySlot(auxSlotIndex);
+        }
     }
 
     private static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
