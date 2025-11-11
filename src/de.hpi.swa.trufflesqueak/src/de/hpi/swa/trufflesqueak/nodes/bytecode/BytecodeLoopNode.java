@@ -93,6 +93,8 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class BytecodeLoopNode extends AbstractExecuteContextNode implements BytecodeOSRNode {
+    private static final int LOCAL_RETURN_PC = -2;
+
     private final CompiledCodeObject code;
     private final boolean isBlock;
 
@@ -453,7 +455,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         final LoopCounter loopCounter = new LoopCounter();
 
         Object returnValue = null;
-        loop: while (true) {
+        while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             CompilerAsserts.partialEvaluationConstant(sp);
             CompilerAsserts.partialEvaluationConstant(extA);
@@ -525,31 +527,38 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.RETURN_RECEIVER: {
                     returnValue = normalReturn(frame, currentPC, pc, sp, loopCounter, FrameAccess.getReceiver(frame));
-                    break loop;
+                    pc = LOCAL_RETURN_PC;
+                    break;
                 }
                 case BC.RETURN_TRUE: {
                     returnValue = normalReturn(frame, currentPC, pc, sp, loopCounter, BooleanObject.TRUE);
-                    break loop;
+                    pc = LOCAL_RETURN_PC;
+                    break;
                 }
                 case BC.RETURN_FALSE: {
                     returnValue = normalReturn(frame, currentPC, pc, sp, loopCounter, BooleanObject.FALSE);
-                    break loop;
+                    pc = LOCAL_RETURN_PC;
+                    break;
                 }
                 case BC.RETURN_NIL: {
                     returnValue = normalReturn(frame, currentPC, pc, sp, loopCounter, NilObject.SINGLETON);
-                    break loop;
+                    pc = LOCAL_RETURN_PC;
+                    break;
                 }
                 case BC.RETURN_TOP_FROM_METHOD: {
                     returnValue = normalReturn(frame, currentPC, pc, sp, loopCounter, top(frame, sp));
-                    break loop;
+                    pc = LOCAL_RETURN_PC;
+                    break;
                 }
                 case BC.RETURN_NIL_FROM_BLOCK: {
                     returnValue = blockReturn(frame, currentPC, loopCounter, NilObject.SINGLETON);
-                    break loop;
+                    pc = LOCAL_RETURN_PC;
+                    break;
                 }
                 case BC.RETURN_TOP_FROM_BLOCK: {
                     returnValue = blockReturn(frame, currentPC, loopCounter, top(frame, sp));
-                    break loop;
+                    pc = LOCAL_RETURN_PC;
+                    break;
                 }
                 case BC.EXT_NOP: {
                     extA = extB = 0;
