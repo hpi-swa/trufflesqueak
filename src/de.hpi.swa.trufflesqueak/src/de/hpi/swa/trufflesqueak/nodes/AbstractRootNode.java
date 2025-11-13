@@ -21,6 +21,15 @@ public abstract class AbstractRootNode extends RootNode {
         executeBytecodeNode = code.getSignFlag() ? new ExecuteBytecodeNode(code) : new BytecodeLoopNode(code);
     }
 
+    protected AbstractRootNode(final AbstractRootNode original) {
+        super(SqueakImageContext.get(original).getLanguage(), original.getFrameDescriptor());
+        if (original.executeBytecodeNode instanceof final BytecodeLoopNode bln) {
+            executeBytecodeNode = new BytecodeLoopNode(bln);
+        } else {
+            executeBytecodeNode = new ExecuteBytecodeNode(getCode());
+        }
+    }
+
     public final CompiledCodeObject getCode() {
         return executeBytecodeNode.getCodeObject();
     }
@@ -32,6 +41,11 @@ public abstract class AbstractRootNode extends RootNode {
 
     @Override
     public final boolean isCloningAllowed() {
+        return true;
+    }
+
+    @Override
+    protected final boolean isCloneUninitializedSupported() {
         return true;
     }
 }

@@ -15,6 +15,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
@@ -46,6 +47,17 @@ public final class StartContextRootNode extends AbstractRootNode {
     public StartContextRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image, code);
         interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
+    }
+
+    public StartContextRootNode(final StartContextRootNode original) {
+        super(original);
+        initialPC = original.initialPC;
+        initialSP = original.initialSP;
+        numTempSlots = original.numTempSlots;
+        tempStackSlotStartIndex = original.tempStackSlotStartIndex;
+        doesNotNeedThisContext = original.doesNotNeedThisContext;
+        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(getCode());
+        getOrCreateContextNode = null;
     }
 
     @Override
@@ -117,6 +129,11 @@ public final class StartContextRootNode extends AbstractRootNode {
             getOrCreateContextNode = insert(GetOrCreateContextWithFrameNode.create());
         }
         return getOrCreateContextNode;
+    }
+
+    @Override
+    protected RootNode cloneUninitialized() {
+        return new StartContextRootNode(this);
     }
 
     @Override

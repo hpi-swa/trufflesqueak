@@ -10,6 +10,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -23,7 +24,13 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     public ResumeContextRootNode(final SqueakImageContext image, final ContextObject context) {
         super(image, context.getCodeObject());
         activeContext = context;
-        assert !context.isDead() : "Terminated contexts cannot be resumed";
+        assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
+    }
+
+    public ResumeContextRootNode(final ResumeContextRootNode original) {
+        super(original);
+        activeContext = original.activeContext;
+        assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
     }
 
     @Override
@@ -56,6 +63,11 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     @Override
     protected boolean isInstrumentable() {
         return false;
+    }
+
+    @Override
+    protected RootNode cloneUninitialized() {
+        return new ResumeContextRootNode(this);
     }
 
     @Override
