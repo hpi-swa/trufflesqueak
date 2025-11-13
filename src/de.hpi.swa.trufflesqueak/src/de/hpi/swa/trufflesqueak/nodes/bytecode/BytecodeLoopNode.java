@@ -1135,7 +1135,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         setStackValue(frame, sp, value);
     }
 
-    private static Object pop(final VirtualFrame frame, final int sp) {
+    private Object pop(final VirtualFrame frame, final int sp) {
+        assert sp >= numArguments;
         final int slotIndex = FrameAccess.toStackSlotIndex(frame, sp);
         final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
         if (slotIndex < numberOfSlots) {
