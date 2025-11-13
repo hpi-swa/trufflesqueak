@@ -104,15 +104,17 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     @CompilationFinal private int numArguments;
 
     @CompilationFinal(dimensions = 1) private final Object[] data;
-    @CompilationFinal(dimensions = 1) private final boolean[] resolveStackSlot;
+    @CompilationFinal(dimensions = 1) private final ConditionProfile[] resolveProfiles;
     @CompilationFinal private Object osrMetadata;
 
     public BytecodeLoopNode(final CompiledCodeObject code) {
         this.code = code;
         isBlock = code.isCompiledBlock();
         numArguments = -1;
-        data = createData();
-        resolveStackSlot = new boolean[code.getFrameDescriptor().getNumberOfSlots()];
+        final int maxPC = AbstractSqueakBytecodeDecoder.trailerPosition(code);
+        data = new Object[maxPC];
+        resolveProfiles = new ConditionProfile[maxPC];
+        processBytecode(maxPC);
     }
 
     public BytecodeLoopNode(final BytecodeLoopNode original) {
@@ -121,33 +123,36 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         isBlock = original.isBlock;
         numArguments = original.numArguments;
         // fresh fields
-        data = createData();
-        resolveStackSlot = new boolean[original.resolveStackSlot.length];
+        final int maxPC = AbstractSqueakBytecodeDecoder.trailerPosition(code);
+        data = new Object[maxPC];
+        resolveProfiles = new ConditionProfile[maxPC];
+        processBytecode(maxPC);
         osrMetadata = null;
     }
 
-    private Object[] createData() {
+    private void processBytecode(final int maxPC) {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
-        final int trailerPosition = AbstractSqueakBytecodeDecoder.trailerPosition(code);
-        final Object[] result = new Object[trailerPosition];
+
         int pc = 0;
         int extA = 0;
         int extB = 0;
 
-        while (pc < trailerPosition) {
+        while (pc < maxPC) {
             final int currentPC = pc++;
             final byte b = getByte(bc, currentPC);
             switch (b) {
                 /* 1 byte bytecodes */
                 case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                     BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
-                    result[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
                     BC.PUSH_LIT_VAR_8, BC.PUSH_LIT_VAR_9, BC.PUSH_LIT_VAR_A, BC.PUSH_LIT_VAR_B, BC.PUSH_LIT_VAR_C, BC.PUSH_LIT_VAR_D, BC.PUSH_LIT_VAR_E, BC.PUSH_LIT_VAR_F: {
-                    result[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.PUSH_LIT_CONST_00, BC.PUSH_LIT_CONST_01, BC.PUSH_LIT_CONST_02, BC.PUSH_LIT_CONST_03, BC.PUSH_LIT_CONST_04, BC.PUSH_LIT_CONST_05, BC.PUSH_LIT_CONST_06, BC.PUSH_LIT_CONST_07, //
@@ -156,191 +161,229 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     BC.PUSH_LIT_CONST_18, BC.PUSH_LIT_CONST_19, BC.PUSH_LIT_CONST_1A, BC.PUSH_LIT_CONST_1B, BC.PUSH_LIT_CONST_1C, BC.PUSH_LIT_CONST_1D, BC.PUSH_LIT_CONST_1E, BC.PUSH_LIT_CONST_1F, //
                     BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
                     BC.PUSH_TEMP_VAR_8, BC.PUSH_TEMP_VAR_9, BC.PUSH_TEMP_VAR_A, BC.PUSH_TEMP_VAR_B, //
-                    BC.PUSH_RECEIVER, BC.PUSH_CONSTANT_TRUE, BC.PUSH_CONSTANT_FALSE, BC.PUSH_CONSTANT_NIL, BC.PUSH_CONSTANT_ZERO, BC.PUSH_CONSTANT_ONE, //
-                    BC.DUPLICATE_TOP, //
+                    BC.PUSH_RECEIVER, BC.DUPLICATE_TOP, //
                     BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7, //
                     BC.POP_STACK: {
+                    resolveProfiles[currentPC] = ConditionProfile.create();
+                    break;
+                }
+                case BC.PUSH_CONSTANT_TRUE, BC.PUSH_CONSTANT_FALSE, BC.PUSH_CONSTANT_NIL, BC.PUSH_CONSTANT_ZERO, BC.PUSH_CONSTANT_ONE: {
                     break;
                 }
                 case BC.EXT_PUSH_PSEUDO_VARIABLE: {
                     if (extB == 0) {
-                        result[currentPC] = insert(GetOrCreateContextWithFrameNode.create());
+                        data[currentPC] = insert(GetOrCreateContextWithFrameNode.create());
                         break;
                     } else {
                         throw CompilerDirectives.shouldNotReachHere();
                     }
                 }
                 case BC.RETURN_RECEIVER, BC.RETURN_TRUE, BC.RETURN_FALSE, BC.RETURN_NIL, BC.RETURN_TOP_FROM_METHOD: {
-                    result[currentPC] = isBlock ? new BlockReturnNode() : new NormalReturnNode();
+                    data[currentPC] = isBlock ? new BlockReturnNode() : new NormalReturnNode();
                     break;
                 }
                 case BC.RETURN_NIL_FROM_BLOCK, BC.RETURN_TOP_FROM_BLOCK: {
-                    result[currentPC] = new NormalReturnNode();
+                    data[currentPC] = new NormalReturnNode();
                     break;
                 }
                 case BC.EXT_NOP:
                     extA = extB = 0;
                     break;
                 case BC.BYTECODE_PRIM_ADD: {
-                    result[currentPC] = insert(BytecodePrimAddNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimAddNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_SUBTRACT: {
-                    result[currentPC] = insert(BytecodePrimSubtractNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimSubtractNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_LESS_THAN: {
-                    result[currentPC] = insert(BytecodePrimLessThanNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimLessThanNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_GREATER_THAN: {
-                    result[currentPC] = insert(BytecodePrimGreaterThanNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimGreaterThanNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
-                    result[currentPC] = insert(BytecodePrimLessOrEqualNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimLessOrEqualNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
-                    result[currentPC] = insert(BytecodePrimGreaterOrEqualNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimGreaterOrEqualNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_EQUAL: {
-                    result[currentPC] = insert(BytecodePrimEqualNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimEqualNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_NOT_EQUAL: {
-                    result[currentPC] = insert(BytecodePrimNotEqualNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimNotEqualNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_MULTIPLY: {
-                    result[currentPC] = insert(BytecodePrimMultiplyNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimMultiplyNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_DIVIDE: {
-                    result[currentPC] = insert(BytecodePrimDivideNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimDivideNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_MOD: {
-                    result[currentPC] = insert(BytecodePrimModNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimModNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_MAKE_POINT: {
-                    result[currentPC] = insert(BytecodePrimMakePointNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimMakePointNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_BIT_SHIFT: {
-                    result[currentPC] = insert(BytecodePrimBitShiftNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimBitShiftNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_DIV: {
-                    result[currentPC] = insert(BytecodePrimDivNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimDivNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_BIT_AND: {
-                    result[currentPC] = insert(BytecodePrimBitAndNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimBitAndNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_BIT_OR: {
-                    result[currentPC] = insert(BytecodePrimBitOrNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimBitOrNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT: {
-                    result[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_PUT: {
-                    result[currentPC] = insert(new SendBytecode2Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode2Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_SIZE: {
-                    result[currentPC] = insert(BytecodePrimSizeNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimSizeNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEXT: {
-                    result[currentPC] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEXT_PUT: {
-                    result[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_END: {
-                    result[currentPC] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_IDENTICAL: {
-                    result[currentPC] = insert(BytecodePrimIdenticalSistaV1NodeGen.create());
+                    data[currentPC] = insert(BytecodePrimIdenticalSistaV1NodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_CLASS: {
-                    result[currentPC] = insert(BytecodePrimClassNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimClassNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
-                    result[currentPC] = insert(BytecodePrimNotIdenticalSistaV1NodeGen.create());
+                    data[currentPC] = insert(BytecodePrimNotIdenticalSistaV1NodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE: {
-                    result[currentPC] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE_WITH_ARG: {
-                    result[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_DO: {
-                    result[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEW: {
-                    result[currentPC] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode0Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_NEW_WITH_ARG: {
-                    result[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    data[currentPC] = insert(new SendBytecode1Node(image.getSpecialSelector(b - 0x60)));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_POINT_X: {
-                    result[currentPC] = insert(BytecodePrimPointXNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimPointXNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.BYTECODE_PRIM_POINT_Y: {
-                    result[currentPC] = insert(BytecodePrimPointYNodeGen.create());
+                    data[currentPC] = insert(BytecodePrimPointYNodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                     final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
-                    result[currentPC] = insert(new SendBytecode0Node(selector));
+                    data[currentPC] = insert(new SendBytecode0Node(selector));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                     final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
-                    result[currentPC] = insert(new SendBytecode1Node(selector));
+                    data[currentPC] = insert(new SendBytecode1Node(selector));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
                     final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
-                    result[currentPC] = insert(new SendBytecode2Node(selector));
+                    data[currentPC] = insert(new SendBytecode2Node(selector));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
                     final int offset = JumpBytecodes.calculateShortOffset(b);
                     if (offset < 0) {
-                        result[currentPC] = insert(CheckForInterruptsQuickNode.createForLoop(result, pc, 1, offset));
+                        data[currentPC] = insert(CheckForInterruptsQuickNode.createForLoop(data, pc, 1, offset));
                     }
                     break;
                 }
                 case BC.SHORT_CJUMP_TRUE_0, BC.SHORT_CJUMP_TRUE_1, BC.SHORT_CJUMP_TRUE_2, BC.SHORT_CJUMP_TRUE_3, BC.SHORT_CJUMP_TRUE_4, BC.SHORT_CJUMP_TRUE_5, BC.SHORT_CJUMP_TRUE_6, BC.SHORT_CJUMP_TRUE_7, //
                     BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
-                    result[currentPC] = CountingConditionProfile.create();
+                    data[currentPC] = CountingConditionProfile.create();
                     break;
                 }
                 case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
-                    result[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
+                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
                     break;
                 }
                 /* 2 byte bytecodes */
@@ -355,17 +398,20 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     break;
                 }
                 case BC.EXT_PUSH_RECEIVER_VARIABLE, BC.EXT_PUSH_LITERAL_VARIABLE: {
-                    result[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     pc++;
                     extA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_CHARACTER: {
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     pc++;
                     extA = 0;
                     break;
                 }
                 case BC.LONG_PUSH_TEMPORARY_VARIABLE, BC.PUSH_NEW_ARRAY, BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE, BC.LONG_STORE_TEMPORARY_VARIABLE: {
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     pc++;
                     break;
                 }
@@ -378,7 +424,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final int byte1 = getUnsignedInt(bc, pc++);
                     final int literalIndex = (byte1 >> 3) + (extA << 5);
                     final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
-                    result[currentPC] = insert(new SendBytecodeNaryNode(selector));
+                    data[currentPC] = insert(new SendBytecodeNaryNode(selector));
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     extA = extB = 0;
                     break;
                 }
@@ -388,30 +435,31 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final int literalIndex = (byte1 >> 3) + (extA << 5);
                     final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
                     if (isDirected) {
-                        result[currentPC] = insert(new SendBytecodeSuperDirectedNode(selector));
+                        data[currentPC] = insert(new SendBytecodeSuperDirectedNode(selector));
                     } else {
                         final ClassObject methodClass = code.getMethod().getMethodClassSlow();
-                        result[currentPC] = insert(new SendBytecodeSuperNode(methodClass, selector));
+                        data[currentPC] = insert(new SendBytecodeSuperNode(methodClass, selector));
                     }
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     extA = extB = 0;
                     break;
                 }
                 case BC.EXT_UNCONDITIONAL_JUMP: {
                     final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc++), extB);
                     if (offset < 0) {
-                        result[currentPC] = insert(CheckForInterruptsQuickNode.createForLoop(result, currentPC, 2, offset));
+                        data[currentPC] = insert(CheckForInterruptsQuickNode.createForLoop(data, currentPC, 2, offset));
                     }
                     extA = extB = 0;
                     break;
                 }
                 case BC.EXT_JUMP_IF_TRUE, BC.EXT_JUMP_IF_FALSE: {
-                    result[currentPC] = CountingConditionProfile.create();
+                    data[currentPC] = CountingConditionProfile.create();
                     pc++;
                     extA = extB = 0;
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, BC.EXT_STORE_AND_POP_LITERAL_VARIABLE, BC.EXT_STORE_RECEIVER_VARIABLE, BC.EXT_STORE_LITERAL_VARIABLE: {
-                    result[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
+                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
                     pc++;
                     extA = 0;
                     break;
@@ -426,7 +474,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final byte byteB = getByte(bc, pc++);
                     final boolean ignoreContext = (byteB & 0x40) != 0;
                     if (!ignoreContext) {
-                        result[currentPC] = insert(GetOrCreateContextWithFrameNode.create());
+                        data[currentPC] = insert(GetOrCreateContextWithFrameNode.create());
                     }
                     extA = 0;
                     break;
@@ -435,18 +483,19 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final byte byteA = getByte(bc, pc++);
                     final int numArgs = (byteA & 7) + Math.floorMod(extA, 16) * 8;
                     final int blockSize = getByteExtended(bc, pc++, extB);
-                    result[currentPC] = insert(new PushClosureNode(code, pc, numArgs));
+                    data[currentPC] = insert(new PushClosureNode(code, pc, numArgs));
                     pc += blockSize;
                     extA = extB = 0;
                     break;
                 }
                 case BC.PUSH_REMOTE_TEMP_LONG: {
-                    result[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
                     pc += 2;
                     break;
                 }
                 case BC.STORE_REMOTE_TEMP_LONG, BC.STORE_AND_POP_REMOTE_TEMP_LONG: {
-                    result[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
+                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
                     pc += 2;
                     break;
                 }
@@ -455,7 +504,6 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
             }
         }
-        return result;
     }
 
     @Override
@@ -492,28 +540,28 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                         BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
                         externalizePCAndSP(frame, pc, sp); // for ContextObject access
-                        push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
                         break;
                     }
                     case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
                         BC.PUSH_LIT_VAR_8, BC.PUSH_LIT_VAR_9, BC.PUSH_LIT_VAR_A, BC.PUSH_LIT_VAR_B, BC.PUSH_LIT_VAR_C, BC.PUSH_LIT_VAR_D, BC.PUSH_LIT_VAR_E, BC.PUSH_LIT_VAR_F: {
-                        push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(b & 0xF), ASSOCIATION.VALUE));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(b & 0xF), ASSOCIATION.VALUE));
                         break;
                     }
                     case BC.PUSH_LIT_CONST_00, BC.PUSH_LIT_CONST_01, BC.PUSH_LIT_CONST_02, BC.PUSH_LIT_CONST_03, BC.PUSH_LIT_CONST_04, BC.PUSH_LIT_CONST_05, BC.PUSH_LIT_CONST_06, BC.PUSH_LIT_CONST_07, //
                         BC.PUSH_LIT_CONST_08, BC.PUSH_LIT_CONST_09, BC.PUSH_LIT_CONST_0A, BC.PUSH_LIT_CONST_0B, BC.PUSH_LIT_CONST_0C, BC.PUSH_LIT_CONST_0D, BC.PUSH_LIT_CONST_0E, BC.PUSH_LIT_CONST_0F, //
                         BC.PUSH_LIT_CONST_10, BC.PUSH_LIT_CONST_11, BC.PUSH_LIT_CONST_12, BC.PUSH_LIT_CONST_13, BC.PUSH_LIT_CONST_14, BC.PUSH_LIT_CONST_15, BC.PUSH_LIT_CONST_16, BC.PUSH_LIT_CONST_17, //
                         BC.PUSH_LIT_CONST_18, BC.PUSH_LIT_CONST_19, BC.PUSH_LIT_CONST_1A, BC.PUSH_LIT_CONST_1B, BC.PUSH_LIT_CONST_1C, BC.PUSH_LIT_CONST_1D, BC.PUSH_LIT_CONST_1E, BC.PUSH_LIT_CONST_1F: {
-                        push(frame, sp++, code.getLiteral(b & 0x1F));
+                        push(frame, currentPC, sp++, code.getLiteral(b & 0x1F));
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
                         BC.PUSH_TEMP_VAR_8, BC.PUSH_TEMP_VAR_9, BC.PUSH_TEMP_VAR_A, BC.PUSH_TEMP_VAR_B: {
-                        push(frame, sp++, getTemp(frame, b & 0xF));
+                        push(frame, currentPC, sp++, getTemp(frame, b & 0xF));
                         break;
                     }
                     case BC.PUSH_RECEIVER: {
-                        push(frame, sp++, FrameAccess.getReceiver(frame));
+                        push(frame, currentPC, sp++, FrameAccess.getReceiver(frame));
                         break;
                     }
                     case BC.PUSH_CONSTANT_TRUE: {
@@ -545,7 +593,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         }
                     }
                     case BC.DUPLICATE_TOP: {
-                        push(frame, sp, top(frame, sp));
+                        push(frame, currentPC, sp, top(frame, sp));
                         sp++;
                         break;
                     }
@@ -592,7 +640,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_CLASS, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
                         final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SendBytecode0.class).executeOrRewrite(frame, data, currentPC, receiver));
                         pc = checkPCAfterSend(frame, pc);
                         break;
                     }
@@ -603,7 +651,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SendBytecode1.class).executeOrRewrite(frame, data, currentPC, receiver, arg));
                         pc = checkPCAfterSend(frame, pc);
                         break;
                     }
@@ -611,7 +659,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                         final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode0Node.class).execute(frame, receiver));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SendBytecode0Node.class).execute(frame, receiver));
                         pc = checkPCAfterSend(frame, pc);
                         break;
                     }
@@ -620,7 +668,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode1Node.class).execute(frame, receiver, arg));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SendBytecode1Node.class).execute(frame, receiver, arg));
                         pc = checkPCAfterSend(frame, pc);
                         break;
                     }
@@ -631,7 +679,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         final Object arg1 = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SendBytecode2Node.class).execute(frame, receiver, arg1, arg2));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SendBytecode2Node.class).execute(frame, receiver, arg1, arg2));
                         pc = checkPCAfterSend(frame, pc);
                         break;
                     }
@@ -704,22 +752,22 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         break;
                     }
                     case BC.EXT_PUSH_RECEIVER_VARIABLE: {
-                        push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA)));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA)));
                         extA = 0;
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                        push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE));
                         extA = 0;
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL: {
-                        push(frame, sp++, code.getLiteral(getByteExtended(bc, pc++, extA)));
+                        push(frame, currentPC, sp++, code.getLiteral(getByteExtended(bc, pc++, extA)));
                         extA = 0;
                         break;
                     }
                     case BC.LONG_PUSH_TEMPORARY_VARIABLE: {
-                        push(frame, sp++, getTemp(frame, getUnsignedInt(bc, pc++)));
+                        push(frame, currentPC, sp++, getTemp(frame, getUnsignedInt(bc, pc++)));
                         break;
                     }
                     case BC.PUSH_NEW_ARRAY: {
@@ -753,7 +801,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         sp -= numArgs;
                         final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SendBytecodeNaryNode.class).execute(frame, receiver, arguments));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SendBytecodeNaryNode.class).execute(frame, receiver, arguments));
                         pc = checkPCAfterSend(frame, pc);
                         extA = extB = 0;
                         break;
@@ -781,7 +829,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         } else {
                             result = uncheckedCast(data[currentPC], SendBytecodeSuperNode.class).execute(frame, receiver, arguments);
                         }
-                        push(frame, sp++, result);
+                        push(frame, currentPC, sp++, result);
                         pc = checkPCAfterSend(frame, pc);
                         extA = extB = 0;
                         break;
@@ -907,7 +955,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     case BC.PUSH_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex));
                         break;
                     }
                     case BC.STORE_REMOTE_TEMP_LONG: {
@@ -1160,21 +1208,15 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
-    private void push(final VirtualFrame frame, final int sp, final Object value) {
-        setStackValue(frame, sp, resolve(sp, value));
+    private void push(final VirtualFrame frame, final int currentPC, final int sp, final Object value) {
+        setStackValue(frame, sp, resolve(currentPC, value));
     }
 
-    private Object resolve(final int sp, final Object value) {
-        if (resolveStackSlot[sp]) {
-            return AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
+    private Object resolve(final int currentPC, final Object value) {
+        if (resolveProfiles[currentPC].profile(value instanceof AbstractSqueakObjectWithClassAndHash)) {
+            return ((AbstractSqueakObjectWithClassAndHash) value).resolveForwardingPointer();
         } else {
-            if (value instanceof final AbstractSqueakObjectWithClassAndHash o) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                resolveStackSlot[sp] = true;
-                return o.resolveForwardingPointer();
-            } else {
-                return value;
-            }
+            return value;
         }
     }
 
