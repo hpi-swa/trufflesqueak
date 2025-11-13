@@ -19,6 +19,7 @@ import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import com.oracle.truffle.api.source.Source;
@@ -1134,7 +1135,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         setStackValue(frame, sp, value);
     }
 
-    private Object pop(final VirtualFrame frame, final int sp) {
+    private static Object pop(final VirtualFrame frame, final int sp) {
         final int slotIndex = FrameAccess.toStackSlotIndex(frame, sp);
         final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
         if (slotIndex < numberOfSlots) {
@@ -1608,5 +1609,15 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return code.toString();
+    }
+
+    @Override
+    public Node copy() {
+        return new BytecodeLoopNode(code);
+    }
+
+    @Override
+    public Node deepCopy() {
+        return new BytecodeLoopNode(code);
     }
 }
