@@ -109,7 +109,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         this.code = code;
         isBlock = code.isCompiledBlock();
         numArguments = -1;
-        data = createData(code, isBlock);
+        data = createData();
         resolveStackSlot = new boolean[code.getFrameDescriptor().getNumberOfSlots()];
     }
 
@@ -119,12 +119,12 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         isBlock = original.isBlock;
         numArguments = original.numArguments;
         // fresh fields
-        data = createData(code, isBlock);
+        data = createData();
         resolveStackSlot = new boolean[original.resolveStackSlot.length];
         osrMetadata = null;
     }
 
-    private Object[] createData(final CompiledCodeObject code, final boolean isBlock) {
+    private Object[] createData() {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
         final int trailerPosition = AbstractSqueakBytecodeDecoder.trailerPosition(code);
