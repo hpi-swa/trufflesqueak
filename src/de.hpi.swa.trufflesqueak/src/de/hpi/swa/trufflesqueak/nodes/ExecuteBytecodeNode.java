@@ -110,7 +110,7 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode implem
             CompilerDirectives.transferToInterpreter();
             throw getContext().tryToSignalLowSpace(frame, e);
         } finally {
-            if (loopCounter.value > 0) {
+            if (CompilerDirectives.hasNextTier() && loopCounter.value > 0) {
                 LoopNode.reportLoopCount(this, loopCounter.value);
             }
         }
