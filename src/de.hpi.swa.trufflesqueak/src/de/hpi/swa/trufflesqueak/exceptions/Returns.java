@@ -49,10 +49,18 @@ public final class Returns {
         }
     }
 
+    public abstract static class AbstractStandardSendReturn extends AbstractReturnWithContext {
+        @Serial private static final long serialVersionUID = 1L;
+
+        private AbstractStandardSendReturn(final Object returnValue, final ContextObject targetContext) {
+            super(returnValue, targetContext);
+        }
+    }
+
     /**
      * NonLocalReturn represents a return to a targetContext that is on the sender chain.
      */
-    public static final class NonLocalReturn extends AbstractReturnWithContext {
+    public static final class NonLocalReturn extends AbstractStandardSendReturn {
         @Serial private static final long serialVersionUID = 1L;
 
         public NonLocalReturn(final Object returnValue, final ContextObject homeContext) {
@@ -84,7 +92,7 @@ public final class Returns {
         }
     }
 
-    public static final class NonVirtualReturn extends AbstractReturnWithContext {
+    public static final class NonVirtualReturn extends AbstractStandardSendReturn {
         @Serial private static final long serialVersionUID = 1L;
 
         public NonVirtualReturn(final Object returnValue, final AbstractSqueakObject targetContextOrNil) {

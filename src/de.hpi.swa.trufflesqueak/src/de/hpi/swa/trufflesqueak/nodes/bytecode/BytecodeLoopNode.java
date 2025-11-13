@@ -25,8 +25,8 @@ import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
+import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -1007,40 +1007,23 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     public abstract static class AbstractSendBytecodeNode extends AbstractNode {
-        @CompilationFinal private ConditionProfile nlrProfile;
-        @CompilationFinal private ConditionProfile nvrProfile;
+        @CompilationFinal private ConditionProfile profile;
 
-        protected final Object handleNonLocalReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
-            if (getNLRProfile().profile(nlr.targetIsFrame(frame))) {
-                return nlr.getReturnValue();
+        protected final Object handleReturnException(final VirtualFrame frame, final AbstractStandardSendReturn returnException) {
+            if (getProfile().profile(returnException.targetIsFrame(frame))) {
+                return returnException.getReturnValue();
             } else {
                 FrameAccess.terminateFrame(frame);
-                throw nlr;
+                throw returnException;
             }
         }
 
-        protected final Object handleNonVirtualReturn(final VirtualFrame frame, final NonVirtualReturn nvr) {
-            if (getNVRProfile().profile(nvr.targetIsFrame(frame))) {
-                return nvr.getReturnValue();
-            } else {
-                throw nvr;
-            }
-        }
-
-        private ConditionProfile getNLRProfile() {
-            if (nlrProfile == null) {
+        private ConditionProfile getProfile() {
+            if (profile == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                nlrProfile = ConditionProfile.create();
+                profile = ConditionProfile.create();
             }
-            return nlrProfile;
-        }
-
-        private ConditionProfile getNVRProfile() {
-            if (nvrProfile == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                nvrProfile = ConditionProfile.create();
-            }
-            return nvrProfile;
+            return profile;
         }
     }
 
@@ -1059,10 +1042,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         public Object execute(final VirtualFrame frame, final Object receiver) {
             try {
                 return dispatchNode.execute(frame, receiver);
-            } catch (final NonLocalReturn nlr) {
-                return handleNonLocalReturn(frame, nlr);
-            } catch (final NonVirtualReturn nvr) {
-                return handleNonVirtualReturn(frame, nvr);
+            } catch (final AbstractStandardSendReturn r) {
+                return handleReturnException(frame, r);
             }
         }
     }
@@ -1082,10 +1063,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         Object execute(final VirtualFrame frame, final Object receiver, final Object arg) {
             try {
                 return dispatchNode.execute(frame, receiver, arg);
-            } catch (final NonLocalReturn nlr) {
-                return handleNonLocalReturn(frame, nlr);
-            } catch (final NonVirtualReturn nvr) {
-                return handleNonVirtualReturn(frame, nvr);
+            } catch (final AbstractStandardSendReturn r) {
+                return handleReturnException(frame, r);
             }
         }
     }
@@ -1100,10 +1079,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
             try {
                 return dispatchNode.execute(frame, receiver, arg1, arg2);
-            } catch (final NonLocalReturn nlr) {
-                return handleNonLocalReturn(frame, nlr);
-            } catch (final NonVirtualReturn nvr) {
-                return handleNonVirtualReturn(frame, nvr);
+            } catch (final AbstractStandardSendReturn r) {
+                return handleReturnException(frame, r);
             }
         }
     }
@@ -1118,10 +1095,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
             try {
                 return dispatchNode.execute(frame, receiver, arguments);
-            } catch (final NonLocalReturn nlr) {
-                return handleNonLocalReturn(frame, nlr);
-            } catch (final NonVirtualReturn nvr) {
-                return handleNonVirtualReturn(frame, nvr);
+            } catch (final AbstractStandardSendReturn r) {
+                return handleReturnException(frame, r);
             }
         }
     }
@@ -1136,10 +1111,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         Object execute(final VirtualFrame frame, final ClassObject lookupClass, final Object receiver, final Object[] arguments) {
             try {
                 return dispatchNode.execute(frame, lookupClass, receiver, arguments);
-            } catch (final NonLocalReturn nlr) {
-                return handleNonLocalReturn(frame, nlr);
-            } catch (final NonVirtualReturn nvr) {
-                return handleNonVirtualReturn(frame, nvr);
+            } catch (final AbstractStandardSendReturn r) {
+                return handleReturnException(frame, r);
             }
         }
     }
@@ -1154,10 +1127,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
             try {
                 return dispatchNode.execute(frame, receiver, arguments);
-            } catch (final NonLocalReturn nlr) {
-                return handleNonLocalReturn(frame, nlr);
-            } catch (final NonVirtualReturn nvr) {
-                return handleNonVirtualReturn(frame, nvr);
+            } catch (final AbstractStandardSendReturn r) {
+                return handleReturnException(frame, r);
             }
         }
     }
