@@ -22,12 +22,14 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -120,7 +122,8 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
         private final int stackPointer;
-        private final ConditionProfile profile = ConditionProfile.create();
+        private final ConditionProfile returnExceptionProfile = ConditionProfile.create();
+        private BranchProfile terminateProfile = BranchProfile.create();
 
         @Child protected DispatchSelectorNode dispatchNode;
         @Child private FrameStackWriteNode writeResultNode;
@@ -139,10 +142,13 @@ public final class SendBytecodes {
             try {
                 result = dispatchNode.execute(frame);
             } catch (final AbstractStandardSendReturn r) {
-                if (profile.profile(r.targetIsFrame(frame))) {
+                if (returnExceptionProfile.profile(r.targetIsFrame(frame))) {
                     result = r.getReturnValue();
                 } else {
-                    FrameAccess.terminateFrame(frame);
+                    if (r instanceof NonLocalReturn) {
+                        terminateProfile.enter();
+                        FrameAccess.terminateFrame(frame);
+                    }
                     throw r;
                 }
             }

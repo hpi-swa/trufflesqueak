@@ -20,6 +20,7 @@ import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import com.oracle.truffle.api.source.Source;
@@ -27,6 +28,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -1007,23 +1009,28 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     }
 
     public abstract static class AbstractSendBytecodeNode extends AbstractNode {
-        @CompilationFinal private ConditionProfile profile;
+        @CompilationFinal private ConditionProfile returnExceptionProfile;
+        @CompilationFinal private BranchProfile terminateProfile;
 
         protected final Object handleReturnException(final VirtualFrame frame, final AbstractStandardSendReturn returnException) {
-            if (getProfile().profile(returnException.targetIsFrame(frame))) {
+            if (getReturnExceptionProfile().profile(returnException.targetIsFrame(frame))) {
                 return returnException.getReturnValue();
             } else {
-                FrameAccess.terminateFrame(frame);
+                if (returnException instanceof NonLocalReturn) {
+                    terminateProfile.enter();
+                    FrameAccess.terminateFrame(frame);
+                }
                 throw returnException;
             }
         }
 
-        private ConditionProfile getProfile() {
-            if (profile == null) {
+        private ConditionProfile getReturnExceptionProfile() {
+            if (returnExceptionProfile == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                profile = ConditionProfile.create();
+                returnExceptionProfile = ConditionProfile.create();
+                terminateProfile = BranchProfile.create();
             }
-            return profile;
+            return returnExceptionProfile;
         }
     }
 
