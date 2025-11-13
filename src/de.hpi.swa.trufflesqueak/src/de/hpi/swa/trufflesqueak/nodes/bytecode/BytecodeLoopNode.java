@@ -548,37 +548,37 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, loopCounter, FrameAccess.getReceiver(frame));
+                        returnValue = handleReturn(frame, currentPC, pc, sp, FrameAccess.getReceiver(frame));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TRUE: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, loopCounter, BooleanObject.TRUE);
+                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.TRUE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_FALSE: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, loopCounter, BooleanObject.FALSE);
+                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.FALSE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, loopCounter, NilObject.SINGLETON);
+                        returnValue = handleReturn(frame, currentPC, pc, sp, NilObject.SINGLETON);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, loopCounter, top(frame, sp));
+                        returnValue = handleReturn(frame, currentPC, pc, sp, top(frame, sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL_FROM_BLOCK: {
-                        returnValue = uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, loopCounter, NilObject.SINGLETON);
+                        returnValue = uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, NilObject.SINGLETON);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
-                        returnValue = uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, loopCounter, top(frame, sp));
+                        returnValue = uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, top(frame, sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
@@ -940,7 +940,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
     static final class NormalReturnNode extends AbstractNode {
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.create();
 
-        private Object execute(final VirtualFrame frame, final LoopCounter loopCounter, final Object returnValue) {
+        private Object execute(final VirtualFrame frame, final Object returnValue) {
             if (hasModifiedSenderProfile.profile(FrameAccess.hasModifiedSender(frame))) {
                 throw new NonVirtualReturn(returnValue, FrameAccess.getSender(frame));
             } else {
@@ -955,7 +955,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode;
         @Child private Dispatch2Node sendAboutToReturnNode;
 
-        private Object execute(final VirtualFrame frame, final int pc, final int sp, final LoopCounter loopCounter, final Object returnValue) {
+        private Object execute(final VirtualFrame frame, final int pc, final int sp, final Object returnValue) {
             externalizePCAndSP(frame, pc, sp);
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
@@ -1145,11 +1145,11 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         return getUnsignedInt(bc, pc) + (extend << 8);
     }
 
-    private Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final LoopCounter loopCounter, final Object result) {
+    private Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         if (isBlock) {
-            return uncheckedCast(data[currentPC], BlockReturnNode.class).execute(frame, pc, sp, loopCounter, result);
+            return uncheckedCast(data[currentPC], BlockReturnNode.class).execute(frame, pc, sp, result);
         } else {
-            return uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, loopCounter, result);
+            return uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, result);
         }
     }
 
