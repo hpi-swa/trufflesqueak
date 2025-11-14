@@ -439,7 +439,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public Object getAndResolveLiteral(final long longIndex) {
         /* See storeLiteralVariable:withValue: */
-        final Object litVar = UnsafeUtils.getObject(literals, longIndex);
+        final Object litVar = getLiteral(longIndex);
         if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
             CompilerDirectives.transferToInterpreter();
             final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();

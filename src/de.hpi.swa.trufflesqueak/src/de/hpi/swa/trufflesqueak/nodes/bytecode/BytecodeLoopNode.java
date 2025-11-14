@@ -152,17 +152,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
                     BC.PUSH_LIT_VAR_8, BC.PUSH_LIT_VAR_9, BC.PUSH_LIT_VAR_A, BC.PUSH_LIT_VAR_B, BC.PUSH_LIT_VAR_C, BC.PUSH_LIT_VAR_D, BC.PUSH_LIT_VAR_E, BC.PUSH_LIT_VAR_F: {
-                    final Object literal = code.getLiteral(b & 0xF);
-                    if (literal instanceof final AbstractSqueakObjectWithClassAndHash l) {
-                        final String squeakClassName = l.getSqueakClassName();
-                        if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
-                            data[currentPC] = insert(new ReadLiteralVariableReadonlyNode(literal));
-                        } else {
-                            data[currentPC] = insert(new ReadLiteralVariableNode());
-                        }
-                    } else {
-                        throw SqueakException.create("Unexpected literal", literal);
-                    }
+                    data[currentPC] = createLiteralNode(code.getAndResolveLiteral(b & 0xF));
                     resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
@@ -362,21 +352,21 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
-                    final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
+                    final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
                     data[currentPC] = insert(new SendBytecode0Node(selector));
                     resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
-                    final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
+                    final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
                     data[currentPC] = insert(new SendBytecode1Node(selector));
                     resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
                 case BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
-                    final NativeObject selector = (NativeObject) code.getLiteral(b & 0xF);
+                    final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
                     data[currentPC] = insert(new SendBytecode2Node(selector));
                     resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
@@ -408,8 +398,15 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     assert extB != 0 : "should use numExtB?";
                     break;
                 }
-                case BC.EXT_PUSH_RECEIVER_VARIABLE, BC.EXT_PUSH_LITERAL_VARIABLE: {
+                case BC.EXT_PUSH_RECEIVER_VARIABLE: {
                     data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    resolveProfiles[currentPC] = ConditionProfile.create();
+                    pc++;
+                    extA = 0;
+                    break;
+                }
+                case BC.EXT_PUSH_LITERAL_VARIABLE: {
+                    data[currentPC] = createLiteralNode(code.getAndResolveLiteral(getByteExtended(bc, pc, extA)));
                     resolveProfiles[currentPC] = ConditionProfile.create();
                     pc++;
                     extA = 0;
@@ -434,7 +431,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 case BC.EXT_SEND: {
                     final int byte1 = getUnsignedInt(bc, pc++);
                     final int literalIndex = (byte1 >> 3) + (extA << 5);
-                    final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
+                    final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
                     data[currentPC] = insert(new SendBytecodeNaryNode(selector));
                     resolveProfiles[currentPC] = ConditionProfile.create();
                     extA = extB = 0;
@@ -444,7 +441,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     final boolean isDirected = extB >= 64;
                     final int byte1 = getUnsignedInt(bc, pc++);
                     final int literalIndex = (byte1 >> 3) + (extA << 5);
-                    final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
+                    final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
                     if (isDirected) {
                         data[currentPC] = insert(new SendBytecodeSuperDirectedNode(selector));
                     } else {
@@ -517,6 +514,19 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         }
     }
 
+    private static Node createLiteralNode(final Object literal) {
+        if (literal instanceof final AbstractSqueakObjectWithClassAndHash l) {
+            final String squeakClassName = l.getSqueakClassName();
+            if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
+                return new ReadLiteralVariableReadonlyNode(literal);
+            } else {
+                return new ReadLiteralVariableNode();
+            }
+        } else {
+            throw SqueakException.create("Unexpected literal", literal);
+        }
+    }
+
     @Override
     @BytecodeInterpreterSwitch
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
@@ -563,7 +573,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         BC.PUSH_LIT_CONST_08, BC.PUSH_LIT_CONST_09, BC.PUSH_LIT_CONST_0A, BC.PUSH_LIT_CONST_0B, BC.PUSH_LIT_CONST_0C, BC.PUSH_LIT_CONST_0D, BC.PUSH_LIT_CONST_0E, BC.PUSH_LIT_CONST_0F, //
                         BC.PUSH_LIT_CONST_10, BC.PUSH_LIT_CONST_11, BC.PUSH_LIT_CONST_12, BC.PUSH_LIT_CONST_13, BC.PUSH_LIT_CONST_14, BC.PUSH_LIT_CONST_15, BC.PUSH_LIT_CONST_16, BC.PUSH_LIT_CONST_17, //
                         BC.PUSH_LIT_CONST_18, BC.PUSH_LIT_CONST_19, BC.PUSH_LIT_CONST_1A, BC.PUSH_LIT_CONST_1B, BC.PUSH_LIT_CONST_1C, BC.PUSH_LIT_CONST_1D, BC.PUSH_LIT_CONST_1E, BC.PUSH_LIT_CONST_1F: {
-                        push(frame, currentPC, sp++, code.getLiteral(b & 0x1F));
+                        push(frame, currentPC, sp++, code.getAndResolveLiteral(b & 0x1F));
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
@@ -768,12 +778,12 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], AbstractLiteralVariableNode.class).execute(this, code, getByteExtended(bc, pc++, extA)));
                         extA = 0;
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL: {
-                        push(frame, currentPC, sp++, code.getLiteral(getByteExtended(bc, pc++, extA)));
+                        push(frame, currentPC, sp++, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)));
                         extA = 0;
                         break;
                     }
@@ -901,7 +911,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
+                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, pop(frame, --sp));
                         extA = 0;
                         break;
                     }
@@ -915,7 +925,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         break;
                     }
                     case BC.EXT_STORE_LITERAL_VARIABLE: {
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, top(frame, sp));
+                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, code.getAndResolveLiteral(getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, top(frame, sp));
                         extA = 0;
                         break;
                     }
@@ -934,7 +944,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     }
                     case BC.EXT_PUSH_FULL_CLOSURE: {
                         final int literalIndex = getByteExtended(bc, pc++, extA);
-                        final CompiledCodeObject block = uncheckedCast(code.getLiteral(literalIndex), CompiledCodeObject.class);
+                        final CompiledCodeObject block = uncheckedCast(code.getAndResolveLiteral(literalIndex), CompiledCodeObject.class);
                         assert block.assertNotForwarded();
                         CompilerAsserts.partialEvaluationConstant(block);
                         final int blockInitialPC = block.getInitialPC();
@@ -1067,7 +1077,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0NodeGen.create();
 
         Object execute(final Node node, final CompiledCodeObject code, final int index) {
-            return at0Node.execute(node, code.getLiteral(index), ASSOCIATION.VALUE);
+            return at0Node.execute(node, code.getAndResolveLiteral(index), ASSOCIATION.VALUE);
         }
     }
 
