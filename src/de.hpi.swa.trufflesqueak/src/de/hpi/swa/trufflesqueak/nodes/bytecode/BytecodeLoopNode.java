@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecode;
 
+import static de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode.READONLY_CLASSES;
 import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -151,7 +152,17 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 }
                 case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
                     BC.PUSH_LIT_VAR_8, BC.PUSH_LIT_VAR_9, BC.PUSH_LIT_VAR_A, BC.PUSH_LIT_VAR_B, BC.PUSH_LIT_VAR_C, BC.PUSH_LIT_VAR_D, BC.PUSH_LIT_VAR_E, BC.PUSH_LIT_VAR_F: {
-                    data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    final Object literal = code.getLiteral(b & 0xF);
+                    if (literal instanceof final AbstractSqueakObjectWithClassAndHash l) {
+                        final String squeakClassName = l.getSqueakClassName();
+                        if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
+                            data[currentPC] = insert(new ReadLiteralVariableReadonlyNode(literal));
+                        } else {
+                            data[currentPC] = insert(new ReadLiteralVariableNode());
+                        }
+                    } else {
+                        throw SqueakException.create("Unexpected literal", literal);
+                    }
                     resolveProfiles[currentPC] = ConditionProfile.create();
                     break;
                 }
@@ -545,7 +556,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     }
                     case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
                         BC.PUSH_LIT_VAR_8, BC.PUSH_LIT_VAR_9, BC.PUSH_LIT_VAR_A, BC.PUSH_LIT_VAR_B, BC.PUSH_LIT_VAR_C, BC.PUSH_LIT_VAR_D, BC.PUSH_LIT_VAR_E, BC.PUSH_LIT_VAR_F: {
-                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, code.getLiteral(b & 0xF), ASSOCIATION.VALUE));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], AbstractLiteralVariableNode.class).execute(this, code, b & 0xF));
                         break;
                     }
                     case BC.PUSH_LIT_CONST_00, BC.PUSH_LIT_CONST_01, BC.PUSH_LIT_CONST_02, BC.PUSH_LIT_CONST_03, BC.PUSH_LIT_CONST_04, BC.PUSH_LIT_CONST_05, BC.PUSH_LIT_CONST_06, BC.PUSH_LIT_CONST_07, //
@@ -1033,6 +1044,30 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                 sendAboutToReturnNode = insert(Dispatch2NodeGen.create(getContext().aboutToReturnSelector));
             }
             return sendAboutToReturnNode;
+        }
+    }
+
+    abstract static class AbstractLiteralVariableNode extends AbstractNode {
+        abstract Object execute(Node node, CompiledCodeObject code, int index);
+    }
+
+    static final class ReadLiteralVariableReadonlyNode extends AbstractLiteralVariableNode {
+        private final Object value;
+
+        ReadLiteralVariableReadonlyNode(final Object literal) {
+            this.value = SqueakObjectAt0Node.executeUncached(literal, ASSOCIATION.VALUE);
+        }
+
+        Object execute(final Node node, final CompiledCodeObject code, final int index) {
+            return value;
+        }
+    }
+
+    static final class ReadLiteralVariableNode extends AbstractLiteralVariableNode {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0NodeGen.create();
+
+        Object execute(final Node node, final CompiledCodeObject code, final int index) {
+            return at0Node.execute(node, code.getLiteral(index), ASSOCIATION.VALUE);
         }
     }
 

@@ -357,7 +357,7 @@ public final class PushBytecodes {
     }
 
     public abstract static class PushLiteralVariableNode extends AbstractInstrumentableBytecodeNode {
-        private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
+        public static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
         protected final AbstractSqueakObjectWithClassAndHash literal;
 
         protected PushLiteralVariableNode(final int successorIndex, final AbstractSqueakObjectWithClassAndHash literal) {
