@@ -561,7 +561,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                         BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
                         externalizePCAndSP(frame, pc, sp); // for ContextObject access
-                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).executeSpecialized(this, FrameAccess.getReceiver(frame), b & 0xF));
                         break;
                     }
                     case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
@@ -773,7 +773,8 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         break;
                     }
                     case BC.EXT_PUSH_RECEIVER_VARIABLE: {
-                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA)));
+                        push(frame, currentPC, sp++,
+                                        uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).executeSpecialized(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA)));
                         extA = 0;
                         break;
                     }
@@ -842,7 +843,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                         final ClassObject lookupClass = isDirected ? uncheckedCast(pop(frame, --sp), ClassObject.class).getResolvedSuperclass() : null;
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(popReceiver(frame, --sp));
                         externalizePCAndSP(frame, pc, sp);
                         final Object result;
                         if (isDirected) {
@@ -976,7 +977,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
                     case BC.PUSH_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).executeSpecialized(this, getTemp(frame, tempVectorIndex), remoteTempIndex));
                         break;
                     }
                     case BC.STORE_REMOTE_TEMP_LONG: {
@@ -1077,7 +1078,7 @@ public final class BytecodeLoopNode extends AbstractExecuteContextNode implement
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0NodeGen.create();
 
         Object execute(final Node node, final CompiledCodeObject code, final int index) {
-            return at0Node.execute(node, code.getAndResolveLiteral(index), ASSOCIATION.VALUE);
+            return at0Node.executeSpecialized(node, code.getAndResolveLiteral(index), ASSOCIATION.VALUE);
         }
     }
 

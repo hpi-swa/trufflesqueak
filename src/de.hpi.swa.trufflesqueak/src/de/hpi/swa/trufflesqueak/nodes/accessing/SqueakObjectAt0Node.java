@@ -46,7 +46,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
         return executeSpecialized(node, AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(obj), index);
     }
 
-    protected abstract Object executeSpecialized(Node node, Object obj, long index);
+    public abstract Object executeSpecialized(Node node, Object obj, long index);
 
     public static final Object executeUncached(final Object obj, final long index) {
         return SqueakObjectAt0NodeGen.getUncached().execute(null, obj, index);
