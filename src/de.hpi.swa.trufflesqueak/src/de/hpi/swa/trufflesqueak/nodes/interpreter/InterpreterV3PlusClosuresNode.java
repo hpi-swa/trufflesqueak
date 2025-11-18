@@ -382,27 +382,27 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, FrameAccess.getReceiver(frame));
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, FrameAccess.getReceiver(frame));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TRUE: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, BooleanObject.TRUE);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, BooleanObject.TRUE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_FALSE: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, BooleanObject.FALSE);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, BooleanObject.FALSE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, NilObject.SINGLETON);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, NilObject.SINGLETON);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, top(frame, sp));
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, top(frame, sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
@@ -584,7 +584,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.PUSH_ACTIVE_CONTEXT: {
-                        push(frame, sp++, getOrCreateContext(frame, currentPC, image));
+                        push(frame, sp++, getOrCreateContext(frame, currentPC));
                         break;
                     }
                     case BC.PUSH_NEW_ARRAY: {
@@ -597,7 +597,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         } else {
                             values = ArrayUtils.withAll(arraySize, NilObject.SINGLETON);
                         }
-                        push(frame, sp++, ArrayObject.createWithStorage(image, image.arrayClass, values));
+                        push(frame, sp++, ArrayObject.createWithStorage(image.arrayClass, values));
                         break;
                     }
                     case BC.CALL_PRIMITIVE: {
@@ -633,7 +633,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final int numCopied = numArgsNumCopied >> 4 & 0xF;
                         final Object[] copiedValues = popN(frame, sp, numCopied);
                         sp -= numCopied;
-                        push(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues, getOrCreateContext(frame, currentPC, image)));
+                        push(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues, getOrCreateContext(frame, currentPC)));
                         pc += blockSizeHigh << 8 | blockSizeLow;
                         break;
                     }

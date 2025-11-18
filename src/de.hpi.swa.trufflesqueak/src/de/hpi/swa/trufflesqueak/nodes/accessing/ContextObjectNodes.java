@@ -113,7 +113,7 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = "index == METHOD")
         protected static final void doMethod(final ContextObject context, @SuppressWarnings("unused") final long index, final CompiledCodeObject value) {
-            context.setCodeObject(value);
+            context.overwriteCodeObject(value);
         }
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})

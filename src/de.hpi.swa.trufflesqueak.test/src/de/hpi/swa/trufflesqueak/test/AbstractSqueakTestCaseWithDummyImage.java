@@ -41,11 +41,11 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
         final ClassObject bindingClass = setupMeta(new ClassObject(image), null, 1L, "Binding");
         final ClassObject classBindingClass = setupMeta(new ClassObject(image), bindingClass, 2L, "ClassBinding");
-        nilClassBinding = new PointersObject(image, classBindingClass, classBindingClass.getLayout());
+        nilClassBinding = new PointersObject(classBindingClass, classBindingClass.getLayout());
         nilClassBinding.instVarAtPut0Slow(0, asByteSymbol("UndefinedObject"));
         nilClassBinding.instVarAtPut0Slow(1, image.nilClass);
 
-        image.setHiddenRoots(ArrayObject.createEmptyStrategy(image, image.arrayClass, 0));
+        image.setHiddenRoots(ArrayObject.createEmptyStrategy(image.arrayClass, 0));
         context.enter();
     }
 
@@ -134,7 +134,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
     }
 
     private static NativeObject asByteSymbol(final String value) {
-        return NativeObject.newNativeBytes(image, image.getByteSymbolClass(), MiscUtils.stringToBytes(value));
+        return NativeObject.newNativeBytes(image.getByteSymbolClass(), MiscUtils.stringToBytes(value));
     }
 
     @AfterClass

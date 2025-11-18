@@ -39,7 +39,7 @@ public abstract class AbstractSqueakTestCase {
     protected static PointersObject nilClassBinding;
 
     protected static final CompiledCodeObject makeMethod(final byte[] bytes, final long header, final Object[] literals) {
-        return new CompiledCodeObject(image, bytes, header, literals, image.compiledMethodClass);
+        return new CompiledCodeObject(bytes, header, literals, image.compiledMethodClass);
     }
 
     protected static final CompiledCodeObject makeMethod(final int header, final Object[] literals, final int... intbytes) {

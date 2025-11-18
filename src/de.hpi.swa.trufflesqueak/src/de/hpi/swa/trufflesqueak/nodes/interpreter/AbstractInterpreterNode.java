@@ -114,8 +114,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
 
         BlockClosureObject execute(final VirtualFrame frame, final Object[] copiedValues, final ContextObject outerContext) {
-            final SqueakImageContext image = getContext();
-            return new BlockClosureObject(image, image.blockClosureClass, shadowBlock, closureStartPC, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
+            return new BlockClosureObject(getContext().blockClosureClass, shadowBlock, closureStartPC, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
         }
     }
 
@@ -204,7 +203,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      */
 
     /** Inlined version of {@link GetOrCreateContextWithFrameNode}. */
-    protected final ContextObject getOrCreateContext(final VirtualFrame frame, final int currentPC, final SqueakImageContext image) {
+    protected final ContextObject getOrCreateContext(final VirtualFrame frame, final int currentPC) {
         final byte state = profiles[currentPC];
         final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
@@ -225,7 +224,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 profiles[currentPC] |= 0b10000;
             }
-            return new ContextObject(image, frame.materialize());
+            return new ContextObject(frame.materialize());
         }
     }
 
@@ -285,12 +284,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
-    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final SqueakImageContext image, final int loopCounter, final int pc, final int sp, final Object result) {
+    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int loopCounter, final int pc, final int sp, final Object result) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
         if (isBlock) {
-            return handleBlockReturn(frame, currentPC, image, pc, sp, result);
+            return handleBlockReturn(frame, currentPC, pc, sp, result);
         } else {
             return handleNormalReturn(frame, currentPC, result);
         }
@@ -322,7 +321,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     @InliningCutoff
-    private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final SqueakImageContext image, final int pc, final int sp, final Object result) {
+    private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         // Target is sender of closure's home context.
         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
         if (homeContext.canBeReturnedTo()) {
@@ -333,7 +332,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     data[currentPC] = insert(Dispatch2NodeGen.create(getContext().aboutToReturnSelector));
                 }
-                ((Dispatch2NodeGen) data[currentPC]).execute(frame, getOrCreateContext(frame, currentPC, image), result, firstMarkedContext);
+                ((Dispatch2NodeGen) data[currentPC]).execute(frame, getOrCreateContext(frame, currentPC), result, firstMarkedContext);
             }
         }
         throw cannotReturn(frame, result);

@@ -52,8 +52,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
-    private NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
-        super(image, classObject);
+    private NativeObject(final ClassObject classObject, final Object storage) {
+        super(classObject);
         assert storage != null : "Unexpected `null` value";
         this.storage = storage;
     }
@@ -67,48 +67,48 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), chunk.getBytes());
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
-        return new NativeObject(img, klass, bytes);
+    public static NativeObject newNativeBytes(final ClassObject klass, final byte[] bytes) {
+        return new NativeObject(klass, bytes);
     }
 
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeBytes(img, klass, new byte[size]);
+    public static NativeObject newNativeBytes(final ClassObject klass, final int size) {
+        return newNativeBytes(klass, new byte[size]);
     }
 
     public static NativeObject newNativeInts(final SqueakImageChunk chunk) {
         return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), UnsafeUtils.toInts(chunk.getBytes()));
     }
 
-    public static NativeObject newNativeInts(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeInts(img, klass, new int[size]);
+    public static NativeObject newNativeInts(final ClassObject klass, final int size) {
+        return newNativeInts(klass, new int[size]);
     }
 
-    public static NativeObject newNativeInts(final SqueakImageContext img, final ClassObject klass, final int[] words) {
-        return new NativeObject(img, klass, words);
+    public static NativeObject newNativeInts(final ClassObject klass, final int[] words) {
+        return new NativeObject(klass, words);
     }
 
     public static NativeObject newNativeLongs(final SqueakImageChunk chunk) {
         return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), UnsafeUtils.toLongs(chunk.getBytes()));
     }
 
-    public static NativeObject newNativeLongs(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeLongs(img, klass, new long[size]);
+    public static NativeObject newNativeLongs(final ClassObject klass, final int size) {
+        return newNativeLongs(klass, new long[size]);
     }
 
-    public static NativeObject newNativeLongs(final SqueakImageContext img, final ClassObject klass, final long[] longs) {
-        return new NativeObject(img, klass, longs);
+    public static NativeObject newNativeLongs(final ClassObject klass, final long[] longs) {
+        return new NativeObject(klass, longs);
     }
 
     public static NativeObject newNativeShorts(final SqueakImageChunk chunk) {
         return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), UnsafeUtils.toShorts(chunk.getBytes()));
     }
 
-    public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeShorts(img, klass, new short[size]);
+    public static NativeObject newNativeShorts(final ClassObject klass, final int size) {
+        return newNativeShorts(klass, new short[size]);
     }
 
-    public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final short[] shorts) {
-        return new NativeObject(img, klass, shorts);
+    public static NativeObject newNativeShorts(final ClassObject klass, final short[] shorts) {
+        return new NativeObject(klass, shorts);
     }
 
     @Override

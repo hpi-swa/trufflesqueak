@@ -100,7 +100,7 @@ public final class EphemeronObject extends AbstractPointersObject {
     }
 
     public EphemeronObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
-        super(image, classObject, layout);
+        super(classObject, layout);
         image.containsEphemerons = true;
     }
 

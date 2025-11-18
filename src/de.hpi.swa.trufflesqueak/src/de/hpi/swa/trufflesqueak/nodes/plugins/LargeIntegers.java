@@ -1039,7 +1039,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     /* Utilities */
 
     public static NativeObject createLongMinOverflowResult(final SqueakImageContext image) {
-        return NativeObject.newNativeBytes(image, image.largePositiveIntegerClass, LONG_MIN_OVERFLOW_RESULT_BYTES.clone());
+        return NativeObject.newNativeBytes(image.largePositiveIntegerClass, LONG_MIN_OVERFLOW_RESULT_BYTES.clone());
     }
 
     private static int highBitOfLargeInt(final NativeObject value) {
@@ -1120,7 +1120,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         final ClassObject squeakClass = isNegative ? image.largeNegativeIntegerClass : image.largePositiveIntegerClass;
         final byte[] result = byteLen < byteSize ? largeIntGrowTo(bytes, byteLen) : bytes;
-        return NativeObject.newNativeBytes(image, squeakClass, result);
+        return NativeObject.newNativeBytes(squeakClass, result);
     }
 
     /**
@@ -1240,7 +1240,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     public static NativeObject toNativeObject(final SqueakImageContext image, final BigInteger result) {
-        return NativeObject.newNativeBytes(image, result.signum() >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass, toByteArray(result));
+        return NativeObject.newNativeBytes(result.signum() >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass, toByteArray(result));
     }
 
     @TruffleBoundary

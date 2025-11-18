@@ -41,7 +41,7 @@ public abstract class GetOrCreateContextWithoutFrameNode extends AbstractNode {
         if (hasContextProfile.profile(node, context != null)) {
             return context;
         } else {
-            return new ContextObject(getContext(node), frame);
+            return new ContextObject(frame);
         }
     }
 }

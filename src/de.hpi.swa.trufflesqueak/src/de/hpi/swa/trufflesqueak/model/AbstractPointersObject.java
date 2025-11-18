@@ -17,7 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
@@ -60,8 +59,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         super();
     }
 
-    protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
-        super(image, classObject);
+    protected AbstractPointersObject(final ClassObject classObject, final ObjectLayout layout) {
+        super(classObject);
         if (layout != null) {
             CompilerAsserts.partialEvaluationConstant(layout);
             this.layout = layout;

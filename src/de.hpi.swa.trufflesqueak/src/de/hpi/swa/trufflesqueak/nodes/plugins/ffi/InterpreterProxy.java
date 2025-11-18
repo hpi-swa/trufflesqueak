@@ -301,8 +301,8 @@ public final class InterpreterProxy {
         return boolToObject(bool != 0);
     }
 
-    private Object floatToObject(final double value) {
-        return new FloatObject(context, value);
+    private static Object floatToObject(final double value) {
+        return new FloatObject(value);
     }
 
     private NativeObject charPointerToByteString(final Object charPointer) {
@@ -508,7 +508,7 @@ public final class InterpreterProxy {
     private long instantiateClassIndexableSize(final long classPointer, final long size) {
         final Object object = objectRegistryGet(classPointer);
         if (object instanceof final ClassObject classObject) {
-            final AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(context, classObject, MiscUtils.toIntExact(size));
+            final AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(classObject, MiscUtils.toIntExact(size));
             return oopFor(newObject);
         } else {
             LogUtils.INTERPRETER_PROXY.severe(() -> "instantiateClassIndexableSize called with non-ClassObject: " + object);

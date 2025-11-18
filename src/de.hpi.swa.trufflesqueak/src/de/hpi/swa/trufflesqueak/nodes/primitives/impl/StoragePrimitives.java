@@ -116,7 +116,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
-                return newNode.execute(node, getContext(node), cachedReceiver);
+                return newNode.execute(node, cachedReceiver);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -130,7 +130,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
-                return newNode.execute(node, getContext(node), receiver);
+                return newNode.execute(node, receiver);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -148,7 +148,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("receiver.withEnsuredBehaviorHash()") final ClassObject cachedReceiver,
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             try {
-                return newNode.execute(node, getContext(node), cachedReceiver, sizeProfile.profile(node, (int) size));
+                return newNode.execute(node, cachedReceiver, sizeProfile.profile(node, (int) size));
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -162,7 +162,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final SqueakObjectNewNode newNode) {
             receiver.ensureBehaviorHash();
             try {
-                return newNode.execute(node, getContext(node), receiver, (int) size);
+                return newNode.execute(node, receiver, (int) size);
             } catch (final OutOfMemoryError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
@@ -288,7 +288,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final SqueakImageContext image = getContext();
             assert receiver.getBasicInstanceSize() == 0;
             assert receiver.getSuperclassOrNull() == image.compiledMethodClass.getSuperclassOrNull() : "Receiver must be subclass of CompiledCode";
-            final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize(image, (int) bytecodeCount, receiver);
+            final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize((int) bytecodeCount, receiver);
             newMethod.initializeHeader(header);
             return newMethod;
         }

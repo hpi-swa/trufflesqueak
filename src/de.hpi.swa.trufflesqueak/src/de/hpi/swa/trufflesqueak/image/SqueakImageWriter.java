@@ -65,7 +65,7 @@ public final class SqueakImageWriter {
         this.image = image;
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         stream = new BufferedOutputStream(truffleFile.newOutputStream());
-        freeList = NativeObject.newNativeLongs(image, image.nilClass /* ignored */, SqueakImageConstants.NUM_FREE_LISTS);
+        freeList = NativeObject.newNativeLongs(image.nilClass /* ignored */, SqueakImageConstants.NUM_FREE_LISTS);
     }
 
     /*
@@ -278,7 +278,7 @@ public final class SqueakImageWriter {
     }
 
     private long reserveBoxedFloat(final double value) {
-        return reserveBoxedObject(new FloatObject(image, value));
+        return reserveBoxedObject(new FloatObject(value));
     }
 
     private long reserveBoxedObject(final AbstractSqueakObjectWithHash object) {

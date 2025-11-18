@@ -15,7 +15,6 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
@@ -39,8 +38,8 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         super(); // for special ArrayObjects only
     }
 
-    private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
-        super(image, classObject);
+    private ArrayObject(final ClassObject classObject, final Object storage) {
+        super(classObject);
         this.storage = storage;
     }
 
@@ -53,16 +52,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         storage = storageCopy;
     }
 
-    public static ArrayObject createEmptyStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        return new ArrayObject(image, classObject, size);
+    public static ArrayObject createEmptyStrategy(final ClassObject classObject, final int size) {
+        return new ArrayObject(classObject, size);
     }
 
-    public static ArrayObject createObjectStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        return new ArrayObject(image, classObject, ArrayUtils.withAll(size, NilObject.SINGLETON));
+    public static ArrayObject createObjectStrategy(final ClassObject classObject, final int size) {
+        return new ArrayObject(classObject, ArrayUtils.withAll(size, NilObject.SINGLETON));
     }
 
-    public static ArrayObject createWithStorage(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
-        return new ArrayObject(image, classObject, storage);
+    public static ArrayObject createWithStorage(final ClassObject classObject, final Object storage) {
+        return new ArrayObject(classObject, storage);
     }
 
     public static boolean isCharNilTag(final char value) {

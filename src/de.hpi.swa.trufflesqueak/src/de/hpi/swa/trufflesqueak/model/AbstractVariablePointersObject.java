@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -22,8 +21,8 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
         super(header, classObject);
     }
 
-    public AbstractVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
-        super(image, classObject, layout);
+    public AbstractVariablePointersObject(final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
+        super(classObject, layout);
         variablePart = ArrayUtils.withAll(variableSize, NilObject.SINGLETON);
     }
 

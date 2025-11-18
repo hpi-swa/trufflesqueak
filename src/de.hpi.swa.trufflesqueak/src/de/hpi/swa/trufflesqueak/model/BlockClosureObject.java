@@ -28,8 +28,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 0) private Object[] copiedValues;
 
-    private BlockClosureObject(final SqueakImageContext image, final ClassObject squeakClass) {
-        super(image, squeakClass);
+    private BlockClosureObject(final ClassObject squeakClass) {
+        super(squeakClass);
     }
 
     private BlockClosureObject(final long header, final ClassObject squeakClass) {
@@ -37,9 +37,9 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         copiedValues = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final SqueakImageContext image, final ClassObject squeakClass, final CompiledCodeObject block, final int startPC, final int numArgs, final Object[] copied,
+    public BlockClosureObject(final ClassObject squeakClass, final CompiledCodeObject block, final int startPC, final int numArgs, final Object[] copied,
                     final Object receiver, final ContextObject outerContext) {
-        super(image, squeakClass);
+        super(squeakClass);
         assert startPC > 0;
         this.block = block;
         this.outerContext = outerContext;
@@ -63,8 +63,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         return new BlockClosureObject(header, squeakClass);
     }
 
-    public static BlockClosureObject create(final SqueakImageContext image, final ClassObject squeakClass, final int extraSize) {
-        final BlockClosureObject result = new BlockClosureObject(image, squeakClass);
+    public static BlockClosureObject create(final ClassObject squeakClass, final int extraSize) {
+        final BlockClosureObject result = new BlockClosureObject(squeakClass);
         result.copiedValues = new Object[extraSize];
         return result;
     }

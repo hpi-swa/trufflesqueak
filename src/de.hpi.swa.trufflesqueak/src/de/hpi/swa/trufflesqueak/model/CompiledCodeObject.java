@@ -105,8 +105,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         super(header, classObject);
     }
 
-    public CompiledCodeObject(final SqueakImageContext image, final byte[] bytes, final long header, final Object[] literals, final ClassObject classObject) {
-        super(image, classObject);
+    public CompiledCodeObject(final byte[] bytes, final long header, final Object[] literals, final ClassObject classObject) {
+        super(classObject);
         this.header = CompiledCodeHeaderUtils.toInt(header);
         this.literals = literals;
         this.bytes = bytes;
@@ -140,13 +140,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         bytes = outerCode.bytes;
     }
 
-    private CompiledCodeObject(final int size, final SqueakImageContext image, final ClassObject classObject) {
-        super(image, classObject);
+    private CompiledCodeObject(final int size, final ClassObject classObject) {
+        super(classObject);
         bytes = new byte[size];
     }
 
-    public static CompiledCodeObject newOfSize(final SqueakImageContext image, final int size, final ClassObject classObject) {
-        return new CompiledCodeObject(size, image, classObject);
+    public static CompiledCodeObject newOfSize(final int size, final ClassObject classObject) {
+        return new CompiledCodeObject(size, classObject);
     }
 
     private boolean hasExecutionData() {

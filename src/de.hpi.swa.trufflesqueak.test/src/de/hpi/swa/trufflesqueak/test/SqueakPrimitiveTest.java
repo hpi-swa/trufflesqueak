@@ -41,7 +41,7 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
         for (int i = 1; i < 8; i++) {
             assertNotSame(NilObject.SINGLETON, rcvr.getObject(i));
         }
-        final Object result = runPrimitive(105, rcvr, 1L, 6L, ArrayObject.createEmptyStrategy(image, image.arrayClass, 10), 1L);
+        final Object result = runPrimitive(105, rcvr, 1L, 6L, ArrayObject.createEmptyStrategy(image.arrayClass, 10), 1L);
         assertSame(result, rcvr);
         for (int i = 0; i < 6; i++) {
             assertSame(NilObject.SINGLETON, rcvr.getObject(i));

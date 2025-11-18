@@ -8,13 +8,12 @@ package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 
 public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
-    public EmptyObject(final SqueakImageContext image, final ClassObject classObject) {
-        super(image, classObject);
+    public EmptyObject(final ClassObject classObject) {
+        super(classObject);
     }
 
     public EmptyObject(final long header, final ClassObject classObject) {

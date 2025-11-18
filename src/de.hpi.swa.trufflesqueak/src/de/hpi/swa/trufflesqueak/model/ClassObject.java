@@ -60,7 +60,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     private ClassObject(final ClassObject original) {
-        super(original);
+        super((AbstractSqueakObjectWithClassAndHash) original);
         image = original.image;
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
@@ -72,7 +72,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        super(image, classObject);
+        super(classObject);
         this.image = image;
         pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.INLINE_POINTERS, 0), NilObject.SINGLETON);
         instancesAreClasses = image.isMetaClass(classObject);

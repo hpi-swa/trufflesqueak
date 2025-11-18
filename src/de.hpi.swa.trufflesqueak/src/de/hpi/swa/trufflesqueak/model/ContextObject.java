@@ -39,37 +39,38 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
 
     private Object senderOrFrameOrSize;
-    private boolean hasModifiedSender;
 
     public ContextObject(final long header) {
         super(header);
         senderOrFrameOrSize = null;
     }
 
-    public ContextObject(final SqueakImageContext image, final int size) {
-        super(image);
+    public ContextObject(final int size) {
+        super();
         senderOrFrameOrSize = size;
         assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE;
     }
 
-    public ContextObject(final SqueakImageContext image, final VirtualFrame frame) {
-        super(image);
+    public ContextObject(final VirtualFrame frame) {
+        super();
         FrameAccess.assertSenderNotNull(frame);
         this.senderOrFrameOrSize = FrameAccess.getSender(frame);
         FrameAccess.setContext(frame, this);
     }
 
-    public ContextObject(final SqueakImageContext image, final MaterializedFrame frame) {
-        super(image);
+    public ContextObject(final MaterializedFrame frame) {
+        super();
         FrameAccess.assertSenderNotNull(frame);
         this.senderOrFrameOrSize = frame;
+        this.setMarkedCodeFlags();
         FrameAccess.setContext(frame, this);
     }
 
     @TruffleBoundary
     private ContextObject(final ContextObject original) {
         super(original);
-        hasModifiedSender = original.hasModifiedSender();
+        // Copy modified sender flag and the marked code flags.
+        setAllBooleanBits(original.getAllBooleanBits());
         // Create shallow copy of Truffle frame
         final FrameDescriptor frameDescriptor = FrameAccess.getCodeObject(original.getTruffleFrame()).getFrameDescriptor();
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(original.getTruffleFrame().getArguments().clone(), frameDescriptor);
@@ -114,6 +115,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert senderOrFrameOrSize == null;
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(frameArguments, methodOrBlock.getFrameDescriptor());
+        setMarkedCodeFlags();
         FrameAccess.setContext(getTruffleFrame(), this);
         final Object pc = chunk.getPointer(CONTEXT.INSTRUCTION_POINTER);
         if (pc == NilObject.SINGLETON) {
@@ -159,6 +161,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     private MaterializedFrame getOrCreateTruffleFrame() {
         if (!hasTruffleFrame()) {
             senderOrFrameOrSize = createTruffleFrame(this);
+            setMarkedCodeFlags();
         }
         return getTruffleFrame();
     }
@@ -194,6 +197,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     @TruffleBoundary
     public void materializeFromFrames() {
         senderOrFrameOrSize = FrameAccess.findFrameForContext(this);
+        setMarkedCodeFlags();
         getCodeObject().getDoesNotNeedThisContextAssumption().invalidate();
     }
 
@@ -201,12 +205,47 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return FrameAccess.getSender(getTruffleFrame());
     }
 
+    /* Context has modified sender flag */
+    public boolean hasModifiedSender() {
+        return isBooleanASet();
+    }
+
+    public void clearModifiedSender() {
+        clearBooleanABit();
+    }
+
+    public void setModifiedSender() {
+        setBooleanABit();
+    }
+
+    /* Marked code flags (implemented in object header flags. */
+    private void setMarkedCodeFlags() {
+        if (getCodeObject().isUnwindMarked() && !hasClosure()) {
+            setUnwindMarked();
+        } else if (getCodeObject().isExceptionHandlerMarked()) {
+            setExceptionHandlerMarked();
+        }
+    }
+
+    private void resetMarkedCodeFlags() {
+        clearUnwindMarked();
+        clearExceptionHandlerMarked();
+    }
+
     /**
      * Returns <code>true</code> if method is unwind-marked. In this case, the ContextObject must
      * always have a frame.
      */
     public boolean isUnwindMarked() {
-        return hasTruffleFrame() && getCodeObject().isUnwindMarked() && !hasClosure();
+        return isBooleanBSet();
+    }
+
+    private void setUnwindMarked() {
+        setBooleanBBit();
+    }
+
+    private void clearUnwindMarked() {
+        clearBooleanBBit();
     }
 
     /**
@@ -214,15 +253,23 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * ContextObject must always have a frame.
      */
     public boolean isExceptionHandlerMarked() {
-        return hasTruffleFrame() && getCodeObject().isExceptionHandlerMarked();
+        return isBooleanCSet();
+    }
+
+    private void setExceptionHandlerMarked() {
+        setBooleanCBit();
+    }
+
+    private void clearExceptionHandlerMarked() {
+        clearBooleanCBit();
     }
 
     /**
      * Sets the sender of a ContextObject.
      */
     public void setSender(final AbstractSqueakObject value) {
-        if (!hasModifiedSender && hasTruffleFrame() && FrameAccess.getSender(getTruffleFrame()) != value) {
-            hasModifiedSender = true;
+        if (!hasModifiedSender() && hasTruffleFrame() && FrameAccess.getSender(getTruffleFrame()) != value) {
+            setModifiedSender();
         }
         setSenderUnsafe(value);
     }
@@ -232,7 +279,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void removeSender() {
-        if (hasModifiedSender) {
+        if (hasModifiedSender()) {
             clearModifiedSender();
         }
         setSenderUnsafe(NilObject.SINGLETON);
@@ -278,6 +325,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public void setCodeObject(final CompiledCodeObject value) {
         senderOrFrameOrSize = createTruffleFrame(this, getTruffleFrame(), value);
+        setMarkedCodeFlags();
+    }
+
+    public void overwriteCodeObject(final CompiledCodeObject value) {
+        resetMarkedCodeFlags();
+        setCodeObject(value);
     }
 
     @TruffleBoundary
@@ -341,6 +394,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // Create and initialize new frame
         final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(arguments, frameDescriptor);
         senderOrFrameOrSize = frame;
+        setMarkedCodeFlags();
         FrameAccess.assertSenderNotNull(frame);
         FrameAccess.assertReceiverNotNull(frame);
         FrameAccess.setContext(frame, this);
@@ -405,14 +459,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return new ContextObject(this);
     }
 
-    public void clearModifiedSender() {
-        hasModifiedSender = false;
-    }
-
-    public boolean hasModifiedSender() {
-        return hasModifiedSender;
-    }
-
     public void push(final Object value) {
         assert value != null : "Unexpected `null` value";
         final int currentStackPointer = getStackPointer();
@@ -466,15 +512,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public void become(final ContextObject other) {
         final Object otherSenderOrFrame = other.senderOrFrameOrSize;
-        final boolean otherHasModifiedSender = other.hasModifiedSender;
-        other.setFields(senderOrFrameOrSize, hasModifiedSender);
-        setFields(otherSenderOrFrame, otherHasModifiedSender);
+        final int otherBooleans = other.getAllBooleanBits();
+        other.setFields(senderOrFrameOrSize, getAllBooleanBits());
+        setFields(otherSenderOrFrame, otherBooleans);
     }
 
-    private void setFields(final Object otherSenderOrFrame, final boolean otherHasModifiedSender) {
+    private void setFields(final Object otherSenderOrFrame, final int otherBooleanBits) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         senderOrFrameOrSize = otherSenderOrFrame;
-        hasModifiedSender = otherHasModifiedSender;
+        setAllBooleanBits(otherBooleanBits);
     }
 
     public Object[] getReceiverAndNArguments() {
@@ -540,7 +586,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             final MaterializedFrame frame = getTruffleFrame();
             final CompiledCodeObject compiledCodeObject = FrameAccess.getCodeObject(frame);
             if (compiledCodeObject != null && fromToMap.get(compiledCodeObject) instanceof final CompiledCodeObject o) {
-                setCodeObject(o);
+                overwriteCodeObject(o);
             }
             final AbstractSqueakObject sender = FrameAccess.getSender(frame);
             if (sender != null && fromToMap.get(sender) instanceof final ContextObject o) {

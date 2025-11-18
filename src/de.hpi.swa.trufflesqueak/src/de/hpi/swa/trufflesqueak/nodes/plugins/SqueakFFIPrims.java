@@ -310,9 +310,9 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             } catch (final UnsupportedMessageException e) {
                 CompilerDirectives.transferToInterpreter();
                 LogUtils.MAIN.warning(e.toString());
-                return newExternalAddress(image, receiver, 0L);
+                return newExternalAddress(receiver, 0L);
             }
-            return newExternalAddress(image, receiver, pointer);
+            return newExternalAddress(receiver, pointer);
         }
 
         @TruffleBoundary
@@ -320,8 +320,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return Source.newBuilder("nfi", String.format("load \"%s\"", getPathOrFail(image, moduleName)), "native").build();
         }
 
-        private static NativeObject newExternalAddress(final SqueakImageContext image, final ClassObject externalAddressClass, final long pointer) {
-            return NativeObject.newNativeBytes(image, externalAddressClass,
+        private static NativeObject newExternalAddress(final ClassObject externalAddressClass, final long pointer) {
+            return NativeObject.newNativeBytes(externalAddressClass,
                             new byte[]{(byte) pointer, (byte) (pointer >> 8), (byte) (pointer >> 16), (byte) (pointer >> 24), (byte) (pointer >> 32), (byte) (pointer >> 40),
                                             (byte) (pointer >> 48), (byte) (pointer >> 56)});
         }

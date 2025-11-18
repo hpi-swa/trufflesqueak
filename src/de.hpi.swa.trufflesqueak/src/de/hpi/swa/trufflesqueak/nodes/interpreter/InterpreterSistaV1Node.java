@@ -363,7 +363,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     case BC.EXT_PUSH_PSEUDO_VARIABLE: {
                         if (extB == 0) {
-                            push(frame, sp++, getOrCreateContext(frame, currentPC, image));
+                            push(frame, sp++, getOrCreateContext(frame, currentPC));
                         } else {
                             throw unknownBytecode();
                         }
@@ -375,27 +375,27 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, FrameAccess.getReceiver(frame));
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, FrameAccess.getReceiver(frame));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TRUE: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, BooleanObject.TRUE);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, BooleanObject.TRUE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_FALSE: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, BooleanObject.FALSE);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, BooleanObject.FALSE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, NilObject.SINGLETON);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, NilObject.SINGLETON);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, currentPC, image, loopCounter.value, pc, sp, top(frame, sp));
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, top(frame, sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
@@ -781,7 +781,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         } else {
                             values = ArrayUtils.withAll(arraySize, NilObject.SINGLETON);
                         }
-                        push(frame, sp++, ArrayObject.createWithStorage(image, image.arrayClass, values));
+                        push(frame, sp++, ArrayObject.createWithStorage(image.arrayClass, values));
                         break;
                     }
                     case BC.EXT_PUSH_INTEGER: {
@@ -935,9 +935,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         sp -= numCopied;
                         final boolean ignoreContext = (byteB & 0x40) != 0;
                         final boolean receiverOnStack = (byteB & 0x80) != 0;
-                        final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, currentPC, image);
+                        final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, currentPC);
                         final Object receiver = receiverOnStack ? pop(frame, --sp) : FrameAccess.getReceiver(frame);
-                        push(frame, sp++, new BlockClosureObject(image, image.getFullBlockClosureClass(), block, blockInitialPC, blockNumArgs, copiedValues, receiver, outerContext));
+                        push(frame, sp++, new BlockClosureObject(image.getFullBlockClosureClass(), block, blockInitialPC, blockNumArgs, copiedValues, receiver, outerContext));
                         extA = 0;
                         break;
                     }
@@ -946,7 +946,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final int numCopied = (byteA >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
                         final Object[] copiedValues = popN(frame, sp, numCopied);
                         sp -= numCopied;
-                        push(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues, getOrCreateContext(frame, currentPC, image)));
+                        push(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues, getOrCreateContext(frame, currentPC)));
                         final int blockSize = getByteExtended(bc, pc++, extB);
                         pc += blockSize;
                         extA = extB = 0;

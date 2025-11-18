@@ -37,8 +37,8 @@ public final class FloatObjectNodes {
         }
 
         @Specialization(guards = "!isFinite(value)")
-        protected final FloatObject doNaNOrInfinite(final double value) {
-            return new FloatObject(getContext(), value);
+        protected static final FloatObject doNaNOrInfinite(final double value) {
+            return new FloatObject(value);
         }
     }
 }

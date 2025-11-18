@@ -141,7 +141,7 @@ public final class SqueakImageContext {
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
 
-    public final CompiledCodeObject dummyMethod = new CompiledCodeObject(this, null, CompiledCodeHeaderUtils.makeHeader(true, 1, 0, 0, false, true), ArrayUtils.EMPTY_ARRAY, compiledMethodClass);
+    public final CompiledCodeObject dummyMethod = new CompiledCodeObject(null, CompiledCodeHeaderUtils.makeHeader(true, 1, 0, 0, false, true), ArrayUtils.EMPTY_ARRAY, compiledMethodClass);
     public final VirtualFrame externalSenderFrame = FrameAccess.newDummyFrame(dummyMethod);
 
     /* Method Cache */
@@ -366,7 +366,7 @@ public final class SqueakImageContext {
         final PointersObject methodNode;
         try {
             methodNode = (PointersObject) parserSharedInstance.send(this, "parse:class:noPattern:notifying:ifFail:",
-                            smalltalkSource, nilClass, BooleanObject.TRUE, requestorSharedInstanceOrNil, BlockClosureObject.create(this, blockClosureClass, 0));
+                            smalltalkSource, nilClass, BooleanObject.TRUE, requestorSharedInstanceOrNil, BlockClosureObject.create(blockClosureClass, 0));
         } catch (final ProcessSwitch e) {
             /*
              * A ProcessSwitch exception is thrown in case of a syntax error to open the
@@ -377,7 +377,7 @@ public final class SqueakImageContext {
         }
         final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send(this, "generate");
 
-        final ContextObject doItContext = new ContextObject(this, doItMethod.getSqueakContextSize());
+        final ContextObject doItContext = new ContextObject(doItMethod.getSqueakContextSize());
         doItContext.setReceiver(NilObject.SINGLETON);
         doItContext.setCodeObject(doItMethod);
         doItContext.setInstructionPointer(0);
@@ -416,10 +416,6 @@ public final class SqueakImageContext {
 
     public SqueakLanguage getLanguage() {
         return language;
-    }
-
-    public boolean getCurrentMarkingFlag() {
-        return currentMarkingFlag;
     }
 
     public boolean toggleCurrentMarkingFlag() {
@@ -611,12 +607,12 @@ public final class SqueakImageContext {
 
     public NativeObject getResourcesDirectory() {
         ensureResourcesDirectoryAndPathInitialized();
-        return NativeObject.newNativeBytes(this, byteStringClass, resourcesDirectoryBytes.clone());
+        return NativeObject.newNativeBytes(byteStringClass, resourcesDirectoryBytes.clone());
     }
 
     public NativeObject getResourcesPath() {
         ensureResourcesDirectoryAndPathInitialized();
-        return NativeObject.newNativeBytes(this, byteStringClass, resourcesPathBytes.clone());
+        return NativeObject.newNativeBytes(byteStringClass, resourcesPathBytes.clone());
     }
 
     private void ensureResourcesDirectoryAndPathInitialized() {
@@ -1097,11 +1093,11 @@ public final class SqueakImageContext {
      */
 
     public ArrayObject asArrayOfLongs(final long... elements) {
-        return ArrayObject.createWithStorage(this, arrayClass, elements);
+        return ArrayObject.createWithStorage(arrayClass, elements);
     }
 
     public ArrayObject asArrayOfObjects(final Object... elements) {
-        return ArrayObject.createWithStorage(this, arrayClass, elements);
+        return ArrayObject.createWithStorage(arrayClass, elements);
     }
 
     public ClassObject getFractionClass() {
@@ -1135,7 +1131,7 @@ public final class SqueakImageContext {
         }
         final long gcd = Math.abs(m);
         // Instantiate reduced fraction
-        final PointersObject fraction = new PointersObject(this, getFractionClass(), fractionClass.getLayout());
+        final PointersObject fraction = new PointersObject(getFractionClass(), fractionClass.getLayout());
         writeNode.execute(inlineTarget, fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
         writeNode.execute(inlineTarget, fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
         return fraction;
@@ -1149,11 +1145,11 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asByteArray(final byte[] bytes) {
-        return NativeObject.newNativeBytes(this, byteArrayClass, bytes);
+        return NativeObject.newNativeBytes(byteArrayClass, bytes);
     }
 
     public NativeObject asByteString(final byte[] bytes) {
-        return NativeObject.newNativeBytes(this, byteStringClass, bytes);
+        return NativeObject.newNativeBytes(byteStringClass, bytes);
     }
 
     public NativeObject asByteString(final String value) {
@@ -1166,7 +1162,7 @@ public final class SqueakImageContext {
     }
 
     private NativeObject asWideString(final String value) {
-        return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
+        return NativeObject.newNativeInts(getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
 
     public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node) {
@@ -1174,18 +1170,18 @@ public final class SqueakImageContext {
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final Object xPos, final Object yPos) {
-        final PointersObject point = new PointersObject(this, pointClass, null);
+        final PointersObject point = new PointersObject(pointClass, null);
         writeNode.execute(inlineTarget, point, POINT.X, xPos);
         writeNode.execute(inlineTarget, point, POINT.Y, yPos);
         return point;
     }
 
     public ArrayObject newEmptyArray() {
-        return ArrayObject.createWithStorage(this, arrayClass, ArrayUtils.EMPTY_ARRAY);
+        return ArrayObject.createWithStorage(arrayClass, ArrayUtils.EMPTY_ARRAY);
     }
 
     public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
-        final PointersObject message = new PointersObject(this, messageClass, null);
+        final PointersObject message = new PointersObject(messageClass, null);
         writeNode.execute(inlineTarget, message, MESSAGE.SELECTOR, selector);
         writeNode.execute(inlineTarget, message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
         assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";

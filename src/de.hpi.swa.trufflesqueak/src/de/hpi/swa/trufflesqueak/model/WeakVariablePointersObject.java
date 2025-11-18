@@ -28,8 +28,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         super(header, classObject);
     }
 
-    public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
-        super(image, classObject, layout, variableSize);
+    public WeakVariablePointersObject(final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
+        super(classObject, layout, variableSize);
     }
 
     private WeakVariablePointersObject(final WeakVariablePointersObject original) {

@@ -1259,7 +1259,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             if (isFiniteProfile.profile(node, receiver.isFinite())) {
                 return Math.sin(receiver.getValue());
             } else {
-                return FloatObject.valueOf(getContext(node), Double.NaN);
+                return FloatObject.valueOf(Double.NaN);
             }
         }
     }
@@ -1291,13 +1291,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final InlinedConditionProfile isPositiveInfinityProfile,
                         @Cached final InlinedConditionProfile isNegativeInfinityOrNaNProfile) {
             if (isZeroProfile.profile(node, receiver.isZero())) {
-                return FloatObject.valueOf(getContext(node), Double.NEGATIVE_INFINITY);
+                return FloatObject.valueOf(Double.NEGATIVE_INFINITY);
             } else if (isFiniteProfile.profile(node, receiver.isFinite())) {
                 return Math.log(receiver.getValue());
             } else if (isPositiveInfinityProfile.profile(node, receiver.isPositiveInfinity())) {
                 return receiver.shallowCopy();
             } else if (isNegativeInfinityOrNaNProfile.profile(node, receiver.isNegativeInfinity() || receiver.isNaN())) {
-                return FloatObject.valueOf(getContext(node), Double.NaN);
+                return FloatObject.valueOf(Double.NaN);
             } else {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
@@ -1737,13 +1737,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isZero(receiver)")
-        protected final FloatObject doFloatZero(@SuppressWarnings("unused") final double receiver) {
-            return FloatObject.valueOf(getContext(), Double.NEGATIVE_INFINITY);
+        protected static final FloatObject doFloatZero(@SuppressWarnings("unused") final double receiver) {
+            return FloatObject.valueOf(Double.NEGATIVE_INFINITY);
         }
 
         @Specialization(guards = "isLessThanZero(receiver)")
-        protected final FloatObject doDoubleNegative(@SuppressWarnings("unused") final double receiver) {
-            return FloatObject.valueOf(getContext(), Double.NaN);
+        protected static final FloatObject doDoubleNegative(@SuppressWarnings("unused") final double receiver) {
+            return FloatObject.valueOf(Double.NaN);
         }
     }
 
