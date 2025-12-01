@@ -53,8 +53,9 @@ public final class StartContextRootNode extends AbstractRootNode {
         ensureInitialized(frame);
         initializeFrame(frame);
         final SqueakImageContext image = SqueakImageContext.get(this);
+        final boolean isCountableStackFrame = CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
         try {
-            if (image.enteringContextExceedsDepth()) {
+            if (isCountableStackFrame && image.enteringContextExceedsDepth()) {
                 CompilerDirectives.transferToInterpreter();
                 // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
                 final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
@@ -62,13 +63,15 @@ public final class StartContextRootNode extends AbstractRootNode {
                 throw ProcessSwitch.SINGLETON;
             }
             interruptHandlerNode.execute(frame);
-            return executeBytecodeNode.execute(frame, initialPC);
+            return executeBytecodeNode.execute(frame, initialPC, initialSP);
         } catch (final NonVirtualReturn | ProcessSwitch | CannotReturnToTarget nvr) {
             /* {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame);
             throw nvr;
         } finally {
-            image.exitingContext();
+            if (isCountableStackFrame) {
+                image.exitingContext();
+            }
         }
     }
 
