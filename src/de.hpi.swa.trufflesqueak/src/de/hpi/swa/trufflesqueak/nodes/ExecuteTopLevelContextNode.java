@@ -30,6 +30,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
 import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -54,7 +55,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         this.image = image;
         initialContext = context;
         this.isImageResuming = isImageResuming;
-        sendCannotReturnNode = Dispatch1Node.create(image.cannotReturn);
+        sendCannotReturnNode = Dispatch1NodeGen.create(image.cannotReturn);
     }
 
     public static ExecuteTopLevelContextNode create(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {

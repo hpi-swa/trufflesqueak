@@ -18,6 +18,7 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
+import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -35,35 +36,34 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimPointXNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimPointYNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial0NodeFactory.BytecodePrimSizeNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimAddNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimBitAndNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimBitOrNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimBitShiftNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimDivNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimDivideNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimGreaterOrEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimGreaterThanNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimIdenticalSistaV1NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimLessOrEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimLessThanNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimMakePointNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimModNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimMultiplyNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimNotEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimNotIdenticalSistaV1NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.SendSpecialNodeFactory.SendSpecial1NodeFactory.BytecodePrimSubtractNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeFactory.DirectedSuperDispatchNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimAddNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimBitAndNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimBitOrNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimBitShiftNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimDivNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimDivideNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimGreaterOrEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimGreaterThanNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimIdenticalSistaV1NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimLessOrEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimLessThanNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimMakePointNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimModNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimMultiplyNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimNotEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimNotIdenticalSistaV1NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimPointXNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimPointYNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSizeNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSubtractNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -279,7 +279,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     break;
                 }
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
-                    final int offset = JumpBytecodes.calculateShortOffset(b);
+                    final int offset = calculateShortOffset(b);
                     if (offset < 0) {
                         data[currentPC] = insert(CheckForInterruptsInLoopNode.createForLoop(data, pc, 1, offset));
                     }
@@ -345,7 +345,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     final int literalIndex = (byte1 >> 3) + (extA << 5);
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
                     if (isDirected) {
-                        data[currentPC] = insert(DirectedSuperDispatchNaryNodeGen.create(selector));
+                        data[currentPC] = insert(DispatchDirectedSuperNaryNodeGen.create(selector));
                     } else {
                         final ClassObject methodClass = code.getMethod().getMethodClassSlow();
                         data[currentPC] = insert(DispatchSuperNaryNodeGen.create(methodClass, selector));
@@ -354,7 +354,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     break;
                 }
                 case BC.EXT_UNCONDITIONAL_JUMP: {
-                    final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc++), extB);
+                    final int offset = calculateLongExtendedOffset(getByte(bc, pc++), extB);
                     if (offset < 0) {
                         data[currentPC] = insert(CheckForInterruptsInLoopNode.createForLoop(data, currentPC, 2, offset));
                     }
@@ -449,7 +449,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                         BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
                         externalizePCAndSP(frame, pc, sp); // for ContextObject access
-                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).executeSpecialized(this, FrameAccess.getReceiver(frame), b & 0xF));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
                         break;
                     }
                     case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
@@ -586,7 +586,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             final byte bytecode = getByte(bc, pc);
                             if (BC.SHORT_CJUMP_FALSE_0 <= bytecode && bytecode <= BC.SHORT_CJUMP_FALSE_7) {
                                 if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!possibleCondition)) {
-                                    pc += JumpBytecodes.calculateShortOffset(bytecode);
+                                    pc += calculateShortOffset(bytecode);
                                 }
                                 pc++;
                                 break;
@@ -639,7 +639,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
-                        final int offset = JumpBytecodes.calculateShortOffset(b);
+                        final int offset = calculateShortOffset(b);
                         pc += offset;
                         if (offset < 0) {
                             if (CompilerDirectives.hasNextTier()) {
@@ -667,7 +667,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final Object stackValue = pop(frame, --sp);
                         if (stackValue instanceof final Boolean condition) {
                             if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(condition)) {
-                                pc += JumpBytecodes.calculateShortOffset(b);
+                                pc += calculateShortOffset(b);
                             }
                         } else {
                             sendMustBeBooleanInInterpreter(frame, pc, stackValue);
@@ -678,7 +678,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final Object stackValue = pop(frame, --sp);
                         if (stackValue instanceof final Boolean condition) {
                             if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(!condition)) {
-                                pc += JumpBytecodes.calculateShortOffset(b);
+                                pc += calculateShortOffset(b);
                             }
                         } else {
                             sendMustBeBooleanInInterpreter(frame, pc, stackValue);
@@ -710,7 +710,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     case BC.EXT_PUSH_RECEIVER_VARIABLE: {
                         push(frame, currentPC, sp++,
-                                        uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).executeSpecialized(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA)));
+                                        uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA)));
                         extA = 0;
                         break;
                     }
@@ -793,7 +793,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.EXT_UNCONDITIONAL_JUMP: {
-                        final int offset = JumpBytecodes.calculateLongExtendedOffset(getByte(bc, pc++), extB);
+                        final int offset = calculateLongExtendedOffset(getByte(bc, pc++), extB);
                         pc += offset;
                         if (offset < 0) {
                             if (CompilerDirectives.hasNextTier()) {
@@ -916,7 +916,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.PUSH_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).executeSpecialized(this, getTemp(frame, tempVectorIndex), remoteTempIndex));
+                        push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex));
                         break;
                     }
                     case BC.STORE_REMOTE_TEMP_LONG: {
@@ -950,6 +950,18 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     private static int getByteExtended(final byte[] bc, final int pc, final int extend) {
         return getUnsignedInt(bc, pc) + (extend << 8);
+    }
+
+    private Object sendSuperDirected(final VirtualFrame frame, final int currentPC, final ClassObject lookupClass, final Object receiver, final Object[] arguments) {
+        try {
+            return uncheckedCast(data[currentPC], DispatchDirectedSuperNaryNodeGen.class).execute(frame, lookupClass, receiver, arguments);
+        } catch (final AbstractStandardSendReturn r) {
+            return handleReturnException(frame, currentPC, r);
+        }
+    }
+
+    public static int calculateLongExtendedOffset(final byte bytecode, final int extB) {
+        return Byte.toUnsignedInt(bytecode) + (extB << 8);
     }
 
     static class BC {

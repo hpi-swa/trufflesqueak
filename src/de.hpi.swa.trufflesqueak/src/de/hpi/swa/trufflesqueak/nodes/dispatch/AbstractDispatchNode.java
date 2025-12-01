@@ -8,9 +8,8 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsInLoopNode.PossibleSendMarker;
 
-abstract class AbstractDispatchNode extends AbstractNode implements PossibleSendMarker {
+public abstract class AbstractDispatchNode extends AbstractNode {
     protected final NativeObject selector;
 
     AbstractDispatchNode(final NativeObject selector) {

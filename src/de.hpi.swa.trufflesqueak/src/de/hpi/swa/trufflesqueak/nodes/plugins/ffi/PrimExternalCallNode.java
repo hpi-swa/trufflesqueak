@@ -226,7 +226,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
         final int stackPointer = FrameAccess.getStackPointer(frame);
         for (int i = 0; i < numReceiverAndArguments; i++) {
             final int stackIndex = stackPointer + i;
-            /* Only values stored above initialSP are cleared in FrameStackReadNode */
+            /* Only values stored above initialSP are cleared */
             if (stackIndex >= initialSP) {
                 FrameAccess.setStackSlot(frame, stackIndex, receiverAndArguments[i]);
             }

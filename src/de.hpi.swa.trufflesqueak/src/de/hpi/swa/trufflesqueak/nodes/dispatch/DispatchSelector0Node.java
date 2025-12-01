@@ -40,12 +40,8 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchDirectPrimitiveFallback0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchDirectedSuper0NodeFactory.DirectedSuperDispatch0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchSuper0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
@@ -54,55 +50,12 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class DispatchSelector0Node extends DispatchSelectorNode {
-    @Child private FrameStackReadNode receiverNode;
-    @Child private AbstractDispatch0Node dispatchNode;
-
-    DispatchSelector0Node(final VirtualFrame frame, final AbstractDispatch0Node dispatchNode) {
-        final int sp = FrameAccess.getStackPointer(frame);
-        receiverNode = FrameStackReadNode.create(frame, sp - 1, false); // replaced by result
-        this.dispatchNode = dispatchNode;
-    }
-
-    @Override
-    public Object execute(final VirtualFrame frame) {
-        return dispatchNode.execute(frame, receiverNode.executeRead(frame));
-    }
-
-    @Override
-    public NativeObject getSelector() {
-        return dispatchNode.selector;
-    }
-
-    static DispatchSelector0Node create(final VirtualFrame frame, final NativeObject selector) {
-        return new DispatchSelector0Node(frame, Dispatch0NodeGen.create(selector));
-    }
-
-    static DispatchSelector0Node createSuper(final VirtualFrame frame, final ClassObject methodClass, final NativeObject selector) {
-        return new DispatchSelector0Node(frame, DispatchSuper0NodeGen.create(methodClass, selector));
-    }
-
-    static DispatchSelector0Node createDirectedSuper(final VirtualFrame frame, final NativeObject selector) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
-        // Trick: decrement stack pointer so that node uses the right receiver and args
-        FrameAccess.setStackPointer(frame, stackPointer - 1);
-        final DispatchSelector0Node result = new DispatchSelector0Node(frame, new DispatchDirectedSuper0Node(frame, selector, stackPointer));
-        // Restore stack pointer
-        FrameAccess.setStackPointer(frame, stackPointer);
-        return result;
-    }
-
-    protected abstract static class AbstractDispatch0Node extends AbstractDispatchNode {
-        AbstractDispatch0Node(final NativeObject selector) {
+    public abstract static class Dispatch0Node extends AbstractDispatchNode {
+        Dispatch0Node(final NativeObject selector) {
             super(selector);
         }
 
         public abstract Object execute(VirtualFrame frame, Object receiver);
-    }
-
-    public abstract static class Dispatch0Node extends AbstractDispatch0Node {
-        Dispatch0Node(final NativeObject selector) {
-            super(selector);
-        }
 
         @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
         protected static final Object doDirect(final VirtualFrame frame, final Object receiver,
@@ -117,55 +70,6 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver,
                         @Cached final DispatchIndirect0Node dispatchNode) {
             return dispatchNode.execute(frame, false, selector, receiver);
-        }
-    }
-
-    public abstract static class DispatchSuper0Node extends AbstractDispatch0Node {
-        protected final ClassObject methodClass;
-
-        DispatchSuper0Node(final ClassObject methodClass, final NativeObject selector) {
-            super(selector);
-            this.methodClass = methodClass;
-        }
-
-        @Specialization(assumptions = {"methodClass.getClassHierarchyAndMethodDictStable()", "dispatchDirectNode.getAssumptions()"})
-        protected static final Object doCached(final VirtualFrame frame, final Object receiver,
-                        @Cached("create(selector, methodClass.getResolvedSuperclass())") final DispatchDirect0Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver);
-        }
-    }
-
-    public static final class DispatchDirectedSuper0Node extends AbstractDispatch0Node {
-        @Child private FrameStackReadNode directedClassNode;
-        @Child private DispatchDirectedSuper0Node.DirectedSuperDispatch0Node dispatchNode;
-
-        DispatchDirectedSuper0Node(final VirtualFrame frame, final NativeObject selector, final int stackPointer) {
-            super(selector);
-            directedClassNode = FrameStackReadNode.create(frame, stackPointer - 1, true);
-            dispatchNode = DirectedSuperDispatch0NodeGen.create(selector);
-        }
-
-        @Override
-        public Object execute(final VirtualFrame frame, final Object receiver) {
-            final ClassObject lookupClass = CompilerDirectives.castExact(directedClassNode.executeRead(frame), ClassObject.class).getResolvedSuperclass();
-            assert lookupClass != null;
-            return dispatchNode.execute(frame, lookupClass, receiver);
-        }
-
-        public abstract static class DirectedSuperDispatch0Node extends AbstractDispatchNode {
-            DirectedSuperDispatch0Node(final NativeObject selector) {
-                super(selector);
-            }
-
-            public abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver);
-
-            @Specialization(guards = "lookupClass == cachedLookupClass", assumptions = {"cachedLookupClass.getClassHierarchyAndMethodDictStable()",
-                            "dispatchDirectNode.getAssumptions()"}, limit = "3")
-            protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject lookupClass, final Object receiver,
-                            @SuppressWarnings("unused") @Cached("lookupClass") final ClassObject cachedLookupClass,
-                            @Cached("create(selector, cachedLookupClass)") final DispatchDirect0Node dispatchDirectNode) {
-                return dispatchDirectNode.execute(frame, receiver);
-            }
         }
     }
 
@@ -185,11 +89,6 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
         public static final DispatchDirect0Node create(final NativeObject selector, final LookupClassGuard guard, final boolean canPrimFail) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
             return create(selector, receiverClass, canPrimFail);
-        }
-
-        @NeverDefault
-        public static final DispatchDirect0Node create(final NativeObject selector, final ClassObject lookupClass) {
-            return create(selector, lookupClass, false);
         }
 
         @NeverDefault

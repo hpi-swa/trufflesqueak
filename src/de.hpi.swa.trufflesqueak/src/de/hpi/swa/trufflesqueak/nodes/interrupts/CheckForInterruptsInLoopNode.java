@@ -17,15 +17,14 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDispatchNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.AbstractBytecodePrimNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @DenyReplace
 public final class CheckForInterruptsInLoopNode extends AbstractNode {
     private static final CheckForInterruptsInLoopNode SINGLETON = new CheckForInterruptsInLoopNode();
-
-    public interface PossibleSendMarker {
-    }
 
     private CheckForInterruptsInLoopNode() {
     }
@@ -42,10 +41,7 @@ public final class CheckForInterruptsInLoopNode extends AbstractNode {
              * FIXME?: Search for call nodes but reject the ones from closure primitives as they do
              * not check for interrupts.
              */
-            // if ((NodeUtil.findFirstNodeInstance(abs, DirectCallNode.class) != null ||
-            // NodeUtil.findFirstNodeInstance(abs, IndirectCallNode.class) != null) &&
-            // NodeUtil.findFirstNodeInstance(abs, AbstractClosurePrimitiveNode.class) == null) {
-            if (data[i] instanceof PossibleSendMarker) {
+            if (data[i] instanceof AbstractDispatchNode || data[i] instanceof AbstractBytecodePrimNode) {
                 return null;
             }
         }

@@ -72,7 +72,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchDirect0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchIndirect0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.DispatchDirect1Node;
@@ -495,8 +495,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     /**
      * Same as
-     * {@link de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectedSuperNaryNode.DirectedSuperDispatchNaryNode
-     * DirectedSuperDispatchNaryNode} but with an additional argument length check.
+     * {@link de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectedSuperNaryNode
+     * DispatchDirectedSuperNaryNode} but with an additional argument length check.
      */
     protected abstract static class DirectedSuperDispatchNaryPrimNode extends AbstractNode {
         protected final NativeObject selector;

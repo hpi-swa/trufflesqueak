@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderV3PlusClosures;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @SuppressWarnings("static-method")
@@ -111,7 +111,7 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         final int header = 14548994; // header with numTemp=55
         final Object[] literals = {NilObject.SINGLETON, NilObject.SINGLETON};
         final CompiledCodeObject code = makeMethod(header, literals, 0x70, 0x68, 0x10, 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, 0xC9, 0x7C);
-        final CharSequence source = SqueakBytecodeV3PlusClosuresDecoder.SINGLETON.decodeToString(code);
+        final CharSequence source = DecoderV3PlusClosures.SINGLETON.decodeToString(code);
         assertEquals(String.join("\n",
                         "1 <70> self",
                         "2 <68> popIntoTemp: 0",
@@ -156,7 +156,7 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
                         176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
                         189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201,
                         202, 203, 204, 205, 206, 207, 208, 225, 240);
-        final CharSequence source = SqueakBytecodeV3PlusClosuresDecoder.SINGLETON.decodeToString(code);
+        final CharSequence source = DecoderV3PlusClosures.SINGLETON.decodeToString(code);
         assertEquals(ALL_BYTECODES_EXPECTED_RESULT, source);
     }
 
