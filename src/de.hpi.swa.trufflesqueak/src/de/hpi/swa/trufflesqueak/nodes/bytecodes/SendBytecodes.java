@@ -22,13 +22,14 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -118,8 +119,8 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
         private final int stackPointer;
-        private final ConditionProfile nlrProfile = ConditionProfile.create();
-        private final ConditionProfile nvrProfile = ConditionProfile.create();
+        private final ConditionProfile returnExceptionProfile = ConditionProfile.create();
+        private BranchProfile terminateProfile = BranchProfile.create();
 
         @Child protected DispatchSelectorNode dispatchNode;
         @Child private FrameStackWriteNode writeResultNode;
@@ -137,18 +138,15 @@ public final class SendBytecodes {
             Object result;
             try {
                 result = dispatchNode.execute(frame);
-            } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.targetIsFrame(frame))) {
-                    result = nlr.getReturnValue();
+            } catch (final AbstractStandardSendReturn r) {
+                if (returnExceptionProfile.profile(r.targetIsFrame(frame))) {
+                    result = r.getReturnValue();
                 } else {
-                    FrameAccess.terminateFrame(frame);
-                    throw nlr;
-                }
-            } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.targetIsFrame(frame))) {
-                    result = nvr.getReturnValue();
-                } else {
-                    throw nvr;
+                    if (r instanceof NonLocalReturn) {
+                        terminateProfile.enter();
+                        FrameAccess.terminateFrame(frame);
+                    }
+                    throw r;
                 }
             }
             // Push result
