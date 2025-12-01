@@ -424,16 +424,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public void setLiteral(final long longIndex, final Object obj) {
-        final int index = (int) longIndex;
-        if (index == 0) {
-            assert obj instanceof Long;
-            final int oldNumLiterals = getNumLiterals();
-            header = CompiledCodeHeaderUtils.toInt((long) obj);
-            assert getNumLiterals() == oldNumLiterals;
-            invalidateCallTarget();
-        } else {
-            literals[index - 1] = obj;
-        }
+        UnsafeUtils.putObject(literals, longIndex, obj);
     }
 
     @Idempotent
@@ -666,9 +657,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return header;
     }
 
-    public void setHeader(final long header) {
-        this.header = CompiledCodeHeaderUtils.toInt(header);
+    public void initializeHeader(final long value) {
+        this.header = CompiledCodeHeaderUtils.toInt(value);
         literals = ArrayUtils.withAll(getNumLiterals(), NilObject.SINGLETON);
+    }
+
+    public void setHeader(final long value) {
+        final int oldNumLiterals = getNumLiterals();
+        header = CompiledCodeHeaderUtils.toInt(value);
+        assert getNumLiterals() == oldNumLiterals;
+        invalidateCallTarget();
     }
 
     public boolean hasStoreIntoTemp1AfterCallPrimitive() {

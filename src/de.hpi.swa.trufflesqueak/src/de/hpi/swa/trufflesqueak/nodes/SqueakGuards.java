@@ -182,6 +182,10 @@ public final class SqueakGuards {
         return value >= 0;
     }
 
+    public static long minus2(final long value) {
+        return value - 2;
+    }
+
     public static long to0(final long value) {
         return value - 1;
     }

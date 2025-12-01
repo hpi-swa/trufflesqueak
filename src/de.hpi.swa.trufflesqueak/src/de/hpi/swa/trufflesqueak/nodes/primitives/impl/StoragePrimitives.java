@@ -78,20 +78,31 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 68)
     protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "index0 < receiver.getNumHeaderAndLiterals()")
-        protected static final Object literalAt(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index,
-                        @Bind("to0(index)") final long index0) {
-            return index0 == 0 ? receiver.getHeader() : receiver.getLiteral(index0 - 1);
+        @Specialization(guards = "index == 1")
+        protected static final long getHeader(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index) {
+            return receiver.getHeader();
+        }
+
+        @Specialization(guards = {"index > 1", "literalIndex < receiver.getNumLiterals()"})
+        protected static final Object getLiteral(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index,
+                        @Bind("minus2(index)") final long literalIndex) {
+            return receiver.getLiteral(literalIndex);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 69)
     protected abstract static class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = "index0 < receiver.getNumHeaderAndLiterals()")
-        protected static final Object literalAtPut(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index, final Object value,
-                        @Bind("to0(index)") final long index0) {
-            receiver.setLiteral(index0, value);
+        @Specialization(guards = "index == 1")
+        protected static final long setHeader(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index, final long value) {
+            receiver.setHeader(value);
+            return value;
+        }
+
+        @Specialization(guards = {"index > 1", "literalIndex < receiver.getNumLiterals()"})
+        protected static final Object setLiteral(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index, final Object value,
+                        @Bind("minus2(index)") final long literalIndex) {
+            receiver.setLiteral(literalIndex, value);
             return value;
         }
     }
@@ -278,7 +289,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             assert receiver.getBasicInstanceSize() == 0;
             assert receiver.getSuperclassOrNull() == image.compiledMethodClass.getSuperclassOrNull() : "Receiver must be subclass of CompiledCode";
             final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize(image, (int) bytecodeCount, receiver);
-            newMethod.setHeader(header);
+            newMethod.initializeHeader(header);
             return newMethod;
         }
     }
