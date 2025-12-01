@@ -102,8 +102,9 @@ public final class ReturnBytecodes {
                     throw CompilerDirectives.shouldNotReachHere();
                 }
             }
+            CompilerDirectives.transferToInterpreter();
             LogUtils.SCHEDULING.info("ReturnFromClosureNode: sendCannotReturn");
-            throw new CannotReturnToTarget(returnValue, getGetOrCreateContextNode().executeGet(frame));
+            throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
         }
 
         /**
