@@ -13,6 +13,7 @@ import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -91,6 +92,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          */
         private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
         private CompiledCodeObject outerMethod;
+        private int outerMethodStartPC;
 
         private Source source;
 
@@ -132,6 +134,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
         assert currentOuterCode.isCompiledMethod();
         getExecutionData().outerMethod = currentOuterCode;
+        getExecutionData().outerMethodStartPC = startPC - currentOuterCode.getInitialPC();
 
         // header info and data
         header = outerCode.header;
@@ -174,6 +177,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public boolean hasOuterMethod() {
         return hasExecutionData() && executionData.outerMethod != null;
+    }
+
+    public int getOuterMethodStartPC() {
+        assert hasOuterMethod();
+        return executionData.outerMethodStartPC;
     }
 
     private void setLiteralsAndBytes(final int header, final Object[] literals, final byte[] bytes) {
@@ -296,13 +304,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             executionData.resumptionCallTarget = new ResumeContextRootNode(SqueakImageContext.getSlow(), context).getCallTarget();
         } else {
             final ResumeContextRootNode resumeNode = (ResumeContextRootNode) executionData.resumptionCallTarget.getRootNode();
-            if (resumeNode.getActiveContext() != context) {
-                /*
-                 * This is a trick: we set the activeContext of the {@link ResumeContextRootNode} to
-                 * the given context to be able to reuse the call target.
-                 */
-                resumeNode.setActiveContext(context);
-            }
+            /*
+             * Set the activeContext of the {@link ResumeContextRootNode} to the given context to
+             * reuse the call target. There may be methods with multiple suspension points. Since
+             * the interrupt handler can trigger at all kinds of locations, it does not make sense
+             * to create a resumption call target per instruction pointer.
+             */
+            resumeNode.setActiveContext(context);
         }
         return executionData.resumptionCallTarget;
     }
@@ -425,6 +433,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public void setLiteral(final long longIndex, final Object obj) {
         UnsafeUtils.putObject(literals, longIndex, obj);
+    }
+
+    /** See storeLiteralVariable:withValue:. */
+    public Object getAndResolveLiteral(final long longIndex) {
+        final Object litVar = getLiteral(longIndex);
+        if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
+            CompilerDirectives.transferToInterpreter();
+            final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();
+            UnsafeUtils.putObject(literals, longIndex, forwarded);
+            return forwarded;
+        } else {
+            return litVar;
+        }
     }
 
     @Idempotent

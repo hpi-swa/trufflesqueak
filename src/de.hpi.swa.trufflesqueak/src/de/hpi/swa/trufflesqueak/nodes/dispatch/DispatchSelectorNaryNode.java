@@ -28,7 +28,6 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.UnadoptableNode;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
@@ -182,7 +181,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 super(selector);
             }
 
-            protected abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object[] arguments);
+            public abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object[] arguments);
 
             @Specialization(guards = "lookupClass == cachedLookupClass", assumptions = {"cachedLookupClass.getClassHierarchyAndMethodDictStable()",
                             "dispatchDirectNode.getAssumptions()"}, limit = "3")
@@ -298,7 +297,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         }
     }
 
-    public abstract static class DispatchPrimitiveNode extends AbstractNode implements UnadoptableNode {
+    public abstract static class DispatchPrimitiveNode extends AbstractNode {
         @Child protected AbstractPrimitiveNode primitiveNode;
         private final boolean needsFrame;
 

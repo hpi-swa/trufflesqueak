@@ -72,7 +72,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchDirect0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchIndirect0Node;
@@ -93,6 +92,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.Dispatch
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.ResolveMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.PushToStackNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsFullNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -373,7 +373,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushNode) {
+                        @Cached final PushToStackNode pushNode) {
             wakeHighestPriorityNode.executeWake(frame, node);
             /* Leave `nil` as result on stack. */
             pushNode.execute(frame, NilObject.SINGLETON);
@@ -408,7 +408,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushNode) {
+                        @Cached final PushToStackNode pushNode) {
             wakeHighestPriorityNode.executeWake(frame, node);
             /* Leave `nil` as result on stack. */
             pushNode.execute(frame, NilObject.SINGLETON);
@@ -1014,7 +1014,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final PointersObject effectiveProcess,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached final FrameStackPushNode pushNode) {
+                        @Cached final PushToStackNode pushNode) {
             addLastLinkToListNode.execute(node, effectiveProcess, mutex);
             wakeHighestPriorityNode.executeWake(frame, node);
             /* Leave `false` as result on stack. */

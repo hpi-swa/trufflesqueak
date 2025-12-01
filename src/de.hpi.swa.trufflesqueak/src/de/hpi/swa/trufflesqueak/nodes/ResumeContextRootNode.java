@@ -10,6 +10,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -18,11 +19,18 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 public final class ResumeContextRootNode extends AbstractRootNode {
     private ContextObject activeContext;
     private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();
+    private final IntValueProfile stackPointerProfile = IntValueProfile.createIdentityProfile();
 
     public ResumeContextRootNode(final SqueakImageContext image, final ContextObject context) {
-        super(image, context.getCodeObject());
+        super(image, context.getMethodOrBlock());
         activeContext = context;
-        assert !context.isDead() : "Terminated contexts cannot be resumed";
+        assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
+    }
+
+    public ResumeContextRootNode(final ResumeContextRootNode original) {
+        super(original);
+        activeContext = original.activeContext;
+        assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
     }
 
     @Override
@@ -30,16 +38,17 @@ public final class ResumeContextRootNode extends AbstractRootNode {
         assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
         activeContext.clearModifiedSender();
         final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
-        if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
-            return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
+        final int sp = stackPointerProfile.profile(activeContext.getStackPointer());
+        if (CompilerDirectives.isPartialEvaluationConstant(pc) && CompilerDirectives.isPartialEvaluationConstant(sp)) {
+            return interpreterNode.execute(activeContext.getTruffleFrame(), pc, sp);
         } else {
-            return interpretBytecodeWithBoundary(pc);
+            return interpretBytecodeWithBoundary(pc, sp);
         }
     }
 
     @TruffleBoundary
-    private Object interpretBytecodeWithBoundary(final int pc) {
-        return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
+    private Object interpretBytecodeWithBoundary(final int pc, final int sp) {
+        return interpreterNode.execute(activeContext.getTruffleFrame(), pc, sp);
     }
 
     public ContextObject getActiveContext() {
@@ -48,12 +57,18 @@ public final class ResumeContextRootNode extends AbstractRootNode {
 
     public void setActiveContext(final ContextObject newActiveContext) {
         assert activeContext.getCodeObject() == newActiveContext.getCodeObject();
+        assert getFrameDescriptor() == newActiveContext.getMethodOrBlock().getFrameDescriptor();
         activeContext = newActiveContext;
     }
 
     @Override
     protected boolean isInstrumentable() {
         return false;
+    }
+
+    @Override
+    protected RootNode cloneUninitialized() {
+        return new ResumeContextRootNode(this);
     }
 
     @Override

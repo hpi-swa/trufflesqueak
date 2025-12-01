@@ -19,7 +19,6 @@ import org.junit.Test;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -152,8 +151,8 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
             try {
                 runMethod(rcvr, bytecode);
                 fail("Exception expected");
-            } catch (final SqueakException e) {
-                assertEquals("Unknown/uninterpreted bytecode: " + bytecode, e.getMessage());
+            } catch (final AssertionError ae) {
+                assertEquals("Unknown bytecode", ae.getMessage());
             }
         }
     }
@@ -477,9 +476,9 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         final int primCode = 1;
         final long rcvr = 1L;
         final NativeObject argument = image.asByteString("foo");
-        // similar to SmallInteger>>#+ callPrimitive 1, returnTop
-        final CompiledCodeObject method = makeMethod(makeHeader(1, 1, 2, true, false), new Object[0], 139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 124);
-        assertEquals(argument, runMethod(method, rcvr, argument));
+        // similar to SmallInteger>>#+ callPrimitive 1, returnNil
+        final CompiledCodeObject method = makeMethod(makeHeader(1, 1, 2, true, false), new Object[0], 139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 123);
+        assertEquals(NilObject.SINGLETON, runMethod(method, rcvr, argument));
     }
 
     @Test

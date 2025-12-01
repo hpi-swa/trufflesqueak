@@ -148,8 +148,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return this; // ContextObject cannot be forwarded
     }
 
+    public CompiledCodeObject getMethodOrBlock() {
+        return hasClosure() ? getClosure().getCompiledBlock() : getCodeObject();
+    }
+
     public CallTarget getCallTarget() {
-        return getCodeObject().getResumptionCallTarget(this);
+        return getMethodOrBlock().getResumptionCallTarget(this);
     }
 
     private MaterializedFrame getOrCreateTruffleFrame() {
@@ -346,9 +350,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // Cannot use copyTo here as frame descriptors may be different
         // ToDo: This does not handle any stack slots held in auxiliarySlots.
         FrameAccess.iterateStackSlots(oldFrame, slotIndex -> {
-            final Object stackValue = oldFrame.getValue(slotIndex);
+            final Object stackValue = oldFrame.getObjectStatic(slotIndex);
             if (stackValue != null) {
-                FrameAccess.setSlot(frame, slotIndex, stackValue);
+                frame.setObjectStatic(slotIndex, stackValue);
             }
         });
     }
@@ -610,7 +614,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final int numSlots = FrameAccess.getNumStackSlots(frame);
         for (int i = numArgs; i < numSlots; i++) {
             final int slotIndex = FrameAccess.toStackSlotIndex(frame, i);
-            final Object stackValue = frame.getValue(slotIndex);
+            final Object stackValue = frame.getObjectStatic(slotIndex);
             if (stackValue == null) {
                 writer.writeNil();
             } else {

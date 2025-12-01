@@ -35,7 +35,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
 
 /**
@@ -99,7 +98,7 @@ public final class FrameAccess {
         final Builder builder = FrameDescriptor.newBuilder(4 + numStackSlots);
         builder.info(code);
         addDefaultSlots(builder);
-        builder.addSlots(numStackSlots, FrameSlotKind.Illegal);
+        builder.addSlots(numStackSlots, FrameSlotKind.Static);
         return builder.build();
     }
 
@@ -235,6 +234,10 @@ public final class FrameAccess {
         return SlotIndicies.STACK_START.ordinal() + index;
     }
 
+    public static int toStackSlotIndex(final int index) {
+        return SlotIndicies.STACK_START.ordinal() + index;
+    }
+
     public static Object getStackValue(final Frame frame, final int stackIndex, final int numArguments) {
         if (stackIndex < numArguments) {
             return getArgument(frame, stackIndex);
@@ -276,9 +279,7 @@ public final class FrameAccess {
             setSlotsAreNilled(frame);
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                if (frame.isObject(slotIndex)) {
-                    frame.setObject(slotIndex, null);
-                }
+                frame.setObjectStatic(slotIndex, null);
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
                 frame.setAuxiliarySlot(auxSlotIndex, null);
@@ -306,9 +307,7 @@ public final class FrameAccess {
         } else {
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                if (frame.isObject(slotIndex)) {
-                    action.accept(frame.getObject(slotIndex));
-                }
+                action.accept(frame.getObjectStatic(slotIndex));
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
                 action.accept(frame.getAuxiliarySlot(auxSlotIndex));
@@ -328,11 +327,9 @@ public final class FrameAccess {
         } else {
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndicies.STACK_START.ordinal(); slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                if (frame.isObject(slotIndex)) {
-                    final Object replacement = action.apply(frame.getObject(slotIndex));
-                    if (replacement != null) {
-                        frame.setObject(slotIndex, replacement);
-                    }
+                final Object replacement = action.apply(frame.getObjectStatic(slotIndex));
+                if (replacement != null) {
+                    frame.setObjectStatic(slotIndex, replacement);
                 }
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
@@ -345,49 +342,29 @@ public final class FrameAccess {
     }
 
     public static Object getSlotValue(final Frame frame, final int slotIndex) {
-        final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
-        if (slotIndex < numberOfSlots) {
-            return frame.getValue(slotIndex);
-        } else {
+        try {
+            return frame.getObjectStatic(slotIndex);
+        } catch (final ArrayIndexOutOfBoundsException aioobe) {
+            CompilerDirectives.transferToInterpreter();
             final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
             return frame.getAuxiliarySlot(auxSlotIndex);
         }
     }
 
-    /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
-    public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {
-        setSlot(frame, SlotIndicies.STACK_START.ordinal() + stackIndex, value);
+    public static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
+        try {
+            frame.setObjectStatic(slotIndex, value);
+        } catch (final ArrayIndexOutOfBoundsException aioobe) {
+            CompilerDirectives.transferToInterpreter();
+            final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+            frame.setAuxiliarySlot(auxSlotIndex, value);
+        }
     }
 
-    public static void setSlot(final Frame frame, final int slotIndex, final Object value) {
-        final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        assert SlotIndicies.STACK_START.ordinal() <= slotIndex && slotIndex <= SlotIndicies.STACK_START.ordinal() + getCodeObject(frame).getSqueakContextSize();
-        final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
-        if (slotIndex < numberOfSlots) {
-            final FrameSlotKind frameSlotKind = frameDescriptor.getSlotKind(slotIndex);
-            final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
-            switch (value) {
-                case final Boolean b when (isIllegal || frameSlotKind == FrameSlotKind.Boolean) -> {
-                    frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Boolean);
-                    frame.setBoolean(slotIndex, b);
-                }
-                case final Long l when (isIllegal || frameSlotKind == FrameSlotKind.Long) -> {
-                    frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Long);
-                    frame.setLong(slotIndex, l);
-                }
-                case final Double d when (isIllegal || frameSlotKind == FrameSlotKind.Double) -> {
-                    frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Double);
-                    frame.setDouble(slotIndex, d);
-                }
-                case null, default -> {
-                    frameDescriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
-                    frame.setObject(slotIndex, value);
-                }
-            }
-        } else {
-            final int auxiliarySlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
-            frame.setAuxiliarySlot(auxiliarySlotIndex, value);
-        }
+    public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {
+        assert value != null;
+        assert 0 <= stackIndex && stackIndex <= getCodeObject(frame).getSqueakContextSize();
+        setSlotValue(frame, SlotIndicies.STACK_START.ordinal() + stackIndex, value);
     }
 
     public static boolean hasUnusedAuxiliarySlots(final Frame frame) {

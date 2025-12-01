@@ -10,11 +10,10 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
@@ -48,6 +47,17 @@ public final class StartContextRootNode extends AbstractRootNode {
         interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
     }
 
+    public StartContextRootNode(final StartContextRootNode original) {
+        super(original);
+        initialPC = original.initialPC;
+        initialSP = original.initialSP;
+        numTempSlots = original.numTempSlots;
+        tempStackSlotStartIndex = original.tempStackSlotStartIndex;
+        doesNotNeedThisContext = original.doesNotNeedThisContext;
+        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(getCode());
+        getOrCreateContextNode = null;
+    }
+
     @Override
     public Object execute(final VirtualFrame frame) {
         ensureInitialized(frame);
@@ -63,7 +73,7 @@ public final class StartContextRootNode extends AbstractRootNode {
                 throw ProcessSwitch.SINGLETON;
             }
             interruptHandlerNode.execute(frame);
-            return executeBytecodeNode.execute(frame, initialPC, initialSP);
+            return interpreterNode.execute(frame, initialPC, initialSP);
         } catch (final NonVirtualReturn | ProcessSwitch | CannotReturnToTarget nvr) {
             /* {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame);
@@ -106,11 +116,9 @@ public final class StartContextRootNode extends AbstractRootNode {
 
         // TODO: avoid nilling out of temp slots to allow slot specializations
         // Initialize remaining temporary variables with nil in newContext.
-        final FrameDescriptor descriptor = frame.getFrameDescriptor();
         for (int i = 0; i < numTempSlots; i++) {
             final int slotIndex = tempStackSlotStartIndex + i;
-            descriptor.setSlotKind(slotIndex, FrameSlotKind.Object);
-            frame.setObject(slotIndex, NilObject.SINGLETON);
+            frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
         }
     }
 
@@ -120,6 +128,11 @@ public final class StartContextRootNode extends AbstractRootNode {
             getOrCreateContextNode = insert(GetOrCreateContextWithFrameNode.create());
         }
         return getOrCreateContextNode;
+    }
+
+    @Override
+    protected RootNode cloneUninitialized() {
+        return new StartContextRootNode(this);
     }
 
     @Override
