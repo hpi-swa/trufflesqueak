@@ -52,7 +52,7 @@ public final class SqueakLanguageView implements TruffleObject {
     }
 
     @ExportMessage
-    protected Object getMetaObject(@Bind final Node node, @Cached final SqueakObjectClassNode classNode) {
+    protected Object getMetaObject(@Bind final Node node, @Cached(inline = true) final SqueakObjectClassNode classNode) {
         return classNode.executeLookup(node, delegate);
     }
 

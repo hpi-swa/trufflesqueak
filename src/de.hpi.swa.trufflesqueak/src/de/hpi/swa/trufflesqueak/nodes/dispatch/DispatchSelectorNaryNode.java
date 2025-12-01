@@ -617,7 +617,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         @Specialization
         protected static final Object doIndirect(final VirtualFrame frame, final boolean canPrimFail, final NativeObject selector, final Object receiver, final Object[] arguments,
                         @Bind final Node node,
-                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached(inline = true) final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,

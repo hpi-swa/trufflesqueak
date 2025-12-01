@@ -395,7 +395,7 @@ public final class SendBytecodes {
                 @Specialization
                 protected static final ClassObject doGeneric(final Object receiver,
                                 @Bind final Node node,
-                                @Cached final SqueakObjectClassNode classNode) {
+                                @Cached(inline = true) final SqueakObjectClassNode classNode) {
                     return classNode.executeLookup(node, receiver);
                 }
             }

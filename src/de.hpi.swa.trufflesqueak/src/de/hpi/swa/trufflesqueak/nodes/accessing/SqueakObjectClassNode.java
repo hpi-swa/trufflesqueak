@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 @GenerateInline
 @GenerateUncached
-@GenerateCached(false)
+@GenerateCached(true)
 public abstract class SqueakObjectClassNode extends AbstractNode {
 
     public static SqueakObjectClassNode getUncached() {

@@ -607,7 +607,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final ClassObject doClass(final Object receiver,
                         @Bind final Node node,
-                        @Cached final SqueakObjectClassNode classNode) {
+                        @Cached(inline = true) final SqueakObjectClassNode classNode) {
             return classNode.executeLookup(node, receiver);
         }
     }
@@ -618,7 +618,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @Bind final Node node,
-                        @Cached final SqueakObjectClassNode classNode) {
+                        @Cached(inline = true) final SqueakObjectClassNode classNode) {
             return classNode.executeLookup(node, object);
         }
     }

@@ -89,7 +89,7 @@ public final class InlinePrimitiveBytecodes {
         @Specialization
         protected static final void doClass(final VirtualFrame frame,
                         @Bind final Node node,
-                        @Cached final SqueakObjectClassNode classNode,
+                        @Cached(inline = true) final SqueakObjectClassNode classNode,
                         @Cached final FrameStackPopNode popNode,
                         @Cached final FrameStackPushNode pushNode) {
             pushNode.execute(frame, classNode.executeLookup(node, popNode.execute(frame)));

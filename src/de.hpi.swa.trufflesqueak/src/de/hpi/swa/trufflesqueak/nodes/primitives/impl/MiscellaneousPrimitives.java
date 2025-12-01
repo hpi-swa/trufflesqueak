@@ -647,7 +647,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         protected static final boolean doGet(final Object receiver,
                         @Bind final Node node,
-                        @Cached final SqueakObjectClassNode classNode) {
+                        @Cached(inline = true) final SqueakObjectClassNode classNode) {
             return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
     }
@@ -658,7 +658,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         protected static final boolean doGet(final Object receiver, @SuppressWarnings("unused") final boolean value,
                         @Bind final Node node,
-                        @Cached final SqueakObjectClassNode classNode) {
+                        @Cached(inline = true) final SqueakObjectClassNode classNode) {
             // FIXME: implement immutability
             return BooleanObject.wrap(classNode.executeLookup(node, receiver).isImmediateClassType());
         }
