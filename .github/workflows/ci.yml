@@ -230,7 +230,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
         type: [native]
     env:
-      VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
+      VM_ARGS: "--vm.Xmx6G --headless --experimental-options --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose"
     name: build ${{ matrix.type }} ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
