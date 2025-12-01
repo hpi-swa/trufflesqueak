@@ -40,10 +40,6 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
         }
     }
 
-    public static final CheckForInterruptsQuickNode createForLoop() {
-        return CheckForInterruptsQuickImplNode.SINGLETON;
-    }
-
     public abstract void execute(VirtualFrame frame);
 
     @DenyReplace

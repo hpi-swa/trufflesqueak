@@ -25,7 +25,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectCopyIntoObjectArrayNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode.AbstractPrimitiveWithFrameNode;

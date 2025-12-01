@@ -21,7 +21,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NonIdempotent;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -38,11 +37,10 @@ import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderSistaV1;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderV3PlusClosures;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.PrimNoopNode;
@@ -358,9 +356,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return CompiledCodeHeaderUtils.getSignFlag(header);
     }
 
-    private AbstractSqueakBytecodeDecoder getDecoder() {
+    private AbstractDecoder getDecoder() {
         CompilerAsserts.neverPartOfCompilation();
-        return getSignFlag() ? SqueakBytecodeV3PlusClosuresDecoder.SINGLETON : SqueakBytecodeSistaV1Decoder.SINGLETON;
+        return getSignFlag() ? DecoderV3PlusClosures.SINGLETON : DecoderSistaV1.SINGLETON;
     }
 
     @Override
@@ -373,18 +371,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         literals = chunk.getPointers(1, getNumHeaderAndLiterals());
         assert bytes == null;
         bytes = Arrays.copyOfRange(chunk.getBytes(), getBytecodeOffset(), chunk.getBytes().length);
-    }
-
-    public AbstractBytecodeNode[] asBytecodeNodesEmpty() {
-        return new AbstractBytecodeNode[AbstractSqueakBytecodeDecoder.trailerPosition(this)];
-    }
-
-    public AbstractBytecodeNode bytecodeNodeAt(final VirtualFrame frame, final AbstractBytecodeNode[] bytecodeNodes, final int pc) {
-        return getDecoder().decodeBytecode(frame, this, bytecodeNodes, pc);
-    }
-
-    public int findLineNumber(final int successorIndex) {
-        return getDecoder().findLineNumber(this, successorIndex);
     }
 
     public void become(final CompiledCodeObject other) {

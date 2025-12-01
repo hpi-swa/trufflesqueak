@@ -4,17 +4,14 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.trufflesqueak.nodes.bytecodes;
+package de.hpi.swa.trufflesqueak.nodes.interpreter;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
-public abstract class AbstractSqueakBytecodeDecoder {
-
-    public abstract AbstractBytecodeNode decodeBytecode(VirtualFrame frame, CompiledCodeObject code, AbstractBytecodeNode[] bytecodeNodes, int index);
+public abstract class AbstractDecoder {
 
     public abstract boolean hasStoreIntoTemp1AfterCallPrimitive(CompiledCodeObject code);
 

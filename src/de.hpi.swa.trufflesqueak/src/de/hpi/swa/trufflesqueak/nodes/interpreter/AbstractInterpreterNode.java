@@ -35,7 +35,6 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -44,16 +43,15 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSpecialNode.SendSpecial0Node.DispatchBytecodePrim0Node;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSpecialNode.SendSpecial1Node.DispatchBytecodePrim1Node;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeFactory.DirectedSuperDispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.AbstractBytecodePrim0Node;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.AbstractBytecodePrim1Node;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -185,7 +183,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         private final SqueakObjectAt0Node at0Node = insert(SqueakObjectAt0NodeGen.create());
 
         Object execute(final Node node, final CompiledCodeObject code, final int index) {
-            return at0Node.executeSpecialized(node, code.getAndResolveLiteral(index), ASSOCIATION.VALUE);
+            return at0Node.execute(node, code.getAndResolveLiteral(index), ASSOCIATION.VALUE);
         }
     }
 
@@ -241,14 +239,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
-    protected final Object sendSuperDirected(final VirtualFrame frame, final int currentPC, final ClassObject lookupClass, final Object receiver, final Object[] arguments) {
-        try {
-            return uncheckedCast(data[currentPC], DirectedSuperDispatchNaryNodeGen.class).execute(frame, lookupClass, receiver, arguments);
-        } catch (final AbstractStandardSendReturn r) {
-            return handleReturnException(frame, currentPC, r);
-        }
-    }
-
     protected final Object sendSuper(final VirtualFrame frame, final int currentPC, final Object receiver, final Object[] arguments) {
         try {
             return uncheckedCast(data[currentPC], DispatchSuperNaryNodeGen.class).execute(frame, receiver, arguments);
@@ -258,13 +248,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object sendBytecodePrim(final VirtualFrame frame, final int currentPC, final Object receiver) {
-        if (data[currentPC] instanceof DispatchBytecodePrim0Node) {
+        if (data[currentPC] instanceof AbstractBytecodePrim0Node) {
             try {
-                return uncheckedCast(data[currentPC], DispatchBytecodePrim0Node.class).execute(frame, receiver);
+                return uncheckedCast(data[currentPC], AbstractBytecodePrim0Node.class).execute(frame, receiver);
             } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int selectorIndex = ((DispatchBytecodePrim0Node) data[currentPC]).getSelectorIndex();
-                final NativeObject specialSelector = SqueakImageContext.getSlow().getSpecialSelector(selectorIndex);
+                final NativeObject specialSelector = ((AbstractBytecodePrim0Node) data[currentPC]).getSpecialSelector();
                 data[currentPC] = insert(Dispatch0NodeGen.create(specialSelector));
                 return send(frame, currentPC, receiver);
             }
@@ -274,14 +263,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object sendBytecodePrim(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
-        if (data[currentPC] instanceof DispatchBytecodePrim1Node) {
+        if (data[currentPC] instanceof AbstractBytecodePrim1Node) {
             try {
-                return uncheckedCast(data[currentPC], DispatchBytecodePrim1Node.class).execute(frame, receiver, arg);
+                return uncheckedCast(data[currentPC], AbstractBytecodePrim1Node.class).execute(frame, receiver, arg);
             } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final SqueakImageContext image = SqueakImageContext.getSlow();
-                final int selectorIndex = ((DispatchBytecodePrim1Node) data[currentPC]).getSelectorIndex();
-                final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
+                final NativeObject specialSelector = ((AbstractBytecodePrim1Node) data[currentPC]).getSpecialSelector();
                 data[currentPC] = insert(Dispatch1NodeGen.create(specialSelector));
                 return send(frame, currentPC, receiver, arg);
             }
@@ -506,6 +493,10 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected static final RuntimeException unknownBytecode() {
         throw CompilerDirectives.shouldNotReachHere("Unknown bytecode");
+    }
+
+    public static final int calculateShortOffset(final int bytecode) {
+        return (bytecode & 7) + 1;
     }
 
     /**

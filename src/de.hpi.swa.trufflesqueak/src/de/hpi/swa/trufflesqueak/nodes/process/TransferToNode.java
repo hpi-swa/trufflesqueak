@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 
 /**
  * Record a Process to be awakened on the next interpreter cycle. Suspends the active Context and

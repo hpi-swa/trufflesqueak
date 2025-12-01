@@ -4,7 +4,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.trufflesqueak.nodes.context.frame;
+package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;

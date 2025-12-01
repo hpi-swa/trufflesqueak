@@ -35,7 +35,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 
 /**
  * TruffleSqueak frame argument layout.

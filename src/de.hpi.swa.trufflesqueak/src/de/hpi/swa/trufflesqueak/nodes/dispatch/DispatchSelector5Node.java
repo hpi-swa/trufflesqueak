@@ -19,7 +19,6 @@ import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -40,12 +39,8 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextWithoutFrameNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5NodeFactory.Dispatch5NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5NodeFactory.DispatchDirectPrimitiveFallback5NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5NodeFactory.DispatchDirectedSuper5NodeFactory.DirectedSuperDispatch5NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5NodeFactory.DispatchSuper5NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5;
@@ -53,133 +48,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class DispatchSelector5Node extends DispatchSelectorNode {
-    @Child private FrameStackReadNode receiverNode;
-    @Child private FrameStackReadNode arg1Node;
-    @Child private FrameStackReadNode arg2Node;
-    @Child private FrameStackReadNode arg3Node;
-    @Child private FrameStackReadNode arg4Node;
-    @Child private FrameStackReadNode arg5Node;
-    @Child private AbstractDispatch5Node dispatchNode;
-
-    DispatchSelector5Node(final VirtualFrame frame, final AbstractDispatch5Node dispatchNode) {
-        final int sp = FrameAccess.getStackPointer(frame);
-        receiverNode = FrameStackReadNode.create(frame, sp - 6, false); // replaced by result
-        arg1Node = FrameStackReadNode.create(frame, sp - 5, true);
-        arg2Node = FrameStackReadNode.create(frame, sp - 4, true);
-        arg3Node = FrameStackReadNode.create(frame, sp - 3, true);
-        arg4Node = FrameStackReadNode.create(frame, sp - 2, true);
-        arg5Node = FrameStackReadNode.create(frame, sp - 1, true);
-        this.dispatchNode = dispatchNode;
-    }
-
-    @Override
-    public Object execute(final VirtualFrame frame) {
-        return dispatchNode.execute(frame, receiverNode.executeRead(frame), arg1Node.executeRead(frame), arg2Node.executeRead(frame), arg3Node.executeRead(frame), arg4Node.executeRead(frame),
-                        arg5Node.executeRead(frame));
-    }
-
-    @Override
-    public NativeObject getSelector() {
-        return dispatchNode.selector;
-    }
-
-    static DispatchSelector5Node create(final VirtualFrame frame, final NativeObject selector) {
-        return new DispatchSelector5Node(frame, Dispatch5NodeGen.create(selector));
-    }
-
-    static DispatchSelector5Node createSuper(final VirtualFrame frame, final ClassObject methodClass, final NativeObject selector) {
-        return new DispatchSelector5Node(frame, DispatchSuper5NodeGen.create(methodClass, selector));
-    }
-
-    static DispatchSelector5Node createDirectedSuper(final VirtualFrame frame, final NativeObject selector) {
-        final int stackPointer = FrameAccess.getStackPointer(frame);
-        // Trick: decrement stack pointer so that node uses the right receiver and args
-        FrameAccess.setStackPointer(frame, stackPointer - 1);
-        final DispatchSelector5Node result = new DispatchSelector5Node(frame, new DispatchDirectedSuper5Node(frame, selector, stackPointer));
-        // Restore stack pointer
-        FrameAccess.setStackPointer(frame, stackPointer);
-        return result;
-    }
-
-    protected abstract static class AbstractDispatch5Node extends AbstractDispatchNode {
-        AbstractDispatch5Node(final NativeObject selector) {
-            super(selector);
-        }
-
-        public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
-    }
-
-    public abstract static class Dispatch5Node extends AbstractDispatch5Node {
-        Dispatch5Node(final NativeObject selector) {
-            super(selector);
-        }
-
-        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
-        protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
-                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard)") final DispatchDirect5Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
-        }
-
-        @ReportPolymorphism.Megamorphic
-        @Specialization(replaces = "doDirect")
-        @SuppressWarnings("truffle-static-method")
-        protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
-                        @Cached final DispatchIndirect5Node dispatchNode) {
-            return dispatchNode.execute(frame, false, selector, receiver, arg1, arg2, arg3, arg4, arg5);
-        }
-    }
-
-    public abstract static class DispatchSuper5Node extends AbstractDispatch5Node {
-        protected final ClassObject methodClass;
-
-        DispatchSuper5Node(final ClassObject methodClass, final NativeObject selector) {
-            super(selector);
-            this.methodClass = methodClass;
-        }
-
-        @Specialization(assumptions = {"methodClass.getClassHierarchyAndMethodDictStable()", "dispatchDirectNode.getAssumptions()"})
-        protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
-                        @Cached("create(selector, methodClass.getResolvedSuperclass())") final DispatchDirect5Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
-        }
-    }
-
-    public static final class DispatchDirectedSuper5Node extends AbstractDispatch5Node {
-        @Child private FrameStackReadNode directedClassNode;
-        @Child private DispatchSelector5Node.DispatchDirectedSuper5Node.DirectedSuperDispatch5Node dispatchNode;
-
-        DispatchDirectedSuper5Node(final VirtualFrame frame, final NativeObject selector, final int stackPointer) {
-            super(selector);
-            directedClassNode = FrameStackReadNode.create(frame, stackPointer - 1, true);
-            dispatchNode = DirectedSuperDispatch5NodeGen.create(selector);
-        }
-
-        @Override
-        public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-            final ClassObject lookupClass = CompilerDirectives.castExact(directedClassNode.executeRead(frame), ClassObject.class).getResolvedSuperclass();
-            assert lookupClass != null;
-            return dispatchNode.execute(frame, lookupClass, receiver, arg1, arg2, arg3, arg4, arg5);
-        }
-
-        public abstract static class DirectedSuperDispatch5Node extends AbstractDispatchNode {
-            DirectedSuperDispatch5Node(final NativeObject selector) {
-                super(selector);
-            }
-
-            public abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
-
-            @Specialization(guards = "lookupClass == cachedLookupClass", assumptions = {"cachedLookupClass.getClassHierarchyAndMethodDictStable()",
-                            "dispatchDirectNode.getAssumptions()"}, limit = "3")
-            protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject lookupClass, final Object receiver, final Object arg1, final Object arg2,
-                            final Object arg3, final Object arg4, final Object arg5,
-                            @SuppressWarnings("unused") @Cached("lookupClass") final ClassObject cachedLookupClass,
-                            @Cached("create(selector, cachedLookupClass)") final DispatchDirect5Node dispatchDirectNode) {
-                return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
-            }
-        }
-    }
-
     public abstract static class DispatchDirect5Node extends AbstractDispatchDirectNode {
         DispatchDirect5Node(final Assumption[] assumptions) {
             super(assumptions);
@@ -188,19 +56,9 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
         public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
 
         @NeverDefault
-        protected static final DispatchDirect5Node create(final NativeObject selector, final LookupClassGuard guard) {
-            return create(selector, guard, true);
-        }
-
-        @NeverDefault
         public static final DispatchDirect5Node create(final NativeObject selector, final LookupClassGuard guard, final boolean canPrimFail) {
             final ClassObject receiverClass = guard.getSqueakClassInternal(null);
             return create(selector, receiverClass, canPrimFail);
-        }
-
-        @NeverDefault
-        public static final DispatchDirect5Node create(final NativeObject selector, final ClassObject lookupClass) {
-            return create(selector, lookupClass, true);
         }
 
         @NeverDefault
