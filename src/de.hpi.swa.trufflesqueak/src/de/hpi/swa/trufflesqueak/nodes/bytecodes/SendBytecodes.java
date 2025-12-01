@@ -33,6 +33,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -848,6 +849,18 @@ public final class SendBytecodes {
                                 @Bind final SqueakImageContext image) {
                     return PrimEqualNode.doLargeInteger(lhs, rhs, image);
                 }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdenticalNativeObject(final NativeObject lhs, final NativeObject rhs) {
+                    return BooleanObject.TRUE;
+                }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdenticalArrayObject(final ArrayObject lhs, final ArrayObject rhs) {
+                    return BooleanObject.TRUE;
+                }
             }
 
             @GenerateInline(false)
@@ -899,6 +912,18 @@ public final class SendBytecodes {
                 protected static final boolean doLongLargeInteger(final long lhs, final NativeObject rhs,
                                 @Bind final SqueakImageContext image) {
                     return PrimNotEqualNode.doLargeInteger(lhs, rhs, image);
+                }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdenticalNativeObject(final NativeObject lhs, final NativeObject rhs) {
+                    return BooleanObject.FALSE;
+                }
+
+                @SuppressWarnings("unused")
+                @Specialization(guards = "lhs == rhs")
+                protected static final boolean doIdenticalArrayObject(final ArrayObject lhs, final ArrayObject rhs) {
+                    return BooleanObject.FALSE;
                 }
             }
 
