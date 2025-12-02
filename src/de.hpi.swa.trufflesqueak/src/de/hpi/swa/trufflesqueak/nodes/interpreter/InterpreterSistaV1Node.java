@@ -10,7 +10,6 @@ import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
@@ -559,30 +558,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b100;
                             }
-                            final boolean possibleCondition = PrimLessThanNode.doLong(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimLessThanNode.doLong(lhs, rhs));
                             break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            final boolean possibleCondition = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimSmallFloatLessThanNode.doDouble(lhs, rhs));
                             break;
                         } else {
                             if ((state & 0b10000) == 0) {
@@ -605,30 +588,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b100;
                             }
-                            final boolean possibleCondition = PrimGreaterThanNode.doLong(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimGreaterThanNode.doLong(lhs, rhs));
                             break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            final boolean possibleCondition = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs));
                             break;
                         } else {
                             if ((state & 0b10000) == 0) {
@@ -651,30 +618,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b100;
                             }
-                            final boolean possibleCondition = PrimLessOrEqualNode.doLong(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimLessOrEqualNode.doLong(lhs, rhs));
                             break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            final boolean possibleCondition = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs));
                             break;
                         } else {
                             if ((state & 0b10000) == 0) {
@@ -697,30 +648,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b100;
                             }
-                            final boolean possibleCondition = PrimGreaterOrEqualNode.doLong(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimGreaterOrEqualNode.doLong(lhs, rhs));
                             break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            final boolean possibleCondition = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs));
                             break;
                         } else {
                             if ((state & 0b10000) == 0) {
@@ -743,30 +678,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b100;
                             }
-                            final boolean possibleCondition = PrimEqualNode.doLong(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimEqualNode.doLong(lhs, rhs));
                             break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            final boolean possibleCondition = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimSmallFloatEqualNode.doDouble(lhs, rhs));
                             break;
                         } else {
                             if ((state & 0b10000) == 0) {
@@ -789,30 +708,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b100;
                             }
-                            final boolean possibleCondition = PrimNotEqualNode.doLong(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimNotEqualNode.doLong(lhs, rhs));
                             break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            final boolean possibleCondition = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
-                            if (HostCompilerDirectives.inInterpreterFastPath()) {
-                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                                if (cheatPC != NO_CHEAT_PC) {
-                                    pc = cheatPC;
-                                    break;
-                                }
-                            }
-                            pushResolved(frame, sp++, possibleCondition);
+                            pushResolved(frame, sp++, PrimSmallFloatNotEqualNode.doDouble(lhs, rhs));
                             break;
                         } else {
                             if ((state & 0b10000) == 0) {
@@ -829,30 +732,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.BYTECODE_PRIM_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final boolean possibleCondition = uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg);
-                        if (HostCompilerDirectives.inInterpreterFastPath()) {
-                            final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                            if (cheatPC != NO_CHEAT_PC) {
-                                pc = cheatPC;
-                                break;
-                            }
-                        }
-                        pushResolved(frame, sp++, possibleCondition);
+                        pushResolved(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
 
                     case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final boolean possibleCondition = !uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg);
-                        if (HostCompilerDirectives.inInterpreterFastPath()) {
-                            final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
-                            if (cheatPC != NO_CHEAT_PC) {
-                                pc = cheatPC;
-                                break;
-                            }
-                        }
-                        pushResolved(frame, sp++, possibleCondition);
+                        pushResolved(frame, sp++, !uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
                     case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
@@ -1207,33 +1094,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     public static int calculateLongExtendedOffset(final byte bytecode, final int extB) {
         return Byte.toUnsignedInt(bytecode) + (extB << 8);
-    }
-
-    /** See #booleanCheatSistaV1:. */
-    private int booleanCheat(final byte[] bc, final int pc, final int extB, final boolean possibleCondition) {
-        final byte bytecode = getByte(bc, pc);
-        if (BC.SHORT_CJUMP_FALSE_0 <= bytecode && bytecode <= BC.SHORT_CJUMP_FALSE_7) {
-            if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!possibleCondition)) {
-                return pc + 1 + calculateShortOffset(bytecode);
-            } else {
-                return pc + 1;
-            }
-        } else if (bytecode == BC.EXT_JUMP_IF_FALSE) {
-            assert extB == 0;
-            if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!possibleCondition)) {
-                return pc + 2 + getByteExtended(bc, pc + 1, 0);
-            } else {
-                return pc + 2;
-            }
-        } else if (bytecode == BC.EXT_JUMP_IF_TRUE) {
-            assert extB == 0;
-            if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(possibleCondition)) {
-                return pc + 2 + getByteExtended(bc, pc + 1, 0);
-            } else {
-                return pc + 2;
-            }
-        }
-        return NO_CHEAT_PC;
     }
 
     static class BC {
