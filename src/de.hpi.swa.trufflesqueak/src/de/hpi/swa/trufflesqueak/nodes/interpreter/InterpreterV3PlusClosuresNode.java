@@ -10,6 +10,7 @@ import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
@@ -856,7 +857,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             final boolean possibleCondition = PrimLessThanNode.doLong(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -871,7 +872,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b1000;
                             }
                             final boolean possibleCondition = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -902,7 +903,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             final boolean possibleCondition = PrimGreaterThanNode.doLong(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -917,7 +918,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b1000;
                             }
                             final boolean possibleCondition = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -948,7 +949,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             final boolean possibleCondition = PrimLessOrEqualNode.doLong(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -963,7 +964,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b1000;
                             }
                             final boolean possibleCondition = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -994,7 +995,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             final boolean possibleCondition = PrimGreaterOrEqualNode.doLong(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -1009,7 +1010,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b1000;
                             }
                             final boolean possibleCondition = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -1040,7 +1041,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             final boolean possibleCondition = PrimEqualNode.doLong(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -1055,7 +1056,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b1000;
                             }
                             final boolean possibleCondition = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -1086,7 +1087,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             final boolean possibleCondition = PrimNotEqualNode.doLong(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -1101,7 +1102,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b1000;
                             }
                             final boolean possibleCondition = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
-                            if (CompilerDirectives.inInterpreter()) {
+                            if (HostCompilerDirectives.inInterpreterFastPath()) {
                                 final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                                 if (cheatPC != NO_CHEAT_PC) {
                                     pc = cheatPC;
@@ -1126,7 +1127,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
                         final boolean possibleCondition = uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg);
-                        if (CompilerDirectives.inInterpreter()) {
+                        if (HostCompilerDirectives.inInterpreterFastPath()) {
                             final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                             if (cheatPC != NO_CHEAT_PC) {
                                 pc = cheatPC;
@@ -1140,7 +1141,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
                         final boolean possibleCondition = !uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg);
-                        if (CompilerDirectives.inInterpreter()) {
+                        if (HostCompilerDirectives.inInterpreterFastPath()) {
                             final int cheatPC = booleanCheat(bc, pc, possibleCondition);
                             if (cheatPC != NO_CHEAT_PC) {
                                 pc = cheatPC;
