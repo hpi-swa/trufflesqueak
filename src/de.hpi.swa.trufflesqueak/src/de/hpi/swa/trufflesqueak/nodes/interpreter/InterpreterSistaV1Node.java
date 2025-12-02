@@ -36,6 +36,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
@@ -49,22 +50,26 @@ import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodeP
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimBitShiftNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimDivNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimDivideNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimGreaterOrEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimGreaterThanNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimIdenticalSistaV1NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimLessOrEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimLessThanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimMakePointNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimModNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimMultiplyNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimNotEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimNotIdenticalSistaV1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimPointXNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimPointYNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSubtractNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsInLoopNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimGreaterOrEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimGreaterThanNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessOrEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessThanNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimNotEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterOrEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterThanNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatLessOrEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatLessThanNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatNotEqualNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -140,28 +145,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     data[currentPC] = insert(BytecodePrimSubtractNodeGen.create());
                     break;
                 }
-                case BC.BYTECODE_PRIM_LESS_THAN: {
-                    data[currentPC] = insert(BytecodePrimLessThanNodeGen.create());
-                    break;
-                }
-                case BC.BYTECODE_PRIM_GREATER_THAN: {
-                    data[currentPC] = insert(BytecodePrimGreaterThanNodeGen.create());
-                    break;
-                }
-                case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
-                    data[currentPC] = insert(BytecodePrimLessOrEqualNodeGen.create());
-                    break;
-                }
-                case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
-                    data[currentPC] = insert(BytecodePrimGreaterOrEqualNodeGen.create());
-                    break;
-                }
-                case BC.BYTECODE_PRIM_EQUAL: {
-                    data[currentPC] = insert(BytecodePrimEqualNodeGen.create());
-                    break;
-                }
-                case BC.BYTECODE_PRIM_NOT_EQUAL: {
-                    data[currentPC] = insert(BytecodePrimNotEqualNodeGen.create());
+                case BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL: {
+                    data[currentPC] = insert(Dispatch1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD)));
                     break;
                 }
                 case BC.BYTECODE_PRIM_MULTIPLY: {
@@ -220,16 +205,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     data[currentPC] = insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - 0x60)));
                     break;
                 }
-                case BC.BYTECODE_PRIM_IDENTICAL: {
-                    data[currentPC] = insert(BytecodePrimIdenticalSistaV1NodeGen.create());
+                case BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL: {
+                    data[currentPC] = insert(SqueakObjectIdentityNodeGen.create());
                     break;
                 }
                 case BC.BYTECODE_PRIM_CLASS: {
                     data[currentPC] = insert(SqueakObjectClassNodeGen.create());
-                    break;
-                }
-                case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
-                    data[currentPC] = insert(BytecodePrimNotIdenticalSistaV1NodeGen.create());
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE: {
@@ -568,46 +549,309 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = checkPCAfterSend(frame, pc);
                         break;
                     }
-                    case BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, BC.BYTECODE_PRIM_EQUAL, //
-                        BC.BYTECODE_PRIM_NOT_EQUAL, BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL: {
+                    case BC.BYTECODE_PRIM_LESS_THAN: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        externalizePCAndSP(frame, pc, sp);
-                        final Object result = sendBytecodePrim(frame, currentPC, receiver, arg);
-                        if (CompilerDirectives.inInterpreter() && result instanceof final Boolean possibleCondition) {
-                            // see #booleanCheatSistaV1:
-                            /*
-                             * populate resolve profile: push value is a boolean, so not an
-                             * AbstractSqueakObjectWithClassAndHash.
-                             */
-                            if ((profiles[currentPC] & 0b10) == 0) {
-                                profiles[currentPC] |= 0b10;
+                        final byte state = profiles[currentPC];
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
-                            final byte bytecode = getByte(bc, pc);
-                            if (BC.SHORT_CJUMP_FALSE_0 <= bytecode && bytecode <= BC.SHORT_CJUMP_FALSE_7) {
-                                if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!possibleCondition)) {
-                                    pc += calculateShortOffset(bytecode);
+                            final boolean possibleCondition = PrimLessThanNode.doLong(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
                                 }
-                                pc++;
-                                break;
-                            } else if (bytecode == BC.EXT_JUMP_IF_FALSE) {
-                                assert extB == 0;
-                                if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!possibleCondition)) {
-                                    pc += getByteExtended(bc, pc + 1, extB);
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            final boolean possibleCondition = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
                                 }
-                                pc += 2;
-                                break;
-                            } else if (bytecode == BC.EXT_JUMP_IF_TRUE) {
-                                assert extB == 0;
-                                if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(possibleCondition)) {
-                                    pc += getByteExtended(bc, pc + 1, extB);
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else {
+                            if ((state & 0b10000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b10000;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            final Object result = send(frame, currentPC, receiver, arg);
+                            push(frame, currentPC, sp++, result);
+                            pc = checkPCAfterSend(frame, pc);
+                            break;
+                        }
+                    }
+                    case BC.BYTECODE_PRIM_GREATER_THAN: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            final boolean possibleCondition = PrimGreaterThanNode.doLong(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
                                 }
-                                pc += 2;
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            final boolean possibleCondition = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else {
+                            if ((state & 0b10000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b10000;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            final Object result = send(frame, currentPC, receiver, arg);
+                            push(frame, currentPC, sp++, result);
+                            pc = checkPCAfterSend(frame, pc);
+                            break;
+                        }
+                    }
+                    case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            final boolean possibleCondition = PrimLessOrEqualNode.doLong(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            final boolean possibleCondition = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else {
+                            if ((state & 0b10000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b10000;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            final Object result = send(frame, currentPC, receiver, arg);
+                            push(frame, currentPC, sp++, result);
+                            pc = checkPCAfterSend(frame, pc);
+                            break;
+                        }
+                    }
+                    case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            final boolean possibleCondition = PrimGreaterOrEqualNode.doLong(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            final boolean possibleCondition = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else {
+                            if ((state & 0b10000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b10000;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            final Object result = send(frame, currentPC, receiver, arg);
+                            push(frame, currentPC, sp++, result);
+                            pc = checkPCAfterSend(frame, pc);
+                            break;
+                        }
+                    }
+                    case BC.BYTECODE_PRIM_EQUAL: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            final boolean possibleCondition = PrimEqualNode.doLong(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            final boolean possibleCondition = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else {
+                            if ((state & 0b10000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b10000;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            final Object result = send(frame, currentPC, receiver, arg);
+                            push(frame, currentPC, sp++, result);
+                            pc = checkPCAfterSend(frame, pc);
+                            break;
+                        }
+                    }
+                    case BC.BYTECODE_PRIM_NOT_EQUAL: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            final boolean possibleCondition = PrimNotEqualNode.doLong(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            final boolean possibleCondition = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
+                            if (CompilerDirectives.inInterpreter()) {
+                                final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                                if (cheatPC != NO_CHEAT_PC) {
+                                    pc = cheatPC;
+                                    break;
+                                }
+                            }
+                            pushResolved(frame, sp++, possibleCondition);
+                            break;
+                        } else {
+                            if ((state & 0b10000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b10000;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            final Object result = send(frame, currentPC, receiver, arg);
+                            push(frame, currentPC, sp++, result);
+                            pc = checkPCAfterSend(frame, pc);
+                            break;
+                        }
+                    }
+                    case BC.BYTECODE_PRIM_IDENTICAL: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final boolean possibleCondition = uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg);
+                        if (CompilerDirectives.inInterpreter()) {
+                            final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                            if (cheatPC != NO_CHEAT_PC) {
+                                pc = cheatPC;
                                 break;
                             }
                         }
-                        push(frame, currentPC, sp++, result);
-                        pc = checkPCAfterSend(frame, pc);
+                        pushResolved(frame, sp++, possibleCondition);
+                        break;
+                    }
+
+                    case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final boolean possibleCondition = !uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg);
+                        if (CompilerDirectives.inInterpreter()) {
+                            final int cheatPC = booleanCheat(bc, pc, extB, possibleCondition);
+                            if (cheatPC != NO_CHEAT_PC) {
+                                pc = cheatPC;
+                                break;
+                            }
+                        }
+                        pushResolved(frame, sp++, possibleCondition);
                         break;
                     }
                     case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
@@ -962,6 +1206,33 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     public static int calculateLongExtendedOffset(final byte bytecode, final int extB) {
         return Byte.toUnsignedInt(bytecode) + (extB << 8);
+    }
+
+    /** See #booleanCheatSistaV1:. */
+    private int booleanCheat(final byte[] bc, final int pc, final int extB, final boolean possibleCondition) {
+        final byte bytecode = getByte(bc, pc);
+        if (BC.SHORT_CJUMP_FALSE_0 <= bytecode && bytecode <= BC.SHORT_CJUMP_FALSE_7) {
+            if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!possibleCondition)) {
+                return pc + 1 + calculateShortOffset(bytecode);
+            } else {
+                return pc + 1;
+            }
+        } else if (bytecode == BC.EXT_JUMP_IF_FALSE) {
+            assert extB == 0;
+            if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!possibleCondition)) {
+                return pc + 2 + getByteExtended(bc, pc + 1, 0);
+            } else {
+                return pc + 2;
+            }
+        } else if (bytecode == BC.EXT_JUMP_IF_TRUE) {
+            assert extB == 0;
+            if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(possibleCondition)) {
+                return pc + 2 + getByteExtended(bc, pc + 1, 0);
+            } else {
+                return pc + 2;
+            }
+        }
+        return NO_CHEAT_PC;
     }
 
     static class BC {

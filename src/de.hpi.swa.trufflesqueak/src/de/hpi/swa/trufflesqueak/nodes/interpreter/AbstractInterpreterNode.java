@@ -60,6 +60,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrumentableNode implements BytecodeOSRNode, InstrumentableNode {
     private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
     protected static final int LOCAL_RETURN_PC = -2;
+    protected static final int NO_CHEAT_PC = -1;
 
     protected final CompiledCodeObject code;
     protected final boolean isBlock;

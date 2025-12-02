@@ -22,7 +22,7 @@ import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 @GenerateInline
-@GenerateCached(false)
+@GenerateCached(true)
 public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     public abstract boolean execute(Node node, Object left, Object right);
