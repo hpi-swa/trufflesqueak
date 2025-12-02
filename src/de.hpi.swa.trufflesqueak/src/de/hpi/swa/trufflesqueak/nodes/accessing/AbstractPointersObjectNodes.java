@@ -39,7 +39,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public class AbstractPointersObjectNodes {
     @GenerateInline
     @GenerateUncached
-    @GenerateCached(false)
+    @GenerateCached(true)
     public abstract static class AbstractPointersObjectReadNode extends AbstractNode {
 
         public static AbstractPointersObjectReadNode getUncached() {
@@ -90,7 +90,7 @@ public class AbstractPointersObjectNodes {
 
     @GenerateInline
     @GenerateUncached
-    @GenerateCached(false)
+    @GenerateCached(true)
     public abstract static class AbstractPointersObjectWriteNode extends AbstractNode {
 
         public static AbstractPointersObjectWriteNode getUncached() {

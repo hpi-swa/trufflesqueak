@@ -33,9 +33,9 @@ public abstract class GetNextActiveContextNode extends AbstractNode {
     protected static final ContextObject doHandle(
                     @Bind final Node node,
                     @Cached final GetActiveProcessNode getActiveProcessNode,
-                    @Cached final AbstractPointersObjectReadNode readNode,
-                    @Cached final AbstractPointersObjectWriteNode writeSuspendedContextNode,
-                    @Cached final AbstractPointersObjectWriteNode writeListNode) {
+                    @Cached(inline = true) final AbstractPointersObjectReadNode readNode,
+                    @Cached(inline = true) final AbstractPointersObjectWriteNode writeSuspendedContextNode,
+                    @Cached(inline = true) final AbstractPointersObjectWriteNode writeListNode) {
         final PointersObject activeProcess = getActiveProcessNode.execute(node);
         final Object newActiveContextObject = readNode.execute(node, activeProcess, PROCESS.SUSPENDED_CONTEXT);
         if (!(newActiveContextObject instanceof final ContextObject newActiveContext)) {

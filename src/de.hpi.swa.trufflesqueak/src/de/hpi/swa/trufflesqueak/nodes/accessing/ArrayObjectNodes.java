@@ -137,7 +137,7 @@ public final class ArrayObjectNodes {
 
     @GenerateInline
     @GenerateUncached
-    @GenerateCached(false)
+    @GenerateCached(true)
     public abstract static class ArrayObjectSizeNode extends AbstractNode {
 
         public static ArrayObjectSizeNode getUncached() {
