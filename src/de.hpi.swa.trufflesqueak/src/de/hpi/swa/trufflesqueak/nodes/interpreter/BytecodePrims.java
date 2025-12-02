@@ -34,12 +34,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
-import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers.PrimDigitBitAndNode;
-import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers.PrimDigitBitOrNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimAddLargeIntegersNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimAddNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitOrNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitShiftNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimDivideLargeIntegersNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimDivideNode;
@@ -536,92 +532,6 @@ public class BytecodePrims {
                         @Bind final Node node,
                         @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) {
             return PrimFloorDivideNode.doLongLargeInteger(lhs, rhs, image, node, isZeroProfile);
-        }
-    }
-
-    @GenerateInline(false)
-    public abstract static class BytecodePrimBitAndNode extends AbstractBytecodePrim1Node {
-        @Override
-        final int getSelectorIndex() {
-            return 14;
-        }
-
-        @Specialization
-        protected static final long doLong(final long receiver, final long arg) {
-            return PrimBitAndNode.doLong(receiver, arg);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
-        public static final long doLongLargeQuick(final long receiver, final NativeObject arg,
-                        @Bind final SqueakImageContext image) {
-            return PrimBitAndNode.doLongLargeQuick(receiver, arg, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
-        public static final Object doLongLarge(final long receiver, final NativeObject arg,
-                        @Bind final SqueakImageContext image) {
-            return PrimBitAndNode.doLongLarge(receiver, arg, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(lhs)"})
-        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimDigitBitAndNode.doLargeInteger(lhs, rhs, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
-        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimDigitBitAndNode.doLargeInteger(lhs, rhs, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(rhs)"})
-        protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimDigitBitAndNode.doLong(lhs, rhs, image);
-        }
-    }
-
-    @GenerateInline(false)
-    public abstract static class BytecodePrimBitOrNode extends AbstractBytecodePrim1Node {
-        @Override
-        final int getSelectorIndex() {
-            return 15;
-        }
-
-        @Specialization
-        protected static final long doLong(final long receiver, final long arg) {
-            return PrimBitOrNode.doLong(receiver, arg);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(arg)"}, rewriteOn = ArithmeticException.class)
-        public static final long doLongLargeQuick(final long receiver, final NativeObject arg,
-                        @Bind final SqueakImageContext image) {
-            return PrimBitOrNode.doLongLargeQuick(receiver, arg, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(arg)"}, replaces = "doLongLargeQuick")
-        public static final Object doLongLarge(final long receiver, final NativeObject arg,
-                        @Bind final SqueakImageContext image) {
-            return PrimBitOrNode.doLongLarge(receiver, arg, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(lhs)"})
-        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimDigitBitOrNode.doLargeInteger(lhs, rhs, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
-        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimDigitBitOrNode.doLargeInteger(lhs, rhs, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(rhs)"})
-        protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimDigitBitOrNode.doLong(lhs, rhs, image);
         }
     }
 }
