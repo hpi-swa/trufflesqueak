@@ -48,8 +48,8 @@ import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodeP
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimMultiplyNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimPointXNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimPointYNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSubtractNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitOrNode;
@@ -818,7 +818,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             pushResolved(frame, sp++, PrimBitAndNode.doLong(lhs, rhs));
-                            break;
                         } else {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -828,8 +827,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             final Object result = send(frame, currentPC, receiver, arg);
                             push(frame, currentPC, sp++, result);
                             pc = checkPCAfterSend(frame, pc);
-                            break;
                         }
+                        break;
                     }
                     case BC.BYTECODE_PRIM_BIT_OR: {
                         final Object arg = pop(frame, --sp);
@@ -841,7 +840,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             pushResolved(frame, sp++, PrimBitOrNode.doLong(lhs, rhs));
-                            break;
                         } else {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -851,8 +849,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             final Object result = send(frame, currentPC, receiver, arg);
                             push(frame, currentPC, sp++, result);
                             pc = checkPCAfterSend(frame, pc);
-                            break;
                         }
+                        break;
                     }
                     case BC.BYTECODE_PRIM_LESS_THAN: {
                         final Object arg = pop(frame, --sp);
@@ -864,14 +862,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             pushResolved(frame, sp++, PrimLessThanNode.doLong(lhs, rhs));
-                            break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
                             pushResolved(frame, sp++, PrimSmallFloatLessThanNode.doDouble(lhs, rhs));
-                            break;
                         } else {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -881,8 +877,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             final Object result = send(frame, currentPC, receiver, arg);
                             push(frame, currentPC, sp++, result);
                             pc = checkPCAfterSend(frame, pc);
-                            break;
                         }
+                        break;
                     }
                     case BC.BYTECODE_PRIM_GREATER_THAN: {
                         final Object arg = pop(frame, --sp);
@@ -894,14 +890,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             pushResolved(frame, sp++, PrimGreaterThanNode.doLong(lhs, rhs));
-                            break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
                             pushResolved(frame, sp++, PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs));
-                            break;
                         } else {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -911,8 +905,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             final Object result = send(frame, currentPC, receiver, arg);
                             push(frame, currentPC, sp++, result);
                             pc = checkPCAfterSend(frame, pc);
-                            break;
                         }
+                        break;
                     }
                     case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
@@ -924,14 +918,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             pushResolved(frame, sp++, PrimLessOrEqualNode.doLong(lhs, rhs));
-                            break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
                             pushResolved(frame, sp++, PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs));
-                            break;
                         } else {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -941,8 +933,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             final Object result = send(frame, currentPC, receiver, arg);
                             push(frame, currentPC, sp++, result);
                             pc = checkPCAfterSend(frame, pc);
-                            break;
                         }
+                        break;
                     }
                     case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
@@ -954,14 +946,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             pushResolved(frame, sp++, PrimGreaterOrEqualNode.doLong(lhs, rhs));
-                            break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
                             pushResolved(frame, sp++, PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs));
-                            break;
                         } else {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -971,8 +961,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             final Object result = send(frame, currentPC, receiver, arg);
                             push(frame, currentPC, sp++, result);
                             pc = checkPCAfterSend(frame, pc);
-                            break;
                         }
+                        break;
                     }
                     case BC.BYTECODE_PRIM_EQUAL: {
                         final Object arg = pop(frame, --sp);
@@ -984,14 +974,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             pushResolved(frame, sp++, PrimEqualNode.doLong(lhs, rhs));
-                            break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
                             pushResolved(frame, sp++, PrimSmallFloatEqualNode.doDouble(lhs, rhs));
-                            break;
                         } else {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -1001,8 +989,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             final Object result = send(frame, currentPC, receiver, arg);
                             push(frame, currentPC, sp++, result);
                             pc = checkPCAfterSend(frame, pc);
-                            break;
                         }
+                        break;
                     }
                     case BC.BYTECODE_PRIM_NOT_EQUAL: {
                         final Object arg = pop(frame, --sp);
@@ -1014,14 +1002,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 profiles[currentPC] |= 0b100;
                             }
                             pushResolved(frame, sp++, PrimNotEqualNode.doLong(lhs, rhs));
-                            break;
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
                             pushResolved(frame, sp++, PrimSmallFloatNotEqualNode.doDouble(lhs, rhs));
-                            break;
                         } else {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -1031,8 +1017,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             final Object result = send(frame, currentPC, receiver, arg);
                             push(frame, currentPC, sp++, result);
                             pc = checkPCAfterSend(frame, pc);
-                            break;
                         }
+                        break;
                     }
                     case BC.BYTECODE_PRIM_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
