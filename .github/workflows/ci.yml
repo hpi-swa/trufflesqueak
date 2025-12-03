@@ -26,7 +26,7 @@ env:
   PGO_LCOV_FILE_CUIS: '${{ github.workspace }}/lcov-cuis.info'
   PGO_LCOV_FILE_SQUEAK: '${{ github.workspace }}/lcov-squeak.info'
   PYTHONIOENCODING: 'utf-8'
-  PYTHON_VERSION: '3.12.0'
+  PYTHON_VERSION: '3.12'
   VERBOSE_GRAALVM_LAUNCHERS: true
 
 jobs:
