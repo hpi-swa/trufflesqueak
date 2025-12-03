@@ -30,7 +30,12 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
@@ -44,17 +49,18 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Disp
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimAddNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.BytecodePrimAddNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.BytecodePrimAddNode.BytecodePrimAddLongNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.BytecodePrimMakePointNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.BytecodePrimPointXNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.BytecodePrimPointYNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.BytecodePrimSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimBitShiftNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimDivNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimDivideNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimMakePointNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimModNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimMultiplyNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimPointXNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimPointYNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSubtractNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitOrNode;
@@ -138,13 +144,16 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     extA = extB = 0;
                     break;
                 case BC.BYTECODE_PRIM_ADD: {
-                    data[currentPC] = insert(BytecodePrimAddNodeGen.create());
+                    data[currentPC] = insert(new BytecodePrimAddNode(image));
                     break;
                 }
                 case BC.BYTECODE_PRIM_SUBTRACT: {
                     data[currentPC] = insert(BytecodePrimSubtractNodeGen.create());
                     break;
                 }
+                case BC.BYTECODE_PRIM_SIZE:
+                    data[currentPC] = insert(new BytecodePrimSizeNode(image));
+                    break;
                 case BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW: {
                     data[currentPC] = insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD)));
                     break;
@@ -172,7 +181,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     break;
                 }
                 case BC.BYTECODE_PRIM_MAKE_POINT: {
-                    data[currentPC] = insert(BytecodePrimMakePointNodeGen.create());
+                    data[currentPC] = insert(new BytecodePrimMakePointNode(image));
                     break;
                 }
                 case BC.BYTECODE_PRIM_BIT_SHIFT: {
@@ -181,10 +190,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 case BC.BYTECODE_PRIM_DIV: {
                     data[currentPC] = insert(BytecodePrimDivNodeGen.create());
-                    break;
-                }
-                case BC.BYTECODE_PRIM_SIZE: {
-                    data[currentPC] = insert(BytecodePrimSizeNodeGen.create());
                     break;
                 }
                 case BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL: {
@@ -196,11 +201,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     break;
                 }
                 case BC.BYTECODE_PRIM_POINT_X: {
-                    data[currentPC] = insert(BytecodePrimPointXNodeGen.create());
+                    data[currentPC] = insert(new BytecodePrimPointXNode(image));
                     break;
                 }
                 case BC.BYTECODE_PRIM_POINT_Y: {
-                    data[currentPC] = insert(BytecodePrimPointYNodeGen.create());
+                    data[currentPC] = insert(new BytecodePrimPointYNode(image));
                     break;
                 }
                 case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
@@ -368,6 +373,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             numArguments = FrameAccess.getNumArguments(frame);
         }
 
+        final SqueakImageContext image = getContext();
         final byte[] bc = uncheckedCast(code.getBytes(), byte[].class);
 
         int pc = startPC;
@@ -488,12 +494,17 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         extA = extB = 0;
                         break;
                     }
-                    /* bytecode prims with 0 args */
-                    case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
+                    case BC.BYTECODE_PRIM_ADD: {
+                        final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        externalizePCAndSP(frame, pc, sp);
-                        push(frame, currentPC, sp++, sendBytecodePrim(frame, currentPC, receiver));
-                        pc = checkPCAfterSend(frame, pc);
+                        final BytecodePrimAddNode node = uncheckedCast(data[currentPC], BytecodePrimAddNode.class);
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            pushResolved(frame, sp++, uncheckedCast(node.longNode, BytecodePrimAddLongNode.class).execute(lhs, rhs));
+                        } else {
+                            externalizePCAndSP(frame, pc, sp);
+                            push(frame, currentPC, sp++, send(frame, uncheckedCast(node.dispatchNode, Dispatch1NodeGen.class), currentPC, receiver, arg));
+                            pc = checkPCAfterSend(frame, pc);
+                        }
                         break;
                     }
                     case BC.BYTECODE_PRIM_CLASS: {
@@ -502,12 +513,25 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     /* bytecode prims with 1 arg */
-                    case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV: {
+                    case BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
                         push(frame, currentPC, sp++, sendBytecodePrim(frame, currentPC, receiver, arg));
                         pc = checkPCAfterSend(frame, pc);
+                        break;
+                    }
+                    case BC.BYTECODE_PRIM_MAKE_POINT: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final BytecodePrimMakePointNode node = uncheckedCast(data[currentPC], BytecodePrimMakePointNode.class);
+                        if (receiver instanceof Long && arg instanceof Long) {
+                            pushResolved(frame, sp++, image.asPoint(uncheckedCast(node.writeNode, AbstractPointersObjectWriteNode.class), this, receiver, arg));
+                        } else {
+                            externalizePCAndSP(frame, pc, sp);
+                            push(frame, currentPC, sp++, send(frame, uncheckedCast(node.dispatchNode, Dispatch1NodeGen.class), currentPC, receiver, arg));
+                            pc = checkPCAfterSend(frame, pc);
+                        }
                         break;
                     }
                     case BC.BYTECODE_PRIM_BIT_AND: {
@@ -722,17 +746,56 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         }
                         break;
                     }
+                    case BC.BYTECODE_PRIM_SIZE: {
+                        final Object receiver = popReceiver(frame, --sp);
+                        final BytecodePrimSizeNode node = uncheckedCast(data[currentPC], BytecodePrimSizeNode.class);
+                        if (receiver instanceof final NativeObject object && (image.isByteString(object) || image.isByteSymbol(object))) {
+                            pushResolved(frame, sp++, (long) object.getByteLength());
+                        } else if (receiver instanceof final ArrayObject array) {
+                            pushResolved(frame, sp++, (long) uncheckedCast(node.arrayNode, ArrayObjectSizeNodeGen.class).execute(this, array));
+                        } else {
+                            externalizePCAndSP(frame, pc, sp);
+                            push(frame, currentPC, sp++, send(frame, uncheckedCast(node.dispatchNode, Dispatch0NodeGen.class), currentPC, receiver));
+                            pc = checkPCAfterSend(frame, pc);
+                        }
+                        break;
+                    }
                     case BC.BYTECODE_PRIM_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
                         pushResolved(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
-
                     case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
                         pushResolved(frame, sp++, !uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
+                        break;
+                    }
+                    case BC.BYTECODE_PRIM_POINT_X: {
+                        final Object receiver = popReceiver(frame, --sp);
+                        final BytecodePrimPointXNode node = uncheckedCast(data[currentPC], BytecodePrimPointXNode.class);
+                        if (receiver instanceof final PointersObject point && image.isPoint(point)) {
+                            final Object result = uncheckedCast(node.readNode, AbstractPointersObjectReadNode.class).execute(this, point, POINT.X);
+                            pushResolved(frame, sp++, result);
+                        } else {
+                            externalizePCAndSP(frame, pc, sp);
+                            push(frame, currentPC, sp++, send(frame, uncheckedCast(node.dispatchNode, Dispatch0NodeGen.class), currentPC, receiver));
+                            pc = checkPCAfterSend(frame, pc);
+                        }
+                        break;
+                    }
+                    case BC.BYTECODE_PRIM_POINT_Y: {
+                        final Object receiver = popReceiver(frame, --sp);
+                        final BytecodePrimPointYNode node = uncheckedCast(data[currentPC], BytecodePrimPointYNode.class);
+                        if (receiver instanceof final PointersObject point && image.isPoint(point)) {
+                            final Object result = uncheckedCast(node.readNode, AbstractPointersObjectReadNode.class).execute(this, point, POINT.Y);
+                            pushResolved(frame, sp++, result);
+                        } else {
+                            externalizePCAndSP(frame, pc, sp);
+                            push(frame, currentPC, sp++, send(frame, uncheckedCast(node.dispatchNode, Dispatch0NodeGen.class), currentPC, receiver));
+                            pc = checkPCAfterSend(frame, pc);
+                        }
                         break;
                     }
                     case BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, //
@@ -864,7 +927,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         } else {
                             values = ArrayUtils.withAll(arraySize, NilObject.SINGLETON);
                         }
-                        final SqueakImageContext image = getContext();
                         pushResolved(frame, sp++, ArrayObject.createWithStorage(image, image.arrayClass, values));
                         break;
                     }
@@ -1023,7 +1085,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final boolean receiverOnStack = (byteB & 0x80) != 0;
                         final ContextObject outerContext = ignoreContext ? null : uncheckedCast(data[currentPC], GetOrCreateContextWithFrameNode.class).executeGet(frame);
                         final Object receiver = receiverOnStack ? pop(frame, --sp) : FrameAccess.getReceiver(frame);
-                        final SqueakImageContext image = getContext();
                         pushResolved(frame, sp++, new BlockClosureObject(image, image.getFullBlockClosureClass(), block, blockInitialPC, blockNumArgs, copiedValues, receiver, outerContext));
                         extA = 0;
                         break;
@@ -1064,7 +1125,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             }
         } catch (final StackOverflowError e) {
             CompilerDirectives.transferToInterpreter();
-            throw getContext().tryToSignalLowSpace(frame, e);
+            throw image.tryToSignalLowSpace(frame, e);
         } finally {
             if (CompilerDirectives.hasNextTier() && loopCounter.value > 0) {
                 LoopNode.reportLoopCount(this, loopCounter.value);

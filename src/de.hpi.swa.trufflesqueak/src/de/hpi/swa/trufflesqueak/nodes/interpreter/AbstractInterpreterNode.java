@@ -208,16 +208,24 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver) {
+        return send(frame, uncheckedCast(data[currentPC], Dispatch0NodeGen.class), currentPC, receiver);
+    }
+
+    protected final Object send(final VirtualFrame frame, final Dispatch0NodeGen node, final int currentPC, final Object receiver) {
         try {
-            return uncheckedCast(data[currentPC], Dispatch0NodeGen.class).execute(frame, receiver);
+            return node.execute(frame, receiver);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
     }
 
     protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
+        return send(frame, uncheckedCast(data[currentPC], Dispatch1NodeGen.class), currentPC, receiver, arg);
+    }
+
+    protected final Object send(final VirtualFrame frame, final Dispatch1NodeGen node, final int currentPC, final Object receiver, final Object arg) {
         try {
-            return uncheckedCast(data[currentPC], Dispatch1NodeGen.class).execute(frame, receiver, arg);
+            return node.execute(frame, receiver, arg);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }

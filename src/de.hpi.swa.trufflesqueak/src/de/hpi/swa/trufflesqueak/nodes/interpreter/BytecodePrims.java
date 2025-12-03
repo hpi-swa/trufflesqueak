@@ -18,23 +18,20 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
-import de.hpi.swa.trufflesqueak.model.ArrayObject;
-import de.hpi.swa.trufflesqueak.model.CharacterObject;
-import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectWriteNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimAddLargeIntegersNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrimsFactory.BytecodePrimAddNodeFactory.BytecodePrimAddLongNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimAddNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitShiftNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimDivideLargeIntegersNode;
@@ -42,10 +39,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimD
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimFloorDivideNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimFloorModLargeIntegersNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimFloorModNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimMakePointNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimMultiplyLargeIntegersNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimMultiplyNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatAddNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatDivideNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatMultiplyNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatSubtractNode;
@@ -53,6 +48,67 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimS
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSubtractNode;
 
 public class BytecodePrims {
+    public static final class BytecodePrimAddNode extends AbstractNode {
+        @Child BytecodePrimAddLongNode longNode = BytecodePrimAddLongNodeGen.create();
+        @Child Dispatch1Node dispatchNode;
+
+        BytecodePrimAddNode(final SqueakImageContext image) {
+            dispatchNode = Dispatch1NodeGen.create(image.getSpecialSelector(0));
+        }
+
+        @GenerateInline(false)
+        public abstract static class BytecodePrimAddLongNode extends AbstractNode {
+            abstract Object execute(Long lhs, Long rhs);
+
+            @Specialization(rewriteOn = ArithmeticException.class)
+            protected static final Long doLong(final Long lhs, final Long rhs) {
+                return PrimAddNode.doLong(lhs, rhs);
+            }
+
+            @Specialization(replaces = "doLong")
+            protected static final Object doLongWithOverflow(final Long lhs, final Long rhs,
+                            @Bind final SqueakImageContext image) {
+                return PrimAddNode.doLongWithOverflow(lhs, rhs, image);
+            }
+        }
+    }
+
+    public static final class BytecodePrimMakePointNode extends AbstractNode {
+        @Child AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNodeGen.create();
+        @Child Dispatch1Node dispatchNode;
+
+        BytecodePrimMakePointNode(final SqueakImageContext image) {
+            dispatchNode = Dispatch1NodeGen.create(image.getSpecialSelector(11));
+        }
+    }
+
+    public static final class BytecodePrimPointXNode extends AbstractNode {
+        @Child AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNodeGen.create();
+        @Child Dispatch0Node dispatchNode;
+
+        BytecodePrimPointXNode(final SqueakImageContext image) {
+            dispatchNode = Dispatch0NodeGen.create(image.getSpecialSelector(30));
+        }
+    }
+
+    public static final class BytecodePrimPointYNode extends AbstractNode {
+        @Child AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNodeGen.create();
+        @Child Dispatch0Node dispatchNode;
+
+        BytecodePrimPointYNode(final SqueakImageContext image) {
+            dispatchNode = Dispatch0NodeGen.create(image.getSpecialSelector(31));
+        }
+    }
+
+    public static final class BytecodePrimSizeNode extends AbstractNode {
+        @Child ArrayObjectSizeNode arrayNode = ArrayObjectSizeNodeGen.create();
+        @Child Dispatch0Node dispatchNode;
+
+        BytecodePrimSizeNode(final SqueakImageContext image) {
+            dispatchNode = Dispatch0NodeGen.create(image.getSpecialSelector(18));
+        }
+    }
+
     public abstract static class AbstractBytecodePrimNode extends AbstractNode {
         protected final NativeObject getSpecialSelector() {
             return getContext().getSpecialSelector(getSelectorIndex());
@@ -65,155 +121,8 @@ public class BytecodePrims {
         public abstract Object execute(VirtualFrame frame, Object receiver);
     }
 
-    /**
-     * Subset of {@link de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode} for classes
-     * that do not override #size. Returns long values. OpenSmalltalkVM always performs sends.
-     */
-    @GenerateInline(false)
-    public abstract static class BytecodePrimSizeNode extends AbstractBytecodePrim0Node {
-        @Override
-        final int getSelectorIndex() {
-            return 18;
-        }
-
-        @Specialization
-        protected static final long doArrayObject(final ArrayObject receiver,
-                        @Bind final Node node,
-                        @Cached final ArrayObjectSizeNode sizeNode) {
-            return sizeNode.execute(node, receiver);
-        }
-
-        /*
-         * Cannot use all specializations for NativeObject as Cuis has lots of conflicting
-         * overrides, such as Float64Array#size. Use only a single specialization for byte strings
-         * and symbols.
-         */
-
-        @Specialization(guards = "image.isByteString(obj) || image.isByteSymbol(obj)")
-        protected static final long doNativeBytes(final NativeObject obj,
-                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
-            return obj.getByteLength();
-        }
-
-        @Specialization
-        protected static final long doCode(final CompiledCodeObject obj) {
-            return obj.size();
-        }
-
-        /*
-         * Cannot use specialization for BlockClosureObject due to FullBlockClosure#size override.
-         */
-
-        @Specialization
-        protected static final long doContext(final ContextObject obj) {
-            return obj.size();
-        }
-
-        @Specialization
-        protected static final long doFloat(final FloatObject obj) {
-            return obj.size();
-        }
-
-        @Specialization
-        protected static final long doClass(final ClassObject obj) {
-            return obj.size();
-        }
-
-        @Specialization
-        protected static final long doNilObject(final NilObject receiver) {
-            return receiver.size();
-        }
-
-        @Specialization
-        protected static final long doCharacterObject(final CharacterObject obj) {
-            return obj.size();
-        }
-    }
-
-    @GenerateInline(false)
-    public abstract static class BytecodePrimPointXNode extends AbstractBytecodePrim0Node {
-        @Override
-        final int getSelectorIndex() {
-            return 30;
-        }
-
-        @Specialization(guards = "getContext(node).isPoint(receiver)")
-        protected static final Object doX(final AbstractPointersObject receiver,
-                        @Bind final Node node,
-                        @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(node, receiver, POINT.X);
-        }
-    }
-
-    @GenerateInline(false)
-    public abstract static class BytecodePrimPointYNode extends AbstractBytecodePrim0Node {
-        @Override
-        final int getSelectorIndex() {
-            return 31;
-        }
-
-        @Specialization(guards = "getContext(node).isPoint(receiver)")
-        protected static final Object doY(final AbstractPointersObject receiver,
-                        @Bind final Node node,
-                        @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(node, receiver, POINT.Y);
-        }
-    }
-
     public abstract static class AbstractBytecodePrim1Node extends AbstractBytecodePrimNode {
         public abstract Object execute(VirtualFrame frame, Object receiver, Object arg);
-    }
-
-    @GenerateInline(false)
-    public abstract static class BytecodePrimAddNode extends AbstractBytecodePrim1Node {
-        @Override
-        final int getSelectorIndex() {
-            return 0;
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
-            return PrimAddNode.doLong(lhs, rhs);
-        }
-
-        @Specialization(replaces = "doLong")
-        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimAddNode.doLongWithOverflow(lhs, rhs, image);
-        }
-
-        @Specialization
-        protected static final double doDouble(final double lhs, final double rhs) {
-            return PrimSmallFloatAddNode.doDouble(lhs, rhs);
-        }
-
-        @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final double doLongDouble(final long lhs, final double rhs) {
-            return PrimAddNode.doLongDouble(lhs, rhs);
-        }
-
-        @Specialization(guards = "isPrimitiveDoMixedArithmetic()")
-        protected static final double doDoubleLong(final double lhs, final long rhs) {
-            return PrimSmallFloatAddNode.doLong(lhs, rhs);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(lhs)"})
-        protected static final Object doLargeIntegerLong(final NativeObject lhs, final long rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimAddLargeIntegersNode.doLargeIntegerLong(lhs, rhs, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(lhs)", "image.isLargeInteger(rhs)"})
-        protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimAddLargeIntegersNode.doLargeInteger(lhs, rhs, image);
-        }
-
-        @Specialization(guards = {"image.isLargeInteger(rhs)"})
-        protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
-                        @Bind final SqueakImageContext image) {
-            return PrimAddNode.doLongLargeInteger(lhs, rhs, image);
-        }
     }
 
     @GenerateInline(false)
@@ -360,7 +269,7 @@ public class BytecodePrims {
                         @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                         @Exclusive @Cached final InlinedConditionProfile isOverflowProfile,
                         @Exclusive @Cached final InlinedConditionProfile isIntegralProfile,
-                        @Cached final AbstractPointersObjectWriteNode writeNode) {
+                        @Cached(inline = true) final AbstractPointersObjectWriteNode writeNode) {
             return PrimDivideNode.doLongFraction(lhs, rhs, image, node, isZeroProfile, isOverflowProfile, isIntegralProfile, writeNode);
         }
 
@@ -453,38 +362,6 @@ public class BytecodePrims {
         protected static final Object doLargeInteger(final NativeObject lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image) {
             return PrimFloorModLargeIntegersNode.doLargeInteger(lhs, rhs, image);
-        }
-    }
-
-    @GenerateInline(false)
-    public abstract static class BytecodePrimMakePointNode extends AbstractBytecodePrim1Node {
-        @Override
-        final int getSelectorIndex() {
-            return 11;
-        }
-
-        @Specialization
-        protected static final PointersObject doLong(final long xPos, final Object yPos,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return PrimMakePointNode.doPoint(xPos, yPos, node, image, writeNode);
-        }
-
-        @Specialization
-        protected static final PointersObject doDouble(final double xPos, final Object yPos,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return PrimMakePointNode.doPoint(xPos, yPos, node, image, writeNode);
-        }
-
-        @Specialization(guards = "image.isLargeInteger(xPos)")
-        protected static final PointersObject doLargeInteger(final NativeObject xPos, final Object yPos,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return PrimMakePointNode.doPoint(xPos, yPos, node, image, writeNode);
         }
     }
 
