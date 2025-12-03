@@ -11,7 +11,6 @@ import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -24,7 +23,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
@@ -37,7 +35,6 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -50,8 +47,6 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2No
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.AbstractBytecodePrim0Node;
-import de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodePrims.AbstractBytecodePrim1Node;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -252,36 +247,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
             return uncheckedCast(data[currentPC], DispatchSuperNaryNodeGen.class).execute(frame, receiver, arguments);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
-        }
-    }
-
-    protected final Object sendBytecodePrim(final VirtualFrame frame, final int currentPC, final Object receiver) {
-        if (data[currentPC] instanceof AbstractBytecodePrim0Node) {
-            try {
-                return uncheckedCast(data[currentPC], AbstractBytecodePrim0Node.class).execute(frame, receiver);
-            } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                final NativeObject specialSelector = ((AbstractBytecodePrim0Node) data[currentPC]).getSpecialSelector();
-                data[currentPC] = insert(Dispatch0NodeGen.create(specialSelector));
-                return send(frame, currentPC, receiver);
-            }
-        } else {
-            return send(frame, currentPC, receiver);
-        }
-    }
-
-    protected final Object sendBytecodePrim(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
-        if (data[currentPC] instanceof AbstractBytecodePrim1Node) {
-            try {
-                return uncheckedCast(data[currentPC], AbstractBytecodePrim1Node.class).execute(frame, receiver, arg);
-            } catch (final UnsupportedSpecializationException | PrimitiveFailed use) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                final NativeObject specialSelector = ((AbstractBytecodePrim1Node) data[currentPC]).getSpecialSelector();
-                data[currentPC] = insert(Dispatch1NodeGen.create(specialSelector));
-                return send(frame, currentPC, receiver, arg);
-            }
-        } else {
-            return send(frame, currentPC, receiver, arg);
         }
     }
 
