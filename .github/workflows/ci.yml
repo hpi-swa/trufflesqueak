@@ -260,6 +260,23 @@ jobs:
       with:
         name: trufflesqueak-profiles
       if: ${{ matrix.type == 'native' }}
+    - name: Free resources on macOS
+      run: |
+        echo "Disabling Spotlight indexing..."
+        sudo mdutil -a -i off
+        sudo mdutil -a -d
+        sudo launchctl bootout system /System/Library/LaunchDaemons/com.apple.metadata.mds.plist
+        sudo pkill -f "mds|mds_stores|mdworker_shared|Spotlight|corespotlightd"
+
+        echo "Forcing disk cache to be purged..."
+        sudo purge
+
+        echo "Top processes sorted by memory usage:"
+        ps -emo pid,pmem,pcpu,comm | head 2>/dev/null
+        echo ""
+        memory_pressure
+        echo ""
+      if: ${{ runner.os == 'macOS' }}
     - name: Build TruffleSqueak standalone
       run: |
         export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo=${{ env.PGO_FILE_CUIS }},${{ env.PGO_FILE_SQUEAK }}"
