@@ -396,37 +396,37 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, FrameAccess.getReceiver(frame));
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, FrameAccess.getReceiver(frame));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TRUE: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.TRUE);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, BooleanObject.TRUE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_FALSE: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.FALSE);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, BooleanObject.FALSE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, NilObject.SINGLETON);
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, NilObject.SINGLETON);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, top(frame, sp));
+                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, top(frame, sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL_FROM_BLOCK: {
-                        returnValue = uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, NilObject.SINGLETON);
+                        returnValue = handleReturnFromBlock(frame, currentPC, loopCounter.value, NilObject.SINGLETON);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
-                        returnValue = uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, top(frame, sp));
+                        returnValue = handleReturnFromBlock(frame, currentPC, loopCounter.value, top(frame, sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
@@ -984,10 +984,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } catch (final StackOverflowError e) {
             CompilerDirectives.transferToInterpreter();
             throw image.tryToSignalLowSpace(frame, e);
-        } finally {
-            if (CompilerDirectives.hasNextTier() && loopCounter.value > 0) {
-                LoopNode.reportLoopCount(this, loopCounter.value);
-            }
         }
         assert returnValue != null;
         return returnValue;

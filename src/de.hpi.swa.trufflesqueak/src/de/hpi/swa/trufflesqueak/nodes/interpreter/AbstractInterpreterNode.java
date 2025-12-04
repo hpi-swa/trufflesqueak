@@ -18,6 +18,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
@@ -334,12 +335,22 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
-    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
+    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int loopCounter, final int pc, final int sp, final Object result) {
+        if (loopCounter > 0) {
+            LoopNode.reportLoopCount(this, loopCounter);
+        }
         if (isBlock) {
             return uncheckedCast(data[currentPC], BlockReturnNode.class).execute(frame, pc, sp, result);
         } else {
             return uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, result);
         }
+    }
+
+    protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final int loopCounter, final Object result) {
+        if (loopCounter > 0) {
+            LoopNode.reportLoopCount(this, loopCounter);
+        }
+        return uncheckedCast(data[currentPC], NormalReturnNode.class).execute(frame, result);
     }
 
     /*
