@@ -705,8 +705,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                     loopCounter.value = 0;
                                 }
                             }
-                            if (data[currentPC] != null) {
-                                uncheckedCast(data[currentPC], CheckForInterruptsInLoopNode.class).execute(frame, pc);
+                            if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
+                                checkForInterruptsNode.execute(frame, pc);
                             }
                         }
                         break;
@@ -822,11 +822,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         }
                         final int byte1 = getUnsignedInt(bc, pc++);
                         final int numArgs = (byte1 & 7) + (extBValue << 3);
-                        final ClassObject lookupClass = isDirected ? uncheckedCast(pop(frame, --sp), ClassObject.class).getResolvedSuperclass() : null;
+                        final ClassObject lookupClass = isDirected ? ((ClassObject) pop(frame, --sp)).getResolvedSuperclass() : null;
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
                         final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(popReceiver(frame, --sp));
                         externalizePCAndSP(frame, pc, sp);
+                        CompilerAsserts.partialEvaluationConstant(isDirected);
                         final Object result;
                         if (isDirected) {
                             result = sendSuperDirected(frame, currentPC, lookupClass, receiver, arguments);
@@ -857,8 +858,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                     loopCounter.value = 0;
                                 }
                             }
-                            if (data[currentPC] != null) {
-                                uncheckedCast(data[currentPC], CheckForInterruptsInLoopNode.class).execute(frame, pc);
+                            if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
+                                checkForInterruptsNode.execute(frame, pc);
                             }
                         }
                         extA = extB = 0;
@@ -930,7 +931,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     case BC.EXT_PUSH_FULL_CLOSURE: {
                         final int literalIndex = getByteExtended(bc, pc++, extA);
-                        final CompiledCodeObject block = uncheckedCast(code.getLiteral(literalIndex), CompiledCodeObject.class);
+                        final CompiledCodeObject block = (CompiledCodeObject) code.getLiteral(literalIndex);
                         assert block.assertNotForwarded();
                         CompilerAsserts.partialEvaluationConstant(block);
                         final int blockInitialPC = block.getInitialPC();

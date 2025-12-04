@@ -664,8 +664,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                     loopCounter.value = 0;
                                 }
                             }
-                            if (data[currentPC] != null) {
-                                uncheckedCast(data[currentPC], CheckForInterruptsInLoopNode.class).execute(frame, pc);
+                            if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
+                                checkForInterruptsNode.execute(frame, pc);
                             }
                         }
                         break;
@@ -700,8 +700,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                     loopCounter.value = 0;
                                 }
                             }
-                            if (data[currentPC] != null) {
-                                uncheckedCast(data[currentPC], CheckForInterruptsInLoopNode.class).execute(frame, pc);
+                            if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
+                                checkForInterruptsNode.execute(frame, pc);
                             }
                         }
                         break;

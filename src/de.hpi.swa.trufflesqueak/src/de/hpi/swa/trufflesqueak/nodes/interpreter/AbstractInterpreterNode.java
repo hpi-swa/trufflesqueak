@@ -298,8 +298,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final Object readLiteralVariable(final int currentPC, final int index) {
         final Object literalVariableOrNode = data[currentPC];
-        if (literalVariableOrNode instanceof ReadLiteralVariableNode) {
-            return uncheckedCast(data[currentPC], ReadLiteralVariableNode.class).execute(this, code, index);
+        if (literalVariableOrNode instanceof final ReadLiteralVariableNode node) {
+            return node.execute(this, code, index);
         } else {
             return literalVariableOrNode;
         }
@@ -363,12 +363,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final Object resolve(final int currentPC, final Object value) {
         final byte state = profiles[currentPC];
-        if (value instanceof AbstractSqueakObjectWithClassAndHash) {
+        if (value instanceof final AbstractSqueakObjectWithClassAndHash object) {
             if ((state & 0b01) == 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 profiles[currentPC] |= 0b01;
             }
-            return uncheckedCast(value, AbstractSqueakObjectWithClassAndHash.class).resolveForwardingPointer();
+            return object.resolveForwardingPointer();
         } else {
             if ((state & 0b10) == 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -476,6 +476,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected static final RuntimeException unknownBytecode() {
+        CompilerDirectives.transferToInterpreter();
         throw CompilerDirectives.shouldNotReachHere("Unknown bytecode");
     }
 
