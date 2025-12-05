@@ -20,7 +20,6 @@ import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -825,15 +824,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final ClassObject lookupClass = isDirected ? ((ClassObject) pop(frame, --sp)).getResolvedSuperclass() : null;
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
-                        final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(popReceiver(frame, --sp));
+                        final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
                         CompilerAsserts.partialEvaluationConstant(isDirected);
-                        final Object result;
-                        if (isDirected) {
-                            result = sendSuperDirected(frame, currentPC, lookupClass, receiver, arguments);
-                        } else {
-                            result = sendSuper(frame, currentPC, receiver, arguments);
-                        }
+                        final Object result = sendSuper(frame, isDirected, currentPC, lookupClass, receiver, arguments);
                         push(frame, currentPC, sp++, result);
                         pc = checkPCAfterSend(frame, pc);
                         extA = extB = 0;
@@ -997,9 +991,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         return getUnsignedInt(bc, pc) + (extend << 8);
     }
 
-    private Object sendSuperDirected(final VirtualFrame frame, final int currentPC, final ClassObject lookupClass, final Object receiver, final Object[] arguments) {
+    private Object sendSuper(final VirtualFrame frame, final boolean isDirected, final int currentPC, final ClassObject lookupClass, final Object receiver, final Object[] arguments) {
         try {
-            return uncheckedCast(data[currentPC], DispatchDirectedSuperNaryNodeGen.class).execute(frame, lookupClass, receiver, arguments);
+            if (isDirected) {
+                return uncheckedCast(data[currentPC], DispatchDirectedSuperNaryNodeGen.class).execute(frame, lookupClass, receiver, arguments);
+            } else {
+                return uncheckedCast(data[currentPC], DispatchSuperNaryNodeGen.class).execute(frame, receiver, arguments);
+            }
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
