@@ -427,7 +427,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.EXTENDED_PUSH: {
                         final byte descriptor = getByte(bc, pc++);
                         final int variableIndex = variableIndex(descriptor);
-                        switch (variableType(descriptor)) {
+                        final byte variableType = variableType(descriptor);
+                        CompilerAsserts.partialEvaluationConstant(variableType);
+                        switch (variableType) {
                             case 0: {
                                 externalizePCAndSP(frame, pc, sp); // for ContextObject access
                                 push(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex));
@@ -450,9 +452,11 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.EXTENDED_STORE: {
                         final byte descriptor = getByte(bc, pc++);
-                        final int variableIndex = variableIndex(descriptor);
                         final Object stackTop = top(frame, sp);
-                        switch (variableType(descriptor)) {
+                        final int variableIndex = variableIndex(descriptor);
+                        final byte variableType = variableType(descriptor);
+                        CompilerAsserts.partialEvaluationConstant(variableType);
+                        switch (variableType) {
                             case 0: {
                                 uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex, stackTop);
                                 break;
@@ -473,9 +477,11 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.EXTENDED_POP: {
                         final byte descriptor = getByte(bc, pc++);
-                        final int variableIndex = variableIndex(descriptor);
                         final Object stackValue = pop(frame, --sp);
-                        switch (variableType(descriptor)) {
+                        final int variableIndex = variableIndex(descriptor);
+                        final byte variableType = variableType(descriptor);
+                        CompilerAsserts.partialEvaluationConstant(variableType);
+                        switch (variableType) {
                             case 0: {
                                 uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex, stackValue);
                                 break;
@@ -507,7 +513,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.DOUBLE_EXTENDED_DO_ANYTHING: {
                         final int byte2 = getUnsignedInt(bc, pc++);
                         final int byte3 = getUnsignedInt(bc, pc++);
-                        switch (byte2 >> 5) {
+                        final int opType = byte2 >> 5;
+                        CompilerAsserts.partialEvaluationConstant(opType);
+                        switch (opType) {
                             case 0: {
                                 final int numArgs = byte2 & 31;
                                 final Object[] arguments = popN(frame, sp, numArgs);
@@ -641,8 +649,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object[] copiedValues = popN(frame, sp, numCopied);
                         sp -= numCopied;
                         pushResolved(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues));
-                        final int blockSize = blockSizeHigh << 8 | blockSizeLow;
-                        pc += blockSize;
+                        pc += blockSizeHigh << 8 | blockSizeLow;
                         break;
                     }
                     case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {

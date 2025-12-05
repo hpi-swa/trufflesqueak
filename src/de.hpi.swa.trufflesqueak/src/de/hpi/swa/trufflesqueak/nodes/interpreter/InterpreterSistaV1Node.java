@@ -892,13 +892,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE: {
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA), pop(frame, --sp));
+                        final int index = getByteExtended(bc, pc++, extA);
+                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --sp));
                         extA = 0;
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE,
-                                        pop(frame, --sp));
+                        final int index = getByteExtended(bc, pc++, extA);
+                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, index), ASSOCIATION.VALUE, pop(frame, --sp));
                         extA = 0;
                         break;
                     }
@@ -907,12 +908,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.EXT_STORE_RECEIVER_VARIABLE: {
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA), top(frame, sp));
+                        final int index = getByteExtended(bc, pc++, extA);
+                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, sp));
                         extA = 0;
                         break;
                     }
                     case BC.EXT_STORE_LITERAL_VARIABLE: {
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, getByteExtended(bc, pc++, extA)), ASSOCIATION.VALUE, top(frame, sp));
+                        final int index = getByteExtended(bc, pc++, extA);
+                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, index), ASSOCIATION.VALUE, top(frame, sp));
                         extA = 0;
                         break;
                     }
