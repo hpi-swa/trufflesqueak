@@ -335,7 +335,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
-    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int loopCounter, final int pc, final int sp, final Object result) {
+    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
@@ -346,7 +346,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
-    protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final int loopCounter, final Object result) {
+    protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
