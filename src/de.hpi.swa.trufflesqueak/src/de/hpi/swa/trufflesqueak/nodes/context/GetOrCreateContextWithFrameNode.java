@@ -13,7 +13,8 @@ import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.InlinedCountingConditionProfile;
+import com.oracle.truffle.api.profiles.InlinedBranchProfile;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -29,7 +30,7 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
     }
 
     public static final ContextObject executeUncached(final VirtualFrame frame) {
-        return doGetOrCreate(frame, null, InlinedCountingConditionProfile.getUncached());
+        return doGetOrCreate(frame, null, InlinedConditionProfile.getUncached(), InlinedBranchProfile.getUncached());
     }
 
     public abstract ContextObject executeGet(VirtualFrame frame, Node node);
@@ -40,10 +41,12 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
 
     @Specialization
     protected static final ContextObject doGetOrCreate(final VirtualFrame frame, final Node node,
-                    @Cached final InlinedCountingConditionProfile hasContextProfile) {
+                    @Cached final InlinedConditionProfile hasContextProfile,
+                    @Cached final InlinedBranchProfile hasFrameProfile) {
         final ContextObject context = FrameAccess.getContext(frame);
-        if (context != null) {
-            if (hasContextProfile.profile(node, !context.hasTruffleFrame())) {
+        if (hasContextProfile.profile(node, context != null)) {
+            if (!context.hasTruffleFrame()) {
+                hasFrameProfile.enter(node);
                 context.setTruffleFrame(frame.materialize());
             }
             return context;
