@@ -218,7 +218,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         setBooleanABit();
     }
 
-    /* Marked code flags (implemented in object header flags. */
+    /* Marked code flags (implemented in object header flags). */
     private void setMarkedCodeFlags() {
         if (getCodeObject().isUnwindMarked() && !hasClosure()) {
             setUnwindMarked();

@@ -92,8 +92,6 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class EphemeronObject extends AbstractPointersObject {
 
-    private boolean hasBeenSignaled;
-
     public EphemeronObject(final SqueakImageContext image, final long header, final ClassObject classObject) {
         super(header, classObject);
         image.containsEphemerons = true;
@@ -106,14 +104,20 @@ public final class EphemeronObject extends AbstractPointersObject {
 
     private EphemeronObject(final EphemeronObject original) {
         super(original);
+        clearHasBeenSignaled();
     }
 
+    /* hasBeenSignaled flag (implemented in object header flags). */
     public boolean hasBeenSignaled() {
-        return hasBeenSignaled;
+        return isBooleanASet();
     }
 
     public void setHasBeenSignaled() {
-        hasBeenSignaled = true;
+        setBooleanABit();
+    }
+
+    public void clearHasBeenSignaled() {
+        clearBooleanABit();
     }
 
     public boolean keyHasBeenMarked(final ObjectTracer tracer) {
