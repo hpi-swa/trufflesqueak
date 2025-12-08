@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -985,6 +986,59 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         push(frame, sp++, result);
                         break;
                     }
+                    case BC.BYTECODE_PRIM_MULTIPLY: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        final Object result;
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            /* Profiled version of LargeIntegers.multiply(image, lhs, rhs). */
+                            final long r = lhs * rhs;
+                            final long ax = Math.abs(lhs);
+                            final long ay = Math.abs(rhs);
+                            if ((ax | ay) >>> 31 != 0) {
+                                if ((state & 0b10000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b10000;
+                                }
+                                // Some bits greater than 2^31 that might cause overflow
+                                // Check the result using the divide operator
+                                // and check for the special case of Long.MIN_VALUE * -1
+                                if (rhs != 0 && r / rhs != lhs || lhs == Long.MIN_VALUE && rhs == -1) {
+                                    result = LargeIntegers.multiplyLarge(image, lhs, rhs);
+                                } else {
+                                    result = r;
+                                }
+                            } else {
+                                if ((state & 0b100000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b100000;
+                                }
+                                result = r;
+                            }
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000000;
+                            }
+                            final double r = lhs * rhs;
+                            result = Double.isFinite(r) ? r : new FloatObject(r);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            result = send(frame, currentPC, receiver, arg);
+                            pc = internalizePC(frame, pc);
+                        }
+                        push(frame, sp++, result);
+                        break;
+                    }
                     case BC.BYTECODE_PRIM_BIT_AND: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
@@ -1057,7 +1111,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         pc = internalizePC(frame, pc);
                         break;
                     }
-                    case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
+                    case BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
                         BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {

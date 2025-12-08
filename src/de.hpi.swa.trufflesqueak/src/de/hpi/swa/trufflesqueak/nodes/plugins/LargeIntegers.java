@@ -785,7 +785,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @TruffleBoundary
-    private static Object multiplyLarge(final SqueakImageContext image, final long lhs, final long rhs) {
+    public static Object multiplyLarge(final SqueakImageContext image, final long lhs, final long rhs) {
         return multiply(image, BigInteger.valueOf(lhs), BigInteger.valueOf(rhs));
     }
 
