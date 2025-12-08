@@ -728,21 +728,21 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
-                            result = PrimLessThanNode.doLong(lhs, rhs);
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
-                        } else {
+                            result = PrimLessThanNode.doLong(lhs, rhs);
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b10000;
+                            }
+                            result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
@@ -757,21 +757,21 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
-                            result = PrimGreaterThanNode.doLong(lhs, rhs);
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
-                        } else {
+                            result = PrimGreaterThanNode.doLong(lhs, rhs);
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b10000;
+                            }
+                            result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
@@ -786,21 +786,21 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
-                            result = PrimLessOrEqualNode.doLong(lhs, rhs);
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
-                        } else {
+                            result = PrimLessOrEqualNode.doLong(lhs, rhs);
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b10000;
+                            }
+                            result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
@@ -815,21 +815,21 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
-                            result = PrimGreaterOrEqualNode.doLong(lhs, rhs);
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
-                        } else {
+                            result = PrimGreaterOrEqualNode.doLong(lhs, rhs);
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b10000;
+                            }
+                            result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
@@ -844,21 +844,21 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
-                            result = PrimEqualNode.doLong(lhs, rhs);
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
-                        } else {
+                            result = PrimEqualNode.doLong(lhs, rhs);
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b10000;
+                            }
+                            result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
@@ -873,21 +873,21 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
-                            result = PrimNotEqualNode.doLong(lhs, rhs);
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
                             }
-                            result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
-                        } else {
+                            result = PrimNotEqualNode.doLong(lhs, rhs);
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
                             if ((state & 0b10000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b10000;
+                            }
+                            result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
@@ -902,15 +902,15 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
-                            result = PrimBitAndNode.doLong(lhs, rhs);
-                        } else {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
+                            }
+                            result = PrimBitAndNode.doLong(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
@@ -925,15 +925,15 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
-                            result = PrimBitOrNode.doLong(lhs, rhs);
-                        } else {
                             if ((state & 0b1000) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 profiles[currentPC] |= 0b1000;
+                            }
+                            result = PrimBitOrNode.doLong(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
                             }
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
