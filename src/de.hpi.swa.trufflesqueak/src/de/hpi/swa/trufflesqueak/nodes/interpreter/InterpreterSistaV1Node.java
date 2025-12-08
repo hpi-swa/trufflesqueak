@@ -74,7 +74,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @Override
     protected void processBytecode(final int maxPC) {
         final byte[] bc = code.getBytes();
-        final SqueakImageContext image = SqueakImageContext.getSlow();
+        final SqueakImageContext image = getContext();
 
         int pc = 0;
         int extA = 0;

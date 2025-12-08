@@ -71,7 +71,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
     @Override
     protected void processBytecode(final int maxPC) {
         final byte[] bc = code.getBytes();
-        final SqueakImageContext image = SqueakImageContext.getSlow();
+        final SqueakImageContext image = getContext();
 
         int pc = code.hasOuterMethod() ? code.getOuterMethodStartPC() : 0;
 
