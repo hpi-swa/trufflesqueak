@@ -39,6 +39,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Disp
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsInLoopNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitOrNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimEqualNode;
@@ -47,12 +48,14 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimG
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessOrEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessThanNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimNotEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatAddNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterOrEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterThanNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatLessOrEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatLessThanNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatNotEqualNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatSubtractNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -722,6 +725,92 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         }
                         break;
                     }
+                    case BC.BYTECODE_PRIM_ADD: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        final Object result;
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            /* Profiled version of LargeIntegers.add(image, lhs, rhs). */
+                            final long r = lhs + rhs;
+                            if (((lhs ^ r) & (rhs ^ r)) < 0) {
+                                if ((state & 0b10000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b10000;
+                                }
+                                result = LargeIntegers.addLarge(image, lhs, rhs);
+                            } else {
+                                if ((state & 0b100000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b100000;
+                                }
+                                result = r;
+                            }
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000000;
+                            }
+                            result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            result = send(frame, currentPC, receiver, arg);
+                            pc = internalizePC(frame, pc);
+                        }
+                        push(frame, sp++, result);
+                        break;
+                    }
+                    case BC.BYTECODE_PRIM_SUBTRACT: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        final Object result;
+                        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            /* Profiled version of LargeIntegers.subtract(image, lhs, rhs). */
+                            final long r = lhs - rhs;
+                            if (((lhs ^ rhs) & (lhs ^ r)) < 0) {
+                                if ((state & 0b10000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b10000;
+                                }
+                                result = LargeIntegers.subtractLarge(image, lhs, rhs);
+                            } else {
+                                if ((state & 0b100000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b100000;
+                                }
+                                result = r;
+                            }
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                            if ((state & 0b1000000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000000;
+                            }
+                            result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            result = send(frame, currentPC, receiver, arg);
+                            pc = internalizePC(frame, pc);
+                        }
+                        push(frame, sp++, result);
+                        break;
+                    }
                     case BC.BYTECODE_PRIM_LESS_THAN: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
@@ -968,7 +1057,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         pc = internalizePC(frame, pc);
                         break;
                     }
-                    case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
+                    case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
                         BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {

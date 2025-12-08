@@ -715,7 +715,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @TruffleBoundary
-    private static Object addLarge(final SqueakImageContext image, final long lhs, final long rhs) {
+    public static Object addLarge(final SqueakImageContext image, final long lhs, final long rhs) {
         return add(image, BigInteger.valueOf(lhs), BigInteger.valueOf(rhs));
     }
 
@@ -745,7 +745,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @TruffleBoundary
-    private static Object subtractLarge(final SqueakImageContext image, final long lhs, final long rhs) {
+    public static Object subtractLarge(final SqueakImageContext image, final long lhs, final long rhs) {
         return subtract(image, BigInteger.valueOf(lhs), BigInteger.valueOf(rhs));
     }
 
