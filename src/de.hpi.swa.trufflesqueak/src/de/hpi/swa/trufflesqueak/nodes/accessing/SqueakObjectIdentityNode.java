@@ -51,7 +51,7 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     @Specialization
     protected static final boolean doDouble(final double left, final double right) {
-        return BooleanObject.wrap(Double.doubleToRawLongBits(left) == Double.doubleToRawLongBits(right));
+        return BooleanObject.wrap(left == right);
     }
 
     @SuppressWarnings("unused")
