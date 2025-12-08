@@ -437,8 +437,15 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             final int slotIndex = topSlotIndex - i;
-            stackValues[numPop - 1 - i] = frame.getObjectStatic(slotIndex);
-            frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
+            try {
+                stackValues[numPop - 1 - i] = frame.getObjectStatic(slotIndex);
+                frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
+            } catch (final ArrayIndexOutOfBoundsException aioobe) {
+                CompilerDirectives.transferToInterpreter();
+                final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
+                stackValues[numPop - 1 - i] = frame.getAuxiliarySlot(auxSlotIndex);
+                frame.setAuxiliarySlot(auxSlotIndex, NilObject.SINGLETON);
+            }
         }
         return stackValues;
     }
