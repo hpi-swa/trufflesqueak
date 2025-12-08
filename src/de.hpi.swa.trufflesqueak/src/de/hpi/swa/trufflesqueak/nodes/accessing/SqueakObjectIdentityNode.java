@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -99,6 +100,7 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
     }
 
     /** (inspired by SimpleLanguage's {@code SLEqualNode}). */
+    @InliningCutoff
     @Specialization(guards = "isForeignObject(left) || isForeignObject(right)", limit = "4")
     protected static final boolean doForeignObject(final Object left, final Object right,
                     @CachedLibrary("left") final InteropLibrary leftInterop,
