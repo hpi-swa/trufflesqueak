@@ -197,7 +197,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     extA = 0;
                     break;
                 }
-                case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_CHARACTER, BC.EXT_PUSH_FULL_CLOSURE: {
+                case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_CHARACTER: {
                     pc++;
                     extA = 0;
                     break;
@@ -256,6 +256,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 /* 3 byte bytecodes */
                 case BC.CALL_PRIMITIVE: {
                     pc += 2;
+                    break;
+                }
+                case BC.EXT_PUSH_FULL_CLOSURE: {
+                    pc += 2;
+                    extA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_CLOSURE: {
