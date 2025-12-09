@@ -74,8 +74,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         final SqueakImageContext image = SqueakImageContext.getSlow();
 
         int pc = code.hasOuterMethod() ? code.getOuterMethodStartPC() : 0;
+        final int endPC = maxPC; // FIXME: should use block size in blocks
 
-        while (pc < maxPC) {
+        while (pc < endPC) {
             final int currentPC = pc++;
             final byte b = getByte(bc, currentPC);
             switch (b) {

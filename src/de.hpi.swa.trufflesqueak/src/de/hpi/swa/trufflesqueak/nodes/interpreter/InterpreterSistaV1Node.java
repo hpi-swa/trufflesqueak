@@ -76,11 +76,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
 
-        int pc = 0;
+        int pc = code.hasOuterMethod() ? code.getOuterMethodStartPC() : 0;
+        final int endPC = maxPC; // FIXME: should use block size in blocks
         int extA = 0;
         int extB = 0;
 
-        while (pc < maxPC) {
+        while (pc < endPC) {
             final int currentPC = pc++;
             final byte b = getByte(bc, currentPC);
             switch (b) {
