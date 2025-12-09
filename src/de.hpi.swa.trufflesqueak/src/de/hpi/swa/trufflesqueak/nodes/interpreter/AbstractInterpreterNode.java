@@ -60,7 +60,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     @CompilationFinal protected int numArguments;
 
     @CompilationFinal(dimensions = 1) protected final Object[] data;
-    @CompilationFinal(dimensions = 1) protected final byte[] profiles;
+    @CompilationFinal(dimensions = 1) protected final short[] profiles;
     @CompilationFinal private Object osrMetadata;
 
     @SuppressWarnings("this-escape")
@@ -70,7 +70,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         numArguments = -1;
         final int maxPC = BytecodeUtils.trailerPosition(code);
         data = new Object[maxPC];
-        profiles = new byte[maxPC];
+        profiles = new short[maxPC];
         processBytecode(maxPC);
     }
 
@@ -83,7 +83,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         // fresh fields
         final int maxPC = BytecodeUtils.trailerPosition(code);
         data = new Object[maxPC];
-        profiles = new byte[maxPC];
+        profiles = new short[maxPC];
         processBytecode(maxPC);
         osrMetadata = null;
     }
@@ -171,7 +171,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object handleReturnException(final VirtualFrame frame, final int currentPC, final AbstractStandardSendReturn returnException) {
-        final byte state = profiles[currentPC];
+        final short state = profiles[currentPC];
         if ((state & 0b100) == 0) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             profiles[currentPC] |= 0b100;
@@ -204,7 +204,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     /** Inlined version of {@link GetOrCreateContextWithFrameNode}. */
     protected final ContextObject getOrCreateContext(final VirtualFrame frame, final int currentPC) {
-        final byte state = profiles[currentPC];
+        final short state = profiles[currentPC];
         final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
             if ((state & 0b100) == 0) {
@@ -303,7 +303,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     private Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final Object result) {
-        final byte state = profiles[currentPC];
+        final short state = profiles[currentPC];
         if (FrameAccess.hasModifiedSender(frame)) {
             if ((state & 0b100) == 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -378,7 +378,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Handling of forwarding pointers
      */
     private Object followForwarded(final int currentPC, final Object value) {
-        final byte state = profiles[currentPC];
+        final short state = profiles[currentPC];
         if (value instanceof final AbstractSqueakObjectWithClassAndHash object) {
             if ((state & 0b01) == 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

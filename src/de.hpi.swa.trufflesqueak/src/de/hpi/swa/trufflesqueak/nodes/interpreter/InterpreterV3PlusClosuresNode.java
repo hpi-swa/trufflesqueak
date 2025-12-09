@@ -728,7 +728,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_ADD: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -771,7 +771,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_SUBTRACT: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -814,7 +814,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_LESS_THAN: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -843,7 +843,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_GREATER_THAN: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -872,7 +872,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -901,7 +901,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -930,7 +930,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -959,7 +959,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_NOT_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -988,7 +988,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_BIT_AND: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
@@ -1011,7 +1011,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_BIT_OR: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final short state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
                             if ((state & 0b1000) == 0) {
