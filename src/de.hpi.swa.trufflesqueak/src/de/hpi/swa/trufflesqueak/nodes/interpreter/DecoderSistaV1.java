@@ -124,11 +124,18 @@ public final class DecoderSistaV1 extends AbstractDecoder {
 
     @Override
     protected int decodeNumBytes(final CompiledCodeObject code, final int index) {
+        return decodeNumBytes(code, index, 0);
+    }
+
+    private int decodeNumBytes(final CompiledCodeObject code, final int index, final int extB) {
         final int b = Byte.toUnsignedInt(code.getBytes()[index]);
         if (b <= 223) {
             return 1;
         } else if (b <= 247) {
             return 2;
+        } else if (b == 250) {
+            final int blockSize = Byte.toUnsignedInt(code.getBytes()[index]) + (extB << 8);
+            return 3 + blockSize;
         } else {
             return 3;
         }
@@ -137,11 +144,16 @@ public final class DecoderSistaV1 extends AbstractDecoder {
     private int decodeNextPCDelta(final CompiledCodeObject code, final int index) {
         int b = Byte.toUnsignedInt(code.getBytes()[index]);
         int offset = 0;
+        int extB = 0;
         while (b == 0xE0 || b == 0xE1) {
+            if (b == 0xE1) {
+                final int byteValue = Byte.toUnsignedInt(code.getBytes()[index + 1]);
+                extB = extB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue;
+            }
             offset += 2;
             b = Byte.toUnsignedInt(code.getBytes()[index + offset]);
         }
-        return offset + decodeNumBytes(code, index + offset);
+        return offset + decodeNumBytes(code, index + offset, extB);
     }
 
     /**
@@ -211,7 +223,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
                     throw SqueakException.create("Not a bytecode:", b);
                 }
             }
-            case 0x5F -> 0;
+            case 0x5F -> sp;
             case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, //
                 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F -> {
                 final int numArguments = code.getSqueakClass().getImage().getSpecialSelectorNumArgs(b - 96);
