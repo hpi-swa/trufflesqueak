@@ -11,6 +11,7 @@ import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -284,7 +285,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
-    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int loopCounter, final int pc, final int sp, final Object result) {
+    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
@@ -295,7 +296,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
-    protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final int loopCounter, final Object result) {
+    protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
@@ -511,6 +512,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     /**
      * Smaller than int[1], does not kill int[] on write and doesn't need bounds checks.
      */
+    @ValueType
     protected static final class LoopCounter {
         protected static final int CHECK_LOOP_STRIDE = 1 << 14;
         protected static final double CHECK_LOOP_PROBABILITY = 1.0D / CHECK_LOOP_STRIDE;

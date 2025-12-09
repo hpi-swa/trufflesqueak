@@ -303,7 +303,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         int extA = 0;
         int extB = 0;
 
-        final LoopCounter loopCounter = new LoopCounter();
+        int counter = 0;
+        final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
 
         Object returnValue = null;
         try {
@@ -378,37 +379,44 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, FrameAccess.getReceiver(frame));
+                        returnValue = handleReturn(frame, currentPC, pc, sp, FrameAccess.getReceiver(frame),
+                                        CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TRUE: {
-                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, BooleanObject.TRUE);
+                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.TRUE,
+                                        CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_FALSE: {
-                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, BooleanObject.FALSE);
+                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.FALSE,
+                                        CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL: {
-                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, NilObject.SINGLETON);
+                        returnValue = handleReturn(frame, currentPC, pc, sp, NilObject.SINGLETON,
+                                        CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, currentPC, loopCounter.value, pc, sp, top(frame, sp));
+                        returnValue = handleReturn(frame, currentPC, pc, sp, top(frame, sp),
+                                        CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL_FROM_BLOCK: {
-                        returnValue = handleReturnFromBlock(frame, currentPC, loopCounter.value, NilObject.SINGLETON);
+                        returnValue = handleReturnFromBlock(frame, currentPC, NilObject.SINGLETON,
+                                        CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
-                        returnValue = handleReturnFromBlock(frame, currentPC, loopCounter.value, top(frame, sp));
+                        returnValue = handleReturnFromBlock(frame, currentPC, top(frame, sp),
+                                        CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
@@ -775,18 +783,29 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc += offset;
                         if (offset < 0) {
                             if (CompilerDirectives.hasNextTier()) {
-                                final int loopCount = ++loopCounter.value;
-                                if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, loopCount >= LoopCounter.CHECK_LOOP_STRIDE)) {
-                                    LoopNode.reportLoopCount(this, loopCount);
-                                    if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
+                                if (CompilerDirectives.inCompiledCode()) {
+                                    counter = ++loopCounter.value;
+                                } else {
+                                    counter++;
+                                }
+                                if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
+                                    LoopNode.reportLoopCount(this, counter);
+                                    if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
                                         final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc, null, null, frame);
                                         if (osrReturnValue != null) {
                                             assert !FrameAccess.hasModifiedSender(frame);
                                             FrameAccess.terminateFrame(frame);
                                             return osrReturnValue;
                                         }
+                                        if (CompilerDirectives.inCompiledCode()) {
+                                            loopCounter.value = 0;
+                                        } else {
+                                            counter = 0;
+                                        }
                                     }
-                                    loopCounter.value = 0;
+                                    if (CompilerDirectives.inCompiledCode()) {
+                                        counter = 0;
+                                    }
                                 }
                             }
                             if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
@@ -923,18 +942,29 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc += offset;
                         if (offset < 0) {
                             if (CompilerDirectives.hasNextTier()) {
-                                final int loopCount = ++loopCounter.value;
-                                if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, loopCount >= LoopCounter.CHECK_LOOP_STRIDE)) {
-                                    LoopNode.reportLoopCount(this, loopCount);
-                                    if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, loopCount)) {
+                                if (CompilerDirectives.inCompiledCode()) {
+                                    counter = ++loopCounter.value;
+                                } else {
+                                    counter++;
+                                }
+                                if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
+                                    LoopNode.reportLoopCount(this, counter);
+                                    if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
                                         final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc, null, null, frame);
                                         if (osrReturnValue != null) {
                                             assert !FrameAccess.hasModifiedSender(frame);
                                             FrameAccess.terminateFrame(frame);
                                             return osrReturnValue;
                                         }
+                                        if (CompilerDirectives.inCompiledCode()) {
+                                            loopCounter.value = 0;
+                                        } else {
+                                            counter = 0;
+                                        }
                                     }
-                                    loopCounter.value = 0;
+                                    if (CompilerDirectives.inCompiledCode()) {
+                                        counter = 0;
+                                    }
                                 }
                             }
                             if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
