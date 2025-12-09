@@ -732,6 +732,46 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 profiles[currentPC] |= 0b1000;
                             }
                             result = (long) string.getByteLength();
+                        } else if (receiver instanceof final ArrayObject array) {
+                            if (array.isObjectType()) {
+                                if ((state & 0b10000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b10000;
+                                }
+                                result = (long) array.getObjectLength();
+                            } else if (array.isLongType()) {
+                                if ((state & 0b100000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b100000;
+                                }
+                                result = (long) array.getLongLength();
+                            } else if (array.isEmptyType()) {
+                                if ((state & 0b1000000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b1000000;
+                                }
+                                result = (long) array.getEmptyLength();
+                            } else if (array.isDoubleType()) {
+                                if ((state & 0b10000000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b10000000;
+                                }
+                                result = (long) array.getDoubleLength();
+                            } else if (array.isBooleanType()) {
+                                if ((state & 0b100000000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b100000000;
+                                }
+                                result = (long) array.getBooleanLength();
+                            } else if (array.isCharType()) {
+                                if ((state & 0b1000000000) == 0) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    profiles[currentPC] |= 0b1000000000;
+                                }
+                                result = (long) array.getCharLength();
+                            } else {
+                                throw CompilerDirectives.shouldNotReachHere();
+                            }
                         } else { // TODO: specialize for ArrayObject
                             if ((state & 0b100) == 0) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
