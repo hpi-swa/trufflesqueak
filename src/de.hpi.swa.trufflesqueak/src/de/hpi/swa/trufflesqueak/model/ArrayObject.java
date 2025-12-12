@@ -38,16 +38,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         super(); // for special ArrayObjects only
     }
 
+    public ArrayObject(final SqueakImageChunk chunk) {
+        super(chunk);
+    }
+
     private ArrayObject(final ClassObject classObject, final Object storage) {
         super(classObject);
         this.storage = storage;
     }
 
-    public ArrayObject(final long header, final ClassObject squeakClass) {
-        super(header, squeakClass);
-    }
-
-    private ArrayObject(final ArrayObject original, final Object storageCopy) {
+    public ArrayObject(final ArrayObject original, final Object storageCopy) {
         super(original);
         storage = storageCopy;
     }
@@ -209,10 +209,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public int size() {
         CompilerAsserts.neverPartOfCompilation();
         return ArrayObjectSizeNode.executeUncached(this);
-    }
-
-    public ArrayObject shallowCopy(final Object storageCopy) {
-        return new ArrayObject(this, storageCopy);
     }
 
     public boolean isBooleanType() {

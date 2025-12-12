@@ -103,18 +103,16 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     static final class PushClosureNode extends AbstractNode {
-        private final CompiledCodeObject shadowBlock;
+        private final CompiledCodeObject block;
         private final int numArgs;
-        private final int closureStartPC;
 
         PushClosureNode(final CompiledCodeObject code, final int pc, final int numArgs) {
-            this.closureStartPC = code.getInitialPC() + pc;
-            shadowBlock = code.getOrCreateShadowBlock(closureStartPC);
+            block = code.createShadowBlock(code.getInitialPC() + pc);
             this.numArgs = numArgs;
         }
 
         BlockClosureObject execute(final VirtualFrame frame, final Object[] copiedValues, final ContextObject outerContext) {
-            return new BlockClosureObject(getContext().blockClosureClass, shadowBlock, closureStartPC, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
+            return new BlockClosureObject(getContext().blockClosureClass, block, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
         }
     }
 

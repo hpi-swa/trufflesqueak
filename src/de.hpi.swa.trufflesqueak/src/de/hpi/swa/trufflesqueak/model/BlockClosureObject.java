@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.model;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -17,73 +16,65 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledCodeObject block;
-    @CompilationFinal private long startPC = -1;
-    @CompilationFinal private long numArgs = -1;
+    @CompilationFinal private int numArgs = -1;
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 0) private Object[] copiedValues;
 
-    private BlockClosureObject(final ClassObject squeakClass) {
-        super(squeakClass);
-    }
-
-    private BlockClosureObject(final long header, final ClassObject squeakClass) {
-        super(header, squeakClass);
-        copiedValues = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
-    }
-
-    public BlockClosureObject(final ClassObject squeakClass, final CompiledCodeObject block, final int startPC, final int numArgs, final Object[] copied,
-                    final Object receiver, final ContextObject outerContext) {
-        super(squeakClass);
-        assert startPC > 0;
-        this.block = block;
-        this.outerContext = outerContext;
-        copiedValues = copied;
-        this.startPC = startPC;
-        this.numArgs = numArgs;
-        this.receiver = receiver;
-    }
-
-    private BlockClosureObject(final BlockClosureObject original) {
-        super(original);
-        block = original.block;
-        outerContext = original.outerContext;
-        copiedValues = original.copiedValues;
-        startPC = original.startPC;
-        numArgs = original.numArgs;
-        receiver = original.receiver;
-    }
-
-    public static BlockClosureObject createWithHeaderAndClass(final long header, final ClassObject squeakClass) {
-        return new BlockClosureObject(header, squeakClass);
-    }
-
-    public static BlockClosureObject create(final ClassObject squeakClass, final int extraSize) {
-        final BlockClosureObject result = new BlockClosureObject(squeakClass);
-        result.copiedValues = new Object[extraSize];
-        return result;
-    }
-
-    @Override
-    public void fillin(final SqueakImageChunk chunk) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
+    public BlockClosureObject(final SqueakImageChunk chunk) {
+        super(chunk);
         assert chunk.getWordSize() >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
         outerContext = (ContextObject) chunk.getPointer(BLOCK_CLOSURE.OUTER_CONTEXT);
         final Object startPCOrMethod = chunk.getPointer(BLOCK_CLOSURE.START_PC_OR_METHOD);
+        numArgs = (int) (long) chunk.getPointer(BLOCK_CLOSURE.ARGUMENT_COUNT);
         if (startPCOrMethod instanceof final CompiledCodeObject code) {
             block = code;
             receiver = chunk.getPointer(BLOCK_CLOSURE.FULL_RECEIVER);
             copiedValues = chunk.getPointers(BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE);
         } else {
-            startPC = (long) startPCOrMethod;
+            receiver = chunk.getChunk(BLOCK_CLOSURE.OUTER_CONTEXT).getPointer(CONTEXT.RECEIVER);
             copiedValues = chunk.getPointers(BLOCK_CLOSURE.FIRST_COPIED_VALUE);
         }
-        numArgs = (long) chunk.getPointer(BLOCK_CLOSURE.ARGUMENT_COUNT);
+    }
+
+    public BlockClosureObject(final ClassObject squeakClass, final int extraSize) {
+        super(squeakClass);
+        copiedValues = new Object[extraSize];
+    }
+
+    public BlockClosureObject(final ClassObject squeakClass, final CompiledCodeObject block, final int numArgs, final Object[] copied, final Object receiver, final ContextObject outerContext) {
+        super(squeakClass);
+        this.block = block;
+        this.outerContext = outerContext;
+        copiedValues = copied;
+        this.numArgs = numArgs;
+        this.receiver = receiver;
+    }
+
+    public BlockClosureObject(final BlockClosureObject original) {
+        super(original);
+        block = original.block;
+        outerContext = original.outerContext;
+        copiedValues = original.copiedValues;
+        numArgs = original.numArgs;
+        receiver = original.receiver;
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+    }
+
+    public void fillInClosure(final SqueakImageChunk chunk) {
+        assert chunk.getHash() == getSqueakHashInt();
+        if (block == null && chunk.getPointer(BLOCK_CLOSURE.START_PC_OR_METHOD) instanceof final Long startPC) {
+            block = outerContext.getMethodFromChunk().createShadowBlock(startPC.intValue());
+        }
     }
 
     public AbstractSqueakObject getOuterContext() {
@@ -94,19 +85,17 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         return outerContext;
     }
 
-    public long getStartPC() {
-        if (startPC == -1) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            startPC = block.getInitialPC();
-        }
-        return startPC;
+    public CompiledCodeObject getCompiledBlock() {
+        assert block != null;
+        return block;
     }
 
-    public long getNumArgs() {
-        if (numArgs == -1) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            numArgs = block.getNumArgs();
-        }
+    public long getStartPC() {
+        return block.getOuterMethodStartPC();
+    }
+
+    public int getNumArgs() {
+        assert numArgs != -1;
         return numArgs;
     }
 
@@ -123,40 +112,35 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public Object getReceiver() {
-        if (receiver == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            receiver = getOuterContextOrNull().getReceiver();
-        }
+        assert receiver != null;
         return receiver;
     }
 
     public void setReceiver(final Object value) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         receiver = value;
     }
 
     public void setOuterContext(final ContextObject outerContext) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.outerContext = outerContext;
     }
 
     public void removeOuterContext() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         outerContext = null;
     }
 
     public void setStartPC(final int pc) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        startPC = pc;
+        if (block == null) {
+            block = outerContext.getCodeObject().createShadowBlock(pc);
+        } else {
+            block.setOuterMethodStartPC(pc);
+        }
     }
 
     public void setBlock(final CompiledCodeObject value) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         block = value;
     }
 
     public void setNumArgs(final int numArgs) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.numArgs = numArgs;
     }
 
@@ -165,7 +149,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public void setCopiedValues(final Object[] copied) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         copiedValues = copied;
     }
 
@@ -204,23 +187,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
                         copiedValues.length + " copied values in " + outerContext + ")";
     }
 
-    public CompiledCodeObject getCompiledBlock() {
-        if (block == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            /* `outerContext.getMethod()` should not be part of compilation. */
-            block = outerContext.getCodeObject().getOrCreateShadowBlock((int) getStartPC());
-        }
-        return block;
-    }
-
-    /** Special version of getCompiledBlock for image loader. */
-    public CompiledCodeObject getCompiledBlock(final CompiledCodeObject method) {
-        if (block == null) {
-            block = method.getOrCreateShadowBlock((int) getStartPC());
-        }
-        return block;
-    }
-
     public ContextObject getHomeContext() {
         ContextObject currentContext = outerContext;
         while (currentContext.hasClosure()) {
@@ -231,7 +197,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     public int getNumTemps() {
         if (block.isCompiledMethod()) { // See BlockClosure>>#numTemps
-            return (int) (getNumCopied() + getNumArgs() + tempCountForBlock());
+            return getNumCopied() + getNumArgs() + tempCountForBlock();
         } else { // FullBlockClosure>>#numTemps
             return block.getNumTemps();
         }
@@ -245,10 +211,10 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         final int pushNilCode;
         final int blockSize;
         if (block.getSignFlag()) {
-            pc = (int) getStartPC() - 4 - block.getInitialPC();
+            pc = block.getOuterMethodStartPCZeroBased() - 4;
             pushNilCode = 115;
         } else {
-            pc = (int) getStartPC() - 3 - block.getInitialPC();
+            pc = block.getOuterMethodStartPCZeroBased() - 3;
             pushNilCode = 79;
         }
         blockSize = Byte.toUnsignedInt(bytecode[pc + 2]) << 8 | Byte.toUnsignedInt(bytecode[pc + 3]);
@@ -266,10 +232,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
             }
         }
         return stackpointer;
-    }
-
-    public BlockClosureObject shallowCopy() {
-        return new BlockClosureObject(this);
     }
 
     @Override

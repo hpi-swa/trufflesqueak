@@ -1180,7 +1180,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             if (isFiniteProfile.profile(node, receiver.isFinite())) {
                 return PrimSmallFloatFractionPartNode.doDouble(receiver.getValue(), node, inSafeIntegerRangeProfile);
             } else if (isNanProfile.profile(node, receiver.isNaN())) {
-                return receiver.shallowCopy();
+                return new FloatObject(receiver);
             } else {
                 assert receiver.isInfinite();
                 return isNegativeInfinityProfile.profile(node, receiver.getValue() == Double.NEGATIVE_INFINITY) ? -0.0D : 0.0D;
@@ -1242,7 +1242,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             if (isPositiveFiniteProfile.profile(node, receiver.isPositive() && receiver.isFinite())) {
                 return Math.sqrt(receiver.getValue());
             } else if (isPositiveInfinityProfile.profile(node, receiver.isPositiveInfinity())) {
-                return receiver.shallowCopy();
+                return new FloatObject(receiver);
             } else {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
@@ -1272,7 +1272,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isNaNProfile) {
             if (isNaNProfile.profile(node, receiver.isNaN())) {
-                return receiver.shallowCopy();
+                return new FloatObject(receiver);
             } else {
                 return Math.atan(receiver.getValue());
             }
@@ -1295,7 +1295,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             } else if (isFiniteProfile.profile(node, receiver.isFinite())) {
                 return Math.log(receiver.getValue());
             } else if (isPositiveInfinityProfile.profile(node, receiver.isPositiveInfinity())) {
-                return receiver.shallowCopy();
+                return new FloatObject(receiver);
             } else if (isNegativeInfinityOrNaNProfile.profile(node, receiver.isNegativeInfinity() || receiver.isNaN())) {
                 return FloatObject.valueOf(Double.NaN);
             } else {
@@ -1319,7 +1319,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             } else if (isNegativeInfinityProfile.profile(node, receiver.isNegativeInfinity())) {
                 return 0.0D;
             } else if (isPositiveInfinityOrNaNProfile.profile(node, receiver.isPositiveInfinity() || receiver.isNaN())) {
-                return receiver.shallowCopy();
+                return new FloatObject(receiver);
             } else {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }

@@ -92,9 +92,9 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class EphemeronObject extends AbstractPointersObject {
 
-    public EphemeronObject(final SqueakImageContext image, final long header, final ClassObject classObject) {
-        super(header, classObject);
-        image.containsEphemerons = true;
+    public EphemeronObject(final SqueakImageChunk chunk) {
+        super(chunk);
+        chunk.getImage().containsEphemerons = true;
     }
 
     public EphemeronObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
@@ -102,7 +102,7 @@ public final class EphemeronObject extends AbstractPointersObject {
         image.containsEphemerons = true;
     }
 
-    private EphemeronObject(final EphemeronObject original) {
+    public EphemeronObject(final EphemeronObject original) {
         super(original);
         clearHasBeenSignaled();
     }
@@ -145,10 +145,6 @@ public final class EphemeronObject extends AbstractPointersObject {
 
     public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Node inlineTarget, final Object thang) {
         return layoutValuesPointTo(identityNode, inlineTarget, thang);
-    }
-
-    public EphemeronObject shallowCopy() {
-        return new EphemeronObject(this);
     }
 
     @Override

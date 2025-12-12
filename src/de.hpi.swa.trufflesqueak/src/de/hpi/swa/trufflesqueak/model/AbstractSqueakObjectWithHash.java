@@ -79,6 +79,11 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
         }
     }
 
+    protected AbstractSqueakObjectWithHash(final SqueakImageChunk chunk) {
+        this(chunk.getHeader());
+        chunk.setObject(this);
+    }
+
     protected AbstractSqueakObjectWithHash(final long header) {
         /* The mark bit and the rest of the flags are set to zero when loading the image. */
         squeakHashAndBits = ObjectHeader.getHash(header) << SQUEAK_HASH_SHIFT;

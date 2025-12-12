@@ -21,7 +21,9 @@ import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -402,10 +404,10 @@ public final class SqueakImageReader {
                 continue;
             }
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof final AbstractSqueakObjectWithClassAndHash obj) {
+            if (chunkObject instanceof final AbstractSqueakObjectWithHash obj) {
                 // FIXME:
-                if (obj.needsSqueakClass()) {
-                    obj.setSqueakClass(chunk.getSqueakClass());
+                if (chunkObject instanceof final AbstractSqueakObjectWithClassAndHash asowcah && asowcah.needsSqueakClass()) {
+                    asowcah.setSqueakClass(chunk.getSqueakClass());
                 }
                 if (obj.getSqueakHashInt() != chunk.getHash()) {
                     obj.setSqueakHash(chunk.getHash());
@@ -423,6 +425,8 @@ public final class SqueakImageReader {
             final Object chunkObject = chunk.asObject();
             if (chunkObject instanceof final ContextObject contextObject) {
                 contextObject.fillInContext(chunk);
+            } else if (chunkObject instanceof final BlockClosureObject blockClosureObject) {
+                blockClosureObject.fillInClosure(chunk);
             }
         }
     }

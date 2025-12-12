@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
+import com.oracle.truffle.api.CompilerDirectives;
+
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -50,71 +52,73 @@ public final class SqueakImageChunk {
     public ClassObject asClassObject(final ClassObject metaClassObject) {
         if (object == null) {
             assert getFormat() == 1;
-            object = new ClassObject(getImage(), header, metaClassObject);
+            return new ClassObject(this);
         } else if (object == NilObject.SINGLETON) {
             return null;
+        } else {
+            return (ClassObject) object;
         }
-        return (ClassObject) object;
     }
 
     public Object asObject() {
-        if (object == null) {
-            final int format = getFormat();
-            final ClassObject classObject = getSqueakClass();
-            final SqueakImageContext image = getImage();
-            if (format == 0) { // no fields
-                object = new EmptyObject(header, classObject);
-            } else if (format == 1) { // fixed pointers
-                if (classObject.instancesAreClasses()) {
-                    /*
-                     * In rare cases, there are still some classes that are not in the class table
-                     * for some reason (e.g. not completely removed from the system yet).
-                     */
-                    object = new ClassObject(image, header, classObject);
-                } else {
-                    // classes should already be instantiated at this point, check a bit
-                    assert classObject != image.metaClass && classObject.getSqueakClass() != image.metaClass;
-                    object = new PointersObject(header, classObject);
-                }
-            } else if (format == 2) { // indexable fields
-                object = new ArrayObject(header, classObject);
-            } else if (format == 3) { // fixed and indexable fields
-                if (classObject == image.methodContextClass) {
-                    object = new ContextObject(header);
-                } else if (image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)) {
-                    object = BlockClosureObject.createWithHeaderAndClass(header, classObject);
-                } else {
-                    object = new VariablePointersObject(header, classObject);
-                }
-            } else if (format == 4) { // indexable weak fields
-                object = new WeakVariablePointersObject(header, classObject);
-            } else if (format == 5) { // fixed fields, special notification
-                object = new EphemeronObject(image, header, classObject);
-            } else if (format <= 8) {
-                assert false : "Should never happen (unused format)";
-            } else if (format == 9) { // 64-bit integers
-                object = NativeObject.newNativeLongs(this);
-            } else if (format <= 11) { // 32-bit integers
-                if (classObject == image.floatClass) {
-                    object = FloatObject.newFrom(this);
-                } else {
-                    object = NativeObject.newNativeInts(this);
-                }
-            } else if (format <= 15) { // 16-bit integers
-                object = NativeObject.newNativeShorts(this);
-            } else if (format <= 23) { // bytes
-                if (squeakClass == image.largePositiveIntegerClass) {
-                    object = LargeIntegers.normalize(image, getBytes(), false);
-                } else if (squeakClass == image.largeNegativeIntegerClass) {
-                    object = LargeIntegers.normalize(image, getBytes(), true);
-                } else {
-                    object = NativeObject.newNativeBytes(this);
-                }
-            } else if (format <= 31) { // compiled methods
-                object = new CompiledCodeObject(header, classObject);
-            }
+        if (object != null) {
+            return object;
         }
-        return object;
+        final ClassObject classObject = getSqueakClass();
+        final SqueakImageContext image = getImage();
+        final int format = getFormat();
+        if (format == 0) { // no fields
+            return new EmptyObject(this);
+        } else if (format == 1) { // fixed pointers
+            if (classObject.instancesAreClasses()) {
+                /*
+                 * In rare cases, there are still some classes that are not in the class table for
+                 * some reason (e.g. not completely removed from the system yet).
+                 */
+                return new ClassObject(this);
+            } else {
+                // classes should already be instantiated at this point, check a bit
+                assert classObject != image.metaClass && classObject.getSqueakClass() != image.metaClass;
+                return new PointersObject(this);
+            }
+        } else if (format == 2) { // indexable fields
+            return new ArrayObject(this);
+        } else if (format == 3) { // fixed and indexable fields
+            if (classObject == image.methodContextClass) {
+                return new ContextObject(this);
+            } else if (image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)) {
+                return new BlockClosureObject(this);
+            } else {
+                return new VariablePointersObject(this);
+            }
+        } else if (format == 4) { // indexable weak fields
+            return new WeakVariablePointersObject(this);
+        } else if (format == 5) { // fixed fields, special notification
+            return new EphemeronObject(this);
+        } else if (format <= 8) {
+            throw CompilerDirectives.shouldNotReachHere("Should never happen (unused format)");
+        } else if (format == 9) { // 64-bit integers
+            return NativeObject.newNativeLongs(this);
+        } else if (format <= 11) { // 32-bit integers
+            if (classObject == image.floatClass) {
+                return FloatObject.newFrom(this);
+            } else {
+                return NativeObject.newNativeInts(this);
+            }
+        } else if (format <= 15) { // 16-bit integers
+            return NativeObject.newNativeShorts(this);
+        } else if (format <= 23) { // bytes
+            if (squeakClass == image.largePositiveIntegerClass) {
+                return LargeIntegers.normalize(this, false);
+            } else if (squeakClass == image.largeNegativeIntegerClass) {
+                return LargeIntegers.normalize(this, true);
+            } else {
+                return NativeObject.newNativeBytes(this);
+            }
+        } else { // compiled methods
+            assert format <= 31;
+            return new CompiledCodeObject(this);
+        }
     }
 
     public void setObject(final Object value) {
@@ -168,6 +172,14 @@ public final class SqueakImageChunk {
 
     public void setSqueakClass(final ClassObject baseSqueakObject) {
         squeakClass = baseSqueakObject;
+    }
+
+    public SqueakImageChunk getChunk(final int index) {
+        final long pointer = getWord(index);
+        assert (pointer & 7) == SqueakImageConstants.OBJECT_TAG;
+        final SqueakImageChunk chunk = reader.chunkMap.get(pointer);
+        assert chunk != null : "Unable to find chunk for index " + index;
+        return chunk;
     }
 
     public Object getPointer(final int index) {

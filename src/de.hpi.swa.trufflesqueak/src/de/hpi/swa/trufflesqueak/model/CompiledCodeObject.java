@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
-import org.graalvm.collections.EconomicMap;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -77,18 +76,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      * instance that is not actually executed.
      */
     static final class ExecutionData {
-        // frame info
         private FrameDescriptor frameDescriptor;
 
         /*
          * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
          * CompiledBlocks their outer method in their last literal. For traditional BlockClosures,
          * we need to do something similar, but with CompiledMethods only (CompiledBlocks are not
-         * used then). The next two fields are used to store "shadowBlocks", which are light copies
-         * of the outer method with a new call target, and the outer method to be used for closure
+         * used then). The next two fields are used to store "shadow blocks", which are copies of
+         * the outer method with a new call target, and the outer method to be used for closure
          * activations.
          */
-        private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
         private CompiledCodeObject outerMethod;
         private int outerMethodStartPC;
 
@@ -100,9 +97,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         private RootCallTarget resumptionCallTarget;
     }
 
-    @TruffleBoundary
-    public CompiledCodeObject(final long header, final ClassObject classObject) {
-        super(header, classObject);
+    public CompiledCodeObject(final SqueakImageChunk chunk) {
+        super(chunk);
+        // header is a tagged small integer
+        final long headerWord = (chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS);
+        header = CompiledCodeHeaderUtils.toInt(headerWord);
+        assert literals == null;
+        literals = chunk.getPointers(1, getNumHeaderAndLiterals());
+        assert bytes == null;
+        bytes = Arrays.copyOfRange(chunk.getBytes(), getBytecodeOffset(), chunk.getBytes().length);
     }
 
     public CompiledCodeObject(final byte[] bytes, final long header, final Object[] literals, final ClassObject classObject) {
@@ -112,7 +115,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         this.bytes = bytes;
     }
 
-    private CompiledCodeObject(final CompiledCodeObject original) {
+    public CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
         if (original.hasExecutionData()) {
             getExecutionData().frameDescriptor = original.executionData.frameDescriptor;
@@ -123,7 +126,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
         super(outerCode);
-        outerCode.getExecutionData().shadowBlocks.put(startPC, this);
 
         // Find outer method
         CompiledCodeObject currentOuterCode = outerCode;
@@ -132,7 +134,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
         assert currentOuterCode.isCompiledMethod();
         getExecutionData().outerMethod = currentOuterCode;
-        getExecutionData().outerMethodStartPC = startPC - currentOuterCode.getInitialPC();
+        getExecutionData().outerMethodStartPC = startPC;
 
         // header info and data
         header = outerCode.header;
@@ -160,17 +162,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return executionData;
     }
 
-    public CompiledCodeObject getOrCreateShadowBlock(final int startPC) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (getExecutionData().shadowBlocks == null) {
-            executionData.shadowBlocks = EconomicMap.create();
-        }
-        final CompiledCodeObject copy = executionData.shadowBlocks.get(startPC);
-        if (copy == null) {
-            return new CompiledCodeObject(this, startPC);
-        } else {
-            return copy;
-        }
+    /**
+     * A shadow block works similar to a CompiledBlock (e.g., has an outerCode reference) and is
+     * used when activating a traditional BlockClosure to ensure these activations use their own
+     * call target. This is not needed for FullBlockClosures because they have their own
+     * CompiledBlock instance.
+     */
+    @TruffleBoundary
+    public CompiledCodeObject createShadowBlock(final int startPC) {
+        return new CompiledCodeObject(this, startPC);
     }
 
     public boolean hasOuterMethod() {
@@ -180,6 +180,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public int getOuterMethodStartPC() {
         assert hasOuterMethod();
         return executionData.outerMethodStartPC;
+    }
+
+    public void setOuterMethodStartPC(final int pc) {
+        assert hasOuterMethod();
+        executionData.outerMethodStartPC = pc;
+        assert executionData.outerMethodStartPC > executionData.outerMethod.getInitialPC();
+    }
+
+    public int getOuterMethodStartPCZeroBased() {
+        return getOuterMethodStartPC() - executionData.outerMethod.getInitialPC();
     }
 
     private void setLiteralsAndBytes(final int header, final Object[] literals, final byte[] bytes) {
@@ -363,32 +373,22 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        CompilerAsserts.neverPartOfCompilation();
-        // header is a tagged small integer
-        final long headerWord = (chunk.getWord(0) >> SqueakImageConstants.NUM_TAG_BITS);
-        header = CompiledCodeHeaderUtils.toInt(headerWord);
-        assert literals == null;
-        literals = chunk.getPointers(1, getNumHeaderAndLiterals());
-        assert bytes == null;
-        bytes = Arrays.copyOfRange(chunk.getBytes(), getBytecodeOffset(), chunk.getBytes().length);
+        assert literals != null && bytes != null;
     }
 
     public void become(final CompiledCodeObject other) {
         final int header2 = other.header;
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;
-        final EconomicMap<Integer, CompiledCodeObject> shadowBlocks2 = other.hasExecutionData() ? other.executionData.shadowBlocks : null;
         final CompiledCodeObject outerMethod2 = other.hasExecutionData() ? other.executionData.outerMethod : null;
         other.setLiteralsAndBytes(header, literals, bytes);
-        if (hasExecutionData() && (executionData.shadowBlocks != null || executionData.outerMethod != null)) {
-            other.getExecutionData().shadowBlocks = executionData.shadowBlocks;
-            other.executionData.outerMethod = executionData.outerMethod;
+        if (hasExecutionData() && executionData.outerMethod != null) {
+            other.getExecutionData().outerMethod = executionData.outerMethod;
         }
         other.invalidateCallTargetStable("become");
         setLiteralsAndBytes(header2, literals2, bytes2);
-        if (shadowBlocks2 != null || outerMethod2 != null) {
-            getExecutionData().shadowBlocks = shadowBlocks2;
-            executionData.outerMethod = outerMethod2;
+        if (outerMethod2 != null) {
+            getExecutionData().outerMethod = outerMethod2;
         }
         other.invalidateCallTarget();
         invalidateCallTarget();
@@ -473,10 +473,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public boolean isExceptionHandlerMarked() {
         return hasPrimitive() && primitiveIndex() == PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX;
-    }
-
-    public CompiledCodeObject shallowCopy() {
-        return new CompiledCodeObject(this);
     }
 
     @Override

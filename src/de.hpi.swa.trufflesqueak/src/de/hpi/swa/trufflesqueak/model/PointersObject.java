@@ -31,15 +31,15 @@ public final class PointersObject extends AbstractPointersObject {
         super(); // for special PointersObjects only
     }
 
-    public PointersObject(final long header, final ClassObject klass) {
-        super(header, klass);
+    public PointersObject(final SqueakImageChunk chunk) {
+        super(chunk);
     }
 
     public PointersObject(final ClassObject classObject, final ObjectLayout layout) {
         super(classObject, layout);
     }
 
-    private PointersObject(final PointersObject original) {
+    public PointersObject(final PointersObject original) {
         super(original);
     }
 
@@ -113,10 +113,6 @@ public final class PointersObject extends AbstractPointersObject {
         }
         writeNode.executeNil(inlineTarget, first, PROCESS.NEXT_LINK);
         return first;
-    }
-
-    public PointersObject shallowCopy() {
-        return new PointersObject(this);
     }
 
     @Override

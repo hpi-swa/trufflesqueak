@@ -12,15 +12,15 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 
 public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
+    public EmptyObject(final SqueakImageChunk chunk) {
+        super(chunk);
+    }
+
     public EmptyObject(final ClassObject classObject) {
         super(classObject);
     }
 
-    public EmptyObject(final long header, final ClassObject classObject) {
-        super(header, classObject);
-    }
-
-    private EmptyObject(final EmptyObject original) {
+    public EmptyObject(final EmptyObject original) {
         super(original);
     }
 
@@ -41,10 +41,6 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void become(final EmptyObject other) {
         becomeOtherClass(other);
-    }
-
-    public EmptyObject shallowCopy() {
-        return new EmptyObject(this);
     }
 
     @Override

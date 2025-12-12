@@ -24,14 +24,14 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         super();
     }
 
-    private FloatObject(final FloatObject original) {
-        super(original);
-        doubleValue = original.doubleValue;
-    }
-
     public FloatObject(final double doubleValue) {
         super();
         this.doubleValue = doubleValue;
+    }
+
+    public FloatObject(final FloatObject original) {
+        super(original);
+        doubleValue = original.doubleValue;
     }
 
     @Override
@@ -73,7 +73,9 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         final long lowValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 0));
         final long highValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 1));
         final double value = Double.longBitsToDouble(highValue << 32 | lowValue);
-        return Double.isFinite(value) ? value : new FloatObject(value);
+        final Object object = Double.isFinite(value) ? value : new FloatObject(value);
+        chunk.setObject(object);
+        return object;
     }
 
     public long getHigh() {
@@ -165,9 +167,5 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return Double.toString(doubleValue);
-    }
-
-    public FloatObject shallowCopy() {
-        return new FloatObject(this);
     }
 }

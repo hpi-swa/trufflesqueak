@@ -74,9 +74,15 @@ public final class BlockClosureObjectNodes {
 
         public abstract void execute(Node node, BlockClosureObject closure, long index, Object value);
 
-        @Specialization(guards = "index == OUTER_CONTEXT")
+        @Specialization(guards = {"index == OUTER_CONTEXT", "closure.isAFullBlockClosure(getContext())"})
         protected static final void doClosureOuterContext(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final ContextObject value) {
             closure.setOuterContext(value);
+        }
+
+        @Specialization(guards = {"index == OUTER_CONTEXT", "closure.isABlockClosure(getContext())"})
+        protected static final void doClosureOuterContextAndReceiver(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final ContextObject value) {
+            closure.setOuterContext(value);
+            closure.setReceiver(value.getReceiver());
         }
 
         @Specialization(guards = "index == OUTER_CONTEXT")
@@ -84,14 +90,14 @@ public final class BlockClosureObjectNodes {
             closure.removeOuterContext();
         }
 
-        @Specialization(guards = {"index == START_PC_OR_METHOD", "closure.isABlockClosure(getContext())"})
-        protected static final void doClosureStartPC(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final long value) {
-            closure.setStartPC((int) value);
-        }
-
         @Specialization(guards = {"index == START_PC_OR_METHOD", "closure.isAFullBlockClosure(getContext())"})
         protected static final void doClosureStartPC(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final CompiledCodeObject value) {
             closure.setBlock(value);
+        }
+
+        @Specialization(guards = {"index == START_PC_OR_METHOD", "closure.isABlockClosure(getContext())"})
+        protected static final void doClosureStartPC(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final long value) {
+            closure.setStartPC((int) value);
         }
 
         @Specialization(guards = "index == ARGUMENT_COUNT")

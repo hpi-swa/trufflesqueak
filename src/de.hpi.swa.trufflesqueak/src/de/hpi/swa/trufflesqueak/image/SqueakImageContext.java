@@ -366,7 +366,7 @@ public final class SqueakImageContext {
         final PointersObject methodNode;
         try {
             methodNode = (PointersObject) parserSharedInstance.send(this, "parse:class:noPattern:notifying:ifFail:",
-                            smalltalkSource, nilClass, BooleanObject.TRUE, requestorSharedInstanceOrNil, BlockClosureObject.create(blockClosureClass, 0));
+                            smalltalkSource, nilClass, BooleanObject.TRUE, requestorSharedInstanceOrNil, new BlockClosureObject(blockClosureClass, 0));
         } catch (final ProcessSwitch e) {
             /*
              * A ProcessSwitch exception is thrown in case of a syntax error to open the

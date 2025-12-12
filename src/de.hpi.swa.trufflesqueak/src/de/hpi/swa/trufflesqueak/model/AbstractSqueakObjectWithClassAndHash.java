@@ -10,6 +10,7 @@ import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -30,6 +31,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     protected AbstractSqueakObjectWithClassAndHash() {
         /* Flags are zero and hash is uninitialized. squeakClass is null. */
         super();
+    }
+
+    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageChunk chunk) {
+        super(chunk);
+        squeakClass = chunk.getSqueakClass();
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final long header, final ClassObject klass) {

@@ -32,6 +32,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -1081,6 +1082,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         } else {
             return toNativeObject(image, value);
         }
+    }
+
+    public static Object normalize(final SqueakImageChunk chunk, final boolean isNegative) {
+        final Object object = normalize(chunk.getImage(), chunk.getBytes(), isNegative);
+        chunk.setObject(object);
+        return object;
     }
 
     public static Object normalize(final SqueakImageContext image, final byte[] bytes, final boolean isNegative) {

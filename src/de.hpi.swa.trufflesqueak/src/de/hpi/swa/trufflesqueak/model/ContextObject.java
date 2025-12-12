@@ -40,9 +40,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private Object senderOrFrameOrSize;
 
-    public ContextObject(final long header) {
-        super(header);
-        senderOrFrameOrSize = null;
+    public ContextObject(final SqueakImageChunk chunk) {
+        super(chunk);
+        senderOrFrameOrSize = chunk;
     }
 
     public ContextObject(final int size) {
@@ -67,7 +67,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     @TruffleBoundary
-    private ContextObject(final ContextObject original) {
+    public ContextObject(final ContextObject original) {
         super(original);
         // Copy modified sender flag and the marked code flags.
         setAllBooleanBits(original.getAllBooleanBits());
@@ -83,7 +83,24 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      */
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        // Do nothing.
+        // Nothing to do.
+        assert senderOrFrameOrSize == chunk;
+    }
+
+    public CompiledCodeObject getMethodFromChunk() {
+        if (senderOrFrameOrSize instanceof final SqueakImageChunk chunk) {
+            return (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
+        } else {
+            return getCodeObject();
+        }
+    }
+
+    public Object getReceiverFromChunk() {
+        if (senderOrFrameOrSize instanceof final SqueakImageChunk chunk) {
+            return chunk.getPointer(CONTEXT.RECEIVER);
+        } else {
+            return getReceiver();
+        }
     }
 
     public void fillInContext(final SqueakImageChunk chunk) {
@@ -101,11 +118,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             numArgs = code.getNumArgs();
         } else {
             closure = (BlockClosureObject) closureOrNil;
-            numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
+            numArgs = closure.getNumArgs() + closure.getNumCopied();
             if (code.isCompiledMethod()) {
-                methodOrBlock = closure.getCompiledBlock(code);
+                closure.fillInClosure(chunk.getChunk(CONTEXT.CLOSURE_OR_NIL));
+                methodOrBlock = closure.getCompiledBlock();
             } else { // FullBlockClosure
-                assert !closure.isABlockClosure(chunk.getImage()) && !code.isCompiledMethod();
+                assert !closure.isABlockClosure(chunk.getImage());
                 methodOrBlock = code;
             }
         }
@@ -113,7 +131,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final Object[] arguments = chunk.getPointers(CONTEXT.RECEIVER, endArguments);
         final Object[] frameArguments = FrameAccess.newWith(sender, closure, arguments);
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert senderOrFrameOrSize == null;
+        assert senderOrFrameOrSize == chunk;
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(frameArguments, methodOrBlock.getFrameDescriptor());
         setMarkedCodeFlags();
         FrameAccess.setContext(getTruffleFrame(), this);
@@ -385,7 +403,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final int pc = FrameAccess.getInstructionPointer(oldFrame);
         final int sp = FrameAccess.getStackPointer(oldFrame);
         // Prepare arguments
-        final int numArgs = (int) value.getNumArgs();
+        final int numArgs = value.getNumArgs();
         final int numCopied = value.getNumCopied();
         final int expectedFrameArgumentSize = FrameAccess.expectedArgumentSize(numArgs);
         final Object[] arguments = Arrays.copyOf(oldFrame.getArguments(), expectedFrameArgumentSize + numCopied);
@@ -453,10 +471,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public boolean canBeReturnedTo() {
         return !isDead() && getFrameSender() != NilObject.SINGLETON;
-    }
-
-    public ContextObject shallowCopy() {
-        return new ContextObject(this);
     }
 
     public void push(final Object value) {
