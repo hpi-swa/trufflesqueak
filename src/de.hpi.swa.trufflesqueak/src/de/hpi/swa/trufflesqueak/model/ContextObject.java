@@ -95,14 +95,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
     }
 
-    public Object getReceiverFromChunk() {
-        if (senderOrFrameOrSize instanceof final SqueakImageChunk chunk) {
-            return chunk.getPointer(CONTEXT.RECEIVER);
-        } else {
-            return getReceiver();
-        }
-    }
-
     public void fillInContext(final SqueakImageChunk chunk) {
         assert chunk.getWordSize() > CONTEXT.TEMP_FRAME_START;
         final CompiledCodeObject code = (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);

@@ -38,11 +38,6 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakClass = chunk.getSqueakClass();
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final long header, final ClassObject klass) {
-        super(header);
-        squeakClass = klass;
-    }
-
     protected AbstractSqueakObjectWithClassAndHash(final ClassObject klass) {
         /* Flags are zero and hash is uninitialized. */
         super();

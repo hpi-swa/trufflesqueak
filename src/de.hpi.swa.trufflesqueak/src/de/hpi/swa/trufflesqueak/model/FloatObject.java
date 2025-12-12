@@ -24,6 +24,11 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         super();
     }
 
+    public FloatObject(final SqueakImageChunk chunk, final double doubleValue) {
+        super(chunk);
+        this.doubleValue = doubleValue;
+    }
+
     public FloatObject(final double doubleValue) {
         super();
         this.doubleValue = doubleValue;
@@ -73,9 +78,7 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         final long lowValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 0));
         final long highValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 1));
         final double value = Double.longBitsToDouble(highValue << 32 | lowValue);
-        final Object object = Double.isFinite(value) ? value : new FloatObject(value);
-        chunk.setObject(object);
-        return object;
+        return Double.isFinite(value) ? value : new FloatObject(chunk, value);
     }
 
     public long getHigh() {

@@ -49,7 +49,7 @@ public final class SqueakImageChunk {
         }
     }
 
-    public ClassObject asClassObject(final ClassObject metaClassObject) {
+    public ClassObject asClassObject() {
         if (object == null) {
             assert getFormat() == 1;
             return new ClassObject(this);
@@ -146,7 +146,7 @@ public final class SqueakImageChunk {
 
     public ClassObject getSqueakClass() {
         if (squeakClass == null) {
-            squeakClass = getClassChunk().asClassObject(null);
+            squeakClass = getClassChunk().asClassObject();
         }
         return squeakClass;
     }

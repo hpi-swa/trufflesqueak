@@ -127,7 +127,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         return decodeNumBytes(code, index, 0);
     }
 
-    private int decodeNumBytes(final CompiledCodeObject code, final int index, final int extB) {
+    private static int decodeNumBytes(final CompiledCodeObject code, final int index, final int extB) {
         final int b = Byte.toUnsignedInt(code.getBytes()[index]);
         if (b <= 223) {
             return 1;
@@ -141,7 +141,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         }
     }
 
-    private int decodeNextPCDelta(final CompiledCodeObject code, final int index) {
+    private static int decodeNextPCDelta(final CompiledCodeObject code, final int index) {
         int b = Byte.toUnsignedInt(code.getBytes()[index]);
         int offset = 0;
         int extB = 0;

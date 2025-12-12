@@ -21,7 +21,6 @@ import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -343,9 +342,9 @@ public final class SqueakImageReader {
                     highestKnownClassIndex = p << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT | i;
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
+                    final ClassObject metaClassObject = classChunk.asClassObject();
                     metaClassObject.setInstancesAreClasses();
-                    classInstance.asClassObject(metaClassObject);
+                    classInstance.asClassObject();
                 }
             }
         }
@@ -380,8 +379,7 @@ public final class SqueakImageReader {
                 if (classChunk.getSqueakClass() == image.metaClass) {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
-                    final ClassObject classObject = classInstance.asClassObject(metaClassObject);
+                    final ClassObject classObject = classInstance.asClassObject();
                     classObject.fillin(classInstance);
                     if (inst.contains(classObject.getSuperclassOrNull())) {
                         inst.add(classObject);
@@ -404,10 +402,10 @@ public final class SqueakImageReader {
                 continue;
             }
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof final AbstractSqueakObjectWithHash obj) {
+            if (chunkObject instanceof final AbstractSqueakObjectWithClassAndHash obj) {
                 // FIXME:
-                if (chunkObject instanceof final AbstractSqueakObjectWithClassAndHash asowcah && asowcah.needsSqueakClass()) {
-                    asowcah.setSqueakClass(chunk.getSqueakClass());
+                if (obj.needsSqueakClass()) {
+                    obj.setSqueakClass(chunk.getSqueakClass());
                 }
                 if (obj.getSqueakHashInt() != chunk.getHash()) {
                     obj.setSqueakHash(chunk.getHash());
