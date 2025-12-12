@@ -134,7 +134,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         } else if (b <= 247) {
             return 2;
         } else if (b == 250) {
-            final int blockSize = Byte.toUnsignedInt(code.getBytes()[index]) + (extB << 8);
+            final int blockSize = Byte.toUnsignedInt(code.getBytes()[index + 2]) + (extB << 8);
             return 3 + blockSize;
         } else {
             return 3;
@@ -147,7 +147,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         int extB = 0;
         while (b == 0xE0 || b == 0xE1) {
             if (b == 0xE1) {
-                final int byteValue = Byte.toUnsignedInt(code.getBytes()[index + 1]);
+                final int byteValue = Byte.toUnsignedInt(code.getBytes()[index + offset + 1]);
                 extB = extB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue;
             }
             offset += 2;
