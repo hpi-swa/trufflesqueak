@@ -33,9 +33,9 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         super();
     }
 
+    @SuppressWarnings("this-escape")
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageChunk chunk) {
-        super(chunk);
-        squeakClass = chunk.getSqueakClass();
+        initializeFrom(chunk);
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final ClassObject klass) {
@@ -50,6 +50,12 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         assert original.assertNotForwarded() && original.squeakClass.assertNotForwarded();
         squeakClass = original.squeakClass;
         setSqueakHash(HASH_UNINITIALIZED);
+    }
+
+    @Override
+    public void initializeFrom(final SqueakImageChunk chunk) {
+        super.initializeFrom(chunk);
+        squeakClass = chunk.getSqueakClass();
     }
 
     @Override

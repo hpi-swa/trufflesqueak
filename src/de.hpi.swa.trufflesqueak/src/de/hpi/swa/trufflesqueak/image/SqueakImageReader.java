@@ -225,6 +225,10 @@ public final class SqueakImageReader {
         return chunkMap.get(specialObjectsChunk.getWord(idx));
     }
 
+    private void setPrebuiltObject(final SqueakImageChunk specialObjectsChunk, final int idx, final AbstractSqueakObjectWithClassAndHash object) {
+        object.initializeFrom(specialObjectChunk(specialObjectsChunk, idx));
+    }
+
     private void setPrebuiltObject(final SqueakImageChunk specialObjectsChunk, final int idx, final Object object) {
         specialObjectChunk(specialObjectsChunk, idx).setObject(object);
     }
@@ -380,6 +384,7 @@ public final class SqueakImageReader {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
                     final ClassObject classObject = classInstance.asClassObject();
+                    assert classObject != null;
                     classObject.fillin(classInstance);
                     if (inst.contains(classObject.getSuperclassOrNull())) {
                         inst.add(classObject);

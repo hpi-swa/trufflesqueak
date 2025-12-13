@@ -56,10 +56,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return new ArrayObject(classObject, size);
     }
 
-    public static ArrayObject createObjectStrategy(final ClassObject classObject, final int size) {
-        return new ArrayObject(classObject, ArrayUtils.withAll(size, NilObject.SINGLETON));
-    }
-
     public static ArrayObject createWithStorage(final ClassObject classObject, final Object storage) {
         return new ArrayObject(classObject, storage);
     }

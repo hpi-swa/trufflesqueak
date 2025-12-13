@@ -85,15 +85,19 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
 
     @SuppressWarnings("this-escape")
     protected AbstractSqueakObjectWithHash(final SqueakImageChunk chunk) {
-        /* The mark bit and the rest of the flags are set to zero when loading the image. */
-        squeakHashAndBits = ObjectHeader.getHash(chunk.getHeader()) << SQUEAK_HASH_SHIFT;
-        chunk.setObject(this);
+        initializeFrom(chunk);
     }
 
     @SuppressWarnings("this-escape")
     protected AbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash original) {
         /* Preserves flags and resets hash. */
         squeakHashAndBits = original.squeakHashAndBits & SQUEAK_HASH_FLAGS_MASK;
+    }
+
+    protected void initializeFrom(final SqueakImageChunk chunk) {
+        /* The mark bit and the rest of the flags are set to zero when loading the image. */
+        squeakHashAndBits = ObjectHeader.getHash(chunk.getHeader()) << SQUEAK_HASH_SHIFT;
+        chunk.setObject(this);
     }
 
     @Override
