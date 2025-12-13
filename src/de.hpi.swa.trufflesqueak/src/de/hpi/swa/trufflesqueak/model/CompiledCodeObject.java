@@ -68,6 +68,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
 
+    private boolean isShadowBlock;
+
     private ExecutionData executionData;
 
     /**
@@ -122,6 +124,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
         setLiteralsAndBytes(original.header, original.literals.clone(), original.bytes.clone());
         primitiveNodeOrNull = original.primitiveNodeOrNull;
+        isShadowBlock = original.isShadowBlock;
     }
 
     private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
@@ -140,6 +143,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         header = outerCode.header;
         literals = outerCode.literals;
         bytes = outerCode.bytes;
+        isShadowBlock = true;
     }
 
     private CompiledCodeObject(final int size, final ClassObject classObject) {
@@ -171,6 +175,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     public CompiledCodeObject createShadowBlock(final int startPC) {
         return new CompiledCodeObject(this, startPC);
+    }
+
+    public boolean isShadowBlock() {
+        return isShadowBlock;
     }
 
     public boolean hasOuterMethod() {
@@ -328,7 +336,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (getExecutionData().frameDescriptor == null) {
             /* Never let synthetic compiled block escape, use outer method instead. */
             final CompiledCodeObject exposedMethod = executionData.outerMethod != null ? executionData.outerMethod : this;
-            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod);
+            final int maxNumStackSlots = isShadowBlock ? getSqueakContextSize() : this.getMaxNumStackSlots();
+            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod, maxNumStackSlots);
         }
         return executionData.frameDescriptor;
     }
