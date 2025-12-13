@@ -173,17 +173,17 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return new CompiledCodeObject(this, startPC);
     }
 
-    public boolean hasOuterMethod() {
+    public boolean isShadowBlock() {
         return hasExecutionData() && executionData.outerMethod != null;
     }
 
     public int getOuterMethodStartPC() {
-        assert hasOuterMethod();
+        assert isShadowBlock();
         return executionData.outerMethodStartPC;
     }
 
     public void setOuterMethodStartPC(final int pc) {
-        assert hasOuterMethod();
+        assert isShadowBlock();
         executionData.outerMethodStartPC = pc;
         assert executionData.outerMethodStartPC > executionData.outerMethod.getInitialPC();
     }

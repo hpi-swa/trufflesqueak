@@ -76,7 +76,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
 
-        int pc = code.hasOuterMethod() ? code.getOuterMethodStartPCZeroBased() : 0;
+        int pc = code.isShadowBlock() ? code.getOuterMethodStartPCZeroBased() : 0;
         final int endPC = maxPC; // FIXME: should use block size in blocks
         assert pc < endPC;
         int extA = 0;

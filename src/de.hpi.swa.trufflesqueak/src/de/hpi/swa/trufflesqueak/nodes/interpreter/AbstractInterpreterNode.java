@@ -66,7 +66,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     @SuppressWarnings("this-escape")
     public AbstractInterpreterNode(final CompiledCodeObject code) {
         this.code = code;
-        isBlock = code.isCompiledBlock() || code.hasOuterMethod();
+        isBlock = code.isCompiledBlock() || code.isShadowBlock();
         numArguments = -1;
         final int maxPC = BytecodeUtils.trailerPosition(code);
         data = new Object[maxPC];

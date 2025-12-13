@@ -75,7 +75,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
 
         int pc;
         final int endPC;
-        if (code.hasOuterMethod()) {
+        if (code.isShadowBlock()) {
             pc = code.getOuterMethodStartPCZeroBased();
             endPC = pc + getBlockSize(bc, pc - 2, pc - 1);
         } else {
