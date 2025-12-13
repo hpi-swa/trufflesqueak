@@ -328,7 +328,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (getExecutionData().frameDescriptor == null) {
             /* Never let synthetic compiled block escape, use outer method instead. */
             final CompiledCodeObject exposedMethod = executionData.outerMethod != null ? executionData.outerMethod : this;
-            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod);
+            final int maxNumStackSlots = isShadowBlock() ? getSqueakContextSize() : this.getMaxNumStackSlots();
+            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod, maxNumStackSlots);
         }
         return executionData.frameDescriptor;
     }

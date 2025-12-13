@@ -167,21 +167,23 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         Arrays.fill(joins, SP_NIL_TAG);
         int index = 0;
         byte currentStackPointer = (byte) code.getNumTemps(); // initial SP
-        int maxStackPointer = 0;
+        int maxStackPointer = currentStackPointer;
         final int contextSize = code.getSqueakContextSize();
         // Uncomment the following and compare with `(Character>>#isSeparator) detailedSymbolic`
-        // final int initialPC = code.getInitialPC();
-        // final StringBuilder sb = new StringBuilder();
+//        final int initialPC = code.getInitialPC();
+//        final StringBuilder sb = new StringBuilder();
+//        sb.append(code).append("[").append(contextSize).append("]\n");
         while (index < trailerPosition) {
-            // sb.append(initialPC + index).append(":\t").append(currentStackPointer).append("->");
+//             sb.append(initialPC + index).append(":\t").append(currentStackPointer).append("->");
             joins[index] = currentStackPointer;
             currentStackPointer = decodeStackPointer(code, joins, index, currentStackPointer);
-            // sb.append(currentStackPointer).append("\n");
+//             sb.append(currentStackPointer).append("\n");
             assert 0 <= currentStackPointer && currentStackPointer <= contextSize;
             maxStackPointer = Math.max(maxStackPointer, currentStackPointer);
             index += decodeNextPCDelta(code, index);
         }
-        // sb.toString();
+//        sb.append("max SP = ").append(maxStackPointer).append("\n");
+//        System.out.append(sb.toString());
         assert 0 <= maxStackPointer && maxStackPointer <= contextSize;
         return maxStackPointer;
     }
