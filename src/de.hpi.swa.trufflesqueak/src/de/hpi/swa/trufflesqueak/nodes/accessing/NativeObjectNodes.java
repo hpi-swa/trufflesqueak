@@ -343,22 +343,22 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = "obj.isByteType()")
         protected static final NativeObject doNativeBytes(final NativeObject obj) {
-            return obj.shallowCopy(obj.getByteStorage().clone());
+            return new NativeObject(obj, obj.getByteStorage().clone());
         }
 
         @Specialization(guards = "obj.isShortType()")
         protected static final NativeObject doNativeShorts(final NativeObject obj) {
-            return obj.shallowCopy(obj.getShortStorage().clone());
+            return new NativeObject(obj, obj.getShortStorage().clone());
         }
 
         @Specialization(guards = "obj.isIntType()")
         protected static final NativeObject doNativeInts(final NativeObject obj) {
-            return obj.shallowCopy(obj.getIntStorage().clone());
+            return new NativeObject(obj, obj.getIntStorage().clone());
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final NativeObject doNativeLongs(final NativeObject obj) {
-            return obj.shallowCopy(obj.getLongStorage().clone());
+            return new NativeObject(obj, obj.getLongStorage().clone());
         }
     }
 }

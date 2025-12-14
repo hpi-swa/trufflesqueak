@@ -73,8 +73,15 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
 
-        int pc = code.hasOuterMethod() ? code.getOuterMethodStartPC() : 0;
-        final int endPC = maxPC; // FIXME: should use block size in blocks
+        int pc;
+        final int endPC;
+        if (code.isShadowBlock()) {
+            pc = code.getOuterMethodStartPCZeroBased();
+            endPC = pc + getBlockSize(bc, pc - 2, pc - 1);
+        } else {
+            pc = 0;
+            endPC = maxPC;
+        }
 
         while (pc < endPC) {
             final int currentPC = pc++;
@@ -215,7 +222,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 case BC.PUSH_CLOSURE_COPY_COPIED_VALUES: {
                     final int numArgsNumCopied = getUnsignedInt(bc, pc++);
                     final int numArgs = numArgsNumCopied & 0xF;
-                    final int blockSize = getUnsignedInt(bc, pc++) << 8 | getUnsignedInt(bc, pc++);
+                    final int blockSize = getBlockSize(bc, pc++, pc++);
                     data[currentPC] = insert(new PushClosureNode(code, pc, numArgs));
                     pc += blockSize;
                     break;
@@ -632,13 +639,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.PUSH_CLOSURE_COPY_COPIED_VALUES: {
                         final int numArgsNumCopied = getUnsignedInt(bc, pc++);
-                        final int blockSizeHigh = getUnsignedInt(bc, pc++);
-                        final int blockSizeLow = getUnsignedInt(bc, pc++);
+                        final int blockSize = getBlockSize(bc, pc++, pc++);
                         final int numCopied = numArgsNumCopied >> 4 & 0xF;
                         final Object[] copiedValues = popN(frame, sp, numCopied);
                         sp -= numCopied;
                         push(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues, getOrCreateContext(frame, currentPC)));
-                        pc += blockSizeHigh << 8 | blockSizeLow;
+                        pc += blockSize;
                         break;
                     }
                     case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
@@ -1091,6 +1097,10 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         }
         assert returnValue != null;
         return returnValue;
+    }
+
+    private static int getBlockSize(final byte[] bc, final int highIndex, final int lowIndex) {
+        return getUnsignedInt(bc, highIndex) << 8 | getUnsignedInt(bc, lowIndex);
     }
 
     private Object sendSuper(final VirtualFrame frame, final int currentPC, final Object receiver, final Object[] arguments) {

@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -15,20 +16,16 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class VariablePointersObject extends AbstractVariablePointersObject {
 
-    public VariablePointersObject(final long header, final ClassObject classObject) {
-        super(header, classObject);
+    public VariablePointersObject(final SqueakImageChunk chunk) {
+        super(chunk);
     }
 
     public VariablePointersObject(final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
         super(classObject, layout, variableSize);
     }
 
-    private VariablePointersObject(final VariablePointersObject original) {
+    public VariablePointersObject(final VariablePointersObject original) {
         super(original);
-    }
-
-    public VariablePointersObject shallowCopy() {
-        return new VariablePointersObject(this);
     }
 
     public Object getFromVariablePart(final long index) {

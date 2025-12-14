@@ -24,15 +24,15 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class WeakVariablePointersObject extends AbstractVariablePointersObject {
-    public WeakVariablePointersObject(final long header, final ClassObject classObject) {
-        super(header, classObject);
+    public WeakVariablePointersObject(final SqueakImageChunk chunk) {
+        super(chunk);
     }
 
     public WeakVariablePointersObject(final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
         super(classObject, layout, variableSize);
     }
 
-    private WeakVariablePointersObject(final WeakVariablePointersObject original) {
+    public WeakVariablePointersObject(final WeakVariablePointersObject original) {
         super(original);
     }
 
@@ -73,10 +73,6 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
             }
         }
         return false;
-    }
-
-    public WeakVariablePointersObject shallowCopy() {
-        return new WeakVariablePointersObject(this);
     }
 
     @Override

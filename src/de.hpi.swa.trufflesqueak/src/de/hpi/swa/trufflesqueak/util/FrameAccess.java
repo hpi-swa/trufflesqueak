@@ -96,8 +96,7 @@ public final class FrameAccess {
     /**
      * Creates a new {@link FrameDescriptor} according to {@link SlotIndicies}.
      */
-    public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code) {
-        final int numStackSlots = code.getMaxNumStackSlots();
+    public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code, final int numStackSlots) {
         final Builder builder = FrameDescriptor.newBuilder(4 + numStackSlots);
         builder.info(code);
         addDefaultSlots(builder);

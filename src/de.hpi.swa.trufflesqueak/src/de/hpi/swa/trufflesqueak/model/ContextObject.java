@@ -24,7 +24,6 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -40,9 +39,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private Object senderOrFrameOrSize;
 
-    public ContextObject(final long header) {
-        super(header);
-        senderOrFrameOrSize = null;
+    public ContextObject(final SqueakImageChunk chunk) {
+        super(chunk);
+        senderOrFrameOrSize = chunk;
     }
 
     public ContextObject(final int size) {
@@ -67,7 +66,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     @TruffleBoundary
-    private ContextObject(final ContextObject original) {
+    public ContextObject(final ContextObject original) {
         super(original);
         // Copy modified sender flag and the marked code flags.
         setAllBooleanBits(original.getAllBooleanBits());
@@ -77,16 +76,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         FrameAccess.copyAllSlots(original.getTruffleFrame(), getTruffleFrame());
     }
 
-    /**
-     * {@link ContextObject}s are filled in at a later stage by a
-     * {@link SqueakImageReader#fillInContextObjects}.
-     */
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        // Do nothing.
-    }
-
-    public void fillInContext(final SqueakImageChunk chunk) {
         assert chunk.getWordSize() > CONTEXT.TEMP_FRAME_START;
         final CompiledCodeObject code = (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
         final AbstractSqueakObject sender = (AbstractSqueakObject) chunk.getPointer(CONTEXT.SENDER_OR_NIL);
@@ -101,11 +92,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             numArgs = code.getNumArgs();
         } else {
             closure = (BlockClosureObject) closureOrNil;
-            numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
+            numArgs = closure.getNumArgs() + closure.getNumCopied();
             if (code.isCompiledMethod()) {
-                methodOrBlock = closure.getCompiledBlock(code);
+                closure.fillin(chunk.getChunk(CONTEXT.CLOSURE_OR_NIL));
+                methodOrBlock = closure.getCompiledBlock();
             } else { // FullBlockClosure
-                assert !closure.isABlockClosure(chunk.getImage()) && !code.isCompiledMethod();
+                assert !closure.isABlockClosure(chunk.getImage());
                 methodOrBlock = code;
             }
         }
@@ -113,7 +105,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final Object[] arguments = chunk.getPointers(CONTEXT.RECEIVER, endArguments);
         final Object[] frameArguments = FrameAccess.newWith(sender, closure, arguments);
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert senderOrFrameOrSize == null;
+        assert senderOrFrameOrSize == chunk;
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(frameArguments, methodOrBlock.getFrameDescriptor());
         setMarkedCodeFlags();
         FrameAccess.setContext(getTruffleFrame(), this);
@@ -127,6 +119,14 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         setStackPointer(stackPointer);
         for (int i = 0; i < stackPointer; i++) {
             atTempPut(i, chunk.getPointer(CONTEXT.TEMP_FRAME_START + i));
+        }
+    }
+
+    public CompiledCodeObject getMethodFromChunk() {
+        if (senderOrFrameOrSize instanceof final SqueakImageChunk chunk) {
+            return (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
+        } else {
+            return getCodeObject();
         }
     }
 
@@ -385,7 +385,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final int pc = FrameAccess.getInstructionPointer(oldFrame);
         final int sp = FrameAccess.getStackPointer(oldFrame);
         // Prepare arguments
-        final int numArgs = (int) value.getNumArgs();
+        final int numArgs = value.getNumArgs();
         final int numCopied = value.getNumCopied();
         final int expectedFrameArgumentSize = FrameAccess.expectedArgumentSize(numArgs);
         final Object[] arguments = Arrays.copyOf(oldFrame.getArguments(), expectedFrameArgumentSize + numCopied);
@@ -453,10 +453,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public boolean canBeReturnedTo() {
         return !isDead() && getFrameSender() != NilObject.SINGLETON;
-    }
-
-    public ContextObject shallowCopy() {
-        return new ContextObject(this);
     }
 
     public void push(final Object value) {

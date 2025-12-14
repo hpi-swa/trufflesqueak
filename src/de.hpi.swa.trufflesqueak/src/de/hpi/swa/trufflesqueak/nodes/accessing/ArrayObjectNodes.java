@@ -106,32 +106,32 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final ArrayObject doArrayOfObjects(final ArrayObject obj) {
-            return obj.shallowCopy(obj.getObjectStorage().clone());
+            return new ArrayObject(obj, obj.getObjectStorage().clone());
         }
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final ArrayObject doEmptyArray(final ArrayObject obj) {
-            return obj.shallowCopy(obj.getEmptyStorage());
+            return new ArrayObject(obj, obj.getEmptyStorage());
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final ArrayObject doArrayOfLongs(final ArrayObject obj) {
-            return obj.shallowCopy(obj.getLongStorage().clone());
+            return new ArrayObject(obj, obj.getLongStorage().clone());
         }
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final ArrayObject doArrayOfDoubles(final ArrayObject obj) {
-            return obj.shallowCopy(obj.getDoubleStorage().clone());
+            return new ArrayObject(obj, obj.getDoubleStorage().clone());
         }
 
         @Specialization(guards = "obj.isCharType()")
         protected static final ArrayObject doArrayOfChars(final ArrayObject obj) {
-            return obj.shallowCopy(obj.getCharStorage().clone());
+            return new ArrayObject(obj, obj.getCharStorage().clone());
         }
 
         @Specialization(guards = "obj.isBooleanType()")
         protected static final ArrayObject doArrayOfBooleans(final ArrayObject obj) {
-            return obj.shallowCopy(obj.getBooleanStorage().clone());
+            return new ArrayObject(obj, obj.getBooleanStorage().clone());
         }
     }
 

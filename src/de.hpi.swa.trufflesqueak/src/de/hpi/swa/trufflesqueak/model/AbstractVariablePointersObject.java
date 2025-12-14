@@ -17,8 +17,8 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public abstract class AbstractVariablePointersObject extends AbstractPointersObject {
     protected Object[] variablePart;
 
-    public AbstractVariablePointersObject(final long header, final ClassObject classObject) {
-        super(header, classObject);
+    public AbstractVariablePointersObject(final SqueakImageChunk chunk) {
+        super(chunk);
     }
 
     public AbstractVariablePointersObject(final ClassObject classObject, final ObjectLayout layout, final int variableSize) {

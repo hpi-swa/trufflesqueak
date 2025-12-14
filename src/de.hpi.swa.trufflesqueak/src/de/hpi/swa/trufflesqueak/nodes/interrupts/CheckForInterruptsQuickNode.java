@@ -33,7 +33,7 @@ public abstract class CheckForInterruptsQuickNode extends AbstractNode {
         if (SqueakImageContext.getSlow().interruptHandlerDisabled() || code.hasPrimitive() || //
                         code.getBytes().length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS || //
                         /* FullBlockClosure or normal closure */
-                        code.isCompiledBlock() || code.hasOuterMethod()) {
+                        code.isCompiledBlock() || code.isShadowBlock()) {
             return NoCheckForInterruptsNode.SINGLETON;
         } else {
             return CheckForInterruptsQuickImplNode.SINGLETON;

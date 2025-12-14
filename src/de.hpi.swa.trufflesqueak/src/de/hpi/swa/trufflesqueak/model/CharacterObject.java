@@ -21,6 +21,10 @@ public final class CharacterObject extends AbstractSqueakObject {
         this.value = value;
     }
 
+    public CharacterObject(final CharacterObject original) {
+        this.value = original.value;
+    }
+
     @Override
     public int getNumSlots() {
         return 0;

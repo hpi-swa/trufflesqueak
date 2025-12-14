@@ -10,6 +10,7 @@ import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -32,9 +33,9 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         super();
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final long header, final ClassObject klass) {
-        super(header);
-        squeakClass = klass;
+    @SuppressWarnings("this-escape")
+    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageChunk chunk) {
+        initializeFrom(chunk);
     }
 
     protected AbstractSqueakObjectWithClassAndHash(final ClassObject klass) {
@@ -49,6 +50,12 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         assert original.assertNotForwarded() && original.squeakClass.assertNotForwarded();
         squeakClass = original.squeakClass;
         setSqueakHash(HASH_UNINITIALIZED);
+    }
+
+    @Override
+    public void initializeFrom(final SqueakImageChunk chunk) {
+        super.initializeFrom(chunk);
+        squeakClass = chunk.getSqueakClass();
     }
 
     @Override

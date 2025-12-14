@@ -27,7 +27,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -43,11 +42,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public NativeObject() { // constructor for special selectors
         super();
-        storage = ArrayUtils.EMPTY_ARRAY;
     }
 
-    private NativeObject(final long header, final ClassObject classObject, final Object storage) {
-        super(header, classObject);
+    private NativeObject(final SqueakImageChunk chunk, final Object storage) {
+        super(chunk);
         assert storage != null : "Unexpected `null` value";
         this.storage = storage;
     }
@@ -58,13 +56,13 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
-    private NativeObject(final NativeObject original, final Object storageCopy) {
+    public NativeObject(final NativeObject original, final Object storageCopy) {
         super(original);
         storage = storageCopy;
     }
 
     public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), chunk.getBytes());
+        return new NativeObject(chunk, chunk.getBytes());
     }
 
     public static NativeObject newNativeBytes(final ClassObject klass, final byte[] bytes) {
@@ -76,7 +74,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static NativeObject newNativeInts(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), UnsafeUtils.toInts(chunk.getBytes()));
+        return new NativeObject(chunk, UnsafeUtils.toInts(chunk.getBytes()));
     }
 
     public static NativeObject newNativeInts(final ClassObject klass, final int size) {
@@ -88,7 +86,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static NativeObject newNativeLongs(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), UnsafeUtils.toLongs(chunk.getBytes()));
+        return new NativeObject(chunk, UnsafeUtils.toLongs(chunk.getBytes()));
     }
 
     public static NativeObject newNativeLongs(final ClassObject klass, final int size) {
@@ -100,7 +98,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static NativeObject newNativeShorts(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getHeader(), chunk.getSqueakClass(), UnsafeUtils.toShorts(chunk.getBytes()));
+        return new NativeObject(chunk, UnsafeUtils.toShorts(chunk.getBytes()));
     }
 
     public static NativeObject newNativeShorts(final ClassObject klass, final int size) {
@@ -113,9 +111,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        if (storage == ArrayUtils.EMPTY_ARRAY) { /* Fill in special selectors. */
-            setStorage(chunk.getBytes());
-        }
+        assert storage != null : "Unexpected `null` storage";
     }
 
     @Override
@@ -154,10 +150,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         final Object otherStorage = other.storage;
         other.setStorage(storage);
         setStorage(otherStorage);
-    }
-
-    public NativeObject shallowCopy(final Object storageCopy) {
-        return new NativeObject(this, storageCopy);
     }
 
     public NativeObject shallowCopyBytes() {

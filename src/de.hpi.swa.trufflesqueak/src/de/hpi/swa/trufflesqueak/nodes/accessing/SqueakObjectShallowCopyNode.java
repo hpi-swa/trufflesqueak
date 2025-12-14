@@ -38,7 +38,7 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
     @Specialization
     protected static final PointersObject doPointers(final PointersObject receiver) {
-        return receiver.shallowCopy();
+        return new PointersObject(receiver);
     }
 
     @Specialization
@@ -55,51 +55,51 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
     @Specialization
     protected static final VariablePointersObject doVariablePointers(final VariablePointersObject receiver) {
-        return receiver.shallowCopy();
+        return new VariablePointersObject(receiver);
     }
 
     @Specialization
     protected static final ContextObject doContext(final ContextObject receiver) {
-        return receiver.shallowCopy();
+        return new ContextObject(receiver);
     }
 
     @Specialization
     protected static final WeakVariablePointersObject doWeakPointers(final WeakVariablePointersObject receiver) {
-        return receiver.shallowCopy();
+        return new WeakVariablePointersObject(receiver);
     }
 
     @Specialization
     protected static final EphemeronObject doEphemeron(final EphemeronObject receiver) {
-        return receiver.shallowCopy();
+        return new EphemeronObject(receiver);
     }
 
     @Specialization
     protected static final BlockClosureObject doClosure(final BlockClosureObject receiver) {
-        return receiver.shallowCopy();
+        return new BlockClosureObject(receiver);
     }
 
     @Specialization
     protected static final CompiledCodeObject doCode(final CompiledCodeObject receiver) {
-        return receiver.shallowCopy();
+        return new CompiledCodeObject(receiver);
     }
 
     @Specialization
     protected static final ClassObject doClass(final ClassObject receiver) {
-        return receiver.shallowCopy();
+        return new ClassObject(receiver);
     }
 
     @Specialization
     protected static final EmptyObject doEmpty(final EmptyObject receiver) {
-        return receiver.shallowCopy();
+        return new EmptyObject(receiver);
     }
 
     @Specialization
     protected static final FloatObject doFloat(final FloatObject receiver) {
-        return receiver.shallowCopy();
+        return new FloatObject(receiver);
     }
 
     @Specialization
     protected static final CharacterObject doCharacterObject(final CharacterObject obj) {
-        return obj.shallowCopy();
+        return new CharacterObject(obj);
     }
 }

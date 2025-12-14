@@ -52,11 +52,15 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public Object object1 = NilObject.SINGLETON;
     public Object object2 = NilObject.SINGLETON;
 
-    public long[] primitiveExtension;
-    public Object[] objectExtension;
+    @CompilationFinal(dimensions = 0) public long[] primitiveExtension;
+    @CompilationFinal(dimensions = 0) public Object[] objectExtension;
 
     protected AbstractPointersObject() {
         super();
+    }
+
+    protected AbstractPointersObject(final SqueakImageChunk chunk) {
+        super(chunk);
     }
 
     protected AbstractPointersObject(final ClassObject classObject, final ObjectLayout layout) {
@@ -70,10 +74,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         assert classObject.getLayout() == this.layout : "Layout mismatch";
         primitiveExtension = this.layout.getFreshPrimitiveExtension();
         objectExtension = this.layout.getFreshObjectExtension();
-    }
-
-    protected AbstractPointersObject(final long header, final ClassObject classObject) {
-        super(header, classObject);
     }
 
     protected AbstractPointersObject(final AbstractPointersObject original) {

@@ -76,8 +76,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
 
-        int pc = code.hasOuterMethod() ? code.getOuterMethodStartPC() : 0;
+        int pc = code.isShadowBlock() ? code.getOuterMethodStartPCZeroBased() : 0;
         final int endPC = maxPC; // FIXME: should use block size in blocks
+        assert pc < endPC;
         int extA = 0;
         int extB = 0;
 
@@ -1022,7 +1023,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final CompiledCodeObject block = (CompiledCodeObject) code.getLiteral(literalIndex);
                         assert block.assertNotForwarded();
                         CompilerAsserts.partialEvaluationConstant(block);
-                        final int blockInitialPC = block.getInitialPC();
                         final int blockNumArgs = block.getNumArgs();
                         final byte byteB = getByte(bc, pc++);
                         final int numCopied = Byte.toUnsignedInt(byteB) & 63;
@@ -1032,7 +1032,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final boolean receiverOnStack = (byteB & 0x80) != 0;
                         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, currentPC);
                         final Object receiver = receiverOnStack ? pop(frame, --sp) : FrameAccess.getReceiver(frame);
-                        push(frame, sp++, new BlockClosureObject(image.getFullBlockClosureClass(), block, blockInitialPC, blockNumArgs, copiedValues, receiver, outerContext));
+                        push(frame, sp++, new BlockClosureObject(image.getFullBlockClosureClass(), block, blockNumArgs, copiedValues, receiver, outerContext));
                         extA = 0;
                         break;
                     }

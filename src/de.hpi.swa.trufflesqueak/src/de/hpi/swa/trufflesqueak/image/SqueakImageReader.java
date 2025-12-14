@@ -21,10 +21,10 @@ import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
@@ -224,6 +224,23 @@ public final class SqueakImageReader {
         return chunkMap.get(specialObjectsChunk.getWord(idx));
     }
 
+    private void initializeClass(final SqueakImageChunk specialChunk, final int index, final ClassObject targetClass) {
+        final SqueakImageChunk chunk = specialObjectChunk(specialChunk, index).getClassChunk();
+        chunk.setObject(targetClass);
+        targetClass.setSqueakClass(chunk.getSqueakClass());
+    }
+
+    private void setPrebuiltObject(final SqueakImageChunk specialObjectsChunk, final int idx, final NativeObject object) {
+        final SqueakImageChunk chunk = specialObjectChunk(specialObjectsChunk, idx);
+        object.initializeFrom(chunk);
+        assert 15 < chunk.getFormat() && chunk.getFormat() <= 23 : "non-byte NativeObject in special objects array";
+        object.setStorage(chunk.getBytes());
+    }
+
+    private void setPrebuiltObject(final SqueakImageChunk specialObjectsChunk, final int idx, final AbstractSqueakObjectWithClassAndHash object) {
+        object.initializeFrom(specialObjectChunk(specialObjectsChunk, idx));
+    }
+
     private void setPrebuiltObject(final SqueakImageChunk specialObjectsChunk, final int idx, final Object object) {
         specialObjectChunk(specialObjectsChunk, idx).setObject(object);
     }
@@ -240,11 +257,12 @@ public final class SqueakImageReader {
         final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
         final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
         sqMetaclass.setObject(image.metaClass);
+        image.metaClass.setSqueakClass(sqMetaclass.getSqueakClass());
 
         // also cache nil, true, and false classes
-        specialObjectChunk(specialChunk, SPECIAL_OBJECT.NIL_OBJECT).getClassChunk().setObject(image.nilClass);
-        specialObjectChunk(specialChunk, SPECIAL_OBJECT.FALSE_OBJECT).getClassChunk().setObject(image.falseClass);
-        specialObjectChunk(specialChunk, SPECIAL_OBJECT.TRUE_OBJECT).getClassChunk().setObject(image.trueClass);
+        initializeClass(specialChunk, SPECIAL_OBJECT.NIL_OBJECT, image.nilClass);
+        initializeClass(specialChunk, SPECIAL_OBJECT.FALSE_OBJECT, image.falseClass);
+        initializeClass(specialChunk, SPECIAL_OBJECT.TRUE_OBJECT, image.trueClass);
 
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.NIL_OBJECT, NilObject.SINGLETON);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.FALSE_OBJECT, BooleanObject.FALSE);
@@ -311,13 +329,16 @@ public final class SqueakImageReader {
         if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_UNSAFE_ALIEN).isNil()) {
             setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_UNSAFE_ALIEN, image.initializeUnsafeAlienClass());
         }
+
+        image.specialObjectsArray.setSqueakClass(specialChunk.getSqueakClass());
+        image.specialObjectsArray.fillin(specialChunk);
+        image.specialSelectors.fillin(specialChunk.getChunk(SPECIAL_OBJECT.SPECIAL_SELECTORS));
     }
 
     private void initObjects() {
         initPrebuiltConstant();
         fillInClassObjects();
         fillInObjects();
-        fillInContextObjects();
         fillInClassesFromCompactClassList();
     }
 
@@ -341,9 +362,9 @@ public final class SqueakImageReader {
                     highestKnownClassIndex = p << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT | i;
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
+                    final ClassObject metaClassObject = classChunk.asClassObject();
                     metaClassObject.setInstancesAreClasses();
-                    classInstance.asClassObject(metaClassObject);
+                    classInstance.asClassObject();
                 }
             }
         }
@@ -378,8 +399,8 @@ public final class SqueakImageReader {
                 if (classChunk.getSqueakClass() == image.metaClass) {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
-                    final ClassObject classObject = classInstance.asClassObject(metaClassObject);
+                    final ClassObject classObject = classInstance.asClassObject();
+                    assert classObject != null;
                     classObject.fillin(classInstance);
                     if (inst.contains(classObject.getSuperclassOrNull())) {
                         inst.add(classObject);
@@ -402,27 +423,10 @@ public final class SqueakImageReader {
                 continue;
             }
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof final AbstractSqueakObjectWithClassAndHash obj) {
-                // FIXME:
-                if (obj.needsSqueakClass()) {
-                    obj.setSqueakClass(chunk.getSqueakClass());
-                }
-                if (obj.getSqueakHashInt() != chunk.getHash()) {
-                    obj.setSqueakHash(chunk.getHash());
-                }
+            if (chunkObject instanceof final AbstractSqueakObjectWithHash obj) {
+                assert !(obj instanceof final AbstractSqueakObjectWithClassAndHash o) || !o.needsSqueakClass() : "object is missing class";
+                assert obj.getSqueakHashInt() == chunk.getHash() : "object is missing hash";
                 obj.fillin(chunk);
-            }
-        }
-    }
-
-    public void fillInContextObjects() {
-        for (final SqueakImageChunk chunk : chunkMap.getChunks()) {
-            if (chunk == null) {
-                continue;
-            }
-            final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof final ContextObject contextObject) {
-                contextObject.fillInContext(chunk);
             }
         }
     }

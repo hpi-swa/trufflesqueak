@@ -54,19 +54,20 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         this.image = image;
     }
 
-    public ClassObject(final SqueakImageContext image, final long header, final ClassObject squeakClass) {
-        super(header, squeakClass);
-        this.image = image;
+    public ClassObject(final SqueakImageChunk chunk) {
+        super(chunk);
+        this.image = chunk.getImage();
     }
 
-    private ClassObject(final ClassObject original) {
+    public ClassObject(final ClassObject original) {
         super((AbstractSqueakObjectWithClassAndHash) original);
         image = original.image;
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         assert superclass == null || superclass.assertNotForwarded();
-        methodDict = original.methodDict.shallowCopy();
+        methodDict = new VariablePointersObject(original.methodDict);
         format = original.format;
+        // FIXME: should clone the pointers themselves, too
         pointers = original.pointers.clone();
         initializeLayout();
     }
@@ -439,10 +440,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public int getInstanceSpecification() {
         return (int) (format >> 16 & 0x1f);
-    }
-
-    public ClassObject shallowCopy() {
-        return new ClassObject(this);
     }
 
     public boolean pointsTo(final Object thang) {
