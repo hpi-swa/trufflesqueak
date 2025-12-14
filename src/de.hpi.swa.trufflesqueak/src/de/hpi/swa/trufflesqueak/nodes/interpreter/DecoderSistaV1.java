@@ -110,16 +110,10 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         int previousPC = -1;
         while (currentPC < pc) {
             previousPC = currentPC;
-            do {
-                currentPC += decodeNumBytes(code, currentPC);
-            } while (isSistaV1Extension(Byte.toUnsignedInt(code.getBytes()[currentPC])));
+            currentPC += decodeNextPCDelta(code, currentPC);
         }
         assert previousPC > 0;
         return previousPC;
-    }
-
-    private static boolean isSistaV1Extension(final int bytecode) {
-        return 0xE0 <= bytecode && bytecode <= 0xE1;
     }
 
     @Override
