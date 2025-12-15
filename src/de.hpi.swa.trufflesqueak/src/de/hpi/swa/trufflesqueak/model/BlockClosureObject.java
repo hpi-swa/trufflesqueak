@@ -150,8 +150,22 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public void become(final BlockClosureObject other) {
+        final ContextObject otherOuterContext = other.outerContext;
+        final CompiledCodeObject otherBlock = other.block;
+        final int otherNumArgs = other.numArgs;
+        final Object otherReceiver = other.receiver;
         final Object[] otherCopied = other.copiedValues;
+
+        other.setOuterContext(outerContext);
+        other.setBlock(block);
+        other.setNumArgs(numArgs);
+        other.setReceiver(receiver);
         other.setCopiedValues(copiedValues);
+
+        setOuterContext(otherOuterContext);
+        setBlock(otherBlock);
+        setNumArgs(otherNumArgs);
+        setReceiver(otherReceiver);
         setCopiedValues(otherCopied);
     }
 
