@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -15,7 +16,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public abstract class AbstractVariablePointersObject extends AbstractPointersObject {
-    protected Object[] variablePart;
+    @CompilationFinal(dimensions = 0) protected Object[] variablePart;
 
     public AbstractVariablePointersObject(final SqueakImageChunk chunk) {
         super(chunk);
