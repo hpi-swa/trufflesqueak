@@ -151,10 +151,18 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new EmptyObject(classObject);
     }
 
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "image.isBlockClosureClass(classObject) || image.isFullBlockClosureClass(classObject)"})
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "image.isFullBlockClosureClass(classObject)"})
+    protected static final BlockClosureObject doFullBlockClosure(final ClassObject classObject, final int extraSize,
+                    @Bind final SqueakImageContext image) {
+        return new BlockClosureObject(false, extraSize);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "image.isBlockClosureClass(classObject)"})
     protected static final BlockClosureObject doBlockClosure(final ClassObject classObject, final int extraSize,
-                    @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
-        return new BlockClosureObject(classObject, extraSize);
+                    @Bind final SqueakImageContext image) {
+        return new BlockClosureObject(true, extraSize);
     }
 
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "getContext().isMethodContextClass(classObject)"})

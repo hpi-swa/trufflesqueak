@@ -1062,7 +1062,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final boolean receiverOnStack = (byteB & 0x80) != 0;
                         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, currentPC);
                         final Object receiver = receiverOnStack ? pop(frame, --sp) : FrameAccess.getReceiver(frame);
-                        push(frame, sp++, new BlockClosureObject(image.getFullBlockClosureClass(), block, blockNumArgs, copiedValues, receiver, outerContext));
+                        push(frame, sp++, new BlockClosureObject(false, block, blockNumArgs, copiedValues, receiver, outerContext));
                         extA = 0;
                         break;
                     }

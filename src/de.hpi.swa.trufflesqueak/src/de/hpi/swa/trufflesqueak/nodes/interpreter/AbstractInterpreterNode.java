@@ -113,7 +113,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
 
         BlockClosureObject execute(final VirtualFrame frame, final Object[] copiedValues, final ContextObject outerContext) {
-            return new BlockClosureObject(getContext().blockClosureClass, block, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
+            return new BlockClosureObject(true, block, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
         }
     }
 

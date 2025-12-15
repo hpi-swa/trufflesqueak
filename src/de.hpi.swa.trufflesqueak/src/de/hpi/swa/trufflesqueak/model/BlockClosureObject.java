@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHash {
+public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledCodeObject block;
     @CompilationFinal private int numArgs = -1;
@@ -30,6 +30,9 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     public BlockClosureObject(final SqueakImageChunk chunk) {
         super(chunk);
         assert chunk.getWordSize() >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
+        if (chunk.getSqueakClass().isBlockClosureClass()) {
+            setIsABlockClosure();
+        }
         outerContext = (ContextObject) chunk.getPointer(BLOCK_CLOSURE.OUTER_CONTEXT);
         final Object startPCOrMethod = chunk.getPointer(BLOCK_CLOSURE.START_PC_OR_METHOD);
         numArgs = (int) (long) chunk.getPointer(BLOCK_CLOSURE.ARGUMENT_COUNT);
@@ -43,13 +46,19 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
-    public BlockClosureObject(final ClassObject squeakClass, final int extraSize) {
-        super(squeakClass);
+    public BlockClosureObject(final boolean hasBlockClosureClass, final int extraSize) {
+        super();
+        if (hasBlockClosureClass) {
+            setIsABlockClosure();
+        }
         copiedValues = new Object[extraSize];
     }
 
-    public BlockClosureObject(final ClassObject squeakClass, final CompiledCodeObject block, final int numArgs, final Object[] copied, final Object receiver, final ContextObject outerContext) {
-        super(squeakClass);
+    public BlockClosureObject(final boolean hasBlockClosureClass, final CompiledCodeObject block, final int numArgs, final Object[] copied, final Object receiver, final ContextObject outerContext) {
+        super();
+        if (hasBlockClosureClass) {
+            setIsABlockClosure();
+        }
         this.block = block;
         this.outerContext = outerContext;
         copiedValues = copied;
@@ -72,6 +81,26 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         if (block == null && chunk.getPointer(BLOCK_CLOSURE.START_PC_OR_METHOD) instanceof final Long startPC) {
             block = outerContext.getMethodFromChunk().createShadowBlock(startPC.intValue());
         }
+    }
+
+    @Override
+    protected AbstractSqueakObjectWithHash getForwardingPointer() {
+        return this;
+    }
+
+    @Override
+    public AbstractSqueakObjectWithHash resolveForwardingPointer() {
+        return this;
+    }
+
+    @Override
+    public ClassObject getSqueakClass() {
+        return getSqueakClass(SqueakImageContext.getSlow());
+    }
+
+    @Override
+    public ClassObject getSqueakClass(final SqueakImageContext image) {
+        return isABlockClosure() ? image.blockClosureClass : image.getFullBlockClosureClass();
     }
 
     public AbstractSqueakObject getOuterContext() {
@@ -179,22 +208,22 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         return instsize() + copiedValues.length;
     }
 
-    public boolean isABlockClosure(final SqueakImageContext image) {
-        return image.isBlockClosureClass(getSqueakClass());
+    private void setIsABlockClosure() {
+        setBooleanABit();
     }
 
-    public boolean isAFullBlockClosure(final SqueakImageContext image) {
-        return image.isFullBlockClosureClass(getSqueakClass());
+    public boolean isABlockClosure() {
+        return isBooleanASet();
     }
 
     public boolean isAFullBlockClosure() {
-        return isAFullBlockClosure(getSqueakClass().getImage());
+        return !isABlockClosure();
     }
 
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode()) + " (with " + (numArgs == -1 && block == null ? "no block" : getNumArgs() + " args") + " and " +
+        return "a " + getSqueakClass().getClassName() + " @" + Integer.toHexString(hashCode()) + " (with " + (numArgs == -1 && block == null ? "no block" : getNumArgs() + " args") + " and " +
                         copiedValues.length + " copied values in " + outerContext + ")";
     }
 
@@ -247,7 +276,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
-        super.pointersBecomeOneWay(fromToMap);
         if (receiver != null) {
             final Object toReceiver = fromToMap.get(receiver);
             if (toReceiver != null) {

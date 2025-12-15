@@ -13,6 +13,7 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -45,6 +46,8 @@ public abstract class LookupClassGuard {
             return DoubleGuard.SINGLETON;
         } else if (receiver instanceof ContextObject) {
             return ContextObjectGuard.SINGLETON;
+        } else if (receiver instanceof final BlockClosureObject closure) {
+            return closure.isABlockClosure() ? BlockClosureGuard.SINGLETON : FullBlockClosureGuard.SINGLETON;
         } else if (receiver instanceof FloatObject) {
             return FloatObjectGuard.SINGLETON;
         } else if (receiver instanceof final AbstractSqueakObjectWithClassAndHash o) {
@@ -150,6 +153,34 @@ public abstract class LookupClassGuard {
         @Override
         protected ClassObject getSqueakClassInternal(final Node node) {
             return SqueakImageContext.get(node).methodContextClass;
+        }
+    }
+
+    private static final class BlockClosureGuard extends LookupClassGuard {
+        private static final BlockClosureGuard SINGLETON = new BlockClosureGuard();
+
+        @Override
+        public boolean check(final Object receiver) {
+            return receiver instanceof final BlockClosureObject closure && closure.isABlockClosure();
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).blockClosureClass;
+        }
+    }
+
+    private static final class FullBlockClosureGuard extends LookupClassGuard {
+        private static final FullBlockClosureGuard SINGLETON = new FullBlockClosureGuard();
+
+        @Override
+        public boolean check(final Object receiver) {
+            return receiver instanceof final BlockClosureObject closure && closure.isAFullBlockClosure();
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final Node node) {
+            return SqueakImageContext.get(node).getFullBlockClosureClass();
         }
     }
 

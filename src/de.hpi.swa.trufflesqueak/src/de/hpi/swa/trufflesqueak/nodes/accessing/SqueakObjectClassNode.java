@@ -18,6 +18,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -83,6 +84,16 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     @Specialization
     protected final ClassObject doContext(@SuppressWarnings("unused") final ContextObject value) {
         return getContext().methodContextClass;
+    }
+
+    @Specialization(guards = "value.isAFullBlockClosure()")
+    protected final ClassObject doFullBlockClosure(@SuppressWarnings("unused") final BlockClosureObject value) {
+        return getContext().getFullBlockClosureClass();
+    }
+
+    @Specialization(guards = "value.isABlockClosure()")
+    protected final ClassObject doBlockClosure(@SuppressWarnings("unused") final BlockClosureObject value) {
+        return getContext().blockClosureClass;
     }
 
     @Specialization
