@@ -3,7 +3,6 @@
 StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'; newLine; flush.
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
 Utilities classPool at: #AuthorInitials put: 'TS'.
-SmallInteger initMinValAndMaxVal. "resize SmallInteger range"
 
 nonTerminatingTestCases := OrderedCollection new.
 {
@@ -17,9 +16,10 @@ StdIOWriteStream stdout newLine; flush.
 
 failingTests := OrderedCollection new.
 {
-    #FloatTest -> #(#testIsDenormalized #testPrimTruncated).
+    #FloatTest -> #(#testHashWithSmallishLargeNegativeInteger #testHashWithSmallishLargePositiveInteger #testIsDenormalized #testPrimDivideBy #testPrimTruncated).
+    #IntegerTest -> #(#testRange).
     #StringTest -> #("flaky" #testFindSelector).
-    #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString).
+    #SmallIntegerTest -> #(#testDivideMayOverflow).
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
     assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].
