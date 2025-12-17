@@ -110,7 +110,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         int previousPC = -1;
         while (currentPC < pc) {
             previousPC = currentPC;
-            currentPC += decodeNextPCDelta(code, currentPC);
+            currentPC += decodeNextPCDelta(code, currentPC, false);
         }
         assert previousPC > 0;
         return previousPC;
@@ -118,16 +118,16 @@ public final class DecoderSistaV1 extends AbstractDecoder {
 
     @Override
     protected int decodeNumBytes(final CompiledCodeObject code, final int index) {
-        return decodeNumBytes(code, index, 0);
+        return decodeNumBytes(code, index, 0, false);
     }
 
-    private static int decodeNumBytes(final CompiledCodeObject code, final int index, final int extB) {
+    private static int decodeNumBytes(final CompiledCodeObject code, final int index, final int extB, final boolean skipOverBlocks) {
         final int b = Byte.toUnsignedInt(code.getBytes()[index]);
         if (b <= 223) {
             return 1;
         } else if (b <= 247) {
             return 2;
-        } else if (b == 250) {
+        } else if (b == 250 && skipOverBlocks) {
             final int blockSize = Byte.toUnsignedInt(code.getBytes()[index + 2]) + (extB << 8);
             return 3 + blockSize;
         } else {
@@ -135,7 +135,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         }
     }
 
-    private static int decodeNextPCDelta(final CompiledCodeObject code, final int index) {
+    private static int decodeNextPCDelta(final CompiledCodeObject code, final int index, final boolean skipOverBlocks) {
         int b = Byte.toUnsignedInt(code.getBytes()[index]);
         int offset = 0;
         int extB = 0;
@@ -147,7 +147,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
             offset += 2;
             b = Byte.toUnsignedInt(code.getBytes()[index + offset]);
         }
-        return offset + decodeNumBytes(code, index + offset, extB);
+        return offset + decodeNumBytes(code, index + offset, extB, skipOverBlocks);
     }
 
     /**
@@ -174,7 +174,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
             // sb.append(currentStackPointer).append("\n");
             assert 0 <= currentStackPointer && currentStackPointer <= contextSize;
             maxStackPointer = Math.max(maxStackPointer, currentStackPointer);
-            index += decodeNextPCDelta(code, index);
+            index += decodeNextPCDelta(code, index, true);
         }
         // sb.append("max SP = ").append(maxStackPointer).append("\n");
         // System.out.append(sb.toString());
