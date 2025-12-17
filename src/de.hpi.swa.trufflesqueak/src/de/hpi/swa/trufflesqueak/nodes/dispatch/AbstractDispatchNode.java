@@ -15,4 +15,9 @@ public abstract class AbstractDispatchNode extends AbstractNode {
     AbstractDispatchNode(final NativeObject selector) {
         this.selector = selector;
     }
+
+    @Override
+    public final String toString() {
+        return "send: " + selector.toString();
+    }
 }

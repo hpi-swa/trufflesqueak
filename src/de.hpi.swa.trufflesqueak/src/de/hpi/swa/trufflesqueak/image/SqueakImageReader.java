@@ -363,6 +363,7 @@ public final class SqueakImageReader {
                     assert classChunk.getWordSize() == METACLASS.INST_SIZE;
                     final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
                     final ClassObject metaClassObject = classChunk.asClassObject();
+                    assert metaClassObject != null;
                     metaClassObject.setInstancesAreClasses();
                     classInstance.asClassObject();
                 }

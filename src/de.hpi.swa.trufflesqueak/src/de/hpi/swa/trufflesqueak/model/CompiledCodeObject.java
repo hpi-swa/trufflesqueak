@@ -125,14 +125,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
         super(outerCode);
 
-        // Find outer method
-        CompiledCodeObject currentOuterCode = outerCode;
-        while (currentOuterCode.getExecutionData().outerMethod != null) {
-            currentOuterCode = currentOuterCode.executionData.outerMethod;
-        }
-        assert currentOuterCode.isCompiledMethod();
-        getExecutionData().outerMethod = currentOuterCode;
-        getExecutionData().outerMethodStartPC = startPC;
+        // store outer method and startPC
+        final ExecutionData data = getExecutionData();
+        data.outerMethod = outerCode.isShadowBlock() ? outerCode.getExecutionData().outerMethod : outerCode;
+        assert data.outerMethod.isCompiledMethod();
+        data.outerMethodStartPC = startPC;
 
         // header info and data
         header = outerCode.header;
