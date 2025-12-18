@@ -47,8 +47,13 @@ public abstract class AbstractNode extends Node {
     }
 
     @Idempotent
-    protected final boolean isPrimitiveDoMixedArithmetic() {
-        return getContext().flags.isPrimitiveDoMixedArithmetic();
+    protected final boolean numericPrimsMixArithmetic() {
+        return getContext().flags.numericPrimsMixArithmetic();
+    }
+
+    @Idempotent
+    protected final boolean numericPrimsMixComparison() {
+        return getContext().flags.numericPrimsMixComparison();
     }
 
     protected final boolean isSemaphore(final PointersObject object) {

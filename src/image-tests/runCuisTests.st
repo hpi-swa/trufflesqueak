@@ -16,7 +16,7 @@ StdIOWriteStream stdout newLine; flush.
 
 failingTests := OrderedCollection new.
 {
-    #FloatTest -> #(#testHashWithSmallishLargeNegativeInteger #testHashWithSmallishLargePositiveInteger #testIsDenormalized #testPrimDivideBy #testPrimTruncated).
+    #FloatTest -> #(#testHashWithSmallishLargeNegativeInteger #testHashWithSmallishLargePositiveInteger #testIsDenormalized #testPrimTruncated).
     #IntegerTest -> #(#testRange).
     #StringTest -> #("flaky" #testFindSelector).
     #SmallIntegerTest -> #(#testDivideMayOverflow).

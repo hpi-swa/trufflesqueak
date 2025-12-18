@@ -965,7 +965,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 71 -> 13L;
                 // do mixed arithmetic; if false binary arithmetic primitives will fail unless
                 // receiver and argument are of the same type
-                case 75 -> image.flags.isPrimitiveDoMixedArithmetic();
+                case 75 -> image.flags.numericPrimsMixArithmetic();
+                case 77 -> image.flags.numericPrimsMixComparison();
                 default -> NilObject.SINGLETON;
             };
         }
@@ -974,6 +975,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
             if (index == 26) {
                 image.interrupt.setInterruptCheckMilliseconds(parameter);
+            } else if (index == 48) {
+                image.flags.setHeaderFlagsEncoded(parameter);
             }
         }
     }

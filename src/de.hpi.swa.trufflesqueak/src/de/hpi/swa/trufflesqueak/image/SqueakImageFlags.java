@@ -11,24 +11,24 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Idempotent;
 
 public final class SqueakImageFlags {
-    private static final int PRIMITIVE_DO_MIXED_ARITHMETIC = 0x100;
+    private static final int NUMERIC_PRIMS_MIX_ARITHMETIC = 0x100;
+    private static final int NUMERIC_PRIMS_MIX_COMPARISON = 0x800;
     private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
 
     @CompilationFinal private long oldBaseAddress = -1;
     @CompilationFinal private long headerFlags;
     @CompilationFinal private long snapshotScreenSize;
     @CompilationFinal private int maxExternalSemaphoreTableSize;
-    @CompilationFinal private boolean isPrimitiveDoMixedArithmetic;
+    @CompilationFinal private boolean numericPrimsMixArithmetic;
+    @CompilationFinal private boolean numericPrimsMixComparison;
     @CompilationFinal private boolean preemptionYields;
 
     public void initialize(final long oldBaseAddressValue, final long flags, final long screenSize, final int lastMaxExternalSemaphoreTableSize) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         oldBaseAddress = oldBaseAddressValue;
-        headerFlags = flags;
+        setHeaderFlags(flags);
         snapshotScreenSize = screenSize;
         maxExternalSemaphoreTableSize = lastMaxExternalSemaphoreTableSize;
-        isPrimitiveDoMixedArithmetic = (headerFlags & PRIMITIVE_DO_MIXED_ARITHMETIC) == 0;
-        preemptionYields = (headerFlags & PREEMPTION_DOES_NOT_YIELD) == 0;
     }
 
     public long getOldBaseAddress() {
@@ -40,9 +40,32 @@ public final class SqueakImageFlags {
         return headerFlags;
     }
 
+    private void setHeaderFlags(final long headerFlags) {
+        final long oldHeaderFlags = this.headerFlags;
+        this.headerFlags = headerFlags;
+        if (oldHeaderFlags != headerFlags) {
+            /*
+             * This is a trick to work around an incompatible change in OSVM: Squeak does not update
+             * the header flags on startup, so initialization uses the old behavior. Cuis 7.3
+             * updates the header once via #doMixedArithmetic: and since the two lower bits change,
+             * the old behavior is used twice. Cuis 7.5 updates the header twice via
+             * #doMixedArithmetic: and #doMixedArithmetic:, and since the two lower bits no longer
+             * change after the second update, the new behavior is used.
+             */
+            numericPrimsUpdateOldBehavior();
+        } else {
+            numericPrimsUpdateNewBehavior();
+        }
+        preemptionYields = (headerFlags & PREEMPTION_DOES_NOT_YIELD) == 0;
+    }
+
     // For some reason, header flags appear to be shifted by 2 (see #getImageHeaderFlagsParameter).
     public long getHeaderFlagsDecoded() {
         return headerFlags >> 2;
+    }
+
+    public void setHeaderFlagsEncoded(final long headerFlags) {
+        setHeaderFlags(headerFlags << 2);
     }
 
     public long getSnapshotScreenSize() {
@@ -61,9 +84,24 @@ public final class SqueakImageFlags {
         return maxExternalSemaphoreTableSize;
     }
 
+    private void numericPrimsUpdateOldBehavior() {
+        numericPrimsMixArithmetic = (headerFlags & NUMERIC_PRIMS_MIX_ARITHMETIC) == 0;
+        numericPrimsMixComparison = numericPrimsMixArithmetic;
+    }
+
+    private void numericPrimsUpdateNewBehavior() {
+        numericPrimsMixArithmetic = (headerFlags & NUMERIC_PRIMS_MIX_ARITHMETIC) != 0;
+        numericPrimsMixComparison = (headerFlags & NUMERIC_PRIMS_MIX_COMPARISON) != 0;
+    }
+
     @Idempotent
-    public boolean isPrimitiveDoMixedArithmetic() {
-        return isPrimitiveDoMixedArithmetic;
+    public boolean numericPrimsMixArithmetic() {
+        return numericPrimsMixArithmetic;
+    }
+
+    @Idempotent
+    public boolean numericPrimsMixComparison() {
+        return numericPrimsMixComparison;
     }
 
     @Idempotent
