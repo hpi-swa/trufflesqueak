@@ -181,18 +181,32 @@ download-trufflesqueak-test-image() {
   echo "[TruffleSqueak test image (${DEP_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
-download-cuis-test-image() {
+download-cuis-7-3-test-image() {
   local target_dir="${BASE_DIRECTORY}/images"
 
   mkdir "${target_dir}" || true
   pushd "${target_dir}" > /dev/null
 
-  download-asset "${DEP_CUIS_TEST_IMAGE}" "${DEP_CUIS_TEST_IMAGE_TAG}"
-  unzip -qq "${DEP_CUIS_TEST_IMAGE}"
+  download-asset "${DEP_CUIS_7_3_TEST_IMAGE}" "${DEP_CUIS_7_3_TEST_IMAGE_TAG}"
+  unzip -qq "${DEP_CUIS_7_3_TEST_IMAGE}"
 
   popd > /dev/null
 
-  echo "[Cuis test image (${DEP_CUIS_TEST_IMAGE_TAG}) downloaded successfully]"
+  echo "[Cuis test image (${DEP_CUIS_7_3_TEST_IMAGE_TAG}) downloaded successfully]"
+}
+
+download-cuis-7-5-test-image() {
+  local target_dir="${BASE_DIRECTORY}/images"
+
+  mkdir "${target_dir}" || true
+  pushd "${target_dir}" > /dev/null
+
+  download-asset "${DEP_CUIS_7_5_TEST_IMAGE}" "${DEP_CUIS_7_5_TEST_IMAGE_TAG}"
+  unzip -qq "${DEP_CUIS_7_5_TEST_IMAGE}"
+
+  popd > /dev/null
+
+  echo "[Cuis test image (${DEP_CUIS_7_5_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
 standalone-dirname() {

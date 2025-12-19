@@ -129,9 +129,15 @@ jobs:
         trufflesqueak-polyglot-get -v ${{ env.JAVA_VERSION }} -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' }}
-    - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
+    - name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
-        mx.trufflesqueak/utils.sh download-cuis-test-image
+        mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
+        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+      timeout-minutes: 10
+      if: ${{ matrix.os == 'macos-14' }}
+    - name: Run Cuis 7.5 tests on TruffleSqueak standalone
+      run: |
+        mx.trufflesqueak/utils.sh download-cuis-7-5-test-image
         trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
@@ -200,9 +206,9 @@ jobs:
       shell: bash
       run: |
         trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
-    - name: Run Cuis-Smalltalk tests on instrumented TruffleSqueak standalone
+    - name: Run Cuis 7.3 tests on instrumented TruffleSqueak standalone
       run: |
-        mx.trufflesqueak/utils.sh download-cuis-test-image
+        mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
         trufflesqueak --headless --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_CUIS }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_CUIS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
@@ -320,9 +326,15 @@ jobs:
         trufflesqueak-polyglot-get -v ${{ env.JAVA_VERSION }} -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' }}
-    - name: Run Cuis-Smalltalk tests on TruffleSqueak standalone
+    - name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
-        mx.trufflesqueak/utils.sh download-cuis-test-image
+        mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
+        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+      timeout-minutes: 10
+      if: ${{ matrix.os == 'macos-14' }}
+    - name: Run Cuis 7.5 tests on TruffleSqueak standalone
+      run: |
+        mx.trufflesqueak/utils.sh download-cuis-7-5-test-image
         trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
