@@ -9,12 +9,14 @@ package de.hpi.swa.trufflesqueak.model;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
+@ValueType
 public final class FloatObject extends AbstractSqueakObjectWithHash {
     public static final int PRECISION = 53;
     public static final int WORD_LENGTH = 2;
