@@ -65,12 +65,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
 
     protected AbstractPointersObject(final ClassObject classObject, final ObjectLayout layout) {
         super(classObject);
-        if (layout != null) {
-            CompilerAsserts.partialEvaluationConstant(layout);
-            this.layout = layout;
-        } else {
-            this.layout = classObject.getLayout();
-        }
+        this.layout = layout;
         assert classObject.getLayout() == this.layout : "Layout mismatch";
         primitiveExtension = this.layout.getFreshPrimitiveExtension();
         objectExtension = this.layout.getFreshObjectExtension();

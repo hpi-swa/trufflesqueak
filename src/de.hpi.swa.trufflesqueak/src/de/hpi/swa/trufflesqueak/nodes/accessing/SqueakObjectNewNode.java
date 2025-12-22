@@ -103,7 +103,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     @Specialization(guards = {"instantiatesPointersObject(getContext(), classObject)"}, replaces = "doPointersCached")
     protected static final PointersObject doPointersUncached(final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
-        return new PointersObject(classObject, null);
+        return new PointersObject(classObject);
     }
 
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
@@ -123,7 +123,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
 
     @Specialization(guards = {"instantiatesVariablePointersObject(getContext(), classObject)"}, replaces = "doVariablePointersCached")
     protected static final VariablePointersObject doVariablePointersUncached(final ClassObject classObject, final int extraSize) {
-        return new VariablePointersObject(classObject, null, extraSize);
+        return new VariablePointersObject(classObject, classObject.getLayout(), extraSize);
     }
 
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
@@ -143,7 +143,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
 
     @Specialization(guards = "instantiatesWeakVariablePointersObject(classObject)", replaces = "doWeakPointersCached")
     protected static final WeakVariablePointersObject doWeakPointersUncached(final ClassObject classObject, final int extraSize) {
-        return new WeakVariablePointersObject(classObject, null, extraSize);
+        return new WeakVariablePointersObject(classObject, classObject.getLayout(), extraSize);
     }
 
     @Specialization(guards = "classObject.isZeroSized()")
@@ -201,7 +201,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     protected static final EphemeronObject doEphemeronUncached(final ClassObject classObject, final int extraSize,
                     @Bind final SqueakImageContext image) {
         assert extraSize == 0;
-        return new EphemeronObject(image, classObject, null);
+        return new EphemeronObject(image, classObject, classObject.getLayout());
     }
 
     @Specialization(guards = {"classObject.isWords()", "getContext().isFloatClass(classObject)"})

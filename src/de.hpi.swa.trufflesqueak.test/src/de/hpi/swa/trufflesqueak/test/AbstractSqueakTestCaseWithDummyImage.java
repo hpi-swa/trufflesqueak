@@ -41,7 +41,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
         final ClassObject bindingClass = setupMeta(new ClassObject(image), null, 1L, "Binding");
         final ClassObject classBindingClass = setupMeta(new ClassObject(image), bindingClass, 2L, "ClassBinding");
-        nilClassBinding = new PointersObject(classBindingClass, classBindingClass.getLayout());
+        nilClassBinding = new PointersObject(classBindingClass);
         nilClassBinding.instVarAtPut0Slow(0, asByteSymbol("UndefinedObject"));
         nilClassBinding.instVarAtPut0Slow(1, image.nilClass);
 
