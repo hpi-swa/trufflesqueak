@@ -737,6 +737,34 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         push(frame, sp++, result);
                         break;
                     }
+                    case BC.BYTECODE_PRIM_SIZE: {
+                        final Object receiver = popReceiver(frame, --sp);
+                        final byte state = profiles[currentPC];
+                        final Object result;
+                        if (receiver instanceof final NativeObject byteString && byteString.getSqueakClass() == image.byteStringClass) {
+                            if ((state & 0b1000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b1000;
+                            }
+                            result = (long) byteString.getByteLength();
+                        } else if (receiver instanceof final ArrayObject arrayObject && arrayObject.isObjectType()) {
+                            if ((state & 0b10000) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b10000;
+                            }
+                            result = (long) arrayObject.getObjectLength();
+                        } else {
+                            if ((state & 0b100) == 0) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                profiles[currentPC] |= 0b100;
+                            }
+                            externalizePCAndSP(frame, pc, sp);
+                            result = send(frame, currentPC, receiver);
+                            pc = internalizePC(frame, pc);
+                        }
+                        push(frame, sp++, result);
+                        break;
+                    }
                     case BC.BYTECODE_PRIM_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
@@ -754,7 +782,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         push(frame, sp++, !uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
-                    case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
+                    case BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
                         BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                         BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                         final Object receiver = popReceiver(frame, --sp);
