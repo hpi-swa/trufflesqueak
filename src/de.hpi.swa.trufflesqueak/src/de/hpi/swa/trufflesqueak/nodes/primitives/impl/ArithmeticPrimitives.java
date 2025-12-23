@@ -15,7 +15,6 @@ import com.oracle.truffle.api.ExactMath;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -333,7 +332,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         public static final Object doLongFraction(final long lhs, final long rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                         @Exclusive @Cached final InlinedConditionProfile isOverflowProfile,
                         @Exclusive @Cached final InlinedConditionProfile isIntegralProfile,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
@@ -351,7 +350,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"numericPrimsMixArithmetic()"}, rewriteOn = RespecializeException.class)
         public static final double doLongDoubleFinite(final long lhs, final double rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
             if (isZeroProfile.profile(node, rhs == 0)) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             } else {
@@ -362,7 +361,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"numericPrimsMixArithmetic()"}, replaces = "doLongDoubleFinite")
         public static final Object doLongDouble(final long lhs, final double rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                         @Cached final FloatObjectNormalizeNode normalizeNode) {
             if (isZeroProfile.profile(node, rhs == 0)) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -379,7 +378,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         public static final long doLong(final long lhs, final long rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                         @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
             if (isZeroProfile.profile(node, rhs == 0)) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -398,7 +397,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doLongLargeInteger(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile) {
             if (isZeroProfile.profile(node, isZero(rhs))) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             } else {
@@ -414,7 +413,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         public static final Object doLong(final long lhs, final long rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                         @Exclusive @Cached final InlinedConditionProfile isOverflowDivisionProfile,
                         @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
             if (isZeroProfile.profile(node, rhs == 0)) {
@@ -436,7 +435,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         public static final long doLongLargeInteger(final long lhs, final NativeObject rhs,
                         @Bind final SqueakImageContext image,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile) {
             if (isZeroProfile.profile(node, isZero(rhs))) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             } else {
@@ -451,7 +450,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doLong(final long lhs, final long rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                         @Exclusive @Cached final InlinedConditionProfile isOverflowDivisionProfile) {
             if (isZeroProfile.profile(node, rhs == 0)) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -466,7 +465,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final long doLongLargeInteger(final long lhs, final NativeObject rhs,
                         @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile) {
             if (isZeroProfile.profile(node, isZero(rhs))) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             } else {
@@ -897,14 +896,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "index == 1")
         protected static final long doHigh(final Object receiver, @SuppressWarnings("unused") final long index,
                         @Bind final Node node,
-                        @Shared("toDoubleNode") @Cached final PrimFloatAtReceiverToDoubleNode toDoubleNode) {
+                        @Exclusive @Cached final PrimFloatAtReceiverToDoubleNode toDoubleNode) {
             return Integer.toUnsignedLong((int) (Double.doubleToRawLongBits(toDoubleNode.execute(node, receiver)) >> 32));
         }
 
         @Specialization(guards = "index == 2")
         protected static final long doLow(final Object receiver, @SuppressWarnings("unused") final long index,
                         @Bind final Node node,
-                        @Shared("toDoubleNode") @Cached final PrimFloatAtReceiverToDoubleNode toDoubleNode) {
+                        @Exclusive @Cached final PrimFloatAtReceiverToDoubleNode toDoubleNode) {
             return Integer.toUnsignedLong((int) Double.doubleToRawLongBits(toDoubleNode.execute(node, receiver)));
         }
 
@@ -1210,7 +1209,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(rewriteOn = RespecializeException.class)
         protected static final Object doDoubleFinite(final FloatObject matissa, final long exponent,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
             if (isZeroProfile.profile(node, matissa.isZero() || exponent == 0)) {
                 return matissa; /* Can be either 0.0 or -0.0. */
             } else {
@@ -1221,7 +1220,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doDoubleFinite")
         protected static final Object doDouble(final FloatObject matissa, final long exponent,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                         @Cached final FloatObjectNormalizeNode normalizeNode) {
             if (isZeroProfile.profile(node, matissa.isZero() || exponent == 0)) {
                 return matissa; /* Can be either 0.0 or -0.0. */
@@ -1381,14 +1380,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
                         @Bind final Node node,
-                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
             return normalizeNode.execute(node, lhs - rhs.getValue());
         }
 
         @Specialization(guards = "isFraction(rhs, node)")
         protected static final Object doFraction(final double lhs, final PointersObject rhs,
                         @Bind final Node node,
-                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode,
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
             return normalizeNode.execute(node, lhs - SqueakImageContext.fromFraction(rhs, readNode, node));
         }
@@ -1555,7 +1554,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doDoubleFinite")
         public static final Object doDouble(final double lhs, final double rhs,
                         @Bind final Node node,
-                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
             return normalizeNode.execute(node, lhs * rhs);
         }
 
@@ -1567,14 +1566,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "numericPrimsMixArithmetic()", replaces = "doLongFinite")
         public static final Object doLong(final double lhs, final long rhs,
                         @Bind final Node node,
-                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
             return doDouble(lhs, rhs, node, normalizeNode);
         }
 
         @Specialization
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
                         @Bind final Node node,
-                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
             return doDouble(lhs, rhs.getValue(), node, normalizeNode);
         }
     }
@@ -1585,7 +1584,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(rewriteOn = RespecializeException.class)
         public static final double doDoubleFinite(final double lhs, final double rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
             if (isZeroProfile.profile(node, SqueakGuards.isZero(rhs))) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             } else {
@@ -1596,8 +1595,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doDoubleFinite")
         public static final Object doDouble(final double lhs, final double rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
-                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
             if (isZeroProfile.profile(node, SqueakGuards.isZero(rhs))) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             } else {
@@ -1608,23 +1607,23 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"numericPrimsMixArithmetic()"}, rewriteOn = RespecializeException.class)
         public static final double doDoubleLongFinite(final double lhs, final long rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
             return doDoubleFinite(lhs, rhs, node, isZeroProfile);
         }
 
         @Specialization(guards = {"numericPrimsMixArithmetic()"}, replaces = "doDoubleLongFinite")
         public static final Object doDoubleLong(final double lhs, final long rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
-                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
             return doDouble(lhs, rhs, node, isZeroProfile, normalizeNode);
         }
 
         @Specialization
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
                         @Bind final Node node,
-                        @Shared("isZeroProfile") @Cached final InlinedConditionProfile isZeroProfile,
-                        @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
+                        @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
             return doDouble(lhs, rhs.getValue(), node, isZeroProfile, normalizeNode);
         }
     }

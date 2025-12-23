@@ -14,7 +14,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -362,7 +361,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final CompiledCodeObject doMethod(final CompiledCodeObject rcvr, final long start, final long stop, final CompiledCodeObject repl, final long replStart,
                         @Bind final Node node,
-                        @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                        @Exclusive @Cached final InlinedBranchProfile errorProfile) {
             if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
                 errorProfile.enter(node);
                 throw PrimitiveFailed.BAD_INDEX;
@@ -379,7 +378,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"repl.isIntType()"})
         protected static final FloatObject doFloat(final FloatObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                         @Bind final Node node,
-                        @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                        @Exclusive @Cached final InlinedBranchProfile errorProfile) {
             if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getIntLength(), replStart)) {
                 errorProfile.enter(node);
                 throw PrimitiveFailed.GENERIC_ERROR;
@@ -406,7 +405,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @SuppressWarnings("unused")
             @Specialization(guards = {"rcvr.isEmptyType()", "repl.isEmptyType()"})
             protected static final void doEmptyArrays(final Node node, final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (!inBounds(rcvr.getEmptyLength(), start, stop, repl.getEmptyLength(), replStart)) {
                     errorProfile.enter(node);
                     throw PrimitiveFailed.BAD_INDEX;
@@ -416,7 +415,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isBooleanType()", "repl.isBooleanType()"})
             protected static final void doArraysOfBooleans(final Node node, final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getBooleanLength(), start, stop, repl.getBooleanLength(), replStart)) {
                     UnsafeUtils.copyBytes(repl.getBooleanStorage(), replStart - 1, rcvr.getBooleanStorage(), start - 1, 1 + stop - start);
                 } else {
@@ -427,7 +426,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isCharType()", "repl.isCharType()"})
             protected static final void doArraysOfChars(final Node node, final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getCharLength(), start, stop, repl.getCharLength(), replStart)) {
                     UnsafeUtils.copyChars(repl.getCharStorage(), replStart - 1, rcvr.getCharStorage(), start - 1, 1 + stop - start);
                 } else {
@@ -438,7 +437,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()"})
             protected static final void doArraysOfLongs(final Node node, final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getLongLength(), start, stop, repl.getLongLength(), replStart)) {
                     UnsafeUtils.copyLongs(repl.getLongStorage(), replStart - 1, rcvr.getLongStorage(), start - 1, 1 + stop - start);
                 } else {
@@ -449,7 +448,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isDoubleType()", "repl.isDoubleType()"})
             protected static final void doArraysOfDoubles(final Node node, final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getDoubleLength(), start, stop, repl.getDoubleLength(), replStart)) {
                     UnsafeUtils.copyDoubles(repl.getDoubleStorage(), replStart - 1, rcvr.getDoubleStorage(), start - 1, 1 + stop - start);
                 } else {
@@ -460,7 +459,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isObjectType()", "repl.isObjectType()"})
             protected static final void doArraysOfObjects(final Node node, final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 try {
                     System.arraycopy(repl.getObjectStorage(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
                 } catch (final Throwable e) {
@@ -533,7 +532,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isByteType()", "repl.isByteType()"})
             protected static final void doNativeBytes(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getByteLength(), start, stop, repl.getByteLength(), replStart)) {
                     UnsafeUtils.copyBytes(repl.getByteStorage(), replStart - 1, rcvr.getByteStorage(), start - 1, 1 + stop - start);
                 } else {
@@ -544,7 +543,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isShortType()", "repl.isShortType()"})
             protected static final void doNativeShorts(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getShortLength(), start, stop, repl.getShortLength(), replStart)) {
                     UnsafeUtils.copyShorts(repl.getShortStorage(), replStart - 1, rcvr.getShortStorage(), start - 1, 1 + stop - start);
                 } else {
@@ -555,7 +554,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isIntType()", "repl.isIntType()"})
             protected static final void doNativeInts(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getIntLength(), start, stop, repl.getIntLength(), replStart)) {
                     UnsafeUtils.copyInts(repl.getIntStorage(), replStart - 1, rcvr.getIntStorage(), start - 1, 1 + stop - start);
                 } else {
@@ -566,7 +565,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()"})
             protected static final void doNativeLongs(final Node node, final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 if (inBounds(rcvr.getLongLength(), start, stop, repl.getLongLength(), replStart)) {
                     UnsafeUtils.copyLongs(repl.getLongStorage(), replStart - 1, rcvr.getLongStorage(), start - 1, 1 + stop - start);
                 } else {
@@ -589,11 +588,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization
             protected static final void doPointers(final Node node, final PointersObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
-                            @Shared("rcvrSizeNode") @Cached final AbstractPointersObjectInstSizeNode rcvrSizeNode,
+                            @Exclusive @Cached final AbstractPointersObjectInstSizeNode rcvrSizeNode,
                             @Exclusive @Cached final AbstractPointersObjectInstSizeNode replSizeNode,
                             @Cached final AbstractPointersObjectReadNode readNode,
-                            @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 final int rcvrSize = rcvrSizeNode.execute(node, rcvr);
                 final int replSize = replSizeNode.execute(node, repl);
                 if (inBounds(rcvrSize, rcvrSize, start, stop, replSize, replSize, replStart)) {
@@ -609,11 +608,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization
             protected static final void doPointersArray(final Node node, final PointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("rcvrSizeNode") @Cached final AbstractPointersObjectInstSizeNode rcvrSizeNode,
+                            @Exclusive @Cached final AbstractPointersObjectInstSizeNode rcvrSizeNode,
                             @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
-                            @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 final int rcvrSize = rcvrSizeNode.execute(node, rcvr);
                 if (!inBounds(rcvrSize, rcvrSize, start, stop, repl.instsize(), sizeNode.execute(node, repl), replStart)) {
                     errorProfile.enter(node);
@@ -640,11 +639,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Specialization
             protected static final void doVariablePointers(final Node node, final VariablePointersObject rcvr, final long start, final long stop, final VariablePointersObject repl,
                             final long replStart,
-                            @Shared("rcvrInstSizeNode") @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
+                            @Exclusive @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
                             @Exclusive @Cached final AbstractPointersObjectInstSizeNode replInstSizeNode,
                             @Cached final VariablePointersObjectReadNode readNode,
-                            @Shared("writeNode") @Cached final VariablePointersObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final VariablePointersObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 final int rcvrInstSize = rcvrInstSizeNode.execute(node, rcvr);
                 final int replInstSize = replInstSizeNode.execute(node, repl);
                 if (!inBounds(rcvrInstSize, rcvrInstSize + rcvr.getVariablePartSize(), start, stop, replInstSize, replInstSize + repl.getVariablePartSize(), replStart)) {
@@ -659,11 +658,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization
             protected static final void doVariablePointersArray(final Node node, final VariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("rcvrInstSizeNode") @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
+                            @Exclusive @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
                             @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
-                            @Shared("writeNode") @Cached final VariablePointersObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final VariablePointersObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 final int rcvrInstSize = rcvrInstSizeNode.execute(node, rcvr);
                 if (!inBounds(rcvrInstSize, rcvrInstSize + rcvr.getVariablePartSize(), start, stop, repl.instsize(), sizeNode.execute(node, repl), replStart)) {
                     errorProfile.enter(node);
@@ -690,11 +689,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Specialization
             protected static final void doWeakPointers(final Node node, final WeakVariablePointersObject rcvr, final long start, final long stop, final WeakVariablePointersObject repl,
                             final long replStart,
-                            @Shared("rcvrInstSizeNode") @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
+                            @Exclusive @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
                             @Exclusive @Cached final AbstractPointersObjectInstSizeNode replInstSizeNode,
                             @Cached final WeakVariablePointersObjectReadNode readNode,
-                            @Shared("writeNode") @Cached final WeakVariablePointersObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final WeakVariablePointersObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 final int rcvrInstSize = rcvrInstSizeNode.execute(node, rcvr);
                 final int replInstSize = replInstSizeNode.execute(node, repl);
                 if (!inBounds(rcvrInstSize, rcvrInstSize + rcvr.getVariablePartSize(), start, stop, replInstSize, replInstSize + repl.getVariablePartSize(), replStart)) {
@@ -709,11 +708,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization
             protected static final void doWeakPointersArray(final Node node, final WeakVariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("rcvrInstSizeNode") @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
+                            @Exclusive @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
                             @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
-                            @Shared("writeNode") @Cached final WeakVariablePointersObjectWriteNode writeNode,
-                            @Shared("errorProfile") @Cached final InlinedBranchProfile errorProfile) {
+                            @Exclusive @Cached final WeakVariablePointersObjectWriteNode writeNode,
+                            @Exclusive @Cached final InlinedBranchProfile errorProfile) {
                 final int rcvrInstSize = rcvrInstSizeNode.execute(node, rcvr);
                 if (!inBounds(rcvrInstSize, rcvrInstSize + rcvr.getVariablePartSize(), start, stop, repl.instsize(), sizeNode.execute(node, repl), replStart)) {
                     errorProfile.enter(node);
