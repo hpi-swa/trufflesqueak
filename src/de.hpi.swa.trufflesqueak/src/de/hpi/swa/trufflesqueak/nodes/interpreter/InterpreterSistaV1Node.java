@@ -437,36 +437,21 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             /* Profiled version of LargeIntegers.add(image, lhs, rhs). */
                             final long r = lhs + rhs;
                             if (((lhs ^ r) & (rhs ^ r)) < 0) {
-                                if ((state & 0b10000) == 0) {
-                                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                                    profiles[currentPC] |= 0b10000;
-                                }
+                                enter(currentPC, state, BRANCH3);
                                 result = LargeIntegers.addLarge(image, lhs, rhs);
                             } else {
-                                if ((state & 0b100000) == 0) {
-                                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                                    profiles[currentPC] |= 0b100000;
-                                }
+                                enter(currentPC, state, BRANCH4);
                                 result = r;
                             }
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            if ((state & 0b1000000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000000;
-                            }
+                            enter(currentPC, state, BRANCH5);
                             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -480,36 +465,21 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             /* Profiled version of LargeIntegers.subtract(image, lhs, rhs). */
                             final long r = lhs - rhs;
                             if (((lhs ^ rhs) & (lhs ^ r)) < 0) {
-                                if ((state & 0b10000) == 0) {
-                                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                                    profiles[currentPC] |= 0b10000;
-                                }
+                                enter(currentPC, state, BRANCH3);
                                 result = LargeIntegers.subtractLarge(image, lhs, rhs);
                             } else {
-                                if ((state & 0b100000) == 0) {
-                                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                                    profiles[currentPC] |= 0b100000;
-                                }
+                                enter(currentPC, state, BRANCH4);
                                 result = r;
                             }
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            if ((state & 0b1000000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000000;
-                            }
+                            enter(currentPC, state, BRANCH5);
                             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -523,22 +493,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             result = PrimLessThanNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            if ((state & 0b10000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b10000;
-                            }
+                            enter(currentPC, state, BRANCH3);
                             result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -552,22 +513,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             result = PrimGreaterThanNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            if ((state & 0b10000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b10000;
-                            }
+                            enter(currentPC, state, BRANCH3);
                             result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -581,22 +533,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             result = PrimLessOrEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            if ((state & 0b10000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b10000;
-                            }
+                            enter(currentPC, state, BRANCH3);
                             result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -610,22 +553,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             result = PrimGreaterOrEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            if ((state & 0b10000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b10000;
-                            }
+                            enter(currentPC, state, BRANCH3);
                             result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -639,22 +573,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             result = PrimEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            if ((state & 0b10000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b10000;
-                            }
+                            enter(currentPC, state, BRANCH3);
                             result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -668,22 +593,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             result = PrimNotEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            if ((state & 0b10000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b10000;
-                            }
+                            enter(currentPC, state, BRANCH3);
                             result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -697,16 +613,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             result = PrimBitAndNode.doLong(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -720,16 +630,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final byte state = profiles[currentPC];
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            if ((state & 0b1000) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b1000;
-                            }
+                            enter(currentPC, state, BRANCH2);
                             result = PrimBitOrNode.doLong(lhs, rhs);
                         } else {
-                            if ((state & 0b100) == 0) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                profiles[currentPC] |= 0b100;
-                            }
+                            enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);

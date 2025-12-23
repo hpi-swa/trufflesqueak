@@ -55,6 +55,14 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
     protected static final int LOCAL_RETURN_PC = -2;
 
+    protected static final byte BRANCH1 = 0b1;
+    protected static final byte BRANCH2 = 0b10;
+    protected static final byte BRANCH3 = 0b100;
+    protected static final byte BRANCH4 = 0b1000;
+    protected static final byte BRANCH5 = 0b10000;
+    protected static final byte BRANCH6 = 0b100000;
+    protected static final byte BRANCH7 = 0b1000000;
+
     protected final CompiledCodeObject code;
     protected final boolean isBlock;
 
@@ -171,26 +179,14 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final Object handleReturnException(final VirtualFrame frame, final int currentPC, final AbstractStandardSendReturn returnException) {
         final byte state = profiles[currentPC];
-        if ((state & 0b100) == 0) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            profiles[currentPC] |= 0b100;
-        }
+        enter(currentPC, state, BRANCH1);
         if (returnException.targetIsFrame(frame)) {
-            if ((state & 0b1000) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b1000;
-            }
+            enter(currentPC, state, BRANCH2);
             return returnException.getReturnValue();
         } else {
-            if ((state & 0b10000) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b10000;
-            }
+            enter(currentPC, state, BRANCH3);
             if (returnException instanceof NonLocalReturn) {
-                if ((state & 0b100000) == 0) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    profiles[currentPC] |= 0b100000;
-                }
+                enter(currentPC, state, BRANCH4);
                 FrameAccess.terminateFrame(frame);
             }
             throw returnException;
@@ -206,23 +202,14 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final byte state = profiles[currentPC];
         final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
-            if ((state & 0b100) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b100;
-            }
+            enter(currentPC, state, BRANCH1);
             if (!context.hasTruffleFrame()) {
-                if ((state & 0b1000) == 0) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    profiles[currentPC] |= 0b1000;
-                }
+                enter(currentPC, state, BRANCH2);
                 context.setTruffleFrame(frame.materialize());
             }
             return context;
         } else {
-            if ((state & 0b10000) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b10000;
-            }
+            enter(currentPC, state, BRANCH3);
             return new ContextObject(frame.materialize());
         }
     }
@@ -257,10 +244,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     public final Object getAndResolveLiteral(final int currentPC, final long longIndex) {
         final Object litVar = code.getLiteral(longIndex);
         if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj) {
-            if ((profiles[currentPC] & 0b100) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b100;
-            }
+            enter(currentPC, profiles[currentPC], BRANCH1);
             if (!obj.isNotForwarded()) {
                 CompilerDirectives.transferToInterpreter();
                 final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();
@@ -304,16 +288,10 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     private Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final Object result) {
         final byte state = profiles[currentPC];
         if (FrameAccess.hasModifiedSender(frame)) {
-            if ((state & 0b100) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b100;
-            }
+            enter(currentPC, state, BRANCH1);
             throw new NonVirtualReturn(result, FrameAccess.getSender(frame));
         } else {
-            if ((state & 0b1000) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b1000;
-            }
+            enter(currentPC, state, BRANCH2);
             FrameAccess.terminateFrame(frame);
             return result;
         }
@@ -379,16 +357,10 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     private Object followForwarded(final int currentPC, final Object value) {
         final byte state = profiles[currentPC];
         if (value instanceof final AbstractSqueakObjectWithClassAndHash object) {
-            if ((state & 0b01) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b01;
-            }
+            enter(currentPC, state, BRANCH6);
             return object.resolveForwardingPointer();
         } else {
-            if ((state & 0b10) == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                profiles[currentPC] |= 0b10;
-            }
+            enter(currentPC, state, BRANCH7);
             return value;
         }
     }
@@ -520,6 +492,17 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     @Override
     public final CompiledCodeObject getCodeObject() {
         return code;
+    }
+
+    /*
+     * Profiling
+     */
+
+    protected final void enter(final int currentPC, final byte state, final byte stateBit) {
+        if ((state & stateBit) == 0) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            profiles[currentPC] |= stateBit;
+        }
     }
 
     /*
