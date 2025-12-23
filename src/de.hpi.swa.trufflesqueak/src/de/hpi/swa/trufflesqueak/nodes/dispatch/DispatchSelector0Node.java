@@ -14,7 +14,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -32,6 +31,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -269,6 +269,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
                         @Cached(inline = true) final SqueakObjectClassNode classNode,
                         @Cached final ResolveMethodNode methodNode,
                         @Cached final TryPrimitive0Node tryPrimitiveNode,
+                        @Cached(inline = true) final GetOrCreateContextWithoutFrameNode senderNode,
                         @Cached final CreateFrameArgumentsForIndirectCall0Node argumentsNode,
                         @Cached final IndirectCallNode callNode) {
             CompilerAsserts.partialEvaluationConstant(canPrimFail);
@@ -279,7 +280,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, receiverClass, lookupResult, selector));
+                return callNode.call(method.getCallTarget(), argumentsNode.execute(node, senderNode.execute(frame, node), receiver, receiverClass, lookupResult, selector));
             }
         }
 
@@ -336,32 +337,30 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
         @GenerateInline
         @GenerateCached(false)
         protected abstract static class CreateFrameArgumentsForIndirectCall0Node extends AbstractNode {
-            abstract Object[] execute(VirtualFrame frame, Node node, Object receiver, ClassObject receiverClass, Object lookupResult, NativeObject selector);
+            abstract Object[] execute(Node node, AbstractSqueakObject sender, Object receiver, ClassObject receiverClass, Object lookupResult, NativeObject selector);
 
             @Specialization
             @SuppressWarnings("unused")
-            protected static final Object[] doMethod(final VirtualFrame frame, final Node node, final Object receiver, final ClassObject receiverClass,
-                            final CompiledCodeObject lookupResult, final NativeObject selector,
-                            @Shared("senderNode") @Cached final GetOrCreateContextWithoutFrameNode senderNode) {
-                return FrameAccess.newWith(senderNode.execute(frame, node), null, receiver);
+            protected static final Object[] doMethod(final Node node, final AbstractSqueakObject sender, final Object receiver, final ClassObject receiverClass,
+                            final CompiledCodeObject lookupResult, final NativeObject selector) {
+                return FrameAccess.newWith(sender, null, receiver);
             }
 
             @Specialization(guards = "lookupResult == null")
-            protected static final Object[] doDoesNotUnderstand(final VirtualFrame frame, final Node node, final Object receiver, final ClassObject receiverClass,
+            protected static final Object[] doDoesNotUnderstand(final Node node, final AbstractSqueakObject sender, final Object receiver, final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Cached final AbstractPointersObjectWriteNode writeNode,
-                            @Shared("senderNode") @Cached final GetOrCreateContextWithoutFrameNode senderNode) {
+                            @Cached final AbstractPointersObjectWriteNode writeNode) {
                 final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
                 final PointersObject message = getContext(node).newMessage(writeNode, node, selector, receiverClass, arguments);
-                return FrameAccess.newDNUWith(senderNode.execute(frame, node), receiver, message);
+                return FrameAccess.newDNUWith(sender, receiver, message);
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
-            protected static final Object[] doObjectAsMethod(final VirtualFrame frame, final Node node, final Object receiver, @SuppressWarnings("unused") final ClassObject receiverClass,
-                            final Object targetObject, final NativeObject selector,
-                            @Shared("senderNode") @Cached final GetOrCreateContextWithoutFrameNode senderNode) {
+            protected static final Object[] doObjectAsMethod(final Node node, final AbstractSqueakObject sender, final Object receiver,
+                            @SuppressWarnings("unused") final ClassObject receiverClass,
+                            final Object targetObject, final NativeObject selector) {
                 final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
-                return FrameAccess.newOAMWith(senderNode.execute(frame, node), targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
+                return FrameAccess.newOAMWith(sender, targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
             }
         }
     }

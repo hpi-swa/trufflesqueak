@@ -481,11 +481,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final Object performGeneric(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject lookupClass,
                         final InheritsFromNode inheritsFromNode, final ResolveMethodNode methodNode, final ArrayObjectSizeNode sizeNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
-                        final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode, final IndirectCallNode callNode, final Node node) {
+                        final GetOrCreateContextWithoutFrameNode senderNode, final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode, final IndirectCallNode callNode, final Node node) {
             if (inheritsFromNode.execute(node, receiver, lookupClass)) {
                 final Object lookupResult = getContext(node).lookup(lookupClass, selector);
                 final CompiledCodeObject method = methodNode.execute(node, getContext(node), sizeNode.execute(node, arguments), true, lookupClass, lookupResult);
-                return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, node, receiver, getObjectArrayNode.execute(node, arguments), lookupClass, lookupResult, selector));
+                final Object callArguments = argumentsNode.execute(node, senderNode.execute(frame, node), receiver, getObjectArrayNode.execute(node, arguments), lookupClass, lookupResult, selector);
+                return callNode.call(method.getCallTarget(), callArguments);
             } else {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -539,9 +540,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final ResolveMethodNode methodNode,
                         @Exclusive @Cached final ArrayObjectSizeNode sizeNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached final GetOrCreateContextWithoutFrameNode senderNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
-            return performGeneric(frame, receiver, selector, arguments, lookupClass, inheritsFromNode, methodNode, sizeNode, getObjectArrayNode, argumentsNode, callNode, node);
+            return performGeneric(frame, receiver, selector, arguments, lookupClass, inheritsFromNode, methodNode, sizeNode, getObjectArrayNode, senderNode, argumentsNode, callNode, node);
         }
     }
 
@@ -570,9 +572,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final ResolveMethodNode methodNode,
                         @Exclusive @Cached final ArrayObjectSizeNode sizeNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached final GetOrCreateContextWithoutFrameNode senderNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
-            return performGeneric(frame, target, selector, arguments, lookupClass, inheritsFromNode, methodNode, sizeNode, getObjectArrayNode, argumentsNode, callNode, node);
+            return performGeneric(frame, target, selector, arguments, lookupClass, inheritsFromNode, methodNode, sizeNode, getObjectArrayNode, senderNode, argumentsNode, callNode, node);
         }
     }
 
