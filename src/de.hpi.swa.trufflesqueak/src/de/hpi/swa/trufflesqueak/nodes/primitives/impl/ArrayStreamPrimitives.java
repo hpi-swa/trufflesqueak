@@ -169,7 +169,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected static final Object doNativeObjectInts(final NativeObject obj, final long index,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isImmediateProfile) {
-            return CharacterObject.valueOf(Integer.toUnsignedLong(obj.getInt(index - 1)), isImmediateProfile, node);
+            return CharacterObject.valueOf(obj.getInt(index - 1), isImmediateProfile, node);
         }
     }
 
