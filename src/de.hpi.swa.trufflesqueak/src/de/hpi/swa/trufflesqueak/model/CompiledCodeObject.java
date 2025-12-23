@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.ShadowBlockParams;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderSistaV1;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderV3PlusClosures;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -48,6 +49,8 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+
+import static de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.trailerPosition;
 
 @SuppressWarnings("static-method")
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
@@ -322,17 +325,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerAsserts.neverPartOfCompilation();
         if (getExecutionData().frameDescriptor == null) {
             final CompiledCodeObject exposedMethod;
-            final int maxNumStackSlots;
             if (isShadowBlock()) {
                 /* Never let shadow blocks escape, use their outer method instead. */
                 exposedMethod = executionData.outerMethod;
-                /* TODO: determine max number of stack slots instead of context size. */
-                maxNumStackSlots = getSqueakContextSize();
             } else {
                 exposedMethod = this;
-                maxNumStackSlots = getMaxNumStackSlots();
             }
-            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod, maxNumStackSlots);
+            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod, getMaxNumStackSlots());
         }
         return executionData.frameDescriptor;
     }
@@ -363,7 +362,18 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public int getMaxNumStackSlots() {
-        return getDecoder().determineMaxNumStackSlots(this);
+        if (bytes == null) {
+            // When creating a new Context for a new Process, Smalltalk will initialize the Context
+            // out of order (sender will be set before method) causing a frame to be created before
+            // bytes is set in this object.
+            return getSqueakContextSize();
+        } else if (isShadowBlock()) {
+            final int initialPC = getOuterMethodStartPCZeroBased();
+            final ShadowBlockParams params = getDecoder().decodeShadowBlock(this, initialPC);
+            return params.numArgs() + params.numCopied() + getDecoder().determineMaxNumStackSlots(this, initialPC, initialPC + params.blockSize());
+        } else {
+            return getNumTemps() + getDecoder().determineMaxNumStackSlots(this, 0, trailerPosition(this));
+        }
     }
 
     public boolean getSignFlag() {
@@ -497,20 +507,24 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        if (isCompiledBlock()) {
-            return "[] in " + getMethod().toString();
-        } else {
-            String className = "UnknownClass";
-            String selector = "unknownSelector";
-            final ClassObject methodClass = getMethodClassSlow();
-            if (methodClass != null) {
-                className = methodClass.getClassName();
+        try {
+            if (isCompiledBlock()) {
+                return "[] in " + getMethod().toString();
+            } else {
+                String className = "UnknownClass";
+                String selector = "unknownSelector";
+                final ClassObject methodClass = getMethodClassSlow();
+                if (methodClass != null) {
+                    className = methodClass.getClassName();
+                }
+                final NativeObject selectorObj = getCompiledInSelector();
+                if (selectorObj != null) {
+                    selector = selectorObj.asStringUnsafe();
+                }
+                return (isShadowBlock() ? "[] embedded in " : "") + className + "#" + selector;
             }
-            final NativeObject selectorObj = getCompiledInSelector();
-            if (selectorObj != null) {
-                selector = selectorObj.asStringUnsafe();
-            }
-            return className + "#" + selector;
+        } catch (NullPointerException e) {
+            return (isShadowBlock() ? "[] embedded in " : "") + "UnknownClass#unknownSelector";
         }
     }
 

@@ -97,7 +97,7 @@ public final class FrameAccess {
      * Creates a new {@link FrameDescriptor} according to {@link SlotIndicies}.
      */
     public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code, final int numStackSlots) {
-        final Builder builder = FrameDescriptor.newBuilder(4 + numStackSlots);
+        final Builder builder = FrameDescriptor.newBuilder(SlotIndicies.STACK_START + numStackSlots);
         builder.info(code);
         addDefaultSlots(builder);
         builder.addSlots(numStackSlots, FrameSlotKind.Static);
@@ -105,7 +105,7 @@ public final class FrameAccess {
     }
 
     public static VirtualFrame newDummyFrame(final CompiledCodeObject dummyMethod) {
-        final Builder builder = FrameDescriptor.newBuilder(4);
+        final Builder builder = FrameDescriptor.newBuilder(SlotIndicies.STACK_START);
         builder.info(dummyMethod);
         addDefaultSlots(builder);
         return Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), builder.build());

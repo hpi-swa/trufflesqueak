@@ -13,15 +13,28 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractDecoder {
 
+    public record ShadowBlockParams(int numArgs, int numCopied, int blockSize) {
+    }
+
+    public abstract ShadowBlockParams decodeShadowBlock(CompiledCodeObject code, int shadowBlockIndex);
+
     public abstract boolean hasStoreIntoTemp1AfterCallPrimitive(CompiledCodeObject code);
 
     public abstract int pcPreviousTo(CompiledCodeObject code, int pc);
 
-    public abstract int determineMaxNumStackSlots(CompiledCodeObject code);
+    public abstract int determineMaxNumStackSlots(CompiledCodeObject code, int initialPC, int maxPC);
 
     protected abstract int decodeNumBytes(CompiledCodeObject code, int index);
 
     protected abstract String decodeBytecodeToString(CompiledCodeObject code, int currentByte, int bytecodeIndex);
+
+    public final String safeDecodeBytecodeToString(final CompiledCodeObject code, final int currentByte, final int bytecodeIndex) {
+        try {
+            return decodeBytecodeToString(code, currentByte, bytecodeIndex);
+        } catch (RuntimeException e) {
+            return "error decoding: " + currentByte;
+        }
+    }
 
     public final String decodeToString(final CompiledCodeObject code) {
         CompilerAsserts.neverPartOfCompilation();
