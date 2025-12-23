@@ -648,9 +648,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         if (receiver instanceof final NativeObject byteString && byteString.getSqueakClass() == image.byteStringClass) {
                             enter(currentPC, state, BRANCH2);
                             result = (long) byteString.getByteLength();
-                        } else if (receiver instanceof final ArrayObject arrayObject && arrayObject.isObjectType()) {
-                            enter(currentPC, state, BRANCH3);
-                            result = (long) arrayObject.getObjectLength();
                         } else {
                             enter(currentPC, state, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
