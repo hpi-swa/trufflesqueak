@@ -6,15 +6,15 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interpreter;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerAsserts;
+
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
-import java.util.Arrays;
-
 public final class DecoderV3PlusClosures extends AbstractDecoder {
     public static final DecoderV3PlusClosures SINGLETON = new DecoderV3PlusClosures();
-    private static final byte SP_NIL_TAG = -42;
 
     private DecoderV3PlusClosures() {
     }
@@ -137,7 +137,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
         int previousPC = -1;
         while (currentPC < pc) {
             previousPC = currentPC;
-            currentPC += decodeNumBytes(code, currentPC - initialPC, false);
+            currentPC += decodeNumBytes(code, currentPC - initialPC);
         }
         assert previousPC > 0;
         return previousPC;
@@ -145,11 +145,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
 
     @Override
     protected int decodeNumBytes(final CompiledCodeObject code, final int index) {
-        return decodeNumBytes(code, index, false);
-    }
-
-    private static int decodeNumBytes(final CompiledCodeObject code, final int index, final boolean skipOverBlocks) {
-        return decodeNumBytes(code.getBytes(), index, skipOverBlocks);
+        return decodeNumBytes(code.getBytes(), index, false);
     }
 
     private static int decodeNumBytes(final byte[] bc, final int index, final boolean skipOverBlocks) {
@@ -237,7 +233,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
                 -> sp + 1;
             case 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111 -> sp - 1;
             case 112, 113, 114, 115, 116, 117, 118, 119 -> sp + 1;
-            case 120, 121, 122, 123 -> resetStackAfterBranchOrReturn(joins, index + 1, sp + 0);
+            case 120, 121, 122, 123 -> resetStackAfterBranchOrReturn(joins, index + 1, sp);
             case 124, 125 -> resetStackAfterBranchOrReturn(joins, index + 1, sp - 1);
 
             case 128 -> sp + 1;
@@ -287,7 +283,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
             }
             case 144, 145, 146, 147, 148, 149, 150, 151 -> {
                 final int delta = AbstractInterpreterNode.calculateShortOffset(b);
-                yield jumpAndResetStackAfterBranchOrReturn(joins, index + 1, sp + 0, delta);
+                yield jumpAndResetStackAfterBranchOrReturn(joins, index + 1, sp, delta);
             }
             case 152, 153, 154, 155, 156, 157, 158, 159 -> {
                 final int delta = AbstractInterpreterNode.calculateShortOffset(b);

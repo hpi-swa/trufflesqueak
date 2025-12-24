@@ -16,7 +16,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 
 public final class DecoderSistaV1 extends AbstractDecoder {
     public static final DecoderSistaV1 SINGLETON = new DecoderSistaV1();
-    private static final byte SP_NIL_TAG = -42;
 
     private DecoderSistaV1() {
     }
@@ -110,7 +109,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         int previousPC = -1;
         while (currentPC < pc) {
             previousPC = currentPC;
-            currentPC += decodeNextPCDelta(code, currentPC, false);
+            currentPC += decodeNextPCDelta(code, currentPC, decodeExtension(code, currentPC), false);
         }
         assert previousPC > 0;
         return previousPC;
@@ -160,30 +159,25 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         return new DecodedExtension(offset, extA, extB);
     }
 
-    private static int decodeNextPCDelta(final CompiledCodeObject code, final int index, final boolean skipOverBlocks) {
-        final DecodedExtension extension = decodeExtension(code, index);
-        return decodeNextPCDelta(code, index, extension, skipOverBlocks);
-    }
-
     private static int decodeNextPCDelta(final CompiledCodeObject code, final int index, final DecodedExtension extension, final boolean skipOverBlocks) {
         return extension.offset + decodeNumBytes(code, index + extension.offset, extension.extB, skipOverBlocks);
     }
 
+    /**
+     * From EncoderForSistaV1 >> pcOfBlockCreationBytecodeForBlockStartingAt: startpc in: method
+     *
+     * <pre>
+     *
+     *  224   11100000 aaaaaaaa           Extend A (Ext A = Ext A prev * 256 + Ext A)
+     *  225   11100001 bbbbbbbb           Extend B (Ext B = Ext B prev * 256 + Ext B)
+     *  250   11111010 eeiiikkk jjjjjjjj  Push Closure Num Copied iii (+ExtA//16*8)
+     *                                                 Num Args kkk (+ ExtA\\16*8)
+     *                                                 BlockSize jjjjjjjj (+ExtB*256).
+     *                                                 ee = num extensions
+     * </pre>
+     */
     @Override
     public ShadowBlockParams decodeShadowBlock(final CompiledCodeObject code, final int shadowBlockIndex) {
-        /**
-         * From EncoderForSistaV1 >> pcOfBlockCreationBytecodeForBlockStartingAt: startpc in: method
-         *
-         * <pre>
-         *
-         *  224   11100000 aaaaaaaa           Extend A (Ext A = Ext A prev * 256 + Ext A)
-         *  225   11100001 bbbbbbbb           Extend B (Ext B = Ext B prev * 256 + Ext B)
-         *  250   11111010 eeiiikkk jjjjjjjj  Push Closure Num Copied iii (+ExtA//16*8)
-         *                                                 Num Args kkk (+ ExtA\\16*8)
-         *                                                 BlockSize jjjjjjjj (+ExtB*256).
-         *                                                 ee = num extensions
-         * </pre>
-         */
         final byte[] bc = code.getBytes();
 
         final int numExtensions = Byte.toUnsignedInt(bc[shadowBlockIndex - 2]) >> 6;
@@ -213,14 +207,22 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         int currentStackPointer = 0; // initial SP
         int maxStackPointer = currentStackPointer;
         final int contextSize = code.getSqueakContextSize();
+        // Uncomment the following and compare with `(Character>>#isSeparator) detailedSymbolic`
+        // final int initialPC = code.getInitialPC();
+        // final StringBuilder sb = new StringBuilder();
+        // sb.append(code).append("[").append(contextSize).append("]\n");
         while (index < maxPC) {
+            // sb.append(initialPC + index).append(":\t").append(currentStackPointer).append("->");
             final DecodedExtension extension = decodeExtension(bc, index);
             joins[index] = currentStackPointer;
             currentStackPointer = decodeStackPointer(code, bc, index, extension, currentStackPointer, joins);
+            // sb.append(currentStackPointer).append("\n");
             assert 0 <= currentStackPointer && currentStackPointer <= contextSize : "Stack pointer out of range: " + currentStackPointer + " (Context size: " + contextSize + ")";
             maxStackPointer = Math.max(maxStackPointer, currentStackPointer);
             index += decodeNextPCDelta(code, index, extension, true);
         }
+        // sb.append("max SP = ").append(maxStackPointer).append("\n");
+        // System.out.append(sb.toString());
         assert 0 <= maxStackPointer && maxStackPointer <= contextSize : "Stack pointer out of range: " + maxStackPointer + " (Context size: " + contextSize + ")";
         return maxStackPointer;
     }
@@ -248,9 +250,9 @@ public final class DecoderSistaV1 extends AbstractDecoder {
             }
             case 0x53 -> sp + 1;
             case 0x54, 0x55, 0x56, 0x57 -> throw SqueakException.create("Not a bytecode:", b);
-            case 0x58, 0x59, 0x5A, 0x5B -> resetStackAfterBranchOrReturn(joins, index + 1, sp + 0);
+            case 0x58, 0x59, 0x5A, 0x5B -> resetStackAfterBranchOrReturn(joins, index + 1, sp);
             case 0x5C -> resetStackAfterBranchOrReturn(joins, index + 1, sp - 1);
-            case 0x5D -> resetStackAfterBranchOrReturn(joins, index + 1, sp + 0);
+            case 0x5D -> resetStackAfterBranchOrReturn(joins, index + 1, sp);
             case 0x5E -> {
                 if (extension.extA == 0) {
                     yield resetStackAfterBranchOrReturn(joins, index + 1, sp - 1);
@@ -264,12 +266,12 @@ public final class DecoderSistaV1 extends AbstractDecoder {
                 final int numArguments = code.getSqueakClass().getImage().getSpecialSelectorNumArgs(b - 96);
                 yield sp - numArguments;
             }
-            case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F -> sp + 0;
+            case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F -> sp;
             case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F -> sp - 1;
             case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF -> sp - 2;
             case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> {
                 final int delta = AbstractInterpreterNode.calculateShortOffset(b);
-                yield jumpAndResetStackAfterBranchOrReturn(joins, index + 1, sp + 0, delta);
+                yield jumpAndResetStackAfterBranchOrReturn(joins, index + 1, sp, delta);
             }
             case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> {
                 final int delta = AbstractInterpreterNode.calculateShortOffset(b);
@@ -306,14 +308,14 @@ public final class DecoderSistaV1 extends AbstractDecoder {
             case 0xEC -> throw SqueakException.create("Not a bytecode:", b);
             case 0xED -> {
                 final int delta = InterpreterSistaV1Node.calculateLongExtendedOffset(bc[indexWithExt + 1], extension.extB);
-                yield jumpAndResetStackAfterBranchOrReturn(joins, indexWithExt + 2, sp + 0, delta);
+                yield jumpAndResetStackAfterBranchOrReturn(joins, indexWithExt + 2, sp, delta);
             }
             case 0xEE, 0xEF -> {
                 final int delta = InterpreterSistaV1Node.calculateLongExtendedOffset(bc[indexWithExt + 1], extension.extB);
                 yield jumpAndResetStackAfterBranchOrReturn(joins, indexWithExt + 2, sp - 1, delta);
             }
             case 0xF0, 0xF1, 0xF2 -> sp - 1;
-            case 0xF3, 0xF4, 0xF5 -> sp + 0;
+            case 0xF3, 0xF4, 0xF5 -> sp;
             case 0xF6, 0xF7 -> throw SqueakException.create("Not a bytecode:", b);
             case 0xF8 -> {
                 final int i = Byte.toUnsignedInt(bc[indexWithExt + 1]);
@@ -321,7 +323,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
                 final int primitiveIndex = i + (j << 8);
                 assert 1 <= primitiveIndex && primitiveIndex < 32767 : "primitiveIndex out of range";
                 if (primitiveIndex < 1000) {
-                    yield sp + 0;
+                    yield sp;
                 }
                 throw SqueakException.create("Not yet implemented for inline prim");
             }
@@ -337,7 +339,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
                 yield sp + 1 - numCopied;
             }
             case 0xFB -> sp + 1;
-            case 0xFC -> sp + 0;
+            case 0xFC -> sp;
             case 0xFD -> sp - 1;
             case 0xFE, 0xFF -> throw SqueakException.create("Not a bytecode:", b);
 

@@ -12,6 +12,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractDecoder {
+    protected static final byte SP_NIL_TAG = -42;
 
     public record ShadowBlockParams(int numArgs, int numCopied, int blockSize) {
     }
@@ -27,14 +28,6 @@ public abstract class AbstractDecoder {
     protected abstract int decodeNumBytes(CompiledCodeObject code, int index);
 
     protected abstract String decodeBytecodeToString(CompiledCodeObject code, int currentByte, int bytecodeIndex);
-
-    public final String safeDecodeBytecodeToString(final CompiledCodeObject code, final int currentByte, final int bytecodeIndex) {
-        try {
-            return decodeBytecodeToString(code, currentByte, bytecodeIndex);
-        } catch (RuntimeException e) {
-            return "error decoding: " + currentByte;
-        }
-    }
 
     public final String decodeToString(final CompiledCodeObject code) {
         CompilerAsserts.neverPartOfCompilation();

@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import static de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.trailerPosition;
+
 import java.util.Arrays;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
@@ -49,8 +51,6 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
-
-import static de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.trailerPosition;
 
 @SuppressWarnings("static-method")
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
@@ -324,13 +324,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public FrameDescriptor getFrameDescriptor() {
         CompilerAsserts.neverPartOfCompilation();
         if (getExecutionData().frameDescriptor == null) {
-            final CompiledCodeObject exposedMethod;
-            if (isShadowBlock()) {
-                /* Never let shadow blocks escape, use their outer method instead. */
-                exposedMethod = executionData.outerMethod;
-            } else {
-                exposedMethod = this;
-            }
+            /* Never let shadow blocks escape, use their outer method instead. */
+            final CompiledCodeObject exposedMethod = isShadowBlock() ? executionData.outerMethod : this;
             executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod, getMaxNumStackSlots());
         }
         return executionData.frameDescriptor;
@@ -362,12 +357,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public int getMaxNumStackSlots() {
-        if (bytes == null) {
-            // When creating a new Context for a new Process, Smalltalk will initialize the Context
-            // out of order (sender will be set before method) causing a frame to be created before
-            // bytes is set in this object.
-            return getSqueakContextSize();
-        } else if (isShadowBlock()) {
+        if (isShadowBlock()) {
             final int initialPC = getOuterMethodStartPCZeroBased();
             final ShadowBlockParams params = getDecoder().decodeShadowBlock(this, initialPC);
             return params.numArgs() + params.numCopied() + getDecoder().determineMaxNumStackSlots(this, initialPC, initialPC + params.blockSize());
@@ -507,24 +497,20 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        try {
-            if (isCompiledBlock()) {
-                return "[] in " + getMethod().toString();
-            } else {
-                String className = "UnknownClass";
-                String selector = "unknownSelector";
-                final ClassObject methodClass = getMethodClassSlow();
-                if (methodClass != null) {
-                    className = methodClass.getClassName();
-                }
-                final NativeObject selectorObj = getCompiledInSelector();
-                if (selectorObj != null) {
-                    selector = selectorObj.asStringUnsafe();
-                }
-                return (isShadowBlock() ? "[] embedded in " : "") + className + "#" + selector;
+        if (isCompiledBlock()) {
+            return "[] in " + getMethod().toString();
+        } else {
+            String className = "UnknownClass";
+            String selector = "unknownSelector";
+            final ClassObject methodClass = getMethodClassSlow();
+            if (methodClass != null) {
+                className = methodClass.getClassName();
             }
-        } catch (NullPointerException e) {
-            return (isShadowBlock() ? "[] embedded in " : "") + "UnknownClass#unknownSelector";
+            final NativeObject selectorObj = getCompiledInSelector();
+            if (selectorObj != null) {
+                selector = selectorObj.asStringUnsafe();
+            }
+            return (isShadowBlock() ? "[] embedded in " : "") + className + "#" + selector;
         }
     }
 
