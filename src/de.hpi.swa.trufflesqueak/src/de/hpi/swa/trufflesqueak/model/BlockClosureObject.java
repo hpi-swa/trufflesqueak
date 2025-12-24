@@ -10,6 +10,7 @@ import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -154,6 +155,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         outerContext = null;
     }
 
+    @TruffleBoundary
     public void setStartPC(final int pc) {
         if (block == null) {
             block = outerContext.getCodeObject().createShadowBlock(pc);
