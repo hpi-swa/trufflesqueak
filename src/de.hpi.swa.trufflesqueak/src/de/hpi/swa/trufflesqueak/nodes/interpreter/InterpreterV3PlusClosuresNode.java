@@ -82,6 +82,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
             pc = 0;
             endPC = maxPC;
         }
+        assert pc < endPC;
 
         while (pc < endPC) {
             final int currentPC = pc++;

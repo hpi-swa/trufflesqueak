@@ -76,8 +76,15 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
 
-        int pc = code.isShadowBlock() ? code.getOuterMethodStartPCZeroBased() : 0;
-        final int endPC = maxPC; // FIXME: should use block size in blocks
+        int pc;
+        final int endPC;
+        if (code.isShadowBlock()) {
+            pc = code.getOuterMethodStartPCZeroBased();
+            endPC = pc + code.getShadowBlockInfo().blockSize();
+        } else {
+            pc = 0;
+            endPC = maxPC;
+        }
         assert pc < endPC;
         int extA = 0;
         int extB = 0;

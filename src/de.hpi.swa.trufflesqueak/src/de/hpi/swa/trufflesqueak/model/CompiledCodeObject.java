@@ -91,6 +91,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          */
         private CompiledCodeObject outerMethod;
         private int outerMethodStartPC;
+        private ShadowBlockParams shadowBlockParams;
 
         private Source source;
 
@@ -128,16 +129,17 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
         super(outerCode);
 
+        // header info and data
+        header = outerCode.header;
+        literals = outerCode.literals;
+        bytes = outerCode.bytes;
+
         // store outer method and startPC
         final ExecutionData data = getExecutionData();
         data.outerMethod = outerCode.isShadowBlock() ? outerCode.getExecutionData().outerMethod : outerCode;
         assert data.outerMethod.isCompiledMethod();
         data.outerMethodStartPC = startPC;
-
-        // header info and data
-        header = outerCode.header;
-        literals = outerCode.literals;
-        bytes = outerCode.bytes;
+        data.shadowBlockParams = getDecoder().decodeShadowBlock(this, startPC - data.outerMethod.getInitialPC());
     }
 
     private CompiledCodeObject(final int size, final ClassObject classObject) {
@@ -184,10 +186,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         assert isShadowBlock();
         executionData.outerMethodStartPC = pc;
         assert executionData.outerMethodStartPC > executionData.outerMethod.getInitialPC();
+        executionData.shadowBlockParams = getDecoder().decodeShadowBlock(this, pc - executionData.outerMethod.getInitialPC());
     }
 
     public int getOuterMethodStartPCZeroBased() {
         return getOuterMethodStartPC() - executionData.outerMethod.getInitialPC();
+    }
+
+    public ShadowBlockParams getShadowBlockInfo() {
+        assert isShadowBlock();
+        return executionData.shadowBlockParams;
     }
 
     private void setLiteralsAndBytes(final int header, final Object[] literals, final byte[] bytes) {
