@@ -11,6 +11,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 
@@ -134,7 +135,18 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         }
     }
 
+    private static int decodeNoExtensionNumBytes(final int b) {
+        if (b <= 223) {
+            return 1;
+        } else if (b <= 247) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+
     private record DecodedExtension(int offset, int extA, int extB) {
+        private static final DecodedExtension DEFAULT = new DecodedExtension(0, 0, 0);
     }
 
     private static DecodedExtension decodeExtension(final CompiledCodeObject code, final int index) {
@@ -187,11 +199,66 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         final int byteA = Byte.toUnsignedInt(bc[index + extension.offset + 1]);
         final int byteB = Byte.toUnsignedInt(bc[index + extension.offset + 2]);
 
-        final int numArgs = (byteA & 7) + Math.floorMod(extension.extA, 16) * 8;
-        final int numCopied = (byteA >> 3 & 0x7) + Math.floorDiv(extension.extA, 16) * 8;
+        final int numArgs = (byteA & 0x07) + (extension.extA & 0x0F) * 8;
+        final int numCopied = (byteA >> 3 & 0x07) + (extension.extA >> 4) * 8;
         final int blockSize = (extension.extB << 8) | byteB;
 
         return new ShadowBlockParams(numArgs, numCopied, blockSize);
+    }
+
+    /**
+     * Split the implementation of determineMaxNumStackSlots into a fast path
+     * (bytecodes that do not need an extension or additional bytes to determine
+     * the stack pointer change) decoded by a table lookup, and a slow path,
+     * decoded using a switch.
+     */
+    private static final byte NEEDS_EXTENSION = -128;
+    private static final byte NEEDS_SPECIAL_SELECTORS = -127;
+    private static final byte NEEDS_SWITCH = -126;
+    private static final byte[] BYTECODE_DELTAS = new byte[256];
+
+    static {
+        // Default everything to "Requires Switch Logic"
+        Arrays.fill(BYTECODE_DELTAS, NEEDS_SWITCH);
+
+        // Mark the extensions.
+        BYTECODE_DELTAS[0xE0] = NEEDS_EXTENSION;
+        BYTECODE_DELTAS[0xE1] = NEEDS_EXTENSION;
+
+        // Mark the special sends.
+        fillRange(BYTECODE_DELTAS, 0x60, 0x7F, NEEDS_SPECIAL_SELECTORS);
+
+        // Map the "Fast Path" (Fixed Deltas)
+
+        // sp + 1
+        fillRange(BYTECODE_DELTAS, 0x00, 0x51, 1);
+        BYTECODE_DELTAS[0x53] = 1;
+        fillRange(BYTECODE_DELTAS, 0xE2, 0xE5, 1);
+        BYTECODE_DELTAS[0xE8] = 1;
+        BYTECODE_DELTAS[0xE9] = 1;
+        BYTECODE_DELTAS[0xFB] = 1;
+
+        // sp + 0
+        BYTECODE_DELTAS[0x5F] = 0;
+        fillRange(BYTECODE_DELTAS, 0x80, 0x8F, 0);
+        fillRange(BYTECODE_DELTAS, 0xF3, 0xF5, 0);
+        BYTECODE_DELTAS[0xFC] = 0;
+
+        // sp - 1
+        fillRange(BYTECODE_DELTAS, 0x90, 0x9F, -1);
+        fillRange(BYTECODE_DELTAS, 0xC8, 0xD7, -1);
+        BYTECODE_DELTAS[0xD9] = -1;
+        fillRange(BYTECODE_DELTAS, 0xF0, 0xF2, -1);
+        BYTECODE_DELTAS[0xFD] = -1;
+
+        // sp - 2
+        fillRange(BYTECODE_DELTAS, 0xA0, 0xAF, -2);
+    }
+
+    private static void fillRange(byte[] array, int start, int end, int value) {
+        for (int i = start; i <= end; i++) {
+            array[i] = (byte) value;
+        }
     }
 
     /**
@@ -200,34 +267,54 @@ public final class DecoderSistaV1 extends AbstractDecoder {
      */
     @Override
     public int determineMaxNumStackSlots(final CompiledCodeObject code, final int initialPC, final int maxPC) {
+        SqueakImageContext image = null;
+        final int contextSize = code.getSqueakContextSize();
+
         final byte[] bc = code.getBytes();
+
         final int[] joins = new int[maxPC];
         Arrays.fill(joins, SP_NIL_TAG);
+
         int index = initialPC;
         int currentStackPointer = 0; // initial SP
         int maxStackPointer = currentStackPointer;
-        final int contextSize = code.getSqueakContextSize();
-        // Uncomment the following and compare with `(Character>>#isSeparator) detailedSymbolic`
-        // final int initialPC = code.getInitialPC();
-        // final StringBuilder sb = new StringBuilder();
-        // sb.append(code).append("[").append(contextSize).append("]\n");
+
         while (index < maxPC) {
-            // sb.append(initialPC + index).append(":\t").append(currentStackPointer).append("->");
-            final DecodedExtension extension = decodeExtension(bc, index);
             joins[index] = currentStackPointer;
-            currentStackPointer = decodeStackPointer(code, bc, index, extension, currentStackPointer, joins);
-            // sb.append(currentStackPointer).append("\n");
+
+            final int b = Byte.toUnsignedInt(bc[index]);
+            final int delta = BYTECODE_DELTAS[b];
+            if (delta > NEEDS_SWITCH) {
+                // Fast path: stack offset determined by single bytecode only.
+                currentStackPointer += delta;
+                index += decodeNoExtensionNumBytes(b);
+            } else if (delta == NEEDS_SPECIAL_SELECTORS) {
+                // Fast path: stack offset determined by single bytecode and special selectors table.
+                if (image == null) {
+                    image = code.getSqueakClass().getImage();
+                }
+                currentStackPointer -= image.getSpecialSelectorNumArgs(b - 96);
+                index += decodeNoExtensionNumBytes(b);
+            } else {
+                // Slow path: stack offset determined by extension and/or multiple bytes.
+                final DecodedExtension extension = (delta == NEEDS_EXTENSION)
+                        ? decodeExtension(bc, index)
+                        : DecodedExtension.DEFAULT;
+                currentStackPointer = decodeStackPointer(bc, index, extension, currentStackPointer, joins);
+                index += decodeNextPCDelta(code, index, extension, true);
+            }
+
             assert 0 <= currentStackPointer && currentStackPointer <= contextSize : "Stack pointer out of range: " + currentStackPointer + " (Context size: " + contextSize + ")";
-            maxStackPointer = Math.max(maxStackPointer, currentStackPointer);
-            index += decodeNextPCDelta(code, index, extension, true);
+            if (currentStackPointer > maxStackPointer) {
+                maxStackPointer = currentStackPointer;
+            }
         }
-        // sb.append("max SP = ").append(maxStackPointer).append("\n");
-        // System.out.append(sb.toString());
+
         assert 0 <= maxStackPointer && maxStackPointer <= contextSize : "Stack pointer out of range: " + maxStackPointer + " (Context size: " + contextSize + ")";
         return maxStackPointer;
     }
 
-    private static int decodeStackPointer(final CompiledCodeObject code, final byte[] bc, final int index, final DecodedExtension extension, final int sp, final int[] joins) {
+    private static int decodeStackPointer(final byte[] bc, final int index, final DecodedExtension extension, final int sp, final int[] joins) {
         CompilerAsserts.neverPartOfCompilation();
 
         final int indexWithExt = index + extension.offset;
@@ -261,11 +348,11 @@ public final class DecoderSistaV1 extends AbstractDecoder {
                 }
             }
             case 0x5F -> sp;
-            case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, //
-                0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F -> {
-                final int numArguments = code.getSqueakClass().getImage().getSpecialSelectorNumArgs(b - 96);
-                yield sp - numArguments;
-            }
+//            case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, //
+//                0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F -> {
+//                final int numArguments = image.getSpecialSelectorNumArgs(b - 96);
+//                yield sp - numArguments;
+//            }
             case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F -> sp;
             case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F -> sp - 1;
             case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF -> sp - 2;
