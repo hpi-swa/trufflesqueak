@@ -12,7 +12,8 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractDecoder {
-    protected static final byte SP_NIL_TAG = -42;
+    protected static final byte SP_NIL_TAG = 0;
+    protected static final byte SP_BIAS = 1;
 
     public record ShadowBlockParams(int numArgs, int numCopied, int blockSize) {
     }

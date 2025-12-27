@@ -11,12 +11,95 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public final class DecoderV3PlusClosures extends AbstractDecoder {
     public static final DecoderV3PlusClosures SINGLETON = new DecoderV3PlusClosures();
 
     private DecoderV3PlusClosures() {
+    }
+
+    /**
+     * Split the implementation of determineMaxNumStackSlots into a fast path (bytecodes that do not
+     * need additional bytes to determine the stack pointer change) decoded by a table lookup, and a
+     * slow path, decoded using a switch.
+     */
+    private static final byte NEEDS_SWITCH = -128;
+    private static final byte NEEDS_SPECIAL_SELECTORS = -127;
+    private static final byte[] BYTECODE_DELTAS = new byte[256];
+
+    static {
+        // Default everything to "Requires Switch Logic"
+        Arrays.fill(BYTECODE_DELTAS, NEEDS_SWITCH);
+
+        // 0-95: Push (sp + 1)
+        fillRange(BYTECODE_DELTAS, 0, 95, 1);
+
+        // 96-111: Pop (sp - 1)
+        fillRange(BYTECODE_DELTAS, 96, 111, -1);
+
+        // 112-119: Push Constant (sp + 1)
+        fillRange(BYTECODE_DELTAS, 112, 119, 1);
+
+        // 128: Push, 129: Store (0), 130: Pop (-1)
+        BYTECODE_DELTAS[128] = 1;
+        BYTECODE_DELTAS[129] = 0;
+        BYTECODE_DELTAS[130] = -1;
+
+        // 135: Pop (-1), 136-137: Push (+1)
+        BYTECODE_DELTAS[135] = -1;
+        BYTECODE_DELTAS[136] = 1;
+        BYTECODE_DELTAS[137] = 1;
+
+        // 139: Store (0), 140: Push (+1), 141: Store (0), 142: Pop (-1)
+        BYTECODE_DELTAS[139] = 0;
+        BYTECODE_DELTAS[140] = 1;
+        BYTECODE_DELTAS[141] = 0;
+        BYTECODE_DELTAS[142] = -1;
+
+        // 176-207: Special Selectors (Variable delta based on Image)
+        fillRange(BYTECODE_DELTAS, 176, 207, NEEDS_SPECIAL_SELECTORS);
+
+        // 208-223: Send 0 args (delta 0)
+        fillRange(BYTECODE_DELTAS, 208, 223, 0);
+
+        // 224-239: Send 1 arg (delta -1)
+        fillRange(BYTECODE_DELTAS, 224, 239, -1);
+
+        // 240-255: Send 2 args (delta -2)
+        fillRange(BYTECODE_DELTAS, 240, 255, -2);
+    }
+
+    private static final byte DYNAMIC_LENGTH = 4;
+    private static final byte[] BYTECODE_LENGTHS = new byte[256];
+
+    static {
+        // Default to 1 byte (covers 0-127, 135-137, 144-159, 176-255)
+        Arrays.fill(BYTECODE_LENGTHS, (byte) 1);
+
+        // 2-byte instructions
+        fillRange(BYTECODE_LENGTHS, 128, 131, 2);
+        fillRange(BYTECODE_LENGTHS, 133, 134, 2);
+        BYTECODE_LENGTHS[138] = 2;
+        fillRange(BYTECODE_LENGTHS, 160, 175, 2);
+
+        // 3-byte instructions
+        BYTECODE_LENGTHS[132] = 3;
+        fillRange(BYTECODE_LENGTHS, 139, 142, 3);
+
+        // 4-byte / Dynamic (Push Closure)
+        BYTECODE_LENGTHS[143] = DYNAMIC_LENGTH;
+    }
+
+    private static int decodeNumBytes(final int b) {
+        return BYTECODE_LENGTHS[b];
+    }
+
+    private static void fillRange(final byte[] array, final int start, final int end, final int value) {
+        for (int i = start; i <= end; i++) {
+            array[i] = (byte) value;
+        }
     }
 
     @Override
@@ -145,37 +228,17 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
 
     @Override
     protected int decodeNumBytes(final CompiledCodeObject code, final int index) {
-        return decodeNumBytes(code.getBytes(), index, false);
+        return decodeNumBytes(Byte.toUnsignedInt(code.getBytes()[index]));
     }
 
-    private static int decodeNumBytes(final byte[] bc, final int index, final boolean skipOverBlocks) {
-        final int b = Byte.toUnsignedInt(bc[index]);
-        return switch (b) {
-            case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, //
-                43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, //
-                81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, //
-                115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127 -> 1;
-            case 128, 129, 130, 131 -> 2;
-            case 132 -> 3;
-            case 133, 134 -> 2;
-            case 135, 136, 137 -> 1;
-            case 138 -> 2;
-            case 139, 140, 141, 142 -> 3;
-            case 143 -> {
-                if (skipOverBlocks) {
-                    final int blockSize = (Byte.toUnsignedInt(bc[index + 2]) << 8 | Byte.toUnsignedInt(bc[index + 3]));
-                    yield 4 + blockSize;
-                } else {
-                    yield 4;
-                }
-            }
-            case 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159 -> 1;
-            case 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175 -> 2;
-            case 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, //
-                208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, //
-                238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255 -> 1;
-            default -> throw SqueakException.create("Unknown bytecode:", b);
-        };
+    private static int decodeNumBytesSkipOverBlocks(final byte[] bc, final int index) {
+        final int numBytes = decodeNumBytes(Byte.toUnsignedInt(bc[index]));
+        if (numBytes == DYNAMIC_LENGTH) {
+            final int blockSize = (Byte.toUnsignedInt(bc[index + 2]) << 8 | Byte.toUnsignedInt(bc[index + 3]));
+            return numBytes + blockSize;
+        } else {
+            return numBytes;
+        }
     }
 
     @Override
@@ -195,50 +258,59 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
      */
     @Override
     public int determineMaxNumStackSlots(final CompiledCodeObject code, final int initialPC, final int maxPC) {
-        final byte[] bc = code.getBytes();
-        final int[] joins = new int[maxPC];
-        Arrays.fill(joins, SP_NIL_TAG);
-        int index = initialPC;
-        int currentStackPointer = 0; // initial SP
-        int maxStackPointer = currentStackPointer;
+        SqueakImageContext image = null;
         final int contextSize = code.getSqueakContextSize();
-        // Uncomment the following and compare with `(Character>>#isSeparator) detailedSymbolic`
-        // final StringBuilder sb = new StringBuilder();
-        // sb.append(code).append("[").append(contextSize).append("]\n");
+        final int[] joins = new int[maxPC];
+        final byte[] bc = code.getBytes();
+
+        // Use a biased stack pointer to avoid filling the joins array.
+        int currentStackPointer = SP_BIAS;
+        int maxStackPointer = currentStackPointer;
+
+        int index = initialPC;
         while (index < maxPC) {
-            // sb.append(initialPC + index).append(":\t").append(currentStackPointer).append("->");
             joins[index] = currentStackPointer;
-            currentStackPointer = decodeStackPointer(code, bc, index, currentStackPointer, joins);
-            // sb.append(currentStackPointer).append("\t").append(Byte.toUnsignedInt(bc[index])).append("\t")
-            // .append(safeDecodeBytecodeToString(code, Byte.toUnsignedInt(bc[index]),
-            // index)).append("\n");
-            assert 0 <= currentStackPointer && currentStackPointer <= contextSize : "Stack pointer out of range: " + currentStackPointer + " (Context size: " + contextSize + ")";
-            maxStackPointer = Math.max(maxStackPointer, currentStackPointer);
-            index += decodeNumBytes(bc, index, true);
+
+            final int b = Byte.toUnsignedInt(bc[index]);
+            final int delta = BYTECODE_DELTAS[b];
+            if (delta > NEEDS_SPECIAL_SELECTORS) {
+                // Fast path: stack offset determined by single bytecode only.
+                currentStackPointer += delta;
+                index += decodeNumBytes(b);
+            } else if (delta == NEEDS_SPECIAL_SELECTORS) {
+                // Fast path: stack offset determined by single bytecode and special selectors
+                // table.
+                if (image == null) {
+                    image = code.getSqueakClass().getImage();
+                }
+                currentStackPointer -= image.getSpecialSelectorNumArgs(b - 176);
+                index += decodeNumBytes(b);
+            } else {
+                // Slow path: stack offset determined by multiple bytes.
+                currentStackPointer = decodeStackPointer(bc, index, currentStackPointer, joins);
+                index += decodeNumBytesSkipOverBlocks(bc, index);
+            }
+
+            assert 0 <= currentStackPointer - SP_BIAS && currentStackPointer - SP_BIAS <= contextSize : "Stack pointer out of range: " + (currentStackPointer - SP_BIAS) + " (Context size: " +
+                            contextSize + ")";
+            if (currentStackPointer > maxStackPointer) {
+                maxStackPointer = currentStackPointer;
+            }
         }
-        // sb.append("max SP = ").append(maxStackPointer).append("\n");
-        // System.out.append(sb.toString());
-        assert 0 <= maxStackPointer && maxStackPointer <= contextSize : "Stack pointer out of range: " + maxStackPointer + " (Context size: " + contextSize + ")";
-        return maxStackPointer;
+
+        assert 0 <= maxStackPointer - SP_BIAS && maxStackPointer - SP_BIAS <= contextSize : "Stack pointer out of range: " + (maxStackPointer - SP_BIAS) + " (Context size: " + contextSize + ")";
+        return maxStackPointer - SP_BIAS;
     }
 
-    private static int decodeStackPointer(final CompiledCodeObject code, final byte[] bc, final int index, final int sp, final int[] joins) {
+    private static int decodeStackPointer(final byte[] bc, final int index, final int sp, final int[] joins) {
         CompilerAsserts.neverPartOfCompilation();
+
         final int b = Byte.toUnsignedInt(bc[index]);
 
         return switch (b) {
-            case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, //
-                32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, //
-                64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95 //
-                -> sp + 1;
-            case 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111 -> sp - 1;
-            case 112, 113, 114, 115, 116, 117, 118, 119 -> sp + 1;
             case 120, 121, 122, 123 -> resetStackAfterBranchOrReturn(joins, index + 1, sp);
             case 124, 125 -> resetStackAfterBranchOrReturn(joins, index + 1, sp - 1);
 
-            case 128 -> sp + 1;
-            case 129 -> sp;
-            case 130 -> sp - 1;
             case 131 -> {
                 final int numArguments = Byte.toUnsignedInt(bc[index + 1]) >> 5;
                 yield sp - numArguments;
@@ -264,18 +336,13 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
                 final int numArguments = Byte.toUnsignedInt(bc[index + 1]) >> 6;
                 yield sp - numArguments;
             }
-            case 135 -> sp - 1;
-            case 136 -> sp + 1;
-            case 137 -> sp + 1;
+
             case 138 -> {
                 final byte param = bc[index + 1];
                 final int arraySize = param & 127;
                 yield sp + 1 - (param < 0 ? arraySize : 0);
             }
-            case 139 -> sp;
-            case 140 -> sp + 1;
-            case 141 -> sp;
-            case 142 -> sp - 1;
+
             case 143 -> {
                 final byte numArgsNumCopied = bc[index + 1];
                 final int numCopied = numArgsNumCopied >> 4 & 0xF;
@@ -297,16 +364,14 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
                 final int delta = ((b & 3) << 8) + Byte.toUnsignedInt(bc[index + 1]);
                 yield jumpAndResetStackAfterBranchOrReturn(joins, index + 2, sp - 1, delta);
             }
-            case 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, //
-                192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207 -> {
-                final int numArguments = code.getSqueakClass().getImage().getSpecialSelectorNumArgs(b - 176);
-                yield sp - numArguments;
-            }
-            case 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223 -> sp;
-            case 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239 -> sp - 1;
-            case 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255 -> sp - 2;
 
-            default -> throw new AssertionError("Unknown bytecode");
+            default -> {
+                if (BYTECODE_DELTAS[b] <= NEEDS_SWITCH) {
+                    throw new AssertionError("Unknown bytecode");
+                } else {
+                    throw SqueakException.create("Caller error:", b);
+                }
+            }
         };
     }
 
