@@ -384,7 +384,7 @@ public final class FrameAccess {
     }
 
     public static boolean isTruffleSqueakFrame(final Frame frame) {
-        return frame.getArguments().length >= ArgumentIndicies.RECEIVER && frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
+        return frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
