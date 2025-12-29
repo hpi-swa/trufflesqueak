@@ -12,6 +12,10 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractDecoder {
+    protected static final byte NEEDS_EXTENSION = -128;
+    protected static final byte NEEDS_SWITCH = -127;
+    protected static final byte NEEDS_SPECIAL_SELECTORS = -126;
+
     protected static final byte SP_NIL_TAG = 0;
     protected static final byte SP_BIAS = 1;
 

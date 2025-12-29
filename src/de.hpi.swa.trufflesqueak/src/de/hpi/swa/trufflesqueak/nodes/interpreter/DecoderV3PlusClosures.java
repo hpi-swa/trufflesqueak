@@ -17,6 +17,11 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 public final class DecoderV3PlusClosures extends AbstractDecoder {
     public static final DecoderV3PlusClosures SINGLETON = new DecoderV3PlusClosures();
 
+    private static final byte[] BYTECODE_DELTAS = new byte[256];
+
+    private static final byte DYNAMIC_LENGTH = 4;
+    private static final byte[] BYTECODE_LENGTHS = new byte[256];
+
     private DecoderV3PlusClosures() {
     }
 
@@ -25,10 +30,6 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
      * need additional bytes to determine the stack pointer change) decoded by a table lookup, and a
      * slow path, decoded using a switch.
      */
-    private static final byte NEEDS_SWITCH = -128;
-    private static final byte NEEDS_SPECIAL_SELECTORS = -127;
-    private static final byte[] BYTECODE_DELTAS = new byte[256];
-
     static {
         // Default everything to "Requires Switch Logic"
         Arrays.fill(BYTECODE_DELTAS, NEEDS_SWITCH);
@@ -70,9 +71,6 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
         // 240-255: Send 2 args (delta -2)
         fillRange(BYTECODE_DELTAS, 240, 255, -2);
     }
-
-    private static final byte DYNAMIC_LENGTH = 4;
-    private static final byte[] BYTECODE_LENGTHS = new byte[256];
 
     static {
         // Default to 1 byte (covers 0-127, 135-137, 144-159, 176-255)
@@ -260,7 +258,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
     public int determineMaxNumStackSlots(final CompiledCodeObject code, final int initialPC, final int maxPC) {
         SqueakImageContext image = null;
         final int contextSize = code.getSqueakContextSize();
-        final int[] joins = new int[maxPC];
+        final byte[] joins = new byte[maxPC];
         final byte[] bc = code.getBytes();
 
         // Use a biased stack pointer to avoid filling the joins array.
@@ -269,7 +267,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
 
         int index = initialPC;
         while (index < maxPC) {
-            joins[index] = currentStackPointer;
+            joins[index] = (byte) currentStackPointer;
 
             final int b = Byte.toUnsignedInt(bc[index]);
             final int delta = BYTECODE_DELTAS[b];
@@ -302,7 +300,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
         return maxStackPointer - SP_BIAS;
     }
 
-    private static int decodeStackPointer(final byte[] bc, final int index, final int sp, final int[] joins) {
+    private static int decodeStackPointer(final byte[] bc, final int index, final int sp, final byte[] joins) {
         CompilerAsserts.neverPartOfCompilation();
 
         final int b = Byte.toUnsignedInt(bc[index]);
@@ -375,18 +373,18 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
         };
     }
 
-    private static int jumpAndResetStackAfterBranchOrReturn(final int[] joins, final int pc, final int sp, final int delta) {
+    private static int jumpAndResetStackAfterBranchOrReturn(final byte[] joins, final int pc, final int sp, final int delta) {
         if (delta < 0) {
-            assert joins[pc + delta] == sp : "bad join";
+            assert Byte.toUnsignedInt(joins[pc + delta]) == sp : "bad join";
         } else {
-            joins[pc + delta] = sp;
+            joins[pc + delta] = (byte) sp;
         }
         return resetStackAfterBranchOrReturn(joins, pc, sp);
     }
 
-    private static int resetStackAfterBranchOrReturn(final int[] joins, final int pc, final int sp) {
+    private static int resetStackAfterBranchOrReturn(final byte[] joins, final int pc, final int sp) {
         if (pc < joins.length) {
-            final int spAtPC = joins[pc];
+            final int spAtPC = Byte.toUnsignedInt(joins[pc]);
             if (spAtPC == SP_NIL_TAG) {
                 return sp;
             } else {

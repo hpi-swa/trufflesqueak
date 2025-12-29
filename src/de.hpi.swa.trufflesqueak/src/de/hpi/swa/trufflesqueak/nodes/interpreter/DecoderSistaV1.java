@@ -18,6 +18,8 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 public final class DecoderSistaV1 extends AbstractDecoder {
     public static final DecoderSistaV1 SINGLETON = new DecoderSistaV1();
 
+    private static final byte[] BYTECODE_DELTAS = new byte[256];
+
     private DecoderSistaV1() {
     }
 
@@ -26,11 +28,6 @@ public final class DecoderSistaV1 extends AbstractDecoder {
      * need an extension or additional bytes to determine the stack pointer change) decoded by a
      * table lookup, and a slow path, decoded using a switch.
      */
-    private static final byte NEEDS_EXTENSION = -128;
-    private static final byte NEEDS_SWITCH = -127;
-    private static final byte NEEDS_SPECIAL_SELECTORS = -126;
-    private static final byte[] BYTECODE_DELTAS = new byte[256];
-
     static {
         // Default everything to "Requires Switch Logic"
         Arrays.fill(BYTECODE_DELTAS, NEEDS_SWITCH);
@@ -268,7 +265,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
     public int determineMaxNumStackSlots(final CompiledCodeObject code, final int initialPC, final int maxPC) {
         SqueakImageContext image = null;
         final int contextSize = code.getSqueakContextSize();
-        final int[] joins = new int[maxPC];
+        final byte[] joins = new byte[maxPC];
         final byte[] bc = code.getBytes();
 
         // Use a biased stack pointer to avoid filling the joins array.
@@ -277,7 +274,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
 
         int index = initialPC;
         while (index < maxPC) {
-            joins[index] = currentStackPointer;
+            joins[index] = (byte) currentStackPointer;
 
             final int b = Byte.toUnsignedInt(bc[index]);
             final int delta = BYTECODE_DELTAS[b];
@@ -313,7 +310,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         return maxStackPointer - SP_BIAS;
     }
 
-    private static int decodeStackPointer(final byte[] bc, final int index, final DecodedExtension extension, final int sp, final int[] joins) {
+    private static int decodeStackPointer(final byte[] bc, final int index, final DecodedExtension extension, final int sp, final byte[] joins) {
         CompilerAsserts.neverPartOfCompilation();
 
         final int indexWithExt = index + extension.offset;
@@ -350,7 +347,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
             }
 
             /* Check joins first for '(SqueakSSL class >> #ensureSampleCert) detailedSymbolic'. */
-            case 0xD8 -> joins[index] == SP_NIL_TAG ? sp - 1 : Math.max(SP_BIAS, sp - 1);
+            case 0xD8 -> Byte.toUnsignedInt(joins[index]) == SP_NIL_TAG ? sp - 1 : Math.max(SP_BIAS, sp - 1);
 
             case 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF -> throw SqueakException.create("Not a bytecode:", b);
 
@@ -424,18 +421,18 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         };
     }
 
-    private static int jumpAndResetStackAfterBranchOrReturn(final int[] joins, final int pc, final int sp, final int delta) {
+    private static int jumpAndResetStackAfterBranchOrReturn(final byte[] joins, final int pc, final int sp, final int delta) {
         if (delta < 0) {
-            assert joins[pc + delta] == sp : "bad join";
+            assert Byte.toUnsignedInt(joins[pc + delta]) == sp : "bad join";
         } else {
-            joins[pc + delta] = sp;
+            joins[pc + delta] = (byte) sp;
         }
         return resetStackAfterBranchOrReturn(joins, pc, sp);
     }
 
-    private static int resetStackAfterBranchOrReturn(final int[] joins, final int pc, final int sp) {
+    private static int resetStackAfterBranchOrReturn(final byte[] joins, final int pc, final int sp) {
         if (pc < joins.length) {
-            final int spAtPC = joins[pc];
+            final int spAtPC = Byte.toUnsignedInt(joins[pc]);
             if (spAtPC == SP_NIL_TAG) {
                 return sp;
             } else {
