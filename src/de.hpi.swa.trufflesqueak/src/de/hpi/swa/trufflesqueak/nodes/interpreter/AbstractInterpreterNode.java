@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interpreter;
 
+import static de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodeDSLAccess.FRAMES;
 import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -381,8 +382,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         assert sp >= numArguments;
         final int slotIndex = FrameAccess.toStackSlotIndex(sp);
         try {
-            final Object result = frame.getObjectStatic(slotIndex);
-            frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
+            final Object result = FRAMES.uncheckedGetObject(frame, slotIndex);
+            FRAMES.setObject(frame, slotIndex, NilObject.SINGLETON);
             return result;
         } catch (final ArrayIndexOutOfBoundsException aioobe) {
             CompilerDirectives.transferToInterpreter();
@@ -408,8 +409,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             final int slotIndex = topSlotIndex - i;
-            stackValues[numPop - 1 - i] = frame.getObjectStatic(slotIndex);
-            frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
+            stackValues[numPop - 1 - i] = FRAMES.uncheckedGetObject(frame, slotIndex);
+            FRAMES.setObject(frame, slotIndex, NilObject.SINGLETON);
         }
         return stackValues;
     }

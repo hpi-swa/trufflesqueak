@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import static de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodeDSLAccess.FRAMES;
+
 import java.util.Arrays;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
@@ -404,9 +406,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // Cannot use copyTo here as frame descriptors may be different
         // ToDo: This does not handle any stack slots held in auxiliarySlots.
         FrameAccess.iterateStackSlots(oldFrame, slotIndex -> {
-            final Object stackValue = oldFrame.getObjectStatic(slotIndex);
+            final Object stackValue = FRAMES.uncheckedGetObject(oldFrame, slotIndex);
             if (stackValue != null) {
-                frame.setObjectStatic(slotIndex, stackValue);
+                FRAMES.setObject(frame, slotIndex, stackValue);
             }
         });
     }
@@ -656,7 +658,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final int numSlots = FrameAccess.getNumStackSlots(frame);
         for (int i = numArgs; i < numSlots; i++) {
             final int slotIndex = FrameAccess.toStackSlotIndex(frame, i);
-            final Object stackValue = frame.getObjectStatic(slotIndex);
+            final Object stackValue = FRAMES.uncheckedGetObject(frame, slotIndex);
             if (stackValue == null) {
                 writer.writeNil();
             } else {

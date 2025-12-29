@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
+import static de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodeDSLAccess.FRAMES;
+
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -20,7 +22,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameDescriptor.Builder;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -97,24 +98,10 @@ public final class FrameAccess {
      * Creates a new {@link FrameDescriptor} according to {@link SlotIndicies}.
      */
     public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code, final int numStackSlots) {
-        final Builder builder = FrameDescriptor.newBuilder(4 + numStackSlots);
-        builder.info(code);
-        addDefaultSlots(builder);
-        builder.addSlots(numStackSlots, FrameSlotKind.Static);
+        final int numSlots = SlotIndicies.STACK_START + numStackSlots;
+        final Builder builder = FrameDescriptor.newBuilder(numSlots).info(code).useSlotKinds(false);
+        builder.addSlots(numSlots);
         return builder.build();
-    }
-
-    public static VirtualFrame newDummyFrame(final CompiledCodeObject dummyMethod) {
-        final Builder builder = FrameDescriptor.newBuilder(4);
-        builder.info(dummyMethod);
-        addDefaultSlots(builder);
-        return Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), builder.build());
-    }
-
-    private static void addDefaultSlots(final Builder builder) {
-        builder.addSlot(FrameSlotKind.Static, null, null); // SlotIndicies.THIS_CONTEXT
-        builder.addSlot(FrameSlotKind.Static, null, null); // SlotIndicies.INSTRUCTION_POINTER
-        builder.addSlot(FrameSlotKind.Static, null, null); // SlotIndicies.STACK_POINTER
     }
 
     public static void copyAllSlots(final MaterializedFrame source, final MaterializedFrame destination) {
@@ -193,7 +180,7 @@ public final class FrameAccess {
     }
 
     public static ContextObject getContext(final Frame frame) {
-        return (ContextObject) frame.getObjectStatic(SlotIndicies.THIS_CONTEXT);
+        return (ContextObject) FRAMES.uncheckedGetObject(frame, SlotIndicies.THIS_CONTEXT);
     }
 
     public static boolean hasModifiedSender(final VirtualFrame frame) {
@@ -203,11 +190,11 @@ public final class FrameAccess {
 
     public static void setContext(final Frame frame, final ContextObject context) {
         assert getContext(frame) == null : "ContextObject already allocated";
-        frame.setObjectStatic(SlotIndicies.THIS_CONTEXT, context);
+        FRAMES.setObject(frame, SlotIndicies.THIS_CONTEXT, context);
     }
 
     public static int getInstructionPointer(final Frame frame) {
-        return frame.getIntStatic(SlotIndicies.INSTRUCTION_POINTER);
+        return frame.getInt(SlotIndicies.INSTRUCTION_POINTER);
     }
 
     public static boolean isDead(final Frame frame) {
@@ -215,11 +202,11 @@ public final class FrameAccess {
     }
 
     public static void setInstructionPointer(final Frame frame, final int value) {
-        frame.setIntStatic(SlotIndicies.INSTRUCTION_POINTER, value);
+        FRAMES.setInt(frame, SlotIndicies.INSTRUCTION_POINTER, value);
     }
 
     public static int getStackPointer(final Frame frame) {
-        return frame.getIntStatic(SlotIndicies.STACK_POINTER);
+        return frame.getInt(SlotIndicies.STACK_POINTER);
     }
 
     @NeverDefault
@@ -228,7 +215,7 @@ public final class FrameAccess {
     }
 
     public static void setStackPointer(final Frame frame, final int value) {
-        frame.setIntStatic(SlotIndicies.STACK_POINTER, value);
+        FRAMES.setInt(frame, SlotIndicies.STACK_POINTER, value);
     }
 
     public static int toStackSlotIndex(final Frame frame, final int index) {
@@ -281,7 +268,7 @@ public final class FrameAccess {
             setSlotsAreNilled(frame);
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndicies.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                frame.setObjectStatic(slotIndex, null);
+                FRAMES.setObject(frame, slotIndex, null);
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
                 frame.setAuxiliarySlot(auxSlotIndex, null);
@@ -309,7 +296,7 @@ public final class FrameAccess {
         } else {
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndicies.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                action.accept(frame.getObjectStatic(slotIndex));
+                action.accept(FRAMES.uncheckedGetObject(frame, slotIndex));
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
                 action.accept(frame.getAuxiliarySlot(auxSlotIndex));
@@ -329,9 +316,9 @@ public final class FrameAccess {
         } else {
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndicies.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                final Object replacement = action.apply(frame.getObjectStatic(slotIndex));
+                final Object replacement = action.apply(FRAMES.uncheckedGetObject(frame, slotIndex));
                 if (replacement != null) {
-                    frame.setObjectStatic(slotIndex, replacement);
+                    FRAMES.setObject(frame, slotIndex, replacement);
                 }
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
@@ -345,7 +332,7 @@ public final class FrameAccess {
 
     public static Object getSlotValue(final Frame frame, final int slotIndex) {
         try {
-            return frame.getObjectStatic(slotIndex);
+            return FRAMES.uncheckedGetObject(frame, slotIndex);
         } catch (final ArrayIndexOutOfBoundsException aioobe) {
             CompilerDirectives.transferToInterpreter();
             final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
@@ -355,7 +342,7 @@ public final class FrameAccess {
 
     public static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
         try {
-            frame.setObjectStatic(slotIndex, value);
+            FRAMES.setObject(frame, slotIndex, value);
         } catch (final ArrayIndexOutOfBoundsException aioobe) {
             CompilerDirectives.transferToInterpreter();
             final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
