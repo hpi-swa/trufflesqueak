@@ -25,7 +25,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
     private DecoderV3PlusClosures() {
     }
 
-    /**
+    /*
      * Split the implementation of determineMaxNumStackSlots into a fast path (bytecodes that do not
      * need additional bytes to determine the stack pointer change) decoded by a table lookup, and a
      * slow path, decoded using a switch.
@@ -35,13 +35,13 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
         Arrays.fill(BYTECODE_DELTAS, NEEDS_SWITCH);
 
         // 0-95: Push (sp + 1)
-        fillRange(BYTECODE_DELTAS, 0, 95, 1);
+        Arrays.fill(BYTECODE_DELTAS, 0, 96, (byte) 1);
 
         // 96-111: Pop (sp - 1)
-        fillRange(BYTECODE_DELTAS, 96, 111, -1);
+        Arrays.fill(BYTECODE_DELTAS, 96, 112, (byte) -1);
 
         // 112-119: Push Constant (sp + 1)
-        fillRange(BYTECODE_DELTAS, 112, 119, 1);
+        Arrays.fill(BYTECODE_DELTAS, 112, 120, (byte) 1);
 
         // 128: Push, 129: Store (0), 130: Pop (-1)
         BYTECODE_DELTAS[128] = 1;
@@ -60,16 +60,16 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
         BYTECODE_DELTAS[142] = -1;
 
         // 176-207: Special Selectors (Variable delta based on Image)
-        fillRange(BYTECODE_DELTAS, 176, 207, NEEDS_SPECIAL_SELECTORS);
+        Arrays.fill(BYTECODE_DELTAS, 176, 208, NEEDS_SPECIAL_SELECTORS);
 
         // 208-223: Send 0 args (delta 0)
-        fillRange(BYTECODE_DELTAS, 208, 223, 0);
+        Arrays.fill(BYTECODE_DELTAS, 208, 224, (byte) 0);
 
         // 224-239: Send 1 arg (delta -1)
-        fillRange(BYTECODE_DELTAS, 224, 239, -1);
+        Arrays.fill(BYTECODE_DELTAS, 224, 240, (byte) -1);
 
         // 240-255: Send 2 args (delta -2)
-        fillRange(BYTECODE_DELTAS, 240, 255, -2);
+        Arrays.fill(BYTECODE_DELTAS, 240, 256, (byte) -2);
     }
 
     static {
@@ -77,14 +77,14 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
         Arrays.fill(BYTECODE_LENGTHS, (byte) 1);
 
         // 2-byte instructions
-        fillRange(BYTECODE_LENGTHS, 128, 131, 2);
-        fillRange(BYTECODE_LENGTHS, 133, 134, 2);
+        Arrays.fill(BYTECODE_LENGTHS, 128, 132, (byte) 2);
+        Arrays.fill(BYTECODE_LENGTHS, 133, 135, (byte) 2);
         BYTECODE_LENGTHS[138] = 2;
-        fillRange(BYTECODE_LENGTHS, 160, 175, 2);
+        Arrays.fill(BYTECODE_LENGTHS, 160, 176, (byte) 2);
 
         // 3-byte instructions
         BYTECODE_LENGTHS[132] = 3;
-        fillRange(BYTECODE_LENGTHS, 139, 142, 3);
+        Arrays.fill(BYTECODE_LENGTHS, 139, 143, (byte) 3);
 
         // 4-byte / Dynamic (Push Closure)
         BYTECODE_LENGTHS[143] = DYNAMIC_LENGTH;
@@ -92,12 +92,6 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
 
     private static int decodeNumBytes(final int b) {
         return BYTECODE_LENGTHS[b];
-    }
-
-    private static void fillRange(final byte[] array, final int start, final int end, final int value) {
-        for (int i = start; i <= end; i++) {
-            array[i] = (byte) value;
-        }
     }
 
     @Override
@@ -256,7 +250,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
      */
     @Override
     public int determineMaxNumStackSlots(final CompiledCodeObject code, final int initialPC, final int maxPC) {
-        SqueakImageContext image = null;
+        final SqueakImageContext image = code.getSqueakClass().getImage();
         final int contextSize = code.getSqueakContextSize();
         final byte[] joins = new byte[maxPC];
         final byte[] bc = code.getBytes();
@@ -278,9 +272,6 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
             } else if (delta == NEEDS_SPECIAL_SELECTORS) {
                 // Fast path: stack offset determined by single bytecode and special selectors
                 // table.
-                if (image == null) {
-                    image = code.getSqueakClass().getImage();
-                }
                 currentStackPointer -= image.getSpecialSelectorNumArgs(b - 176);
                 index += decodeNumBytes(b);
             } else {

@@ -23,7 +23,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
     private DecoderSistaV1() {
     }
 
-    /**
+    /*
      * Split the implementation of determineMaxNumStackSlots into a fast path (bytecodes that do not
      * need an extension or additional bytes to determine the stack pointer change) decoded by a
      * table lookup, and a slow path, decoded using a switch.
@@ -37,39 +37,33 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         BYTECODE_DELTAS[0xE1] = NEEDS_EXTENSION;
 
         // Mark the special sends.
-        fillRange(BYTECODE_DELTAS, 0x60, 0x7F, NEEDS_SPECIAL_SELECTORS);
+        Arrays.fill(BYTECODE_DELTAS, 0x60, 0x80, NEEDS_SPECIAL_SELECTORS);
 
         // Map the "Fast Path" (Fixed Deltas)
 
         // sp + 1
-        fillRange(BYTECODE_DELTAS, 0x00, 0x51, 1);
+        Arrays.fill(BYTECODE_DELTAS, 0x00, 0x52, (byte) 1);
         BYTECODE_DELTAS[0x53] = 1;
-        fillRange(BYTECODE_DELTAS, 0xE2, 0xE5, 1);
+        Arrays.fill(BYTECODE_DELTAS, 0xE2, 0xE6, (byte) 1);
         BYTECODE_DELTAS[0xE8] = 1;
         BYTECODE_DELTAS[0xE9] = 1;
         BYTECODE_DELTAS[0xFB] = 1;
 
         // sp + 0
         BYTECODE_DELTAS[0x5F] = 0;
-        fillRange(BYTECODE_DELTAS, 0x80, 0x8F, 0);
-        fillRange(BYTECODE_DELTAS, 0xF3, 0xF5, 0);
+        Arrays.fill(BYTECODE_DELTAS, 0x80, 0x90, (byte) 0);
+        Arrays.fill(BYTECODE_DELTAS, 0xF3, 0xF6, (byte) 0);
         BYTECODE_DELTAS[0xFC] = 0;
 
         // sp - 1
-        fillRange(BYTECODE_DELTAS, 0x90, 0x9F, -1);
-        fillRange(BYTECODE_DELTAS, 0xC8, 0xD7, -1);
+        Arrays.fill(BYTECODE_DELTAS, 0x90, 0xA0, (byte) -1);
+        Arrays.fill(BYTECODE_DELTAS, 0xC8, 0xD8, (byte) -1);
         BYTECODE_DELTAS[0xD9] = -1;
-        fillRange(BYTECODE_DELTAS, 0xF0, 0xF2, -1);
+        Arrays.fill(BYTECODE_DELTAS, 0xF0, 0xF3, (byte) -1);
         BYTECODE_DELTAS[0xFD] = -1;
 
         // sp - 2
-        fillRange(BYTECODE_DELTAS, 0xA0, 0xAF, -2);
-    }
-
-    private static void fillRange(final byte[] array, final int start, final int end, final int value) {
-        for (int i = start; i <= end; i++) {
-            array[i] = (byte) value;
-        }
+        Arrays.fill(BYTECODE_DELTAS, 0xA0, 0xB0, (byte) -2);
     }
 
     @Override
@@ -263,7 +257,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
      */
     @Override
     public int determineMaxNumStackSlots(final CompiledCodeObject code, final int initialPC, final int maxPC) {
-        SqueakImageContext image = null;
+        final SqueakImageContext image = code.getSqueakClass().getImage();
         final int contextSize = code.getSqueakContextSize();
         final byte[] joins = new byte[maxPC];
         final byte[] bc = code.getBytes();
@@ -285,9 +279,6 @@ public final class DecoderSistaV1 extends AbstractDecoder {
             } else if (delta == NEEDS_SPECIAL_SELECTORS) {
                 // Fast path: stack offset determined by single bytecode and special selectors
                 // table.
-                if (image == null) {
-                    image = code.getSqueakClass().getImage();
-                }
                 currentStackPointer -= image.getSpecialSelectorNumArgs(b - 96);
                 index += decodeNoExtensionNumBytes(b);
             } else {
@@ -384,7 +375,7 @@ public final class DecoderSistaV1 extends AbstractDecoder {
             }
 
             case 0xF0, 0xF1, 0xF2 -> sp - 1;
-            case 0xF3, 0xF4, 0xF5 -> sp + 0;
+            case 0xF3, 0xF4, 0xF5 -> sp;
 
             case 0xF6, 0xF7 -> throw SqueakException.create("Not a bytecode:", b);
             case 0xF8 -> {
