@@ -105,7 +105,7 @@ public final class FrameAccess {
     }
 
     public static void copyAllSlots(final MaterializedFrame source, final MaterializedFrame destination) {
-        source.copyTo(0, destination, 0, source.getFrameDescriptor().getNumberOfSlots());
+        FRAMES.copyTo(source, 0, destination, 0, source.getFrameDescriptor().getNumberOfSlots());
     }
 
     /* Returns the code object matching the frame's descriptor. */
@@ -332,7 +332,7 @@ public final class FrameAccess {
 
     public static Object getSlotValue(final Frame frame, final int slotIndex) {
         try {
-            return FRAMES.uncheckedGetObject(frame, slotIndex);
+            return frame.getObject(slotIndex);
         } catch (final ArrayIndexOutOfBoundsException aioobe) {
             CompilerDirectives.transferToInterpreter();
             final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
@@ -342,7 +342,7 @@ public final class FrameAccess {
 
     public static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
         try {
-            FRAMES.setObject(frame, slotIndex, value);
+            frame.setObject(slotIndex, value);
         } catch (final ArrayIndexOutOfBoundsException aioobe) {
             CompilerDirectives.transferToInterpreter();
             final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
