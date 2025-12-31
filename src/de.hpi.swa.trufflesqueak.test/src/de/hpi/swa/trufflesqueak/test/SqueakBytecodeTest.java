@@ -581,6 +581,11 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
             final int[] intBytes = new int[length];
             intBytes[0] = bytecode;
             intBytes[1] = 20;
+            for (int index = 3; index < length - 2; index += 2) {
+                // uninitialized intBytes = "pushRcvr: 0"
+                // must cancel with "pop" to avoid stack overflow
+                intBytes[index] = 0x87;
+            }
             intBytes[length - 2] = 0x75;
             intBytes[length - 1] = 0x7C;
             assertSame(0L, runMethod(rcvr, intBytes));

@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import static de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.trailerPosition;
+
 import java.util.Arrays;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
@@ -38,6 +40,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.ShadowBlockParams;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderSistaV1;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderV3PlusClosures;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -321,18 +324,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public FrameDescriptor getFrameDescriptor() {
         CompilerAsserts.neverPartOfCompilation();
         if (getExecutionData().frameDescriptor == null) {
-            final CompiledCodeObject exposedMethod;
-            final int maxNumStackSlots;
-            if (isShadowBlock()) {
-                /* Never let shadow blocks escape, use their outer method instead. */
-                exposedMethod = executionData.outerMethod;
-                /* TODO: determine max number of stack slots instead of context size. */
-                maxNumStackSlots = getSqueakContextSize();
-            } else {
-                exposedMethod = this;
-                maxNumStackSlots = getMaxNumStackSlots();
-            }
-            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod, maxNumStackSlots);
+            /* Never let shadow blocks escape, use their outer method instead. */
+            final CompiledCodeObject exposedMethod = isShadowBlock() ? executionData.outerMethod : this;
+            executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod, getMaxNumStackSlots());
         }
         return executionData.frameDescriptor;
     }
@@ -363,7 +357,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public int getMaxNumStackSlots() {
-        return getDecoder().determineMaxNumStackSlots(this);
+        if (isShadowBlock()) {
+            final int initialPC = getOuterMethodStartPCZeroBased();
+            final ShadowBlockParams params = getDecoder().decodeShadowBlock(this, initialPC);
+            return params.numArgs() + params.numCopied() + getDecoder().determineMaxNumStackSlots(this, initialPC, initialPC + params.blockSize());
+        } else {
+            return getNumTemps() + getDecoder().determineMaxNumStackSlots(this, 0, trailerPosition(this));
+        }
     }
 
     public boolean getSignFlag() {
@@ -510,7 +510,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             if (selectorObj != null) {
                 selector = selectorObj.asStringUnsafe();
             }
-            return className + "#" + selector;
+            return (isShadowBlock() ? "[] embedded in " : "") + className + "#" + selector;
         }
     }
 
