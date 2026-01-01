@@ -287,7 +287,10 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
 
         final int finalMaxStackPointer = maxStackPointer - SP_BIAS + initialSP;
         assert initialSP <= finalMaxStackPointer && finalMaxStackPointer <= contextSize : "Stack pointer out of range: " + finalMaxStackPointer + " (Context size: " + contextSize + ")";
-        return finalMaxStackPointer;
+
+        // Leave space for a push that could occur during unwind handling or process/context
+        // manipulation. For example, Context class>>contextEnsure: and ContextPart>>unwindAndStop:
+        return finalMaxStackPointer < contextSize ? finalMaxStackPointer + 1 : finalMaxStackPointer;
     }
 
     private static int decodeStackPointer(final byte[] bc, final int index, final int sp, final byte[] joins) {

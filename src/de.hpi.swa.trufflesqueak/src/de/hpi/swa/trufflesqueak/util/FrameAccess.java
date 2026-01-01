@@ -344,23 +344,11 @@ public final class FrameAccess {
     }
 
     public static Object getSlotValue(final Frame frame, final int slotIndex) {
-        try {
-            return frame.getObjectStatic(slotIndex);
-        } catch (final ArrayIndexOutOfBoundsException aioobe) {
-            CompilerDirectives.transferToInterpreter();
-            final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
-            return frame.getAuxiliarySlot(auxSlotIndex);
-        }
+        return frame.getObjectStatic(slotIndex);
     }
 
     public static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
-        try {
-            frame.setObjectStatic(slotIndex, value);
-        } catch (final ArrayIndexOutOfBoundsException aioobe) {
-            CompilerDirectives.transferToInterpreter();
-            final int auxSlotIndex = frame.getFrameDescriptor().findOrAddAuxiliarySlot(slotIndex);
-            frame.setAuxiliarySlot(auxSlotIndex, value);
-        }
+        frame.setObjectStatic(slotIndex, value);
     }
 
     public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {
