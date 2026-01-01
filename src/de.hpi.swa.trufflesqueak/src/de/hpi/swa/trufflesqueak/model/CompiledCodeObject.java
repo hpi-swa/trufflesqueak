@@ -81,16 +81,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     static final class ExecutionData {
         private FrameDescriptor frameDescriptor;
 
-        /*
-         * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
-         * CompiledBlocks their outer method in their last literal. For traditional BlockClosures,
-         * we need to do something similar, but with CompiledMethods only (CompiledBlocks are not
-         * used then). The next two fields are used to store "shadow blocks", which are copies of
-         * the outer method with a new call target, and the outer method to be used for closure
-         * activations.
-         */
-        private CompiledCodeObject outerMethod;
-        private int outerMethodStartPC;
+        private ShadowBlockMetadata shadowBlockMetadata;
 
         private Source source;
 
@@ -98,6 +89,48 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         private CyclicAssumption callTargetStable;
         private Assumption doesNotNeedThisContext;
         private RootCallTarget resumptionCallTarget;
+    }
+
+    static final class ShadowBlockMetadata {
+        /*
+         * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
+         * CompiledBlocks their outer method in their last literal. For traditional BlockClosures,
+         * we need to do something similar, but with CompiledMethods only (CompiledBlocks are not
+         * used then). This class stores data for "shadow blocks", which are copies of the outer
+         * method with a new call target, and the outer method to be used for closure activations.
+         */
+        private final CompiledCodeObject outerMethod;
+        private int outerMethodStartPC;
+
+        private final ShadowBlockParams params;
+
+        private ShadowBlockMetadata(final CompiledCodeObject shadowMethod, final CompiledCodeObject outerCode, final int startPC) {
+            outerMethod = outerCode.getOuterMethod();
+            assert outerMethod.isCompiledMethod();
+            outerMethodStartPC = startPC;
+            params = shadowMethod.getDecoder().decodeShadowBlock(shadowMethod, startPC - outerMethod.getInitialPC());
+        }
+
+        public int getOuterMethodStartPC() {
+            return outerMethodStartPC;
+        }
+
+        public void setOuterMethodStartPC(final int pc) {
+            outerMethodStartPC = pc;
+            assert outerMethodStartPC > outerMethod.getInitialPC();
+        }
+
+        public int getOuterMethodStartPCZeroBased() {
+            return outerMethodStartPC - outerMethod.getInitialPC();
+        }
+
+        public int getOuterMethodMaxPCZeroBased() {
+            return getOuterMethodStartPCZeroBased() + params.blockSize();
+        }
+
+        public int getInitialSP() {
+            return params.numArgs() + params.numCopied();
+        }
     }
 
     public CompiledCodeObject(final SqueakImageChunk chunk) {
@@ -128,16 +161,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
         super(outerCode);
 
-        // store outer method and startPC
-        final ExecutionData data = getExecutionData();
-        data.outerMethod = outerCode.isShadowBlock() ? outerCode.getExecutionData().outerMethod : outerCode;
-        assert data.outerMethod.isCompiledMethod();
-        data.outerMethodStartPC = startPC;
-
         // header info and data
         header = outerCode.header;
         literals = outerCode.literals;
         bytes = outerCode.bytes;
+
+        // store outer method and startPC
+        final ExecutionData data = getExecutionData();
+        data.shadowBlockMetadata = new ShadowBlockMetadata(this, outerCode, startPC);
     }
 
     private CompiledCodeObject(final int size, final ClassObject classObject) {
@@ -172,22 +203,37 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public boolean isShadowBlock() {
-        return hasExecutionData() && executionData.outerMethod != null;
+        return hasExecutionData() && executionData.shadowBlockMetadata != null;
+    }
+
+    private ShadowBlockMetadata getShadowBlockMetadata() {
+        assert isShadowBlock();
+        return executionData.shadowBlockMetadata;
+    }
+
+    public CompiledCodeObject getOuterMethod() {
+        if (isShadowBlock()) {
+            return getShadowBlockMetadata().outerMethod;
+        } else {
+            return this;
+        }
     }
 
     public int getOuterMethodStartPC() {
-        assert isShadowBlock();
-        return executionData.outerMethodStartPC;
+        return getShadowBlockMetadata().getOuterMethodStartPC();
     }
 
     public void setOuterMethodStartPC(final int pc) {
         assert isShadowBlock();
-        executionData.outerMethodStartPC = pc;
-        assert executionData.outerMethodStartPC > executionData.outerMethod.getInitialPC();
+        getShadowBlockMetadata().setOuterMethodStartPC(pc);
     }
 
     public int getOuterMethodStartPCZeroBased() {
-        return getOuterMethodStartPC() - executionData.outerMethod.getInitialPC();
+        return getShadowBlockMetadata().getOuterMethodStartPCZeroBased();
+    }
+
+    public int getOuterMethodMaxPCZeroBased() {
+        return getShadowBlockMetadata().getOuterMethodMaxPCZeroBased();
     }
 
     private void setLiteralsAndBytes(final int header, final Object[] literals, final byte[] bytes) {
@@ -325,7 +371,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerAsserts.neverPartOfCompilation();
         if (getExecutionData().frameDescriptor == null) {
             /* Never let shadow blocks escape, use their outer method instead. */
-            final CompiledCodeObject exposedMethod = isShadowBlock() ? executionData.outerMethod : this;
+            final CompiledCodeObject exposedMethod = isShadowBlock() ? executionData.shadowBlockMetadata.outerMethod : this;
             executionData.frameDescriptor = FrameAccess.newFrameDescriptor(exposedMethod, getMaxNumStackSlots());
         }
         return executionData.frameDescriptor;
@@ -356,14 +402,20 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return CompiledCodeHeaderUtils.getNeedsLargeFrame(header) ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
+    public int getStartPCZeroBased() {
+        return isShadowBlock() ? getShadowBlockMetadata().getOuterMethodStartPCZeroBased() : 0;
+    }
+
+    public int getMaxPCZeroBased() {
+        return isShadowBlock() ? getShadowBlockMetadata().getOuterMethodMaxPCZeroBased() : trailerPosition(this);
+    }
+
+    public int getInitialSP() {
+        return isShadowBlock() ? getShadowBlockMetadata().getInitialSP() : getNumTemps();
+    }
+
     public int getMaxNumStackSlots() {
-        if (isShadowBlock()) {
-            final int initialPC = getOuterMethodStartPCZeroBased();
-            final ShadowBlockParams params = getDecoder().decodeShadowBlock(this, initialPC);
-            return params.numArgs() + params.numCopied() + getDecoder().determineMaxNumStackSlots(this, initialPC, initialPC + params.blockSize());
-        } else {
-            return getNumTemps() + getDecoder().determineMaxNumStackSlots(this, 0, trailerPosition(this));
-        }
+        return getInitialSP() + getDecoder().determineMaxNumStackSlots(this, getStartPCZeroBased(), getMaxPCZeroBased());
     }
 
     public boolean getSignFlag() {
@@ -384,15 +436,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final int header2 = other.header;
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;
-        final CompiledCodeObject outerMethod2 = other.hasExecutionData() ? other.executionData.outerMethod : null;
+        final ShadowBlockMetadata meta2 = other.hasExecutionData() ? other.executionData.shadowBlockMetadata : null;
         other.setLiteralsAndBytes(header, literals, bytes);
-        if (hasExecutionData() && executionData.outerMethod != null) {
-            other.getExecutionData().outerMethod = executionData.outerMethod;
+        if (hasExecutionData() && executionData.shadowBlockMetadata != null) {
+            other.getExecutionData().shadowBlockMetadata = executionData.shadowBlockMetadata;
         }
         other.invalidateCallTargetStable("become");
         setLiteralsAndBytes(header2, literals2, bytes2);
-        if (outerMethod2 != null) {
-            getExecutionData().outerMethod = outerMethod2;
+        if (meta2 != null) {
+            getExecutionData().shadowBlockMetadata = meta2;
         }
         other.invalidateCallTarget();
         invalidateCallTarget();

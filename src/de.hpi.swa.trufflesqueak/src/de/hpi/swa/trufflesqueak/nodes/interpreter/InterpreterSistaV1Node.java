@@ -72,12 +72,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @Override
-    protected void processBytecode(final int maxPC) {
+    protected void processBytecode(final int startPC, final int endPC) {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
 
-        int pc = code.isShadowBlock() ? code.getOuterMethodStartPCZeroBased() : 0;
-        final int endPC = maxPC; // FIXME: should use block size in blocks
+        int pc = startPC;
         assert pc < endPC;
         int extA = 0;
         int extB = 0;

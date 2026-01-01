@@ -77,10 +77,11 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         this.code = code;
         isBlock = code.isCompiledBlock() || code.isShadowBlock();
         numArguments = -1;
-        final int maxPC = BytecodeUtils.trailerPosition(code);
-        data = new Object[maxPC];
-        profiles = new byte[maxPC];
-        processBytecode(maxPC);
+        final int startPC = code.getStartPCZeroBased();
+        final int endPC = code.getMaxPCZeroBased();
+        data = new Object[endPC];
+        profiles = new byte[endPC];
+        processBytecode(startPC, endPC);
     }
 
     @SuppressWarnings("this-escape")
@@ -90,14 +91,15 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         isBlock = original.isBlock;
         numArguments = original.numArguments;
         // fresh fields
-        final int maxPC = BytecodeUtils.trailerPosition(code);
-        data = new Object[maxPC];
-        profiles = new byte[maxPC];
-        processBytecode(maxPC);
+        final int startPC = code.getStartPCZeroBased();
+        final int endPC = code.getMaxPCZeroBased();
+        data = new Object[endPC];
+        profiles = new byte[endPC];
+        processBytecode(startPC, endPC);
         osrMetadata = null;
     }
 
-    protected abstract void processBytecode(int maxPC);
+    protected abstract void processBytecode(int startPC, int endPC);
 
     @Override
     public abstract Object execute(VirtualFrame frame, int startPC, int startSP);
