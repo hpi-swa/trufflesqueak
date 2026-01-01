@@ -28,7 +28,7 @@ public abstract class AbstractDecoder {
 
     public abstract int pcPreviousTo(CompiledCodeObject code, int pc);
 
-    public abstract int determineMaxNumStackSlots(CompiledCodeObject code, int initialPC, int maxPC);
+    public abstract int determineMaxNumStackSlots(CompiledCodeObject code, int initialPC, int maxPC, int initialSP);
 
     protected abstract int decodeNumBytes(CompiledCodeObject code, int index);
 

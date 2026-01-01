@@ -415,7 +415,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public int getMaxNumStackSlots() {
-        return getInitialSP() + getDecoder().determineMaxNumStackSlots(this, getStartPCZeroBased(), getMaxPCZeroBased());
+        return getDecoder().determineMaxNumStackSlots(this, getStartPCZeroBased(), getMaxPCZeroBased(), getInitialSP());
     }
 
     public boolean getSignFlag() {

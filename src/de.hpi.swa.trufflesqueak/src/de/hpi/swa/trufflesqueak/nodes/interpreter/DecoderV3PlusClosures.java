@@ -249,7 +249,7 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
      * allows dead code (at least the one for SistaV1), which simplifies the implementation.
      */
     @Override
-    public int determineMaxNumStackSlots(final CompiledCodeObject code, final int initialPC, final int maxPC) {
+    public int determineMaxNumStackSlots(final CompiledCodeObject code, final int initialPC, final int maxPC, final int initialSP) {
         final SqueakImageContext image = code.getSqueakClass().getImage();
         final int contextSize = code.getSqueakContextSize();
         final byte[] joins = new byte[maxPC];
@@ -280,15 +280,14 @@ public final class DecoderV3PlusClosures extends AbstractDecoder {
                 index += decodeNumBytesSkipOverBlocks(bc, index);
             }
 
-            assert 0 <= currentStackPointer - SP_BIAS && currentStackPointer - SP_BIAS <= contextSize : "Stack pointer out of range: " + (currentStackPointer - SP_BIAS) + " (Context size: " +
-                            contextSize + ")";
             if (currentStackPointer > maxStackPointer) {
                 maxStackPointer = currentStackPointer;
             }
         }
 
-        assert 0 <= maxStackPointer - SP_BIAS && maxStackPointer - SP_BIAS <= contextSize : "Stack pointer out of range: " + (maxStackPointer - SP_BIAS) + " (Context size: " + contextSize + ")";
-        return maxStackPointer - SP_BIAS;
+        final int finalMaxStackPointer = maxStackPointer - SP_BIAS + initialSP;
+        assert initialSP <= finalMaxStackPointer && finalMaxStackPointer <= contextSize : "Stack pointer out of range: " + finalMaxStackPointer + " (Context size: " + contextSize + ")";
+        return finalMaxStackPointer;
     }
 
     private static int decodeStackPointer(final byte[] bc, final int index, final int sp, final byte[] joins) {
