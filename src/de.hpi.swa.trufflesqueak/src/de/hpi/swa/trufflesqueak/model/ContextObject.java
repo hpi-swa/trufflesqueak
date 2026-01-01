@@ -174,7 +174,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
         FrameAccess.setContext(truffleFrame, context);
         FrameAccess.setInstructionPointer(truffleFrame, 0);
-        FrameAccess.setStackPointer(truffleFrame, 1);
+        FrameAccess.setStackPointer(truffleFrame, 0);
         return truffleFrame;
     }
 
