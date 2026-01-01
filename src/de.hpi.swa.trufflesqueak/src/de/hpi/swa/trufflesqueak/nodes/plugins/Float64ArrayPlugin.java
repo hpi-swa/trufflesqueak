@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2020-2025 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2025 Oracle and/or its affiliates
+ * Copyright (c) 2020-2026 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021-2026 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
