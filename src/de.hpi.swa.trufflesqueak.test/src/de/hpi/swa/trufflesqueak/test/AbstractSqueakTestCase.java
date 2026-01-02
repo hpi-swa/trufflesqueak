@@ -42,20 +42,20 @@ public abstract class AbstractSqueakTestCase {
         return new CompiledCodeObject(bytes, header, literals, image.compiledMethodClass);
     }
 
-    protected static final CompiledCodeObject makeMethod(final int header, final Object[] literals, final int... intbytes) {
+    protected static final CompiledCodeObject makeMethod(final long header, final Object[] literals, final int... intbytes) {
         final byte[] bytes = new byte[intbytes.length + 1];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
         }
         bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
-        final int numLiterals = header & 0x7FFF;
+        final int numLiterals = (int) header & 0x7FFF;
         final Object[] allLiterals = Arrays.copyOf(literals, numLiterals);
         allLiterals[numLiterals - 2] = image.asByteString("DoIt"); // compiledInSelector
         allLiterals[numLiterals - 1] = nilClassBinding; // methodClassAssociation
         return makeMethod(bytes, header, allLiterals);
     }
 
-    protected static final int makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
+    protected static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
         return CompiledCodeObject.CompiledCodeHeaderUtils.makeHeader(true, numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
     }
 
