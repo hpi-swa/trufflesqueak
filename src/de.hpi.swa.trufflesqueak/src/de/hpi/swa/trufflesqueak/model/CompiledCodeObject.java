@@ -718,7 +718,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public long getHeader() {
-        return header;
+        return CompiledCodeHeaderUtils.toLong(header);
     }
 
     public void initializeHeader(final long value) {
@@ -776,11 +776,23 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      *   (index 24)      4 bits:   number of arguments to the method (#numArgs)
      *   (index 28)      2 bits:   reserved for an access modifier (00-unused, 01-private, 10-protected, 11-public), although accessors for bit 29 exist (see #flag).
      *   sign bit:       1 bit:    selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag)
+     *
+     * Internally, we store a compressed 32-bit header and expand it to 64 bits when needed. Since
+     * CompiledCode's hash includes the header value in the hash computation, we need to ensure that the header
+     * value is the same on TS and OSVM. We can do this by restricting the value of the header to fall within
+     * OSVM's SmallInteger 61 bit range.
+     *
+     * Therefore the "long" version of the header is:
+     *   | 4b sign | 30b 0 | 2b access | 4b numArgs | 6b numTemps | largeFrame | hasPrim | jit | 15b numLiterals
+     * and the "int" version is:
+     *   | sign    | 0     | 2b access | 4b numArgs | 6b numTemps | largeFrame | hasPrim | jit | 15b numLiterals
      * </pre>
      */
     public static final class CompiledCodeHeaderUtils {
-        public static int makeHeader(final boolean signFlag, final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
-            return numLiterals & 0x7FFF | (hasPrimitive ? 0x10000 : 0) | (needsLargeFrame ? 0x20000 : 0) | (numTemps & 0x3F) << 18 | (numArgs & 0x0F) << 24 | (signFlag ? 0 : Integer.MIN_VALUE);
+        // Create a header for an internally generated method.
+        public static long makeHeader(final boolean signFlag, final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
+            return numLiterals & 0x7FFF | (hasPrimitive ? 0x10000 : 0) | (needsLargeFrame ? 0x20000 : 0) | (numTemps & 0x3F) << 18 | (numArgs & 0x0F) << 24 |
+                            (signFlag ? 0 : SqueakImageConstants.SMALL_INTEGER_MIN_VAL);
         }
 
         private static int getNumLiterals(final int header) {
@@ -807,9 +819,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             return header >= 0;
         }
 
-        // Convert 61bit to more compact 32bit representation
+        // Convert 61-or-more-bit SmallInteger into more compact 32-bit internal representation.
         private static int toInt(final long headerWord) {
             return (int) (headerWord | (headerWord < 0 ? Integer.MIN_VALUE : 0));
+        }
+
+        // Convert compact 32-bit internal representation back to 64-bit representation.
+        private static long toLong(final int headerWord) {
+            return ((long) headerWord & 0x3FFFFFFF | (headerWord < 0 ? SqueakImageConstants.SMALL_INTEGER_MIN_VAL : 0));
         }
     }
 }
