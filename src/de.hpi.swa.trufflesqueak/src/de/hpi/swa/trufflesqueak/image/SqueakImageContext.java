@@ -19,6 +19,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
@@ -146,7 +147,7 @@ public final class SqueakImageContext {
                     new byte[]{(byte) 139, 0, 1, (byte) 192, (byte) 169, (byte) 142, (byte) 254},
                     CompiledCodeHeaderUtils.makeHeader(true, 0, 0, 0, true, true),
                     ArrayUtils.EMPTY_ARRAY, compiledMethodClass);
-    public final VirtualFrame externalSenderFrame = FrameAccess.newDummyFrame(dummyMethod);
+    public final VirtualFrame externalSenderFrame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), dummyMethod.getFrameDescriptor());
 
     /* Method Cache */
     private static final int METHOD_CACHE_SIZE = 2 << 12;

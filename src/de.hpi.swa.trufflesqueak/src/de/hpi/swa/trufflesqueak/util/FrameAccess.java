@@ -97,24 +97,10 @@ public final class FrameAccess {
      * Creates a new {@link FrameDescriptor} according to {@link SlotIndicies}.
      */
     public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code, final int numStackSlots) {
-        final Builder builder = FrameDescriptor.newBuilder(SlotIndicies.STACK_START + numStackSlots);
-        builder.info(code);
-        addDefaultSlots(builder);
-        builder.addSlots(numStackSlots, FrameSlotKind.Static);
+        final int numSlots = SlotIndicies.STACK_START + numStackSlots;
+        final Builder builder = FrameDescriptor.newBuilder(numSlots).info(code);
+        builder.addSlots(numSlots, FrameSlotKind.Static);
         return builder.build();
-    }
-
-    public static VirtualFrame newDummyFrame(final CompiledCodeObject dummyMethod) {
-        final Builder builder = FrameDescriptor.newBuilder(SlotIndicies.STACK_START);
-        builder.info(dummyMethod);
-        addDefaultSlots(builder);
-        return Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), builder.build());
-    }
-
-    private static void addDefaultSlots(final Builder builder) {
-        builder.addSlot(FrameSlotKind.Static, null, null); // SlotIndicies.THIS_CONTEXT
-        builder.addSlot(FrameSlotKind.Static, null, null); // SlotIndicies.INSTRUCTION_POINTER
-        builder.addSlot(FrameSlotKind.Static, null, null); // SlotIndicies.STACK_POINTER
     }
 
     public static void copyAllSlots(final MaterializedFrame source, final MaterializedFrame destination) {
