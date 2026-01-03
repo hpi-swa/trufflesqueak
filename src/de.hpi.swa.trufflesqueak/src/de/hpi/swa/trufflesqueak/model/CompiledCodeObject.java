@@ -91,24 +91,31 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         private RootCallTarget resumptionCallTarget;
     }
 
+    /**
+     * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
+     * CompiledBlocks their outer method in their last literal. For traditional BlockClosures, we
+     * need to do something similar, but with CompiledMethods only (CompiledBlocks are not used
+     * then). This class stores data for "shadow blocks", which are copies of the outer method with
+     * a new call target, and the outer method to be used for closure activations.
+     */
     static final class ShadowBlockMetadata {
-        /*
-         * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
-         * CompiledBlocks their outer method in their last literal. For traditional BlockClosures,
-         * we need to do something similar, but with CompiledMethods only (CompiledBlocks are not
-         * used then). This class stores data for "shadow blocks", which are copies of the outer
-         * method with a new call target, and the outer method to be used for closure activations.
-         */
         private final CompiledCodeObject outerMethod;
         private int outerMethodStartPC;
 
         private final ShadowBlockParams params;
 
-        private ShadowBlockMetadata(final CompiledCodeObject shadowMethod, final CompiledCodeObject outerCode, final int startPC) {
+        private ShadowBlockMetadata(final CompiledCodeObject outerCode, final int startPC) {
             outerMethod = outerCode.getOuterMethod();
             assert outerMethod.isCompiledMethod();
             outerMethodStartPC = startPC;
-            params = shadowMethod.getDecoder().decodeShadowBlock(shadowMethod, startPC - outerMethod.getInitialPC());
+            params = outerMethod.getDecoder().decodeShadowBlock(outerMethod, startPC - outerMethod.getInitialPC());
+        }
+
+        private ShadowBlockMetadata(final CompiledCodeObject outerCode, final int startPC, final int numArgs, final int numCopied, final int blockSize) {
+            outerMethod = outerCode.getOuterMethod();
+            assert outerMethod.isCompiledMethod();
+            outerMethodStartPC = startPC;
+            params = new ShadowBlockParams(numArgs, numCopied, blockSize);
         }
 
         public int getOuterMethodStartPC() {
@@ -158,8 +165,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         primitiveNodeOrNull = original.primitiveNodeOrNull;
     }
 
-    private CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
+    private CompiledCodeObject(final CompiledCodeObject outerCode, final ShadowBlockMetadata shadowBlockMetadata) {
         super(outerCode);
+        CompilerAsserts.neverPartOfCompilation();
 
         // header info and data
         header = outerCode.header;
@@ -167,8 +175,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         bytes = outerCode.bytes;
 
         // store outer method and startPC
-        final ExecutionData data = getExecutionData();
-        data.shadowBlockMetadata = new ShadowBlockMetadata(this, outerCode, startPC);
+        getExecutionData().shadowBlockMetadata = shadowBlockMetadata;
     }
 
     private CompiledCodeObject(final int size, final ClassObject classObject) {
@@ -191,15 +198,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return executionData;
     }
 
-    /**
-     * A shadow block works similar to a CompiledBlock (e.g., has an outerCode reference) and is
-     * used when activating a traditional BlockClosure to ensure these activations use their own
-     * call target. This is not needed for FullBlockClosures because they have their own
-     * CompiledBlock instance.
-     */
     @TruffleBoundary
     public CompiledCodeObject createShadowBlock(final int startPC) {
-        return new CompiledCodeObject(this, startPC);
+        return new CompiledCodeObject(this, new ShadowBlockMetadata(this, startPC));
+    }
+
+    public CompiledCodeObject createShadowBlock(final int startPC, final int numArgs, final int numCopied, final int blockSize) {
+        return new CompiledCodeObject(this, new ShadowBlockMetadata(this, startPC, numArgs, numCopied, blockSize));
     }
 
     public boolean isShadowBlock() {
@@ -232,8 +237,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return getShadowBlockMetadata().getOuterMethodStartPCZeroBased();
     }
 
-    public int getOuterMethodMaxPCZeroBased() {
-        return getShadowBlockMetadata().getOuterMethodMaxPCZeroBased();
+    public int getShadowBlockNumArgs() {
+        return getShadowBlockMetadata().params.numArgs();
     }
 
     private void setLiteralsAndBytes(final int header, final Object[] literals, final byte[] bytes) {

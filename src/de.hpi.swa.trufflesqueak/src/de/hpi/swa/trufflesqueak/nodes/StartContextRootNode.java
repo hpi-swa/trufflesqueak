@@ -44,7 +44,7 @@ public final class StartContextRootNode extends AbstractRootNode {
 
     public StartContextRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image, code);
-        initialPC = code.isShadowBlock() ? code.getOuterMethodStartPCZeroBased() : 0;
+        initialPC = code.getStartPCZeroBased();
         interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(code);
     }
 

@@ -267,8 +267,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 case BC.EXT_PUSH_CLOSURE: {
                     final int byteA = getUnsignedInt(bc, pc++);
                     final int numArgs = (byteA & 0x07) + (extA & 0x0F) * 8;
+                    final int numCopied = (byteA >> 3 & 0x7) + (extA >> 4) * 8;
                     final int blockSize = getByteExtended(bc, pc++, extB);
-                    data[currentPC] = insert(new PushClosureNode(code, pc, numArgs));
+                    data[currentPC] = createBlock(code, pc, numArgs, numCopied, blockSize);
                     pc += blockSize;
                     extA = extB = 0;
                     break;
@@ -956,7 +957,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final CompiledCodeObject block = (CompiledCodeObject) code.getLiteral(literalIndex);
                         assert block.assertNotForwarded();
                         CompilerAsserts.partialEvaluationConstant(block);
-                        final int blockNumArgs = block.getNumArgs();
                         final byte byteB = getByte(bc, pc++);
                         final int numCopied = Byte.toUnsignedInt(byteB) & 63;
                         final Object[] copiedValues = popN(frame, sp, numCopied);
@@ -965,7 +965,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final boolean receiverOnStack = (byteB & 0x80) != 0;
                         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, currentPC);
                         final Object receiver = receiverOnStack ? pop(frame, --sp) : FrameAccess.getReceiver(frame);
-                        push(frame, sp++, new BlockClosureObject(false, block, blockNumArgs, copiedValues, receiver, outerContext));
+                        push(frame, sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
                         extA = 0;
                         break;
                     }
@@ -974,7 +974,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final int numCopied = (byteA >> 3 & 0x7) + (extA >> 4) * 8;
                         final Object[] copiedValues = popN(frame, sp, numCopied);
                         sp -= numCopied;
-                        push(frame, sp++, uncheckedCast(data[currentPC], PushClosureNode.class).execute(frame, copiedValues, getOrCreateContext(frame, currentPC)));
+                        push(frame, sp++, createBlockClosure(frame, uncheckedCast(data[currentPC], CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, currentPC)));
                         final int blockSize = getByteExtended(bc, pc++, extB);
                         pc += blockSize;
                         extA = extB = 0;
