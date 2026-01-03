@@ -13,7 +13,6 @@ import java.util.function.Function;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.Frame;
@@ -23,7 +22,6 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -34,7 +32,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 
 /**
@@ -358,7 +355,7 @@ public final class FrameAccess {
     }
 
     public static boolean isTruffleSqueakFrame(final Frame frame) {
-        return frame.getArguments().length >= ArgumentIndicies.RECEIVER && frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
+        return frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
@@ -505,64 +502,26 @@ public final class FrameAccess {
         assert getReceiver(frame) != null : "Receiver should not be null";
     }
 
-    public static ContextObject getResumingContextObjectOrSkip(final FrameInstance frameInstance) {
-        if (frameInstance.getCallTarget() instanceof final RootCallTarget rct) {
-            if (rct.getRootNode() instanceof final ResumeContextRootNode rcrn) {
-                /*
-                 * Reached end of Smalltalk activations on Truffle frames. From here, tracing should
-                 * continue to walk senders via ContextObjects.
-                 */
-                return rcrn.getActiveContext(); // break
-            }
-            /* Work around OSR bug. */
-            for (final Node child : rct.getRootNode().getChildren()) {
-                /* In case of OSR, the first child node is the actual root node */
-                if (child instanceof final ResumeContextRootNode rcrn) {
-                    LogUtils.ITERATE_FRAMES.warning("Workaround for OSR bug taken");
-                    return rcrn.getActiveContext();
-                }
-            }
-            return null; // skip
-        } else {
-            return null; // skip
-        }
-    }
-
     @TruffleBoundary
     public static MaterializedFrame findFrameForContext(final ContextObject context) {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a ContextObject...");
-        final Object frameOrResumingContextObject = Truffle.getRuntime().iterateFrames(frameInstance -> {
+        final MaterializedFrame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-            if (!isTruffleSqueakFrame(current)) {
-                return FrameAccess.getResumingContextObjectOrSkip(frameInstance);
+            if (isTruffleSqueakFrame(current)) {
+                LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
+                final ContextObject contextObject = getContext(current);
+                if (context == contextObject) {
+                    assert contextObject == null || !contextObject.hasTruffleFrame() : "Redundant frame lookup";
+                    return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE).materialize();
+                }
             }
-            LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
-            final ContextObject contextObject = getContext(current);
-            if (context == contextObject) {
-                assert contextObject == null || !contextObject.hasTruffleFrame() : "Redundant frame lookup";
-                return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE).materialize();
-            } else {
-                return null; // continue with next frame
-            }
+            return null; // continue with next frame
         });
-        if (frameOrResumingContextObject instanceof final MaterializedFrame materializedFrame) {
-            return materializedFrame;
-        } else if (frameOrResumingContextObject instanceof final ContextObject resumingContextObject) {
-            ContextObject currentContext = resumingContextObject;
-            while (true) {
-                if (currentContext == context) {
-                    return currentContext.getTruffleFrame(); // success
-                }
-                final AbstractSqueakObject sender = currentContext.getMaterializedSender();
-                if (sender instanceof final ContextObject senderContext) {
-                    currentContext = senderContext;
-                } else { // end of chain
-                    assert sender == NilObject.SINGLETON;
-                    break; // fail
-                }
-            }
+        if (frame != null) {
+            return frame;
+        } else {
+            throw SqueakException.create("Could not find frame for:", context);
         }
-        throw SqueakException.create("Could not find frame for:", context);
     }
 }

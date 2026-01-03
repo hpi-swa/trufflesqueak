@@ -316,10 +316,10 @@ public final class ObjectGraphUtils {
 
     @TruffleBoundary
     private static void pointersBecomeOneWayFrames(final Consumer<Object> tracer, final UnmodifiableEconomicMap<Object, Object> fromToMap) {
-        final ContextObject resumeContextObject = Truffle.getRuntime().iterateFrames((frameInstance) -> {
+        Truffle.getRuntime().iterateFrames((frameInstance) -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
             if (!FrameAccess.isTruffleSqueakFrame(current)) {
-                return FrameAccess.getResumingContextObjectOrSkip(frameInstance);
+                return null; // skip
             }
             final Object[] arguments = current.getArguments();
             for (int i = 0; i < arguments.length; i++) {
@@ -355,14 +355,8 @@ public final class ObjectGraphUtils {
                     return null;
                 }
             });
-            return null;
+            return null; // continue
         });
-        if (resumeContextObject != null) {
-            tracer.accept(resumeContextObject);
-        } else {
-            // TODO: find out when and why this happens
-            LogUtils.OBJECT_GRAPH.warning("Failed to find ResumeContextRootNode");
-        }
     }
 
     private record EphemeronsTask(ObjectTracer roots, ArrayDeque<EphemeronObject> ephemeronsToBeTraced,
@@ -532,18 +526,15 @@ public final class ObjectGraphUtils {
 
         private void addObjectsFromFrames() {
             CompilerAsserts.neverPartOfCompilation();
-            final ContextObject resumeContextObject = Truffle.getRuntime().iterateFrames(frameInstance -> {
+            Truffle.getRuntime().iterateFrames(frameInstance -> {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (!FrameAccess.isTruffleSqueakFrame(current)) {
-                    return FrameAccess.getResumingContextObjectOrSkip(frameInstance);
+                if (FrameAccess.isTruffleSqueakFrame(current)) {
+                    addAllIfUnmarked(current.getArguments());
+                    addIfUnmarked(FrameAccess.getContext(current));
+                    FrameAccess.iterateStackObjects(current, false, this::addIfUnmarked);
                 }
-                addAllIfUnmarked(current.getArguments());
-                addIfUnmarked(FrameAccess.getContext(current));
-                FrameAccess.iterateStackObjects(current, false, this::addIfUnmarked);
                 return null; // continue
             });
-            assert resumeContextObject != null : "Failed to find ResumeContextRootNode";
-            addIfUnmarked(resumeContextObject);
         }
 
         private AbstractSqueakObjectWithHash getNext() {

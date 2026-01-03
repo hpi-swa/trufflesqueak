@@ -201,10 +201,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         getCodeObject().getDoesNotNeedThisContextAssumption().invalidate();
     }
 
-    public AbstractSqueakObject getMaterializedSender() {
-        return FrameAccess.getSender(getTruffleFrame());
-    }
-
     /* Context has modified sender flag */
     public boolean hasModifiedSender() {
         return isBooleanASet();
