@@ -12,7 +12,7 @@ index 79c97354020..9518d41f5db 100644
      },
      "org.graalvm.launcher.test" : {
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
-index de0c5fa02fa..1fa2ff83bea 100644
+index de0c5fa02fa..23bafdc9f94 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
 +++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
 @@ -174,15 +174,15 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
@@ -20,7 +20,7 @@ index de0c5fa02fa..1fa2ff83bea 100644
          } else {
              indexedLocalsArray = new Object[indexedSize];
 -            indexedPrimitiveLocalsArray = new long[indexedSize];
-+            indexedPrimitiveLocalsArray = new long[Math.min(2, indexedSize)];
++            indexedPrimitiveLocalsArray = new long[indexedPrimitiveLengthTrimmed(indexedSize)];
              // Do not initialize tags, even for static slots. In practice, this means that it is
              // possible to statically access uninitialized slots.
 -            indexedTagsArray = new byte[indexedSize];
@@ -104,6 +104,69 @@ index de0c5fa02fa..1fa2ff83bea 100644
      }
  
      @Override
+@@ -1071,13 +1072,13 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+         } else if (sourceOffset < 0) {
+             CompilerDirectives.transferToInterpreterAndInvalidate();
+             throw new IndexOutOfBoundsException("Illegal sourceOffset passed.");
+-        } else if (sourceOffset + length > getIndexedTags().length) {
++        } else if (sourceOffset + length > getIndexedLocals().length) {
+             CompilerDirectives.transferToInterpreterAndInvalidate();
+             throw new IndexOutOfBoundsException("Illegal sourceOffset or length passed.");
+         } else if (destinationOffset < 0) {
+             CompilerDirectives.transferToInterpreterAndInvalidate();
+             throw new IndexOutOfBoundsException("Illegal destinationOffset passed.");
+-        } else if (destinationOffset + length > o.getIndexedTags().length) {
++        } else if (destinationOffset + length > o.getIndexedLocals().length) {
+             CompilerDirectives.transferToInterpreterAndInvalidate();
+             throw new IndexOutOfBoundsException("Illegal destinationOffset or length passed.");
+         }
+@@ -1091,9 +1092,13 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+ 
+         // eventually we might want to optimize this further using Unsafe.
+         // for now System.arrayCopy is fast enough.
+-        System.arraycopy(getIndexedTags(), srcOffset, o.getIndexedTags(), dstOffset, length);
++        // System.arraycopy(getIndexedTags(), srcOffset, o.getIndexedTags(), dstOffset, length);
+         System.arraycopy(getIndexedLocals(), srcOffset, o.getIndexedLocals(), dstOffset, length);
+-        System.arraycopy(getIndexedPrimitiveLocals(), srcOffset, o.getIndexedPrimitiveLocals(), dstOffset, length);
++        System.arraycopy(getIndexedPrimitiveLocals(), srcOffset, o.getIndexedPrimitiveLocals(), dstOffset, indexedPrimitiveLengthTrimmed(length));
++    }
++
++    private int indexedPrimitiveLengthTrimmed(final int length) {
++        return Math.min(2, length);
+     }
+ 
+     @Override
+@@ -1177,18 +1182,18 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+      * @param slot The slot that should be transferred
+      */
+     void transferOSRStaticSlot(FrameWithoutBoxing target, int slot) {
+-        if (ASSERTIONS_ENABLED) {
+-            final byte tag = indexedTags[slot];
+-            indexedTags[slot] = STATIC_OBJECT_TAG;
+-            target.setObjectStatic(slot, getObjectStatic(slot));
+-            indexedTags[slot] = STATIC_LONG_TAG;
+-            target.setLongStatic(slot, getLongStatic(slot));
+-            indexedTags[slot] = tag;
+-            target.setStaticSlotTag(slot, tag);
+-        } else {
+-            target.setObjectStatic(slot, getObjectStatic(slot));
+-            target.setLongStatic(slot, getLongStatic(slot));
+-        }
++        // if (ASSERTIONS_ENABLED) {
++        // final byte tag = indexedTags[slot];
++        // indexedTags[slot] = STATIC_OBJECT_TAG;
++        // target.setObjectStatic(slot, getObjectStatic(slot));
++        // indexedTags[slot] = STATIC_LONG_TAG;
++        // target.setLongStatic(slot, getLongStatic(slot));
++        // indexedTags[slot] = tag;
++        // target.setStaticSlotTag(slot, tag);
++        // } else {
++        target.setObjectStatic(slot, getObjectStatic(slot));
++        target.setLongStatic(slot, getLongStatic(slot));
++        // }
+     }
+ 
+     private void setStaticSlotTag(int slot, byte tag) {
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
 index 10b976c323e..18e3fd6a8a8 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
@@ -117,3 +180,56 @@ index 10b976c323e..18e3fd6a8a8 100644
              failNotAdopted(node, prev);
          }
          return true;
+diff --git a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
+index 37ce96b318d..230bb98be62 100644
+--- a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
++++ b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
+@@ -431,17 +431,16 @@ public final class BytecodeOSRMetadata {
+             CompilerDirectives.transferToInterpreterAndInvalidate();
+             throw new IllegalArgumentException("Transferring frame for OSR from an uninitialized bytecode target.");
+         }
+-        if (!(targetMetadata instanceof OsrEntryDescription)) {
++        if (!(targetMetadata instanceof OsrEntryDescription description)) {
+             CompilerDirectives.transferToInterpreterAndInvalidate();
+             throw new IllegalArgumentException("Wrong usage of targetMetadata during OSR frame transfer.");
+         }
+-
+-        OsrEntryDescription description = (OsrEntryDescription) targetMetadata;
+         CompilerAsserts.partialEvaluationConstant(description);
+ 
+         OptimizedRuntimeAccessor.ACCESSOR.startOSRFrameTransfer(target);
+         // Transfer indexed frame slots
+-        transferLoop(description.indexedFrameTags, source, target);
++        // transferLoop(description.indexedFrameTags, source, target);
++        source.copyTo(0, target, 0, source.getFrameDescriptor().getNumberOfSlots());
+         // transfer auxiliary slots
+         transferAuxiliarySlots(source, target, state);
+     }
+@@ -533,19 +532,18 @@ public final class BytecodeOSRMetadata {
+             byte actualTag = source.getTag(i);
+             byte expectedTag = expectedTags[i];
+ 
+-            if (expectedTag == FrameWithoutBoxing.STATIC_TAG) {
++            if (expectedTag != FrameWithoutBoxing.STATIC_TAG) {
+                 // Here we can skip incompatible tag check in case of static slot since the frame
+                 // descriptor has not changed (checked as pre-condition in 'validateDescriptor').
+                 // This allows uninitialized static slots (tag == 0) to pass through (and transfer
+                 // with 'tag == STATIC')
+-                actualTag = FrameWithoutBoxing.STATIC_TAG;
+-            }
+-            boolean incompatibleTags = expectedTag != actualTag;
+-            if (incompatibleTags) {
+-                // The tag for this slot may have changed; if so, deoptimize and update it.
+-                CompilerDirectives.transferToInterpreterAndInvalidate();
+-                expectedTags[i] = actualTag;
+-                continue; // try again with updated tags.
++                boolean incompatibleTags = expectedTag != actualTag;
++                if (incompatibleTags) {
++                    // The tag for this slot may have changed; if so, deoptimize and update it.
++                    CompilerDirectives.transferToInterpreterAndInvalidate();
++                    expectedTags[i] = actualTag;
++                    continue; // try again with updated tags.
++                }
+             }
+ 
+             transferIndexedFrameSlot(source, target, i, expectedTag);
