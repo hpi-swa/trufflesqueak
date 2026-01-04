@@ -11,6 +11,82 @@ index 79c97354020..9518d41f5db 100644
        "graalCompilerSourceEdition": "ignore",
      },
      "org.graalvm.launcher.test" : {
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
+index de0c5fa02fa..d0f17350a62 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
+@@ -174,15 +174,15 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+             indexedTagsArray = EMPTY_BYTE_ARRAY;
+         } else {
+             indexedLocalsArray = new Object[indexedSize];
+-            indexedPrimitiveLocalsArray = new long[indexedSize];
++            indexedPrimitiveLocalsArray = new long[Math.min(2, indexedSize)];
+             // Do not initialize tags, even for static slots. In practice, this means that it is
+             // possible to statically access uninitialized slots.
+-            indexedTagsArray = new byte[indexedSize];
+-            if (defaultValue == ILLEGAL_DEFAULT) {
+-                Arrays.fill(indexedTagsArray, ILLEGAL_TAG);
+-            } else if (defaultValue != null) {
+-                Arrays.fill(indexedLocalsArray, defaultValue);
+-            }
++            indexedTagsArray = null; // new byte[indexedSize];
++            // if (defaultValue == ILLEGAL_DEFAULT) {
++            // Arrays.fill(indexedTagsArray, ILLEGAL_TAG);
++            // } else if (defaultValue != null) {
++            // Arrays.fill(indexedLocalsArray, defaultValue);
++            // }
+         }
+         if (auxiliarySize == 0) {
+             auxiliarySlotsArray = EMPTY_OBJECT_ARRAY;
+@@ -812,18 +812,19 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+ 
+     @Override
+     public Object getObjectStatic(int slot) {
+-        assert checkStaticGet(slot, STATIC_OBJECT_TAG) : "Unexpected read of static object value";
++        // assert checkStaticGet(slot, STATIC_OBJECT_TAG) : "Unexpected read of static object
++        // value";
+ 
+         return getIndexedLocals()[slot];
+     }
+ 
+     @Override
+     public void setObjectStatic(int slot, Object value) {
+-        assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
++        // assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
+         // We use this check instead of the assert keyword to update the tags in PE'd code.
+-        if (ASSERTIONS_ENABLED) {
+-            indexedTags[slot] = STATIC_OBJECT_TAG;
+-        }
++        // if (ASSERTIONS_ENABLED) {
++        // indexedTags[slot] = STATIC_OBJECT_TAG;
++        // }
+ 
+         getIndexedLocals()[slot] = value;
+     }
+@@ -866,18 +867,18 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+ 
+     @Override
+     public int getIntStatic(int slot) {
+-        assert checkStaticGet(slot, STATIC_INT_TAG) : "Unexpected read of static int value";
++        // assert checkStaticGet(slot, STATIC_INT_TAG) : "Unexpected read of static int value";
+ 
+         return narrow(getIndexedPrimitiveLocals()[slot]);
+     }
+ 
+     @Override
+     public void setIntStatic(int slot, int value) {
+-        assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
++        // assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
+         // We use this check instead of the assert keyword to update the tags in PE'd code.
+-        if (ASSERTIONS_ENABLED) {
+-            indexedTags[slot] = STATIC_INT_TAG;
+-        }
++        // if (ASSERTIONS_ENABLED) {
++        // indexedTags[slot] = STATIC_INT_TAG;
++        // }
+ 
+         getIndexedPrimitiveLocals()[slot] = extend(value);
+     }
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
 index 10b976c323e..18e3fd6a8a8 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java

@@ -81,9 +81,9 @@ public final class FrameAccess {
     }
 
     private static final class SlotIndicies {
-        private static final int THIS_CONTEXT = 0;
-        private static final int INSTRUCTION_POINTER = 1;
-        private static final int STACK_POINTER = 2;
+        private static final int INSTRUCTION_POINTER = 0;
+        private static final int STACK_POINTER = 1;
+        private static final int THIS_CONTEXT = 2;
         private static final int STACK_START = 3;
     }
 
