@@ -12,7 +12,7 @@ index 79c97354020..9518d41f5db 100644
      },
      "org.graalvm.launcher.test" : {
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
-index de0c5fa02fa..d0f17350a62 100644
+index de0c5fa02fa..ed5fb724476 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
 +++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
 @@ -174,15 +174,15 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
@@ -38,7 +38,16 @@ index de0c5fa02fa..d0f17350a62 100644
          }
          if (auxiliarySize == 0) {
              auxiliarySlotsArray = EMPTY_OBJECT_ARRAY;
-@@ -812,18 +812,19 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+@@ -207,7 +207,7 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+         } else {
+             defaultTag = OBJECT_TAG;
+         }
+-        Arrays.fill(this.indexedTags, defaultTag);
++        // Arrays.fill(this.indexedTags, defaultTag);
+         Arrays.fill(this.indexedLocals, defaultValue);
+         Arrays.fill(this.indexedPrimitiveLocals, 0L);
+         Arrays.fill(this.auxiliarySlots, null);
+@@ -812,20 +812,21 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
  
      @Override
      public Object getObjectStatic(int slot) {
@@ -46,7 +55,8 @@ index de0c5fa02fa..d0f17350a62 100644
 +        // assert checkStaticGet(slot, STATIC_OBJECT_TAG) : "Unexpected read of static object
 +        // value";
  
-         return getIndexedLocals()[slot];
+-        return getIndexedLocals()[slot];
++        return unsafeGetObject(getIndexedLocals(), getObjectOffset(slot), true, OBJECT_LOCATION);
      }
  
      @Override
@@ -61,16 +71,20 @@ index de0c5fa02fa..d0f17350a62 100644
 +        // indexedTags[slot] = STATIC_OBJECT_TAG;
 +        // }
  
-         getIndexedLocals()[slot] = value;
+-        getIndexedLocals()[slot] = value;
++        unsafePutObject(getIndexedLocals(), getObjectOffset(slot), value, OBJECT_LOCATION);
      }
-@@ -866,18 +867,18 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+ 
+     @Override
+@@ -866,20 +867,20 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
  
      @Override
      public int getIntStatic(int slot) {
 -        assert checkStaticGet(slot, STATIC_INT_TAG) : "Unexpected read of static int value";
 +        // assert checkStaticGet(slot, STATIC_INT_TAG) : "Unexpected read of static int value";
  
-         return narrow(getIndexedPrimitiveLocals()[slot]);
+-        return narrow(getIndexedPrimitiveLocals()[slot]);
++        return unsafeGetLongAndNarrowInt(getIndexedPrimitiveLocals(), getPrimitiveOffset(slot), true, PRIMITIVE_LOCATION);
      }
  
      @Override
@@ -85,8 +99,11 @@ index de0c5fa02fa..d0f17350a62 100644
 +        // indexedTags[slot] = STATIC_INT_TAG;
 +        // }
  
-         getIndexedPrimitiveLocals()[slot] = extend(value);
+-        getIndexedPrimitiveLocals()[slot] = extend(value);
++        unsafePutLongAndExtendInt(getIndexedPrimitiveLocals(), getPrimitiveOffset(slot), value, PRIMITIVE_LOCATION);
      }
+ 
+     @Override
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
 index 10b976c323e..18e3fd6a8a8 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
@@ -100,3 +117,74 @@ index 10b976c323e..18e3fd6a8a8 100644
              failNotAdopted(node, prev);
          }
          return true;
+diff --git a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
+index 37ce96b318d..9047f143acb 100644
+--- a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
++++ b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
+@@ -190,36 +190,36 @@ public final class BytecodeOSRMetadata {
+             if (state.frameDescriptor == null) {
+                 state.frameDescriptor = frame.getFrameDescriptor();
+             }
+-            if (osrEntry != null) {
+-                // The concrete frame can have different tags from the descriptor (e.g., when a slot
+-                // is uninitialized), so we use the frame's tags to avoid deoptimizing during
+-                // transfer.
+-                // The tags array lazily grows when new slots are initialized, so it could be
+-                // smaller than the number of slots. Copy it into an array with the correct size.
+-                osrEntry.indexedFrameTags = new byte[state.frameDescriptor.getNumberOfSlots()];
+-                for (int i = 0; i < osrEntry.indexedFrameTags.length; i++) {
+-                    if (frame.isStatic(i)) {
+-                        /*
+-                         * Static check goes through the frame descriptor, which is more precise
+-                         * than the tag in case of uninitialized slot. The tag is forced to be
+-                         * STATIC, effectively disallowing the OSR frame to have uninitialized
+-                         * static slots. This solves a couple effects:
+-                         *
+-                         * - Uninitialized slots would get tag == 0, which, in the frame transfer
+-                         * loop would resolve as a non-static OBJECT access. Forcing them to be
+-                         * STATIC here solves that issue.
+-                         *
+-                         * - Uninitialized slots have a Long(0) in their slot, which causes problems
+-                         * when their virtualization returns them as-is. Static slots used in OSR
+-                         * forces the conversion to the requested kind anyway: we can take advantage
+-                         * of that behavior here to return the correct 0 value for all slot kinds.
+-                         */
+-                        osrEntry.indexedFrameTags[i] = FrameWithoutBoxing.STATIC_TAG;
+-                    } else {
+-                        osrEntry.indexedFrameTags[i] = frame.getTag(i);
+-                    }
+-                }
+-            }
++            // if (osrEntry != null) {
++            // // The concrete frame can have different tags from the descriptor (e.g., when a slot
++            // // is uninitialized), so we use the frame's tags to avoid deoptimizing during
++            // // transfer.
++            // // The tags array lazily grows when new slots are initialized, so it could be
++            // // smaller than the number of slots. Copy it into an array with the correct size.
++            // osrEntry.indexedFrameTags = new byte[state.frameDescriptor.getNumberOfSlots()];
++            // for (int i = 0; i < osrEntry.indexedFrameTags.length; i++) {
++            // if (frame.isStatic(i)) {
++            // /*
++            // * Static check goes through the frame descriptor, which is more precise
++            // * than the tag in case of uninitialized slot. The tag is forced to be
++            // * STATIC, effectively disallowing the OSR frame to have uninitialized
++            // * static slots. This solves a couple effects:
++            // *
++            // * - Uninitialized slots would get tag == 0, which, in the frame transfer
++            // * loop would resolve as a non-static OBJECT access. Forcing them to be
++            // * STATIC here solves that issue.
++            // *
++            // * - Uninitialized slots have a Long(0) in their slot, which causes problems
++            // * when their virtualization returns them as-is. Static slots used in OSR
++            // * forces the conversion to the requested kind anyway: we can take advantage
++            // * of that behavior here to return the correct 0 value for all slot kinds.
++            // */
++            // osrEntry.indexedFrameTags[i] = FrameWithoutBoxing.STATIC_TAG;
++            // } else {
++            // osrEntry.indexedFrameTags[i] = frame.getTag(i);
++            // }
++            // }
++            // }
+         });
+     }
+ 
