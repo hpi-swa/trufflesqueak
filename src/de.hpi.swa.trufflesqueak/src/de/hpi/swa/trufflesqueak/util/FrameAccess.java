@@ -73,14 +73,14 @@ import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode
  */
 public final class FrameAccess {
 
-    private static final class ArgumentIndicies {
+    private static final class ArgumentIndices {
         private static final int SENDER = 0;
         private static final int CLOSURE_OR_NULL = 1;
         private static final int RECEIVER = 2;
         private static final int ARGUMENTS_START = 3;
     }
 
-    private static final class SlotIndicies {
+    private static final class SlotIndices {
         private static final int THIS_CONTEXT = 0;
         private static final int INSTRUCTION_POINTER = 1;
         private static final int STACK_POINTER = 2;
@@ -91,10 +91,10 @@ public final class FrameAccess {
     }
 
     /**
-     * Creates a new {@link FrameDescriptor} according to {@link SlotIndicies}.
+     * Creates a new {@link FrameDescriptor} according to {@link SlotIndices}.
      */
     public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code, final int numStackSlots) {
-        final int numSlots = SlotIndicies.STACK_START + numStackSlots;
+        final int numSlots = SlotIndices.STACK_START + numStackSlots;
         final Builder builder = FrameDescriptor.newBuilder(numSlots).info(code);
         builder.addSlots(numSlots, FrameSlotKind.Static);
         return builder.build();
@@ -110,7 +110,7 @@ public final class FrameAccess {
     }
 
     public static AbstractSqueakObject getSender(final Frame frame) {
-        return (AbstractSqueakObject) frame.getArguments()[ArgumentIndicies.SENDER];
+        return (AbstractSqueakObject) frame.getArguments()[ArgumentIndices.SENDER];
     }
 
     public static ContextObject getSenderContext(final Frame frame) {
@@ -118,52 +118,52 @@ public final class FrameAccess {
     }
 
     public static void setSender(final Frame frame, final AbstractSqueakObject value) {
-        frame.getArguments()[ArgumentIndicies.SENDER] = value;
+        frame.getArguments()[ArgumentIndices.SENDER] = value;
     }
 
     public static BlockClosureObject getClosure(final Frame frame) {
-        return (BlockClosureObject) frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL];
+        return (BlockClosureObject) frame.getArguments()[ArgumentIndices.CLOSURE_OR_NULL];
     }
 
     public static boolean hasClosure(final Frame frame) {
-        return frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL] instanceof BlockClosureObject;
+        return frame.getArguments()[ArgumentIndices.CLOSURE_OR_NULL] instanceof BlockClosureObject;
     }
 
     public static void setClosure(final Frame frame, final BlockClosureObject closure) {
-        frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
+        frame.getArguments()[ArgumentIndices.CLOSURE_OR_NULL] = closure;
     }
 
     public static Object[] storeParentFrameInArguments(final VirtualFrame parentFrame) {
         assert !hasClosure(parentFrame);
         final Object[] arguments = parentFrame.getArguments();
-        arguments[ArgumentIndicies.CLOSURE_OR_NULL] = parentFrame;
+        arguments[ArgumentIndices.CLOSURE_OR_NULL] = parentFrame;
         return arguments;
     }
 
     public static Frame restoreParentFrameFromArguments(final Object[] arguments) {
-        final Object frame = arguments[ArgumentIndicies.CLOSURE_OR_NULL];
-        arguments[ArgumentIndicies.CLOSURE_OR_NULL] = null;
+        final Object frame = arguments[ArgumentIndices.CLOSURE_OR_NULL];
+        arguments[ArgumentIndices.CLOSURE_OR_NULL] = null;
         return (Frame) frame;
     }
 
     public static Object getReceiver(final Frame frame) {
-        return frame.getArguments()[ArgumentIndicies.RECEIVER];
+        return frame.getArguments()[ArgumentIndices.RECEIVER];
     }
 
     public static void setReceiver(final Frame frame, final Object receiver) {
-        frame.getArguments()[ArgumentIndicies.RECEIVER] = receiver;
+        frame.getArguments()[ArgumentIndices.RECEIVER] = receiver;
     }
 
     public static Object getArgument(final Frame frame, final int index) {
-        return frame.getArguments()[ArgumentIndicies.RECEIVER + index];
+        return frame.getArguments()[ArgumentIndices.RECEIVER + index];
     }
 
     public static int getReceiverStartIndex() {
-        return ArgumentIndicies.RECEIVER;
+        return ArgumentIndices.RECEIVER;
     }
 
     public static int getArgumentStartIndex() {
-        return ArgumentIndicies.ARGUMENTS_START;
+        return ArgumentIndices.ARGUMENTS_START;
     }
 
     public static int getNumArguments(final Frame frame) {
@@ -176,7 +176,7 @@ public final class FrameAccess {
     }
 
     public static ContextObject getContext(final Frame frame) {
-        return (ContextObject) frame.getObjectStatic(SlotIndicies.THIS_CONTEXT);
+        return (ContextObject) frame.getObjectStatic(SlotIndices.THIS_CONTEXT);
     }
 
     public static boolean hasModifiedSender(final VirtualFrame frame) {
@@ -186,11 +186,11 @@ public final class FrameAccess {
 
     public static void setContext(final Frame frame, final ContextObject context) {
         assert getContext(frame) == null : "ContextObject already allocated";
-        frame.setObjectStatic(SlotIndicies.THIS_CONTEXT, context);
+        frame.setObjectStatic(SlotIndices.THIS_CONTEXT, context);
     }
 
     public static int getInstructionPointer(final Frame frame) {
-        return frame.getIntStatic(SlotIndicies.INSTRUCTION_POINTER);
+        return frame.getIntStatic(SlotIndices.INSTRUCTION_POINTER);
     }
 
     public static boolean isDead(final Frame frame) {
@@ -198,11 +198,11 @@ public final class FrameAccess {
     }
 
     public static void setInstructionPointer(final Frame frame, final int value) {
-        frame.setIntStatic(SlotIndicies.INSTRUCTION_POINTER, value);
+        frame.setIntStatic(SlotIndices.INSTRUCTION_POINTER, value);
     }
 
     public static int getStackPointer(final Frame frame) {
-        return frame.getIntStatic(SlotIndicies.STACK_POINTER);
+        return frame.getIntStatic(SlotIndices.STACK_POINTER);
     }
 
     @NeverDefault
@@ -211,16 +211,16 @@ public final class FrameAccess {
     }
 
     public static void setStackPointer(final Frame frame, final int value) {
-        frame.setIntStatic(SlotIndicies.STACK_POINTER, value);
+        frame.setIntStatic(SlotIndices.STACK_POINTER, value);
     }
 
     public static int toStackSlotIndex(final Frame frame, final int index) {
         assert frame.getArguments().length - getArgumentStartIndex() <= index;
-        return SlotIndicies.STACK_START + index;
+        return SlotIndices.STACK_START + index;
     }
 
     public static int toStackSlotIndex(final int index) {
-        return SlotIndicies.STACK_START + index;
+        return SlotIndices.STACK_START + index;
     }
 
     public static Object getStackValue(final Frame frame, final int stackIndex, final int numArguments) {
@@ -232,7 +232,7 @@ public final class FrameAccess {
     }
 
     public static int getNumStackSlots(final Frame frame) {
-        return frame.getFrameDescriptor().getNumberOfSlots() - SlotIndicies.STACK_START;
+        return frame.getFrameDescriptor().getNumberOfSlots() - SlotIndices.STACK_START;
     }
 
     public static boolean slotsAreNotNilled(final Frame frame) {
@@ -263,7 +263,7 @@ public final class FrameAccess {
         if (slotsAreNotNilled(frame)) {
             setSlotsAreNilled(frame);
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            for (int slotIndex = SlotIndicies.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
+            for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
                 frame.setObjectStatic(slotIndex, null);
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
@@ -277,7 +277,7 @@ public final class FrameAccess {
         if (isDead(frame)) {
             clearStackSlots(frame);
         } else {
-            for (int slotIndex = SlotIndicies.STACK_START; slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
+            for (int slotIndex = SlotIndices.STACK_START; slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
                 action.accept(slotIndex);
             }
         }
@@ -291,7 +291,7 @@ public final class FrameAccess {
             }
         } else {
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            for (int slotIndex = SlotIndicies.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
+            for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
                 action.accept(frame.getObjectStatic(slotIndex));
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
@@ -311,7 +311,7 @@ public final class FrameAccess {
             }
         } else {
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            for (int slotIndex = SlotIndicies.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
+            for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
                 final Object replacement = action.apply(frame.getObjectStatic(slotIndex));
                 if (replacement != null) {
                     frame.setObjectStatic(slotIndex, replacement);
@@ -337,7 +337,7 @@ public final class FrameAccess {
     public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {
         assert value != null;
         assert 0 <= stackIndex && stackIndex <= getCodeObject(frame).getSqueakContextSize();
-        setSlotValue(frame, SlotIndicies.STACK_START + stackIndex, value);
+        setSlotValue(frame, SlotIndices.STACK_START + stackIndex, value);
     }
 
     public static boolean hasUnusedAuxiliarySlots(final Frame frame) {
@@ -360,100 +360,100 @@ public final class FrameAccess {
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
         final int receiverAndArgumentsLength = receiverAndArguments.length;
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER + receiverAndArgumentsLength];
+        final Object[] frameArguments = new Object[ArgumentIndices.RECEIVER + receiverAndArgumentsLength];
         assert sender != null : "Sender should never be null";
         assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
         assert receiverAndArguments[0] != null : "Receiver should never be null";
-        frameArguments[ArgumentIndicies.SENDER] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        ArrayUtils.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER, receiverAndArgumentsLength);
+        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        ArrayUtils.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndices.RECEIVER, receiverAndArgumentsLength);
         return frameArguments;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START];
-        frameArguments[ArgumentIndicies.SENDER] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        frameArguments[ArgumentIndicies.RECEIVER] = receiver;
+        final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START];
+        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        frameArguments[ArgumentIndices.RECEIVER] = receiver;
         return frameArguments;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START + 1];
-        frameArguments[ArgumentIndicies.SENDER] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        frameArguments[ArgumentIndicies.RECEIVER] = receiver;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START] = arg1;
+        final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 1];
+        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        frameArguments[ArgumentIndices.RECEIVER] = receiver;
+        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
         return frameArguments;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START + 2];
-        frameArguments[ArgumentIndicies.SENDER] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        frameArguments[ArgumentIndicies.RECEIVER] = receiver;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START] = arg1;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 1] = arg2;
+        final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 2];
+        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        frameArguments[ArgumentIndices.RECEIVER] = receiver;
+        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
         return frameArguments;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START + 3];
-        frameArguments[ArgumentIndicies.SENDER] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        frameArguments[ArgumentIndicies.RECEIVER] = receiver;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START] = arg1;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 1] = arg2;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 2] = arg3;
+        final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 3];
+        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        frameArguments[ArgumentIndices.RECEIVER] = receiver;
+        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
         return frameArguments;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                     final Object arg4) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START + 4];
-        frameArguments[ArgumentIndicies.SENDER] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        frameArguments[ArgumentIndicies.RECEIVER] = receiver;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START] = arg1;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 1] = arg2;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 2] = arg3;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 3] = arg4;
+        final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 4];
+        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        frameArguments[ArgumentIndices.RECEIVER] = receiver;
+        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 3] = arg4;
         return frameArguments;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                     final Object arg4, final Object arg5) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START + 5];
-        frameArguments[ArgumentIndicies.SENDER] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        frameArguments[ArgumentIndicies.RECEIVER] = receiver;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START] = arg1;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 1] = arg2;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 2] = arg3;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 3] = arg4;
-        frameArguments[ArgumentIndicies.ARGUMENTS_START + 4] = arg5;
+        final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 5];
+        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        frameArguments[ArgumentIndices.RECEIVER] = receiver;
+        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 3] = arg4;
+        frameArguments[ArgumentIndices.ARGUMENTS_START + 4] = arg5;
         return frameArguments;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object[] arguments) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START + arguments.length];
-        frameArguments[ArgumentIndicies.SENDER] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        frameArguments[ArgumentIndicies.RECEIVER] = receiver;
-        ArrayUtils.arraycopy(arguments, 0, frameArguments, ArgumentIndicies.ARGUMENTS_START, arguments.length);
+        final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + arguments.length];
+        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        frameArguments[ArgumentIndices.RECEIVER] = receiver;
+        ArrayUtils.arraycopy(arguments, 0, frameArguments, ArgumentIndices.ARGUMENTS_START, arguments.length);
         return frameArguments;
     }
 
     public static Object[] newWith(final int numArgs) {
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START + numArgs];
-        frameArguments[ArgumentIndicies.SENDER] = NilObject.SINGLETON;
+        final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + numArgs];
+        frameArguments[ArgumentIndices.SENDER] = NilObject.SINGLETON;
         return frameArguments;
     }
 
@@ -470,12 +470,12 @@ public final class FrameAccess {
         final Object[] copied = closure.getCopiedValues();
         final int numCopied = copied.length;
         assert closure.getNumArgs() == numArgs : "number of required and provided block arguments do not match";
-        final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START + numArgs + numCopied];
-        arguments[ArgumentIndicies.SENDER] = sender;
-        arguments[ArgumentIndicies.CLOSURE_OR_NULL] = closure;
-        arguments[ArgumentIndicies.RECEIVER] = closure.getReceiver();
-        assert arguments[ArgumentIndicies.RECEIVER] != null;
-        ArrayUtils.arraycopy(copied, 0, arguments, ArgumentIndicies.ARGUMENTS_START + numArgs, numCopied);
+        final Object[] arguments = new Object[ArgumentIndices.ARGUMENTS_START + numArgs + numCopied];
+        arguments[ArgumentIndices.SENDER] = sender;
+        arguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        arguments[ArgumentIndices.RECEIVER] = closure.getReceiver();
+        assert arguments[ArgumentIndices.RECEIVER] != null;
+        ArrayUtils.arraycopy(copied, 0, arguments, ArgumentIndices.ARGUMENTS_START + numArgs, numCopied);
         return arguments;
     }
 
@@ -491,7 +491,7 @@ public final class FrameAccess {
     }
 
     public static int expectedArgumentSize(final int numArgsAndCopied) {
-        return ArgumentIndicies.ARGUMENTS_START + numArgsAndCopied;
+        return ArgumentIndices.ARGUMENTS_START + numArgsAndCopied;
     }
 
     public static void assertSenderNotNull(final Frame frame) {
