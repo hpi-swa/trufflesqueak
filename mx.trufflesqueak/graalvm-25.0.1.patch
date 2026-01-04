@@ -203,7 +203,7 @@ index 10b976c323e..18e3fd6a8a8 100644
          }
          return true;
 diff --git a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
-index 37ce96b318d..230bb98be62 100644
+index 37ce96b318d..4118d192ff4 100644
 --- a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
 +++ b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
 @@ -431,17 +431,16 @@ public final class BytecodeOSRMetadata {
@@ -227,7 +227,17 @@ index 37ce96b318d..230bb98be62 100644
          // transfer auxiliary slots
          transferAuxiliarySlots(source, target, state);
      }
-@@ -533,19 +532,18 @@ public final class BytecodeOSRMetadata {
+@@ -495,7 +494,8 @@ public final class BytecodeOSRMetadata {
+         // state.frameDescriptor to restoreLoop in order to correctly account for static slots.
+ 
+         // transfer indexed frame slots
+-        restoreLoop(state.frameDescriptor, source, target);
++        // restoreLoop(state.frameDescriptor, source, target);
++        source.copyTo(0, target, 0, source.getFrameDescriptor().getNumberOfSlots());
+         // transfer auxiliary slots
+         transferAuxiliarySlots(source, target, state);
+     }
+@@ -533,19 +533,18 @@ public final class BytecodeOSRMetadata {
              byte actualTag = source.getTag(i);
              byte expectedTag = expectedTags[i];
  
