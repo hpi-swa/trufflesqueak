@@ -965,6 +965,8 @@ public final class SqueakImageContext {
         methodCacheRandomish = methodCacheRandomish + 1 & 3;
         final int selectorHash = System.identityHashCode(selector);
         int firstProbe = (System.identityHashCode(classObject) ^ selectorHash) & METHOD_CACHE_MASK;
+        final int stride = (selectorHash << 1) | 1;
+
         int probe = firstProbe;
         for (int i = 0; i < METHOD_CACHE_REPROBES; i++) {
             final MethodCacheEntry entry = methodCache[probe];
@@ -974,7 +976,7 @@ public final class SqueakImageContext {
             if (i == methodCacheRandomish) {
                 firstProbe = probe;
             }
-            probe = probe + selectorHash & METHOD_CACHE_MASK;
+            probe = probe + stride & METHOD_CACHE_MASK;
         }
         return methodCache[firstProbe].reuseFor(classObject, selector);
     }

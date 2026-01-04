@@ -371,6 +371,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     /** See Interpreter#lookupMethodInClass:. */
     @TruffleBoundary
     public Object lookupInMethodDictSlow(final NativeObject selector) {
+        final int selectorHash = selector.getSqueakHashInt();
         ClassObject lookupClass = this;
         while (lookupClass != null) {
             assert lookupClass.assertNotForwarded();
@@ -381,7 +382,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                  */
                 return getSuperclassOrNull().lookupInMethodDictSlow(image.cannotReturn);
             }
-            final Object result = lookupMethodInDictionary(lookupClass.getResolvedMethodDict(), selector);
+            final Object result = lookupMethodInDictionary(lookupClass.getResolvedMethodDict(), selector, selectorHash);
             if (result != null) {
                 return result;
             }
@@ -395,26 +396,28 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     /** See Interpreter#lookupMethodInDictionary:. */
-    private static Object lookupMethodInDictionary(final VariablePointersObject methodDictionary, final NativeObject messageSelector) {
+    private static Object lookupMethodInDictionary(final VariablePointersObject methodDictionary, final NativeObject messageSelector, final int messageSelectorHash) {
         final Object[] methodDictSelectors = methodDictionary.getVariablePart();
-        final int length = methodDictSelectors.length;
-        int index = messageSelector.getSqueakHashInt() % length;
+        /* MethodDictionary always has a power-of-two size */
+        final int sizeMask = methodDictSelectors.length - 1;
+        int index = messageSelectorHash & sizeMask;
         /*
          * "It is assumed that there are some nils in this dictionary, and search will stop when one
          * is encountered."
          */
-        for (int j = 0; j < length; j++) {
+        for (int j = 0; j <= sizeMask; j++) {
             final Object nextSelector = methodDictSelectors[index];
             if (nextSelector == NilObject.SINGLETON) {
                 return null;
             } else if (nextSelector == messageSelector) {
                 final Object[] methodDictValues = AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage();
-                if (methodDictValues[index] instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isNotForwarded()) {
-                    methodDictValues[index] = o.getForwardingPointer();
+                final Object method = methodDictValues[index];
+                if (method instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isNotForwarded()) {
+                    return methodDictValues[index] = o.getForwardingPointer();
                 }
-                return methodDictValues[index];
+                return method;
             }
-            index = ++index % length;
+            index = ++index & sizeMask;
         }
         return null;
     }
