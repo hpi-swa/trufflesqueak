@@ -12,7 +12,7 @@ index 79c97354020..9518d41f5db 100644
      },
      "org.graalvm.launcher.test" : {
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
-index de0c5fa02fa..ed5fb724476 100644
+index de0c5fa02fa..1fa2ff83bea 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
 +++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
 @@ -174,15 +174,15 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
@@ -29,7 +29,7 @@ index de0c5fa02fa..ed5fb724476 100644
 -            } else if (defaultValue != null) {
 -                Arrays.fill(indexedLocalsArray, defaultValue);
 -            }
-+            indexedTagsArray = null; // new byte[indexedSize];
++            indexedTagsArray = EMPTY_BYTE_ARRAY;
 +            // if (defaultValue == ILLEGAL_DEFAULT) {
 +            // Arrays.fill(indexedTagsArray, ILLEGAL_TAG);
 +            // } else if (defaultValue != null) {
@@ -117,74 +117,3 @@ index 10b976c323e..18e3fd6a8a8 100644
              failNotAdopted(node, prev);
          }
          return true;
-diff --git a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
-index 37ce96b318d..9047f143acb 100644
---- a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
-+++ b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BytecodeOSRMetadata.java
-@@ -190,36 +190,36 @@ public final class BytecodeOSRMetadata {
-             if (state.frameDescriptor == null) {
-                 state.frameDescriptor = frame.getFrameDescriptor();
-             }
--            if (osrEntry != null) {
--                // The concrete frame can have different tags from the descriptor (e.g., when a slot
--                // is uninitialized), so we use the frame's tags to avoid deoptimizing during
--                // transfer.
--                // The tags array lazily grows when new slots are initialized, so it could be
--                // smaller than the number of slots. Copy it into an array with the correct size.
--                osrEntry.indexedFrameTags = new byte[state.frameDescriptor.getNumberOfSlots()];
--                for (int i = 0; i < osrEntry.indexedFrameTags.length; i++) {
--                    if (frame.isStatic(i)) {
--                        /*
--                         * Static check goes through the frame descriptor, which is more precise
--                         * than the tag in case of uninitialized slot. The tag is forced to be
--                         * STATIC, effectively disallowing the OSR frame to have uninitialized
--                         * static slots. This solves a couple effects:
--                         *
--                         * - Uninitialized slots would get tag == 0, which, in the frame transfer
--                         * loop would resolve as a non-static OBJECT access. Forcing them to be
--                         * STATIC here solves that issue.
--                         *
--                         * - Uninitialized slots have a Long(0) in their slot, which causes problems
--                         * when their virtualization returns them as-is. Static slots used in OSR
--                         * forces the conversion to the requested kind anyway: we can take advantage
--                         * of that behavior here to return the correct 0 value for all slot kinds.
--                         */
--                        osrEntry.indexedFrameTags[i] = FrameWithoutBoxing.STATIC_TAG;
--                    } else {
--                        osrEntry.indexedFrameTags[i] = frame.getTag(i);
--                    }
--                }
--            }
-+            // if (osrEntry != null) {
-+            // // The concrete frame can have different tags from the descriptor (e.g., when a slot
-+            // // is uninitialized), so we use the frame's tags to avoid deoptimizing during
-+            // // transfer.
-+            // // The tags array lazily grows when new slots are initialized, so it could be
-+            // // smaller than the number of slots. Copy it into an array with the correct size.
-+            // osrEntry.indexedFrameTags = new byte[state.frameDescriptor.getNumberOfSlots()];
-+            // for (int i = 0; i < osrEntry.indexedFrameTags.length; i++) {
-+            // if (frame.isStatic(i)) {
-+            // /*
-+            // * Static check goes through the frame descriptor, which is more precise
-+            // * than the tag in case of uninitialized slot. The tag is forced to be
-+            // * STATIC, effectively disallowing the OSR frame to have uninitialized
-+            // * static slots. This solves a couple effects:
-+            // *
-+            // * - Uninitialized slots would get tag == 0, which, in the frame transfer
-+            // * loop would resolve as a non-static OBJECT access. Forcing them to be
-+            // * STATIC here solves that issue.
-+            // *
-+            // * - Uninitialized slots have a Long(0) in their slot, which causes problems
-+            // * when their virtualization returns them as-is. Static slots used in OSR
-+            // * forces the conversion to the requested kind anyway: we can take advantage
-+            // * of that behavior here to return the correct 0 value for all slot kinds.
-+            // */
-+            // osrEntry.indexedFrameTags[i] = FrameWithoutBoxing.STATIC_TAG;
-+            // } else {
-+            // osrEntry.indexedFrameTags[i] = frame.getTag(i);
-+            // }
-+            // }
-+            // }
-         });
-     }
- 
