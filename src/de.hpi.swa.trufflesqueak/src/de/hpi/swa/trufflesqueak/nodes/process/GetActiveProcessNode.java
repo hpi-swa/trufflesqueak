@@ -24,7 +24,7 @@ public abstract class GetActiveProcessNode extends AbstractNode {
 
     @Specialization
     protected static final PointersObject getActiveProcess(final Node node,
-                    @Cached final AbstractPointersObjectReadNode readNode) {
-        return readNode.executePointers(node, getContext(node).getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
+                    @Cached(inline = false) final AbstractPointersObjectReadNode readNode) {
+        return readNode.executePointers(getContext(node).getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 }

@@ -8,13 +8,11 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -52,9 +50,8 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"id == DEFAULT_HOST_WINDOW_ID"})
         protected final Object doSize(final Object receiver, final long id,
-                        @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().asPoint(writeNode, node, 0L, 0L);
+            return getContext().asPoint(writeNode, 0L, 0L);
         }
     }
 

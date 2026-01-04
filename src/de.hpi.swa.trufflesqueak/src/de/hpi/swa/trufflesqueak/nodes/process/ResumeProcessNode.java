@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -22,15 +23,15 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 /**
  * Returns the new active Context or null if the current active Context has not been preempted.
  */
-@GenerateInline
-@GenerateCached(false)
+@GenerateInline(false)
+@GenerateCached
 public abstract class ResumeProcessNode extends AbstractNode {
 
     public static final boolean executeUncached(final VirtualFrame frame, final SqueakImageContext image, final PointersObject newProcess) {
         final PointersObject activeProcess = image.getActiveProcessSlow();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-        final long activePriority = readNode.executeLong(null, activeProcess, PROCESS.PRIORITY);
-        final long newPriority = readNode.executeLong(null, newProcess, PROCESS.PRIORITY);
+        final long activePriority = readNode.executeLong(activeProcess, PROCESS.PRIORITY);
+        final long newPriority = readNode.executeLong(newProcess, PROCESS.PRIORITY);
         if (newPriority > activePriority) {
             PutToSleepNode.executeUncached(image, activeProcess, image.flags.preemptionYields());
             TransferToNode.executeUncached(frame, newProcess);
@@ -41,23 +42,24 @@ public abstract class ResumeProcessNode extends AbstractNode {
         }
     }
 
-    public abstract boolean executeResume(VirtualFrame frame, Node node, PointersObject newProcess);
+    public abstract boolean executeResume(VirtualFrame frame, PointersObject newProcess);
 
     @Specialization
-    protected static final boolean resumeProcess(final VirtualFrame frame, final Node node, final PointersObject newProcess,
+    protected static final boolean resumeProcess(final VirtualFrame frame, final PointersObject newProcess,
+                    @Bind final Node node,
                     @Cached final AbstractPointersObjectReadNode readNode,
                     @Cached final GetActiveProcessNode getActiveProcessNode,
                     @Cached final PutToSleepNode putToSleepNode,
                     @Cached final TransferToNode transferToNode) {
         final PointersObject activeProcess = getActiveProcessNode.execute(node);
-        final long activePriority = readNode.executeLong(node, activeProcess, PROCESS.PRIORITY);
-        final long newPriority = readNode.executeLong(node, newProcess, PROCESS.PRIORITY);
+        final long activePriority = readNode.executeLong(activeProcess, PROCESS.PRIORITY);
+        final long newPriority = readNode.executeLong(newProcess, PROCESS.PRIORITY);
         if (newPriority > activePriority) {
-            putToSleepNode.executePutToSleep(node, activeProcess, getContext(node).flags.preemptionYields());
-            transferToNode.execute(frame, node, newProcess);
+            putToSleepNode.executePutToSleep(activeProcess, getContext(node).flags.preemptionYields());
+            transferToNode.execute(frame, newProcess);
             return true;
         } else {
-            putToSleepNode.executePutToSleep(node, newProcess, true);
+            putToSleepNode.executePutToSleep(newProcess, true);
             return false;
         }
     }

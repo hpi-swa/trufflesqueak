@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -4858,14 +4857,14 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveGetClipRect */
-    public void primitiveGetClipRect(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final PointersObject receiver, final PointersObject rectOop) {
+    public void primitiveGetClipRect(final AbstractPointersObjectWriteNode writeNode, final PointersObject receiver, final PointersObject rectOop) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        PointersObject pointOop = image.asPoint(writeNode, inlineTarget, clipMinXGet(), clipMinYGet());
+        PointersObject pointOop = image.asPoint(writeNode, clipMinXGet(), clipMinYGet());
         storeValue(0, rectOop, pointOop);
-        pointOop = image.asPoint(writeNode, inlineTarget, clipMaxXGet(), clipMaxYGet());
+        pointOop = image.asPoint(writeNode, clipMaxXGet(), clipMaxYGet());
         storeValue(1, rectOop, pointOop);
     }
 
@@ -4917,12 +4916,12 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveGetOffset */
-    public PointersObject primitiveGetOffset(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final PointersObject receiver) {
+    public PointersObject primitiveGetOffset(final AbstractPointersObjectWriteNode writeNode, final PointersObject receiver) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             throw PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        return image.asPoint(writeNode, inlineTarget, destOffsetXGet(), destOffsetYGet());
+        return image.asPoint(writeNode, destOffsetXGet(), destOffsetYGet());
     }
 
     /* BalloonEngineBase>>#primitiveGetTimes */

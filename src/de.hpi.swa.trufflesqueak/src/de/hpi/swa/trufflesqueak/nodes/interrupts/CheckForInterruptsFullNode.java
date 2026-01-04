@@ -39,13 +39,13 @@ public final class CheckForInterruptsFullNode extends Node {
         }
         boolean switchToNewProcess = false;
         if (istate.tryInterruptPending()) {
-            switchToNewProcess |= signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+            switchToNewProcess |= signalSemaporeNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
         }
         if (istate.tryWakeUpTickTrigger()) {
-            switchToNewProcess |= signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            switchToNewProcess |= signalSemaporeNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
         }
         if (istate.tryPendingFinalizations()) {
-            switchToNewProcess |= signalSemaporeNode.executeSignal(frame, this, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+            switchToNewProcess |= signalSemaporeNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
         }
         if (istate.trySemaphoresToSignal()) {
             final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
@@ -53,7 +53,7 @@ public final class CheckForInterruptsFullNode extends Node {
                 final Object[] semaphores = externalObjects.getObjectStorage();
                 Integer semaIndex;
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                    switchToNewProcess |= signalSemaporeNode.executeSignal(frame, this, semaphores[semaIndex - 1]);
+                    switchToNewProcess |= signalSemaporeNode.executeSignal(frame, semaphores[semaIndex - 1]);
                 }
             }
         }

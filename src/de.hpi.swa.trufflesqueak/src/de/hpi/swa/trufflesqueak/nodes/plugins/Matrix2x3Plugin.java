@@ -74,7 +74,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
         private double loadArgumentPointAt(final PointersObject point, final long index, final AbstractPointersObjectReadNode readNode, final InlinedBranchProfile errorProfile, final Node node) {
             if (isPoint(point)) {
-                final Object value = readNode.execute(node, point, index);
+                final Object value = readNode.execute(point, index);
                 if (value instanceof final Long longValue) {
                     return longValue;
                 } else if (value instanceof final Double doubleValue) {
@@ -116,7 +116,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter(node);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            return getContext().asPoint(writeNode, node, (long) m23ResultX, (long) m23ResultY);
+            return getContext().asPoint(writeNode, (long) m23ResultX, (long) m23ResultY);
         }
 
         protected final PointersObject roundAndStoreResultRect(final PointersObject dstRect, final double x0, final double y0, final double x1, final double y1,
@@ -130,10 +130,10 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             final SqueakImageContext image = getContext();
-            final PointersObject origin = image.asPoint(writeNode, node, (long) minX, (long) minY);
-            final PointersObject corner = image.asPoint(writeNode, node, (long) maxX, (long) maxY);
-            writeNode.execute(node, dstRect, 0, origin);
-            writeNode.execute(node, dstRect, 1, corner);
+            final PointersObject origin = image.asPoint(writeNode, (long) minX, (long) minY);
+            final PointersObject corner = image.asPoint(writeNode, (long) maxX, (long) maxY);
+            writeNode.execute(dstRect, 0, origin);
+            writeNode.execute(dstRect, 1, corner);
             return dstRect;
         }
 
@@ -190,7 +190,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             final float[] m = loadMatrixAsFloat(receiver);
 
             /* Load top-left point */
-            final PointersObject originPoint = readPointNode.executePointers(node, srcRect, 0);
+            final PointersObject originPoint = readPointNode.executePointers(srcRect, 0);
             final double originX = loadArgumentPointX(originPoint, readNode, errorProfile, node);
             final double originY = loadArgumentPointY(originPoint, readNode, errorProfile, node);
             final double[] result1 = matrix2x3InvertPoint(m, originX, originY, errorProfile, node);
@@ -200,7 +200,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             double maxY = minY;
 
             /* Load bottom-right point */
-            final PointersObject cornerPoint = readPointNode.executePointers(node, srcRect, 1);
+            final PointersObject cornerPoint = readPointNode.executePointers(srcRect, 1);
             final double cornerX = loadArgumentPointX(cornerPoint, readNode, errorProfile, node);
             final double cornerY = loadArgumentPointY(cornerPoint, readNode, errorProfile, node);
             final double[] result2 = matrix2x3InvertPoint(m, originX, originY, errorProfile, node);
@@ -276,7 +276,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             final float[] m = loadMatrixAsFloat(receiver);
 
             /* Load top-left point */
-            final PointersObject point0 = readPointNode.executePointers(node, srcRect, 0);
+            final PointersObject point0 = readPointNode.executePointers(srcRect, 0);
             final double originX = loadArgumentPointX(point0, readNode, errorProfile, node);
             final double originY = loadArgumentPointY(point0, readNode, errorProfile, node);
             double minX = matrix2x3TransformPointX(m, originX, originY);
@@ -285,7 +285,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             double maxY = minY;
 
             /* Load bottom-right point */
-            final PointersObject point1 = readPointNode.executePointers(node, srcRect, 1);
+            final PointersObject point1 = readPointNode.executePointers(srcRect, 1);
             final double cornerX = loadArgumentPointX(point1, readNode, errorProfile, node);
             final double cornerY = loadArgumentPointY(point1, readNode, errorProfile, node);
             final double m23ResultX1 = matrix2x3TransformPointX(m, cornerX, cornerY);

@@ -8,12 +8,10 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -22,13 +20,13 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -237,9 +235,8 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"rect.size() >= 2"})
         protected final PointersObject doGet(final PointersObject receiver, final PointersObject rect,
-                        @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            getContext().b2d.primitiveGetClipRect(writeNode, node, receiver, rect);
+            getContext().b2d.primitiveGetClipRect(writeNode, receiver, rect);
             return rect;
         }
     }
@@ -281,9 +278,8 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final PointersObject doGet(final PointersObject receiver,
-                        @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return getContext().b2d.primitiveGetOffset(writeNode, node, receiver);
+            return getContext().b2d.primitiveGetOffset(writeNode, receiver);
         }
     }
 

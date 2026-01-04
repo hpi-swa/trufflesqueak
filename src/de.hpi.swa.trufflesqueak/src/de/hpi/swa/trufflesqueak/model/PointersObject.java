@@ -77,45 +77,45 @@ public final class PointersObject extends AbstractPointersObject {
         return layoutValuesPointTo(identityNode, inlineTarget, thang);
     }
 
-    public boolean isEmptyList(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
-        return readNode.execute(inlineTarget, this, LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
+    public boolean isEmptyList(final AbstractPointersObjectReadNode readNode) {
+        return readNode.execute(this, LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
     }
 
     public boolean isDisplay(final SqueakImageContext image) {
         return this == image.getSpecialObject(SPECIAL_OBJECT.THE_DISPLAY);
     }
 
-    public int[] getFormBits(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
-        return readNode.executeNative(inlineTarget, this, FORM.BITS).getIntStorage();
+    public int[] getFormBits(final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeNative(this, FORM.BITS).getIntStorage();
     }
 
-    public int getFormDepth(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
-        return readNode.executeInt(inlineTarget, this, FORM.DEPTH);
+    public int getFormDepth(final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeInt(this, FORM.DEPTH);
     }
 
-    public int getFormHeight(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
-        return readNode.executeInt(inlineTarget, this, FORM.HEIGHT);
+    public int getFormHeight(final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeInt(this, FORM.HEIGHT);
     }
 
-    public PointersObject getFormOffset(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
-        return readNode.executePointers(inlineTarget, this, FORM.OFFSET);
+    public PointersObject getFormOffset(final AbstractPointersObjectReadNode readNode) {
+        return readNode.executePointers(this, FORM.OFFSET);
     }
 
-    public int getFormWidth(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
-        return readNode.executeInt(inlineTarget, this, FORM.WIDTH);
+    public int getFormWidth(final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeInt(this, FORM.WIDTH);
     }
 
-    public PointersObject removeFirstLinkOfList(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget) {
+    public PointersObject removeFirstLinkOfList(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode) {
         // Remove the first process from the given linked list.
-        final PointersObject first = readNode.executePointers(inlineTarget, this, LINKED_LIST.FIRST_LINK);
-        final Object last = readNode.execute(inlineTarget, this, LINKED_LIST.LAST_LINK);
+        final PointersObject first = readNode.executePointers(this, LINKED_LIST.FIRST_LINK);
+        final Object last = readNode.execute(this, LINKED_LIST.LAST_LINK);
         if (first == last) {
-            writeNode.executeNil(inlineTarget, this, LINKED_LIST.FIRST_LINK);
-            writeNode.executeNil(inlineTarget, this, LINKED_LIST.LAST_LINK);
+            writeNode.executeNil(this, LINKED_LIST.FIRST_LINK);
+            writeNode.executeNil(this, LINKED_LIST.LAST_LINK);
         } else {
-            writeNode.execute(inlineTarget, this, LINKED_LIST.FIRST_LINK, readNode.execute(inlineTarget, first, PROCESS.NEXT_LINK));
+            writeNode.execute(this, LINKED_LIST.FIRST_LINK, readNode.execute(first, PROCESS.NEXT_LINK));
         }
-        writeNode.executeNil(inlineTarget, first, PROCESS.NEXT_LINK);
+        writeNode.executeNil(first, PROCESS.NEXT_LINK);
         return first;
     }
 
@@ -148,18 +148,18 @@ public final class PointersObject extends AbstractPointersObject {
          */
         final SqueakImageContext image = classObject.getImage();
         if (image.isPoint(this)) {
-            return readNode.execute(null, this, POINT.X) + "@" + readNode.execute(null, this, POINT.Y);
+            return readNode.execute(this, POINT.X) + "@" + readNode.execute(this, POINT.Y);
         }
         final String squeakClassName = classObject.getClassName();
         if ("Fraction".equals(squeakClassName)) {
-            return readNode.execute(null, this, FRACTION.NUMERATOR) + " / " + readNode.execute(null, this, FRACTION.DENOMINATOR);
+            return readNode.execute(this, FRACTION.NUMERATOR) + " / " + readNode.execute(this, FRACTION.DENOMINATOR);
         }
         if ("Association".equals(squeakClassName)) {
-            return readNode.execute(null, this, ASSOCIATION.KEY) + " -> " + readNode.execute(null, this, ASSOCIATION.VALUE);
+            return readNode.execute(this, ASSOCIATION.KEY) + " -> " + readNode.execute(this, ASSOCIATION.VALUE);
         }
         final ClassObject superclass = classObject.getSuperclassOrNull();
         if (superclass != null && "Binding".equals(superclass.getClassName())) {
-            return readNode.execute(null, this, BINDING.KEY) + " => " + readNode.execute(null, this, BINDING.VALUE);
+            return readNode.execute(this, BINDING.KEY) + " => " + readNode.execute(this, BINDING.VALUE);
         }
         return super.toString();
     }

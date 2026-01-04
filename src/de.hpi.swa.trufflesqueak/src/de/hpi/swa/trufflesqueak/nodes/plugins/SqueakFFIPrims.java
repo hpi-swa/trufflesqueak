@@ -173,14 +173,14 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             final ArgTypeConversionNode conversionNode = ArgTypeConversionNode.getUncached();
 
-            final ArrayObject argTypes = readNode.executeArray(null, externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
+            final ArrayObject argTypes = readNode.executeArray(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
 
             if (argTypes != null && argTypes.getObjectStorage().length == arguments.length + 1) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
 
                 for (final Object argumentType : argTypesValues) {
                     if (argumentType instanceof final PointersObject o) {
-                        final NativeObject compiledSpec = readNode.executeNative(null, o, ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
+                        final NativeObject compiledSpec = readNode.executeNative(o, ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                         headerWordList.add(compiledSpec.getInt(0));
                     }
                 }
@@ -189,8 +189,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final Object[] argumentsConverted = getConvertedArgumentsFromHeaderWords(conversionNode, headerWordList, arguments);
             final List<String> nfiArgTypeList = getArgTypeListFromHeaderWords(headerWordList);
 
-            final String name = readNode.executeNative(null, externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME).asStringUnsafe();
-            final String moduleName = getModuleName(readNode, null, receiver, externalLibraryFunction);
+            final String name = readNode.executeNative(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME).asStringUnsafe();
+            final String moduleName = getModuleName(readNode, receiver, externalLibraryFunction);
             final String nfiCodeParams = generateNfiCodeParamsString(nfiArgTypeList);
             final String nfiCode = String.format("load \"%s\" {%s%s}", getPathOrFail(image, moduleName), name, nfiCodeParams);
             try {
@@ -236,9 +236,9 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             return interopLib.invokeMember(ffiTest, name, argumentsConverted);
         }
 
-        private static String getModuleName(final AbstractPointersObjectReadNode readExternalLibNode, final Node inlineTarget, final AbstractSqueakObject receiver,
+        private static String getModuleName(final AbstractPointersObjectReadNode readExternalLibNode, final AbstractSqueakObject receiver,
                         final PointersObject externalLibraryFunction) {
-            final Object moduleObject = readExternalLibNode.execute(inlineTarget, externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
+            final Object moduleObject = readExternalLibNode.execute(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
             if (moduleObject != NilObject.SINGLETON) {
                 return ((NativeObject) moduleObject).asStringUnsafe();
             } else {

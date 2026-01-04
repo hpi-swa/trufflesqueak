@@ -117,7 +117,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
         final int instSize = instsize();
         for (int i = 0; i < instSize; i++) {
-            writeNode.execute(null, this, i, chunk.getPointer(i));
+            writeNode.execute(this, i, chunk.getPointer(i));
         }
         fillInVariablePart(chunk, instSize);
         assert size() == chunk.getWordSize();
@@ -365,7 +365,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         if (writeHeader(writer)) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             for (int i = 0; i < instsize(); i++) {
-                writer.writeObject(readNode.execute(null, this, i));
+                writer.writeObject(readNode.execute(this, i));
             }
             writeVariablePart(writer);
         }

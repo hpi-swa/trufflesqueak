@@ -408,7 +408,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             if (nextSelector == NilObject.SINGLETON) {
                 return null;
             } else if (nextSelector == messageSelector) {
-                final Object[] methodDictValues = AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage();
+                final Object[] methodDictValues = AbstractPointersObjectReadNode.getUncached().executeArray(methodDictionary, METHOD_DICT.VALUES).getObjectStorage();
                 if (methodDictValues[index] instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isNotForwarded()) {
                     methodDictValues[index] = o.getForwardingPointer();
                 }
@@ -431,7 +431,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         final Object[] methodDictVariablePart = methodDictionary.getVariablePart();
         for (int i = 0; i < methodDictVariablePart.length; i++) {
             if (selector == methodDictVariablePart[i]) {
-                final Object lookupResult = AbstractPointersObjectReadNode.getUncached().executeArray(null, methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
+                final Object lookupResult = AbstractPointersObjectReadNode.getUncached().executeArray(methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
                 if (lookupResult instanceof final CompiledCodeObject codeObject) {
                     codeObject.flushCacheBySelector();
                 }

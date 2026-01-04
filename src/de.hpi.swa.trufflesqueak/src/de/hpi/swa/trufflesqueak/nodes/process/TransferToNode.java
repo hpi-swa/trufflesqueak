@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.process;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -26,31 +27,32 @@ import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
  * Record a Process to be awakened on the next interpreter cycle. Suspends the active Context and
  * returns the new active Context.
  */
-@GenerateInline
-@GenerateCached(false)
+@GenerateInline(false)
+@GenerateCached
 public abstract class TransferToNode extends AbstractNode {
     private static final AbstractPointersObjectReadNode READ_NODE = AbstractPointersObjectReadNode.getUncached();
     private static final AbstractPointersObjectWriteNode WRITE_NODE = AbstractPointersObjectWriteNode.getUncached();
 
-    public abstract void execute(VirtualFrame frame, Node node, PointersObject newProcess);
+    public abstract void execute(VirtualFrame frame, PointersObject newProcess);
 
     public static final void executeUncached(final VirtualFrame frame, final PointersObject newProcess) {
         final PointersObject scheduler = getContext(null).getScheduler();
-        final PointersObject oldProcess = READ_NODE.executePointers(null, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS);
-        WRITE_NODE.execute(null, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+        final PointersObject oldProcess = READ_NODE.executePointers(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS);
+        WRITE_NODE.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
-        WRITE_NODE.execute(null, oldProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
+        WRITE_NODE.execute(oldProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
     }
 
     @Specialization
-    protected static final void transferTo(final VirtualFrame frame, final Node node, final PointersObject newProcess,
-                    @Cached final GetOrCreateContextWithFrameNode contextNode,
+    protected static final void transferTo(final VirtualFrame frame, final PointersObject newProcess,
+                    @Bind final Node node,
+                    @Cached(inline = true) final GetOrCreateContextWithFrameNode contextNode,
                     @Cached final AbstractPointersObjectReadNode readOldProcessNode,
                     @Cached final AbstractPointersObjectWriteNode writeActiveProcessNode,
                     @Cached final AbstractPointersObjectWriteNode writeSuspendedContextNode) {
         final PointersObject scheduler = getContext(node).getScheduler();
-        final PointersObject oldProcess = readOldProcessNode.executePointers(node, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS);
-        writeActiveProcessNode.execute(node, scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        writeSuspendedContextNode.execute(node, oldProcess, PROCESS.SUSPENDED_CONTEXT, contextNode.executeGet(frame, node));
+        final PointersObject oldProcess = readOldProcessNode.executePointers(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS);
+        writeActiveProcessNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+        writeSuspendedContextNode.execute(oldProcess, PROCESS.SUSPENDED_CONTEXT, contextNode.executeGet(frame, node));
     }
 }

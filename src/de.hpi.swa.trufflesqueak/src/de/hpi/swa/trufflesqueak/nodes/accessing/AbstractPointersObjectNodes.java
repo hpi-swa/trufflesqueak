@@ -37,7 +37,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodesFacto
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public class AbstractPointersObjectNodes {
-    @GenerateInline
+    @GenerateInline(false)
     @GenerateUncached
     @GenerateCached(true)
     public abstract static class AbstractPointersObjectReadNode extends AbstractNode {
@@ -46,22 +46,22 @@ public class AbstractPointersObjectNodes {
             return AbstractPointersObjectReadNodeGen.getUncached();
         }
 
-        public abstract Object execute(Node node, AbstractPointersObject obj, long index);
+        public abstract Object execute(AbstractPointersObject obj, long index);
 
         public static final Object executeUncached(final AbstractPointersObject obj, final long index) {
-            return getUncached().execute(null, obj, index);
+            return getUncached().execute(obj, index);
         }
 
-        public abstract long executeLong(Node node, AbstractPointersObject obj, long index);
+        public abstract long executeLong(AbstractPointersObject obj, long index);
 
-        public abstract ArrayObject executeArray(Node node, AbstractPointersObject obj, long index);
+        public abstract ArrayObject executeArray(AbstractPointersObject obj, long index);
 
-        public abstract NativeObject executeNative(Node node, AbstractPointersObject obj, long index);
+        public abstract NativeObject executeNative(AbstractPointersObject obj, long index);
 
-        public abstract PointersObject executePointers(Node node, AbstractPointersObject obj, long index);
+        public abstract PointersObject executePointers(AbstractPointersObject obj, long index);
 
-        public final int executeInt(final Node node, final AbstractPointersObject obj, final long index) {
-            return MiscUtils.toIntExact(executeLong(node, obj, index));
+        public final int executeInt(final AbstractPointersObject obj, final long index) {
+            return MiscUtils.toIntExact(executeLong(obj, index));
         }
 
         @SuppressWarnings("unused")
@@ -88,7 +88,7 @@ public class AbstractPointersObjectNodes {
         }
     }
 
-    @GenerateInline
+    @GenerateInline(false)
     @GenerateUncached
     @GenerateCached(true)
     public abstract static class AbstractPointersObjectWriteNode extends AbstractNode {
@@ -97,14 +97,14 @@ public class AbstractPointersObjectNodes {
             return AbstractPointersObjectWriteNodeGen.getUncached();
         }
 
-        public abstract void execute(Node node, AbstractPointersObject obj, long index, Object value);
+        public abstract void execute(AbstractPointersObject obj, long index, Object value);
 
         public static final void executeUncached(final AbstractPointersObject obj, final long index, final Object value) {
-            getUncached().execute(null, obj, index, value);
+            getUncached().execute(obj, index, value);
         }
 
-        public final void executeNil(final Node node, final AbstractPointersObject obj, final long index) {
-            execute(node, obj, index, NilObject.SINGLETON);
+        public final void executeNil(final AbstractPointersObject obj, final long index) {
+            execute(obj, index, NilObject.SINGLETON);
         }
 
         @SuppressWarnings("unused")
@@ -185,35 +185,35 @@ public class AbstractPointersObjectNodes {
         }
     }
 
-    @GenerateInline
+    @GenerateInline(false)
     @GenerateUncached
-    @GenerateCached(false)
+    @GenerateCached
     public abstract static class VariablePointersObjectReadNode extends AbstractNode {
 
-        public abstract Object execute(Node node, VariablePointersObject object, long index);
+        public abstract Object execute(VariablePointersObject object, long index);
 
         @Specialization(guards = {"cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
-        protected static final Object doReadCached(final Node node, final VariablePointersObject object, @SuppressWarnings("unused") final long index,
+        protected static final Object doReadCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index,
                         @Cached("index") final long cachedIndex,
                         @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(node, object, cachedIndex);
+            return readNode.execute(object, cachedIndex);
         }
 
         @TruffleBoundary
         @Specialization(guards = {"index < object.instsize()", "!object.getLayout().isValid()"})
-        protected static final Object doReadInvalid(final Node node, final VariablePointersObject object, final long index,
+        protected static final Object doReadInvalid(final VariablePointersObject object, final long index,
                         @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
             object.updateLayout(); // ensure layout is updated
-            return doReadGeneric(node, object, index, readNode);
+            return doReadGeneric(object, index, readNode);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"index < object.instsize()"}, replaces = {"doReadCached", "doReadInvalid"})
-        protected static final Object doReadGeneric(final Node node, final VariablePointersObject object, final long index,
+        protected static final Object doReadGeneric(final VariablePointersObject object, final long index,
                         @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(node, object, index);
+            return readNode.execute(object, index);
         }
 
         @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
@@ -237,35 +237,35 @@ public class AbstractPointersObjectNodes {
         }
     }
 
-    @GenerateInline
+    @GenerateInline(false)
     @GenerateUncached
-    @GenerateCached(false)
+    @GenerateCached
     public abstract static class VariablePointersObjectWriteNode extends AbstractNode {
 
-        public abstract void execute(Node node, VariablePointersObject object, long index, Object value);
+        public abstract void execute(VariablePointersObject object, long index, Object value);
 
         @Specialization(guards = {"cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
-        protected static final void doWriteCached(final Node node, final VariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+        protected static final void doWriteCached(final VariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
                         @Cached("index") final long cachedIndex,
                         @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(node, object, cachedIndex, value);
+            writeNode.execute(object, cachedIndex, value);
         }
 
         @TruffleBoundary
         @Specialization(guards = {"index < object.instsize()", "!object.getLayout().isValid()"})
-        protected static final void doWriteInvalid(final Node node, final VariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteInvalid(final VariablePointersObject object, final long index, final Object value,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
             object.updateLayout(); // ensure layout is updated
-            doWriteGeneric(node, object, index, value, writeNode);
+            doWriteGeneric(object, index, value, writeNode);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"index < object.instsize()"}, replaces = {"doWriteCached", "doWriteInvalid"})
-        protected static final void doWriteGeneric(final Node node, final VariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteGeneric(final VariablePointersObject object, final long index, final Object value,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(node, object, index, value);
+            writeNode.execute(object, index, value);
         }
 
         @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
@@ -289,40 +289,41 @@ public class AbstractPointersObjectNodes {
         }
     }
 
-    @GenerateInline
+    @GenerateInline(false)
     @GenerateUncached
-    @GenerateCached(false)
+    @GenerateCached
     public abstract static class WeakVariablePointersObjectReadNode extends AbstractNode {
 
-        public abstract Object execute(Node node, WeakVariablePointersObject object, long index);
+        public abstract Object execute(WeakVariablePointersObject object, long index);
 
         @Specialization(guards = {"cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
-        protected static final Object doReadCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
+        protected static final Object doReadCached(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
                         @Cached("index") final long cachedIndex,
                         @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(node, object, cachedIndex);
+            return readNode.execute(object, cachedIndex);
         }
 
         @TruffleBoundary
         @Specialization(guards = {"index < object.instsize()", "!object.getLayout().isValid()"})
-        protected static final Object doReadInvalid(final Node node, final WeakVariablePointersObject object, final long index,
+        protected static final Object doReadInvalid(final WeakVariablePointersObject object, final long index,
                         @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
             object.updateLayout(); // ensure layout is updated
-            return doReadGeneric(node, object, index, readNode);
+            return doReadGeneric(object, index, readNode);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"index < object.instsize()"}, replaces = {"doReadCached", "doReadInvalid"})
-        protected static final Object doReadGeneric(final Node node, final WeakVariablePointersObject object, final long index,
+        protected static final Object doReadGeneric(final WeakVariablePointersObject object, final long index,
                         @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(node, object, index);
+            return readNode.execute(object, index);
         }
 
         @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_VARIABLE_PART_CACHE_LIMIT")
-        protected static final Object doReadFromVariablePartCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
+        protected static final Object doReadFromVariablePartCached(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index,
+                        @Bind final Node node,
                         @Cached("index") final long cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final InlinedConditionProfile weakRefProfile) {
@@ -330,54 +331,57 @@ public class AbstractPointersObjectNodes {
         }
 
         @Specialization(guards = {"index >= object.instsize()", "!object.getLayout().isValid()"})
-        protected static final Object doReadFromVariablePartInvalid(final Node node, final WeakVariablePointersObject object, final long index,
+        protected static final Object doReadFromVariablePartInvalid(final WeakVariablePointersObject object, final long index,
+                        @Bind final Node node,
                         @Shared("weakRefProfile") @Cached final InlinedConditionProfile weakRefProfile) {
             object.updateLayout(); // ensure layout is updated
-            return doReadFromVariablePartGeneric(node, object, index, weakRefProfile);
+            return doReadFromVariablePartGeneric(object, index, node, weakRefProfile);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doReadFromVariablePartCached", "doReadFromVariablePartInvalid"})
-        protected static final Object doReadFromVariablePartGeneric(final Node node, final WeakVariablePointersObject object, final long index,
+        protected static final Object doReadFromVariablePartGeneric(final WeakVariablePointersObject object, final long index,
+                        @Bind final Node node,
                         @Shared("weakRefProfile") @Cached final InlinedConditionProfile weakRefProfile) {
             return object.getFromWeakVariablePart(node, index - object.instsize(), weakRefProfile);
         }
     }
 
-    @GenerateInline
+    @GenerateInline(false)
     @GenerateUncached
-    @GenerateCached(false)
+    @GenerateCached
     public abstract static class WeakVariablePointersObjectWriteNode extends AbstractNode {
 
-        public abstract void execute(Node node, WeakVariablePointersObject object, long index, Object value);
+        public abstract void execute(WeakVariablePointersObject object, long index, Object value);
 
         @Specialization(guards = {"cachedIndex < cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_LAYOUT_CACHE_LIMIT")
-        protected static final void doWriteCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+        protected static final void doWriteCached(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
                         @Cached("index") final long cachedIndex,
                         @SuppressWarnings("unused") @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(node, object, cachedIndex, value);
+            writeNode.execute(object, cachedIndex, value);
         }
 
         @TruffleBoundary
         @Specialization(guards = {"index < object.instsize()", "!object.getLayout().isValid()"})
-        protected static final void doWriteInvalid(final Node node, final WeakVariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteInvalid(final WeakVariablePointersObject object, final long index, final Object value,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
             object.updateLayout(); // ensure layout is updated
-            doWriteGeneric(node, object, index, value, writeNode);
+            doWriteGeneric(object, index, value, writeNode);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"index < object.instsize()"}, replaces = {"doWriteCached", "doWriteInvalid"})
-        protected static final void doWriteGeneric(final Node node, final WeakVariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteGeneric(final WeakVariablePointersObject object, final long index, final Object value,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(node, object, index, value);
+            writeNode.execute(object, index, value);
         }
 
         @Specialization(guards = {"cachedIndex >= cachedLayout.getInstSize()", "cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "POINTERS_VARIABLE_PART_CACHE_LIMIT")
-        protected static final void doWriteIntoVariablePartCached(final Node node, final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+        protected static final void doWriteIntoVariablePartCached(final WeakVariablePointersObject object, @SuppressWarnings("unused") final long index, final Object value,
+                        @Bind final Node node,
                         @Bind final SqueakImageContext image,
                         @Cached("index") final long cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
@@ -386,16 +390,18 @@ public class AbstractPointersObjectNodes {
         }
 
         @Specialization(guards = {"index >= object.instsize()", "!object.getLayout().isValid()"})
-        protected static final void doWriteIntoVariablePartInvalid(final Node node, final WeakVariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteIntoVariablePartInvalid(final WeakVariablePointersObject object, final long index, final Object value,
+                        @Bind final Node node,
                         @Bind final SqueakImageContext image,
                         @Shared("weakRefProfile") @Cached final InlinedConditionProfile weakRefProfile) {
             object.updateLayout(); // ensure layout is updated
-            doWriteIntoVariablePartGeneric(node, object, index, value, image, weakRefProfile);
+            doWriteIntoVariablePartGeneric(object, index, value, node, image, weakRefProfile);
         }
 
         @ReportPolymorphism.Megamorphic
         @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCached", "doWriteIntoVariablePartInvalid"})
-        protected static final void doWriteIntoVariablePartGeneric(final Node node, final WeakVariablePointersObject object, final long index, final Object value,
+        protected static final void doWriteIntoVariablePartGeneric(final WeakVariablePointersObject object, final long index, final Object value,
+                        @Bind final Node node,
                         @Bind final SqueakImageContext image,
                         @Shared("weakRefProfile") @Cached final InlinedConditionProfile primitiveProfile) {
             object.putIntoWeakVariablePart(node, index - object.instsize(), value, image, primitiveProfile);

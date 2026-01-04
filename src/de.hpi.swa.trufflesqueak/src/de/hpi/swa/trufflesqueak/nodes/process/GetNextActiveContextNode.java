@@ -33,16 +33,16 @@ public abstract class GetNextActiveContextNode extends AbstractNode {
     protected static final ContextObject doHandle(
                     @Bind final Node node,
                     @Cached final GetActiveProcessNode getActiveProcessNode,
-                    @Cached(inline = true) final AbstractPointersObjectReadNode readNode,
-                    @Cached(inline = true) final AbstractPointersObjectWriteNode writeSuspendedContextNode,
-                    @Cached(inline = true) final AbstractPointersObjectWriteNode writeListNode) {
+                    @Cached final AbstractPointersObjectReadNode readNode,
+                    @Cached final AbstractPointersObjectWriteNode writeSuspendedContextNode,
+                    @Cached final AbstractPointersObjectWriteNode writeListNode) {
         final PointersObject activeProcess = getActiveProcessNode.execute(node);
-        final Object newActiveContextObject = readNode.execute(node, activeProcess, PROCESS.SUSPENDED_CONTEXT);
+        final Object newActiveContextObject = readNode.execute(activeProcess, PROCESS.SUSPENDED_CONTEXT);
         if (!(newActiveContextObject instanceof final ContextObject newActiveContext)) {
             throw SqueakException.create("new process not runnable");
         }
-        writeSuspendedContextNode.executeNil(node, activeProcess, PROCESS.SUSPENDED_CONTEXT);
-        writeListNode.executeNil(node, activeProcess, PROCESS.LIST);
+        writeSuspendedContextNode.executeNil(activeProcess, PROCESS.SUSPENDED_CONTEXT);
+        writeListNode.executeNil(activeProcess, PROCESS.LIST);
         assert !newActiveContext.isDead() : "Cannot switch to terminated context";
         return newActiveContext;
     }
