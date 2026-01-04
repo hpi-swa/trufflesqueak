@@ -22,7 +22,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NonIdempotent;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -686,10 +685,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return literals[getNumLiterals() - 1];
     }
 
-    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
+    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
         final Object mca = getMethodClassAssociation();
         if (mca instanceof final AbstractPointersObject apo) {
-            return readNode.execute(inlineTarget, apo, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
+            return readNode.execute(apo, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
         } else {
             return false;
         }
@@ -698,8 +697,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public ClassObject getMethodClassSlow() {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-        if (hasMethodClass(readNode, null)) {
-            final ClassObject methodClass = getMethodClass(readNode, null);
+        if (hasMethodClass(readNode)) {
+            final ClassObject methodClass = getMethodClass(readNode);
             if (methodClass.isNotForwarded()) {
                 return methodClass;
             } else {
@@ -713,8 +712,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     /** CompiledMethod>>#methodClass. */
     @NonIdempotent
-    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
-        return (ClassObject) readNode.execute(inlineTarget, (AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
+    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
+        return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
     public long getHeader() {

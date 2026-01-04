@@ -807,7 +807,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject getActiveProcessSlow() {
-        return AbstractPointersObjectReadNode.getUncached().executePointers(null, getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
+        return AbstractPointersObjectReadNode.getUncached().executePointers(getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
     public Object getSpecialObject(final int index) {
@@ -1112,7 +1112,7 @@ public final class SqueakImageContext {
         return fractionClass;
     }
 
-    public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget) {
+    public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode) {
         final long actualNumerator;
         final long actualDenominator;
         if (denominator < 0) { // "keep sign in numerator"
@@ -1131,15 +1131,15 @@ public final class SqueakImageContext {
         final long gcd = Math.abs(m);
         // Instantiate reduced fraction
         final PointersObject fraction = new PointersObject(getFractionClass());
-        writeNode.execute(inlineTarget, fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
-        writeNode.execute(inlineTarget, fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
+        writeNode.execute(fraction, FRACTION.NUMERATOR, actualNumerator / gcd);
+        writeNode.execute(fraction, FRACTION.DENOMINATOR, actualDenominator / gcd);
         return fraction;
     }
 
     public static double fromFraction(final PointersObject fraction, final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
         assert SqueakGuards.isFraction(fraction, inlineTarget);
-        final long numerator = readNode.executeLong(inlineTarget, fraction, ObjectLayouts.FRACTION.NUMERATOR);
-        final double denominator = readNode.executeLong(inlineTarget, fraction, ObjectLayouts.FRACTION.DENOMINATOR);
+        final long numerator = readNode.executeLong(fraction, ObjectLayouts.FRACTION.NUMERATOR);
+        final double denominator = readNode.executeLong(fraction, ObjectLayouts.FRACTION.DENOMINATOR);
         return numerator / denominator;
     }
 
@@ -1168,10 +1168,10 @@ public final class SqueakImageContext {
         return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
     }
 
-    public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final Object xPos, final Object yPos) {
+    public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {
         final PointersObject point = new PointersObject(pointClass);
-        writeNode.execute(inlineTarget, point, POINT.X, xPos);
-        writeNode.execute(inlineTarget, point, POINT.Y, yPos);
+        writeNode.execute(point, POINT.X, xPos);
+        writeNode.execute(point, POINT.Y, yPos);
         return point;
     }
 
@@ -1179,12 +1179,12 @@ public final class SqueakImageContext {
         return ArrayObject.createWithStorage(arrayClass, ArrayUtils.EMPTY_ARRAY);
     }
 
-    public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final Node inlineTarget, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
+    public PointersObject newMessage(final AbstractPointersObjectWriteNode writeNode, final NativeObject selector, final ClassObject lookupClass, final Object[] arguments) {
         final PointersObject message = new PointersObject(messageClass);
-        writeNode.execute(inlineTarget, message, MESSAGE.SELECTOR, selector);
-        writeNode.execute(inlineTarget, message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
+        writeNode.execute(message, MESSAGE.SELECTOR, selector);
+        writeNode.execute(message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
         assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";
-        writeNode.execute(inlineTarget, message, MESSAGE.LOOKUP_CLASS, lookupClass);
+        writeNode.execute(message, MESSAGE.LOOKUP_CLASS, lookupClass);
         return message;
     }
 

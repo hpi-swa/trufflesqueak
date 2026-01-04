@@ -29,8 +29,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWrit
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -87,10 +87,9 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimUtcWithOffset2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "objectWithTwoSlots.size() == 2")
         protected static final PointersObject doUTC(@SuppressWarnings("unused") final Object receiver, final PointersObject objectWithTwoSlots,
-                        @Bind final Node node,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(node, objectWithTwoSlots, 0, getUTCMicroseconds());
-            writeNode.execute(node, objectWithTwoSlots, 1, getOffsetFromGTMInSeconds());
+            writeNode.execute(objectWithTwoSlots, 0, getUTCMicroseconds());
+            writeNode.execute(objectWithTwoSlots, 1, getOffsetFromGTMInSeconds());
             return objectWithTwoSlots;
         }
 

@@ -303,10 +303,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSignalNode extends AbstractPrimitiveWithFrameNode implements Primitive0WithFallback {
         @Specialization(guards = "isSemaphore(receiver)")
         protected static final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
-                        @Bind final Node node,
-                        @Cached(inline = true) final SignalSemaphoreNode signalSemaphoreNode,
+                        @Cached final SignalSemaphoreNode signalSemaphoreNode,
                         @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
-            if (signalSemaphoreNode.executeSignal(frame, node, receiver)) {
+            if (signalSemaphoreNode.executeSignal(frame, receiver)) {
                 FrameAccess.setStackPointer(frame, stackPointer);
                 throw ProcessSwitch.SINGLETON;
             } else {
@@ -329,13 +328,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
             assert isSemaphore(receiver);
-            final long excessSignals = pointersReadNode.executeLong(node, receiver, SEMAPHORE.EXCESS_SIGNALS);
+            final long excessSignals = pointersReadNode.executeLong(receiver, SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0) {
-                writeNode.execute(node, receiver, SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
+                writeNode.execute(receiver, SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
                 return receiver;
             } else {
-                addLastLinkToListNode.execute(node, getActiveProcessNode.execute(node), receiver);
-                wakeHighestPriorityNode.executeWake(frame, node);
+                addLastLinkToListNode.execute(getActiveProcessNode.execute(node), receiver);
+                wakeHighestPriorityNode.executeWake(frame);
                 FrameAccess.setStackPointer(frame, stackPointer);
                 throw ProcessSwitch.SINGLETON;
             }
@@ -347,15 +346,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimResumeNode extends AbstractPrimitiveWithFrameNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doResume(final VirtualFrame frame, final PointersObject receiver,
-                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ResumeProcessNode resumeProcessNode,
                         @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
-            if (!(readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject)) {
+            if (!(readNode.execute(receiver, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject)) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            if (resumeProcessNode.executeResume(frame, node, receiver)) {
+            if (resumeProcessNode.executeResume(frame, receiver)) {
                 FrameAccess.setStackPointer(frame, stackPointer);
                 throw ProcessSwitch.SINGLETON;
             } else {
@@ -370,11 +368,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
         protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Bind final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final PushToStackNode pushNode) {
-            wakeHighestPriorityNode.executeWake(frame, node);
+            wakeHighestPriorityNode.executeWake(frame);
             /* Leave `nil` as result on stack. */
             pushNode.execute(frame, NilObject.SINGLETON);
             throw ProcessSwitch.SINGLETON;
@@ -387,14 +385,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            final Object myListOrNil = readNode.execute(node, receiver, PROCESS.LIST);
+            final Object myListOrNil = readNode.execute(receiver, PROCESS.LIST);
             if (!(myListOrNil instanceof final PointersObject myList)) {
                 CompilerDirectives.transferToInterpreter();
                 assert myListOrNil == NilObject.SINGLETON;
                 throw PrimitiveFailed.BAD_RECEIVER;
             }
-            removeProcessNode.executeRemove(receiver, myList, readNode, writeNode, node);
-            writeNode.execute(node, receiver, PROCESS.LIST, NilObject.SINGLETON);
+            removeProcessNode.executeRemove(receiver, myList, readNode, writeNode);
+            writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
             return myList;
         }
     }
@@ -405,11 +403,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver == getActiveProcessNode.execute(node)", limit = "1")
         protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Bind final Node node,
+                        @SuppressWarnings("unused") @Bind final Node node,
                         @SuppressWarnings("unused") @Exclusive @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final PushToStackNode pushNode) {
-            wakeHighestPriorityNode.executeWake(frame, node);
+            wakeHighestPriorityNode.executeWake(frame);
             /* Leave `nil` as result on stack. */
             pushNode.execute(frame, NilObject.SINGLETON);
             throw ProcessSwitch.SINGLETON;
@@ -422,11 +420,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            final Object myListOrNil = readNode.execute(node, receiver, PROCESS.LIST);
-            final Object myContextOrNil = readNode.execute(node, receiver, PROCESS.SUSPENDED_CONTEXT);
+            final Object myListOrNil = readNode.execute(receiver, PROCESS.LIST);
+            final Object myContextOrNil = readNode.execute(receiver, PROCESS.SUSPENDED_CONTEXT);
             if ((myContextOrNil instanceof final ContextObject myContext) && !myContext.isDead() && (myListOrNil instanceof final PointersObject myList)) {
-                removeProcessNode.executeRemove(receiver, myList, readNode, writeNode, node);
-                writeNode.execute(node, receiver, PROCESS.LIST, NilObject.SINGLETON);
+                removeProcessNode.executeRemove(receiver, myList, readNode, writeNode);
+                writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
                 if (myList.getSqueakClass() != getContext(node).getLinkedListClass()) {
                     backupContextToBlockingSendTo(myContext, myList);
                     return NilObject.SINGLETON;
@@ -904,14 +902,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
             final PointersObject activeProcess = getActiveProcessNode.execute(node);
-            final long priority = pointersReadNode.executeLong(node, activeProcess, PROCESS.PRIORITY);
-            final ArrayObject processLists = pointersReadNode.executeArray(node, scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
+            final long priority = pointersReadNode.executeLong(activeProcess, PROCESS.PRIORITY);
+            final ArrayObject processLists = pointersReadNode.executeArray(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
             final PointersObject processList = (PointersObject) arrayReadNode.execute(node, processLists, priority - 1);
-            if (processList.isEmptyList(pointersReadNode, node)) {
+            if (processList.isEmptyList(pointersReadNode)) {
                 return NilObject.SINGLETON;
             }
-            addLastLinkToListNode.execute(node, activeProcess, processList);
-            wakeHighestPriorityNode.executeWake(frame, node);
+            addLastLinkToListNode.execute(activeProcess, processList);
+            wakeHighestPriorityNode.executeWake(frame);
             FrameAccess.setStackPointer(frame, stackPointer);
             throw ProcessSwitch.SINGLETON;
         }
@@ -936,7 +934,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ExitCriticalSectionNode exitCriticalSectionNode) {
-            return exitCriticalSectionNode.execute(frame, node, mutex, readNode.execute(node, mutex, LINKED_LIST.FIRST_LINK));
+            return exitCriticalSectionNode.execute(frame, node, mutex, readNode.execute(mutex, LINKED_LIST.FIRST_LINK));
         }
 
         @GenerateInline
@@ -945,21 +943,21 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract PointersObject execute(VirtualFrame frame, Node node, PointersObject mutex, Object firstLink);
 
             @Specialization
-            protected static final PointersObject doExitEmpty(final Node node, final PointersObject mutex, @SuppressWarnings("unused") final NilObject firstLink,
+            protected static final PointersObject doExitEmpty(final PointersObject mutex, @SuppressWarnings("unused") final NilObject firstLink,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode) {
-                writeNode.executeNil(node, mutex, MUTEX.OWNER);
+                writeNode.executeNil(mutex, MUTEX.OWNER);
                 return mutex;
             }
 
             @Fallback
-            protected static final PointersObject doExitNonEmpty(final VirtualFrame frame, final Node node, final PointersObject mutex, @SuppressWarnings("unused") final Object firstLink,
+            protected static final PointersObject doExitNonEmpty(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final Object firstLink,
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Cached final ResumeProcessNode resumeProcessNode,
                             @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
-                final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode, node);
-                writeNode.execute(node, mutex, MUTEX.OWNER, owningProcess);
-                if (resumeProcessNode.executeResume(frame, node, owningProcess)) {
+                final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode);
+                writeNode.execute(mutex, MUTEX.OWNER, owningProcess);
+                if (resumeProcessNode.executeResume(frame, owningProcess)) {
                     FrameAccess.setStackPointer(frame, stackPointer);
                     throw ProcessSwitch.SINGLETON;
                 } else {
@@ -978,7 +976,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final EnterCriticalSectionNode enterCriticalSectionNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode) {
-            return enterCriticalSectionNode.execute(frame, node, mutex, readNode.execute(node, mutex, MUTEX.OWNER), getActiveProcessNode.execute(node));
+            return enterCriticalSectionNode.execute(frame, node, mutex, readNode.execute(mutex, MUTEX.OWNER), getActiveProcessNode.execute(node));
         }
     }
 
@@ -990,7 +988,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final EnterCriticalSectionNode enterCriticalSectionNode) {
-            return enterCriticalSectionNode.execute(frame, node, mutex, readNode.execute(node, mutex, MUTEX.OWNER), effectiveProcess);
+            return enterCriticalSectionNode.execute(frame, node, mutex, readNode.execute(mutex, MUTEX.OWNER), effectiveProcess);
         }
     }
 
@@ -1000,9 +998,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected abstract Object execute(VirtualFrame frame, Node node, PointersObject mutex, Object mutexOwner, PointersObject effectiveProcess);
 
         @Specialization
-        protected static final boolean doEnterNilOwner(final Node node, final PointersObject mutex, @SuppressWarnings("unused") final NilObject mutexOwner, final PointersObject effectiveProcess,
+        protected static final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NilObject mutexOwner, final PointersObject effectiveProcess,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(node, mutex, MUTEX.OWNER, effectiveProcess);
+            writeNode.execute(mutex, MUTEX.OWNER, effectiveProcess);
             return BooleanObject.FALSE;
         }
 
@@ -1013,13 +1011,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Fallback
-        protected static final Object doEnter(final VirtualFrame frame, final Node node, final PointersObject mutex, @SuppressWarnings("unused") final Object mutexOwner,
+        protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final Object mutexOwner,
                         final PointersObject effectiveProcess,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final PushToStackNode pushNode) {
-            addLastLinkToListNode.execute(node, effectiveProcess, mutex);
-            wakeHighestPriorityNode.executeWake(frame, node);
+            addLastLinkToListNode.execute(effectiveProcess, mutex);
+            wakeHighestPriorityNode.executeWake(frame);
             /* Leave `false` as result on stack. */
             pushNode.execute(frame, BooleanObject.FALSE);
             throw ProcessSwitch.SINGLETON;
@@ -1036,7 +1034,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final TestAndSetOwnershipOfCriticalSectionNode testAndSetOwnershipOfCriticalSectionNode) {
-            return testAndSetOwnershipOfCriticalSectionNode.execute(node, rcvrMutex, readNode.execute(node, rcvrMutex, MUTEX.OWNER), getActiveProcessNode.execute(node));
+            return testAndSetOwnershipOfCriticalSectionNode.execute(node, rcvrMutex, readNode.execute(rcvrMutex, MUTEX.OWNER), getActiveProcessNode.execute(node));
         }
 
         @GenerateInline
@@ -1045,9 +1043,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract Object execute(Node node, PointersObject mutex, Object mutexOwner, PointersObject activeProcess);
 
             @Specialization
-            protected static final boolean doNilOwner(final Node node, final PointersObject mutex, final NilObject owner, final PointersObject activeProcess,
+            protected static final boolean doNilOwner(final PointersObject mutex, final NilObject owner, final PointersObject activeProcess,
                             @Cached final AbstractPointersObjectWriteNode writeNode) {
-                return EnterCriticalSectionNode.doEnterNilOwner(node, mutex, owner, activeProcess, writeNode);
+                return EnterCriticalSectionNode.doEnterNilOwner(mutex, owner, activeProcess, writeNode);
             }
 
             @SuppressWarnings("unused")

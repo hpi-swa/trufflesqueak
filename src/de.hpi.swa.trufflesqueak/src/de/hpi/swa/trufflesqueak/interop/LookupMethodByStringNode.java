@@ -59,7 +59,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
                      * An AbstractPointersObjectReadNode is sufficient for accessing `values`
                      * instance variable here.
                      */
-                    @Cached final AbstractPointersObjectReadNode pointersReadValuesNode,
+                    @Cached(inline = false) final AbstractPointersObjectReadNode pointersReadValuesNode,
                     @Cached final ArrayObjectReadNode arrayReadNode) {
         final byte[] selectorBytes = MiscUtils.toBytes(selector);
         ClassObject lookupClass = classObject;
@@ -69,7 +69,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
             for (int i = 0; i < methodDictVariablePart.length; i++) {
                 final Object methodSelector = methodDictVariablePart[i];
                 if (methodSelector instanceof final NativeObject m && Arrays.equals(selectorBytes, m.getByteStorage())) {
-                    return arrayReadNode.execute(node, pointersReadValuesNode.executeArray(node, methodDict, METHOD_DICT.VALUES), i);
+                    return arrayReadNode.execute(node, pointersReadValuesNode.executeArray(methodDict, METHOD_DICT.VALUES), i);
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();

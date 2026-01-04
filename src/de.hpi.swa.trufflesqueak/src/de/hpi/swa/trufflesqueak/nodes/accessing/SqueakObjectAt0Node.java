@@ -54,9 +54,9 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doPointers(final Node node, final PointersObject obj, final long index,
-                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
-        return readNode.execute(node, obj, index);
+    protected static final Object doPointers(final PointersObject obj, final long index,
+                    @Shared("readNode") @Cached(inline = false) final AbstractPointersObjectReadNode readNode) {
+        return readNode.execute(obj, index);
     }
 
     @Specialization
@@ -77,15 +77,15 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doVariablePointers(final Node node, final VariablePointersObject obj, final long index,
-                    @Cached final VariablePointersObjectReadNode readNode) {
-        return readNode.execute(node, obj, index);
+    protected static final Object doVariablePointers(final VariablePointersObject obj, final long index,
+                    @Cached(inline = false) final VariablePointersObjectReadNode readNode) {
+        return readNode.execute(obj, index);
     }
 
     @Specialization
-    protected static final Object doWeakPointersVariable(final Node node, final WeakVariablePointersObject obj, final long index,
-                    @Cached final WeakVariablePointersObjectReadNode readNode) {
-        return readNode.execute(node, obj, index);
+    protected static final Object doWeakPointersVariable(final WeakVariablePointersObject obj, final long index,
+                    @Cached(inline = false) final WeakVariablePointersObjectReadNode readNode) {
+        return readNode.execute(obj, index);
     }
 
     @Specialization
@@ -101,9 +101,9 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doEphemeron(final Node node, final EphemeronObject obj, final long index,
-                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode) {
-        return readNode.execute(node, obj, index);
+    protected static final Object doEphemeron(final EphemeronObject obj, final long index,
+                    @Shared("readNode") @Cached(inline = false) final AbstractPointersObjectReadNode readNode) {
+        return readNode.execute(obj, index);
     }
 
     @Specialization

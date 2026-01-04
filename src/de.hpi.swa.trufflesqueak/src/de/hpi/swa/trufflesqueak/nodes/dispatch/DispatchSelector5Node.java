@@ -320,9 +320,9 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
             @Specialization(guards = "lookupResult == null")
             protected static final Object[] doDoesNotUnderstand(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                             final Object arg4, final Object arg5, final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Cached final AbstractPointersObjectWriteNode writeNode) {
+                            @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode) {
                 final Object[] arguments = new Object[]{arg1, arg2, arg3, arg4, arg5};
-                final PointersObject message = getContext(node).newMessage(writeNode, node, selector, receiverClass, arguments);
+                final PointersObject message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
                 return FrameAccess.newDNUWith(sender, receiver, message);
             }
 

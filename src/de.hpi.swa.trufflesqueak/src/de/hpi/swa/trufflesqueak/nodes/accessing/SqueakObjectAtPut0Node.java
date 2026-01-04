@@ -39,7 +39,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObject
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 
 @GenerateInline
-@GenerateCached(true)
+@GenerateCached
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
@@ -57,9 +57,9 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doPointers(final Node node, final PointersObject obj, final long index, final Object value,
-                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-        writeNode.execute(node, obj, (int) index, value);
+    protected static final void doPointers(final PointersObject obj, final long index, final Object value,
+                    @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode) {
+        writeNode.execute(obj, (int) index, value);
     }
 
     @Specialization
@@ -74,15 +74,15 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doWeakPointers(final Node node, final WeakVariablePointersObject obj, final long index, final Object value,
-                    @Cached final WeakVariablePointersObjectWriteNode writeNode) {
-        writeNode.execute(node, obj, (int) index, value);
+    protected static final void doWeakPointers(final WeakVariablePointersObject obj, final long index, final Object value,
+                    @Cached(inline = false) final WeakVariablePointersObjectWriteNode writeNode) {
+        writeNode.execute(obj, (int) index, value);
     }
 
     @Specialization
-    protected static final void doVariablePointers(final Node node, final VariablePointersObject obj, final long index, final Object value,
-                    @Cached final VariablePointersObjectWriteNode writeNode) {
-        writeNode.execute(node, obj, (int) index, value);
+    protected static final void doVariablePointers(final VariablePointersObject obj, final long index, final Object value,
+                    @Cached(inline = false) final VariablePointersObjectWriteNode writeNode) {
+        writeNode.execute(obj, (int) index, value);
     }
 
     @Specialization
@@ -104,9 +104,9 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doEphemeron(final Node node, final EphemeronObject obj, final long index, final Object value,
-                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-        writeNode.execute(node, obj, index, value);
+    protected static final void doEphemeron(final EphemeronObject obj, final long index, final Object value,
+                    @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode) {
+        writeNode.execute(obj, index, value);
     }
 
     @Specialization

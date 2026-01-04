@@ -11,16 +11,3 @@ index 79c97354020..9518d41f5db 100644
        "graalCompilerSourceEdition": "ignore",
      },
      "org.graalvm.launcher.test" : {
-diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
-index 10b976c323e..18e3fd6a8a8 100644
---- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
-+++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/nodes/NodeUtil.java
-@@ -175,7 +175,7 @@ public final class NodeUtil {
-             current = current.getParent();
-         } while (current != null);
- 
--        if (!(prev instanceof ExecutableNode)) {
-+        if (prev.isAdoptable() && !(prev instanceof ExecutableNode)) {
-             failNotAdopted(node, prev);
-         }
-         return true;

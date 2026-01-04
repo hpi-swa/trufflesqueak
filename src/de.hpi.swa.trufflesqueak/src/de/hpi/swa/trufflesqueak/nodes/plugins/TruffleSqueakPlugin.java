@@ -11,14 +11,12 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -112,14 +110,13 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "form.instsize() > OFFSET")
         protected final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
-                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode) {
             try {
                 /* Extract information from form. */
-                final NativeObject bits = readNode.executeNative(node, form, FORM.BITS);
-                final int width = readNode.executeInt(node, form, FORM.WIDTH);
-                final int height = readNode.executeInt(node, form, FORM.HEIGHT);
-                final long depth = readNode.executeLong(node, form, FORM.DEPTH);
+                final NativeObject bits = readNode.executeNative(form, FORM.BITS);
+                final int width = readNode.executeInt(form, FORM.WIDTH);
+                final int height = readNode.executeInt(form, FORM.HEIGHT);
+                final long depth = readNode.executeLong(form, FORM.DEPTH);
                 if (!bits.isIntType() || depth != 32) {
                     CompilerDirectives.transferToInterpreter();
                     throw PrimitiveFailed.GENERIC_ERROR;

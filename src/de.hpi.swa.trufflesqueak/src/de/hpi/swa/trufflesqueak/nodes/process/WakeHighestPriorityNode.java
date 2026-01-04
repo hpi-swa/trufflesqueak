@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -30,8 +31,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSize
  * Return the Context for the highest priority process that is ready to run. Suspends the active
  * Context and returns the new active Context.
  */
-@GenerateInline
-@GenerateCached(false)
+@GenerateInline(false)
+@GenerateCached
 public abstract class WakeHighestPriorityNode extends AbstractNode {
 
     public static final void executeAndThrowUncached(final VirtualFrame frame, final SqueakImageContext image) {
@@ -41,7 +42,7 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
         final AbstractPointersObjectWriteNode pointersWriteNode = AbstractPointersObjectWriteNode.getUncached();
 
         // Note: It is a fatal VM error if there is no runnable process.
-        final ArrayObject schedLists = pointersReadNode.executeArray(null, image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
+        final ArrayObject schedLists = pointersReadNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
         long p = arraySizeNode.execute(null, schedLists) - 1;  // index of last indexable field
         PointersObject processList;
         do {
@@ -49,23 +50,24 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
                 throw CompilerDirectives.shouldNotReachHere("scheduler could not find a runnable process");
             }
             processList = (PointersObject) arrayReadNode.execute(null, schedLists, p--);
-        } while (processList.isEmptyList(pointersReadNode, null));
-        final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode, null);
+        } while (processList.isEmptyList(pointersReadNode));
+        final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
         TransferToNode.executeUncached(frame, newProcess);
         throw ProcessSwitch.SINGLETON;
     }
 
-    public abstract void executeWake(VirtualFrame frame, Node node);
+    public abstract void executeWake(VirtualFrame frame);
 
     @Specialization
-    protected static final void doWake(final VirtualFrame frame, final Node node,
+    protected static final void doWake(final VirtualFrame frame,
+                    @Bind final Node node,
                     @Cached final ArrayObjectReadNode arrayReadNode,
-                    @Cached final ArrayObjectSizeNode arraySizeNode,
+                    @Cached(inline = true) final ArrayObjectSizeNode arraySizeNode,
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached final TransferToNode transferToNode) {
         // Note: It is a fatal VM error if there is no runnable process.
-        final ArrayObject schedLists = pointersReadNode.executeArray(node, getContext(node).getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
+        final ArrayObject schedLists = pointersReadNode.executeArray(getContext(node).getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
         long p = arraySizeNode.execute(node, schedLists) - 1;  // index of last indexable field
         PointersObject processList;
         do {
@@ -73,8 +75,8 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
                 throw SqueakException.create("scheduler could not find a runnable process");
             }
             processList = (PointersObject) arrayReadNode.execute(node, schedLists, p--);
-        } while (processList.isEmptyList(pointersReadNode, node));
-        final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode, node);
-        transferToNode.execute(frame, node, newProcess);
+        } while (processList.isEmptyList(pointersReadNode));
+        final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
+        transferToNode.execute(frame, newProcess);
     }
 }

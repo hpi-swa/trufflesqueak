@@ -166,6 +166,6 @@ public final class EphemeronObject extends AbstractPointersObject {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode = AbstractPointersObjectNodes.AbstractPointersObjectReadNode.getUncached();
-        return readNode.execute(null, this, ObjectLayouts.EPHEMERON.KEY) + " -> " + readNode.execute(null, this, ObjectLayouts.EPHEMERON.VALUE);
+        return readNode.execute(this, ObjectLayouts.EPHEMERON.KEY) + " -> " + readNode.execute(this, ObjectLayouts.EPHEMERON.VALUE);
     }
 }
