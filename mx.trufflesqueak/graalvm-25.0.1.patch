@@ -12,7 +12,7 @@ index 79c97354020..9518d41f5db 100644
      },
      "org.graalvm.launcher.test" : {
 diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
-index de0c5fa02fa..23bafdc9f94 100644
+index de0c5fa02fa..d5f3b55e387 100644
 --- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
 +++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
 @@ -174,15 +174,15 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
@@ -76,7 +76,7 @@ index de0c5fa02fa..23bafdc9f94 100644
      }
  
      @Override
-@@ -866,20 +867,20 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+@@ -866,36 +867,36 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
  
      @Override
      public int getIntStatic(int slot) {
@@ -104,6 +104,28 @@ index de0c5fa02fa..23bafdc9f94 100644
      }
  
      @Override
+     public long getLongStatic(int slot) {
+-        assert checkStaticGet(slot, STATIC_LONG_TAG) : "Unexpected read of static long value";
++        // assert checkStaticGet(slot, STATIC_LONG_TAG) : "Unexpected read of static long value";
+ 
+-        return getIndexedPrimitiveLocals()[slot];
++        return unsafeGetLong(slot);
+     }
+ 
+     @Override
+     public void setLongStatic(int slot, long value) {
+-        assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
++        // assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
+         // We use this check instead of the assert keyword to update the tags in PE'd code.
+-        if (ASSERTIONS_ENABLED) {
+-            indexedTags[slot] = STATIC_LONG_TAG;
+-        }
++        // if (ASSERTIONS_ENABLED) {
++        // indexedTags[slot] = STATIC_LONG_TAG;
++        // }
+ 
+         getIndexedPrimitiveLocals()[slot] = value;
+     }
 @@ -1071,13 +1072,13 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
          } else if (sourceOffset < 0) {
              CompilerDirectives.transferToInterpreterAndInvalidate();
