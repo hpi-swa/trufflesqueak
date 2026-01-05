@@ -221,7 +221,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
         if (!FrameAccess.hasClosure(frame)) {
             initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
         } else {
-            initialSP = FrameAccess.getClosure(frame).getNumTemps();
+            initialSP = FrameAccess.getClosure(frame).getInitialSP();
         }
         final int stackPointer = FrameAccess.getStackPointer(frame);
         for (int i = 0; i < numReceiverAndArguments; i++) {

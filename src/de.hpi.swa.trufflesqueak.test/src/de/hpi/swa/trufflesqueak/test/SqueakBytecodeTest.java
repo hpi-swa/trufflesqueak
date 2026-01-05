@@ -550,7 +550,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         final BlockClosureObject closure = (BlockClosureObject) result;
         assertEquals(2, closure.getNumArgs());
         assertEquals(0, closure.getNumCopied());
-        assertEquals(2, closure.getNumTemps());
+        assertEquals(2, closure.getInitialSP());
         assertTrue(closure.getCompiledBlock().getSqueakClass().isCompiledMethodClassType());
     }
 
