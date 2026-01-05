@@ -399,6 +399,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private static Object lookupMethodInDictionary(final VariablePointersObject methodDictionary, final NativeObject messageSelector, final int messageSelectorHash) {
         final Object[] methodDictSelectors = methodDictionary.getVariablePart();
         /* MethodDictionary always has a power-of-two size */
+        assert methodDictSelectors.length > 0 && (methodDictSelectors.length & (methodDictSelectors.length - 1)) == 0;
         final int sizeMask = methodDictSelectors.length - 1;
         int index = messageSelectorHash & sizeMask;
         /*
