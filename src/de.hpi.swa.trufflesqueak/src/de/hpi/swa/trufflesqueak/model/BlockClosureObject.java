@@ -237,41 +237,10 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     public int getNumTemps() {
         if (block.isCompiledMethod()) { // See BlockClosure>>#numTemps
-            return getNumCopied() + getNumArgs() + tempCountForBlock();
+            return getNumCopied() + getNumArgs();
         } else { // FullBlockClosure>>#numTemps
             return block.getNumTemps();
         }
-    }
-
-    private int tempCountForBlock() {
-        assert block.isCompiledMethod();
-        CompilerAsserts.neverPartOfCompilation();
-        final byte[] bytecode = block.getBytes();
-        int pc;
-        final int pushNilCode;
-        final int blockSize;
-        if (block.getSignFlag()) {
-            pc = block.getOuterMethodStartPCZeroBased() - 4;
-            pushNilCode = 115;
-        } else {
-            pc = block.getOuterMethodStartPCZeroBased() - 3;
-            pushNilCode = 79;
-        }
-        blockSize = Byte.toUnsignedInt(bytecode[pc + 2]) << 8 | Byte.toUnsignedInt(bytecode[pc + 3]);
-        final int blockEnd = pc + blockSize;
-
-        int stackpointer = 0;
-        if (Byte.toUnsignedInt(bytecode[pc]) == pushNilCode) {
-            while (pc < blockEnd) {
-                final int b = Byte.toUnsignedInt(bytecode[pc++]);
-                if (b == pushNilCode) {
-                    stackpointer++;
-                } else {
-                    break;
-                }
-            }
-        }
-        return stackpointer;
     }
 
     @Override
