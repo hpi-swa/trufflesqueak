@@ -97,7 +97,7 @@ public final class StartContextRootNode extends AbstractRootNode {
                 assert numArgs == code.getNumArgs();
             } else {
                 final BlockClosureObject closure = FrameAccess.getClosure(frame);
-                initialSP = closure.getNumTemps();
+                initialSP = closure.getInitialSP();
                 assert numArgs == closure.getNumArgs() + closure.getNumCopied();
             }
             numTempSlots = MiscUtils.toByteExact(initialSP - numArgs);

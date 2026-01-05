@@ -235,10 +235,15 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         return currentContext;
     }
 
-    public int getNumTemps() {
-        if (block.isCompiledMethod()) { // See BlockClosure>>#numTemps
+    public int getInitialSP() {
+        // See Context>>#privRefresh:
+        if (block.isCompiledMethod()) {
+            // see BlockClosure>>#simulateValueWithArguments:caller:
+            // Temporaries are nilled by push bytecodes at start of block.
             return getNumCopied() + getNumArgs();
-        } else { // FullBlockClosure>>#numTemps
+        } else {
+            // see FullBlockClosure>>#simulateValueWithArguments:caller:
+            // Temporaries are nilled during Context creation.
             return block.getNumTemps();
         }
     }
