@@ -94,9 +94,9 @@ public final class FrameAccess {
      * Creates a new {@link FrameDescriptor} according to {@link SlotIndices}.
      */
     public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code, final int numStackSlots) {
-        final int numSlots = SlotIndices.STACK_START + numStackSlots;
-        final Builder builder = FrameDescriptor.newBuilder(numSlots).info(code);
-        builder.addSlots(numSlots, FrameSlotKind.Static);
+        final Builder builder = FrameDescriptor.newBuilder(SlotIndices.STACK_START + numStackSlots).info(code);
+        builder.addSlots(SlotIndices.STACK_START, FrameSlotKind.Static);
+        builder.addSlots(numStackSlots);
         return builder.build();
     }
 
@@ -264,7 +264,7 @@ public final class FrameAccess {
             setSlotsAreNilled(frame);
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                frame.setObjectStatic(slotIndex, null);
+                frame.setObject(slotIndex, null);
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
                 frame.setAuxiliarySlot(auxSlotIndex, null);
@@ -292,7 +292,7 @@ public final class FrameAccess {
         } else {
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                action.accept(frame.getObjectStatic(slotIndex));
+                action.accept(frame.getObject(slotIndex));
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
                 action.accept(frame.getAuxiliarySlot(auxSlotIndex));
@@ -312,9 +312,9 @@ public final class FrameAccess {
         } else {
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
-                final Object replacement = action.apply(frame.getObjectStatic(slotIndex));
+                final Object replacement = action.apply(frame.getObject(slotIndex));
                 if (replacement != null) {
-                    frame.setObjectStatic(slotIndex, replacement);
+                    frame.setObject(slotIndex, replacement);
                 }
             }
             for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
@@ -327,11 +327,11 @@ public final class FrameAccess {
     }
 
     public static Object getSlotValue(final Frame frame, final int slotIndex) {
-        return frame.getObjectStatic(slotIndex);
+        return frame.getObject(slotIndex);
     }
 
     public static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
-        frame.setObjectStatic(slotIndex, value);
+        frame.setObject(slotIndex, value);
     }
 
     public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {

@@ -400,9 +400,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // Cannot use copyTo here as frame descriptors may be different
         // ToDo: This does not handle any stack slots held in auxiliarySlots.
         FrameAccess.iterateStackSlots(oldFrame, slotIndex -> {
-            final Object stackValue = oldFrame.getObjectStatic(slotIndex);
+            final Object stackValue = oldFrame.getObject(slotIndex);
             if (stackValue != null) {
-                frame.setObjectStatic(slotIndex, stackValue);
+                frame.setObject(slotIndex, stackValue);
             }
         });
     }
@@ -652,7 +652,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final int numSlots = FrameAccess.getNumStackSlots(frame);
         for (int i = numArgs; i < numSlots; i++) {
             final int slotIndex = FrameAccess.toStackSlotIndex(frame, i);
-            final Object stackValue = frame.getObjectStatic(slotIndex);
+            final Object stackValue = frame.getObject(slotIndex);
             if (stackValue == null) {
                 writer.writeNil();
             } else {

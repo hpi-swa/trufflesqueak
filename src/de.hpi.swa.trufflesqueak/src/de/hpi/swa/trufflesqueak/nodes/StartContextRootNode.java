@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import static de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodeDSLAccess.FRAMES;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -117,7 +119,7 @@ public final class StartContextRootNode extends AbstractRootNode {
         // Initialize remaining temporary variables with nil in newContext.
         for (int i = 0; i < numTempSlots; i++) {
             final int slotIndex = tempStackSlotStartIndex + i;
-            frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
+            FRAMES.setObject(frame, slotIndex, NilObject.SINGLETON);
         }
     }
 

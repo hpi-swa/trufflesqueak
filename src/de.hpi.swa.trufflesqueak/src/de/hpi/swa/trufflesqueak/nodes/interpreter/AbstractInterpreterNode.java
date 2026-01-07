@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interpreter;
 
+import static de.hpi.swa.trufflesqueak.nodes.interpreter.BytecodeDSLAccess.FRAMES;
 import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -376,8 +377,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     protected final Object pop(final VirtualFrame frame, final int sp) {
         assert sp >= numArguments;
         final int slotIndex = FrameAccess.toStackSlotIndex(sp);
-        final Object result = frame.getObjectStatic(slotIndex);
-        frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
+        final Object result = FRAMES.uncheckedGetObject(frame, slotIndex);
+        FRAMES.setObject(frame, slotIndex, NilObject.SINGLETON);
         return result;
     }
 
@@ -396,8 +397,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             final int slotIndex = topSlotIndex - i;
-            stackValues[numPop - 1 - i] = frame.getObjectStatic(slotIndex);
-            frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
+            stackValues[numPop - 1 - i] = FRAMES.uncheckedGetObject(frame, slotIndex);
+            FRAMES.setObject(frame, slotIndex, NilObject.SINGLETON);
         }
         return stackValues;
     }
@@ -410,18 +411,18 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         if (sp < numArguments) {
             return UnsafeUtils.getObject(frame.getArguments(), FrameAccess.getArgumentStartIndex() + sp);
         } else {
-            return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(sp));
+            return FRAMES.uncheckedGetObject(frame, FrameAccess.toStackSlotIndex(sp));
         }
     }
 
     protected final Object getStackValue(final VirtualFrame frame, final int sp) {
         assert sp >= numArguments;
-        return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(sp));
+        return FRAMES.uncheckedGetObject(frame, FrameAccess.toStackSlotIndex(sp));
     }
 
     protected final void setStackValue(final VirtualFrame frame, final int sp, final Object value) {
         assert sp >= numArguments;
-        FrameAccess.setSlotValue(frame, FrameAccess.toStackSlotIndex(sp), value);
+        FRAMES.setObject(frame, FrameAccess.toStackSlotIndex(sp), value);
     }
 
     protected static final void externalizePCAndSP(final VirtualFrame frame, final int pc, final int sp) {
