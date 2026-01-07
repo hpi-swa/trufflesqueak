@@ -396,23 +396,15 @@ public final class SqueakImageContext {
      */
 
     public boolean enteringContextExceedsDepth() {
-        if (maxContextStackDepth == 0) {
-            return false;
-        } else {
-            return ++currentContextStackDepth > maxContextStackDepth;
-        }
+        return ++currentContextStackDepth > maxContextStackDepth;
     }
 
     public void exitingContext() {
-        if (maxContextStackDepth != 0) {
-            --currentContextStackDepth;
-        }
+        --currentContextStackDepth;
     }
 
     public void resetContextStackDepth() {
-        if (maxContextStackDepth != 0) {
-            currentContextStackDepth = 0;
-        }
+        currentContextStackDepth = 0;
     }
 
     /*

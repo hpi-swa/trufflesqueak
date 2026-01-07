@@ -71,7 +71,7 @@ public final class SqueakOptions {
                             options.get(ResourceSummary),
                             options.get(Headless),
                             options.get(Interrupts),
-                            Math.max(0, options.get(ContextStackDepth)),
+                            Math.max(1, options.get(ContextStackDepth)),
                             options.get(Startup),
                             options.get(Testing),
                             options.get(SignalInputSemaphore));
