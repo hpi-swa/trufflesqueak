@@ -35,7 +35,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 76)
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"0 <= newStackPointer", "newStackPointer <= LARGE_FRAMESIZE"})
+        @Specialization(guards = {"0 <= newStackPointer", "newStackPointer <= receiver.size()"})
         protected static final ContextObject store(final ContextObject receiver, final long newStackPointer) {
             /*
              * Not need to "nil any newly accessible cells" as cells are always nil-initialized and
