@@ -47,7 +47,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public ContextObject(final int size) {
         super();
         senderOrFrameOrSize = size;
-        assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE;
+        assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE || size == CONTEXT.HUGE_FRAMESIZE;
     }
 
     public ContextObject(final VirtualFrame frame) {
@@ -454,7 +454,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public void push(final Object value) {
         assert value != null : "Unexpected `null` value";
         final int currentStackPointer = getStackPointer();
-        assert currentStackPointer < CONTEXT.MAX_STACK_SIZE;
+        assert currentStackPointer <= getCodeObject().getMaxStackSize() : "curSP " + currentStackPointer + " > maxStackSize " + getCodeObject().getMaxStackSize();
         setStackPointer(currentStackPointer + 1);
         atTempPut(currentStackPointer, value);
     }

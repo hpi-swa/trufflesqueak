@@ -55,12 +55,12 @@ public abstract class AbstractSqueakTestCase {
         return makeMethod(bytes, header, allLiterals);
     }
 
-    protected static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
-        return CompiledCodeObject.CompiledCodeHeaderUtils.makeHeader(true, numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
+    protected static final long makeHeaderWord(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
+        return CompiledCodeObject.CompiledCodeHeaderUtils.makeHeaderWord(true, numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
     }
 
     private static CompiledCodeObject makeMethod(final int... intbytes) {
-        return makeMethod(makeHeader(0, 5, 14, false, true), new Object[0], intbytes);
+        return makeMethod(makeHeaderWord(0, 5, 14, false, true), new Object[0], intbytes);
     }
 
     protected static final Object runMethod(final CompiledCodeObject code, final Object receiver, final Object... arguments) {

@@ -28,7 +28,7 @@ public final class PushToStackNode extends AbstractNode {
         if (stackPointer == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackPointer = FrameAccess.getStackPointer(frame) + 1;
-            assert stackPointer <= CONTEXT.MAX_STACK_SIZE : "Bad stack pointer";
+            assert stackPointer <= FrameAccess.getCodeObject(frame).getMaxStackSize() : "Bad stack pointer";
             stackSlot = FrameAccess.toStackSlotIndex(frame, stackPointer - 1);
         }
         FrameAccess.setStackPointer(frame, stackPointer);

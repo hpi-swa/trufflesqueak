@@ -145,7 +145,7 @@ public final class SqueakImageContext {
     public final CompiledCodeObject dummyMethod = new CompiledCodeObject(
                     /* Object>>#yourself with large frame and without literals */
                     new byte[]{(byte) 139, 0, 1, (byte) 192, (byte) 169, (byte) 142, (byte) 254},
-                    CompiledCodeHeaderUtils.makeHeader(true, 0, 0, 0, true, true),
+                    CompiledCodeHeaderUtils.makeHeaderWord(true, 0, 0, 0, true, true),
                     ArrayUtils.EMPTY_ARRAY, compiledMethodClass);
     public final VirtualFrame externalSenderFrame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), dummyMethod.getFrameDescriptor());
 
