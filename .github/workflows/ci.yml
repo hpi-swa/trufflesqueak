@@ -282,6 +282,8 @@ jobs:
         echo ""
         memory_pressure
         echo ""
+        echo "Setting '--parallelism=1' for native-image builds..."
+        echo "NATIVE_IMAGE_OPTIONS=--parallelism=1 ${NATIVE_IMAGE_OPTIONS}" >> $GITHUB_ENV
       if: ${{ runner.os == 'macOS' }}
     - name: Build TruffleSqueak standalone
       run: |
