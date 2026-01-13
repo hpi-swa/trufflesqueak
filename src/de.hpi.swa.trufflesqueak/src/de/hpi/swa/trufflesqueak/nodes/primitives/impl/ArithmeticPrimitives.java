@@ -1206,25 +1206,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 54)
     protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractFloatArithmeticPrimitiveNode implements Primitive1WithFallback {
         @Specialization(rewriteOn = RespecializeException.class)
-        protected static final Object doDoubleFinite(final FloatObject matissa, final long exponent,
+        protected static final Object doDoubleFinite(final FloatObject mantissa, final long exponent,
                         @Bind final Node node,
                         @Exclusive @Cached final InlinedConditionProfile isZeroProfile) throws RespecializeException {
-            if (isZeroProfile.profile(node, matissa.isZero() || exponent == 0)) {
-                return matissa; /* Can be either 0.0 or -0.0. */
+            if (isZeroProfile.profile(node, mantissa.isZero() || exponent == 0)) {
+                return mantissa; /* Can be either 0.0 or -0.0. */
             } else {
-                return ensureFinite(timesToPower(matissa.getValue(), exponent));
+                return ensureFinite(timesToPower(mantissa.getValue(), exponent));
             }
         }
 
         @Specialization(replaces = "doDoubleFinite")
-        protected static final Object doDouble(final FloatObject matissa, final long exponent,
+        protected static final Object doDouble(final FloatObject mantissa, final long exponent,
                         @Bind final Node node,
                         @Exclusive @Cached final InlinedConditionProfile isZeroProfile,
                         @Cached final FloatObjectNormalizeNode normalizeNode) {
-            if (isZeroProfile.profile(node, matissa.isZero() || exponent == 0)) {
-                return matissa; /* Can be either 0.0 or -0.0. */
+            if (isZeroProfile.profile(node, mantissa.isZero() || exponent == 0)) {
+                return mantissa; /* Can be either 0.0 or -0.0. */
             } else {
-                return normalizeNode.execute(node, timesToPower(matissa.getValue(), exponent));
+                return normalizeNode.execute(node, timesToPower(mantissa.getValue(), exponent));
             }
         }
     }
@@ -1676,21 +1676,21 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 554)
     protected abstract static class PrimSmallFloatTimesTwoPowerNode extends AbstractFloatArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "isZero(matissa) || isZero(exponent)")
-        protected static final double doDoubleZero(final double matissa, @SuppressWarnings("unused") final long exponent) {
-            return matissa; /* Can be either 0.0 or -0.0. */
+        @Specialization(guards = "isZero(mantissa) || isZero(exponent)")
+        protected static final double doDoubleZero(final double mantissa, @SuppressWarnings("unused") final long exponent) {
+            return mantissa; /* Can be either 0.0 or -0.0. */
         }
 
-        @Specialization(guards = {"!isZero(matissa)", "!isZero(exponent)"}, rewriteOn = RespecializeException.class)
-        protected static final double doDoubleFinite(final double matissa, final long exponent) throws RespecializeException {
-            return ensureFinite(timesToPower(matissa, exponent));
+        @Specialization(guards = {"!isZero(mantissa)", "!isZero(exponent)"}, rewriteOn = RespecializeException.class)
+        protected static final double doDoubleFinite(final double mantissa, final long exponent) throws RespecializeException {
+            return ensureFinite(timesToPower(mantissa, exponent));
         }
 
-        @Specialization(guards = {"!isZero(matissa)", "!isZero(exponent)"}, replaces = "doDoubleFinite")
-        protected static final Object doDouble(final double matissa, final long exponent,
+        @Specialization(guards = {"!isZero(mantissa)", "!isZero(exponent)"}, replaces = "doDoubleFinite")
+        protected static final Object doDouble(final double mantissa, final long exponent,
                         @Bind final Node node,
                         @Cached final FloatObjectNormalizeNode normalizeNode) {
-            return normalizeNode.execute(node, timesToPower(matissa, exponent));
+            return normalizeNode.execute(node, timesToPower(mantissa, exponent));
         }
     }
 
@@ -1794,11 +1794,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractFloatArithmeticPrimitiveNode extends AbstractArithmeticPrimitiveNode {
-        private static final int LARGE_NUMBER_EXP = 64;
-        private static final double LARGE_NUMBER = Math.pow(2, LARGE_NUMBER_EXP);
-
-        protected static final double timesToPower(final double matissa, final long exponent) {
-            return Math.scalb(matissa, (int) MiscUtils.clamp(exponent, Integer.MIN_VALUE, Integer.MAX_VALUE));
+        protected static final double timesToPower(final double mantissa, final long exponent) {
+            return Math.scalb(mantissa, (int) MiscUtils.clamp(exponent, Integer.MIN_VALUE, Integer.MAX_VALUE));
         }
 
         protected static final long exponentNonZero(final double receiver, final InlinedBranchProfile subnormalFloatProfile, final Node node) {
@@ -1806,8 +1803,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             if (exp == Double.MIN_EXPONENT - 1) {
                 // we have a subnormal float (actual zero was handled above)
                 subnormalFloatProfile.enter(node);
-                // make it normal by multiplying a large number and subtract the number's exponent
-                return Math.getExponent(receiver * LARGE_NUMBER) - LARGE_NUMBER_EXP;
+                final double scaled = Math.scalb(receiver, Double.MAX_EXPONENT);
+                return Math.getExponent(scaled) - Double.MAX_EXPONENT;
             } else {
                 return exp;
             }
