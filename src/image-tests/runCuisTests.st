@@ -1,8 +1,20 @@
-| testSuite nonTerminatingTestCases failingTests result retries exitCode |
+| fileEntry testSuite nonTerminatingTestCases failingTests result retries exitCode |
 
 StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'; newLine; flush.
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
 Utilities classPool at: #AuthorInitials put: 'TS'.
+
+fileEntry := DirectoryEntry currentDirectory / 'src' / 'image-tests' // 'extendCompiledMethodWithTestsCuis.st'.
+fileEntry exists ifFalse: [
+    StdIOWriteStream stdout cr; cr; nextPutAll: 'CompiledMethod extensions and tests not found at "', fileEntry asString, '". EXITING'; cr; cr; flush.
+    Smalltalk quitPrimitive: 1].
+
+CompiledMethod preferredBytecodeSetEncoderClass == EncoderForSistaV1
+    ifTrue: [
+        StdIOWriteStream stdout nextPutAll: 'Loading CompiledMethod extensions from "', fileEntry asString, '" ...'; newLine; flush.
+        ChangeSet fileIn: fileEntry]
+    ifFalse: [
+        StdIOWriteStream stdout nextPutAll: 'Image does not support EncoderForSistaV1...'; newLine; flush].
 
 nonTerminatingTestCases := OrderedCollection new.
 {
