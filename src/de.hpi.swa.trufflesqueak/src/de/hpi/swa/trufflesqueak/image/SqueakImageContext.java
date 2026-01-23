@@ -438,24 +438,22 @@ public final class SqueakImageContext {
         }
         // "is it in range?"
         // "are all pages the right size?"
-        int numClassTablePages = -1;
+        boolean encounteredNil = false;
         for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
             final Object classPageOrNil = hiddenRootsObjects[i];
             if (classPageOrNil instanceof final ArrayObject classPage) {
+                // If we already saw a nil, we cannot have another Page (must be contiguous)
+                if (encounteredNil) {
+                    return false;
+                }
+
                 final int numSlots = classPage.isEmptyType() ? classPage.getEmptyLength() : classPage.getObjectLength();
                 if (numSlots != SqueakImageConstants.CLASS_TABLE_PAGE_SIZE) {
                     return false;
                 }
             } else {
                 assert classPageOrNil == NilObject.SINGLETON;
-                numClassTablePages = i;
-            }
-        }
-        // "are all entries beyond numClassTablePages nil?"
-        for (int i = numClassTablePages; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
-            final Object classPageOrNil = hiddenRootsObjects[i];
-            if (classPageOrNil != NilObject.SINGLETON) {
-                return false;
+                encounteredNil = true;
             }
         }
         return true;
@@ -491,6 +489,7 @@ public final class SqueakImageContext {
                 }
             }
             majorIndex = Math.max(majorIndex + 1 & SqueakImageConstants.CLASS_INDEX_MASK, 1);
+            minorIndex = 0;
             assert majorIndex != initialMajorIndex : "wrapped; table full";
         }
     }
@@ -514,8 +513,8 @@ public final class SqueakImageContext {
     /* SpurMemoryManager>>#purgeDuplicateClassTableEntriesFor: */
     public void purgeDuplicateAndUnreachableClassTableEntriesFor(final ClassObject clazz, final UnmodifiableEconomicMap<Object, Object> becomeMap) {
         final int expectedIndex = clazz != null ? clazz.getSqueakHashInt() : -1;
-        int majorIndex = SqueakImageConstants.majorClassIndexOf(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE);
-        while (majorIndex < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS) {
+        // Must search all pages, but classTableIndex cannot be in page zero.
+        for (int majorIndex = 0; majorIndex < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; majorIndex++) {
             final Object classTablePageOrNil = hiddenRoots.getObject(majorIndex);
             if (classTablePageOrNil instanceof final ArrayObject page) {
                 if (page.isObjectType()) {
@@ -529,21 +528,27 @@ public final class SqueakImageContext {
                         final boolean isDuplicate = entry == clazz && currentClassTableIndex != expectedIndex && currentClassTableIndex > SqueakImageConstants.LAST_CLASS_INDEX_PUN;
                         if (isDuplicate || isUnreachable(entry)) {
                             page.setObject(minorIndex, NilObject.SINGLETON);
-                            if (currentClassTableIndex < classTableIndex) {
+                            if (majorIndex > 0 && currentClassTableIndex < classTableIndex) {
                                 classTableIndex = currentClassTableIndex;
                             }
                         } else if (entry instanceof final ClassObject classObject) {
-                            classObject.pointersBecomeOneWay(becomeMap);
+                            if (!becomeMap.isEmpty()) {
+                                classObject.pointersBecomeOneWay(becomeMap);
+                            }
+                        } else {
+                            if (majorIndex > 0 && currentClassTableIndex < classTableIndex) {
+                                classTableIndex = currentClassTableIndex;
+                            }
                         }
                     }
                 } else {
                     assert page.isEmptyType() && page.getEmptyLength() == SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
                 }
             } else {
+                // Missing page means end of class table.
                 assert classTablePageOrNil == NilObject.SINGLETON;
                 break;
             }
-            majorIndex = Math.max(majorIndex + 1 & SqueakImageConstants.CLASS_INDEX_MASK, 1);
         }
         assert classTableIndex >= SqueakImageConstants.CLASS_TABLE_PAGE_SIZE : "classTableIndex must never index the first page, which is reserved for classes known to the VM";
     }
@@ -566,7 +571,7 @@ public final class SqueakImageContext {
             if (classTablePageOrNil instanceof final ArrayObject page) {
                 if (page.isObjectType()) {
                     final Object[] entries = page.getObjectStorage();
-                    for (int i = 0; i < entries.length; i++) {
+                    for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                         final Object entry = entries[i];
                         if (entry instanceof final ClassObject classObject) {
                             if (!classObject.isNotForwarded()) {
