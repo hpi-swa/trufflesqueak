@@ -370,6 +370,7 @@ public final class SqueakImageReader {
             }
         }
         assert highestKnownClassIndex > 0 : "Failed to find highestKnownClassIndex";
+        // ToDo: why is this set here? setHiddenRoots() initializes it properly
         image.classTableIndex = highestKnownClassIndex;
 
         /* Fill in metaClass. */
