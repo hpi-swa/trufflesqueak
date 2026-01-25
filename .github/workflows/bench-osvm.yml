@@ -37,6 +37,6 @@ jobs:
         kind: ${{ matrix.kind }}
         iterations: ${{ matrix.iterations }}
         token: ${{ secrets.GITHUB_TOKEN }}
-        vm-args: "-vm-display-null"
+        vm-args: "-nosound -vm-display-null"
         vm-binary: squeak
   
