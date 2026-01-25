@@ -26,7 +26,7 @@ jobs:
       run: |
         curl -sSLO https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202312181441/${{ matrix.filename }}
         tar -xzf ${{ matrix.filename }}
-        bin_dir=$(cd sq*spur64ARMv8linuxht/bin && pwd)
+        bin_dir=$(cd sq*spur64ARMv8linuxht && pwd)
         echo "Adding '${bin_dir}' to system path..."
         echo "${bin_dir}" >> $GITHUB_PATH
     - name: OSVM version
