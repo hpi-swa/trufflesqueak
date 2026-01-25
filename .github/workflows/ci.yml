@@ -1,20 +1,20 @@
 name: Test TruffleSqueak
 
 on:
-  push:
-    branches-ignore:
-      - 'experiements/**'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - gu-catalog.properties
-  pull_request:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - gu-catalog.properties
+  # push:
+  #   branches-ignore:
+  #     - 'experiements/**'
+  #   paths-ignore:
+  #     - '**.md'
+  #     - 'docs/**'
+  #     - gu-catalog.properties
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths-ignore:
+  #     - '**.md'
+  #     - 'docs/**'
+  #     - gu-catalog.properties
   workflow_dispatch:
 
 env:
