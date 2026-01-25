@@ -161,7 +161,7 @@ enable-jdk() {
 }
 
 download-trufflesqueak-image() {
-  local target_dir="${BASE_DIRECTORY}/images2"
+  local target_dir="${BASE_DIRECTORY}/images"
   local version=$(grep -E 'public static final String VERSION' "${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak.shared/src/de/hpi/swa/trufflesqueak/shared/SqueakLanguageConfig.java" | sed -E 's/.*"([^"]+)".*/\1/')
   local filename="TruffleSqueakImage-${version}.zip"
 
