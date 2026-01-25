@@ -24,15 +24,19 @@ jobs:
       uses: actions/checkout@v4
     - name: Download and set up OpenSmalltalkVM
       run: |
-        curl -SLO https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202312181441/${{ matrix.filename }}
+        curl -sSLO https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202312181441/${{ matrix.filename }}
         tar -xzf ${{ matrix.filename }}
-        echo $(cd sq*spur64ARMv8linuxht/bin && pwd) >> $GITHUB_PATH
+        bin_dir=$(cd sq*spur64ARMv8linuxht/bin && pwd)
+        echo "Adding '${bin_dir}' to system path..."
+        echo "${bin_dir}" >> $GITHUB_PATH
+    - name: OSVM version
+      run: squeak -version
     - name: Run benchmarks
       uses: ./.github/actions/run-benchmarks
       with:
         kind: ${{ matrix.kind }}
         iterations: ${{ matrix.iterations }}
         token: ${{ secrets.GITHUB_TOKEN }}
-        vm-args: "--headless"
+        vm-args: "-vm-display-null"
         vm-binary: squeak
   
