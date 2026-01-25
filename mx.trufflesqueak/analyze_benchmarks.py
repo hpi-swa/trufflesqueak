@@ -64,7 +64,7 @@ def print_peak_summary(results):
         r_max = r.max()
         r_time_s = r.time_s()
         print(
-            f"| {r.bench_name} | {r_min} | {r_median_low} | {r_max} | {mm_ss(r_time_s)} | {r.first_stable_iteration} | {r.compilations} | {r.invalidations} | {r.splits} | {r.node_count} | {r.t1_code_size} | {r.t2_code_size} | {r.peak_rss} |"
+            f"| {r.bench_name} | {int(r_min)} | {int(r_median_low)} | {int(r_max)} | {mm_ss(r_time_s)} | {r.first_stable_iteration} | {r.compilations} | {r.invalidations} | {r.splits} | {r.node_count} | {r.t1_code_size} | {r.t2_code_size} | {r.peak_rss} |"
         )
         sums = [
             x + y
@@ -87,7 +87,7 @@ def print_peak_summary(results):
             )
         ]
     print(
-        f"| | {sums[0]} | {sums[1]} | {sums[2]} | {mm_ss(sums[3])} | {sums[4]} | {sums[5]} | {sums[6]} | {sums[7]} | {sums[8]} | {sums[9]} | {sums[10]} | {sums[11]} |"
+        f"| | {int(sums[0])} | {int(sums[1])} | {int(sums[2])} | {mm_ss(sums[3])} | {sums[4]} | {sums[5]} | {sums[6]} | {sums[7]} | {sums[8]} | {sums[9]} | {sums[10]} | {sums[11]} |"
     )
 
 
@@ -109,7 +109,7 @@ def print_interpreter_summary(results):
         r_max = r.max()
         r_time_s = r.time_s()
         print(
-            f"| {r.bench_name} | {r_min} | {r_median_low} | {r_max} | {mm_ss(r_time_s)} | {r.peak_rss} |"
+            f"| {r.bench_name} | {int(r_min)} | {int(r_median_low)} | {int(r_max)} | {mm_ss(r_time_s)} | {r.peak_rss} |"
         )
         sums = [
             x + y
@@ -124,7 +124,9 @@ def print_interpreter_summary(results):
                 ],
             )
         ]
-    print(f"| | {sums[0]} | {sums[1]} | {sums[2]} | {mm_ss(sums[3])} | {sums[4]} |")
+    print(
+        f"| | {int(sums[0])} | {int(sums[1])} | {int(sums[2])} | {mm_ss(sums[3])} | {sums[4]} |"
+    )
 
 
 def mm_ss(seconds):
