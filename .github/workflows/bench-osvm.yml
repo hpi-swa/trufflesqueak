@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v4
     - name: Download and set up OpenSmalltalkVM
       run: |
         curl -SLO https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202312181441/${{ matrix.filename }}
