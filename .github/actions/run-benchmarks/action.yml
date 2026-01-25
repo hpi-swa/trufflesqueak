@@ -1,0 +1,95 @@
+name: Run benchmarks
+description: 'Run benchmarks in a TruffleSqueak image on a specific virtual machine'
+
+inputs:
+  iterations:
+    descript: 'Number of interations per benchmark'
+    required: true
+  kind:
+    descript: 'Kind of benchmark run (interpreter vs. peak)'
+    required: true
+  token:
+    descript: 'GitHub token'
+    required: true
+  vm-args:
+    description: 'Arguments passed to the virtual machine'
+    required: true
+  vm-binary:
+    description: 'Binary name of the virtual machine to run the benchmarks on'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Download TruffleSqueak image
+      shell: bash
+      run: mx.trufflesqueak/utils.sh download-trufflesqueak-image
+    - name: Run 'tinyBenchmarks'
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "1 tinyBenchmarks"
+      shell: bash
+    - name: Run 'Bounce' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Bounce' ${{ inputs.iterations }} 1500)" 2>&1 | tee Bounce.log
+      shell: bash
+    - name: Run 'CD' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('CD' ${{ inputs.iterations }} 250)" 2>&1 | tee CD.log
+      shell: bash
+    - name: Run 'DeltaBlue' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('DeltaBlue' ${{ inputs.iterations }} 12000)" 2>&1 | tee DeltaBlue.log
+      shell: bash
+    - name: Run 'Havlak' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Havlak' ${{ inputs.iterations }} 1500)" 2>&1 | tee Havlak.log
+      shell: bash
+    - name: Run 'Json' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Json' ${{ inputs.iterations }} 100)" 2>&1 | tee Json.log
+      shell: bash
+    - name: Run 'List' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('List' ${{ inputs.iterations }} 1500)" 2>&1 | tee List.log
+      shell: bash
+    - name: Run 'Mandelbrot' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Mandelbrot' ${{ inputs.iterations }} 500)" 2>&1 | tee Mandelbrot.log
+      shell: bash
+    - name: Run 'NBody' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('NBody' ${{ inputs.iterations }} 250000)" 2>&1 | tee NBody.log
+      shell: bash
+    - name: Run 'Queens' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Queens' ${{ inputs.iterations }} 1000)" 2>&1 | tee Queens.log
+      shell: bash
+    - name: Run 'Permute' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Permute' ${{ inputs.iterations }} 1000)" 2>&1 | tee Permute.log
+      shell: bash
+    - name: Run 'Richards' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Richards' ${{ inputs.iterations }} 100)" 2>&1 | tee Richards.log
+      shell: bash
+    - name: Run 'Sieve' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Sieve' ${{ inputs.iterations }} 3000)" 2>&1 | tee Sieve.log
+      shell: bash
+    - name: Run 'Storage' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Storage' ${{ inputs.iterations }} 1000)" 2>&1 | tee Storage.log
+      shell: bash
+    - name: Run 'Towers' benchmark
+      run: |
+        /usr/bin/time -v ${{ inputs.vm-binary }} ${{ inputs.vm-args }} images/TruffleSqueak-*.image --evaluate "AWFYHarness run: #('Towers' ${{ inputs.iterations }} 1500)" 2>&1 | tee Towers.log
+      shell: bash
+    - name: Analyze benchmark results
+      run: |
+        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py ${{ inputs.kind }})" '{ body: $body }' |\
+        curl -sL -X POST -d @- \
+          -H "Content-Type: application/json" \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: Bearer ${{ inputs.token }}" \
+          "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
+      shell: bash

@@ -1,0 +1,36 @@
+name: Run benchmarks on OSVM
+
+on: [push, workflow_dispatch]
+
+jobs:
+  run-benchmarks:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: peak
+            os: ubuntu-22.04-arm
+            filename: squeak.cog.spur_linux64ARMv8.tar.gz
+            iterations: 300
+          - kind: interpreter
+            os: ubuntu-22.04-arm
+            filename: squeak.stack.spur_linux64ARMv8.tar.gz
+            iterations: 6
+    name: benchmark ${{ matrix.kind }}
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Download and set up OpenSmalltalkVM
+      run: |
+        curl -SLO https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202312181441/${{ matrix.filename }}
+        tar -xzf ${{ matrix.filename }}
+        echo $(cd sq*spur64ARMv8linuxht/bin && pwd) >> $GITHUB_PATH
+    - name: Run benchmarks
+      uses: ./.github/actions/run-benchmarks
+      with:
+        kind: ${{ matrix.kind }}
+        iterations: ${{ matrix.iterations }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        vm-args: "--headless"
+        vm-binary: squeak
+  
