@@ -16,6 +16,8 @@ jobs:
             os: ubuntu-22.04-arm
             filename: squeak.stack.spur_linux64ARMv8.tar.gz
             iterations: 6
+    env:
+      RUN_CMD: "/usr/bin/time -v squeak -nosound -vm-display-null images/TruffleSqueak-*.image"
     name: benchmark ${{ matrix.kind }}
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
@@ -31,12 +33,59 @@ jobs:
         echo "${bin_dir}" >> $GITHUB_PATH
     - name: OSVM version
       run: squeak -version
-    - name: Run benchmarks
-      uses: ./.github/actions/run-benchmarks
-      with:
-        kind: ${{ matrix.kind }}
-        iterations: ${{ matrix.iterations }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        vm-args: "-nosound -vm-display-null"
-        vm-binary: squeak
+    - name: Download TruffleSqueak image
+      run: mx.trufflesqueak/utils.sh download-trufflesqueak-image
+    - name: Run 'tinyBenchmarks'
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "1 tinyBenchmarks"
+    - name: Run 'Bounce' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Bounce' ${{ matrix.iterations }} 1500)" 2>&1 | tee Bounce.log
+    - name: Run 'CD' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('CD' ${{ matrix.iterations }} 250)" 2>&1 | tee CD.log
+    - name: Run 'DeltaBlue' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('DeltaBlue' ${{ matrix.iterations }} 12000)" 2>&1 | tee DeltaBlue.log
+    - name: Run 'Havlak' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Havlak' ${{ matrix.iterations }} 1500)" 2>&1 | tee Havlak.log
+    - name: Run 'Json' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Json' ${{ matrix.iterations }} 100)" 2>&1 | tee Json.log
+    - name: Run 'List' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('List' ${{ matrix.iterations }} 1500)" 2>&1 | tee List.log
+    - name: Run 'Mandelbrot' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Mandelbrot' ${{ matrix.iterations }} 500)" 2>&1 | tee Mandelbrot.log
+    - name: Run 'NBody' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('NBody' ${{ matrix.iterations }} 250000)" 2>&1 | tee NBody.log
+    - name: Run 'Queens' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Queens' ${{ matrix.iterations }} 1000)" 2>&1 | tee Queens.log
+    - name: Run 'Permute' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Permute' ${{ matrix.iterations }} 1000)" 2>&1 | tee Permute.log
+    - name: Run 'Richards' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Richards' ${{ matrix.iterations }} 100)" 2>&1 | tee Richards.log
+    - name: Run 'Sieve' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Sieve' ${{ matrix.iterations }} 3000)" 2>&1 | tee Sieve.log
+    - name: Run 'Storage' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Storage' ${{ matrix.iterations }} 1000)" 2>&1 | tee Storage.log
+    - name: Run 'Towers' benchmark
+      run: |
+        ${{ env.RUN_CMD }} --evaluate "AWFYHarness run: #('Towers' ${{ matrix.iterations }} 1500)" 2>&1 | tee Towers.log
+    - name: Analyze benchmark results
+      run: |
+        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.kind }})" '{ body: $body }' |\
+        curl -sL -X POST -d @- \
+          -H "Content-Type: application/json" \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
   

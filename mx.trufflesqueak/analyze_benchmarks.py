@@ -133,12 +133,6 @@ def mm_ss(seconds):
     return f"{minutes:02}:{secs:05.2f}"
 
 
-def to_int(value):
-    int_value = int(value)
-    assert int_value == value
-    return int_value
-
-
 def print_warmup(r):
     print(f"## {'Warmup' if IS_PEAK else 'Details'}")
 
@@ -262,7 +256,7 @@ def get_result(bench_name):
                     time = float(match.group("runtime"))
                     if match.group("unit") == "u":
                         time /= 1000
-                    values.append(to_int(time))
+                    values.append(time)
                 elif line.startswith("[engine] opt done"):
                     first_stable_iteration = iteration
                 elif line.startswith("[engine] Truffle runtime statistics"):
