@@ -52,7 +52,7 @@ WARMUP_ITERATIONS = 50 if IS_PEAK else 6
 PEAK_ITERATIONS = 200
 
 
-def print_peak_summary(results):
+def print_summary_with_truffle_compilations(results):
     print(
         '| Benchmark | [Min](# "Smallest value in ms") | [Med](# "Low median in ms") | [Max](# "Largest value in ms") | [:stopwatch:](# "Total time in mm:ss.ss") | [:fire:](# "First Stable Iteration") | [:bulb:](# "Compilations") | [:wastebasket:](# "Invalidations") | [:dna:](# "Splits") | [Nodes](# "Truffle Node Count") | [Tier 1](# "Tier 1: Total Code Size") | [Tier 2](# "Tier 2: Total Code Size") | [Memory](# "Peak RSS in MB") |'  # pylint: disable=line-too-long
     )
@@ -91,7 +91,7 @@ def print_peak_summary(results):
     )
 
 
-def print_interpreter_summary(results):
+def print_simple_summary(results):
     print(
         '| Benchmark | [Min](# "Smallest value in ms") | [Med](# "Low median in ms") | [Max](# "Largest value in ms") | [:stopwatch:](# "Total time in mm:ss.ss") | [Memory](# "Peak RSS in MB") |'  # pylint: disable=line-too-long
     )
@@ -138,8 +138,7 @@ def mm_ss(seconds):
 def print_warmup(r):
     print(f"## {'Warmup' if IS_PEAK else 'Details'}")
 
-    print(
-        f"""
+    print(f"""
 ```mermaid
 ---
 config:
@@ -150,16 +149,13 @@ config:
 xychart-beta
     title "{'First ' if IS_PEAK else ''}{WARMUP_ITERATIONS} Iterations"
     y-axis "Time (in ms)" {min([min(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])} --> {max([max(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])}
-    """
-    )
+    """)
     for bench_name in BENCHMARKS:
         warmup_values = r[bench_name].warmup_iterations()
         print(f"line [{', '.join([str(x) for x in warmup_values])}]")
-    print(
-        """
+    print("""
 ```
-        """
-    )
+        """)
 
 
 def print_steady(r):
@@ -168,8 +164,7 @@ def print_steady(r):
     for bench_name in BENCHMARKS:
         peak_values = r[bench_name].peak_iterations()
         num_peak_values = len(peak_values)
-        print(
-            f"""
+        print(f"""
 ```mermaid
 ---
 config:
@@ -185,8 +180,7 @@ xychart-beta
     y-axis "Time (in ms)" {min(peak_values)} --> {max(peak_values)}
     line [{', '.join([str(x) for x in peak_values])}]
 ```
-        """
-        )
+        """)
 
 
 @dataclass
@@ -314,14 +308,17 @@ def get_result(bench_name):
 
 def main():
     results = {}
+    has_truffle_compilations = False
     for bench_name in BENCHMARKS:
-        results[bench_name] = get_result(bench_name)
+        result = get_result(bench_name)
+        results[bench_name] = result
+        has_truffle_compilations |= result.compilations >= 0
 
     print(f"# {'Peak' if IS_PEAK else 'Interpreter'} Performance Report\n")
-    if IS_PEAK:
-        print_peak_summary(results)
+    if has_truffle_compilations:
+        print_summary_with_truffle_compilations(results)
     else:
-        print_interpreter_summary(results)
+        print_simple_summary(results)
     print_warmup(results)
     if IS_PEAK:
         print_steady(results)
