@@ -75,6 +75,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.TimeUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 import sun.misc.Unsafe;
 
@@ -82,10 +83,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     private abstract static class AbstractSignalAtPrimitiveNode extends AbstractPrimitiveNode {
 
-        protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
+        protected final void signalAtMicroseconds(final PointersObject semaphore, final long microsecondsUTC) {
             final SqueakImageContext image = getContext();
             image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
-            image.interrupt.setNextWakeupTick(msTime);
+            image.interrupt.setNextWakeupTick(microsecondsUTC);
         }
 
         protected final void resetTimerSemaphore() {
@@ -456,7 +457,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected static final class PrimMillisecondClockNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            return MiscUtils.currentTimeMillis() - getContext().startUpMillis;
+            return TimeUtils.elapsedMillis();
         }
     }
 
@@ -465,7 +466,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimSignalAtMillisecondsNode extends AbstractSignalAtPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "isSemaphore(semaphore)")
         protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long msTime) {
-            signalAtMilliseconds(semaphore, msTime);
+            signalAtMicroseconds(semaphore, msTime * 1000);
             return receiver;
         }
 
@@ -482,7 +483,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public static final class PrimSecondClockNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            return MiscUtils.toSqueakSecondsLocal(MiscUtils.currentTimeMillis() / 1000);
+            return TimeUtils.toSqueakSecondsLocal(TimeUtils.currentTimeMillis() / 1000);
         }
     }
 
@@ -786,7 +787,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public static final class PrimUTCClockNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            return MiscUtils.toSqueakMicrosecondsUTC(MiscUtils.currentTimeMillis() * 1000);
+            return TimeUtils.currentMicrosecondsUTC();
         }
     }
 
@@ -795,7 +796,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public static final class PrimLocalMicrosecondsClockNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            return MiscUtils.toSqueakMicrosecondsLocal(MiscUtils.currentTimeMillis() * 1000);
+            return TimeUtils.toSqueakMicrosecondsLocal(TimeUtils.currentMicrosecondsUTC());
         }
     }
 
@@ -804,9 +805,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimSignalAtUTCMicrosecondsNode extends AbstractSignalAtPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization(guards = "isSemaphore(semaphore)")
-        protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long usecsUTC) {
-            final long msTime = MiscUtils.toJavaMicrosecondsUTC(usecsUTC) / 1000;
-            signalAtMilliseconds(semaphore, msTime);
+        protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long microsecondsUTC) {
+            signalAtMicroseconds(semaphore, microsecondsUTC);
             return receiver;
         }
 
@@ -850,7 +850,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 12, 13, 14, 15, 16, 17, 18, 19 -> 0L;
                 // utc microseconds at VM start-up (actually at time initialization, which precedes
                 // image load).
-                case 20 -> MiscUtils.toSqueakMicrosecondsUTC(image.startUpMillis * 1000L);
+                case 20 -> TimeUtils.startUpMicrosecondsUTC();
                 // root table size (read-only)
                 case 21 -> 0L;
                 // root table overflows since startup (read-only)

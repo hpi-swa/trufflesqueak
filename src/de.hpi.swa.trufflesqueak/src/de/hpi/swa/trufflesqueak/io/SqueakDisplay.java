@@ -50,6 +50,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.TimeUtils;
 
 public final class SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
@@ -318,7 +319,7 @@ public final class SqueakDisplay {
     }
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7) {
-        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6, value7, HostWindowPlugin.DEFAULT_HOST_WINDOW_ID});
+        deferredEvents.add(new long[]{eventType, TimeUtils.elapsedMillis(), value3, value4, value5, value6, value7, HostWindowPlugin.DEFAULT_HOST_WINDOW_ID});
         if (image.options.signalInputSemaphore() && inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
@@ -332,10 +333,6 @@ public final class SqueakDisplay {
         final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
         return modifiers;
-    }
-
-    private long getEventTime() {
-        return System.currentTimeMillis() - image.startUpMillis;
     }
 
     public void setDeferUpdates(final boolean flag) {

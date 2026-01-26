@@ -21,15 +21,11 @@ import java.lang.management.MemoryUsage;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Properties;
 import java.util.concurrent.locks.LockSupport;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
@@ -38,13 +34,6 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectGraphOperations;
 
 public final class MiscUtils {
-
-    // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
-    public static final long EPOCH_DELTA_SECONDS = (69L * 365 + 17) * 24 * 3600;
-    public static final long EPOCH_DELTA_MICROSECONDS = EPOCH_DELTA_SECONDS * 1000 * 1000;
-    public static final long TIME_ZONE_OFFSET_MICROSECONDS = (Calendar.getInstance().get(Calendar.ZONE_OFFSET) + Calendar.getInstance().get(Calendar.DST_OFFSET)) * 1000L;
-    public static final long TIME_ZONE_OFFSET_SECONDS = TIME_ZONE_OFFSET_MICROSECONDS / 1000 / 1000;
-
     public static final String[] GC_YOUNG_GEN_NAMES = {"G1 Young Generation", "PS Scavenge"};
     public static final String[] GC_OLD_GEN_NAMES = {"G1 Old Generation", "PS MarkSweep"};
     public static final String GC_EDEN_SPACE_SUFFIX = "Eden Space";
@@ -58,11 +47,6 @@ public final class MiscUtils {
 
     public static long clamp(final long value, final long min, final long max) {
         return Math.max(min, Math.min(value, max));
-    }
-
-    @TruffleBoundary
-    public static long currentTimeMillis() {
-        return System.currentTimeMillis();
     }
 
     @TruffleBoundary
@@ -144,27 +128,6 @@ public final class MiscUtils {
         }
         final String graalVMHome = System.getProperty("graalvm.home", "n/a");
         return String.format("GRAAL_VERSION=%s\nGRAAL_HOME=%s", graalVMVersion, graalVMHome);
-    }
-
-    public static SecureRandom getSecureRandom() {
-        /* SecureRandom must be initialized at (native image) runtime. */
-        if (random == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            random = getSecureRandomInstance();
-        }
-        return random;
-    }
-
-    private static SecureRandom getSecureRandomInstance() {
-        if (Security.getAlgorithms("SecureRandom").contains("NATIVEPRNGNONBLOCKING")) {
-            try {
-                return SecureRandom.getInstance("NATIVEPRNGNONBLOCKING");
-            } catch (NoSuchAlgorithmException e) {
-                throw CompilerDirectives.shouldNotReachHere(e);
-            }
-        } else {
-            return new SecureRandom();
-        }
     }
 
     @TruffleBoundary
@@ -333,22 +296,6 @@ public final class MiscUtils {
     public static int toIntExact(final long value) {
         assert (int) value == value;
         return (int) value;
-    }
-
-    public static long toJavaMicrosecondsUTC(final long microseconds) {
-        return microseconds - EPOCH_DELTA_MICROSECONDS;
-    }
-
-    public static long toSqueakMicrosecondsLocal(final long microseconds) {
-        return toSqueakMicrosecondsUTC(microseconds) + TIME_ZONE_OFFSET_MICROSECONDS;
-    }
-
-    public static long toSqueakMicrosecondsUTC(final long microseconds) {
-        return microseconds + EPOCH_DELTA_MICROSECONDS;
-    }
-
-    public static long toSqueakSecondsLocal(final long seconds) {
-        return seconds + EPOCH_DELTA_SECONDS + TIME_ZONE_OFFSET_SECONDS;
     }
 
     @TruffleBoundary

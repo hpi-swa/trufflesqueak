@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.TimeUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
@@ -63,7 +64,7 @@ public final class SqueakImageReader {
 
     private void run() {
         SqueakImageContext.initializeBeforeLoadingImage();
-        final long start = MiscUtils.currentTimeMillis();
+        final long start = TimeUtils.currentTimeMillis();
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {
             throw SqueakException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
@@ -77,7 +78,7 @@ public final class SqueakImageReader {
             throw SqueakException.create("Failed to read Smalltalk image:", e.getMessage());
         }
         initObjects();
-        LogUtils.IMAGE.fine(() -> "Image loaded in " + (MiscUtils.currentTimeMillis() - start) + "ms.");
+        LogUtils.IMAGE.fine(() -> "Image loaded in " + (TimeUtils.currentTimeMillis() - start) + "ms.");
         image.setHiddenRoots((ArrayObject) hiddenRootsChunk.asObject());
         image.getSqueakImage();
     }

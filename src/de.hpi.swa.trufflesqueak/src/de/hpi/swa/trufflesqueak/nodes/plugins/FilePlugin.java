@@ -48,8 +48,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
+import de.hpi.swa.trufflesqueak.util.TimeUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
@@ -147,8 +147,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             LogUtils.IO.warning(() -> "File must exist: " + file + " (" + e + "). Falling back to nil...");
             return NilObject.SINGLETON;
         }
-        final Long creationTime = MiscUtils.toSqueakSecondsLocal(attributes.get(TruffleFile.CREATION_TIME).to(TimeUnit.SECONDS));
-        final Long lastModifiedTime = MiscUtils.toSqueakSecondsLocal(attributes.get(TruffleFile.LAST_MODIFIED_TIME).to(TimeUnit.SECONDS));
+        final Long creationTime = TimeUtils.toSqueakSecondsLocal(attributes.get(TruffleFile.CREATION_TIME).to(TimeUnit.SECONDS));
+        final Long lastModifiedTime = TimeUtils.toSqueakSecondsLocal(attributes.get(TruffleFile.LAST_MODIFIED_TIME).to(TimeUnit.SECONDS));
         final Boolean isDirectory = attributes.get(TruffleFile.IS_DIRECTORY);
         final Long size = attributes.get(TruffleFile.SIZE);
         return image.asArrayOfObjects(image.asByteString(fileName), creationTime, lastModifiedTime, isDirectory, size);

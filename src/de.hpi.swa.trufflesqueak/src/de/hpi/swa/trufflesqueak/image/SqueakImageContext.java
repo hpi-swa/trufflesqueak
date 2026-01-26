@@ -179,7 +179,6 @@ public final class SqueakImageContext {
     public int classTableIndex = SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
     @CompilationFinal private SqueakDisplay display;
     public final CheckForInterruptsState interrupt;
-    public final long startUpMillis = System.currentTimeMillis();
     public final ReferenceQueue<AbstractSqueakObject> weakPointersQueue = new ReferenceQueue<>();
 
     /* Truffle */

@@ -14,7 +14,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.TimeUtils;
 
 public final class CheckForInterruptsState {
     private static final String CHECK_FOR_INTERRUPTS_THREAD_NAME = "TruffleSqueakCheckForInterrupts";
@@ -145,7 +145,7 @@ public final class CheckForInterruptsState {
 
     private boolean nextWakeUpTickTrigger() {
         if (nextWakeupTick != 0) {
-            final long time = MiscUtils.currentTimeMillis();
+            final long time = TimeUtils.currentMicrosecondsUTC();
             if (time >= nextWakeupTick) {
                 LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick);
                 return true;
@@ -164,15 +164,15 @@ public final class CheckForInterruptsState {
         }
     }
 
-    public void setNextWakeupTick(final long msTime) {
+    public void setNextWakeupTick(final long microsecondsUTC) {
         LogUtils.INTERRUPTS.finer(() -> {
             if (nextWakeupTick != 0) {
-                return (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick;
+                return (microsecondsUTC != 0 ? "Changing nextWakeupTick to " + microsecondsUTC + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick;
             } else {
-                return msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0";
+                return microsecondsUTC != 0 ? "Setting nextWakeupTick to " + microsecondsUTC : "Resetting nextWakeupTick when it was already 0";
             }
         });
-        nextWakeupTick = msTime;
+        nextWakeupTick = microsecondsUTC;
     }
 
     /* Finalization interrupt */

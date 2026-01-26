@@ -32,7 +32,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.TimeUtils;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @DenyReplace
@@ -78,7 +78,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     public static final class PrimUtcWithOffset1Node extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            return getContext().asArrayOfLongs(getUTCMicroseconds(), getOffsetFromGTMInSeconds());
+            return getContext().asArrayOfLongs(TimeUtils.currentMicrosecondsUTC(), getOffsetFromGTMInSeconds());
         }
     }
 
@@ -88,7 +88,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "objectWithTwoSlots.size() == 2")
         protected static final PointersObject doUTC(@SuppressWarnings("unused") final Object receiver, final PointersObject objectWithTwoSlots,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(objectWithTwoSlots, 0, getUTCMicroseconds());
+            writeNode.execute(objectWithTwoSlots, 0, TimeUtils.currentMicrosecondsUTC());
             writeNode.execute(objectWithTwoSlots, 1, getOffsetFromGTMInSeconds());
             return objectWithTwoSlots;
         }
@@ -98,14 +98,10 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @Cached(inline = true) final ArrayObjectWriteNode writeNode) {
-            writeNode.execute(node, arrayWithTwoSlots, 0, getUTCMicroseconds());
+            writeNode.execute(node, arrayWithTwoSlots, 0, TimeUtils.currentMicrosecondsUTC());
             writeNode.execute(node, arrayWithTwoSlots, 1, getOffsetFromGTMInSeconds());
             return arrayWithTwoSlots;
         }
-    }
-
-    private static long getUTCMicroseconds() {
-        return MiscUtils.currentTimeMillis() * 1000L;
     }
 
     @TruffleBoundary

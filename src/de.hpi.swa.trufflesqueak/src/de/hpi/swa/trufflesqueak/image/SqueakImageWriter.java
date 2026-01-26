@@ -36,8 +36,8 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
+import de.hpi.swa.trufflesqueak.util.TimeUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class SqueakImageWriter {
@@ -85,7 +85,7 @@ public final class SqueakImageWriter {
     }
 
     private void run(final ContextObject thisContext) throws IOException {
-        final long start = MiscUtils.currentTimeMillis();
+        final long start = TimeUtils.currentTimeMillis();
         nextChunk = image.flags.getOldBaseAddress();
         final PointersObject activeProcess = image.getActiveProcessSlow();
         try {
@@ -101,7 +101,7 @@ public final class SqueakImageWriter {
             finalizeImageHeader();
         }
         final double fileSize = Math.ceil((double) position / 1024 / 1024 * 100) / 100;
-        LogUtils.IMAGE.fine(() -> "Image saved in " + (MiscUtils.currentTimeMillis() - start) + "ms (" + fileSize + "MiB).");
+        LogUtils.IMAGE.fine(() -> "Image saved in " + (TimeUtils.currentTimeMillis() - start) + "ms (" + fileSize + "MiB).");
     }
 
     private void writeImageHeader() {
