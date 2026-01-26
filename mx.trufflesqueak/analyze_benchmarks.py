@@ -52,7 +52,7 @@ WARMUP_ITERATIONS = 50 if IS_PEAK else 6
 PEAK_ITERATIONS = 200
 
 
-def print_peak_summary(results):
+def print_summary_with_truffle_compilations(results):
     print(
         '| Benchmark | [Min](# "Smallest value in ms") | [Med](# "Low median in ms") | [Max](# "Largest value in ms") | [:stopwatch:](# "Total time in mm:ss.ss") | [:fire:](# "First Stable Iteration") | [:bulb:](# "Compilations") | [:wastebasket:](# "Invalidations") | [:dna:](# "Splits") | [Nodes](# "Truffle Node Count") | [Tier 1](# "Tier 1: Total Code Size") | [Tier 2](# "Tier 2: Total Code Size") | [Memory](# "Peak RSS in MB") |'  # pylint: disable=line-too-long
     )
@@ -64,7 +64,7 @@ def print_peak_summary(results):
         r_max = r.max()
         r_time_s = r.time_s()
         print(
-            f"| {r.bench_name} | {r_min} | {r_median_low} | {r_max} | {mm_ss(r_time_s)} | {r.first_stable_iteration} | {r.compilations} | {r.invalidations} | {r.splits} | {r.node_count} | {r.t1_code_size} | {r.t2_code_size} | {r.peak_rss} |"
+            f"| {r.bench_name} | {int(r_min)} | {int(r_median_low)} | {int(r_max)} | {mm_ss(r_time_s)} | {r.first_stable_iteration} | {r.compilations} | {r.invalidations} | {r.splits} | {r.node_count} | {r.t1_code_size} | {r.t2_code_size} | {r.peak_rss} |"
         )
         sums = [
             x + y
@@ -87,11 +87,11 @@ def print_peak_summary(results):
             )
         ]
     print(
-        f"| | {sums[0]} | {sums[1]} | {sums[2]} | {mm_ss(sums[3])} | {sums[4]} | {sums[5]} | {sums[6]} | {sums[7]} | {sums[8]} | {sums[9]} | {sums[10]} | {sums[11]} |"
+        f"| | {int(sums[0])} | {int(sums[1])} | {int(sums[2])} | {mm_ss(sums[3])} | {sums[4]} | {sums[5]} | {sums[6]} | {sums[7]} | {sums[8]} | {sums[9]} | {sums[10]} | {sums[11]} |"
     )
 
 
-def print_interpreter_summary(results):
+def print_simple_summary(results):
     print(
         '| Benchmark | [Min](# "Smallest value in ms") | [Med](# "Low median in ms") | [Max](# "Largest value in ms") | [:stopwatch:](# "Total time in mm:ss.ss") | [Memory](# "Peak RSS in MB") |'  # pylint: disable=line-too-long
     )
@@ -109,7 +109,7 @@ def print_interpreter_summary(results):
         r_max = r.max()
         r_time_s = r.time_s()
         print(
-            f"| {r.bench_name} | {r_min} | {r_median_low} | {r_max} | {mm_ss(r_time_s)} | {r.peak_rss} |"
+            f"| {r.bench_name} | {int(r_min)} | {int(r_median_low)} | {int(r_max)} | {mm_ss(r_time_s)} | {r.peak_rss} |"
         )
         sums = [
             x + y
@@ -124,7 +124,9 @@ def print_interpreter_summary(results):
                 ],
             )
         ]
-    print(f"| | {sums[0]} | {sums[1]} | {sums[2]} | {mm_ss(sums[3])} | {sums[4]} |")
+    print(
+        f"| | {int(sums[0])} | {int(sums[1])} | {int(sums[2])} | {mm_ss(sums[3])} | {sums[4]} |"
+    )
 
 
 def mm_ss(seconds):
@@ -133,17 +135,10 @@ def mm_ss(seconds):
     return f"{minutes:02}:{secs:05.2f}"
 
 
-def to_int(value):
-    int_value = int(value)
-    assert int_value == value
-    return int_value
-
-
 def print_warmup(r):
     print(f"## {'Warmup' if IS_PEAK else 'Details'}")
 
-    print(
-        f"""
+    print(f"""
 ```mermaid
 ---
 config:
@@ -154,16 +149,13 @@ config:
 xychart-beta
     title "{'First ' if IS_PEAK else ''}{WARMUP_ITERATIONS} Iterations"
     y-axis "Time (in ms)" {min([min(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])} --> {max([max(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])}
-    """
-    )
+    """)
     for bench_name in BENCHMARKS:
         warmup_values = r[bench_name].warmup_iterations()
         print(f"line [{', '.join([str(x) for x in warmup_values])}]")
-    print(
-        """
+    print("""
 ```
-        """
-    )
+        """)
 
 
 def print_steady(r):
@@ -172,8 +164,7 @@ def print_steady(r):
     for bench_name in BENCHMARKS:
         peak_values = r[bench_name].peak_iterations()
         num_peak_values = len(peak_values)
-        print(
-            f"""
+        print(f"""
 ```mermaid
 ---
 config:
@@ -189,8 +180,7 @@ xychart-beta
     y-axis "Time (in ms)" {min(peak_values)} --> {max(peak_values)}
     line [{', '.join([str(x) for x in peak_values])}]
 ```
-        """
-        )
+        """)
 
 
 @dataclass
@@ -262,7 +252,7 @@ def get_result(bench_name):
                     time = float(match.group("runtime"))
                     if match.group("unit") == "u":
                         time /= 1000
-                    values.append(to_int(time))
+                    values.append(time)
                 elif line.startswith("[engine] opt done"):
                     first_stable_iteration = iteration
                 elif line.startswith("[engine] Truffle runtime statistics"):
@@ -318,14 +308,17 @@ def get_result(bench_name):
 
 def main():
     results = {}
+    has_truffle_compilations = False
     for bench_name in BENCHMARKS:
-        results[bench_name] = get_result(bench_name)
+        result = get_result(bench_name)
+        results[bench_name] = result
+        has_truffle_compilations |= result.compilations >= 0
 
     print(f"# {'Peak' if IS_PEAK else 'Interpreter'} Performance Report\n")
-    if IS_PEAK:
-        print_peak_summary(results)
+    if has_truffle_compilations:
+        print_summary_with_truffle_compilations(results)
     else:
-        print_interpreter_summary(results)
+        print_simple_summary(results)
     print_warmup(results)
     if IS_PEAK:
         print_steady(results)
