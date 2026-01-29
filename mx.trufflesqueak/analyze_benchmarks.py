@@ -138,7 +138,8 @@ def mm_ss(seconds):
 def print_warmup(r):
     print(f"## {'Warmup' if IS_PEAK else 'Details'}")
 
-    print(f"""
+    print(
+        f"""
 ```mermaid
 ---
 config:
@@ -149,13 +150,16 @@ config:
 xychart-beta
     title "{'First ' if IS_PEAK else ''}{WARMUP_ITERATIONS} Iterations"
     y-axis "Time (in ms)" {min([min(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])} --> {max([max(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])}
-    """)
+    """
+    )
     for bench_name in BENCHMARKS:
         warmup_values = r[bench_name].warmup_iterations()
         print(f"line [{', '.join([str(x) for x in warmup_values])}]")
-    print("""
+    print(
+        """
 ```
-        """)
+        """
+    )
 
 
 def print_steady(r):
@@ -164,7 +168,8 @@ def print_steady(r):
     for bench_name in BENCHMARKS:
         peak_values = r[bench_name].peak_iterations()
         num_peak_values = len(peak_values)
-        print(f"""
+        print(
+            f"""
 ```mermaid
 ---
 config:
@@ -180,7 +185,8 @@ xychart-beta
     y-axis "Time (in ms)" {min(peak_values)} --> {max(peak_values)}
     line [{', '.join([str(x) for x in peak_values])}]
 ```
-        """)
+        """
+        )
 
 
 @dataclass
