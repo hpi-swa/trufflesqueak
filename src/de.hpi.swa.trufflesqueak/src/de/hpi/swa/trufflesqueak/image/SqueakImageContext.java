@@ -594,10 +594,8 @@ public final class SqueakImageContext {
                             // Guaranteed not in page 0 since classes there can't be deleted.
                             classTableIndex = currentClassTableIndex;
                         }
-                    } else if (entry instanceof final ClassObject classObject) {
-                        if (!becomeMap.isEmpty()) {
-                            classObject.pointersBecomeOneWay(becomeMap);
-                        }
+                    } else if (entry instanceof final ClassObject classObject && !becomeMap.isEmpty()) {
+                        classObject.pointersBecomeOneWay(becomeMap);
                     }
                 }
             } else {
