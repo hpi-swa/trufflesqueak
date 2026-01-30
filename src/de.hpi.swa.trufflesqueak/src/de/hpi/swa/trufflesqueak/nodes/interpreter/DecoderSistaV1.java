@@ -208,7 +208,16 @@ public final class DecoderSistaV1 extends AbstractDecoder {
             if (b == 0xE0) {
                 extA = (extA << 8) | byteValue;
             } else {
-                extB = (extB == 0 && byteValue > 127) ? byteValue - 256 : (extB << 8) | byteValue;
+                // See InterpreterSistaV1Node.execute(). Search for: BC_EXT_B_LOGIC
+                if (extB == 0) {
+                    /* leading byte is signed */
+                    final int signedByteValue = bc[index + offset + 1];
+                    /* make sure new extB is non-zero for next byte processing */
+                    extB = signedByteValue == 0 ? 0x80000000 : signedByteValue;
+                } else {
+                    /* subsequent bytes are unsigned */
+                    extB = (extB << 8) | byteValue;
+                }
             }
             offset += 2;
             b = Byte.toUnsignedInt(bc[index + offset]);
