@@ -175,6 +175,7 @@ public final class SqueakImageContext {
     private boolean currentMarkingFlag;
     public final ObjectGraphUtils objectGraphUtils;
     private ArrayObject hiddenRoots;
+    private int numClassTablePages = SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS;
     // first page of classTable is special
     public int classTableIndex = SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
     @CompilationFinal private SqueakDisplay display;
@@ -419,10 +420,55 @@ public final class SqueakImageContext {
         return currentMarkingFlag = !currentMarkingFlag;
     }
 
+    /* SpurMemoryManager>>#setHiddenRootsObj: */
     public void setHiddenRoots(final ArrayObject theHiddenRoots) {
         assert hiddenRoots == null && (theHiddenRoots.isObjectType() || isTesting());
         hiddenRoots = theHiddenRoots;
+        // This assertion is checked with the initial value of numClassTablePages.
         assert validClassTableRootPages();
+
+        if (!hiddenRoots.isObjectType()) {
+            assert isTesting(); // Ignore dummy images for testing
+            return;
+        }
+
+        // Set numClassTablePages to the number of used pages.
+        // Set classTableIndex to the first unused slot in the class table after the first page.
+        classTableIndex = 0;
+        for (int i = 1; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
+            if (hiddenRoots.getObject(i) instanceof final ArrayObject page) {
+                // Search for the first unused slot if we have not yet found one.
+                if (classTableIndex == 0) {
+                    for (int j = 0; j < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; j++) {
+                        final Object entry = page.getObject(j);
+                        if (entry == NilObject.SINGLETON) {
+                            classTableIndex = SqueakImageConstants.classTableIndexFor(i, j);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // Found nil page -- end of table.
+                assert hiddenRoots.getObject(i) == NilObject.SINGLETON;
+                if (classTableIndex == 0) {
+                    // SpurMemoryManager>>#setHiddenRootsObj: sets this to first entry of previous
+                    // page and then asserts that that entry must be nil, which is will always fail.
+                    // Here, we set it to the first entry of the first unallocated page.
+                    classTableIndex = SqueakImageConstants.classTableIndexFor(i, 0);
+                }
+                numClassTablePages = i;
+                assert lookupClassIndex(classTableIndex) == NilObject.SINGLETON;
+                return;
+            }
+        }
+
+        // We get here when all pages of the class table are allocated.
+        if (classTableIndex == 0) {
+            // No unused slots; set it to the start of the second page.
+            // Assertion below will always fail in this case.
+            classTableIndex = SqueakImageConstants.classTableIndexFor(1, 0);
+        }
+        assert lookupClassIndex(classTableIndex) == NilObject.SINGLETON;
     }
 
     /* SpurMemoryManager>>#validClassTableRootPages */
@@ -434,27 +480,35 @@ public final class SqueakImageContext {
 
         final Object[] hiddenRootsObjects = hiddenRoots.getObjectStorage();
         if (hiddenRootsObjects.length != SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS + SqueakImageConstants.HIDDEN_ROOT_SLOTS) {
+            LogUtils.DEBUG.warning(
+                            "hiddenRootsObjects size out of bounds: " + hiddenRootsObjects.length + " != " + (SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS + SqueakImageConstants.HIDDEN_ROOT_SLOTS));
             return false;
         }
         // "is it in range?"
+        if (!(numClassTablePages > 1 && numClassTablePages <= SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS)) {
+            LogUtils.DEBUG.warning("numClassTablePages out of bounds: " + numClassTablePages + " not within 2 to " + SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS);
+            return false;
+        }
         // "are all pages the right size?"
-        int numClassTablePages = -1;
-        for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
+        for (int i = 0; i < numClassTablePages; i++) {
             final Object classPageOrNil = hiddenRootsObjects[i];
             if (classPageOrNil instanceof final ArrayObject classPage) {
                 final int numSlots = classPage.isEmptyType() ? classPage.getEmptyLength() : classPage.getObjectLength();
                 if (numSlots != SqueakImageConstants.CLASS_TABLE_PAGE_SIZE) {
+                    LogUtils.DEBUG.warning("numSlots wrong size: " + numSlots + " != " + SqueakImageConstants.CLASS_TABLE_PAGE_SIZE);
                     return false;
                 }
-            } else {
-                assert classPageOrNil == NilObject.SINGLETON;
-                numClassTablePages = i;
+            } else if (classPageOrNil != NilObject.SINGLETON) {
+                // We are expecting either an Array or nil as page entries.
+                LogUtils.DEBUG.warning("internal classPageOrNil not nil: " + classPageOrNil);
+                return false;
             }
         }
-        // "are all entries beyond numClassTablePages nil?"
+        // are all entries beyond numClassTablePages nil?
         for (int i = numClassTablePages; i < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; i++) {
             final Object classPageOrNil = hiddenRootsObjects[i];
             if (classPageOrNil != NilObject.SINGLETON) {
+                LogUtils.DEBUG.warning("trailing classPageOrNil not nil: " + classPageOrNil);
                 return false;
             }
         }
@@ -474,8 +528,10 @@ public final class SqueakImageContext {
         assert initialMajorIndex > 0 : "classTableIndex should never index the first page; it's reserved for known classes";
         int minorIndex = SqueakImageConstants.minorClassIndexOf(classTableIndex);
         while (true) {
+            // Allocate new page if necessary.
             if (hiddenRoots.getObject(majorIndex) == NilObject.SINGLETON) {
                 hiddenRoots.setObject(majorIndex, newClassTablePage());
+                ++numClassTablePages;
                 minorIndex = 0;
             }
             final ArrayObject page = (ArrayObject) hiddenRoots.getObject(majorIndex);
@@ -490,7 +546,12 @@ public final class SqueakImageContext {
                     return;
                 }
             }
-            majorIndex = Math.max(majorIndex + 1 & SqueakImageConstants.CLASS_INDEX_MASK, 1);
+            // OSVM wraps majorIndex incorrectly and will allocate pages beyond the number allowed.
+            if (++majorIndex >= SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS) {
+                majorIndex = 1;
+            }
+            // OSVM is missing the following line and will miss free slots on subsequent pages.
+            minorIndex = 0;
             assert majorIndex != initialMajorIndex : "wrapped; table full";
         }
     }
@@ -514,36 +575,32 @@ public final class SqueakImageContext {
     /* SpurMemoryManager>>#purgeDuplicateClassTableEntriesFor: */
     public void purgeDuplicateAndUnreachableClassTableEntriesFor(final ClassObject clazz, final UnmodifiableEconomicMap<Object, Object> becomeMap) {
         final int expectedIndex = clazz != null ? clazz.getSqueakHashInt() : -1;
-        int majorIndex = SqueakImageConstants.majorClassIndexOf(SqueakImageConstants.CLASS_TABLE_PAGE_SIZE);
-        while (majorIndex < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS) {
-            final Object classTablePageOrNil = hiddenRoots.getObject(majorIndex);
-            if (classTablePageOrNil instanceof final ArrayObject page) {
-                if (page.isObjectType()) {
-                    for (int minorIndex = 0; minorIndex < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; minorIndex++) {
-                        final int currentClassTableIndex = SqueakImageConstants.classTableIndexFor(majorIndex, minorIndex);
-                        Object entry = page.getObject(minorIndex);
-                        if (entry instanceof final ClassObject classObject && !classObject.isNotForwarded()) {
-                            entry = classObject.getForwardingPointer();
-                            page.setObject(minorIndex, entry);
-                        }
-                        final boolean isDuplicate = entry == clazz && currentClassTableIndex != expectedIndex && currentClassTableIndex > SqueakImageConstants.LAST_CLASS_INDEX_PUN;
-                        if (isDuplicate || isUnreachable(entry)) {
-                            page.setObject(minorIndex, NilObject.SINGLETON);
-                            if (currentClassTableIndex < classTableIndex) {
-                                classTableIndex = currentClassTableIndex;
-                            }
-                        } else if (entry instanceof final ClassObject classObject) {
-                            classObject.pointersBecomeOneWay(becomeMap);
-                        }
+        // Must search all pages, but classTableIndex cannot be in page zero.
+        for (int majorIndex = 0; majorIndex < numClassTablePages; majorIndex++) {
+            // Guaranteed to be non-nil.
+            final ArrayObject page = (ArrayObject) hiddenRoots.getObject(majorIndex);
+            if (page.isObjectType()) {
+                for (int minorIndex = 0; minorIndex < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; minorIndex++) {
+                    Object entry = page.getObject(minorIndex);
+                    if (entry instanceof final ClassObject classObject && !classObject.isNotForwarded()) {
+                        entry = classObject.getForwardingPointer();
+                        page.setObject(minorIndex, entry);
                     }
-                } else {
-                    assert page.isEmptyType() && page.getEmptyLength() == SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
+                    final int currentClassTableIndex = SqueakImageConstants.classTableIndexFor(majorIndex, minorIndex);
+                    final boolean isDuplicate = entry == clazz && currentClassTableIndex != expectedIndex && currentClassTableIndex > SqueakImageConstants.LAST_CLASS_INDEX_PUN;
+                    if (isDuplicate || isUnreachable(entry)) {
+                        page.setObject(minorIndex, NilObject.SINGLETON);
+                        if (currentClassTableIndex < classTableIndex) {
+                            // Guaranteed not in page 0 since classes there can't be deleted.
+                            classTableIndex = currentClassTableIndex;
+                        }
+                    } else if (entry instanceof final ClassObject classObject && !becomeMap.isEmpty()) {
+                        classObject.pointersBecomeOneWay(becomeMap);
+                    }
                 }
             } else {
-                assert classTablePageOrNil == NilObject.SINGLETON;
-                break;
+                assert page.isEmptyType() && page.getEmptyLength() == SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
             }
-            majorIndex = Math.max(majorIndex + 1 & SqueakImageConstants.CLASS_INDEX_MASK, 1);
         }
         assert classTableIndex >= SqueakImageConstants.CLASS_TABLE_PAGE_SIZE : "classTableIndex must never index the first page, which is reserved for classes known to the VM";
     }
@@ -566,7 +623,7 @@ public final class SqueakImageContext {
             if (classTablePageOrNil instanceof final ArrayObject page) {
                 if (page.isObjectType()) {
                     final Object[] entries = page.getObjectStorage();
-                    for (int i = 0; i < entries.length; i++) {
+                    for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                         final Object entry = entries[i];
                         if (entry instanceof final ClassObject classObject) {
                             if (!classObject.isNotForwarded()) {
