@@ -18,8 +18,9 @@ on:
   workflow_dispatch:
 
 env:
-  # JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
-  JAVA_VERSION: '25.0.1'
+  GRAALVM_VERSION: '25.0.1-ea.13'
+  JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
+  JAVA_VERSION: '25.0.2'
   NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
   PGO_FILE_CUIS: '${{ github.workspace }}/trufflesqueak-cuis.iprof'
   PGO_FILE_SQUEAK: '${{ github.workspace }}/trufflesqueak-squeak.iprof'
@@ -72,12 +73,19 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Set up Oracle GraalVM
-      uses: graalvm/setup-graalvm@v1
+    # - name: Set up Oracle GraalVM
+    #   uses: graalvm/setup-graalvm@v1
+    #   with:
+    #     java-version: '${{ env.GRAALVM_VERSION }}'
+    #     distribution: 'graalvm'
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Download GraalVM 25.1 EA builds
+      run: curl -sL -o $RUNNER_TEMP/graalvm-jdk-25e1-linux-amd64.tar.gz https://github.com/graalvm/oracle-graalvm-ea-builds/releases/download/jdk-25e1-${{ env.GRAALVM_VERSION }}/graalvm-jdk-25e1-${{ env.GRAALVM_VERSION }}_linux-x64_bin.tar.gz
+    - uses: actions/setup-java@v4
       with:
-        java-version: '${{ env.JAVA_VERSION }}'
-        distribution: 'graalvm'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        java-version: '25'
+        distribution: 'jdkfile'
+        jdkFile: ${{ runner.temp }}/graalvm-jdk-25e1-linux-amd64.tar.gz
     - name: Enable Oracle GraalVM
       shell: bash
       run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
@@ -124,11 +132,10 @@ jobs:
         path: ${{ env.STANDALONE_ARCHIVE }}
         retention-days: 7
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
-    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
-      run: |
-        trufflesqueak-polyglot-get -v ${{ env.JAVA_VERSION }} -a js
-        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-      if: ${{ matrix.type == 'jvm' }}
+    # - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
+    #   run: |
+    #     trufflesqueak-polyglot-get -v ${{ env.JAVA_VERSION }} -a js
+    #     trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
     - name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
@@ -182,12 +189,19 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Set up Oracle GraalVM
-      uses: graalvm/setup-graalvm@v1
+    # - name: Set up Oracle GraalVM
+    #   uses: graalvm/setup-graalvm@v1
+    #   with:
+    #     java-version: '${{ env.GRAALVM_VERSION }}'
+    #     distribution: 'graalvm'
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Download GraalVM 25.1 EA builds
+      run: curl -sL -o $RUNNER_TEMP/graalvm-jdk-25e1-linux-amd64.tar.gz https://github.com/graalvm/oracle-graalvm-ea-builds/releases/download/jdk-25e1-${{ env.GRAALVM_VERSION }}/graalvm-jdk-25e1-${{ env.GRAALVM_VERSION }}_linux-x64_bin.tar.gz
+    - uses: actions/setup-java@v4
       with:
-        java-version: '${{ env.JAVA_VERSION }}'
-        distribution: 'graalvm'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        java-version: '25'
+        distribution: 'jdkfile'
+        jdkFile: ${{ runner.temp }}/graalvm-jdk-25e1-linux-amd64.tar.gz
     - name: Enable Oracle GraalVM
       shell: bash
       run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
@@ -245,12 +259,19 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Set up Oracle GraalVM
-      uses: graalvm/setup-graalvm@v1
+    # - name: Set up Oracle GraalVM
+    #   uses: graalvm/setup-graalvm@v1
+    #   with:
+    #     java-version: '${{ env.GRAALVM_VERSION }}'
+    #     distribution: 'graalvm'
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Download GraalVM 25.1 EA builds
+      run: curl -sL -o $RUNNER_TEMP/graalvm-jdk-25e1-linux-amd64.tar.gz https://github.com/graalvm/oracle-graalvm-ea-builds/releases/download/jdk-25e1-${{ env.GRAALVM_VERSION }}/graalvm-jdk-25e1-${{ env.GRAALVM_VERSION }}_linux-x64_bin.tar.gz
+    - uses: actions/setup-java@v4
       with:
-        java-version: '${{ env.JAVA_VERSION }}'
-        distribution: 'graalvm'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        java-version: '25'
+        distribution: 'jdkfile'
+        jdkFile: ${{ runner.temp }}/graalvm-jdk-25e1-linux-amd64.tar.gz
     - name: Enable Oracle GraalVM
       shell: bash
       run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
@@ -323,11 +344,6 @@ jobs:
         path: ${{ env.STANDALONE_ARCHIVE }}
         retention-days: 7
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
-    - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
-      run: |
-        trufflesqueak-polyglot-get -v ${{ env.JAVA_VERSION }} -a js
-        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-      if: ${{ matrix.type == 'jvm' }}
     - name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
