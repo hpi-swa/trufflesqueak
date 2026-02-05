@@ -61,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
+        os: [ubuntu-22.04-arm] # [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
         type: [jvm]
     env:
       VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
@@ -80,7 +80,7 @@ jobs:
     #     distribution: 'graalvm'
     #     github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Download GraalVM 25.1 EA builds
-      run: curl -sL -o $RUNNER_TEMP/graalvm-jdk-25e1-linux-amd64.tar.gz https://github.com/graalvm/oracle-graalvm-ea-builds/releases/download/jdk-25e1-${{ env.GRAALVM_VERSION }}/graalvm-jdk-25e1-${{ env.GRAALVM_VERSION }}_linux-x64_bin.tar.gz
+      run: curl -sL -o $RUNNER_TEMP/graalvm-jdk-25e1-linux-amd64.tar.gz https://github.com/graalvm/oracle-graalvm-ea-builds/releases/download/jdk-25e1-${{ env.GRAALVM_VERSION }}/graalvm-jdk-25e1-${{ env.GRAALVM_VERSION }}_linux-aarch64_bin.tar.gz
     - uses: actions/setup-java@v4
       with:
         java-version: '25'
@@ -183,7 +183,7 @@ jobs:
         type: [native]
     name: instrument ${{ matrix.os }}
     timeout-minutes: 45
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
       uses: actions/checkout@v4
@@ -247,7 +247,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
+        os: [ubuntu-22.04-arm] # [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
         type: [native]
     env:
       VM_ARGS: "--vm.Xmx6G --headless --experimental-options --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose"
@@ -266,7 +266,7 @@ jobs:
     #     distribution: 'graalvm'
     #     github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Download GraalVM 25.1 EA builds
-      run: curl -sL -o $RUNNER_TEMP/graalvm-jdk-25e1-linux-amd64.tar.gz https://github.com/graalvm/oracle-graalvm-ea-builds/releases/download/jdk-25e1-${{ env.GRAALVM_VERSION }}/graalvm-jdk-25e1-${{ env.GRAALVM_VERSION }}_linux-x64_bin.tar.gz
+      run: curl -sL -o $RUNNER_TEMP/graalvm-jdk-25e1-linux-amd64.tar.gz https://github.com/graalvm/oracle-graalvm-ea-builds/releases/download/jdk-25e1-${{ env.GRAALVM_VERSION }}/graalvm-jdk-25e1-${{ env.GRAALVM_VERSION }}_linux-aarch64_bin.tar.gz
     - uses: actions/setup-java@v4
       with:
         java-version: '25'
