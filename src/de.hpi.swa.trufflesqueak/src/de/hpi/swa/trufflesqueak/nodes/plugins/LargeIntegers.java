@@ -1086,11 +1086,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     public static Object normalize(final SqueakImageChunk chunk, final boolean isNegative) {
         final Object object = normalize(chunk.getImage(), chunk.getBytes(), isNegative);
-        chunk.setObject(object);
+        if (object instanceof final NativeObject o) {
+            o.initializeFrom(chunk);
+        } else {
+            chunk.setObject(object);
+        }
         return object;
     }
 
-    public static Object normalize(final SqueakImageContext image, final byte[] bytes, final boolean isNegative) {
+    private static Object normalize(final SqueakImageContext image, final byte[] bytes, final boolean isNegative) {
         final int byteSize = bytes.length;
         // Compute number of 32-bit digits (rounding up)
         int digitLen = (byteSize + 3) / 4;
