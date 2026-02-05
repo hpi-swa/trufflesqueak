@@ -78,8 +78,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
         int pc = startPC;
         assert pc < endPC;
-        int extA = 0;
-        int extB = 0;
+        long extBA = 0;
 
         while (pc < endPC) {
             final int currentPC = pc++;
@@ -110,14 +109,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     break;
                 }
                 case BC.EXT_PUSH_PSEUDO_VARIABLE: {
-                    if (extB == 0) {
+                    if (getExtB(extBA) == 0) {
                         break;
                     } else {
                         throw unknownBytecode();
                     }
                 }
                 case BC.EXT_NOP:
-                    extA = extB = 0;
+                    extBA = 0;
                     break;
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
                     data[currentPC] = insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD)));
@@ -177,30 +176,43 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 /* 2 byte bytecodes */
                 case BC.EXT_A: {
-                    extA = (extA << 8) + getUnsignedInt(bc, pc++);
+                    final int extA = getExtA(extBA);
+                    final int newExtA = (extA << 8) | getUnsignedInt(bc, pc++);
+                    extBA = (extBA & 0xFFFFFFFF00000000L) | Integer.toUnsignedLong(newExtA);
                     break;
                 }
                 case BC.EXT_B: {
-                    final int byteValue = getUnsignedInt(bc, pc++);
-                    extB = extB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue;
-                    assert extB != 0 : "should use numExtB?";
+                    /// Search for: BC_EXT_B_LOGIC for more details
+                    final int extB = getExtB(extBA);
+                    final int newExtB;
+                    if (extB == 0) {
+                        /* leading byte is signed */
+                        final int byteValue = getByte(bc, pc++);
+                        /* make sure newExtB is non-zero for next byte processing */
+                        newExtB = byteValue == 0 ? 0x80000000 : byteValue;
+                    } else {
+                        /* subsequent bytes are unsigned */
+                        final int byteValue = getUnsignedInt(bc, pc++);
+                        newExtB = (extB << 8) | byteValue;
+                    }
+                    extBA = ((long) newExtB << 32) | (extBA & 0xFFFFFFFFL);
                     break;
                 }
                 case BC.EXT_PUSH_RECEIVER_VARIABLE: {
                     data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
                     pc++;
-                    extA = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                    data[currentPC] = getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(getByteExtended(bc, pc, extA)));
+                    data[currentPC] = getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(getByteExtended(bc, pc, getExtA(extBA))));
                     pc++;
-                    extA = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_CHARACTER: {
                     pc++;
-                    extA = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.LONG_PUSH_TEMPORARY_VARIABLE, BC.PUSH_NEW_ARRAY, BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE, BC.LONG_STORE_TEMPORARY_VARIABLE: {
@@ -209,21 +221,21 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 case BC.EXT_PUSH_INTEGER: {
                     pc++;
-                    extB = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.EXT_SEND: {
                     final int byte1 = getUnsignedInt(bc, pc++);
-                    final int literalIndex = (byte1 >> 3) + (extA << 5);
+                    final int literalIndex = (byte1 >> 3) + (getExtA(extBA) << 5);
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
                     data[currentPC] = insert(DispatchNaryNodeGen.create(selector));
-                    extA = extB = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.EXT_SEND_SUPER: {
-                    final boolean isDirected = extB >= 64;
+                    final boolean isDirected = getExtB(extBA) >= 64;
                     final int byte1 = getUnsignedInt(bc, pc++);
-                    final int literalIndex = (byte1 >> 3) + (extA << 5);
+                    final int literalIndex = (byte1 >> 3) + (getExtA(extBA) << 5);
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
                     if (isDirected) {
                         data[currentPC] = insert(DispatchDirectedSuperNaryNodeGen.create(selector));
@@ -231,27 +243,27 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final ClassObject methodClass = code.getMethod().getMethodClassSlow();
                         data[currentPC] = insert(DispatchSuperNaryNodeGen.create(methodClass, selector));
                     }
-                    extA = extB = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.EXT_UNCONDITIONAL_JUMP: {
-                    final int offset = calculateLongExtendedOffset(getByte(bc, pc++), extB);
+                    final int offset = calculateLongExtendedOffset(getByte(bc, pc++), getExtB(extBA));
                     if (offset < 0) {
                         data[currentPC] = insert(CheckForInterruptsInLoopNode.createForLoop(data, currentPC, 2, offset));
                     }
-                    extA = extB = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.EXT_JUMP_IF_TRUE, BC.EXT_JUMP_IF_FALSE: {
                     data[currentPC] = CountingConditionProfile.create();
                     pc++;
-                    extA = extB = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, BC.EXT_STORE_AND_POP_LITERAL_VARIABLE, BC.EXT_STORE_RECEIVER_VARIABLE, BC.EXT_STORE_LITERAL_VARIABLE: {
                     data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
                     pc++;
-                    extA = 0;
+                    extBA = 0;
                     break;
                 }
                 /* 3 byte bytecodes */
@@ -261,17 +273,18 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 case BC.EXT_PUSH_FULL_CLOSURE: {
                     pc += 2;
-                    extA = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.EXT_PUSH_CLOSURE: {
                     final int byteA = getUnsignedInt(bc, pc++);
+                    final int extA = getExtA(extBA);
                     final int numArgs = (byteA & 0x07) + (extA & 0x0F) * 8;
                     final int numCopied = (byteA >> 3 & 0x7) + (extA >> 4) * 8;
-                    final int blockSize = getByteExtended(bc, pc++, extB);
+                    final int blockSize = getByteExtended(bc, pc++, getExtB(extBA));
                     data[currentPC] = createBlock(code, pc, numArgs, numCopied, blockSize);
                     pc += blockSize;
-                    extA = extB = 0;
+                    extBA = 0;
                     break;
                 }
                 case BC.PUSH_REMOTE_TEMP_LONG: {
@@ -307,8 +320,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
         int pc = startPC;
         int sp = startSP;
-        int extA = 0;
-        int extB = 0;
+        long extBA = 0;
 
         int counter = 0;
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
@@ -318,8 +330,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             while (pc != LOCAL_RETURN_PC) {
                 CompilerAsserts.partialEvaluationConstant(pc);
                 CompilerAsserts.partialEvaluationConstant(sp);
-                CompilerAsserts.partialEvaluationConstant(extA);
-                CompilerAsserts.partialEvaluationConstant(extB);
+                CompilerAsserts.partialEvaluationConstant(extBA);
                 final int currentPC = pc++;
                 final byte b = getByte(bc, currentPC);
                 CompilerAsserts.partialEvaluationConstant(b);
@@ -373,7 +384,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.EXT_PUSH_PSEUDO_VARIABLE: {
-                        if (extB == 0) {
+                        if (getExtB(extBA) == 0) {
                             push(frame, sp++, getOrCreateContext(frame, currentPC));
                         } else {
                             throw unknownBytecode();
@@ -428,7 +439,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.EXT_NOP: {
-                        extA = extB = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.BYTECODE_PRIM_ADD: {
@@ -761,29 +772,57 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     /* 2 byte bytecodes */
                     case BC.EXT_A: {
-                        extA = (extA << 8) + getUnsignedInt(bc, pc++);
+                        final int extA = getExtA(extBA);
+                        final int newExtA = (extA << 8) | getUnsignedInt(bc, pc++);
+                        extBA = (extBA & 0xFFFFFFFF00000000L) | Integer.toUnsignedLong(newExtA);
                         break;
                     }
                     case BC.EXT_B: {
-                        final int byteValue = getUnsignedInt(bc, pc++);
-                        extB = extB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue;
-                        assert extB != 0 : "is numExtB needed?";
+                        // {editor-fold desc="BC_EXT_B_LOGIC"}
+                        /*
+                         * OSVM maintains a counter (numExtB) to determine whether an EXT_B byte
+                         * code is the first in a series. Here, we use extB == 0 to indicate that
+                         * the byte code is the first. At the moment, Squeak only emits single EXT_B
+                         * byte codes, so this method will always work. However, when the image
+                         * starts using sequences of EXT_B byte codes and the value being encoded is
+                         * a positive integer with positions 7, 15 or 23 as the highest set bit, the
+                         * decoded value will be interpreted as a negative integer. For example, the
+                         * emitted sequence for the value 0x8765 would be 0x00, 0x87, 0x65. If we
+                         * assume that the encoder will never try to encode the value 0 (since that
+                         * is the default value without any emitted byte codes), we can detect the
+                         * case of the leading zero byte by setting the upper byte of extB and
+                         * relying on the next byte to shift that byte out of the register.
+                         */
+                        // {/editor-fold}
+                        final int extB = getExtB(extBA);
+                        final int newExtB;
+                        if (extB == 0) {
+                            /* leading byte is signed */
+                            final int byteValue = getByte(bc, pc++);
+                            /* make sure newExtB is non-zero for next byte processing */
+                            newExtB = byteValue == 0 ? 0x80000000 : byteValue;
+                        } else {
+                            /* subsequent bytes are unsigned */
+                            final int byteValue = getUnsignedInt(bc, pc++);
+                            newExtB = (extB << 8) | byteValue;
+                        }
+                        extBA = ((long) newExtB << 32) | (extBA & 0xFFFFFFFFL);
                         break;
                     }
                     case BC.EXT_PUSH_RECEIVER_VARIABLE: {
                         pushFollowed(frame, currentPC, sp++,
-                                        uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, extA)));
-                        extA = 0;
+                                        uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc++, getExtA(extBA))));
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                        push(frame, sp++, readLiteralVariable(currentPC, getByteExtended(bc, pc++, extA)));
-                        extA = 0;
+                        push(frame, sp++, readLiteralVariable(currentPC, getByteExtended(bc, pc++, getExtA(extBA))));
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL: {
-                        push(frame, sp++, getAndResolveLiteral(currentPC, getByteExtended(bc, pc++, extA)));
-                        extA = 0;
+                        push(frame, sp++, getAndResolveLiteral(currentPC, getByteExtended(bc, pc++, getExtA(extBA))));
+                        extBA = 0;
                         break;
                     }
                     case BC.LONG_PUSH_TEMPORARY_VARIABLE: {
@@ -804,29 +843,30 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.EXT_PUSH_INTEGER: {
-                        push(frame, sp++, (long) getByteExtended(bc, pc++, extB));
-                        extB = 0;
+                        push(frame, sp++, (long) getByteExtended(bc, pc++, getExtB(extBA)));
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_PUSH_CHARACTER: {
-                        push(frame, sp++, CharacterObject.valueOf(getByteExtended(bc, pc++, extA)));
-                        extA = 0;
+                        push(frame, sp++, CharacterObject.valueOf(getByteExtended(bc, pc++, getExtA(extBA))));
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_SEND: {
                         final int byte1 = getUnsignedInt(bc, pc++);
-                        final int numArgs = (byte1 & 7) + (extB << 3);
+                        final int numArgs = (byte1 & 7) + (getExtB(extBA) << 3);
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
                         final Object receiver = popReceiver(frame, --sp);
                         externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
                         pc = internalizePC(frame, pc);
-                        extA = extB = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_SEND_SUPER: {
                         final boolean isDirected;
+                        final int extB = getExtB(extBA);
                         final int extBValue;
                         if (extB >= 64) {
                             isDirected = true;
@@ -845,11 +885,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         CompilerAsserts.partialEvaluationConstant(isDirected);
                         pushFollowed(frame, currentPC, sp++, sendSuper(frame, isDirected, currentPC, lookupClass, receiver, arguments));
                         pc = internalizePC(frame, pc);
-                        extA = extB = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_UNCONDITIONAL_JUMP: {
-                        final int offset = calculateLongExtendedOffset(getByte(bc, pc++), extB);
+                        final int offset = calculateLongExtendedOffset(getByte(bc, pc++), getExtB(extBA));
                         pc += offset;
                         if (offset < 0) {
                             if (CompilerDirectives.hasNextTier()) {
@@ -882,12 +922,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 checkForInterruptsNode.execute(frame, pc);
                             }
                         }
-                        extA = extB = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_JUMP_IF_TRUE: {
                         final Object stackValue = pop(frame, --sp);
-                        final int offset = getByteExtended(bc, pc++, extB);
+                        final int offset = getByteExtended(bc, pc++, getExtB(extBA));
                         if (stackValue instanceof final Boolean condition) {
                             if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(condition)) {
                                 pc += offset;
@@ -895,12 +935,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         } else {
                             sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                         }
-                        extA = extB = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_JUMP_IF_FALSE: {
                         final Object stackValue = pop(frame, --sp);
-                        final int offset = getByteExtended(bc, pc++, extB);
+                        final int offset = getByteExtended(bc, pc++, getExtB(extBA));
                         if (stackValue instanceof final Boolean condition) {
                             if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(!condition)) {
                                 pc += offset;
@@ -908,19 +948,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         } else {
                             sendMustBeBooleanInInterpreter(frame, pc, stackValue);
                         }
-                        extA = extB = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE: {
-                        final int index = getByteExtended(bc, pc++, extA);
+                        final int index = getByteExtended(bc, pc++, getExtA(extBA));
                         uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --sp));
-                        extA = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                        final int index = getByteExtended(bc, pc++, extA);
+                        final int index = getByteExtended(bc, pc++, getExtA(extBA));
                         uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, index), ASSOCIATION.VALUE, pop(frame, --sp));
-                        extA = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE: {
@@ -928,15 +968,15 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.EXT_STORE_RECEIVER_VARIABLE: {
-                        final int index = getByteExtended(bc, pc++, extA);
+                        final int index = getByteExtended(bc, pc++, getExtA(extBA));
                         uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, sp));
-                        extA = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_STORE_LITERAL_VARIABLE: {
-                        final int index = getByteExtended(bc, pc++, extA);
+                        final int index = getByteExtended(bc, pc++, getExtA(extBA));
                         uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, index), ASSOCIATION.VALUE, top(frame, sp));
-                        extA = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.LONG_STORE_TEMPORARY_VARIABLE: {
@@ -953,7 +993,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.EXT_PUSH_FULL_CLOSURE: {
-                        final int literalIndex = getByteExtended(bc, pc++, extA);
+                        final int literalIndex = getByteExtended(bc, pc++, getExtA(extBA));
                         final CompiledCodeObject block = (CompiledCodeObject) code.getLiteral(literalIndex);
                         assert block.assertNotForwarded();
                         CompilerAsserts.partialEvaluationConstant(block);
@@ -966,18 +1006,18 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, currentPC);
                         final Object receiver = receiverOnStack ? pop(frame, --sp) : FrameAccess.getReceiver(frame);
                         push(frame, sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
-                        extA = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.EXT_PUSH_CLOSURE: {
                         final int byteA = getUnsignedInt(bc, pc++);
-                        final int numCopied = (byteA >> 3 & 0x7) + (extA >> 4) * 8;
+                        final int numCopied = (byteA >> 3 & 0x7) + (getExtA(extBA) >> 4) * 8;
                         final Object[] copiedValues = popN(frame, sp, numCopied);
                         sp -= numCopied;
                         push(frame, sp++, createBlockClosure(frame, uncheckedCast(data[currentPC], CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, currentPC)));
-                        final int blockSize = getByteExtended(bc, pc++, extB);
+                        final int blockSize = getByteExtended(bc, pc++, getExtB(extBA));
                         pc += blockSize;
-                        extA = extB = 0;
+                        extBA = 0;
                         break;
                     }
                     case BC.PUSH_REMOTE_TEMP_LONG: {
@@ -1029,6 +1069,20 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     public static int calculateLongExtendedOffset(final byte bytecode, final int extB) {
         return Byte.toUnsignedInt(bytecode) + (extB << 8);
+    }
+
+    /**
+     * Extracts the signed 32-bit extB from the high 32 bits of extBA.
+     */
+    private static int getExtB(final long extBA) {
+        return (int) (extBA >> 32);
+    }
+
+    /**
+     * Extracts the unsigned 32-bit extA from the low 32 bits of extBA.
+     */
+    private static int getExtA(final long extBA) {
+        return (int) extBA;
     }
 
     static class BC {
