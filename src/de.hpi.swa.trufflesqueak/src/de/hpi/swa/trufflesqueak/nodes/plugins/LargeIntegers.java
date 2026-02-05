@@ -1086,7 +1086,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     public static Object normalize(final SqueakImageChunk chunk, final boolean isNegative) {
         final Object object = normalize(chunk.getImage(), chunk.getBytes(), isNegative);
-        chunk.setObject(object);
+        if (object instanceof NativeObject o) {
+            o.initializeFrom(chunk);
+        } else {
+            chunk.setObject(object);
+        }
         return object;
     }
 
