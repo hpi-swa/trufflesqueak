@@ -1587,9 +1587,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetLanguageInfoNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "lib.hasLanguageId(object)")
         protected final Object getLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
-                                           @CachedLibrary(limit = "2") final InteropLibrary lib) {
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                String id = lib.getLanguageId(object);
+                final String id = lib.getLanguageId(object);
                 // Look up the LanguageInfo using the ID from the Context environment
                 return JavaObjectWrapper.wrap(getContext().env.getInternalLanguages().get(id));
             } catch (final UnsupportedMessageException e) {
@@ -1597,6 +1597,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
     }
+
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveToDisplayString")
     protected abstract static class PrimToDisplayStringNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
@@ -2170,7 +2171,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostFunction")
     protected abstract static class PrimIsHostFunctionNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
-        protected final boolean doIsHostFunction(@SuppressWarnings("unused") final Object receiver, final Object object) {
+        protected static boolean doIsHostFunction(@SuppressWarnings("unused") final Object receiver, final Object object) {
             // isExecutable on a Host Object usually implies it is a function/method
             final InteropLibrary library = InteropLibrary.getUncached();
             return BooleanObject.wrap(library.isHostObject(object) && library.isExecutable(object));
@@ -2181,7 +2182,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostObject")
     protected abstract static class PrimIsHostObjectNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
-        protected final boolean doIsHostObject(@SuppressWarnings("unused") final Object receiver, final Object object) {
+        protected static boolean doIsHostObject(@SuppressWarnings("unused") final Object receiver, final Object object) {
             return BooleanObject.wrap(InteropLibrary.getUncached().isHostObject(object));
         }
     }
@@ -2190,7 +2191,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostSymbol")
     protected abstract static class PrimIsHostSymbolNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
-        protected final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver, final Object object) {
+        protected static boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver, final Object object) {
             final InteropLibrary library = InteropLibrary.getUncached();
             return BooleanObject.wrap(library.isHostObject(object) && library.isScope(object));
         }
@@ -2234,8 +2235,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveToHostObject")
     protected abstract static class PrimToHostObjectNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "lib.isHostObject(value)")
-        protected final Object toHost(@SuppressWarnings("unused") final Object receiver, final Object value,
-                                      @CachedLibrary(limit = "3") final InteropLibrary lib) {
+        protected static Object toHost(@SuppressWarnings("unused") final Object receiver, final Object value,
+                        @CachedLibrary(limit = "3") final InteropLibrary lib) {
             try {
                 return lib.asHostObject(value);
             } catch (final UnsupportedMessageException | HeapIsolationException e) {
