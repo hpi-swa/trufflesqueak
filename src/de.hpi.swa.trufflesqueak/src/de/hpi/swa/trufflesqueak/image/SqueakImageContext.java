@@ -967,7 +967,7 @@ public final class SqueakImageContext {
 
     public void finalizeContext() {
         if (options.printResourceSummary()) {
-            MiscUtils.printResourceSummary();
+            MiscUtils.printResourceSummary(this);
         }
     }
 
