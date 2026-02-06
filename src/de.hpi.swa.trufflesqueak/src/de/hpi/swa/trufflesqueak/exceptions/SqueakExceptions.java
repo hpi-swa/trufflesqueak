@@ -55,13 +55,13 @@ public final class SqueakExceptions {
         }
 
         @ExportMessage
-        protected final boolean hasLanguage() {
+        protected final boolean hasLanguageId() {
             return true;
         }
 
         @ExportMessage
-        protected final Class<? extends TruffleLanguage<?>> getLanguage() {
-            return SqueakLanguage.class;
+        protected final String getLanguageId() {
+            return SqueakLanguageConfig.ID;
         }
     }
 
