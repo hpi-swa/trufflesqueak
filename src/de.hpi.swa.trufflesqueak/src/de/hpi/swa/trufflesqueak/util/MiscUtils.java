@@ -263,7 +263,7 @@ public final class MiscUtils {
 
         final String javaVersion = System.getProperty("java.version");
         final String fullVersion = System.getProperty("org.graalvm.version",
-                System.getProperty("graalvm.version", "N/A"));
+                        System.getProperty("graalvm.version", "N/A"));
         String truffleVersion = image.env.getClass().getPackage().getImplementationVersion();
         if (truffleVersion == null) {
             truffleVersion = "Development Build";

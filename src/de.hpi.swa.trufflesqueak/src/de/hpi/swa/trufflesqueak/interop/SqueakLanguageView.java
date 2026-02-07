@@ -94,4 +94,5 @@ public final class SqueakLanguageView implements TruffleObject {
         } catch (final UnsupportedMessageException e) {
             throw shouldNotReachHere(e);
         }
-    }}
+    }
+}

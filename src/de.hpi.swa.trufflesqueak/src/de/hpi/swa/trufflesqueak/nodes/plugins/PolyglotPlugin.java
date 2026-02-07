@@ -1587,7 +1587,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetLanguageInfoNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "lib.hasLanguageId(object)")
         protected final Object getLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
-                                           @CachedLibrary(limit = "2") final InteropLibrary lib) {
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
                 String id = lib.getLanguageId(object);
                 // Look up the LanguageInfo using the ID from the Context environment
@@ -1597,6 +1597,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
     }
+
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveToDisplayString")
     protected abstract static class PrimToDisplayStringNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
@@ -2235,7 +2236,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimToHostObjectNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "lib.isHostObject(value)")
         protected static Object toHost(@SuppressWarnings("unused") final Object receiver, final Object value,
-                                      @CachedLibrary(limit = "3") final InteropLibrary lib) {
+                        @CachedLibrary(limit = "3") final InteropLibrary lib) {
             try {
                 return lib.asHostObject(value);
             } catch (final UnsupportedMessageException | HeapIsolationException e) {
