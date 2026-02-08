@@ -458,9 +458,9 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         throw SqueakException.create("Should not be reached");
     }
 
-    protected static final RuntimeException unknownBytecode() {
+    protected static final RuntimeException unknownBytecode(final int pc, final int b) {
         CompilerDirectives.transferToInterpreter();
-        throw CompilerDirectives.shouldNotReachHere("Unknown bytecode");
+        throw CompilerDirectives.shouldNotReachHere("Unknown bytecode: " + b + " at pc = " + pc);
     }
 
     public static final int calculateShortOffset(final int bytecode) {

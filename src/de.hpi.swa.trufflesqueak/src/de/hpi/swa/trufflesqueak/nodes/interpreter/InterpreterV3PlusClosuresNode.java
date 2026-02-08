@@ -136,7 +136,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             break;
                         }
                         case 2: {
-                            throw unknownBytecode();
+                            throw unknownBytecode(pc, b);
                         }
                     }
                     break;
@@ -177,7 +177,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             break;
                         }
                         default: {
-                            throw unknownBytecode();
+                            throw unknownBytecode(pc, b);
                         }
                     }
                     break;
@@ -286,7 +286,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 default: {
-                    throw unknownBytecode();
+                    throw unknownBytecode(pc, b);
                 }
             }
         }
@@ -464,7 +464,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 2: {
-                                throw unknownBytecode();
+                                throw unknownBytecode(pc, b);
                             }
                             case 3: {
                                 uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackTop);
@@ -489,7 +489,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 2: {
-                                throw unknownBytecode();
+                                throw unknownBytecode(pc, b);
                             }
                             case 3: {
                                 uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackValue);
@@ -560,7 +560,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             default: {
-                                throw unknownBytecode();
+                                throw unknownBytecode(pc, b);
                             }
                         }
                         break;
@@ -1013,7 +1013,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     default: {
-                        throw unknownBytecode();
+                        throw unknownBytecode(pc, b);
                     }
                 }
             }
